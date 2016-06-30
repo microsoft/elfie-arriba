@@ -1,0 +1,62 @@
+﻿<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>$id$</id>
+    <version>$major$.$minor$.$patch$$prerelease$</version>
+    <title>Extensible Lightweight Fast Indexed Entities (ELFIE)</title>
+    <authors>Scott Louvau,Michael C. Fanning,Ryley Taketa,Jinu Joseph</authors>
+    <owners>Michael C. Fanning,Ryley Taketa</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>An extensible library for fast indexing of code artifacts.</description>
+    <releaseNotes>Version $major$.$minor$.$patch$$prerelease$ of Elfie (Extensible Lightweight Fast Indexed Entities)</releaseNotes>
+    <copyright>Copyright Microsoft</copyright>
+    <licenseUrl>https://github.com/microsoft/elfie/blob/master/LICENSE</licenseUrl>
+    <projectUrl>https://github.com/microsoft/elfie</projectUrl>
+    <tags>semantic search elfy</tags>
+  </metadata>
+  <files>
+
+    <file src='Microsoft.CodeAnalysis.Elfie.dll' target='lib\net45\Microsoft.CodeAnalysis.Elfie.dll'/>
+    <file src='Microsoft.CodeAnalysis.Elfie.pdb' target='lib\net45\Microsoft.CodeAnalysis.Elfie.pdb'/>
+    <file src='Microsoft.CodeAnalysis.Elfie.dll' target='tools\Microsoft.CodeAnalysis.Elfie.dll'/>
+    <file src='Microsoft.CodeAnalysis.Elfie.pdb' target='tools\Microsoft.CodeAnalysis.Elfie.pdb'/>    
+    <file src='Elfie.Api.Indexer.exe' target='tools\Elfie.Api.Indexer.exe'/>
+    <file src='Elfie.Api.Indexer.exe.config' target='tools\Elfie.Api.Indexer.exe.config'/>
+    <file src='Elfie.Api.Indexer.pdb' target='tools\Elfie.Api.Indexer.pdb'/>    
+    <file src='Elfie.Merger.exe' target='tools\Elfie.Merger.exe'/>
+    <file src='Elfie.Merger.exe.config' target='tools\Elfie.Merger.exe.config'/>
+    <file src='Elfie.Merger.pdb' target='tools\Elfie.Merger.pdb'/>
+    <file src='Elfie.Search.exe' target='tools\Elfie.Search.exe'/>
+    <file src='Elfie.Search.exe.config' target='tools\Elfie.Search.exe.config'/>
+    <file src='Elfie.Search.pdb' target='tools\Elfie.Search.pdb'/>
+    <file src='CommandLine.dll' target='tools\CommandLine.dll'/>
+    <file src='Microsoft.Build.dll' target='tools\Microsoft.Build.dll'/>
+    <file src='Microsoft.Build.Engine.dll' target='tools\Microsoft.Build.Engine.dll'/>
+    <file src='Microsoft.Build.Framework.dll' target='tools\Microsoft.Build.Framework.dll'/>
+    <file src='Microsoft.Build.Tasks.Core.dll' target='tools\Microsoft.Build.Tasks.Core.dll'/>
+    <file src='Microsoft.Build.Utilities.Core.dll' target='tools\Microsoft.Build.Utilities.Core.dll'/>
+    <file src='Microsoft.CodeAnalysis.CSharp.dll' target='tools\Microsoft.CodeAnalysis.CSharp.dll'/>
+    <file src='Microsoft.CodeAnalysis.CSharp.Workspaces.dll' target='tools\Microsoft.CodeAnalysis.CSharp.Workspaces.dll'/>
+    <file src='Microsoft.CodeAnalysis.dll' target='tools\Microsoft.CodeAnalysis.dll'/>
+    <file src='Microsoft.CodeAnalysis.VisualBasic.dll' target='tools\Microsoft.CodeAnalysis.VisualBasic.dll'/>
+    <file src='Microsoft.CodeAnalysis.VisualBasic.Workspaces.dll' target='tools\Microsoft.CodeAnalysis.VisualBasic.Workspaces.dll'/>
+    <file src='Microsoft.CodeAnalysis.Workspaces.Desktop.dll' target='tools\Microsoft.CodeAnalysis.Workspaces.Desktop.dll'/>
+    <file src='Microsoft.CodeAnalysis.Workspaces.dll' target='tools\Microsoft.CodeAnalysis.Workspaces.dll'/>
+    <file src='Microsoft.DiaSymReader.dll' target='tools\Microsoft.DiaSymReader.dll'/>
+    <file src='Newtonsoft.Json.dll' target='tools\Newtonsoft.Json.dll'/>
+    <file src='Sarif.dll' target='tools\Sarif.dll'/>
+    <file src='System.Collections.Immutable.dll' target='tools\System.Collections.Immutable.dll'/>
+    <file src='System.Composition.AttributedModel.dll' target='tools\System.Composition.AttributedModel.dll'/>
+    <file src='System.Composition.Convention.dll' target='tools\System.Composition.Convention.dll'/>
+    <file src='System.Composition.Hosting.dll' target='tools\System.Composition.Hosting.dll'/>
+    <file src='System.Composition.Runtime.dll' target='tools\System.Composition.Runtime.dll'/>
+    <file src='System.Composition.TypedParts.dll' target='tools\System.Composition.TypedParts.dll'/>
+    <file src='System.Reflection.Metadata.dll' target='tools\System.Reflection.Metadata.dll'/>
+
+    <file src="..\..\$source_root$\Elfie\**\*.cs" target="src\Elfie" />
+    <file src="..\..\$source_root$\Elfie.Indexer\**\*.cs" target="src\Elfie.Indexer" />
+    <file src="..\..\$source_root$\Elfie.Merger\**\*.cs" target="src\Elfie.Merger" />
+    <file src="..\..\$source_root$\Elfie.Search\**\*.cs" target="src\Elfie.Search" />
+
+  </files>
+</package>

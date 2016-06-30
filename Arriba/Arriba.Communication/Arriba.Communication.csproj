@@ -1,0 +1,225 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{7DCFE5A1-CDBF-426F-BD57-225443651238}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Arriba.Communication</RootNamespace>
+    <AssemblyName>Arriba.Communication</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
+    <RestorePackages>true</RestorePackages>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>..\bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
+    <PlatformTarget>x64</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>..\bin\x64\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>..\bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <RunCodeAnalysis>true</RunCodeAnalysis>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
+    <PlatformTarget>x64</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>..\bin\x64\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <RunCodeAnalysis>true</RunCodeAnalysis>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.Owin">
+      <HintPath>..\packages\Microsoft.Owin.3.0.1\lib\net45\Microsoft.Owin.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.Owin.Cors">
+      <HintPath>..\packages\Microsoft.Owin.Cors.3.0.1\lib\net45\Microsoft.Owin.Cors.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.Owin.Hosting">
+      <HintPath>..\packages\Microsoft.Owin.Hosting.3.0.1\lib\net45\Microsoft.Owin.Hosting.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>..\packages\Newtonsoft.Json.7.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Owin">
+      <HintPath>..\packages\Owin.1.0\lib\net40\Owin.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Composition.AttributedModel">
+      <HintPath>..\packages\Microsoft.Composition.1.0.30\lib\portable-net45+win8+wp8+wpa81\System.Composition.AttributedModel.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Composition.Convention">
+      <HintPath>..\packages\Microsoft.Composition.1.0.30\lib\portable-net45+win8+wp8+wpa81\System.Composition.Convention.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Composition.Hosting">
+      <HintPath>..\packages\Microsoft.Composition.1.0.30\lib\portable-net45+win8+wp8+wpa81\System.Composition.Hosting.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Composition.Runtime">
+      <HintPath>..\packages\Microsoft.Composition.1.0.30\lib\portable-net45+win8+wp8+wpa81\System.Composition.Runtime.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Composition.TypedParts">
+      <HintPath>..\packages\Microsoft.Composition.1.0.30\lib\portable-net45+win8+wp8+wpa81\System.Composition.TypedParts.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Core" />
+    <Reference Include="System.DirectoryServices" />
+    <Reference Include="System.DirectoryServices.AccountManagement" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Net.Http.Extensions">
+      <HintPath>..\packages\Microsoft.Net.Http.2.2.29\lib\net45\System.Net.Http.Extensions.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Net.Http.Primitives">
+      <HintPath>..\packages\Microsoft.Net.Http.2.2.29\lib\net45\System.Net.Http.Primitives.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Net.Http.WebRequest" />
+    <Reference Include="System.Runtime.Caching" />
+    <Reference Include="System.Web" />
+    <Reference Include="System.Web.Cors">
+      <HintPath>..\packages\Microsoft.AspNet.Cors.5.2.3\lib\net45\System.Web.Cors.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Application\IRoutedApplication.cs" />
+    <Compile Include="Application\IRouteEntry.cs" />
+    <Compile Include="Application\Route.cs" />
+    <Compile Include="Application\RoutedApplication.cs" />
+    <Compile Include="Application\RoutedApplicationHandler.cs" />
+    <Compile Include="Application\RouteException.cs" />
+    <Compile Include="Application\RouteMatcher.cs" />
+    <Compile Include="Application\RouteSpecification.cs" />
+    <Compile Include="Application\StaticFileApplication.cs" />
+    <Compile Include="ContentTypes\ContentTypeReaderWriterService.cs" />
+    <Compile Include="ContentTypes\Json\JsonContentReader.cs" />
+    <Compile Include="ContentTypes\Json\JsonContentWriter.cs" />
+    <Compile Include="ContentTypes\Json\JsonpContentWriter.cs" />
+    <Compile Include="ContentTypes\StringContentReader.cs" />
+    <Compile Include="ContentTypes\StringContentWriter.cs" />
+    <Compile Include="DefaultImplementations\NamedValueCollectionValueBag.cs" />
+    <Compile Include="DefaultImplementations\Response.cs" />
+    <Compile Include="DefaultImplementations\ResponseOfT.cs" />
+    <Compile Include="DefaultImplementations\StreamResponse.cs" />
+    <Compile Include="DefaultImplementations\StreamWriterResponse.cs" />
+    <Compile Include="Model\IApplication.cs" />
+    <Compile Include="Model\IChannel.cs" />
+    <Compile Include="Model\IContentReader.cs" />
+    <Compile Include="Model\IContentReaderWriterService.cs" />
+    <Compile Include="Model\IContentWriter.cs" />
+    <Compile Include="Model\IRequest.cs" />
+    <Compile Include="Model\IRequestContext.cs" />
+    <Compile Include="Model\IRequestHandler.cs" />
+    <Compile Include="Model\IResponse.cs" />
+    <Compile Include="Model\IStreamWriterResponse.cs" />
+    <Compile Include="Model\IValueBag.cs" />
+    <Compile Include="Model\RequestMethod.cs" />
+    <Compile Include="Model\ResponseStatus.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RequestExtensions.cs" />
+    <Compile Include="Server\ApplicationServer.cs" />
+    <Compile Include="Server\Application\ArribaApplication.cs" />
+    <Compile Include="Server\Application\ArribaImportApplication.cs" />
+    <Compile Include="Server\Application\ArribaManagement.cs" />
+    <Compile Include="Server\Application\ArribaMessageType.cs" />
+    <Compile Include="Server\Application\ArribaQueryApplication.cs" />
+    <Compile Include="Server\Application\ArribaResponse.cs" />
+    <Compile Include="Server\Application\InspectApplication.cs" />
+    <Compile Include="Server\Authentication\RuntimeCache.cs" />
+    <Compile Include="Server\Authentication\ClaimsAuthenticationService.cs" />
+    <Compile Include="Server\Hosting\ComposedApplicationServer.cs" />
+    <Compile Include="Server\Hosting\Composition\ContainerConfigurationExtensions.cs" />
+    <Compile Include="Server\Hosting\Composition\InstanceExportDescriptorProvider.cs" />
+    <Compile Include="Server\Hosting\Composition\SinglePartExportDescriptorProvider.cs" />
+    <Compile Include="Server\Hosting\DatabaseFactory.cs" />
+    <Compile Include="Server\Hosting\Host.cs" />
+    <Compile Include="Server\Hosting\SharingBoundary.cs" />
+    <Compile Include="Server\ModifiedVerbRequest.cs" />
+    <Compile Include="Server\NullBodyResponse.cs" />
+    <Compile Include="Server\Owin\ArribaOwinHost.cs" />
+    <Compile Include="Server\Owin\ArribaOwinRequest.cs" />
+    <Compile Include="Server\Owin\DictionaryValueBag.cs" />
+    <Compile Include="Server\Owin\OwinExtensions.cs" />
+    <Compile Include="Server\Owin\SelfHostArribaOwinStartup.cs" />
+    <Compile Include="Server\RequestContext.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config" />
+    <None Include="packages.config">
+      <SubType>Designer</SubType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Arriba.Client\Arriba.Client.csproj">
+      <Project>{35e3e90c-f12e-4eb5-9161-a78ed5ca950f}</Project>
+      <Name>Arriba.Client</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Arriba.Query\Arriba.Query.csproj">
+      <Project>{e4d3ab4b-b37e-42a5-a718-33b419ea0170}</Project>
+      <Name>Arriba.Query</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Arriba\Arriba.csproj">
+      <Project>{d89b4a01-f637-4147-9737-91a327a9da3f}</Project>
+      <Name>Arriba</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
+  <Import Project="..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets" Condition="Exists('..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets')" />
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets'))" />
+  </Target>
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

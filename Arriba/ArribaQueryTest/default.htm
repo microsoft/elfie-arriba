@@ -1,0 +1,45 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Arriba Test</title>
+    <link rel="stylesheet" href="semantic.min.css" type="text/css" />
+
+    <style type="text/css">
+        body {
+            font-family: 'Trebuchet MS', Arial, Verdana;
+            margin: 22px;
+        }
+    </style>
+</head>
+<body>
+    <h1 class="ui header">Arriba Test</h1>
+    <div data-bind="if: tableLoaded">
+
+        <div class="ui massive icon input">
+            <input type="text" placeholder="Search..." data-bind="value: queryString, valueUpdate: 'keyup'" style="width: 800px;">
+            <i class="search icon"></i>
+        </div>
+
+        <br /> <br />
+
+        <div data-bind="visible: hasTableData">
+            <div data-bind="with: tableData">
+                <div>Found <span data-bind="text: content.total"></span> results in <span data-bind="text: traceTimings['arriba.Execute'], attr: { title: traceTimings['global.EndToEnd'] }"></span>ms for &quot;<span data-bind="text: content.query.where"></span>&quot;.</div>
+                <table class="ui celled table segment" data-bind="table: { header: content.values.columns, data: content.values.rows }"></table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading scripts -->
+    <script src="Scripts/jquery-2.0.3.js"></script>
+    <script src="Scripts/knockout-2.3.0.debug.js"></script>
+    <script src="Scripts/knockout-table.js"></script>
+    <script src="app.js"></script>
+    <script>
+        $(function () {
+            ko.applyBindings(new App());
+        });
+    </script>
+</body>
+</html>

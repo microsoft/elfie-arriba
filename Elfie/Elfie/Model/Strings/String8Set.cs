@@ -1,0 +1,151 @@
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
+using System.IO;
+
+using Microsoft.CodeAnalysis.Elfie.Diagnostics;
+using Microsoft.CodeAnalysis.Elfie.Model.Structures;
+using Microsoft.CodeAnalysis.Elfie.Serialization;
+
+namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
+{
+    /// <summary>
+    ///  String8Set represents a String8 which has been split into segments with
+    ///  positions tracked via an externally provided buffer. It is used to contain
+    ///  sets of String8s together or to support string splitting without allocation.
+    /// </summary>
+    public struct String8Set : IStatistics, IBinarySerializable
+    {
+        private String8 _content;
+        private PartialArray<int> _partPositions;
+        private int _delimiterWidth;
+
+        internal String8Set(String8 content, int delimiterWidth, PartialArray<int> partPositions)
+        {
+            _content = content;
+            _partPositions = partPositions;
+            _delimiterWidth = delimiterWidth;
+        }
+
+        /// <summary>
+        ///  Split a string on a given delimiter into a provided byte[]. Used
+        ///  to split strings without allocation when a large byte[] is created
+        ///  and reused for many strings.
+        /// </summary>
+        /// <param name="value">String8 value to split</param>
+        /// <param name="delimiter">Delimiter to split on</param>
+        /// <param name="positionArray">int[] to contain split positions, of at least length String8Set.SplitRequiredLength</param>
+        /// <returns>String8Set containing split value</returns>
+        public static String8Set Split(String8 value, char delimiter, int[] positionArray)
+        {
+            // Get the delimiter as a byte
+            ushort delimiterCode = (ushort)delimiter;
+            if (delimiterCode >= 128) throw new ArgumentException(String.Format(Resources.UnableToSupportMultibyteCharacter, delimiter));
+            byte delimiterByte = (byte)delimiterCode;
+
+            // Record each delimiter position
+            PartialArray<int> positions = new PartialArray<int>(positionArray);
+            positions.Add(0);
+
+            if (!value.IsEmpty())
+            {
+                for (int i = 0; i < value.Length; ++i)
+                {
+                    if (value[i] == delimiterByte)
+                    {
+                        // Next start position is after this delimiter
+                        positions.Add(i + 1);
+                    }
+                }
+
+                positions.Add(value.Length + 1);
+            }
+
+            return new String8Set(value, 1, positions);
+        }
+
+        /// <summary>
+        ///  Return the int[] length required for a buffer to split 'value'
+        ///  by 'delimiter'. This may be an overestimate to perform better.
+        ///  Used by callers to allocate a safe byte[] for String8Set.Split. 
+        /// </summary>
+        /// <param name="value">Value to Split</param>
+        /// <param name="delimiter">Delimiter to Split by</param>
+        /// <returns>Length of byte[] required to safely contain value</returns>
+        public static int GetLength(String8 value, char delimiter)
+        {
+            if (value.IsEmpty()) return 1;
+
+            // Get the delimiter as a byte
+            ushort delimiterCode = (ushort)delimiter;
+            if (delimiterCode >= 128) throw new ArgumentException(String.Format(Resources.UnableToSupportMultibyteCharacter, delimiter));
+            byte delimiterByte = (byte)delimiterCode;
+
+            // There are N+1 parts for N delimiters, plus one sentinel at the end
+            int partCount = 2;
+            for (int i = 0; i < value.Length; ++i)
+            {
+                if (value[i] == delimiterByte) partCount++;
+            }
+
+            return partCount;
+        }
+
+        public String8 Value
+        {
+            get { return _content; }
+        }
+
+        public String8 this[int index]
+        {
+            get
+            {
+                int innerIndex = _partPositions[index];
+                return _content.Substring(innerIndex, _partPositions[index + 1] - innerIndex - _delimiterWidth);
+            }
+        }
+
+        #region IBinarySerializable
+        public void WriteBinary(BinaryWriter w)
+        {
+            w.Write(_delimiterWidth);
+            _content.WriteBinary(w);
+            _partPositions.WriteBinary(w);
+        }
+
+        public void ReadBinary(BinaryReader r)
+        {
+            _delimiterWidth = r.ReadInt32();
+
+            _content = new String8();
+            _content.ReadBinary(r);
+
+            _partPositions = new PartialArray<int>();
+            _partPositions.ReadBinary(r);
+        }
+        #endregion
+
+        #region IStatistics
+        /// <summary>
+        ///  Get the number of strings contained within this String8Set.
+        /// </summary>
+        /// <returns>Count of String8s in this String8Set</returns>
+        public int Count
+        {
+            get
+            {
+                return _partPositions.Count - 1;
+            }
+        }
+
+        public long Bytes
+        {
+            get
+            {
+                return _content.Length + 4 * _partPositions.Count;
+            }
+        }
+        #endregion
+    }
+}
