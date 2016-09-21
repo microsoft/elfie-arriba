@@ -39,23 +39,40 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         /// <returns>String8Set containing split value</returns>
         public static String8Set Split(String8 value, char delimiter, int[] positionArray)
         {
+            return Split(value, delimiter, new PartialArray<int>(positionArray));
+        }
+
+        /// <summary>
+        ///  Split a string on a given delimiter into a provided byte[]. Used
+        ///  to split strings without allocation when a large byte[] is created
+        ///  and reused for many strings.
+        /// </summary>
+        /// <param name="value">String8 value to split</param>
+        /// <param name="delimiter">Delimiter to split on</param>
+        /// <param name="positions">PartialArray&lt;int&gt; to contain split positions, of at least length String8Set.SplitRequiredLength</param>
+        /// <returns>String8Set containing split value</returns>
+        public static String8Set Split(String8 value, char delimiter, PartialArray<int> positions)
+        {
             // Get the delimiter as a byte
             ushort delimiterCode = (ushort)delimiter;
             if (delimiterCode >= 128) throw new ArgumentException(String.Format(Resources.UnableToSupportMultibyteCharacter, delimiter));
             byte delimiterByte = (byte)delimiterCode;
 
             // Record each delimiter position
-            PartialArray<int> positions = new PartialArray<int>(positionArray);
             positions.Add(0);
 
             if (!value.IsEmpty())
             {
-                for (int i = 0; i < value.Length; ++i)
+                // Get the String8 array directly and loop from index to (index + length)
+                // 3x faster than String8[index].
+                byte[] array = value._buffer;
+                int end = value._index + value._length;
+                for (int i = value._index; i < end; ++i)
                 {
-                    if (value[i] == delimiterByte)
+                    if (array[i] == delimiterByte)
                     {
                         // Next start position is after this delimiter
-                        positions.Add(i + 1);
+                        positions.Add(i - value._index + 1);
                     }
                 }
 
