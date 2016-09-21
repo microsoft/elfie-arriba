@@ -77,6 +77,12 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Structures
             System.Array.Sort<T>(_array, 0, this.Count, comparer);
         }
 
+        public static void SortKeysAndItems<U, V>(PartialArray<U> keys, PartialArray<V> items)
+        {
+            if (keys.Count != items.Count) throw new InvalidOperationException("Can't sort key and item arrays of different lengths.");
+            Array.Sort(keys._array, items._array, 0, keys.Count);
+        }
+
         public int Capacity
         {
             get

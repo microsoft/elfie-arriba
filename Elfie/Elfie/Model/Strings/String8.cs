@@ -7,6 +7,7 @@ using System.Text;
 
 using Microsoft.CodeAnalysis.Elfie.Extensions;
 using Microsoft.CodeAnalysis.Elfie.Serialization;
+using Microsoft.CodeAnalysis.Elfie.Model.Structures;
 
 namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
 {
@@ -19,11 +20,11 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
     /// </summary>
     public struct String8 : IComparable<String8>, IComparable<string>, IBinarySerializable, IWriteableString
     {
-        private byte[] _buffer;
-        private int _index;
-        private int _length;
+        internal byte[] _buffer;
+        internal int _index;
+        internal int _length;
 
-        internal String8(byte[] buffer, int index, int length)
+        public String8(byte[] buffer, int index, int length)
         {
             _buffer = buffer;
             _index = index;
@@ -88,6 +89,20 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         public String8Set Split(char delimiter, int[] positionArray)
         {
             return String8Set.Split(this, delimiter, positionArray);
+        }
+
+        /// <summary>
+        ///  Split this String8 into a String8Set with the given delimiter.
+        ///  Requires the caller to pass an int[] to contain the split positions.
+        ///  Reuse the array in a loop for much better performance. Call
+        ///  String8Set.GetLength to determine the array length required.
+        /// </summary>
+        /// <param name="delimiter">Delimiter on which to split</param>
+        /// <param name="positions">PartialArray&lt;int&gt; to contain split positions</param>
+        /// <returns>String8Set containing the String8 split on the delimiter</returns>
+        public String8Set Split(char delimiter, PartialArray<int> positions)
+        {
+            return String8Set.Split(this, delimiter, positions);
         }
 
         /// <summary>
