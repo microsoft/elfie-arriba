@@ -76,6 +76,7 @@
     <Compile Include="Model\PackageDatabaseTests.cs" />
     <Compile Include="Model\Strings\AlphanumericSplitterTests.cs" />
     <Compile Include="Model\Strings\Path8Tests.cs" />
+    <Compile Include="Model\Strings\String8BlockTests.cs" />
     <Compile Include="Model\Strings\StringStoreTests.cs" />
     <Compile Include="Model\Strings\String8SetTests.cs" />
     <Compile Include="Model\Strings\String8Tests.cs" />

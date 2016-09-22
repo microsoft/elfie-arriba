@@ -123,6 +123,7 @@
     <Compile Include="Serialization\FileIO.cs" />
     <Compile Include="Serialization\IBinarySerializable.cs" />
     <Compile Include="Serialization\Read.cs" />
+    <Compile Include="Model\Strings\String8Block.cs" />
     <Compile Include="Serialization\Write.cs" />
   </ItemGroup>
   <ItemGroup>
