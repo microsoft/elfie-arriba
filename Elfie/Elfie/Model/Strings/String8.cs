@@ -8,6 +8,7 @@ using System.Text;
 using Microsoft.CodeAnalysis.Elfie.Extensions;
 using Microsoft.CodeAnalysis.Elfie.Serialization;
 using Microsoft.CodeAnalysis.Elfie.Model.Structures;
+using System.Runtime.CompilerServices;
 
 namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
 {
@@ -183,6 +184,30 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         #endregion
 
         #region Basic Methods
+        /// <summary>
+        ///  Convert a String8 with a non-negative integer [digits only] to the numeric value.
+        /// </summary>
+        /// <returns>Numeric Value or -1 if not an integer</returns>
+        public int ToInteger()
+        {
+            if (IsEmpty()) return -1;
+            if (Length > 10) return -1;
+
+            long value = 0;
+            int end = _index + _length;
+            for(int i = _index; i < end; ++i)
+            {
+                int digitValue = this._buffer[i] - UTF8.Zero;
+                if (digitValue < 0 || digitValue > 9) return -1;
+
+                value *= 10;
+                value += digitValue;
+            }
+
+            if (value > int.MaxValue) return -1;
+            return (int)value;  
+        }
+
         /// <summary>
         ///  Return a String8 for the value of this string after the given index.
         /// </summary>
@@ -458,6 +483,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             return 0;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private int CompareOrdinalIgnoreCase(byte left, byte right)
         {
             // Make uppercase (ASCII) - like String.CompareOrdinalIgnoreCaseHelper
@@ -525,6 +551,8 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         /// <returns>Byte count written</returns>
         public int WriteTo(Stream stream)
         {
+            if (_length <= 0) return 0;
+
             stream.Write(_buffer, _index, _length);
             return _length;
         }

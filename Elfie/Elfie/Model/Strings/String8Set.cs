@@ -123,6 +123,11 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             }
         }
 
+        public override string ToString()
+        {
+            return _content.ToString();
+        }
+
         #region IBinarySerializable
         public void WriteBinary(BinaryWriter w)
         {

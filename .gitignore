@@ -215,3 +215,5 @@ ModelManifest.xml
 
 Microsoft.CodeAnalysis.Elfie.dll.*
 /ActiveDirectoryExpander
+/ActiveDirectoryExpander.zip
+*.addb
