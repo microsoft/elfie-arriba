@@ -41,7 +41,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Elfie.Indexer
             Assert.IsTrue(q.TryFindMembers(DB, ref results));
 
             Symbol first = results[0];
-            Assert.AreEqual("Elfie.Test", first.AssemblyName.ToString(), "Unexpected assembly name:" + first.AssemblyName.ToString());
+            Assert.AreEqual("Elfie.NonCore.Test", first.AssemblyName.ToString(), "Unexpected assembly name:" + first.AssemblyName.ToString());
             Assert.AreEqual("IndexerTests", first.Name.ToString());
             Assert.AreEqual(s_indexerTestsNamespace + ".IndexerTests", first.FullName.ToString());
             Assert.AreEqual(SymbolType.Class, first.Type);
