@@ -15,6 +15,34 @@ namespace Microsoft.CodeAnalysis.Elfie.Extensions
     public static class StringExtensions
     {
         /// <summary>
+        ///  String.Join variant which takes an IEnumerator instead of an IEnumerable.
+        /// </summary>
+        /// <typeparam name="T">Type of item in enumerator</typeparam>
+        /// <param name="separator">String to write between items in output</param>
+        /// <param name="enumerator">IEnumerator of items</param>
+        /// <returns>item.ToString for each item, separated by separators</returns>
+        public static string Join<T>(string separator, IEnumerator<T> enumerator)
+        {
+            StringBuilder builder = new StringBuilder();
+            while(enumerator.MoveNext())
+            {
+                if (builder.Length > 0) builder.Append(separator);
+
+                T current = enumerator.Current;
+                if (current == null)
+                {
+                    builder.Append("<null>");
+                }
+                else
+                {
+                    builder.Append(current.ToString());
+                }
+            }
+
+            return builder.ToString();
+        }
+
+        /// <summary>
         /// Return an enumerable list of target framework names, from a
         /// String8 instance that contains an XML-encoded set
         /// </summary>

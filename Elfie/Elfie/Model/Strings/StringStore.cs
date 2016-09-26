@@ -268,6 +268,27 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             return false;
         }
 
+        /// <summary>
+        ///  Convert a whole PartialArray of identifiers from the ones assigned by FindOrAdd
+        ///  to the values being serialized out.
+        /// </summary>
+        /// <param name="stringIdentifiers">PartialArray containing string identifiers for this StringStore</param>
+        public void ConvertToImmutable(PartialArray<int> stringIdentifiers)
+        {
+            for (int i = 0; i < stringIdentifiers.Count; ++i)
+            {
+                stringIdentifiers[i] = this.GetSerializationIdentifier(stringIdentifiers[i]);
+            }
+        }
+
+        /// <summary>
+        ///  Get the serialized identifier for a given new string identifier.
+        ///  StringStore assigns incrementing integers to each string as they are FindOrAdded.
+        ///  When written, the strings are written in sorted order, and the new identifiers are
+        ///  in that order. 
+        /// </summary>
+        /// <param name="identifier">Identifier from FindOrAdd to remap</param>
+        /// <returns>Identifier to serialize out for correct behavior on reload</returns>
         public int GetSerializationIdentifier(int identifier)
         {
             if (identifier == 0) return 0;
@@ -292,6 +313,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         public void WriteBinary(BinaryWriter w)
         {
             ConvertToImmutable();
+            if (_existingValues == null) _existingValues = new ImmutableStringStore(new String8Set(String8.Empty, 1, new PartialArray<int>()));
             _existingValues.WriteBinary(w);
         }
         #endregion

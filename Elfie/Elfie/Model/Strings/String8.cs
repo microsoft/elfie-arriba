@@ -614,13 +614,13 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         public void WriteBinary(BinaryWriter w)
         {
             w.Write(_length);
-            w.Write(_buffer, _index, _length);
+            if(_length > 0) w.Write(_buffer, _index, _length);
         }
 
         public void ReadBinary(BinaryReader r)
         {
             _length = r.ReadArrayLength(1);
-            _buffer = r.ReadBytes(_length);
+            if(_length > 0) _buffer = r.ReadBytes(_length);
             _index = 0;
         }
         #endregion

@@ -43,6 +43,17 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
                 valueCopy = block.GetCopy(value);
                 Assert.IsTrue(value.Equals(valueCopy));
             }
+
+            // Verify conversion of strings
+            String8 directConversion = block.GetCopy("Regular String");
+            Assert.AreEqual("Regular String", directConversion.ToString());
+
+            // Verify null/empty string conversion
+            directConversion = block.GetCopy(null);
+            Assert.IsTrue(directConversion.IsEmpty());
+
+            directConversion = block.GetCopy(String.Empty);
+            Assert.IsTrue(directConversion.IsEmpty());
         }
     }
 }

@@ -67,8 +67,10 @@
     <Compile Include="Extensions\BinaryReaderWriterExtensionsTests.cs" />
     <Compile Include="Extensions\BinarySerializableTests.cs" />
     <Compile Include="Extensions\SampleSerializable.cs" />
+    <Compile Include="Extensions\StringExtensionsTests.cs" />
     <Compile Include="Model\AddReferenceDatabaseTests.cs" />
     <Compile Include="Model\Index\MemberIndexTests.cs" />
+    <Compile Include="Model\Map\ItemMapTests.cs" />
     <Compile Include="Model\MergedMembersDatabaseTests.cs" />
     <Compile Include="Model\PackageDatabaseTests.cs" />
     <Compile Include="Model\Strings\AlphanumericSplitterTests.cs" />
@@ -77,9 +79,10 @@
     <Compile Include="Model\Strings\StringStoreTests.cs" />
     <Compile Include="Model\Strings\String8SetTests.cs" />
     <Compile Include="Model\Strings\String8Tests.cs" />
-    <Compile Include="Model\ItemTreeTests.cs" />
+    <Compile Include="Model\Tree\ItemTreeTests.cs" />
     <Compile Include="Model\Structures\PartialArrayTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SampleElfieStructure.cs" />
     <Compile Include="Serialization\TsvReaderTests.cs" />
     <Compile Include="Verify.cs" />
   </ItemGroup>

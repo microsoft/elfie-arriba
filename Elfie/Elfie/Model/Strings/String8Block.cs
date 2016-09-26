@@ -49,6 +49,28 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             _blocks.Add(_current);
         }
 
+        private BlockPart GetBlockForLength(int length)
+        {
+            BlockPart targetBlock = _current;
+
+            // If the String8 is too long, store by itself
+            if (length >= StoreIndividuallyLengthBytes)
+            {
+                targetBlock = new BlockPart(length);
+                _blocks.Add(targetBlock);
+            }
+
+            // If the current block is too full, start a new one
+            if (_current.Block.Length < _current.LengthUsed + length)
+            {
+                targetBlock = new BlockPart();
+                _blocks.Add(targetBlock);
+                _current = targetBlock;
+            }
+
+            return targetBlock;
+        }
+
         /// <summary>
         ///  Create a copy of a String8. Use when the source of the String8s
         ///  will change (like a reader reusing the same byte[] buffer) and
@@ -60,28 +82,33 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         {
             if (source.IsEmpty()) return String8.Empty;
 
-            BlockPart targetBlock = _current;
-
-            // If the String8 is too long, store by itself
-            if(source.Length >= StoreIndividuallyLengthBytes)
-            {
-                targetBlock = new BlockPart(source.Length);
-                _blocks.Add(targetBlock);
-            }
-
-            // If the current block is too full, start a new one
-            if (_current.Block.Length < _current.LengthUsed + source.Length)
-            {
-                targetBlock = new BlockPart();
-                _blocks.Add(targetBlock);
-                _current = targetBlock;
-            }
+            BlockPart targetBlock = GetBlockForLength(source.Length);
 
             // Write the String8 to the chosen block and return a reference to the new copy
             int writePosition = targetBlock.LengthUsed;
             source.WriteTo(targetBlock.Block, writePosition);
             targetBlock.LengthUsed += source.Length;
             return new String8(targetBlock.Block, writePosition, source.Length);
+        }
+
+        /// <summary>
+        ///  Create a copy of a String8. Use when the source of the String8s
+        ///  will change (like a reader reusing the same byte[] buffer) and
+        ///  you need to keep a copy of specific values with minimal object overhead.
+        /// </summary>
+        /// <param name="source">String8 to copy</param>
+        /// <returns>String8 copy which will persist</returns>
+        public String8 GetCopy(string source)
+        {
+            if (string.IsNullOrEmpty(source)) return String8.Empty;
+
+            int length = String8.GetLength(source);
+            BlockPart targetBlock = GetBlockForLength(length);
+
+            // Write the String to the chosen block and return a reference to the new copy
+            int writePosition = targetBlock.LengthUsed;
+            targetBlock.LengthUsed += source.Length;
+            return String8.Convert(source, targetBlock.Block, writePosition);
         }
     }
 }

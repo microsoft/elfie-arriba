@@ -4,6 +4,8 @@
 using System;
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Microsoft.CodeAnalysis.Elfie.Serialization;
+using System.IO;
 
 namespace Elfie.Test
 {
@@ -25,6 +27,28 @@ namespace Elfie.Test
 
                 Assert.AreEqual(typeof(T), e.GetType(), "An exception was thrown but it was not of the expected type.");
             }
+        }
+
+        public static T RoundTrip<T>(T item) where T : IBinarySerializable
+        {
+            long bytesWritten = 0;
+
+            using (MemoryStream stream = new MemoryStream())
+            {
+                // Write the item
+                BinaryWriter writer = new BinaryWriter(stream);
+                item.WriteBinary(writer);
+                bytesWritten = stream.Position;
+
+                // Read it back
+                stream.Seek(0, SeekOrigin.Begin);
+                BinaryReader reader = new BinaryReader(stream);
+                item.ReadBinary(reader);
+
+                Assert.AreEqual(bytesWritten, stream.Position, "Reading item didn't read as many bytes as writing it wrote out.");
+            }
+
+            return item;
         }
     }
 }
