@@ -80,6 +80,8 @@
     <Compile Include="Model\ItemTreeTests.cs" />
     <Compile Include="Model\Structures\PartialArrayTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Serialization\TsvReaderTests.cs" />
+    <Compile Include="Verify.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Elfie\Elfie.csproj">

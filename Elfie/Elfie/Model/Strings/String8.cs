@@ -191,7 +191,6 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         public int ToInteger()
         {
             if (IsEmpty()) return -1;
-            if (Length > 10) return -1;
 
             long value = 0;
             int end = _index + _length;

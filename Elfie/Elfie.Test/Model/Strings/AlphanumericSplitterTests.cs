@@ -82,7 +82,9 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
             Assert.IsTrue(w.ElapsedMilliseconds < targetMilliseconds);
         }
 
+#if !DEBUG
         [TestMethod]
+#endif
         public void AlphanumericSplitter_EndToEndPerformance()
         {
             String8 code = AllCodeText.AllCode8;
