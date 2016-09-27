@@ -35,6 +35,13 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             // Nothing is initialized to start. They're created when needed.
         }
 
+        public void Clear()
+        {
+            this._existingValues = null;
+            this._addedValues = null;
+            this._addedIdentifierToExistingIdentifier = null;
+        }
+
         #region Get Strings Out
         public String8 this[int identifier]
         {

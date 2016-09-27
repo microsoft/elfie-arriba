@@ -64,12 +64,12 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         {
             _reader = new BinaryReader(new FileStream(tsvFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
             _columnHeadings = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-            _currentLine = 0;
 
-            // Build buffers for reading
+            _currentLine = 0;
             _buffer = new byte[64 * 1024];
             _rowPositionArray = new PartialArray<int>(1024, false);
             _cellPositionArray = new PartialArray<int>(64, false);
+            _nextRowIndexInBlock = 0;
 
             // Read the heading row and record heading positions
             if (hasHeaderRow)

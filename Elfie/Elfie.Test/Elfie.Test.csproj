@@ -82,6 +82,7 @@
     <Compile Include="Model\Tree\ItemTreeTests.cs" />
     <Compile Include="Model\Structures\PartialArrayTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SampleElfieStructure.V1.cs" />
     <Compile Include="SampleElfieStructure.cs" />
     <Compile Include="Serialization\TsvReaderTests.cs" />
     <Compile Include="Verify.cs" />

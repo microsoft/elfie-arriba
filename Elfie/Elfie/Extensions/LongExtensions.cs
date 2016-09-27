@@ -92,5 +92,15 @@ namespace Microsoft.CodeAnalysis.Elfie.Extensions
 
             return FileScaleValues[scale];
         }
+
+        /// <summary>
+        ///  Convert a long [UTC ticks] to the corresponding UTC DateTime.
+        /// </summary>
+        /// <param name="dateTimeValue">UTC Ticks Long to convert</param>
+        /// <returns>UTC DateTime equivalent</returns>
+        public static DateTime ToDateTime(this long dateTimeValue)
+        {
+            return new DateTime(dateTimeValue, DateTimeKind.Utc);
+        }
     }
 }

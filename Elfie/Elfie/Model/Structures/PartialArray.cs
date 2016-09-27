@@ -18,11 +18,17 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Structures
     ///  cheap to clear and re-use between loop iterations.
     /// </summary>
     /// <typeparam name="T">Type of items</typeparam>
-    public struct PartialArray<T> : IBinarySerializable, IEnumerable<T>
+    public class PartialArray<T> : IColumn, IBinarySerializable, IEnumerable<T>
     {
         private T[] _array;
         public bool IsStaticSize { get; private set; }
         public int Count { get; private set; }
+
+        /// <summary>
+        ///  Create an empty, resizable PartialArray.
+        /// </summary>
+        public PartialArray() : this(0, false)
+        { }
 
         /// <summary>
         ///  Construct a partial array with a specific initial size.
@@ -66,6 +72,14 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Structures
                 if (_array == null || index < 0 || index >= this.Count) throw new ArgumentOutOfRangeException("index");
                 _array[index] = value;
             }
+        }
+
+        /// <summary>
+        ///  Add the default value to the array.
+        /// </summary>
+        public void Add()
+        {
+            this.Add(default(T));
         }
 
         /// <summary>
@@ -175,6 +189,11 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Structures
             T[] array = new T[this.Count];
             System.Array.Copy(_array, array, this.Count);
             return array;
+        }
+
+        public void ConvertToImmutable()
+        {
+            // By default, don't do anything
         }
 
         /// <summary>

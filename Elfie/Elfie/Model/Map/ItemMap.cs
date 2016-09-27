@@ -10,7 +10,7 @@ using Microsoft.CodeAnalysis.Elfie.Serialization;
 
 namespace Microsoft.CodeAnalysis.Elfie.Model.Map
 {
-    public class ItemMap<T> : IBinarySerializable
+    public class ItemMap<T> : IColumn, IBinarySerializable
     {
         internal IItemProvider<T> _provider;
         internal MutableItemMap<T> _mutableMap;
@@ -19,7 +19,12 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Map
         public ItemMap(IItemProvider<T> provider)
         {
             this._provider = provider;
-            this._mutableMap = new MutableItemMap<T>(provider);
+            this.Clear();
+        }
+
+        public void Add()
+        {
+            // Nothing to add per item
         }
 
         /// <summary>
@@ -45,6 +50,18 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Map
             return this._immutableMap.LinksFrom(sourceItemIndex);
         }
 
+        #region IColumn
+        public void Clear()
+        {
+            this._immutableMap = null;
+            this._mutableMap = new MutableItemMap<T>(this._provider);
+        }
+
+        public void AddItem()
+        {
+            // Nothing is done on item add
+        }
+
         public void ConvertToImmutable()
         {
             if (this._mutableMap != null)
@@ -68,6 +85,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Map
             ConvertToImmutable();
             this._immutableMap.WriteBinary(w);
         }
+        #endregion
     }
 
     public struct MapEnumerator<U> : IEnumerator<U>
