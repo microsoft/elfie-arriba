@@ -3,12 +3,12 @@
 
 using System;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 using Microsoft.CodeAnalysis.Elfie.Extensions;
-using Microsoft.CodeAnalysis.Elfie.Serialization;
 using Microsoft.CodeAnalysis.Elfie.Model.Structures;
-using System.Runtime.CompilerServices;
+using Microsoft.CodeAnalysis.Elfie.Serialization;
 
 namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
 {
@@ -194,7 +194,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
 
             long value = 0;
             int end = _index + _length;
-            for(int i = _index; i < end; ++i)
+            for (int i = _index; i < end; ++i)
             {
                 int digitValue = this._buffer[i] - UTF8.Zero;
                 if (digitValue < 0 || digitValue > 9) return -1;
@@ -204,7 +204,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             }
 
             if (value > int.MaxValue) return -1;
-            return (int)value;  
+            return (int)value;
         }
 
         /// <summary>
@@ -614,13 +614,13 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         public void WriteBinary(BinaryWriter w)
         {
             w.Write(_length);
-            if(_length > 0) w.Write(_buffer, _index, _length);
+            if (_length > 0) w.Write(_buffer, _index, _length);
         }
 
         public void ReadBinary(BinaryReader r)
         {
             _length = r.ReadArrayLength(1);
-            if(_length > 0) _buffer = r.ReadBytes(_length);
+            if (_length > 0) _buffer = r.ReadBytes(_length);
             _index = 0;
         }
         #endregion

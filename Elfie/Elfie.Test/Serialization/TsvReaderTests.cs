@@ -1,8 +1,12 @@
-﻿using System;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Diagnostics;
 using System.IO;
 
 using Elfie.Test;
+
 using Microsoft.CodeAnalysis.Elfie.Extensions;
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.CodeAnalysis.Elfie.Serialization;
@@ -121,13 +125,11 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
 
                         // Get row text (valid)
                         String8 fullRow = r.CurrentRowText;
-
                     }
 
                     rowIndex++;
                 }
             }
-
         }
 
 #if !DEBUG
@@ -142,7 +144,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
 
             Stopwatch w = Stopwatch.StartNew();
             int iterations = 100;
-            for(int iteration = 0; iteration < iterations; ++iteration)
+            for (int iteration = 0; iteration < iterations; ++iteration)
             {
                 using (TsvReader r = new TsvReader(SampleTsvPath, true))
                 {
@@ -150,7 +152,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
                     int countIndex = r.ColumnIndex("Count");
                     int descriptionIndex = r.ColumnIndex("Description");
 
-                    while(r.NextRow())
+                    while (r.NextRow())
                     {
                         rowCountRead++;
 

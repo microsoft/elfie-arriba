@@ -55,7 +55,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Map
             {
                 return new MapEnumerator<T>(this, this._firstMemberIndexForGroup[sourceItemIndex], this._firstMemberIndexForGroup[sourceItemIndex + 1]);
             }
-            else if(sourceItemIndex == lastSourceIndex)
+            else if (sourceItemIndex == lastSourceIndex)
             {
                 return new MapEnumerator<T>(this, this._firstMemberIndexForGroup[sourceItemIndex], this._memberIndices.Count);
             }

@@ -24,7 +24,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Extensions
         public static string Join<T>(string separator, IEnumerator<T> enumerator)
         {
             StringBuilder builder = new StringBuilder();
-            while(enumerator.MoveNext())
+            while (enumerator.MoveNext())
             {
                 if (builder.Length > 0) builder.Append(separator);
 

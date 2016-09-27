@@ -186,7 +186,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Structures
         /// <param name="w">BinaryWriter to write to</param>
         public void WriteBinary(BinaryWriter w)
         {
-            if (this._array == null) _array = EmptyArray<T>.Instance;
+            if (_array == null) _array = EmptyArray<T>.Instance;
             w.WritePrimitiveArray(_array, 0, this.Count);
         }
 

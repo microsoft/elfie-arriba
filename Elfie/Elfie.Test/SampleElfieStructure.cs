@@ -4,13 +4,14 @@
 using System;
 using System.IO;
 
+using Elfie.Test;
+
+using Microsoft.CodeAnalysis.Elfie.Extensions;
 using Microsoft.CodeAnalysis.Elfie.Model;
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.CodeAnalysis.Elfie.Model.Structures;
 using Microsoft.CodeAnalysis.Elfie.Serialization;
-using Microsoft.CodeAnalysis.Elfie.Extensions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Elfie.Test;
 
 namespace Microsoft.CodeAnalysis.Elfie.Test
 {
@@ -53,8 +54,8 @@ namespace Microsoft.CodeAnalysis.Elfie.Test
         // The constructor is internal only - the set must create the items
         internal SampleItem(SampleSet set, int index)
         {
-            this._set = set;
-            this._index = index;
+            _set = set;
+            _index = index;
         }
 
         // String properties are stored in a StringStore (and de-duped), which provides an int identifier
@@ -231,7 +232,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test
             Assert.AreEqual(100, set.Count);
 
             // Verify items are correct
-            for(int i = 0; i < set.Count; ++i)
+            for (int i = 0; i < set.Count; ++i)
             {
                 item = set[i];
                 Assert.AreEqual(name, item.Name);
