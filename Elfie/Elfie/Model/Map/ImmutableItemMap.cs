@@ -49,16 +49,19 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Map
         /// <returns>PartialArrayRange of links for item.</returns>
         public MapEnumerator<T> LinksFrom(int sourceItemIndex)
         {
-            // If we ask for links and we don't have any, return an empty enumerator
-            if (sourceItemIndex >= this._firstMemberIndexForGroup.Count) return new MapEnumerator<T>(this, 0, 0);
+            int lastSourceIndex = this._firstMemberIndexForGroup.Count - 1;
 
-            if (sourceItemIndex < this._firstMemberIndexForGroup.Count - 1)
+            if (sourceItemIndex < lastSourceIndex)
             {
                 return new MapEnumerator<T>(this, this._firstMemberIndexForGroup[sourceItemIndex], this._firstMemberIndexForGroup[sourceItemIndex + 1]);
             }
-            else
+            else if(sourceItemIndex == lastSourceIndex)
             {
                 return new MapEnumerator<T>(this, this._firstMemberIndexForGroup[sourceItemIndex], this._memberIndices.Count);
+            }
+            else
+            {
+                return new MapEnumerator<T>(this, 0, 0);
             }
         }
 
