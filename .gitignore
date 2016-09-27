@@ -218,3 +218,4 @@ Microsoft.CodeAnalysis.Elfie.dll.*
 /ActiveDirectoryExpander.zip
 *.addb
 /Elfie/Elfie.Test/Sample.tsv
+*.zip
