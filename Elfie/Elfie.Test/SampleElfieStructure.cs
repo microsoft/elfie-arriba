@@ -155,7 +155,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test
         {
             get { return this.NameIdentifiers.Count; }
         }
-        
+
         IEnumerator<SampleItem> IEnumerable<SampleItem>.GetEnumerator()
         {
             return this.GetDefaultEnumerator();
