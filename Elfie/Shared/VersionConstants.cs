@@ -7,7 +7,7 @@ namespace Microsoft.CodeAnalysis.Elfie
     {
         public const string Prerelease = "-rc12";
         public const string AssemblyVersion = "1.0.0";
-        public const string FileVersion = AssemblyVersion + ".12";
+        public const string FileVersion = AssemblyVersion + ".13";
         public const string Version = AssemblyVersion + Prerelease;
     }
 }
