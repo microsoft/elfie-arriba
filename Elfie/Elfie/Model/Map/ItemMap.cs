@@ -12,11 +12,11 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Map
 {
     public class ItemMap<T> : IBinarySerializable
     {
-        internal IItemProvider<T> _provider;
+        internal IReadOnlyList<T> _provider;
         internal MutableItemMap<T> _mutableMap;
         internal ImmutableItemMap<T> _immutableMap;
 
-        public ItemMap(IItemProvider<T> provider)
+        public ItemMap(IReadOnlyList<T> provider)
         {
             this._provider = provider;
             this._mutableMap = new MutableItemMap<T>(provider);

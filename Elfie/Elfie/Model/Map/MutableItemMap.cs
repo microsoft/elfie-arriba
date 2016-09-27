@@ -9,11 +9,11 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Map
 {
     internal class MutableItemMap<T>
     {
-        private IItemProvider<T> _provider;
+        private IReadOnlyList<T> _provider;
         private PartialArray<int> _groupIndices;
         private PartialArray<int> _memberIndices;
 
-        public MutableItemMap(IItemProvider<T> provider)
+        public MutableItemMap(IReadOnlyList<T> provider)
         {
             _provider = provider;
             _groupIndices = new PartialArray<int>();

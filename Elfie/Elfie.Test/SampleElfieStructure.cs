@@ -2,12 +2,13 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 
 using Elfie.Test;
 
 using Microsoft.CodeAnalysis.Elfie.Extensions;
-using Microsoft.CodeAnalysis.Elfie.Model;
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.CodeAnalysis.Elfie.Model.Structures;
 using Microsoft.CodeAnalysis.Elfie.Serialization;
@@ -98,7 +99,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test
         }
     }
 
-    public class SampleSet : IItemProvider<SampleItem>, IBinarySerializable
+    public class SampleSet : IReadOnlyList<SampleItem>, IBinarySerializable
     {
         // String Properties are stored in a StringStore.
         // Each Property has a PartialArray<int> holding the identifier (which string the item uses)
@@ -143,7 +144,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test
             return new SampleItem(this, index);
         }
 
-        // The Set implements IItemProvider so that callers can get items.
+        // The Set implements IReadOnlyList so that callers can get items.
         public SampleItem this[int index]
         {
             get { return new SampleItem(this, index); }
@@ -153,6 +154,16 @@ namespace Microsoft.CodeAnalysis.Elfie.Test
         public int Count
         {
             get { return this.NameIdentifiers.Count; }
+        }
+        
+        IEnumerator<SampleItem> IEnumerable<SampleItem>.GetEnumerator()
+        {
+            return this.GetDefaultEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return this.GetDefaultEnumerator();
         }
 
         // The set exposes ConvertToImmutable to convert mutable (indexing time)

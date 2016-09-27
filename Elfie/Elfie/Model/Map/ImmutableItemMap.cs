@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Collections.Generic;
 using System.IO;
 
 using Microsoft.CodeAnalysis.Elfie.Model.Structures;
@@ -10,11 +11,11 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Map
 {
     internal class ImmutableItemMap<T> : IBinarySerializable
     {
-        internal IItemProvider<T> _provider;
+        internal IReadOnlyList<T> _provider;
         internal PartialArray<int> _firstMemberIndexForGroup;
         internal PartialArray<int> _memberIndices;
 
-        public ImmutableItemMap(IItemProvider<T> provider)
+        public ImmutableItemMap(IReadOnlyList<T> provider)
         {
             this._provider = provider;
             this._firstMemberIndexForGroup = new PartialArray<int>();
