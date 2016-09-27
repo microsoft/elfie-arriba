@@ -160,7 +160,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         {
             get
             {
-                if (_partPositions == null) return 0;
+                if (_partPositions == default(PartialArray<int>)) return 0;
                 return _partPositions.Count - 1;
             }
         }
@@ -169,7 +169,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         {
             get
             {
-                if (_partPositions == null) return _content.Length;
+                if (_partPositions == default(PartialArray<int>)) return _content.Length;
                 return _content.Length + 4 * _partPositions.Count;
             }
         }
