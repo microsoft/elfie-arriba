@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Elfie.Test;
 using Microsoft.CodeAnalysis.Elfie.Model.Structures;
 using Microsoft.CodeAnalysis.Elfie.Test.Extensions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -45,7 +46,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Structures
             a[0] = 0;
 
             // Verify round trip works [Primitives only]
-            a = BinarySerializableTests.RoundTrip<PartialArray<int>>(a);
+            a = Verify.RoundTrip<PartialArray<int>>(a);
 
             // Verify count and capacity are right, IsFull is still false
             Assert.AreEqual(100, a.Count);

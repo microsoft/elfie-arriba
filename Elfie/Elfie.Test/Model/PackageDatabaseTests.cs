@@ -13,6 +13,7 @@ using Microsoft.CodeAnalysis.Elfie.Model.Structures;
 using Microsoft.CodeAnalysis.Elfie.Serialization;
 using Microsoft.CodeAnalysis.Elfie.Test.Extensions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Elfie.Test;
 
 namespace Microsoft.CodeAnalysis.Elfie.Test.Model
 {
@@ -65,7 +66,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model
             // Round trip a database without anything indexed. Verify file written, reload and search work without exceptions
             db.MutableRoot.AddChild(new MutableSymbol("System", SymbolType.Namespace));
             Assert.IsFalse(db.IsEmpty);
-            db = BinarySerializableTests.RoundTrip(db);
+            db = Verify.RoundTrip(db);
 
             PartialArray<Symbol> results = new PartialArray<Symbol>(10);
             new MemberQuery(NS_SAMPLE, false, false).TryFindMembers(db, ref results);
@@ -437,7 +438,7 @@ Method LogUse @src\net35\Diagnostics\Logger.cs(32,21)"
         {
             // Build a sample PackageDatabase and round-trip it to the searchable form
             PackageDatabase builtDB = BuildDefaultSample();
-            PackageDatabase loadedDB = BinarySerializableTests.RoundTrip(builtDB);
+            PackageDatabase loadedDB = Verify.RoundTrip(builtDB);
 
             // Verify the two think they're the same size at least
             Assert.AreEqual(loadedDB.Count, builtDB.Count);
@@ -450,7 +451,7 @@ Method LogUse @src\net35\Diagnostics\Logger.cs(32,21)"
         {
             // Build a sample PackageDatabase and round-trip it to the searchable form
             PackageDatabase builtDB = BuildPreleaseSample();
-            PackageDatabase loadedDB = BinarySerializableTests.RoundTrip(builtDB);
+            PackageDatabase loadedDB = Verify.RoundTrip(builtDB);
 
             // Verify the two think they're the same size at least
             Assert.AreEqual(loadedDB.Count, builtDB.Count);
@@ -465,7 +466,7 @@ Method LogUse @src\net35\Diagnostics\Logger.cs(32,21)"
             PackageDatabase db = BuildDefaultSample();
 
             // Change the first int to '9' and verify format verification throws
-            BinarySerializableTests.RoundTrip(db, (w) => w.Write(9));
+            Verify.RoundTrip(db, (w) => w.Write(9));
         }
 
         private PackageDatabase BuildCheckAndConvert()

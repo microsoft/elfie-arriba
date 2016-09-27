@@ -53,6 +53,9 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         /// <returns>String8Set containing split value</returns>
         public static String8Set Split(String8 value, char delimiter, PartialArray<int> positions)
         {
+            // Clear any previous values in the array
+            positions.Clear();
+
             // Get the delimiter as a byte
             ushort delimiterCode = (ushort)delimiter;
             if (delimiterCode >= 128) throw new ArgumentException(String.Format(Resources.UnableToSupportMultibyteCharacter, delimiter));
@@ -157,6 +160,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         {
             get
             {
+                if (_partPositions == default(PartialArray<int>)) return 0;
                 return _partPositions.Count - 1;
             }
         }
@@ -165,6 +169,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         {
             get
             {
+                if (_partPositions == default(PartialArray<int>)) return _content.Length;
                 return _content.Length + 4 * _partPositions.Count;
             }
         }

@@ -71,6 +71,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             _buffer = new byte[64 * 1024];
             _rowPositionArray = new PartialArray<int>(1024, false);
             _cellPositionArray = new PartialArray<int>(64, false);
+            _nextRowIndexInBlock = 0;
 
             // Read the heading row and record heading positions
             if (hasHeaderRow)

@@ -2,16 +2,13 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.IO;
 
 using Elfie.Test;
 
 using Microsoft.CodeAnalysis.Elfie.Extensions;
+using Microsoft.CodeAnalysis.Elfie.Model;
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.CodeAnalysis.Elfie.Model.Structures;
-using Microsoft.CodeAnalysis.Elfie.Serialization;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Microsoft.CodeAnalysis.Elfie.Test
@@ -21,6 +18,21 @@ namespace Microsoft.CodeAnalysis.Elfie.Test
         Unknown = 0,
         Basic = 1,
         Complex = 2
+    }
+
+    // Sample Data structure the normal .NET class way
+    public class SampleItemClass
+    {
+        public string Name;
+        public string Target;
+        public SampleItemType Type;
+        public DateTime EventTime;
+    }
+
+    // Set of SampleItemClass the normal .NET class way
+    public class SampleItemClassSet
+    {
+        public SampleItemClass[] Set;
     }
 
     /// <summary>
@@ -59,148 +71,69 @@ namespace Microsoft.CodeAnalysis.Elfie.Test
             _index = index;
         }
 
-        // String properties are stored in a StringStore (and de-duped), which provides an int identifier
-        // to look up strings. The friendly property here takes care of getting the identifier and then the
-        // string.
+        // String properties are stored as "String8" (a String in UTF8 byte[])
         public String8 Name
         {
-            get { return _set.Strings[_set.NameIdentifiers[_index]]; }
-            set { _set.NameIdentifiers[_index] = _set.Strings.FindOrAddString(value); }
+            get { return this._set.Name[_index]; }
+            set { this._set.Name[_index] = value; }
         }
 
-        // String properties are of type "String8". String8 is a struct which wraps a UTF8 string within
-        // a byte[]. This means strings are one byte per character (instead of two) and don't have per string
-        // object overhead. [4 bytes for the position of the string in the byte[] and 4 byte for the identifier,
-        // instead of 24b object overhead.
         public String8 Target
         {
-            get { return _set.Strings[_set.TargetIdentifiers[_index]]; }
-            set { _set.TargetIdentifiers[_index] = _set.Strings.FindOrAddString(value); }
+            get { return this._set.Target[_index]; }
+            set { this._set.Target[_index] = value; }
         }
 
-        // Enums aren't primitive types and can't be read and written as a block.
-        // Enums are stored as the underlying type (byte, short, int) and converted by the friendly property.
+        // Enums and other non-primitives must be stored as primitives and converted
         public SampleItemType Type
         {
-            get { return (SampleItemType)_set.Types[_index]; }
-            set { _set.Types[_index] = (byte)value; }
+            get { return (SampleItemType)this._set.Type[_index]; }
+            set { this._set.Type[_index] = (byte)value; }
         }
 
-        // DateTimes are also not primitives and are translated from them.
         public DateTime EventTime
         {
-            get { return DateTimeExtensions.FromLong(_set.EventTimes[_index]); }
-            set { _set.EventTimes[_index] = value.ToLong(); }
+            get { return this._set.EventTime[_index].ToDateTime(); }
+            set { this._set.EventTime[_index] = value.ToLong(); }
         }
 
         public override string ToString()
         {
-            return _index.ToString();
+            return this._index.ToString();
         }
     }
 
-    public class SampleSet : IReadOnlyList<SampleItem>, IBinarySerializable
+    // The Set class inherits from BaseItemSet, which provides the StringStore and overall management
+    public class SampleSet : BaseItemSet<SampleItem>
     {
-        // String Properties are stored in a StringStore.
-        // Each Property has a PartialArray<int> holding the identifier (which string the item uses)
-        internal StringStore Strings;
-        internal PartialArray<int> NameIdentifiers;
-        internal PartialArray<int> TargetIdentifiers;
+        // String values are stored in 'String8Column', which manages lookup
+        internal String8Column Name;
+        internal String8Column Target;
 
-        // Non-Primitive types (Enum, DateTime) are stored via Primitive equivalents and converted
-        internal PartialArray<byte> Types;
-        internal PartialArray<long> EventTimes;
+        // Other values are stored in PartialArrays of primitive types and converted by properties
+        internal PartialArray<byte> Type;
+        internal PartialArray<long> EventTime;
 
-        // The Set can have other structures to provide search and relationships
-        // internal MemberIndex Index;
-        // internal ItemMap Map;
-        // internal ItemTree Tree;
-
-        public SampleSet()
+        // Each column needs to be constructed and added to the BaseItemSet collection
+        public SampleSet() : base()
         {
-            this.Clear();
+            this.Name = new String8Column(this.Strings);
+            this.AddColumn(this.Name);
+
+            this.Target = new String8Column(this.Strings);
+            this.AddColumn(this.Target);
+
+            this.Type = new PartialArray<byte>();
+            this.AddColumn(this.Type);
+
+            this.EventTime = new PartialArray<long>();
+            this.AddColumn(this.EventTime);
         }
 
-        public void Clear()
-        {
-            this.Strings = new StringStore();
-            this.NameIdentifiers = new PartialArray<int>();
-            this.TargetIdentifiers = new PartialArray<int>();
-            this.Types = new PartialArray<byte>();
-            this.EventTimes = new PartialArray<long>();
-        }
-
-        // Add adds a new SampleItem and returns it. If some values have to be
-        // written on other data structures (indexing Name), those properties can
-        // be arguments to add, or they can be indexed just before serialization.
-        public SampleItem Add()
-        {
-            int index = this.NameIdentifiers.Count;
-            this.NameIdentifiers.Add(0);
-            this.TargetIdentifiers.Add(0);
-            this.Types.Add((byte)SampleItemType.Basic);
-            this.EventTimes.Add(default(DateTime).ToLong());
-
-            return new SampleItem(this, index);
-        }
-
-        // The Set implements IReadOnlyList so that callers can get items.
-        public SampleItem this[int index]
+        // The set must implement an indexer to build the corresponding item. BaseItemSet implements the rest of IReadOnlyList<T>
+        public override SampleItem this[int index]
         {
             get { return new SampleItem(this, index); }
-        }
-
-        // The set exposes how many items it contains so they can be enumerated.
-        public int Count
-        {
-            get { return this.NameIdentifiers.Count; }
-        }
-
-        IEnumerator<SampleItem> IEnumerable<SampleItem>.GetEnumerator()
-        {
-            return this.GetDefaultEnumerator();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return this.GetDefaultEnumerator();
-        }
-
-        // The set exposes ConvertToImmutable to convert mutable (indexing time)
-        // data structures to immutable (search time) versions. Items cannot be
-        // added or changed after ConvertToImmutable is called. This design allows
-        // the immutable forms to be optimized for search.
-        public void ConvertToImmutable()
-        {
-            if (this.Strings.ConvertToImmutable())
-            {
-                this.Strings.ConvertToImmutable(this.NameIdentifiers);
-                this.Strings.ConvertToImmutable(this.TargetIdentifiers);
-            }
-        }
-
-        // The set implements WriteBinary to convert the arrays and write them quickly.
-        public void WriteBinary(BinaryWriter w)
-        {
-            ConvertToImmutable();
-
-            this.Strings.WriteBinary(w);
-            this.NameIdentifiers.WriteBinary(w);
-            this.TargetIdentifiers.WriteBinary(w);
-            this.Types.WriteBinary(w);
-            this.EventTimes.WriteBinary(w);
-        }
-
-        // The set exposes ReadBinary to read the arrays back in.
-        public void ReadBinary(BinaryReader r)
-        {
-            this.Clear();
-
-            this.Strings.ReadBinary(r);
-            this.NameIdentifiers.ReadBinary(r);
-            this.TargetIdentifiers.ReadBinary(r);
-            this.Types.ReadBinary(r);
-            this.EventTimes.ReadBinary(r);
         }
     }
 

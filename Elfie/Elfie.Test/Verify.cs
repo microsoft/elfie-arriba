@@ -29,7 +29,7 @@ namespace Elfie.Test
             }
         }
 
-        public static T RoundTrip<T>(T item) where T : IBinarySerializable
+        public static T RoundTrip<T>(T item, Action<BinaryWriter> change = null) where T : IBinarySerializable
         {
             long bytesWritten = 0;
 
@@ -39,6 +39,13 @@ namespace Elfie.Test
                 BinaryWriter writer = new BinaryWriter(stream);
                 item.WriteBinary(writer);
                 bytesWritten = stream.Position;
+
+                // Allow changes to the stream [if caller passed]
+                if (change != null)
+                {
+                    stream.Seek(0, SeekOrigin.Begin);
+                    change(writer);
+                }
 
                 // Read it back
                 stream.Seek(0, SeekOrigin.Begin);

@@ -1,12 +1,11 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System;
 using System.IO;
 
 using Microsoft.CodeAnalysis.Elfie.Extensions;
-using Microsoft.CodeAnalysis.Elfie.Serialization;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Elfie.Test;
 
 namespace Microsoft.CodeAnalysis.Elfie.Test.Extensions
 {
@@ -18,7 +17,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Extensions
         {
             // In-memory round trip
             SampleSerializable ss = new SampleSerializable(5);
-            ss = RoundTrip(ss);
+            ss = Verify.RoundTrip(ss);
             Assert.AreEqual(5, ss.Value);
 
             // Write to file (verify exists, size, save, load)
@@ -49,39 +48,6 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Extensions
             ss.FileRead(pathInSubfolder);
             Assert.AreEqual(5, ss.Value);
             Directory.Delete(folderPath, true);
-        }
-
-        public static T RoundTrip<T>(T item, Action<BinaryWriter> change = null) where T : IBinarySerializable, new()
-        {
-            MemoryStream buffer = new MemoryStream();
-            using (BinaryWriter writer = new BinaryWriter(buffer))
-            {
-                // Write the array
-                item.WriteBinary(writer);
-                long lengthWritten = buffer.Position;
-
-                // Seek back
-                buffer.Seek(0, SeekOrigin.Begin);
-
-                // Allow changes [if caller passed]
-                if (change != null)
-                {
-                    change(writer);
-                }
-
-                // Seek back and read it back
-                buffer.Seek(0, SeekOrigin.Begin);
-
-                BinaryReader reader = new BinaryReader(buffer);
-
-                T readValue = new T();
-                readValue.ReadBinary(reader);
-
-                // Verify same length was read back
-                Assert.AreEqual(lengthWritten, buffer.Position, "ReadBinary didn't read back everything WriteBinary wrote.");
-
-                return readValue;
-            }
         }
     }
 }

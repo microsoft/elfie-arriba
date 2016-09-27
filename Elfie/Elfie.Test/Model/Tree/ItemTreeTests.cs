@@ -7,8 +7,8 @@ using System.Diagnostics;
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.CodeAnalysis.Elfie.Model.Tree;
 using Microsoft.CodeAnalysis.Elfie.Serialization;
-using Microsoft.CodeAnalysis.Elfie.Test.Extensions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Elfie.Test;
 
 namespace Microsoft.CodeAnalysis.Elfie.Test.Model
 {
@@ -111,7 +111,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model
             Trace.WriteLine(Write.ToString((w) => fileTree.WriteTree(w, strings, 1)));
 
             // Verify roundtrip
-            fileTree = BinarySerializableTests.RoundTrip(fileTree);
+            fileTree = Verify.RoundTrip(fileTree);
 
             // Reconstruct each file path
             for (int i = 0; i < filePaths.Length; ++i)

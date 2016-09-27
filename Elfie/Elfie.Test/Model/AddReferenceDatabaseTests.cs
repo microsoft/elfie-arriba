@@ -11,6 +11,7 @@ using Microsoft.CodeAnalysis.Elfie.Model.Structures;
 using Microsoft.CodeAnalysis.Elfie.Serialization;
 using Microsoft.CodeAnalysis.Elfie.Test.Extensions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Elfie.Test;
 
 namespace Microsoft.CodeAnalysis.Elfie.Test.Model
 {
@@ -332,7 +333,7 @@ P SamplePackage
             db.AddUniqueMembers(PackageDatabaseTests.BuildDefaultSample());
 
             // Overwrite version with '9' and verify binary format won't load
-            BinarySerializableTests.RoundTrip(db, (w) => w.Write(9));
+            Verify.RoundTrip(db, (w) => w.Write(9));
         }
     }
 }

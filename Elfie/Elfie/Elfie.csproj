@@ -75,6 +75,7 @@
     <Compile Include="Extensions\StringExtensions.cs" />
     <Compile Include="Model\AddReferenceDatabase.cs" />
     <Compile Include="Model\ArdbVersion.cs" />
+    <Compile Include="Model\BaseItemSet.cs" />
     <Compile Include="Model\DatabaseAddResult.cs" />
     <Compile Include="Model\EmptyArray.cs" />
     <Compile Include="Model\IMemberDatabase.cs" />
@@ -85,6 +86,7 @@
     <Compile Include="Model\MergedMembersDatabase.cs" />
     <Compile Include="Model\NugetVersionUtilities.cs" />
     <Compile Include="Model\Strings\AlphanumericSplitter.cs" />
+    <Compile Include="Model\Strings\String8Column.cs" />
     <Compile Include="Model\Strings\UTF8.cs" />
     <Compile Include="Model\Structures\PackageIdentity.cs" />
     <Compile Include="Model\Strings\IWriteableString.cs" />
@@ -127,6 +129,7 @@
     </Compile>
     <Compile Include="Serialization\FileIO.cs" />
     <Compile Include="Serialization\IBinarySerializable.cs" />
+    <Compile Include="Model\IColumn.cs" />
     <Compile Include="Serialization\Read.cs" />
     <Compile Include="Model\Strings\String8Block.cs" />
     <Compile Include="Serialization\TsvReader.cs" />
