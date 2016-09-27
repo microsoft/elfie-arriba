@@ -1,11 +1,16 @@
-﻿using Elfie.Test;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
+using System.Diagnostics;
+using System.IO;
+
+using Elfie.Test;
+
 using Microsoft.CodeAnalysis.Elfie.Extensions;
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.CodeAnalysis.Elfie.Serialization;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
-using System.Diagnostics;
-using System.IO;
 
 namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
 {
@@ -120,13 +125,11 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
 
                         // Get row text (valid)
                         String8 fullRow = r.CurrentRowText;
-
                     }
 
                     rowIndex++;
                 }
             }
-
         }
 
 #if !DEBUG
@@ -141,7 +144,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
 
             Stopwatch w = Stopwatch.StartNew();
             int iterations = 100;
-            for(int iteration = 0; iteration < iterations; ++iteration)
+            for (int iteration = 0; iteration < iterations; ++iteration)
             {
                 using (TsvReader r = new TsvReader(SampleTsvPath, true))
                 {
@@ -149,7 +152,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
                     int countIndex = r.ColumnIndex("Count");
                     int descriptionIndex = r.ColumnIndex("Description");
 
-                    while(r.NextRow())
+                    while (r.NextRow())
                     {
                         rowCountRead++;
 
@@ -172,6 +175,21 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
             long targetMilliseconds = tsvLengthBytes * iterations / 125000;
             Trace.WriteLine(String.Format("Elfie TsvReader read {0} ({1:n0} rows) in {2} [goal {3}ms]", (tsvLengthBytes * iterations).SizeString(), rowCountRead, w.Elapsed.ToFriendlyString(), targetMilliseconds));
             Assert.IsTrue(w.ElapsedMilliseconds < targetMilliseconds);
+        }
+
+        [TestMethod]
+        public void TsvReader_NoTrailingNewline()
+        {
+            string tsvPath = "NoTrailingNewline.tsv";
+            string tsvContent = "One\tTwo\tThree\n1\t2\t3";
+            File.WriteAllText(tsvPath, tsvContent);
+
+            using (TsvReader r = new TsvReader(tsvPath, true))
+            {
+                Assert.IsTrue(r.NextRow(), "Last line without newline should be read");
+                Assert.AreEqual("3", r.CurrentRow(2).ToString());
+                Assert.IsFalse(r.NextRow(), "Reader didn't stop after last line without newline");
+            }
         }
     }
 }

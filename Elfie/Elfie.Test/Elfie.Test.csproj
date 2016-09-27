@@ -66,6 +66,7 @@
     <Compile Include="AssertStrings.cs" />
     <Compile Include="Extensions\BinaryReaderWriterExtensionsTests.cs" />
     <Compile Include="Extensions\BinarySerializableTests.cs" />
+    <Compile Include="Extensions\IReadOnlyListExtensionsTests.cs" />
     <Compile Include="Extensions\SampleSerializable.cs" />
     <Compile Include="Extensions\StringExtensionsTests.cs" />
     <Compile Include="Model\AddReferenceDatabaseTests.cs" />

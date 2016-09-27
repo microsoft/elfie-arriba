@@ -1,10 +1,14 @@
-﻿using Microsoft.CodeAnalysis.Elfie.Model.Strings;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+
+using Microsoft.CodeAnalysis.Elfie.Model.Strings;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
 {
@@ -37,7 +41,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
             Assert.IsFalse(value.Equals(valueCopy));
 
             // Verify storage uses multiple blocks correctly
-            for(int i = 0; i < 1000; ++i)
+            for (int i = 0; i < 1000; ++i)
             {
                 value = String8.Convert(new string((char)('0' + (i % 10)), 100), buffer);
                 valueCopy = block.GetCopy(value);

@@ -1,5 +1,9 @@
-﻿using Microsoft.CodeAnalysis.Elfie.Model.Strings;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System.IO;
+
+using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 
 namespace Microsoft.CodeAnalysis.Elfie.Test
 {
@@ -9,14 +13,14 @@ namespace Microsoft.CodeAnalysis.Elfie.Test
     /// </summary>
     public static class AllCodeText
     {
-        private static String8 _allCode8;
+        private static String8 s_allCode8;
 
         public static String8 AllCode8
         {
             get
             {
-                if (_allCode8.IsEmpty()) LoadFullCode();
-                return _allCode8;
+                if (s_allCode8.IsEmpty()) LoadFullCode();
+                return s_allCode8;
             }
         }
 
@@ -40,7 +44,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test
                 }
             }
 
-            _allCode8 = new String8(allCode, 0, allCode.Length);
+            s_allCode8 = new String8(allCode, 0, allCode.Length);
         }
     }
 }

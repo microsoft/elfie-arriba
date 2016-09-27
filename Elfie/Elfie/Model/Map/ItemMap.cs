@@ -12,11 +12,11 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Map
 {
     public class ItemMap<T> : IColumn, IBinarySerializable
     {
-        internal IItemProvider<T> _provider;
+        internal IReadOnlyList<T> _provider;
         internal MutableItemMap<T> _mutableMap;
         internal ImmutableItemMap<T> _immutableMap;
 
-        public ItemMap(IItemProvider<T> provider)
+        public ItemMap(IReadOnlyList<T> provider)
         {
             this._provider = provider;
             this.Clear();
@@ -98,20 +98,20 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Map
 
         internal MapEnumerator(ImmutableItemMap<U> map, int firstIndex, int afterLastIndex)
         {
-            this._map = map;
-            this._firstIndex = firstIndex;
-            this._currentIndex = firstIndex - 1;
-            this._afterLastIndex = afterLastIndex;
+            _map = map;
+            _firstIndex = firstIndex;
+            _currentIndex = firstIndex - 1;
+            _afterLastIndex = afterLastIndex;
         }
 
         public U Current
         {
-            get { return this._map._provider[this._map._memberIndices[this._currentIndex]]; }
+            get { return _map._provider[_map._memberIndices[_currentIndex]]; }
         }
 
         object IEnumerator.Current
         {
-            get { return this._map._provider[this._map._memberIndices[this._currentIndex]]; }
+            get { return _map._provider[_map._memberIndices[_currentIndex]]; }
         }
 
         public void Dispose()
@@ -119,13 +119,13 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Map
 
         public bool MoveNext()
         {
-            this._currentIndex++;
-            return this._currentIndex < this._afterLastIndex;
+            _currentIndex++;
+            return _currentIndex < _afterLastIndex;
         }
 
         public void Reset()
         {
-            this._currentIndex = this._firstIndex - 1;
+            _currentIndex = _firstIndex - 1;
         }
 
         public int Count

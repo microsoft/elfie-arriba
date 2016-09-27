@@ -4,10 +4,10 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.Serialization;
 
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.CodeAnalysis.Elfie.Model.Structures;
-using System.Runtime.Serialization;
 
 namespace Microsoft.CodeAnalysis.Elfie.Serialization
 {
@@ -47,6 +47,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         private BinaryReader _reader;
         private Dictionary<string, int> _columnHeadings;
 
+        private char _cellDelimiter;
         private int _currentLine;
         private byte[] _buffer;
         private PartialArray<int> _rowPositionArray;
@@ -60,11 +61,12 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         /// </summary>
         /// <param name="tsvFilePath">File Path to Tsv file to read</param>
         /// <param name="hasHeaderRow">True to read the first row as column names, False not to pre-read anything</param>
-        public TsvReader(string tsvFilePath, bool hasHeaderRow = true)
+        public TsvReader(string tsvFilePath, bool hasHeaderRow = true, char cellDelimiter = '\t')
         {
             _reader = new BinaryReader(new FileStream(tsvFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
             _columnHeadings = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
+            _cellDelimiter = cellDelimiter;
             _currentLine = 0;
             _buffer = new byte[64 * 1024];
             _rowPositionArray = new PartialArray<int>(1024, false);
@@ -145,28 +147,31 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         /// <returns>True if another row exists, False if the TSV is out of content</returns>
         public bool NextRow()
         {
-            // If we're out of rows, read the next block
+            // If we're on the last row, ask for more (we don't read the last row in case it was only partially read into the buffer)
             if (_nextRowIndexInBlock >= _currentBlock.Count - 1)
             {
-                if (!NextBlock()) return false;
+                NextBlock();
             }
+
+            // If there are no more rows, return false
+            if (_nextRowIndexInBlock >= _currentBlock.Count) return false;
 
             // Get the next (complete) row from the current block
             _currentLine++;
-            _currentRow = _currentBlock[_nextRowIndexInBlock].Split('\t', _cellPositionArray);
+            _currentRow = _currentBlock[_nextRowIndexInBlock].Split(_cellDelimiter, _cellPositionArray);
             _nextRowIndexInBlock++;
 
             return true;
         }
 
-        private bool NextBlock()
+        private void NextBlock()
         {
             do
             {
                 int readIntoStartIndex = 0;
 
-                // Copy the last row from the previous block to the buffer start (so we don't process partial rows)
-                if (_currentBlock.Count > 0)
+                // Copy the last row (if more than one) from the previous block to the buffer start (to load all of it)
+                if (_currentBlock.Count > 1)
                 {
                     String8 lastRow = _currentBlock[_currentBlock.Count - 1];
 
@@ -183,10 +188,16 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
                     }
 
                     readIntoStartIndex = lastRow.Length;
+
+                    // Reset the next row to read (since we shifted a possibly partial row)
+                    _nextRowIndexInBlock = 0;
                 }
 
                 // Read from the file to fill the buffer
                 int lengthRead = _reader.Read(_buffer, readIntoStartIndex, _buffer.Length - readIntoStartIndex);
+
+                // Reset the next row index to read if we read something new
+                if (lengthRead > 0) _nextRowIndexInBlock = 0;
 
                 // Split the new block into rows (on newline)
                 _currentBlock = String8Set.Split(new String8(_buffer, 0, readIntoStartIndex + lengthRead), '\n', _rowPositionArray);
@@ -196,9 +207,6 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
 
                 // If the block still doesn't contain at least two rows and there's more file, expand and try again
             } while (_currentBlock.Count < 2);
-
-            _nextRowIndexInBlock = 0;
-            return _currentBlock.Count > 0;
         }
 
         public void Dispose()

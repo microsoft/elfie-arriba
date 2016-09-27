@@ -9,15 +9,15 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Map
 {
     internal class MutableItemMap<T>
     {
-        private IItemProvider<T> _provider;
+        private IReadOnlyList<T> _provider;
         private PartialArray<int> _groupIndices;
         private PartialArray<int> _memberIndices;
 
-        public MutableItemMap(IItemProvider<T> provider)
+        public MutableItemMap(IReadOnlyList<T> provider)
         {
-            this._provider = provider;
-            this._groupIndices = new PartialArray<int>();
-            this._memberIndices = new PartialArray<int>();
+            _provider = provider;
+            _groupIndices = new PartialArray<int>();
+            _memberIndices = new PartialArray<int>();
         }
 
         /// <summary>
@@ -28,8 +28,8 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Map
         /// <param name="memberIndex">Index of item to which to link</param>
         public void AddLink(int groupIndex, int memberIndex)
         {
-            this._groupIndices.Add(groupIndex);
-            this._memberIndices.Add(memberIndex);
+            _groupIndices.Add(groupIndex);
+            _memberIndices.Add(memberIndex);
         }
 
         public ImmutableItemMap<T> ConvertToImmutable()
@@ -38,19 +38,19 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Map
             ImmutableItemMap<T> newMap = new ImmutableItemMap<T>(_provider);
 
             // If no links were generated, return an empty map
-            if (this._groupIndices.Count == 0) return newMap;
+            if (_groupIndices.Count == 0) return newMap;
 
             // Sort the links by the group index
-            PartialArray<int>.SortKeysAndItems(this._groupIndices, this._memberIndices);
+            PartialArray<int>.SortKeysAndItems(_groupIndices, _memberIndices);
 
             // Add links to immutable version in order by group, removing duplicates
-            int currentgroup = this._groupIndices[0];
+            int currentgroup = _groupIndices[0];
             HashSet<int> linksForgroup = new HashSet<int>();
 
-            for (int i = 0; i < this._groupIndices.Count; ++i)
+            for (int i = 0; i < _groupIndices.Count; ++i)
             {
-                int group = this._groupIndices[i];
-                int member = this._memberIndices[i];
+                int group = _groupIndices[i];
+                int member = _memberIndices[i];
 
                 // If we're looking at a new group, reset the links already added
                 // NOTE: new HashSet on each iteration much faster than HashSet.Clear().

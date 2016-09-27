@@ -2,15 +2,17 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 
-using Microsoft.CodeAnalysis.Elfie.Model;
+using Elfie.Test;
+
+using Microsoft.CodeAnalysis.Elfie.Extensions;
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.CodeAnalysis.Elfie.Model.Structures;
 using Microsoft.CodeAnalysis.Elfie.Serialization;
-using Microsoft.CodeAnalysis.Elfie.Extensions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Elfie.Test;
 
 namespace Microsoft.CodeAnalysis.Elfie.Test
 {
@@ -68,8 +70,8 @@ namespace Microsoft.CodeAnalysis.Elfie.Test
         // The constructor is internal only - the set must create the items
         internal SampleItem(SampleSet set, int index)
         {
-            this._set = set;
-            this._index = index;
+            _set = set;
+            _index = index;
         }
 
         // String properties are stored as "String8" (a String in UTF8 byte[])
@@ -137,7 +139,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test
             return this[this.Count - 1];
         }
 
-        // SampleItemSet has to implement
+        // The Set implements IReadOnlyList so that callers can get items.
         public SampleItem this[int index]
         {
             get { return new SampleItem(this, index); }
@@ -188,7 +190,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test
             Assert.AreEqual(100, set.Count);
 
             // Verify items are correct
-            for(int i = 0; i < set.Count; ++i)
+            for (int i = 0; i < set.Count; ++i)
             {
                 item = set[i];
                 Assert.AreEqual(name, item.Name);
