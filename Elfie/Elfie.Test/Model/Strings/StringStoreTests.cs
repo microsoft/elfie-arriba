@@ -236,67 +236,67 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model
             Assert.IsFalse(store.TryFindString(BOOLean, false, out booleanRange));
         }
 
-#if !DEBUG
-        [TestMethod]
-#endif
-        public void StringStore_Performance()
-        {
-            SelfIndex.EnsureSampleIndexBuilt();
-            ImmutableStringStore store = new ImmutableStringStore();
-            store.FileRead(SelfIndex.StringStorePath);
+        //#if !DEBUG
+        //        [TestMethod]
+        //#endif
+        //        public void StringStore_Performance()
+        //        {
+        //            SelfIndex.EnsureSampleIndexBuilt();
+        //            ImmutableStringStore store = new ImmutableStringStore();
+        //            store.FileRead(SelfIndex.StringStorePath);
 
-            // Choose some sample values to find
-            string[] valuesToFind =
-            {
-                "BinaryReader",
-                "ConvertToImmutable",
-                "FileIO.cs",
-                "IBinarySerializable, string, bool",
-                "IWriteableString",
-                "string, string, bool, bool",
-                "WasMemberAdded",
-                "WriteTree",
-                "Action<Symbol>",
-                "IMemberDatabase, PartialArray<Symbol>"
-            };
-            String8[] value8sToFind = new String8[valuesToFind.Length];
-            Range[] identifiers = new Range[valuesToFind.Length];
+        //            // Choose some sample values to find
+        //            string[] valuesToFind =
+        //            {
+        //                "BinaryReader",
+        //                "ConvertToImmutable",
+        //                "FileIO.cs",
+        //                "IBinarySerializable, string, bool",
+        //                "IWriteableString",
+        //                "string, string, bool, bool",
+        //                "WasMemberAdded",
+        //                "WriteTree",
+        //                "Action<Symbol>",
+        //                "IMemberDatabase, PartialArray<Symbol>"
+        //            };
+        //            String8[] value8sToFind = new String8[valuesToFind.Length];
+        //            Range[] identifiers = new Range[valuesToFind.Length];
 
-            // Get identifiers and the values and confirm they work
-            for (int i = 0; i < identifiers.Length; ++i)
-            {
-                Assert.IsTrue(store.TryFindString(valuesToFind[i], out identifiers[i]), string.Format("Could not find \"{0}\"", valuesToFind[i]));
-                Assert.AreEqual(valuesToFind[i], store[identifiers[i].Start].ToString());
-                value8sToFind[i] = String8.Convert(valuesToFind[i], new byte[String8.GetLength(valuesToFind[i])]);
-            }
+        //            // Get identifiers and the values and confirm they work
+        //            for (int i = 0; i < identifiers.Length; ++i)
+        //            {
+        //                Assert.IsTrue(store.TryFindString(valuesToFind[i], out identifiers[i]), string.Format("Could not find \"{0}\"", valuesToFind[i]));
+        //                Assert.AreEqual(valuesToFind[i], store[identifiers[i].Start].ToString());
+        //                value8sToFind[i] = String8.Convert(valuesToFind[i], new byte[String8.GetLength(valuesToFind[i])]);
+        //            }
 
-            // Measure these operations in a tight loop [~2M/sec with case insensitive range for string]
-            int iterations = 10000;
-            Stopwatch w = Stopwatch.StartNew();
-            for (int iteration = 0; iteration < iterations; ++iteration)
-            {
-                for (int i = 0; i < identifiers.Length; ++i)
-                {
-                    store.TryFindString(value8sToFind[i], out identifiers[i]);
-                }
-            }
-            w.Stop();
-            Trace.WriteLine(string.Format("{0:n0} TryFinds took {1}", iterations * identifiers.Length, w.Elapsed.ToFriendlyString()));
-            Assert.IsTrue(w.ElapsedMilliseconds < 100);
+        //            // Measure these operations in a tight loop [~2M/sec with case insensitive range for string]
+        //            int iterations = 10000;
+        //            Stopwatch w = Stopwatch.StartNew();
+        //            for (int iteration = 0; iteration < iterations; ++iteration)
+        //            {
+        //                for (int i = 0; i < identifiers.Length; ++i)
+        //                {
+        //                    store.TryFindString(value8sToFind[i], out identifiers[i]);
+        //                }
+        //            }
+        //            w.Stop();
+        //            Trace.WriteLine(string.Format("{0:n0} TryFinds took {1}", iterations * identifiers.Length, w.Elapsed.ToFriendlyString()));
+        //            Assert.IsTrue(w.ElapsedMilliseconds < 100);
 
-            iterations = 100000;
-            w.Restart();
-            for (int iteration = 0; iteration < iterations; ++iteration)
-            {
-                for (int i = 0; i < identifiers.Length; ++i)
-                {
-                    String8 value = store[identifiers[i].Start];
-                }
-            }
-            w.Stop();
-            Trace.WriteLine(string.Format("{0:n0} GetStrings took {1}", iterations * identifiers.Length, w.Elapsed.ToFriendlyString()));
-            Assert.IsTrue(w.ElapsedMilliseconds < 50);
-        }
+        //            iterations = 100000;
+        //            w.Restart();
+        //            for (int iteration = 0; iteration < iterations; ++iteration)
+        //            {
+        //                for (int i = 0; i < identifiers.Length; ++i)
+        //                {
+        //                    String8 value = store[identifiers[i].Start];
+        //                }
+        //            }
+        //            w.Stop();
+        //            Trace.WriteLine(string.Format("{0:n0} GetStrings took {1}", iterations * identifiers.Length, w.Elapsed.ToFriendlyString()));
+        //            Assert.IsTrue(w.ElapsedMilliseconds < 50);
+        //        }
 
         private static IStringStore Convert(MutableStringStore store, int[] identifiers = null)
         {

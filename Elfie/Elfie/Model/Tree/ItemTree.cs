@@ -14,6 +14,15 @@ using Microsoft.CodeAnalysis.Elfie.Serialization;
 
 namespace Microsoft.CodeAnalysis.Elfie.Model.Tree
 {
+    /// <summary>
+    ///  ItemTree is a data structure designed to efficiently encode a hierarchy
+    ///  structure on a set of items. It's used when the items stored in a data
+    ///  structure have a single logical hierarchy that needs to be traversed.
+    ///  
+    ///  Like other Elfie structures, ItemTree has a mutable form for indexing
+    ///  time and an Immutable form for search time. After the structure is built,
+    ///  ConvertToImmutable must be called and no further changes can be made.
+    /// </summary>
     public class ItemTree : IStatistics, IBinarySerializable
     {
         private PartialArray<int> _parentIndex;

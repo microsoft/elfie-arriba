@@ -68,7 +68,9 @@
     <Compile Include="Diagnostics\Cmd.cs" />
     <Compile Include="Diagnostics\Logger.cs" />
     <Compile Include="Diagnostics\ProgressWriter.cs" />
+    <Compile Include="Extensions\DateTimeExtensions.cs" />
     <Compile Include="Extensions\IntExtensions.cs" />
+    <Compile Include="Extensions\IReadOnlyListExtensions.cs" />
     <Compile Include="Extensions\IStatisticsExtensions.cs" />
     <Compile Include="Extensions\StringExtensions.cs" />
     <Compile Include="Model\AddReferenceDatabase.cs" />
@@ -76,6 +78,9 @@
     <Compile Include="Model\DatabaseAddResult.cs" />
     <Compile Include="Model\EmptyArray.cs" />
     <Compile Include="Model\IMemberDatabase.cs" />
+    <Compile Include="Model\Map\ImmutableItemMap.cs" />
+    <Compile Include="Model\Map\ItemMap.cs" />
+    <Compile Include="Model\Map\MutableItemMap.cs" />
     <Compile Include="Model\MemberQuery.cs" />
     <Compile Include="Model\MergedMembersDatabase.cs" />
     <Compile Include="Model\NugetVersionUtilities.cs" />
@@ -123,6 +128,8 @@
     <Compile Include="Serialization\FileIO.cs" />
     <Compile Include="Serialization\IBinarySerializable.cs" />
     <Compile Include="Serialization\Read.cs" />
+    <Compile Include="Model\Strings\String8Block.cs" />
+    <Compile Include="Serialization\TsvReader.cs" />
     <Compile Include="Serialization\Write.cs" />
   </ItemGroup>
   <ItemGroup>

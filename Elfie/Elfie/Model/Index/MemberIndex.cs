@@ -10,22 +10,47 @@ using Microsoft.CodeAnalysis.Elfie.Model.Structures;
 
 namespace Microsoft.CodeAnalysis.Elfie.Model.Index
 {
+    /// <summary>
+    ///  MemberIndex is a data structure designed to efficiently contain a search
+    ///  index - this word is in these items. The indexed words are stored in a
+    ///  single StringStore and map to the indices of items in an Elfie data structure.
+    ///  
+    ///  Like other Elfie structures, MemberIndex has a mutable form for indexing
+    ///  time and an Immutable form for search time. After the structure is built,
+    ///  ConvertToImmutable must be called and no further changes can be made.
+    /// </summary>
     public class MemberIndex : IStatistics
     {
         private ImmutableMemberIndex _existingIndex;
         private MutableMemberIndex _addedIndex;
 
+        /// <summary>
+        ///  Construct a new MemberIndex.
+        /// </summary>
         public MemberIndex()
         {
             // Neither Index is initialized to start.
         }
 
+        /// <summary>
+        ///  Associate an item with a given word in the index.
+        /// </summary>
+        /// <param name="wordIdentifier">Identifier of word to map to item.</param>
+        /// <param name="itemIndex">Index of item word maps to.</param>
         public void AddItem(int wordIdentifier, int itemIndex)
         {
             if (_addedIndex == null) _addedIndex = new MutableMemberIndex();
             _addedIndex.AddItem(wordIdentifier, itemIndex);
         }
 
+        /// <summary>
+        ///  Get the set of item identifiers for a given word or set of words in the index.
+        /// </summary>
+        /// <param name="identifiers">Word Identifier (or range of identifiers) to match</param>
+        /// <param name="buffer">Array within which matches exists.</param>
+        /// <param name="index">First index in array of matches for range.</param>
+        /// <param name="count">Count of matches in array for range.</param>
+        /// <returns></returns>
         public bool TryGetMatchesInRange(Range identifiers, out int[] buffer, out int index, out int count)
         {
             if (_existingIndex == null) throw new InvalidOperationException(Resources.ConvertToImmutableRequired);
