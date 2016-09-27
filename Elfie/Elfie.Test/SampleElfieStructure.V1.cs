@@ -89,7 +89,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test
         }
     }
 
-    public class SampleSet_V1 : IItemProvider<SampleItem_V1>, IBinarySerializable
+    public class SampleSet_V1 : IBinarySerializable
     {
         // String Properties are stored in a StringStore.
         // Each Property has a PartialArray<int> holding the identifier (which string the item uses)

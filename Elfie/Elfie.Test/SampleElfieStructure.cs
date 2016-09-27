@@ -2,16 +2,13 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.IO;
 
 using Elfie.Test;
 
 using Microsoft.CodeAnalysis.Elfie.Extensions;
+using Microsoft.CodeAnalysis.Elfie.Model;
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.CodeAnalysis.Elfie.Model.Structures;
-using Microsoft.CodeAnalysis.Elfie.Serialization;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Microsoft.CodeAnalysis.Elfie.Test
@@ -107,7 +104,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test
     }
 
     // The Set class inherits from BaseItemSet, which provides the StringStore and overall management
-    public class SampleSet : BaseItemSet, IItemProvider<SampleItem>
+    public class SampleSet : BaseItemSet<SampleItem>
     {
         // String values are stored in 'String8Column', which manages lookup
         internal String8Column Name;
@@ -133,21 +130,10 @@ namespace Microsoft.CodeAnalysis.Elfie.Test
             this.AddColumn(this.EventTime);
         }
 
-        public SampleItem Add()
-        {
-            base.AddItem();
-            return this[this.Count - 1];
-        }
-
-        // The Set implements IReadOnlyList so that callers can get items.
-        public SampleItem this[int index]
+        // The set must implement an indexer to build the corresponding item. BaseItemSet implements the rest of IReadOnlyList<T>
+        public override SampleItem this[int index]
         {
             get { return new SampleItem(this, index); }
-        }
-
-        public int Count
-        {
-            get { return this.Name.Count; }
         }
     }
 
