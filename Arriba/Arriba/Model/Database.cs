@@ -147,6 +147,19 @@ namespace Arriba.Model
             return tableLazy.Value;
         }
 
+        public void ReloadTable(string tableName)
+        {
+            lock (_tableLock)
+            {
+                _tables[tableName] = new Lazy<Table>(() =>
+                {
+                    Table t = new Table();
+                    t.Load(tableName);
+                    return t;
+                });
+            }
+        }
+
         public void EnsureLoaded(string tableName)
         {
             this.GetOrLoadTable(tableName);
