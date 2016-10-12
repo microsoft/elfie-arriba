@@ -329,6 +329,9 @@ namespace Arriba.Model
                     bestColumnType = Value.Create(values[rowIndex, columnIndex]).BestType(bestColumnType);
                 }
 
+                // If no values were set, default to string [can't tell actual best type]
+                if (bestColumnType == null) bestColumnType = typeof(String);
+
                 discoveredNewColumns.Add(new ColumnDetails(columnName, bestColumnType.Name, null) { IsPrimaryKey = isIdColumn });
                 foundIdColumn |= isIdColumn;
             }
