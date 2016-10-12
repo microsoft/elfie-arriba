@@ -43,6 +43,9 @@ namespace Arriba.Server.Application
             // GET /table/foo/save -- TODO: This is not ideal, think of a better pattern 
             this.Get("/table/:tableName/save", this.ValidateWriteAccess, this.Save);
 
+            // GET /table/foo/reload
+            this.Get("/table/:tableName/reload", this.ValidateWriteAccess, this.Reload);
+
             // DELETE /table/foo 
             this.Delete("/table/:tableName", this.ValidateOwnerAccess, this.Drop);
 
@@ -218,6 +221,24 @@ namespace Arriba.Server.Application
                 table.AddColumns(columns);
 
                 return ArribaResponse.Ok("Added");
+            }
+        }
+
+        /// <summary>
+        /// Reload the specified table.
+        /// </summary>
+        private IResponse Reload(IRequestContext request, Route route)
+        {
+            string tableName = GetAndValidateTableName(route);
+            if (!this.Database.TableExists(tableName))
+            {
+                return ArribaResponse.NotFound("Table not found to reload");
+            }
+
+            using (request.Monitor(MonitorEventLevel.Information, "Reload", type: "Table", identity: tableName))
+            {
+                this.Database.ReloadTable(tableName);
+                return ArribaResponse.Ok("Reloaded");
             }
         }
 
