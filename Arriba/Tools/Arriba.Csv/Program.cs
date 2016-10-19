@@ -52,6 +52,9 @@ namespace Arriba.Csv
                     case "decorate":
                         Build(false, c.GetString("table"), c.GetString("csvPath"), c.GetInt("maximumCount", 100000), c.GetString("columns", null));
                         break;
+                    case "add":
+                        Build(true, c.GetString("table"), c.GetString("csvPath"), c.GetInt("maximumCount", 100000), c.GetString("columns", null));
+                        break;
                     case "query":
                         Query(c.GetString("table"), c.GetString("select", ""), c.GetString("orderBy", ""), c.GetInt("count", QueryResultLimit));
                         break;
