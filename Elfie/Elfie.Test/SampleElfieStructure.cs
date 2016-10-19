@@ -74,32 +74,32 @@ namespace Microsoft.CodeAnalysis.Elfie.Test
         // String properties are stored as "String8" (a String in UTF8 byte[])
         public String8 Name
         {
-            get { return this._set.Name[_index]; }
-            set { this._set.Name[_index] = value; }
+            get { return _set.Name[_index]; }
+            set { _set.Name[_index] = value; }
         }
 
         public String8 Target
         {
-            get { return this._set.Target[_index]; }
-            set { this._set.Target[_index] = value; }
+            get { return _set.Target[_index]; }
+            set { _set.Target[_index] = value; }
         }
 
         // Enums and other non-primitives must be stored as primitives and converted
         public SampleItemType Type
         {
-            get { return (SampleItemType)this._set.Type[_index]; }
-            set { this._set.Type[_index] = (byte)value; }
+            get { return (SampleItemType)_set.Type[_index]; }
+            set { _set.Type[_index] = (byte)value; }
         }
 
         public DateTime EventTime
         {
-            get { return this._set.EventTime[_index].ToDateTime(); }
-            set { this._set.EventTime[_index] = value.ToLong(); }
+            get { return _set.EventTime[_index].ToDateTime(); }
+            set { _set.EventTime[_index] = value.ToLong(); }
         }
 
         public override string ToString()
         {
-            return this._index.ToString();
+            return _index.ToString();
         }
     }
 

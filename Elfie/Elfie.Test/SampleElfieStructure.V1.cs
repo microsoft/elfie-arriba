@@ -4,11 +4,11 @@
 using System;
 using System.IO;
 
+using Microsoft.CodeAnalysis.Elfie.Extensions;
 using Microsoft.CodeAnalysis.Elfie.Model;
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.CodeAnalysis.Elfie.Model.Structures;
 using Microsoft.CodeAnalysis.Elfie.Serialization;
-using Microsoft.CodeAnalysis.Elfie.Extensions;
 
 namespace Microsoft.CodeAnalysis.Elfie.Test
 {
@@ -45,8 +45,8 @@ namespace Microsoft.CodeAnalysis.Elfie.Test
         // The constructor is internal only - the set must create the items
         internal SampleItem_V1(SampleSet_V1 set, int index)
         {
-            this._set = set;
-            this._index = index;
+            _set = set;
+            _index = index;
         }
 
         // String properties are stored in a StringStore (and de-duped), which provides an int identifier

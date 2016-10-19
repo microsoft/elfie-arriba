@@ -37,9 +37,9 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
 
         public void Clear()
         {
-            this._existingValues = null;
-            this._addedValues = null;
-            this._addedIdentifierToExistingIdentifier = null;
+            _existingValues = null;
+            _addedValues = null;
+            _addedIdentifierToExistingIdentifier = null;
         }
 
         #region Get Strings Out

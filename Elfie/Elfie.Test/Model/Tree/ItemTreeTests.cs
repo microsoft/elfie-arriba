@@ -4,11 +4,12 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 
+using Elfie.Test;
+
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.CodeAnalysis.Elfie.Model.Tree;
 using Microsoft.CodeAnalysis.Elfie.Serialization;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Elfie.Test;
 
 namespace Microsoft.CodeAnalysis.Elfie.Test.Model
 {

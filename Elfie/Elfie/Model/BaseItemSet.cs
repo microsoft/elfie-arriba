@@ -27,7 +27,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model
         public BaseItemSet()
         {
             this.Strings = new StringStore();
-            this._columns = new List<IColumn>();
+            _columns = new List<IColumn>();
         }
 
         /// <summary>
@@ -36,7 +36,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model
         /// <param name="column">IColumn to add</param>
         protected void AddColumn(IColumn column)
         {
-            this._columns.Add(column);
+            _columns.Add(column);
         }
 
         #region IReadOnlyList<T>
@@ -67,7 +67,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model
         /// </summary>
         public virtual T Add()
         {
-            foreach (IColumn column in this._columns)
+            foreach (IColumn column in _columns)
             {
                 column.Add();
             }
@@ -84,7 +84,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model
         {
             this.Strings.Clear();
 
-            foreach (IColumn column in this._columns)
+            foreach (IColumn column in _columns)
             {
                 column.Clear();
             }
@@ -99,7 +99,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model
         {
             if (this.Strings.ConvertToImmutable())
             {
-                foreach (IColumn column in this._columns)
+                foreach (IColumn column in _columns)
                 {
                     column.ConvertToImmutable();
                 }
@@ -113,7 +113,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model
             w.Write(_count);
             this.Strings.WriteBinary(w);
 
-            foreach (IBinarySerializable column in this._columns)
+            foreach (IBinarySerializable column in _columns)
             {
                 column.WriteBinary(w);
             }
@@ -126,7 +126,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model
             _count = r.ReadInt32();
             this.Strings.ReadBinary(r);
 
-            foreach (IBinarySerializable column in this._columns)
+            foreach (IBinarySerializable column in _columns)
             {
                 column.ReadBinary(r);
             }

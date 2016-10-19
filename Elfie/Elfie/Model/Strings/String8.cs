@@ -284,7 +284,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             long valueLeft = value;
 
             // Write minus sign if negative
-            if(valueLeft < 0)
+            if (valueLeft < 0)
             {
                 valueLeft = -valueLeft;
                 buffer[i++] = (byte)'-';
@@ -293,14 +293,14 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             // Determine how many digits in value
             int digits = 1;
             int scale = 10;
-            while(valueLeft >= scale && digits < 10)
+            while (valueLeft >= scale && digits < 10)
             {
                 digits++;
                 scale *= 10;
             }
 
             // Write digits right to left
-            for(int j = i + digits - 1; j >= i; --j)
+            for (int j = i + digits - 1; j >= i; --j)
             {
                 long digit = valueLeft % 10;
                 buffer[j] = (byte)(UTF8.Zero + (byte)digit);

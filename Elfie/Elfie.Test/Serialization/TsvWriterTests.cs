@@ -1,12 +1,17 @@
-﻿using Elfie.Test;
-using Microsoft.CodeAnalysis.Elfie.Extensions;
-using Microsoft.CodeAnalysis.Elfie.Model.Strings;
-using Microsoft.CodeAnalysis.Elfie.Serialization;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+
+using Elfie.Test;
+
+using Microsoft.CodeAnalysis.Elfie.Extensions;
+using Microsoft.CodeAnalysis.Elfie.Model.Strings;
+using Microsoft.CodeAnalysis.Elfie.Serialization;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
 {
@@ -25,7 +30,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
                 Assert.AreEqual(1, writer.RowNumber);
 
                 int sum = 0;
-                for(int i = 1; i <= 10; ++i)
+                for (int i = 1; i <= 10; ++i)
                 {
                     Assert.AreEqual(i, writer.RowNumber);
 
@@ -42,7 +47,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
             string tsvContent = File.ReadAllText("TsvWriter.tsv");
 
             // Verify header is as expected
-            Assert.IsTrue(tsvContent.StartsWith("LineNumber\tCount\tDescription\tSource\r\n"));            
+            Assert.IsTrue(tsvContent.StartsWith("LineNumber\tCount\tDescription\tSource\r\n"));
 
             // Verify illegal characters are stripped
             Assert.IsTrue(tsvContent.Contains("ValueWithIssues"));
@@ -99,7 +104,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
                     s.Seek(0, SeekOrigin.Begin);
 
                     TsvWriter writer = new TsvWriter(s, new string[] { "LineNumber", "Count", "Description", "Source" });
-                    
+
                     int sum = 0;
                     for (int row = 1; row < 10000; ++row)
                     {
@@ -124,9 +129,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
 
                     bytesWritten += writer.BytesWritten;
                     rowsWritten += writer.RowNumber;
-                    
                 }
-
             }
             w.Stop();
 
@@ -136,6 +139,5 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
             Trace.WriteLine(String.Format("Elfie TsvWriter wrote {0} ({1:n0} rows) in {2} [goal {3}ms]", bytesWritten.SizeString(), rowsWritten, w.Elapsed.ToFriendlyString(), targetMilliseconds));
             Assert.IsTrue(w.ElapsedMilliseconds < targetMilliseconds);
         }
-
     }
 }

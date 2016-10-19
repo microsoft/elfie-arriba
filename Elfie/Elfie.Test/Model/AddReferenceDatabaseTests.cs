@@ -5,13 +5,14 @@ using System;
 using System.Diagnostics;
 using System.IO;
 
+using Elfie.Test;
+
 using Microsoft.CodeAnalysis.Elfie.Model;
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.CodeAnalysis.Elfie.Model.Structures;
 using Microsoft.CodeAnalysis.Elfie.Serialization;
 using Microsoft.CodeAnalysis.Elfie.Test.Extensions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Elfie.Test;
 
 namespace Microsoft.CodeAnalysis.Elfie.Test.Model
 {

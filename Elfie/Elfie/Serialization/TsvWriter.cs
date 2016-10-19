@@ -1,9 +1,13 @@
-﻿using Microsoft.CodeAnalysis.Elfie.Model.Strings;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
+
+using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 
 namespace Microsoft.CodeAnalysis.Elfie.Serialization
 {
@@ -34,7 +38,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
 
         private byte[] _typeConversionBuffer;
 
-        public TsvWriter(string tsvFilePath, IEnumerable<string> columnNames) : 
+        public TsvWriter(string tsvFilePath, IEnumerable<string> columnNames) :
             this(new FileStream(tsvFilePath, FileMode.Create, FileAccess.Write, FileShare.None), columnNames)
         { }
 
@@ -91,7 +95,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         public void NextRow()
         {
             if (_currentRowColumnCount != _columnCount) throw new TsvWriterException(String.Format("Wrote wrong number of columns for row {0:n0}. Wrote {1:n0}, expected {2:n0} columns.", _rowCount, _currentRowColumnCount, _columnCount));
-            WriteRowSeparator();   
+            WriteRowSeparator();
         }
 
         private void WriteCellSeparator()
