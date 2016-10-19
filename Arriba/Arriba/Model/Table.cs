@@ -329,6 +329,9 @@ namespace Arriba.Model
                     bestColumnType = Value.Create(values[rowIndex, columnIndex]).BestType(bestColumnType);
                 }
 
+                // If no values were set, default to string [can't tell actual best type]
+                if (bestColumnType == null) bestColumnType = typeof(String);
+
                 discoveredNewColumns.Add(new ColumnDetails(columnName, bestColumnType.Name, null) { IsPrimaryKey = isIdColumn });
                 foundIdColumn |= isIdColumn;
             }
@@ -351,13 +354,27 @@ namespace Arriba.Model
         /// <param name="values">Set of Columns and values to add or update</param>
         public void AddOrUpdate(DataBlock values)
         {
+            AddOrUpdateOptions options = new Model.AddOrUpdateOptions();
+            options.AddMissingColumns = ShouldAddColumnsDynamically;
+
+            AddOrUpdate(values, options);
+        }
+
+        /// <summary>
+        ///  Add or Update the given items with the given values. The ID column must be passed
+        ///  and must be the first column. If an ID is not known, the item will be added.
+        ///  For each item, the value for each column is set to the provided values.
+        /// </summary>
+        /// <param name="values">Set of Columns and values to add or update</param>
+        public void AddOrUpdate(DataBlock values, AddOrUpdateOptions options)
+        {
             _locker.EnterWriteLock();
             try
             {
                 if (values == null) throw new ArgumentNullException("values");
 
                 // Add columns from data, if this is the first data and columns weren't predefined
-                if (ShouldAddColumnsDynamically) AddColumnsFromBlock(values);
+                if (options.AddMissingColumns) AddColumnsFromBlock(values);
 
                 ColumnDetails idColumn = _partitions[0].IDColumn;
                 if (idColumn == null) throw new ArribaException("Items cannot be added to this Table because it does not yet have an ID column defined. Call AddColumn with exactly one column with 'IsPrimaryKey' true and then items may be added.");
@@ -377,7 +394,7 @@ namespace Arriba.Model
                 // Non-Parallel Implementation
                 if (_partitions.Count == 1)
                 {
-                    _partitions[0].AddOrUpdate(values);
+                    _partitions[0].AddOrUpdate(values, options);
                     return;
                 }
 
@@ -395,7 +412,7 @@ namespace Arriba.Model
                     {
                         for (int i = range.Item1; i < range.Item2; ++i)
                         {
-                            _partitions[i].AddOrUpdate(values, partitionChains, partitionChainHeads[i]);
+                            _partitions[i].AddOrUpdate(values, options, partitionChains, partitionChainHeads[i]);
                         }
                     };
 

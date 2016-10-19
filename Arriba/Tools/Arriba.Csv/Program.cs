@@ -19,15 +19,18 @@ namespace Arriba.Csv
     internal class Program
     {
         public const int QueryResultLimit = 40;
-        public const int BatchSize = 100;
-        public const long RequiredItemCount = 100000;
+        public const int BatchSize = 250;
 
         private const string Usage = @"
     Arriba.Csv builds or queries Arriba tables from CSV source data.
     Source data must include a unique ID column (the first column whose name ends with 'ID' or the first column).
+    'build' to create a new table and add all data.
+    'decorate' mode used to add new columns to existing rows only.
+    'query' to run a query from the command line.
     
-    Arriba.Csv /mode:build /table:<TableName> /csvPath:<CsvFilePath> [/maximumCount:<RowLimitForTable>]?
+    Arriba.Csv /mode:build /table:<TableName> /csvPath:<CsvFilePath> [/maximumCount:<RowLimitForTable>]? [/columns:""C1,C2,C3""]?
     Arriba.Csv /mode:query /table:<TableName> [/select:<ColumnList>]? [/orderBy:<ColumnName>]? [/count:<CountToShow>]?
+    Arriba.Csv /mode:decorate /table:<TableName> /csvPath:<CsvFilePath> [/maximumCount:<RowLimitForTable>]? [/columns:""C1,C2,C3""]?
 
     Ex:
       Arriba.Csv /mode:build /table:SP500 /csvPath:""C:\Temp\SP500 Price History.csv"" /maximumCount:50000
@@ -44,7 +47,10 @@ namespace Arriba.Csv
                 switch (mode)
                 {
                     case "build":
-                        Build(c.GetString("table"), c.GetString("csvPath"), c.GetInt("maximumCount", 100000));
+                        Build(true, c.GetString("table"), c.GetString("csvPath"), c.GetInt("maximumCount", 100000), c.GetString("columns", null));
+                        break;
+                    case "decorate":
+                        Build(false, c.GetString("table"), c.GetString("csvPath"), c.GetInt("maximumCount", 100000), c.GetString("columns", null));
                         break;
                     case "query":
                         Query(c.GetString("table"), c.GetString("select", ""), c.GetString("orderBy", ""), c.GetInt("count", QueryResultLimit));
@@ -61,20 +67,42 @@ namespace Arriba.Csv
             }
         }
 
-        private static void Build(string tableName, string csvFilePath, int maximumCount)
+        private static void Build(bool build, string tableName, string csvFilePath, int maximumCount, string columns)
         {
+            Stopwatch w = Stopwatch.StartNew();
             Console.WriteLine("Building Arriba table '{0}' from '{1}'...", tableName, csvFilePath);
 
-            Table table = new Table(tableName, RequiredItemCount);
+            IList<string> columnNames = null;
+            if (!String.IsNullOrEmpty(columns)) columnNames = SplitAndTrim(columns);
+
+            Table table;
+            if (build)
+            {
+                table = new Table(tableName, maximumCount);
+            }
+            else
+            { 
+                table = new Table();
+                table.Load(tableName);
+            }
+
+            // Always add missing columns. Add rows only when not in 'decorate' mode
+            AddOrUpdateOptions options = new AddOrUpdateOptions();
+            options.AddMissingColumns = true;
+            options.AddMissingRows = build;
+
             using (CsvReader reader = new CsvReader(csvFilePath))
             {
                 long rowsImported = 0;
 
                 foreach (DataBlock block in reader.ReadAsDataBlockBatch(BatchSize))
                 {
-                    table.AddOrUpdate(block);
+                    DataBlock toInsert = block;
+                    if (columnNames != null) toInsert = toInsert.StripToColumns(columnNames);
 
-                    rowsImported += block.RowCount;
+                    table.AddOrUpdate(toInsert);
+
+                    rowsImported += toInsert.RowCount;
                     Console.Write(".");
                 }
 
@@ -83,7 +111,8 @@ namespace Arriba.Csv
             }
 
             table.Save();
-            Console.WriteLine("Done.");
+            w.Stop();
+            Console.WriteLine("Done in {0}.", w.Elapsed.ToFriendlyString());
         }
 
         private static void Query(string tableName, string columnsToSelect, string orderByColumn, int countToShow)
