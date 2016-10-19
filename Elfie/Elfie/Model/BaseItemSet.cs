@@ -106,7 +106,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model
             }
         }
 
-        public void WriteBinary(BinaryWriter w)
+        public virtual void WriteBinary(BinaryWriter w)
         {
             this.ConvertToImmutable();
 
@@ -119,7 +119,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model
             }
         }
 
-        public void ReadBinary(BinaryReader r)
+        public virtual void ReadBinary(BinaryReader r)
         {
             this.Clear();
 
