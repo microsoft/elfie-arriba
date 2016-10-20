@@ -28,7 +28,7 @@
         /// <summary>
         ///  AddMissingColumns determines whether to add columns not seen before
         ///  or throw an exception if a new column name is passed.
-        ///  By default, columns are added only to empty tables (on the first insert).
+        ///  By default, columns are not added automatically.
         /// </summary>
         public bool AddMissingColumns { get; set; }
 
