@@ -86,9 +86,45 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
 
             // Write the String8 to the chosen block and return a reference to the new copy
             int writePosition = targetBlock.LengthUsed;
-            source.WriteTo(targetBlock.Block, writePosition);
-            targetBlock.LengthUsed += source.Length;
+            targetBlock.LengthUsed += source.WriteTo(targetBlock.Block, writePosition);
             return new String8(targetBlock.Block, writePosition, source.Length);
+        }
+
+        /// <summary>
+        ///  Create a concatenation of three String8s. Used to join values
+        ///  with a delimiter in a memory efficient way.
+        /// </summary>
+        /// <param name="first">First Value</param>
+        /// <returns>String8 copy which will persist</returns>
+        public String8 Concatenate(String8 first, String8 delimiter, String8 second)
+        {
+            // If either string is empty, use only the other [if both empty, String8.Empty returned]
+            if (first.IsEmpty()) return GetCopy(second);
+            if (second.IsEmpty()) return GetCopy(first);
+
+            BlockPart targetBlock;
+
+            // If "first" is the last thing on the block and there's room, add the new value after it and re-use it
+            if (_current.Block == first._buffer 
+                && _current.LengthUsed == first._index + first._length 
+                && _current.Block.Length >= _current.LengthUsed + delimiter.Length + second.Length)
+            {
+                targetBlock = _current;
+                targetBlock.LengthUsed += delimiter.WriteTo(targetBlock.Block, targetBlock.LengthUsed);
+                targetBlock.LengthUsed += second.WriteTo(targetBlock.Block, targetBlock.LengthUsed);
+
+                return new String8(first._buffer, first._index, targetBlock.LengthUsed - first._index);
+            }
+
+            // Otherwise, find new room for the concatenated value
+            targetBlock = GetBlockForLength(first.Length + delimiter.Length + second.Length);
+
+            // Write the parts to the chosen block and return a reference to the new copy
+            int startPosition = targetBlock.LengthUsed;
+            targetBlock.LengthUsed += first.WriteTo(targetBlock.Block, targetBlock.LengthUsed);
+            targetBlock.LengthUsed += delimiter.WriteTo(targetBlock.Block, targetBlock.LengthUsed);
+            targetBlock.LengthUsed += second.WriteTo(targetBlock.Block, targetBlock.LengthUsed);
+            return new String8(targetBlock.Block, startPosition, targetBlock.LengthUsed - startPosition);
         }
 
         /// <summary>
@@ -109,6 +145,21 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             int writePosition = targetBlock.LengthUsed;
             targetBlock.LengthUsed += source.Length;
             return String8.Convert(source, targetBlock.Block, writePosition);
+        }
+
+        /// <summary>
+        ///  Clear the String8Block. Clear reuses some memory, avoiding allocations
+        ///  if use between clear calls is relatively small.
+        /// </summary>
+        public void Clear()
+        {
+            // Clear length used on the first block
+            BlockPart first = this._blocks[0];
+            first.LengthUsed = 0;
+
+            // Remove other blocks and restore only the first
+            this._blocks.Clear();
+            this._blocks[0] = first;
         }
     }
 }

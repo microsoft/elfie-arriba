@@ -38,32 +38,56 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
 
         private byte[] _typeConversionBuffer;
 
-        public TsvWriter(string tsvFilePath, IEnumerable<string> columnNames) :
-            this(new FileStream(tsvFilePath, FileMode.Create, FileAccess.Write, FileShare.None), columnNames)
+        /// <summary>
+        ///  Construct a new TsvWriter to write to the given file path.
+        ///  The file is overwritten if it exists.
+        /// </summary>
+        /// <param name="tsvFilePath">Path to file to write.</param>
+        /// <param name="columnNames">Column Names to write out.</param>
+        /// <param name="writeHeaderRow">True to write a header row, False otherwise.</param>
+        public TsvWriter(string tsvFilePath, IEnumerable<string> columnNames, bool writeHeaderRow = true) :
+            this(new FileStream(tsvFilePath, FileMode.Create, FileAccess.Write, FileShare.None), columnNames, writeHeaderRow)
         { }
 
-        public TsvWriter(Stream stream, IEnumerable<string> columnNames)
+        /// <summary>
+        ///  Construct a new TsvWriter to write to the given stream.
+        ///  The column name list is used to validate that rows have the right
+        ///  number of columns written even if a header row isn't written.
+        /// </summary>
+        /// <param name="stream">Stream to write to</param>
+        /// <param name="columnNames">Column names to write.</param>
+        /// <param name="writeHeaderRow">True to write a header row, False otherwise</param>
+        /// <param name="cellDelimiter">Delimiter between cells, default is tab.</param>
+        public TsvWriter(Stream stream, IEnumerable<string> columnNames, bool writeHeaderRow = true, char cellDelimiter = '\t')
         {
             _stream = stream;
-            _cellDelimiter = (byte)'\t';
+            _cellDelimiter = (byte)cellDelimiter;
             _columnCount = columnNames.Count();
             _currentRowColumnCount = 0;
-            _rowCount = 0;
+            _rowCount = 1;
 
             _typeConversionBuffer = new byte[30];
 
             // Write header row
-            String8Block buffer = new String8Block();
-            foreach (string columnName in columnNames)
+            if (writeHeaderRow)
             {
-                Write(buffer.GetCopy(columnName));
-            }
+                String8Block buffer = new String8Block();
+                foreach (string columnName in columnNames)
+                {
+                    Write(buffer.GetCopy(columnName));
+                }
 
-            NextRow();
+                NextRow();
+            }
 
             if (_columnCount == 0) throw new TsvWriterException("No columns were passed to contructor. TSV must have at least one column.");
         }
 
+        /// <summary>
+        ///  Write a value to the current row.
+        ///  Delimiter characters are skipped if found in the value [no TSV escaping standard]
+        /// </summary>
+        /// <param name="value">String8 to write to the current row.</param>
         public void Write(String8 value)
         {
             WriteCellSeparator();
@@ -86,12 +110,22 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             value.Substring(nextWriteStartIndex).WriteTo(_stream);
         }
 
+        /// <summary>
+        ///  Write an integer to the current row.
+        ///  The value is converted without allocations.
+        /// </summary>
+        /// <param name="value">Value to write</param>
         public void Write(int value)
         {
             WriteCellSeparator();
             String8.FromInteger(value, _typeConversionBuffer).WriteTo(_stream);
         }
 
+        /// <summary>
+        ///  Write a row separator and start the next row.
+        ///  NextRow must be called after the row values are written.
+        ///  NextRow validates that the correct number of values were written.
+        /// </summary>
         public void NextRow()
         {
             if (_currentRowColumnCount != _columnCount) throw new TsvWriterException(String.Format("Wrote wrong number of columns for row {0:n0}. Wrote {1:n0}, expected {2:n0} columns.", _rowCount, _currentRowColumnCount, _columnCount));
@@ -113,16 +147,27 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             _rowCount++;
         }
 
-        public int RowNumber
+        /// <summary>
+        ///  Return the line number of the current row being written, 1-based.
+        ///  The header is line one, if it was written.
+        /// </summary>
+        public int LineNumber
         {
             get { return _rowCount; }
         }
 
+        /// <summary>
+        ///  Return how many bytes were written out so far.
+        ///  If the stream wasn't at the beginning, includes previous writing.
+        /// </summary>
         public long BytesWritten
         {
             get { return _stream.Position; }
         }
 
+        /// <summary>
+        ///  Dispose the TsvWriter.
+        /// </summary>
         public void Dispose()
         {
             if (_stream != null)
@@ -133,7 +178,6 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             }
         }
     }
-
 
     [Serializable]
     public class TsvWriterException : Exception
