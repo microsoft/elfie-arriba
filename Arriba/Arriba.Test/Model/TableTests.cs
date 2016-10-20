@@ -169,13 +169,16 @@ namespace Arriba.Test.Model
                     new string[] { "Existing Item", "New Item", "New Item" }
                 });
 
-            // Ask Arriba not to add new items. Verify no items added, existing item updated
-            t.AddOrUpdate(newData, new AddOrUpdateOptions() { AddMissingRows = false });
+            // Ask Arriba to ignore new items. Verify no items added, existing item updated
+            t.AddOrUpdate(newData, new AddOrUpdateOptions() { Mode = AddOrUpdateMode.UpdateAndIgnoreAdds });
             Assert.AreEqual(5, (int)t.Count);
 
             SelectQuery q = new SelectQuery() { Columns = new string[] { "Title" }, Count = 10, Where = SelectQuery.ParseWhere("ID = 11512") };
             SelectResult result = t.Select(q);
             Assert.AreEqual("Existing Item", result.Values[0, 0].ToString());
+
+            // Ask Arriba to not add items. Verify exception trying to add a new item.
+            Verify.Exception<ArribaWriteException>(() => t.AddOrUpdate(newData, new AddOrUpdateOptions() { Mode = AddOrUpdateMode.UpdateOnly }));
         }
 
         [TestMethod]

@@ -1,13 +1,40 @@
 ﻿namespace Arriba.Model
 {
+    /// <summary>
+    ///  AddOrUpdate mode determines how AddOrUpdate handles items
+    ///  with IDs not already in the table.
+    ///   - AddOrUpdate adds rows for new IDs
+    ///   - UpdateOnly throws for new IDs
+    ///   - UpdateAndIgnoreAdds skips items with new IDs
+    /// </summary>
+    public enum AddOrUpdateMode : byte
+    {
+        AddOrUpdate = 0,
+        UpdateOnly = 1,
+        UpdateAndIgnoreAdds = 2
+    }
+
+    /// <summary>
+    ///  AddOrUpdateOptions is used to control the behavior of Table.AddOrUpdate.
+    /// </summary>
     public class AddOrUpdateOptions
     {
-        public bool AddMissingRows { get; set; }
+        /// <summary>
+        ///  Mode determines what to do with items with new IDs.
+        ///  By default, rows are added for items with new IDs.
+        /// </summary>
+        public AddOrUpdateMode Mode { get; set; }
+
+        /// <summary>
+        ///  AddMissingColumns determines whether to add columns not seen before
+        ///  or throw an exception if a new column name is passed.
+        ///  By default, columns are added only to empty tables (on the first insert).
+        /// </summary>
         public bool AddMissingColumns { get; set; }
 
         public AddOrUpdateOptions()
         {
-            this.AddMissingRows = true;
+            this.Mode = AddOrUpdateMode.AddOrUpdate;
             this.AddMissingColumns = false;
         }
     }

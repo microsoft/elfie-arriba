@@ -266,7 +266,7 @@ namespace Arriba.Model
             }
 
             // Look up the LID for each item or add it
-            ushort[] itemLIDs = FindOrAssignLIDs(values, partitionChains, chainStartIndex, rowCount, idColumnIndex, options.AddMissingRows);
+            ushort[] itemLIDs = FindOrAssignLIDs(values, partitionChains, chainStartIndex, rowCount, idColumnIndex, options.Mode);
 
             // If there are new items, resize every column for them
             ushort newCount = (ushort)(_itemCount);
@@ -288,7 +288,7 @@ namespace Arriba.Model
             }
         }
 
-        private ushort[] FindOrAssignLIDs(DataBlock values, int[] partitionChains, int startingIndex, int count, int idColumnIndex, bool addItems)
+        private ushort[] FindOrAssignLIDs(DataBlock values, int[] partitionChains, int startingIndex, int count, int idColumnIndex, AddOrUpdateMode mode)
         {
             Array idColumnData = values.GetColumn(idColumnIndex);
             Type idColumnDataType = idColumnData.GetType().GetElementType();
@@ -297,7 +297,7 @@ namespace Arriba.Model
             // to the column array.  If the types do not match, we need to fallback to object to allow the Value class to handle the type conversion
             ITypedAddOrUpdateWorker worker = NativeContainer.CreateTypedInstance<ITypedAddOrUpdateWorker>(typeof(AddOrUpdateWorker<>), idColumnDataType);
 
-            return worker.FindOrAssignLIDs(this, idColumnData, partitionChains, startingIndex, count, addItems);
+            return worker.FindOrAssignLIDs(this, idColumnData, partitionChains, startingIndex, count, mode);
         }
 
         private void FillPartitionColumn(DataBlock values, int columnIndex, int[] partitionChains, int chainStartIndex, int rowCount, ushort[] itemLIDs)
@@ -318,7 +318,7 @@ namespace Arriba.Model
 
         private interface ITypedAddOrUpdateWorker
         {
-            ushort[] FindOrAssignLIDs(Partition p, Array idColumnValues, int[] partitionChains, int startingIndex, int count, bool addItems);
+            ushort[] FindOrAssignLIDs(Partition p, Array idColumnValues, int[] partitionChains, int startingIndex, int count, AddOrUpdateMode mode);
             void FillPartitionColumn(Partition p, DataBlock values, int columnIndex, int[] partitionChains, int chainStartIndex, int rowCount, ushort[] itemLIDs);
         }
 
@@ -328,7 +328,7 @@ namespace Arriba.Model
         /// <typeparam name="T">Type of the column array</typeparam>
         private class AddOrUpdateWorker<T> : ITypedAddOrUpdateWorker
         {
-            public ushort[] FindOrAssignLIDs(Partition p, Array idColumnValues, int[] partitionChains, int startingIndex, int count, bool addItems)
+            public ushort[] FindOrAssignLIDs(Partition p, Array idColumnValues, int[] partitionChains, int startingIndex, int count, AddOrUpdateMode mode)
             {
                 // TODO: consider keeping one instance of the worker long term? if so, this becomes a private class field
                 ValueTypeReference<T> vtr = new ValueTypeReference<T>();
@@ -376,7 +376,7 @@ namespace Arriba.Model
                 }
 
                 // Go back and add the items which need to be added in a batch
-                if (addItems)
+                if (mode != AddOrUpdateMode.UpdateAndIgnoreAdds)
                 {
                     Dictionary<T, ushort> newlyAssignedLIDs = null;
 
@@ -395,6 +395,12 @@ namespace Arriba.Model
                             // If this ID was already added in this batch, this time it's an update
                             if (newlyAssignedLIDs.TryGetValue(externalID, out lid) == false)
                             {
+                                // If in "UpdateOnly" mode, throw
+                                if(mode == AddOrUpdateMode.UpdateOnly)
+                                {
+                                    throw new ArribaWriteException(externalID, p.IDColumn.Name, externalID, new ArribaException("AddOrUpdate was in UpdateOnly mode but contained a new ID, which is an error."));
+                                }
+
                                 // If this was a new item and not added in this batch, assign it a LID
                                 lid = p._itemCount;
 

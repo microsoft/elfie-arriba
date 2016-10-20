@@ -89,7 +89,7 @@ namespace Arriba.Csv
             // Always add missing columns. Add rows only when not in 'decorate' mode
             AddOrUpdateOptions options = new AddOrUpdateOptions();
             options.AddMissingColumns = true;
-            options.AddMissingRows = build;
+            options.Mode = (build ? AddOrUpdateMode.AddOrUpdate : AddOrUpdateMode.UpdateAndIgnoreAdds);
 
             using (CsvReader reader = new CsvReader(csvFilePath))
             {
