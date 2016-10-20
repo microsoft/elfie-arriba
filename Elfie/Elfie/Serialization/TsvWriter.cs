@@ -45,8 +45,9 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         /// <param name="tsvFilePath">Path to file to write.</param>
         /// <param name="columnNames">Column Names to write out.</param>
         /// <param name="writeHeaderRow">True to write a header row, False otherwise.</param>
-        public TsvWriter(string tsvFilePath, IEnumerable<string> columnNames, bool writeHeaderRow = true) :
-            this(new FileStream(tsvFilePath, FileMode.Create, FileAccess.Write, FileShare.None), columnNames, writeHeaderRow)
+        /// /// <param name="cellDelimiter">Delimiter between cells, default is tab.</param>
+        public TsvWriter(string tsvFilePath, IEnumerable<string> columnNames, bool writeHeaderRow = true, char cellDelimiter = '\t') :
+            this(new FileStream(tsvFilePath, FileMode.Create, FileAccess.Write, FileShare.None), columnNames, writeHeaderRow, cellDelimiter)
         { }
 
         /// <summary>
