@@ -69,8 +69,10 @@ namespace Arriba.Csv
 
         private static void Build(bool build, string tableName, string csvFilePath, int maximumCount, string columns)
         {
+            string action = (build ? "Building" : "Decorating");
+
             Stopwatch w = Stopwatch.StartNew();
-            Console.WriteLine("Building Arriba table '{0}' from '{1}'...", tableName, csvFilePath);
+            Console.WriteLine("{0} Arriba table '{1}' from '{2}'...", action, tableName, csvFilePath);
 
             IList<string> columnNames = null;
             if (!String.IsNullOrEmpty(columns)) columnNames = SplitAndTrim(columns);
