@@ -59,5 +59,38 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
             directConversion = block.GetCopy(String.Empty);
             Assert.IsTrue(directConversion.IsEmpty());
         }
+
+        [TestMethod]
+        public void String8Block_Concatenate()
+        {
+            String8Block block = new String8Block();
+            String8 delimiter = block.GetCopy("; ");
+            String8 one = block.GetCopy("One");
+            String8 two = block.GetCopy("Two");
+            String8 three = block.GetCopy("Three");
+
+            // Verify Concatenate returns only one side if the other is empty
+            Assert.AreEqual(String8.Empty, block.Concatenate(String8.Empty, delimiter, String8.Empty));
+            Assert.AreEqual(two, block.Concatenate(String8.Empty, delimiter, two));
+            Assert.AreEqual(two, block.Concatenate(two, delimiter, String8.Empty));
+
+            // Verify a regular concatenation
+            String8 oneTwo = block.Concatenate(one, delimiter, two);
+            Assert.AreEqual("One; Two", oneTwo.ToString());
+
+            // Verify re-concatenating the last item re-uses memory and doesn't mess up previous item
+            String8 oneTwoThree = block.Concatenate(oneTwo, delimiter, three);
+            Assert.AreEqual(oneTwo._buffer, oneTwoThree._buffer);
+            Assert.AreEqual(oneTwo._index, oneTwoThree._index);
+
+            Assert.AreEqual("One; Two", oneTwo.ToString());
+            Assert.AreEqual("One; Two; Three", oneTwoThree.ToString());
+
+            // Verify re-concatenating doesn't overwrite a following item
+            String8 four = block.GetCopy("Four");
+            String8 oneTwoThreeFour = block.Concatenate(oneTwoThree, delimiter, four);
+            Assert.AreEqual("One; Two; Three", oneTwoThree.ToString());
+            Assert.AreEqual("One; Two; Three; Four", oneTwoThreeFour.ToString());
+        }
     }
 }

@@ -45,6 +45,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
     public class TsvReader : IDisposable
     {
         private BinaryReader _reader;
+        private List<string> _columnHeadingsList;
         private Dictionary<string, int> _columnHeadings;
 
         private char _cellDelimiter;
@@ -64,6 +65,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         public TsvReader(string tsvFilePath, bool hasHeaderRow = true, char cellDelimiter = '\t')
         {
             _reader = new BinaryReader(new FileStream(tsvFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+            _columnHeadingsList = new List<string>();
             _columnHeadings = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
             _cellDelimiter = cellDelimiter;
@@ -80,9 +82,19 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
 
                 for (int i = 0; i < _currentRow.Count; ++i)
                 {
-                    _columnHeadings[CurrentRow(i).ToString()] = i;
+                    string columnName = CurrentRow(i).ToString();
+                    _columnHeadingsList.Add(columnName);
+                    _columnHeadings[columnName] = i;
                 }
             }
+        }
+
+        /// <summary>
+        ///  Return the column headings found. The set is empty if there was no heading row.
+        /// </summary>
+        public IEnumerable<string> Columns
+        {
+            get { return this._columnHeadingsList;  }
         }
 
         /// <summary>

@@ -27,12 +27,12 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
 
             using (TsvWriter writer = new TsvWriter("TsvWriter.tsv", new string[] { "LineNumber", "Count", "Description", "Source" }))
             {
-                Assert.AreEqual(1, writer.RowNumber);
+                Assert.AreEqual(2, writer.LineNumber);
 
                 int sum = 0;
-                for (int i = 1; i <= 10; ++i)
+                for (int i = 2; i <= 10; ++i)
                 {
-                    Assert.AreEqual(i, writer.RowNumber);
+                    Assert.AreEqual(i, writer.LineNumber);
 
                     sum += i;
                     writer.Write(i);
@@ -53,7 +53,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
             Assert.IsTrue(tsvContent.Contains("ValueWithIssues"));
 
             // Verify the first row fully
-            Assert.IsTrue(tsvContent.Contains("1\t1\tSample Description\tValueWithIssues\r\n"));
+            Assert.IsTrue(tsvContent.Contains("2\t2\tSample Description\tValueWithIssues\r\n"));
         }
 
         [TestMethod]
@@ -128,7 +128,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
                     }
 
                     bytesWritten += writer.BytesWritten;
-                    rowsWritten += writer.RowNumber;
+                    rowsWritten += writer.LineNumber;
                 }
             }
             w.Stop();
