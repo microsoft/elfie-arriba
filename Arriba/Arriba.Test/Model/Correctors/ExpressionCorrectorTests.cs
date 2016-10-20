@@ -77,7 +77,7 @@ namespace Arriba.Test.Model.Correctors
                 }
             );
 
-            people.AddOrUpdate(block);
+            people.AddOrUpdate(block, new AddOrUpdateOptions() { AddMissingColumns = true });
 
             UserAliasCorrector corrector = new UserAliasCorrector(people);
 

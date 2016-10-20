@@ -297,15 +297,6 @@ namespace Arriba.Model
         #endregion
 
         #region AddOrUpdate (insert, update)
-        public bool ShouldAddColumnsDynamically
-        {
-            get
-            {
-                // If a table has no data and no or one column, it's willing to add Columns dynamically discovered from the first block AddOrUpdated
-                return this.Count == 0 && _partitions[0].ColumnDetails.Count <= 1;
-            }
-        }
-
         public void AddColumnsFromBlock(DataBlock values)
         {
             bool foundIdColumn = (_partitions[0].IDColumn != null);
@@ -354,10 +345,7 @@ namespace Arriba.Model
         /// <param name="values">Set of Columns and values to add or update</param>
         public void AddOrUpdate(DataBlock values)
         {
-            AddOrUpdateOptions options = new Model.AddOrUpdateOptions();
-            options.AddMissingColumns = ShouldAddColumnsDynamically;
-
-            AddOrUpdate(values, options);
+            AddOrUpdate(values, new AddOrUpdateOptions());
         }
 
         /// <summary>

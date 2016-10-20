@@ -159,7 +159,7 @@ namespace Arriba.Test.Model
         public void Table_AddOrUpdate_NoAddRows()
         {
             Table t = new Table("Sample", 50000);
-            t.AddOrUpdate(BuildSampleData());
+            t.AddOrUpdate(BuildSampleData(), new AddOrUpdateOptions() { AddMissingColumns = true });
 
             // Add one new item and update an item
             DataBlock newData = new DataBlock(new string[] { "ID", "Title" }, 2,
@@ -185,7 +185,7 @@ namespace Arriba.Test.Model
         public void Table_DynamicColumnCreation()
         {
             Table t = new Table("Sample", 50000);
-            t.AddOrUpdate(BuildSampleData());
+            t.AddOrUpdate(BuildSampleData(), new AddOrUpdateOptions() { AddMissingColumns = true });
 
             // When empty, table should automatically add columns
             Assert.AreEqual(5, t.ColumnDetails.Count);
@@ -207,15 +207,8 @@ namespace Arriba.Test.Model
             DataBlock block = new DataBlock(new string[] { "ID", "Priority", "NewColumn" }, 1);
             block.SetRow(0, new object[] { 12345, 1, "New Value" });
 
-            try
-            {
-                t.AddOrUpdate(block);
-                Assert.Fail("Block with new column after first insert shouldn't successfully be added.");
-            }
-            catch (ArribaException)
-            {
-                // Expected. An ArribaException should be thrown identifying the first unknown column.
-            }
+            // Verify AddOrUpdate won't add columns by default (option must be set)
+            Verify.Exception<ArribaException>(() => t.AddOrUpdate(block));
 
             // Verify add didn't partially happen
             Assert.AreEqual(5, (int)t.Count);
@@ -228,48 +221,10 @@ namespace Arriba.Test.Model
                     new string[] { "Fixed", "Won't Fix" }
                 });
 
-            // Verify default AddOrUpdate won't add columns again
-            try
-            {
-                t.AddOrUpdate(newData);
-                Assert.Fail("AddOrUpdate shouldn't add columns after the first insert.");
-            }
-            catch(ArribaException)
-            {
-                // Expected - columns are only added on the first insert
-            }
-
             // Verify AddOrUpdate with option set will add the new column
             t.AddOrUpdate(newData, new AddOrUpdateOptions() { AddMissingColumns = true });
 
             Assert.AreEqual(7, (int)t.Count);
-        }
-
-        [TestMethod]
-        public void Table_DynamicColumnCreation_IdManuallyAdded()
-        {
-            Table t = new Table("Sample", 50000);
-
-            // Table should allow the primary key column to be defined first
-            t.AddColumn(new ColumnDetails("ActiveTime", "TimeSpan", null) { IsPrimaryKey = true });
-
-            t.AddOrUpdate(BuildSampleData());
-
-            // When empty, table should automatically add columns
-            Assert.AreEqual(5, t.ColumnDetails.Count);
-
-            // Verify expected type inference
-            Assert.AreEqual("Int32", t.GetDetails("Priority").Type);
-            Assert.AreEqual("String", t.GetDetails("Title").Type);
-            Assert.AreEqual("Int32", t.GetDetails("ID").Type);
-            Assert.AreEqual("Boolean", t.GetDetails("IsDuplicate").Type);
-            Assert.AreEqual("TimeSpan", t.GetDetails("ActiveTime").Type);
-
-            // Identity column should be 'Priority' because that was specified
-            Assert.AreEqual("ActiveTime", t.IDColumn.Name);
-
-            // Data should've been added
-            Assert.AreEqual(5, (int)t.Count);
         }
 
         [TestMethod]
@@ -354,7 +309,7 @@ namespace Arriba.Test.Model
             Assert.AreEqual(4, b.RowCount);
 
             // Verify Table only inserts rows which are "official"
-            t.AddOrUpdate(b);
+            t.AddOrUpdate(b, new AddOrUpdateOptions() { AddMissingColumns = true });
             Assert.AreEqual(4, (int)t.Count);
         }
 
