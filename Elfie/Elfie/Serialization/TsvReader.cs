@@ -92,7 +92,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         /// <summary>
         ///  Return the column headings found. The set is empty if there was no heading row.
         /// </summary>
-        public IEnumerable<string> Columns
+        public IReadOnlyList<string> Columns
         {
             get { return this._columnHeadingsList;  }
         }
@@ -121,6 +121,19 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         /// <returns>String8 with value for column in current row. Throws if not enough columns in row.</returns>
         public String8 CurrentRow(int columnIndex)
         {
+            // If this is the last column and there's a trailing '\r', exclude it from the value
+            if(columnIndex == _currentRow.Count - 1)
+            {
+                String8 fullValue = _currentRow[columnIndex];
+                if (fullValue.Length > 0)
+                {
+                    byte lastCharacter = fullValue[fullValue.Length - 1];
+                    if (lastCharacter == '\r') fullValue = fullValue.Substring(0, fullValue.Length - 1);
+                }
+
+                return fullValue;
+            }
+
             return _currentRow[columnIndex];
         }
 
@@ -169,8 +182,8 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             if (_nextRowIndexInBlock >= _currentBlock.Count) return false;
 
             // Get the next (complete) row from the current block
-            _currentLine++;
             _currentRow = _currentBlock[_nextRowIndexInBlock].Split(_cellDelimiter, _cellPositionArray);
+            _currentLine++;
             _nextRowIndexInBlock++;
 
             return true;

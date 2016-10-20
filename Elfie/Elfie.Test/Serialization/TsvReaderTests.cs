@@ -27,23 +27,23 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
 
             using (StreamWriter writer = new StreamWriter(SampleTsvPath))
             {
-                writer.Write("LineNumber\tCount\tDescription\n");
+                writer.Write("LineNumber\tCount\tDescription\r\n");
                 for (int i = 0; i < 10000; ++i)
                 {
                     if (i % 100 == 99)
                     {
                         // Write an empty row (1/100)
-                        writer.Write("\n");
+                        writer.Write("\r\n");
                     }
                     else if (i == 5000)
                     {
                         // Write a huge row
-                        writer.Write(string.Format("{0}\t{1}\t{2}\t{3}\n", 10002, r.Next(100000), new string('Z', 100000), "Extra"));
+                        writer.Write(string.Format("{0}\t{1}\t{2}\t{3}\r\n", 10002, r.Next(100000), new string('Z', 100000), "Extra"));
                     }
                     else
                     {
                         // Write a normal row
-                        writer.Write(string.Format("{0}\t{1}\t{2}\n", i + 2, r.Next(100000), "ABCDEF"));
+                        writer.Write(string.Format("{0}\t{1}\t{2}\r\n", i + 2, r.Next(100000), "ABCDEF"));
                     }
                 }
             }
@@ -178,16 +178,32 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
         }
 
         [TestMethod]
-        public void TsvReader_NoTrailingNewline()
+        public void TsvReader_NewlineVariations()
         {
-            string tsvPath = "NoTrailingNewline.tsv";
-            string tsvContent = "One\tTwo\tThree\n1\t2\t3";
+            string tsvPath = "NewlineVariations.tsv";
+            string tsvContent = "One\tTwo\tThree\n1\t2\t3\r\n4\t5\t6\n7\t8\t9";
             File.WriteAllText(tsvPath, tsvContent);
 
             using (TsvReader r = new TsvReader(tsvPath, true))
             {
-                Assert.IsTrue(r.NextRow(), "Last line without newline should be read");
+                // Verify column heading not clipped even though no '\r'
+                Assert.AreEqual("Three", r.Columns[2]);
+
+                Assert.IsTrue(r.NextRow());
+
+                // Verify last column doesn't have extra '\r' when terminated with '\r\n'
                 Assert.AreEqual("3", r.CurrentRow(2).ToString());
+
+                Assert.IsTrue(r.NextRow());
+
+                // Verify last column no clipped when terminated with '\n'
+                Assert.AreEqual("6", r.CurrentRow(2).ToString());
+
+                Assert.IsTrue(r.NextRow());
+
+                // Verify last column no clipped when unterminated [EOF]
+                Assert.AreEqual("9", r.CurrentRow(2).ToString());
+
                 Assert.IsFalse(r.NextRow(), "Reader didn't stop after last line without newline");
             }
         }
