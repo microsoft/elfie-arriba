@@ -185,29 +185,6 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
 
         #region Basic Methods
         /// <summary>
-        ///  Convert a String8 with a non-negative integer [digits only] to the numeric value.
-        /// </summary>
-        /// <returns>Numeric Value or -1 if not an integer</returns>
-        public int ToInteger()
-        {
-            if (IsEmpty()) return -1;
-
-            long value = 0;
-            int end = _index + _length;
-            for (int i = _index; i < end; ++i)
-            {
-                int digitValue = this._buffer[i] - UTF8.Zero;
-                if (digitValue < 0 || digitValue > 9) return -1;
-
-                value *= 10;
-                value += digitValue;
-            }
-
-            if (value > int.MaxValue) return -1;
-            return (int)value;
-        }
-
-        /// <summary>
         ///  Return a String8 for the value of this string after the given index.
         /// </summary>
         /// <param name="index">Index from which to include characters</param>
@@ -272,6 +249,65 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             }
 
             return -1;
+        }
+        #endregion
+
+        #region Type Conversions
+        /// <summary>
+        ///  Convert a String8 with a non-negative integer [digits only] to the numeric value.
+        /// </summary>
+        /// <returns>Numeric Value or -1 if not an integer</returns>
+        public int ToInteger()
+        {
+            if (IsEmpty()) return -1;
+
+            long value = 0;
+            int end = _index + _length;
+            for (int i = _index; i < end; ++i)
+            {
+                int digitValue = this._buffer[i] - UTF8.Zero;
+                if (digitValue < 0 || digitValue > 9) return -1;
+
+                value *= 10;
+                value += digitValue;
+                if (value > int.MaxValue) return -1;
+            }
+
+            return (int)value;
+        }
+
+        public static String8 FromInteger(int value, byte[] buffer)
+        {
+            if (buffer.Length < 11) throw new ArgumentException("String8.FromInteger requires an 11 byte buffer for integer conversion.");
+
+            int i = 0;
+            long valueLeft = value;
+
+            // Write minus sign if negative
+            if (valueLeft < 0)
+            {
+                valueLeft = -valueLeft;
+                buffer[i++] = (byte)'-';
+            }
+
+            // Determine how many digits in value
+            int digits = 1;
+            int scale = 10;
+            while (valueLeft >= scale && digits < 10)
+            {
+                digits++;
+                scale *= 10;
+            }
+
+            // Write digits right to left
+            for (int j = i + digits - 1; j >= i; --j)
+            {
+                long digit = valueLeft % 10;
+                buffer[j] = (byte)(UTF8.Zero + (byte)digit);
+                valueLeft /= 10;
+            }
+
+            return new String8(buffer, 0, i + digits);
         }
         #endregion
 

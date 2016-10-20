@@ -217,7 +217,7 @@ namespace Arriba.Model
         ///  For each item, the value for each column is set to the provided values.
         /// </summary>
         /// <param name="values">Set of Columns and values to add or update</param>
-        public void AddOrUpdate(DataBlock values)
+        public void AddOrUpdate(DataBlock values, AddOrUpdateOptions options)
         {
             if (values == null) throw new ArgumentNullException("values");
 
@@ -235,7 +235,7 @@ namespace Arriba.Model
             // Terminate on the final item.
             partitionChains[values.RowCount - 1] = -1;
 
-            AddOrUpdate(values, partitionChains, 0);
+            AddOrUpdate(values, options, partitionChains, 0);
         }
 
         /// <summary>
@@ -246,7 +246,7 @@ namespace Arriba.Model
         /// <param name="partitionChains">storage for the set of linked lists indicating which values are in each partition.  The index is the row number in values
         /// of the corresponding item.  The value is the next item in the chain with -1 indicating the end.</param>
         /// <param name="chainHead">starting index for the list of items that this partition should add</param>
-        public void AddOrUpdate(DataBlock values, int[] partitionChains, int chainStartIndex)
+        public void AddOrUpdate(DataBlock values, AddOrUpdateOptions options, int[] partitionChains, int chainStartIndex)
         {
             if (values == null) throw new ArgumentNullException("values");
             if (partitionChains == null) throw new ArgumentNullException("partitionChains");
@@ -266,7 +266,7 @@ namespace Arriba.Model
             }
 
             // Look up the LID for each item or add it
-            ushort[] itemLIDs = FindOrAssignLIDs(values, partitionChains, chainStartIndex, rowCount, idColumnIndex);
+            ushort[] itemLIDs = FindOrAssignLIDs(values, partitionChains, chainStartIndex, rowCount, idColumnIndex, options.Mode);
 
             // If there are new items, resize every column for them
             ushort newCount = (ushort)(_itemCount);
@@ -288,7 +288,7 @@ namespace Arriba.Model
             }
         }
 
-        private ushort[] FindOrAssignLIDs(DataBlock values, int[] partitionChains, int startingIndex, int count, int idColumnIndex)
+        private ushort[] FindOrAssignLIDs(DataBlock values, int[] partitionChains, int startingIndex, int count, int idColumnIndex, AddOrUpdateMode mode)
         {
             Array idColumnData = values.GetColumn(idColumnIndex);
             Type idColumnDataType = idColumnData.GetType().GetElementType();
@@ -297,7 +297,7 @@ namespace Arriba.Model
             // to the column array.  If the types do not match, we need to fallback to object to allow the Value class to handle the type conversion
             ITypedAddOrUpdateWorker worker = NativeContainer.CreateTypedInstance<ITypedAddOrUpdateWorker>(typeof(AddOrUpdateWorker<>), idColumnDataType);
 
-            return worker.FindOrAssignLIDs(this, idColumnData, partitionChains, startingIndex, count);
+            return worker.FindOrAssignLIDs(this, idColumnData, partitionChains, startingIndex, count, mode);
         }
 
         private void FillPartitionColumn(DataBlock values, int columnIndex, int[] partitionChains, int chainStartIndex, int rowCount, ushort[] itemLIDs)
@@ -318,7 +318,7 @@ namespace Arriba.Model
 
         private interface ITypedAddOrUpdateWorker
         {
-            ushort[] FindOrAssignLIDs(Partition p, Array idColumnValues, int[] partitionChains, int startingIndex, int count);
+            ushort[] FindOrAssignLIDs(Partition p, Array idColumnValues, int[] partitionChains, int startingIndex, int count, AddOrUpdateMode mode);
             void FillPartitionColumn(Partition p, DataBlock values, int columnIndex, int[] partitionChains, int chainStartIndex, int rowCount, ushort[] itemLIDs);
         }
 
@@ -328,7 +328,7 @@ namespace Arriba.Model
         /// <typeparam name="T">Type of the column array</typeparam>
         private class AddOrUpdateWorker<T> : ITypedAddOrUpdateWorker
         {
-            public ushort[] FindOrAssignLIDs(Partition p, Array idColumnValues, int[] partitionChains, int startingIndex, int count)
+            public ushort[] FindOrAssignLIDs(Partition p, Array idColumnValues, int[] partitionChains, int startingIndex, int count, AddOrUpdateMode mode)
             {
                 // TODO: consider keeping one instance of the worker long term? if so, this becomes a private class field
                 ValueTypeReference<T> vtr = new ValueTypeReference<T>();
@@ -376,52 +376,61 @@ namespace Arriba.Model
                 }
 
                 // Go back and add the items which need to be added in a batch
-                Dictionary<T, ushort> newlyAssignedLIDs = null;
-
-                for (int i = 0, sourceItemIndex = startingIndex; i < count; ++i, sourceItemIndex = partitionChains[sourceItemIndex])
+                if (mode != AddOrUpdateMode.UpdateAndIgnoreAdds)
                 {
-                    ushort lid = itemLIDs[i];
+                    Dictionary<T, ushort> newlyAssignedLIDs = null;
 
-                    // If this is an add...
-                    if (lid == ushort.MaxValue)
+                    for (int i = 0, sourceItemIndex = startingIndex; i < count; ++i, sourceItemIndex = partitionChains[sourceItemIndex])
                     {
-                        // If we have adds, we'll need to track new IDs
-                        if (newlyAssignedLIDs == null) newlyAssignedLIDs = new Dictionary<T, ushort>(addCount);
+                        ushort lid = itemLIDs[i];
 
-                        T externalID = idColumnData[sourceItemIndex];
-
-                        // If this ID was already added in this batch, this time it's an update
-                        if (newlyAssignedLIDs.TryGetValue(externalID, out lid) == false)
+                        // If this is an add...
+                        if (lid == ushort.MaxValue)
                         {
-                            // If this was a new item and not added in this batch, assign it a LID
-                            lid = p._itemCount;
+                            // If we have adds, we'll need to track new IDs
+                            if (newlyAssignedLIDs == null) newlyAssignedLIDs = new Dictionary<T, ushort>(addCount);
 
-                            if (lid == ushort.MaxValue)
+                            T externalID = idColumnData[sourceItemIndex];
+
+                            // If this ID was already added in this batch, this time it's an update
+                            if (newlyAssignedLIDs.TryGetValue(externalID, out lid) == false)
                             {
-                                throw new ArribaWriteException(externalID, p.IDColumn.Name, externalID, new ArribaException("Column full in Partition. Unable to add items."));
-                            }
+                                // If in "UpdateOnly" mode, throw
+                                if(mode == AddOrUpdateMode.UpdateOnly)
+                                {
+                                    throw new ArribaWriteException(externalID, p.IDColumn.Name, externalID, new ArribaException("AddOrUpdate was in UpdateOnly mode but contained a new ID, which is an error."));
+                                }
 
-                            p._itemCount++;
-                            idColumn.SetSize((ushort)(p._itemCount));
+                                // If this was a new item and not added in this batch, assign it a LID
+                                lid = p._itemCount;
 
-                            if (typedIdColumn != null)
-                            {
-                                typedIdColumn[lid] = externalID;
-                            }
-                            else
-                            {
-                                idColumn[lid] = externalID;
-                            }
+                                if (lid == ushort.MaxValue)
+                                {
+                                    throw new ArribaWriteException(externalID, p.IDColumn.Name, externalID, new ArribaException("Column full in Partition. Unable to add items."));
+                                }
 
-                            newlyAssignedLIDs[externalID] = lid;
+                                p._itemCount++;
+                                idColumn.SetSize((ushort)(p._itemCount));
+
+                                if (typedIdColumn != null)
+                                {
+                                    typedIdColumn[lid] = externalID;
+                                }
+                                else
+                                {
+                                    idColumn[lid] = externalID;
+                                }
+
+                                newlyAssignedLIDs[externalID] = lid;
+                            }
                         }
+
+                        itemLIDs[i] = lid;
                     }
 
-                    itemLIDs[i] = lid;
+                    // Commit the updates to the values column if the column requires it (FastAddSortedColumn does)
+                    if (idColumn is ICommittable) (idColumn as ICommittable).Commit();
                 }
-
-                // Commit the updates to the values column if the column requires it (FastAddSortedColumn does)
-                if (idColumn is ICommittable) (idColumn as ICommittable).Commit();
 
                 return itemLIDs;
             }
@@ -443,6 +452,9 @@ namespace Arriba.Model
 
                 for (int rowIndex = 0, sourceItemIndex = chainStartIndex; rowIndex < rowCount; ++rowIndex, sourceItemIndex = partitionChains[sourceItemIndex])
                 {
+                    // If the item is new and no LID was assigned, we don't set values
+                    if (itemLIDs[rowIndex] == ushort.MaxValue) continue;
+
                     try
                     {
                         if (typedColumn != null)

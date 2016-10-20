@@ -297,15 +297,6 @@ namespace Arriba.Model
         #endregion
 
         #region AddOrUpdate (insert, update)
-        public bool ShouldAddColumnsDynamically
-        {
-            get
-            {
-                // If a table has no data and no or one column, it's willing to add Columns dynamically discovered from the first block AddOrUpdated
-                return this.Count == 0 && _partitions[0].ColumnDetails.Count <= 1;
-            }
-        }
-
         public void AddColumnsFromBlock(DataBlock values)
         {
             bool foundIdColumn = (_partitions[0].IDColumn != null);
@@ -354,13 +345,24 @@ namespace Arriba.Model
         /// <param name="values">Set of Columns and values to add or update</param>
         public void AddOrUpdate(DataBlock values)
         {
+            AddOrUpdate(values, new AddOrUpdateOptions());
+        }
+
+        /// <summary>
+        ///  Add or Update the given items with the given values. The ID column must be passed
+        ///  and must be the first column. If an ID is not known, the item will be added.
+        ///  For each item, the value for each column is set to the provided values.
+        /// </summary>
+        /// <param name="values">Set of Columns and values to add or update</param>
+        public void AddOrUpdate(DataBlock values, AddOrUpdateOptions options)
+        {
             _locker.EnterWriteLock();
             try
             {
                 if (values == null) throw new ArgumentNullException("values");
 
                 // Add columns from data, if this is the first data and columns weren't predefined
-                if (ShouldAddColumnsDynamically) AddColumnsFromBlock(values);
+                if (options.AddMissingColumns) AddColumnsFromBlock(values);
 
                 ColumnDetails idColumn = _partitions[0].IDColumn;
                 if (idColumn == null) throw new ArribaException("Items cannot be added to this Table because it does not yet have an ID column defined. Call AddColumn with exactly one column with 'IsPrimaryKey' true and then items may be added.");
@@ -380,7 +382,7 @@ namespace Arriba.Model
                 // Non-Parallel Implementation
                 if (_partitions.Count == 1)
                 {
-                    _partitions[0].AddOrUpdate(values);
+                    _partitions[0].AddOrUpdate(values, options);
                     return;
                 }
 
@@ -398,7 +400,7 @@ namespace Arriba.Model
                     {
                         for (int i = range.Item1; i < range.Item2; ++i)
                         {
-                            _partitions[i].AddOrUpdate(values, partitionChains, partitionChainHeads[i]);
+                            _partitions[i].AddOrUpdate(values, options, partitionChains, partitionChainHeads[i]);
                         }
                     };
 

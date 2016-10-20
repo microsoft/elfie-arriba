@@ -20,46 +20,46 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
 
         public String8Column(StringStore strings)
         {
-            this._strings = strings;
-            this._identifiers = new PartialArray<int>();
+            _strings = strings;
+            _identifiers = new PartialArray<int>();
         }
 
         public String8 this[int index]
         {
-            get { return this._strings[this._identifiers[index]]; }
-            set { this._identifiers[index] = this._strings.FindOrAddString(value); }
+            get { return _strings[_identifiers[index]]; }
+            set { _identifiers[index] = _strings.FindOrAddString(value); }
         }
 
         public int Count
         {
-            get { return this._identifiers.Count; }
+            get { return _identifiers.Count; }
         }
 
         public void Clear()
         {
-            this._identifiers.Clear();
+            _identifiers.Clear();
         }
 
         public void Add()
         {
-            this._identifiers.Add();
+            _identifiers.Add();
         }
 
         public void ConvertToImmutable()
         {
-            this._strings.ConvertToImmutable(this._identifiers);
+            _strings.ConvertToImmutable(_identifiers);
         }
 
         public void WriteBinary(BinaryWriter w)
         {
             // StringStore is written separately
-            this._identifiers.WriteBinary(w);
+            _identifiers.WriteBinary(w);
         }
 
         public void ReadBinary(BinaryReader r)
         {
             // StringStore is read separately
-            this._identifiers.ReadBinary(r);
+            _identifiers.ReadBinary(r);
         }
     }
 }

@@ -136,6 +136,42 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
         }
 
         [TestMethod]
+        public void String8_ToInteger()
+        {
+            Assert.AreEqual(-1, TryToInteger(null));
+            Assert.AreEqual(-1, TryToInteger(String.Empty));
+            Assert.AreEqual(5, TryToInteger("5"));
+            Assert.AreEqual(12345, TryToInteger("12345"));
+            Assert.AreEqual(-1, TryToInteger("-6"));
+            Assert.AreEqual(int.MaxValue, TryToInteger(int.MaxValue.ToString()));
+            Assert.AreEqual(-1, TryToInteger("123g"));
+            Assert.AreEqual(-1, TryToInteger("9999999999"));
+            Assert.AreEqual(-1, TryToInteger("12345678901234567890"));
+        }
+
+        [TestMethod]
+        public void String8_FromInteger()
+        {
+            byte[] buffer = new byte[11];
+            Assert.AreEqual("0", String8.FromInteger(0, buffer).ToString());
+            Assert.AreEqual("9", String8.FromInteger(9, buffer).ToString());
+            Assert.AreEqual("-1", String8.FromInteger(-1, buffer).ToString());
+            Assert.AreEqual("-10", String8.FromInteger(-10, buffer).ToString());
+            Assert.AreEqual("99", String8.FromInteger(99, buffer).ToString());
+            Assert.AreEqual("100", String8.FromInteger(100, buffer).ToString());
+            Assert.AreEqual("-999", String8.FromInteger(-999, buffer).ToString());
+            Assert.AreEqual("123456789", String8.FromInteger(123456789, buffer).ToString());
+            Assert.AreEqual(int.MaxValue.ToString(), String8.FromInteger(int.MaxValue, buffer).ToString());
+            Assert.AreEqual(int.MinValue.ToString(), String8.FromInteger(int.MinValue, buffer).ToString());
+        }
+
+        private int TryToInteger(string value)
+        {
+            String8 value8 = String8.Convert(value, new byte[String8.GetLength(value)]);
+            return value8.ToInteger();
+        }
+
+        [TestMethod]
         public void String8_GetHashCode()
         {
             byte[] buffer = new byte[20];

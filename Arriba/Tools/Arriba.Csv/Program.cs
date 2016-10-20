@@ -24,9 +24,13 @@ namespace Arriba.Csv
         private const string Usage = @"
     Arriba.Csv builds or queries Arriba tables from CSV source data.
     Source data must include a unique ID column (the first column whose name ends with 'ID' or the first column).
+    'build' to create a new table and add all data.
+    'decorate' mode used to add new columns to existing rows only.
+    'query' to run a query from the command line.
     
     Arriba.Csv /mode:build /table:<TableName> /csvPath:<CsvFilePath> [/maximumCount:<RowLimitForTable>]? [/columns:""C1,C2,C3""]?
     Arriba.Csv /mode:query /table:<TableName> [/select:<ColumnList>]? [/orderBy:<ColumnName>]? [/count:<CountToShow>]?
+    Arriba.Csv /mode:decorate /table:<TableName> /csvPath:<CsvFilePath> [/maximumCount:<RowLimitForTable>]? [/columns:""C1,C2,C3""]?
 
     Ex:
       Arriba.Csv /mode:build /table:SP500 /csvPath:""C:\Temp\SP500 Price History.csv"" /maximumCount:50000
@@ -43,10 +47,10 @@ namespace Arriba.Csv
                 switch (mode)
                 {
                     case "build":
-                        Build(false, c.GetString("table"), c.GetString("csvPath"), c.GetInt("maximumCount", 100000), c.GetString("columns", null));
-                        break;
-                    case "add":
                         Build(true, c.GetString("table"), c.GetString("csvPath"), c.GetInt("maximumCount", 100000), c.GetString("columns", null));
+                        break;
+                    case "decorate":
+                        Build(false, c.GetString("table"), c.GetString("csvPath"), c.GetInt("maximumCount", 100000), c.GetString("columns", null));
                         break;
                     case "query":
                         Query(c.GetString("table"), c.GetString("select", ""), c.GetString("orderBy", ""), c.GetInt("count", QueryResultLimit));
@@ -63,7 +67,7 @@ namespace Arriba.Csv
             }
         }
 
-        private static void Build(bool load, string tableName, string csvFilePath, int maximumCount, string columns)
+        private static void Build(bool build, string tableName, string csvFilePath, int maximumCount, string columns)
         {
             Stopwatch w = Stopwatch.StartNew();
             Console.WriteLine("Building Arriba table '{0}' from '{1}'...", tableName, csvFilePath);
@@ -72,15 +76,20 @@ namespace Arriba.Csv
             if (!String.IsNullOrEmpty(columns)) columnNames = SplitAndTrim(columns);
 
             Table table;
-            if (load)
-            {
-                table = new Table();
-                table.Load(tableName);
-            }
-            else
+            if (build)
             {
                 table = new Table(tableName, maximumCount);
             }
+            else
+            { 
+                table = new Table();
+                table.Load(tableName);
+            }
+
+            // Always add missing columns. Add rows only when not in 'decorate' mode
+            AddOrUpdateOptions options = new AddOrUpdateOptions();
+            options.AddMissingColumns = true;
+            options.Mode = (build ? AddOrUpdateMode.AddOrUpdate : AddOrUpdateMode.UpdateAndIgnoreAdds);
 
             using (CsvReader reader = new CsvReader(csvFilePath))
             {
@@ -91,12 +100,7 @@ namespace Arriba.Csv
                     DataBlock toInsert = block;
                     if (columnNames != null) toInsert = toInsert.StripToColumns(columnNames);
 
-                    if(load && rowsImported == 0)
-                    {
-                        table.AddColumnsFromBlock(toInsert);
-                    }
-
-                    table.AddOrUpdate(toInsert);
+                    table.AddOrUpdate(toInsert, options);
 
                     rowsImported += toInsert.RowCount;
                     Console.Write(".");

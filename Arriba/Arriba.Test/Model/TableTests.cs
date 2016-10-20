@@ -90,7 +90,7 @@ namespace Arriba.Test.Model
             DataBlock block = BuildSampleData();
             int[] partitionChains = new int[] { 1, -1, 3, 4, -1 };
             int[] partitionChainHeads = new int[] { 0, 2 };
-            p.AddOrUpdate(block, partitionChains, partitionChainHeads[1]);
+            p.AddOrUpdate(block, new AddOrUpdateOptions(), partitionChains, partitionChainHeads[1]);
 
             // Verify only the right items were added
             SelectQuery q = new SelectQuery();
@@ -156,10 +156,36 @@ namespace Arriba.Test.Model
         }
 
         [TestMethod]
+        public void Table_AddOrUpdate_NoAddRows()
+        {
+            Table t = new Table("Sample", 50000);
+            t.AddOrUpdate(BuildSampleData(), new AddOrUpdateOptions() { AddMissingColumns = true });
+
+            // Add one new item and update an item
+            DataBlock newData = new DataBlock(new string[] { "ID", "Title" }, 2,
+                new Array[]
+                {
+                    new int[] { 11512, 12345, 12346 },
+                    new string[] { "Existing Item", "New Item", "New Item" }
+                });
+
+            // Ask Arriba to ignore new items. Verify no items added, existing item updated
+            t.AddOrUpdate(newData, new AddOrUpdateOptions() { Mode = AddOrUpdateMode.UpdateAndIgnoreAdds });
+            Assert.AreEqual(5, (int)t.Count);
+
+            SelectQuery q = new SelectQuery() { Columns = new string[] { "Title" }, Count = 10, Where = SelectQuery.ParseWhere("ID = 11512") };
+            SelectResult result = t.Select(q);
+            Assert.AreEqual("Existing Item", result.Values[0, 0].ToString());
+
+            // Ask Arriba to not add items. Verify exception trying to add a new item.
+            Verify.Exception<ArribaWriteException>(() => t.AddOrUpdate(newData, new AddOrUpdateOptions() { Mode = AddOrUpdateMode.UpdateOnly }));
+        }
+
+        [TestMethod]
         public void Table_DynamicColumnCreation()
         {
             Table t = new Table("Sample", 50000);
-            t.AddOrUpdate(BuildSampleData());
+            t.AddOrUpdate(BuildSampleData(), new AddOrUpdateOptions() { AddMissingColumns = true });
 
             // When empty, table should automatically add columns
             Assert.AreEqual(5, t.ColumnDetails.Count);
@@ -181,45 +207,24 @@ namespace Arriba.Test.Model
             DataBlock block = new DataBlock(new string[] { "ID", "Priority", "NewColumn" }, 1);
             block.SetRow(0, new object[] { 12345, 1, "New Value" });
 
-            try
-            {
-                t.AddOrUpdate(block);
-                Assert.Fail("Block with new column after first insert shouldn't successfully be added.");
-            }
-            catch (ArribaException)
-            {
-                // Expected. An ArribaException should be thrown identifying the first unknown column.
-            }
+            // Verify AddOrUpdate won't add columns by default (option must be set)
+            Verify.Exception<ArribaException>(() => t.AddOrUpdate(block));
 
             // Verify add didn't partially happen
             Assert.AreEqual(5, (int)t.Count);
-        }
 
-        [TestMethod]
-        public void Table_DynamicColumnCreation_IdManuallyAdded()
-        {
-            Table t = new Table("Sample", 50000);
+            // Build more data and a new column
+            DataBlock newData = new DataBlock(new string[] { "ID", "Resolution" }, 2,
+                new Array[]
+                {
+                    new int[] { 12345, 12346 },
+                    new string[] { "Fixed", "Won't Fix" }
+                });
 
-            // Table should allow the primary key column to be defined first
-            t.AddColumn(new ColumnDetails("ActiveTime", "TimeSpan", null) { IsPrimaryKey = true });
+            // Verify AddOrUpdate with option set will add the new column
+            t.AddOrUpdate(newData, new AddOrUpdateOptions() { AddMissingColumns = true });
 
-            t.AddOrUpdate(BuildSampleData());
-
-            // When empty, table should automatically add columns
-            Assert.AreEqual(5, t.ColumnDetails.Count);
-
-            // Verify expected type inference
-            Assert.AreEqual("Int32", t.GetDetails("Priority").Type);
-            Assert.AreEqual("String", t.GetDetails("Title").Type);
-            Assert.AreEqual("Int32", t.GetDetails("ID").Type);
-            Assert.AreEqual("Boolean", t.GetDetails("IsDuplicate").Type);
-            Assert.AreEqual("TimeSpan", t.GetDetails("ActiveTime").Type);
-
-            // Identity column should be 'Priority' because that was specified
-            Assert.AreEqual("ActiveTime", t.IDColumn.Name);
-
-            // Data should've been added
-            Assert.AreEqual(5, (int)t.Count);
+            Assert.AreEqual(7, (int)t.Count);
         }
 
         [TestMethod]
@@ -304,7 +309,7 @@ namespace Arriba.Test.Model
             Assert.AreEqual(4, b.RowCount);
 
             // Verify Table only inserts rows which are "official"
-            t.AddOrUpdate(b);
+            t.AddOrUpdate(b, new AddOrUpdateOptions() { AddMissingColumns = true });
             Assert.AreEqual(4, (int)t.Count);
         }
 
@@ -412,7 +417,7 @@ namespace Arriba.Test.Model
             // Update an item and verify it
             DataBlock updateItems = new DataBlock(new string[] { "ID", "Priority" }, 1);
             updateItems.SetRow(0, new object[] { 11643, 2 });
-            table.AddOrUpdate(updateItems);
+            table.AddOrUpdate(updateItems, new AddOrUpdateOptions());
             result = table.Select(query);
             Assert.AreEqual(1, (int)result.Total);
             Assert.AreEqual("11999", result.Values[0, 0].ToString());
@@ -779,7 +784,7 @@ Title:unused, null
             items.SetRow(2, new object[] { 1, "Newly Added - should be modified", 99999, false, 3 });
             items.SetRow(3, new object[] { 2, "Modified Added", 99999, false, 3 });
 
-            table.AddOrUpdate(items);
+            table.AddOrUpdate(items, new AddOrUpdateOptions());
 
             SelectQuery query = new SelectQuery();
             query.Columns = new string[] { "ID", "Priority", "Title" };
@@ -837,7 +842,7 @@ Title:unused, null
             // Verify column knows the new default
             DataBlock items = new DataBlock(new string[] { "ID" }, 1);
             items[0, 0] = 12345;
-            table.AddOrUpdate(items);
+            table.AddOrUpdate(items, new AddOrUpdateOptions());
 
             query = new SelectQuery(query.Columns, "ID = 12345");
             result = table.Select(query);
@@ -884,7 +889,7 @@ Title:unused, null
 
             // Add some sample data (with ID column NOT first)
             DataBlock items = BuildSampleData();
-            table.AddOrUpdate(items);
+            table.AddOrUpdate(items, new AddOrUpdateOptions());
         }
 
         private static T FindColumnComponent<T>(IColumn column)
