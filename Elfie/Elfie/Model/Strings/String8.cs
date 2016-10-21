@@ -94,9 +94,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
 
         /// <summary>
         ///  Split this String8 into a String8Set with the given delimiter.
-        ///  Requires the caller to pass an int[] to contain the split positions.
-        ///  Reuse the array in a loop for much better performance. Call
-        ///  String8Set.GetLength to determine the array length required.
+        ///  Reuses the PartialArray to contain positions to avoid allocation.
         /// </summary>
         /// <param name="delimiter">Delimiter on which to split</param>
         /// <param name="positions">PartialArray&lt;int&gt; to contain split positions</param>
@@ -104,6 +102,18 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         public String8Set Split(char delimiter, PartialArray<int> positions)
         {
             return String8Set.Split(this, delimiter, positions);
+        }
+
+        /// <summary>
+        ///  Split this String8 into a String8Set on the given delimiter,
+        ///  but only outside double-quoted sections. Used for CSV parsing.
+        /// </summary>
+        /// <param name="delimiter">Delimiter on which to split</param>
+        /// <param name="positions">PartialArray&lt;int&gt; to contain split positions</param>
+        /// <returns>String8Set containing the String8 split on the delimiter</returns>
+        public String8Set SplitOutsideQuotes(byte delimiter, PartialArray<int> positions)
+        {
+            return String8Set.SplitOutsideQuotes(this, delimiter, positions);
         }
 
         /// <summary>

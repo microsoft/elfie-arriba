@@ -60,6 +60,34 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         }
 
         /// <summary>
+        ///  Join the values in this String8Set with the given delimiter.
+        ///  The buffer length required is the sum of the part length and
+        ///  the delimiters. If the value split had delimiters, this.Content.Length
+        ///  is enough.
+        /// </summary>
+        /// <param name="delimiter"></param>
+        /// <param name="buffer"></param>
+        /// <returns></returns>
+        public String8 Join(char delimiter, byte[] buffer)
+        {
+            ushort delimiterCode = (ushort)delimiter;
+            if (delimiterCode >= 128) throw new ArgumentException(String.Format(Resources.UnableToSupportMultibyteCharacter, delimiter));
+            byte delimiterByte = (byte)delimiterCode;
+
+            int lengthRequired = _content.Length + (_partPositions.Count - 1) * (1 - _delimiterWidth);
+            if (buffer.Length < lengthRequired) throw new ArgumentOutOfRangeException("buffer");
+
+            int currentPosition = 0;
+            for(int i = 0; i < Count; ++i)
+            {
+                if(i != 0) buffer[currentPosition++] = delimiterByte;
+                currentPosition += this[i].WriteTo(buffer, currentPosition);
+            }
+
+            return new String8(buffer, 0, currentPosition);
+        }
+
+        /// <summary>
         ///  Split a string on a given delimiter into a provided byte[]. Used
         ///  to split strings without allocation when a large byte[] is created
         ///  and reused for many strings.
@@ -80,7 +108,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         /// </summary>
         /// <param name="value">String8 value to split</param>
         /// <param name="delimiter">Delimiter to split on</param>
-        /// <param name="positions">PartialArray&lt;int&gt; to contain split positions, of at least length String8Set.SplitRequiredLength</param>
+        /// <param name="positions">PartialArray&lt;int&gt; to contain split positions</param>
         /// <returns>String8Set containing split value</returns>
         public static String8Set Split(String8 value, char delimiter, PartialArray<int> positions)
         {
@@ -141,6 +169,66 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             }
 
             return partCount;
+        }
+
+        /// <summary>
+        ///  Split a string on a given delimiter only outside matching double quotes.
+        ///  Used to split CSV content where the delimiters are ignored within quotes.
+        /// </summary>
+        /// <param name="value">String8 value to split</param>
+        /// <param name="delimiter">Delimiter to split on</param>
+        /// <param name="positions">PartialArray&lt;int&gt; to contain split positions</param>
+        /// <returns>String8Set containing split value</returns>
+        public static String8Set SplitOutsideQuotes(String8 value, byte delimiter, PartialArray<int> positions)
+        {
+            // Clear any previous values in the array
+            positions.Clear();
+
+            // The first part always begins at the start of the string
+            positions.Add(0);
+
+            if (!value.IsEmpty())
+            {
+                byte[] array = value._buffer;
+                int i = value._index;
+                int end = i + value._length;
+
+                while (i < end)
+                {
+                    // Outside Quotes
+                    for (; i < end; ++i)
+                    {
+                        // If a quote is found, we're now inside quotes
+                        if (array[i] == UTF8.Quote)
+                        {
+                            i++;
+                            break;
+                        }
+
+                        // If a delimiter is found, add another split position
+                        if (array[i] == delimiter)
+                        {
+                            positions.Add(i - value._index + 1);
+                        }
+                    }
+
+                    // Inside Quotes
+                    for (; i < end; ++i)
+                    {
+                        // If a quote was found, we're now outside quotes
+                        if (array[i] == UTF8.Quote)
+                        {
+                            i++;
+                            break;
+                        }
+                    }
+                }
+
+                // The last part always ends at the end of the string
+                positions.Add(value.Length + 1);
+            }
+
+            return new String8Set(value, 1, positions);
         }
 
         #region IBinarySerializable

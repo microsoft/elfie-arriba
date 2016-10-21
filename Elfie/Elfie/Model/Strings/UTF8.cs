@@ -5,6 +5,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
 {
     internal class UTF8
     {
+        public const byte Quote = (byte)'"';
         public const byte CR = (byte)'\r';
         public const byte LF = (byte)'\n';
         public const byte a = (byte)'a';
