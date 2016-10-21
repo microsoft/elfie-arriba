@@ -29,6 +29,37 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         }
 
         /// <summary>
+        ///  Return the complete value which was split.
+        /// </summary>
+        public String8 Value
+        {
+            get { return _content; }
+        }
+
+        /// <summary>
+        ///  Return the given part of the split string.
+        /// </summary>
+        /// <param name="index">0-based index of part to return</param>
+        /// <returns>String8 for the index'th part of the split value</returns>
+        public String8 this[int index]
+        {
+            get
+            {
+                int innerIndex = _partPositions[index];
+                return _content.Substring(innerIndex, _partPositions[index + 1] - innerIndex - _delimiterWidth);
+            }
+        }
+
+        /// <summary>
+        ///  ToString override returning the full value which was split
+        /// </summary>
+        /// <returns>The full value which was split</returns>
+        public override string ToString()
+        {
+            return _content.ToString();
+        }
+
+        /// <summary>
         ///  Split a string on a given delimiter into a provided byte[]. Used
         ///  to split strings without allocation when a large byte[] is created
         ///  and reused for many strings.
@@ -110,25 +141,6 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             }
 
             return partCount;
-        }
-
-        public String8 Value
-        {
-            get { return _content; }
-        }
-
-        public String8 this[int index]
-        {
-            get
-            {
-                int innerIndex = _partPositions[index];
-                return _content.Substring(innerIndex, _partPositions[index + 1] - innerIndex - _delimiterWidth);
-            }
-        }
-
-        public override string ToString()
-        {
-            return _content.ToString();
         }
 
         #region IBinarySerializable
