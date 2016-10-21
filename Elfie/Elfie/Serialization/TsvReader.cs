@@ -121,19 +121,6 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         /// <returns>String8 with value for column in current row. Throws if not enough columns in row.</returns>
         public String8 CurrentRow(int columnIndex)
         {
-            // If this is the last column and there's a trailing '\r', exclude it from the value
-            if(columnIndex == _currentRow.Count - 1)
-            {
-                String8 fullValue = _currentRow[columnIndex];
-                if (fullValue.Length > 0)
-                {
-                    byte lastCharacter = fullValue[fullValue.Length - 1];
-                    if (lastCharacter == '\r') fullValue = fullValue.Substring(0, fullValue.Length - 1);
-                }
-
-                return fullValue;
-            }
-
             return _currentRow[columnIndex];
         }
 
@@ -182,56 +169,93 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             if (_nextRowIndexInBlock >= _currentBlock.Count) return false;
 
             // Get the next (complete) row from the current block
-            _currentRow = _currentBlock[_nextRowIndexInBlock].Split(_cellDelimiter, _cellPositionArray);
+            String8 currentLine = _currentBlock[_nextRowIndexInBlock];
+
+            // Trim a trailing '\r', if found [handle \n or \r\n line endings]
+            if (currentLine.EndsWith((byte)'\r')) currentLine = currentLine.Substring(0, currentLine.Length - 1);
+
+            // Split the line into cells
+            _currentRow = SplitCells(currentLine);
+
             _currentLine++;
             _nextRowIndexInBlock++;
 
             return true;
         }
 
+        /// <summary>
+        ///  NextBlock is called by NextRow before reading the last row in _currentBlock.
+        ///  Since the file is read in blocks, the last row is usually incomplete.
+        ///  
+        ///  If there's more file content, NextBlock should copy the last row to the start
+        ///  of the buffer, read more content, and reset _currentBlock to the new split rows
+        ///  and _nextRowIndexInBlock to zero (telling NextRow to read that row next).
+        ///  
+        ///  If there's no more file, the last row is complete. NextBlock must return
+        ///  without changing _currentBlock or _nextRowIndexInBlock to tell NextRow it's safe
+        ///  to return to the user.
+        ///  
+        ///  NextRow will call NextBlock *again* after the last row. NextBlock must again
+        ///  not change anything to tell NextRow that there's nothing left.
+        ///  
+        ///  So, NextBlock must:
+        ///   - Copy the last row to the start of the buffer (if not already there)
+        ///   - Read more content to fill the buffer
+        ///   - Split the buffer into rows
+        ///   - Stop at end-of-file or when a full row was read
+        ///   - Double the buffer until one of these conditions is met
+        ///   
+        ///   - Reset nextRowInIndexBlock *only if* a row was shifted or read
+        /// </summary>
         private void NextBlock()
         {
-            do
+            int bufferLengthFilledStart = 0;
+
+            // Copy the last row to the start of the buffer (if not already there)
+            if (_currentBlock.Count > 1)
             {
-                int readIntoStartIndex = 0;
+                String8 lastRow = _currentBlock[_currentBlock.Count - 1];
+                lastRow.WriteTo(_buffer, 0);
+                bufferLengthFilledStart = lastRow.Length;
 
-                // Copy the last row (if more than one) from the previous block to the buffer start (to load all of it)
-                if (_currentBlock.Count > 1)
-                {
-                    String8 lastRow = _currentBlock[_currentBlock.Count - 1];
+                // Reset the next row to read (since we shifted a row)
+                _nextRowIndexInBlock = 0;
+            }
 
-                    if (lastRow.Length * 2 > _buffer.Length)
-                    {
-                        // If the last row is too long, load more at a time
-                        byte[] newBuffer = new byte[_buffer.Length * 2];
-                        lastRow.WriteTo(newBuffer, 0);
-                        _buffer = newBuffer;
-                    }
-                    else
-                    {
-                        lastRow.WriteTo(_buffer, 0);
-                    }
+            int bufferLengthFilled = bufferLengthFilledStart;
 
-                    readIntoStartIndex = lastRow.Length;
+            while (true)
+            {
+                // Read more content to fill the buffer
+                bufferLengthFilled += _reader.Read(_buffer, bufferLengthFilled, _buffer.Length - bufferLengthFilled);
 
-                    // Reset the next row to read (since we shifted a possibly partial row)
-                    _nextRowIndexInBlock = 0;
-                }
+                // Split the buffer into rows
+                _currentBlock = SplitRows(new String8(_buffer, 0, bufferLengthFilled));
 
-                // Read from the file to fill the buffer
-                int lengthRead = _reader.Read(_buffer, readIntoStartIndex, _buffer.Length - readIntoStartIndex);
+                // Stop at end-of-file (read didn't fill buffer)
+                if (bufferLengthFilled < _buffer.Length) break;
 
-                // Reset the next row index to read if we read something new
-                if (lengthRead > 0) _nextRowIndexInBlock = 0;
+                // Stop when a full row was read (split found at least two parts)
+                if (_currentBlock.Count > 1) break;
 
-                // Split the new block into rows (on newline)
-                _currentBlock = String8Set.Split(new String8(_buffer, 0, readIntoStartIndex + lengthRead), '\n', _rowPositionArray);
+                // Otherwise, double the buffer (until a full row or end of file)
+                byte[] newBuffer = new byte[_buffer.Length * 2];
+                _buffer.CopyTo(newBuffer, 0);
+                _buffer = newBuffer;
+            }
 
-                // If we're out of file, stop
-                if (lengthRead < (_buffer.Length - readIntoStartIndex)) break;
+            // If we read new content, reset the next row to read
+            if (bufferLengthFilled > bufferLengthFilledStart) _nextRowIndexInBlock = 0;
+        }
 
-                // If the block still doesn't contain at least two rows and there's more file, expand and try again
-            } while (_currentBlock.Count < 2);
+        protected virtual String8Set SplitCells(String8 row)
+        {
+            return row.Split(_cellDelimiter, _cellPositionArray);
+        }
+
+        protected virtual String8Set SplitRows(String8 block)
+        {
+            return block.Split('\n', _rowPositionArray);
         }
 
         public void Dispose()

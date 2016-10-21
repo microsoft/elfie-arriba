@@ -250,6 +250,17 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
 
             return -1;
         }
+
+        /// <summary>
+        ///  Return whether this string ends with the given character.
+        /// </summary>
+        /// <param name="c">Character to check for</param>
+        /// <returns>True if string ends with character, false otherwise</returns>
+        public bool EndsWith(byte c)
+        {
+            if (_length == 0) return false;
+            return (_buffer[_index + _length - 1] == c);
+        }
         #endregion
 
         #region Type Conversions
