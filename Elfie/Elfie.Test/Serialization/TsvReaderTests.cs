@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
-using System.Diagnostics;
 using System.IO;
 
 using Elfie.Test;
@@ -142,39 +141,38 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
             long rowCountRead = 0;
             long tsvLengthBytes = new FileInfo(SampleTsvPath).Length;
 
-            Stopwatch w = Stopwatch.StartNew();
-            int iterations = 100;
-            for (int iteration = 0; iteration < iterations; ++iteration)
+            // Goal: 100MB/sec
+            Verify.PerformanceByBytes(100 * LongExtensions.Megabyte, () =>
             {
-                using (TsvReader r = new TsvReader(SampleTsvPath, true))
+                int iterations = 100;
+                for (int iteration = 0; iteration < iterations; ++iteration)
                 {
-                    int lineNumberIndex = r.ColumnIndex("LineNumber");
-                    int countIndex = r.ColumnIndex("Count");
-                    int descriptionIndex = r.ColumnIndex("Description");
-
-                    while (r.NextRow())
+                    using (TsvReader r = new TsvReader(SampleTsvPath, true))
                     {
-                        rowCountRead++;
+                        int lineNumberIndex = r.ColumnIndex("LineNumber");
+                        int countIndex = r.ColumnIndex("Count");
+                        int descriptionIndex = r.ColumnIndex("Description");
 
-                        if (r.CurrentRowColumns < 2) continue;
+                        while (r.NextRow())
+                        {
+                            rowCountRead++;
 
-                        String8 lineNumber8 = r.CurrentRow(lineNumberIndex);
-                        int lineNumber = lineNumber8.ToInteger();
+                            if (r.CurrentRowColumns < 2) continue;
 
-                        // TODO: Get ToInteger fast enough to read overall at goal
-                        String8 count8 = r.CurrentRow(countIndex);
-                        //int count = count8.ToInteger();
+                            String8 lineNumber8 = r.CurrentRow(lineNumberIndex);
+                            int lineNumber = lineNumber8.ToInteger();
 
-                        String8 description = r.CurrentRow(descriptionIndex);
+                            // TODO: Get ToInteger fast enough to read overall at goal
+                            String8 count8 = r.CurrentRow(countIndex);
+                            //int count = count8.ToInteger();
+
+                            String8 description = r.CurrentRow(descriptionIndex);
+                        }
                     }
                 }
-            }
-            w.Stop();
 
-            // Tsv read goal: 125MB/sec [125KB/ms]
-            long targetMilliseconds = tsvLengthBytes * iterations / 125000;
-            Trace.WriteLine(String.Format("Elfie TsvReader read {0} ({1:n0} rows) in {2} [goal {3}ms]", (tsvLengthBytes * iterations).SizeString(), rowCountRead, w.Elapsed.ToFriendlyString(), targetMilliseconds));
-            Assert.IsTrue(w.ElapsedMilliseconds < targetMilliseconds);
+                return iterations * tsvLengthBytes;
+            });
         }
 
         [TestMethod]

@@ -9,6 +9,7 @@ using Microsoft.CodeAnalysis.Elfie.Extensions;
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.CodeAnalysis.Elfie.Model.Structures;
+using Elfie.Test;
 
 namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
 {
@@ -63,24 +64,20 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
         {
             String8 list = String8.Convert("System.Collections.Generic.List<T>", new byte[50]);
             String8 noDelimiters = String8.Convert("No Delimiters", new byte[25]);
-
             PartialArray<int> partBuffer = new PartialArray<int>(10, false);
 
-            Stopwatch w = Stopwatch.StartNew();
-            int iterations = 200000;
-            for (int iteration = 0; iteration < iterations; ++iteration)
+            // Goal: 256MB/sec
+            Verify.PerformanceByBytes(256 * LongExtensions.Megabyte, () =>
             {
-                list.Split('.', partBuffer);
-                noDelimiters.Split('.', partBuffer);
-            }
-            w.Stop();
+                int iterations = 200000;
+                for (int iteration = 0; iteration < iterations; ++iteration)
+                {
+                    list.Split('.', partBuffer);
+                    noDelimiters.Split('.', partBuffer);
+                }
 
-            // Goal: 256MB/s
-            long bytesSplit = (long)iterations * (list.Length + noDelimiters.Length);
-            long bytesPerSecondGoal = 256 * 1024 * 1024;
-            double millisecondGoal = ((double)bytesSplit / (double)bytesPerSecondGoal) * 1000;
-            Trace.WriteLine(string.Format("Split {0} took {1}, goal {2}ms.", bytesSplit.SizeString(), w.Elapsed.ToFriendlyString(), millisecondGoal));
-            Assert.IsTrue(w.ElapsedMilliseconds < millisecondGoal);
+                return iterations * (list.Length + noDelimiters.Length);
+            });
         }
     }
 }

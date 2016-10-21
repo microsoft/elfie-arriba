@@ -12,6 +12,7 @@ using Microsoft.CodeAnalysis.Elfie.Model.Index;
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.CodeAnalysis.Elfie.Model.Structures;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Elfie.Test;
 
 namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
 {
@@ -54,32 +55,31 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
             String8Set set = default(String8Set);
             PartialArray<int> matchContainer = new PartialArray<int>();
 
-            Stopwatch w = Stopwatch.StartNew();
             int iterations = 10;
             int totalWordsSplit = 0;
             int validCount = 0;
 
-            for (int iteration = 0; iteration < iterations; ++iteration)
+            // Split Goal: 75k per millisecond [75 MB/sec]
+            Verify.PerformanceByBytes(75 * LongExtensions.Megabyte, () =>
             {
-                set = AlphanumericSplitter.Split(code, ref matchContainer);
-
-                totalWordsSplit += set.Count;
-                if (set.Count > 0)
+                for (int iteration = 0; iteration < iterations; ++iteration)
                 {
-                    int matchIndex = AlphanumericSplitter.IsAlphaNumeric(set[0][0]) ? 0 : 1;
-                    for (; matchIndex < set.Count; matchIndex += 2)
+                    set = AlphanumericSplitter.Split(code, ref matchContainer);
+
+                    totalWordsSplit += set.Count;
+                    if (set.Count > 0)
                     {
-                        String8 word = set[matchIndex];
-                        if (word.Length > 2) validCount++;
+                        int matchIndex = AlphanumericSplitter.IsAlphaNumeric(set[0][0]) ? 0 : 1;
+                        for (; matchIndex < set.Count; matchIndex += 2)
+                        {
+                            String8 word = set[matchIndex];
+                            if (word.Length > 2) validCount++;
+                        }
                     }
                 }
-            }
-            w.Stop();
 
-            // Split Goal: 75k per millisecond [75 MB/sec]
-            int targetMilliseconds = code.Length * iterations / 75000;
-            Trace.WriteLine(String.Format("Elfie Text Model Split found {0:n0} words [{1:n0} valid] in {2} [goal {3}ms]", totalWordsSplit, validCount, w.Elapsed.ToFriendlyString(), targetMilliseconds));
-            Assert.IsTrue(w.ElapsedMilliseconds < targetMilliseconds);
+                return iterations * code.Length;
+            });
         }
 
 #if !DEBUG
@@ -95,50 +95,47 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
             StringStore strings = new StringStore();
             MemberIndex index = new MemberIndex();
 
-            Stopwatch w = Stopwatch.StartNew();
             int iterations = 10;
             int totalWordsSplit = 0;
 
-            for (int iteration = 0; iteration < iterations; ++iteration)
+            // Split, Add, Index Goal: 30k per millisecond [30 MB/sec]
+            Verify.PerformanceByBytes(30 * LongExtensions.Megabyte, () =>
             {
-                String8Set codeByLine = code.Split('\n', new PartialArray<int>());
-                for (int lineIndex = 0; lineIndex < codeByLine.Count; ++lineIndex)
+                for (int iteration = 0; iteration < iterations; ++iteration)
                 {
-                    // Convert and Split the line
-                    String8 line = codeByLine[lineIndex];
-                    set = AlphanumericSplitter.Split(line, ref matchContainer);
-
-                    totalWordsSplit += set.Count;
-
-                    if (set.Count > 0)
+                    String8Set codeByLine = code.Split('\n', new PartialArray<int>());
+                    for (int lineIndex = 0; lineIndex < codeByLine.Count; ++lineIndex)
                     {
-                        int matchIndex = AlphanumericSplitter.IsAlphaNumeric(set[0][0]) ? 0 : 1;
-                        for (; matchIndex < set.Count; matchIndex += 2)
+                        // Convert and Split the line
+                        String8 line = codeByLine[lineIndex];
+                        set = AlphanumericSplitter.Split(line, ref matchContainer);
+
+                        totalWordsSplit += set.Count;
+
+                        if (set.Count > 0)
                         {
-                            // If the word is long enough...
-                            String8 word = set[matchIndex];
-                            if (word.Length > 2)
+                            int matchIndex = AlphanumericSplitter.IsAlphaNumeric(set[0][0]) ? 0 : 1;
+                            for (; matchIndex < set.Count; matchIndex += 2)
                             {
-                                if (!uniqueWords.Contains(word))
+                                // If the word is long enough...
+                                String8 word = set[matchIndex];
+                                if (word.Length > 2)
                                 {
-                                    int wordIdentifier = strings.FindOrAddString(word);
-                                    uniqueWords.Add(strings[wordIdentifier]);
-                                    index.AddItem(wordIdentifier, lineIndex);
+                                    if (!uniqueWords.Contains(word))
+                                    {
+                                        int wordIdentifier = strings.FindOrAddString(word);
+                                        uniqueWords.Add(strings[wordIdentifier]);
+                                        index.AddItem(wordIdentifier, lineIndex);
+                                    }
                                 }
                             }
                         }
                     }
                 }
-            }
 
-            w.Stop();
-
-            // Split, Add, Index Goal: 30k per millisecond [30 MB/sec]
-            int targetMilliseconds = code.Length * iterations / 30000;
-            Trace.WriteLine(String.Format("Elfie Text Model Split found {0:n0} words [{1:n0} unique] in {2} [goal {3}ms]", totalWordsSplit, uniqueWords.Count, w.Elapsed.ToFriendlyString(), targetMilliseconds));
-            Assert.IsTrue(w.ElapsedMilliseconds < targetMilliseconds);
+                return iterations * code.Length;
+            });
         }
-
 
         public static string SplitAndJoin(string value)
         {

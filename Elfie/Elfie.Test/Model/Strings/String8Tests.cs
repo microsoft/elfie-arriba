@@ -10,6 +10,7 @@ using System.Text;
 using Microsoft.CodeAnalysis.Elfie.Extensions;
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Elfie.Test;
 
 namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
 {
@@ -243,20 +244,21 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
             }
 
             // Compare every combination of values (half within and half across buffers)
-            int iterations = 100000;
-            int comparisons = iterations * values.Length * values.Length;
-            Stopwatch w;
-            w = Stopwatch.StartNew();
-            RunAllComparisons(values, false, iterations);
-            w.Stop();
-            Trace.WriteLine(string.Format("{0:n0} String8.CompareTo (Ordinal) took {1}", comparisons, w.Elapsed.ToFriendlyString()));
-            Assert.IsTrue(w.ElapsedMilliseconds < 200);
 
-            w = Stopwatch.StartNew();
-            RunAllComparisons(values, true, iterations);
-            w.Stop();
-            Trace.WriteLine(string.Format("{0:n0} String8.CompareTo (OrdinalIgnoreCase) took {1}", comparisons, w.Elapsed.ToFriendlyString()));
-            Assert.IsTrue(w.ElapsedMilliseconds < 250);
+            // Goal: 500k/sec [case sensitive]
+            int iterations = 100000;
+            Verify.PerformanceByOperation(500 * LongExtensions.Thousand, () =>
+            {
+                RunAllComparisons(values, false, iterations);
+                return iterations * values.Length * values.Length;
+            });
+
+            // Goal: 400k/sec [case insensitive]
+            Verify.PerformanceByOperation(400 * LongExtensions.Thousand, () =>
+            {
+                RunAllComparisons(values, true, iterations);
+                return iterations * values.Length * values.Length;
+            });
         }
 
         private void RunAllComparisons(String8[] values, bool ignoreCase, int iterations)

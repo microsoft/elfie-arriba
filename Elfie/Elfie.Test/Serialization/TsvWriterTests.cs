@@ -91,52 +91,51 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
             String8 s1 = block.GetCopy("Source: Internal");
             String8 s2 = block.GetCopy("Source: External");
 
-            Stopwatch w = Stopwatch.StartNew();
-            long bytesWritten = 0;
-            int rowsWritten = 0;
-
-            int iterations = 50;
             using (MemoryStream s = new MemoryStream())
             {
-                for (int iteration = 0; iteration < iterations; ++iteration)
+                int iterations = 50;
+                long bytesWritten = 0;
+                int rowsWritten = 0;
+
+                // Tsv Write goal: 100MB/sec
+                // NOTE: Tsv Write performance is very sensitive the mix of text and numbers written. Writing integers is slower.
+                Verify.PerformanceByBytes(100 * LongExtensions.Megabyte, () =>
                 {
-                    s.Seek(0, SeekOrigin.Begin);
-
-                    TsvWriter writer = new TsvWriter(s, new string[] { "LineNumber", "Count", "Description", "Source" });
-
-                    int sum = 0;
-                    for (int row = 1; row < 10000; ++row)
+                    for (int iteration = 0; iteration < iterations; ++iteration)
                     {
-                        sum += row;
+                        s.Seek(0, SeekOrigin.Begin);
 
-                        writer.Write(row);
-                        writer.Write(sum);
+                        TsvWriter writer = new TsvWriter(s, new string[] { "LineNumber", "Count", "Description", "Source" });
 
-                        if (row % 2 == 0)
+                        int sum = 0;
+                        for (int row = 1; row < 10000; ++row)
                         {
-                            writer.Write(d1);
-                            writer.Write(s1);
-                        }
-                        else
-                        {
-                            writer.Write(d2);
-                            writer.Write(s2);
+                            sum += row;
+
+                            writer.Write(row);
+                            writer.Write(sum);
+
+                            if (row % 2 == 0)
+                            {
+                                writer.Write(d1);
+                                writer.Write(s1);
+                            }
+                            else
+                            {
+                                writer.Write(d2);
+                                writer.Write(s2);
+                            }
+
+                            writer.NextRow();
                         }
 
-                        writer.NextRow();
+                        bytesWritten += writer.BytesWritten;
+                        rowsWritten += writer.LineNumber;
                     }
 
-                    bytesWritten += writer.BytesWritten;
-                    rowsWritten += writer.LineNumber;
-                }
-            }
-            w.Stop();
-
-            // Tsv Write goal: 100MB/sec [100KB/ms]
-            // NOTE: Tsv Write performance is very sensitive the mix of text and numbers written. Writing integers is slower.
-            long targetMilliseconds = bytesWritten / 100000;
-            Trace.WriteLine(String.Format("Elfie TsvWriter wrote {0} ({1:n0} rows) in {2} [goal {3}ms]", bytesWritten.SizeString(), rowsWritten, w.Elapsed.ToFriendlyString(), targetMilliseconds));
-            Assert.IsTrue(w.ElapsedMilliseconds < targetMilliseconds);
+                    return bytesWritten;
+                });
+            }   
         }
     }
 }
