@@ -14,16 +14,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
     ///  format. The writer removes '\t' and '\n' in values written to avoid read
     ///  errors, as no standard for escaping seems to be defined.
     ///  
-    ///  Usage:
-    ///  using (TsvWriter w = new TsvWriter(writeToPath, new string[] { "Name", "IPs" }))
-    ///  {
-    ///     while(/* ... data source .. */)
-    ///     {
-    ///         w.Write(name);
-    ///         w.Write(ips);
-    ///         w.NextRow();
-    ///     }
-    /// }
+    ///  See BaseTabularWriter for details and usage.
     /// </summary>
     public class TsvWriter : BaseTabularWriter
     {
@@ -60,7 +51,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         protected override void WriteRowSeparator(Stream stream)
         {
             stream.WriteByte(UTF8.CR);
-            stream.WriteByte(UTF8.LF);
+            stream.WriteByte(UTF8.Newline);
         }
 
         protected override void WriteCellValue(Stream stream, String8 value)
@@ -72,7 +63,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             for (int i = value._index; i < end; ++i)
             {
                 byte c = value._buffer[i];
-                if (c == UTF8.Tab || c == UTF8.LF)
+                if (c == UTF8.Tab || c == UTF8.Newline)
                 {
                     int inStringIndex = i - value._index;
                     value.Substring(nextWriteStartIndex, inStringIndex - nextWriteStartIndex).WriteTo(stream);

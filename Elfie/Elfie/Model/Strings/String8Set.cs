@@ -68,11 +68,9 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         /// <param name="delimiter"></param>
         /// <param name="buffer"></param>
         /// <returns></returns>
-        public String8 Join(char delimiter, byte[] buffer)
+        public String8 Join(byte delimiter, byte[] buffer)
         {
-            ushort delimiterCode = (ushort)delimiter;
-            if (delimiterCode >= 128) throw new ArgumentException(String.Format(Resources.UnableToSupportMultibyteCharacter, delimiter));
-            byte delimiterByte = (byte)delimiterCode;
+            if (delimiter >= 128) throw new ArgumentException(String.Format(Resources.UnableToSupportMultibyteCharacter, delimiter));
 
             int lengthRequired = _content.Length + (Count - 1) * (1 - _delimiterWidth);
             if (buffer.Length < lengthRequired) throw new ArgumentOutOfRangeException("buffer");
@@ -80,7 +78,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             int currentPosition = 0;
             for(int i = 0; i < Count; ++i)
             {
-                if(i != 0) buffer[currentPosition++] = delimiterByte;
+                if(i != 0) buffer[currentPosition++] = delimiter;
                 currentPosition += this[i].WriteTo(buffer, currentPosition);
             }
 
@@ -98,6 +96,20 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         /// <returns>String8Set containing split value</returns>
         public static String8Set Split(String8 value, char delimiter, int[] positionArray)
         {
+            return Split(value, (byte)delimiter, new PartialArray<int>(positionArray));
+        }
+
+        /// <summary>
+        ///  Split a string on a given delimiter into a provided byte[]. Used
+        ///  to split strings without allocation when a large byte[] is created
+        ///  and reused for many strings.
+        /// </summary>
+        /// <param name="value">String8 value to split</param>
+        /// <param name="delimiter">Delimiter to split on</param>
+        /// <param name="positionArray">int[] to contain split positions, of at least length String8Set.SplitRequiredLength</param>
+        /// <returns>String8Set containing split value</returns>
+        public static String8Set Split(String8 value, byte delimiter, int[] positionArray)
+        {
             return Split(value, delimiter, new PartialArray<int>(positionArray));
         }
 
@@ -110,15 +122,13 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         /// <param name="delimiter">Delimiter to split on</param>
         /// <param name="positions">PartialArray&lt;int&gt; to contain split positions</param>
         /// <returns>String8Set containing split value</returns>
-        public static String8Set Split(String8 value, char delimiter, PartialArray<int> positions)
+        public static String8Set Split(String8 value, byte delimiter, PartialArray<int> positions)
         {
             // Clear any previous values in the array
             positions.Clear();
 
-            // Get the delimiter as a byte
-            ushort delimiterCode = (ushort)delimiter;
-            if (delimiterCode >= 128) throw new ArgumentException(String.Format(Resources.UnableToSupportMultibyteCharacter, delimiter));
-            byte delimiterByte = (byte)delimiterCode;
+            // Ensure the delimiter is single byte
+            if (delimiter >= 128) throw new ArgumentException(String.Format(Resources.UnableToSupportMultibyteCharacter, delimiter));
 
             // Record each delimiter position
             positions.Add(0);
@@ -131,7 +141,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
                 int end = value._index + value._length;
                 for (int i = value._index; i < end; ++i)
                 {
-                    if (array[i] == delimiterByte)
+                    if (array[i] == delimiter)
                     {
                         // Next start position is after this delimiter
                         positions.Add(i - value._index + 1);
@@ -154,18 +164,29 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         /// <returns>Length of byte[] required to safely contain value</returns>
         public static int GetLength(String8 value, char delimiter)
         {
+            return GetLength(value, (byte)delimiter);
+
+        }
+        /// <summary>
+        ///  Return the int[] length required for a buffer to split 'value'
+        ///  by 'delimiter'. This may be an overestimate to perform better.
+        ///  Used by callers to allocate a safe byte[] for String8Set.Split. 
+        /// </summary>
+        /// <param name="value">Value to Split</param>
+        /// <param name="delimiter">Delimiter to Split by</param>
+        /// <returns>Length of byte[] required to safely contain value</returns>
+        public static int GetLength(String8 value, byte delimiter)
+        {
             if (value.IsEmpty()) return 1;
 
-            // Get the delimiter as a byte
-            ushort delimiterCode = (ushort)delimiter;
-            if (delimiterCode >= 128) throw new ArgumentException(String.Format(Resources.UnableToSupportMultibyteCharacter, delimiter));
-            byte delimiterByte = (byte)delimiterCode;
+            // Ensure the delimiter is single byte
+            if (delimiter >= 128) throw new ArgumentException(String.Format(Resources.UnableToSupportMultibyteCharacter, delimiter));
 
             // There are N+1 parts for N delimiters, plus one sentinel at the end
             int partCount = 2;
             for (int i = 0; i < value.Length; ++i)
             {
-                if (value[i] == delimiterByte) partCount++;
+                if (value[i] == delimiter) partCount++;
             }
 
             return partCount;

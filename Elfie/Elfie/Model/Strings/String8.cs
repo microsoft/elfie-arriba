@@ -87,9 +87,23 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         /// <param name="delimiter">Delimiter on which to split</param>
         /// <param name="positionArray">int[] to contain split positions</param>
         /// <returns>String8Set containing the String8 split on the delimiter</returns>
-        public String8Set Split(char delimiter, int[] positionArray)
+        public String8Set Split(byte delimiter, int[] positionArray)
         {
             return String8Set.Split(this, delimiter, positionArray);
+        }
+
+        /// <summary>
+        ///  Split this String8 into a String8Set with the given delimiter.
+        ///  Requires the caller to pass an int[] to contain the split positions.
+        ///  Reuse the array in a loop for much better performance. Call
+        ///  String8Set.GetLength to determine the array length required.
+        /// </summary>
+        /// <param name="delimiter">Delimiter on which to split</param>
+        /// <param name="positionArray">int[] to contain split positions</param>
+        /// <returns>String8Set containing the String8 split on the delimiter</returns>
+        public String8Set Split(char delimiter, int[] positionArray)
+        {
+            return String8Set.Split(this, (byte)delimiter, positionArray);
         }
 
         /// <summary>
@@ -99,7 +113,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         /// <param name="delimiter">Delimiter on which to split</param>
         /// <param name="positions">PartialArray&lt;int&gt; to contain split positions</param>
         /// <returns>String8Set containing the String8 split on the delimiter</returns>
-        public String8Set Split(char delimiter, PartialArray<int> positions)
+        public String8Set Split(byte delimiter, PartialArray<int> positions)
         {
             return String8Set.Split(this, delimiter, positions);
         }

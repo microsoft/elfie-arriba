@@ -64,7 +64,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         protected override void WriteRowSeparator(Stream stream)
         {
             stream.WriteByte(UTF8.CR);
-            stream.WriteByte(UTF8.LF);
+            stream.WriteByte(UTF8.Newline);
         }
 
         protected override void WriteCellValue(Stream stream, String8 value)

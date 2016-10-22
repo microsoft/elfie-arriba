@@ -5,19 +5,18 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.Serialization;
 
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 
 namespace Microsoft.CodeAnalysis.Elfie.Serialization
 {
     /// <summary>
-    ///  TsvReader is a high performance writer for the TSV (tab-separated value)
-    ///  format. The reader doesn't support escaped \t or \n in values (no standard
-    ///  for escaping seems to be defined).
+    ///  BaseTabularWriter is a high performance writer base class for tabular formats
+    ///  (columns in rows). Descendants specify how to separate cells and rows and how
+    ///  to write string values (with proper escaping).
     ///  
     ///  Usage:
-    ///  using (TsvWriter w = new TsvWriter(writeToPath, new string[] { "Name", "IPs" }))
+    ///  using (BaseTabularWriter w = new XWriter(writeToPath, new string[] { "Name", "IPs" }))
     ///  {
     ///     while(/* ... data source .. */)
     ///     {

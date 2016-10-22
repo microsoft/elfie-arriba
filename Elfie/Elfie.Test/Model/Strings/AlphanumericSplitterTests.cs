@@ -103,7 +103,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
             {
                 for (int iteration = 0; iteration < iterations; ++iteration)
                 {
-                    String8Set codeByLine = code.Split('\n', new PartialArray<int>());
+                    String8Set codeByLine = code.Split(UTF8.Newline, new PartialArray<int>());
                     for (int lineIndex = 0; lineIndex < codeByLine.Count; ++lineIndex)
                     {
                         // Convert and Split the line

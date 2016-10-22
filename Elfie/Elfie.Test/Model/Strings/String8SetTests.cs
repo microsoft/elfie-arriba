@@ -19,41 +19,41 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
         [TestMethod]
         public void String8Set_Split()
         {
-            Assert.AreEqual(string.Empty, SplitAndJoin(string.Empty, '.'));
-            Assert.AreEqual("System|Collections|Generic|List<T>", SplitAndJoin("System.Collections.Generic.List<T>", '.'));
-            Assert.AreEqual("A|B|C|D", SplitAndJoin("A.B.C.D", '.'));
-            Assert.AreEqual("|A|B|C||D|", SplitAndJoin(".A.B.C..D.", '.'));
-            Assert.AreEqual("No Delimiters", SplitAndJoin("No Delimiters", '.'));
+            Assert.AreEqual(string.Empty, SplitAndJoin(string.Empty, UTF8.Period));
+            Assert.AreEqual("System|Collections|Generic|List<T>", SplitAndJoin("System.Collections.Generic.List<T>", UTF8.Period));
+            Assert.AreEqual("A|B|C|D", SplitAndJoin("A.B.C.D", UTF8.Period));
+            Assert.AreEqual("|A|B|C||D|", SplitAndJoin(".A.B.C..D.", UTF8.Period));
+            Assert.AreEqual("No Delimiters", SplitAndJoin("No Delimiters", UTF8.Period));
         }
 
-        private string SplitAndJoin(string value, char delimiter)
+        private string SplitAndJoin(string value, byte delimiter)
         {
             String8 value8 = String8.Convert(value, new byte[String8.GetLength(value)]);
             String8Set set = value8.Split(delimiter, new PartialArray<int>());
-            String8 joined8 = set.Join('|', new byte[set.Value.Length]);
+            String8 joined8 = set.Join(UTF8.Pipe, new byte[set.Value.Length]);
             return joined8.ToString();
         }
 
         [TestMethod]
         public void String8Set_SplitOutsideQuotes()
         {
-            Assert.AreEqual(string.Empty, SplitOutsideQuotesAndJoin(string.Empty, (byte)','));
-            Assert.AreEqual("Nothing to Split", SplitOutsideQuotesAndJoin("Nothing to Split", (byte)','));
+            Assert.AreEqual(string.Empty, SplitOutsideQuotesAndJoin(string.Empty, UTF8.Comma));
+            Assert.AreEqual("Nothing to Split", SplitOutsideQuotesAndJoin("Nothing to Split", UTF8.Comma));
 
             Assert.AreEqual("\"Quotes Around Everything\"", SplitOutsideQuotesAndJoin("\"Quotes Around Everything\"", (byte)' '));
             Assert.AreEqual("\"Unclosed Quotes ", SplitOutsideQuotesAndJoin("\"Unclosed Quotes ", (byte)' '));
 
-            Assert.AreEqual("One|Two|Three", SplitOutsideQuotesAndJoin("One,Two,Three", (byte)','));
-            Assert.AreEqual("|One|Two||Three|", SplitOutsideQuotesAndJoin(",One,Two,,Three,", (byte)','));
-            Assert.AreEqual("One|\"Here, Commas\"|Three", SplitOutsideQuotesAndJoin("One,\"Here, Commas\",Three", (byte)','));
-            Assert.AreEqual("\"Quotes, to start\"|Two|\"And, to end\"", SplitOutsideQuotesAndJoin("\"Quotes, to start\",Two,\"And, to end\"", (byte)','));
+            Assert.AreEqual("One|Two|Three", SplitOutsideQuotesAndJoin("One,Two,Three", UTF8.Comma));
+            Assert.AreEqual("|One|Two||Three|", SplitOutsideQuotesAndJoin(",One,Two,,Three,", UTF8.Comma));
+            Assert.AreEqual("One|\"Here, Commas\"|Three", SplitOutsideQuotesAndJoin("One,\"Here, Commas\",Three", UTF8.Comma));
+            Assert.AreEqual("\"Quotes, to start\"|Two|\"And, to end\"", SplitOutsideQuotesAndJoin("\"Quotes, to start\",Two,\"And, to end\"", UTF8.Comma));
         }
 
         private string SplitOutsideQuotesAndJoin(string value, byte delimiter)
         {
             String8 value8 = String8.Convert(value, new byte[String8.GetLength(value)]);
             String8Set set = value8.SplitOutsideQuotes(delimiter, new PartialArray<int>());
-            String8 joined8 = set.Join('|', new byte[set.Value.Length]);
+            String8 joined8 = set.Join(UTF8.Pipe, new byte[set.Value.Length]);
             return joined8.ToString();
         }
 
@@ -88,7 +88,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
         {
             String8 value8 = String8.Convert(value, new byte[String8.GetLength(value)]);
             String8Set set = value8.SplitAndDecodeCsvCells(new PartialArray<int>());
-            String8 joined8 = set.Join('|', new byte[set.Value.Length]);
+            String8 joined8 = set.Join(UTF8.Pipe, new byte[set.Value.Length]);
             return joined8.ToString();
         }
 
@@ -108,8 +108,8 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
                 int iterations = 200000;
                 for (int iteration = 0; iteration < iterations; ++iteration)
                 {
-                    list.Split('.', partBuffer);
-                    noDelimiters.Split('.', partBuffer);
+                    list.Split(UTF8.Period, partBuffer);
+                    noDelimiters.Split(UTF8.Period, partBuffer);
                 }
 
                 return iterations * (list.Length + noDelimiters.Length);
