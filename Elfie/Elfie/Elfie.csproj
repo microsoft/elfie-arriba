@@ -134,6 +134,7 @@
     <Compile Include="Serialization\Read.cs" />
     <Compile Include="Model\Strings\String8Block.cs" />
     <Compile Include="Serialization\BaseTabularReader.cs" />
+    <Compile Include="Serialization\CsvReader.cs" />
     <Compile Include="Serialization\TsvReader.cs" />
     <Compile Include="Serialization\CsvWriter.cs" />
     <Compile Include="Serialization\TsvWriter.cs" />

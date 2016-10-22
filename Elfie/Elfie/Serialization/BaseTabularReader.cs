@@ -186,9 +186,6 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             // Get the next (complete) row from the current block
             String8 currentLine = _currentBlock[_nextRowIndexInBlock];
 
-            // Trim a trailing '\r', if found [handle \n or \r\n line endings]
-            if (currentLine.EndsWith((byte)'\r')) currentLine = currentLine.Substring(0, currentLine.Length - 1);
-
             // Split the line into cells
             _currentRow = SplitCells(currentLine, _cellPositionArray);
 

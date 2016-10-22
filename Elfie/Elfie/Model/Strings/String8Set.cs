@@ -28,6 +28,8 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             _delimiterWidth = delimiterWidth;
         }
 
+        public static String8Set Empty = new String8Set(String8.Empty, 0, null);
+
         /// <summary>
         ///  Return the complete value which was split.
         /// </summary>
@@ -45,6 +47,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         {
             get
             {
+                if (_partPositions == null) throw new ArgumentOutOfRangeException("index");
                 int innerIndex = _partPositions[index];
                 return _content.Substring(innerIndex, _partPositions[index + 1] - innerIndex - _delimiterWidth);
             }
@@ -76,9 +79,9 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             if (buffer.Length < lengthRequired) throw new ArgumentOutOfRangeException("buffer");
 
             int currentPosition = 0;
-            for(int i = 0; i < Count; ++i)
+            for (int i = 0; i < Count; ++i)
             {
-                if(i != 0) buffer[currentPosition++] = delimiter;
+                if (i != 0) buffer[currentPosition++] = delimiter;
                 currentPosition += this[i].WriteTo(buffer, currentPosition);
             }
 
@@ -124,32 +127,31 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         /// <returns>String8Set containing split value</returns>
         public static String8Set Split(String8 value, byte delimiter, PartialArray<int> positions)
         {
-            // Clear any previous values in the array
-            positions.Clear();
-
             // Ensure the delimiter is single byte
             if (delimiter >= 128) throw new ArgumentException(String.Format(Resources.UnableToSupportMultibyteCharacter, delimiter));
+
+            if (value.IsEmpty()) return String8Set.Empty;
+
+            // Clear any previous values in the array
+            positions.Clear();
 
             // Record each delimiter position
             positions.Add(0);
 
-            if (!value.IsEmpty())
+            // Get the String8 array directly and loop from index to (index + length)
+            // 3x faster than String8[index].
+            byte[] array = value._buffer;
+            int end = value._index + value._length;
+            for (int i = value._index; i < end; ++i)
             {
-                // Get the String8 array directly and loop from index to (index + length)
-                // 3x faster than String8[index].
-                byte[] array = value._buffer;
-                int end = value._index + value._length;
-                for (int i = value._index; i < end; ++i)
+                if (array[i] == delimiter)
                 {
-                    if (array[i] == delimiter)
-                    {
-                        // Next start position is after this delimiter
-                        positions.Add(i - value._index + 1);
-                    }
+                    // Next start position is after this delimiter
+                    positions.Add(i - value._index + 1);
                 }
-
-                positions.Add(value.Length + 1);
             }
+
+            positions.Add(value.Length + 1);
 
             return new String8Set(value, 1, positions);
         }
@@ -177,10 +179,10 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         /// <returns>Length of byte[] required to safely contain value</returns>
         public static int GetLength(String8 value, byte delimiter)
         {
-            if (value.IsEmpty()) return 1;
-
             // Ensure the delimiter is single byte
             if (delimiter >= 128) throw new ArgumentException(String.Format(Resources.UnableToSupportMultibyteCharacter, delimiter));
+
+            if (value.IsEmpty()) return 1;
 
             // There are N+1 parts for N delimiters, plus one sentinel at the end
             int partCount = 2;
@@ -203,53 +205,52 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         /// <returns>String8Set containing split value</returns>
         public static String8Set SplitOutsideQuotes(String8 value, byte delimiter, PartialArray<int> positions)
         {
+            if (value.IsEmpty()) return String8Set.Empty;
+
             // Clear any previous values in the array
             positions.Clear();
 
             // The first part always begins at the start of the string
             positions.Add(0);
 
-            if (!value.IsEmpty())
+            byte[] array = value._buffer;
+            int i = value._index;
+            int end = i + value._length;
+
+            // Walk the string. Find and mark delimiters outside of quotes only
+            while (i < end)
             {
-                byte[] array = value._buffer;
-                int i = value._index;
-                int end = i + value._length;
-
-                // Walk the string. Find and mark delimiters outside of quotes only
-                while (i < end)
+                // Outside Quotes
+                for (; i < end; ++i)
                 {
-                    // Outside Quotes
-                    for (; i < end; ++i)
+                    // If a quote is found, we're now inside quotes
+                    if (array[i] == UTF8.Quote)
                     {
-                        // If a quote is found, we're now inside quotes
-                        if (array[i] == UTF8.Quote)
-                        {
-                            i++;
-                            break;
-                        }
-
-                        // If a delimiter is found, add another split position
-                        if (array[i] == delimiter)
-                        {
-                            positions.Add(i - value._index + 1);
-                        }
+                        i++;
+                        break;
                     }
 
-                    // Inside Quotes
-                    for (; i < end; ++i)
+                    // If a delimiter is found, add another split position
+                    if (array[i] == delimiter)
                     {
-                        // If a quote was found, we're now outside quotes
-                        if (array[i] == UTF8.Quote)
-                        {
-                            i++;
-                            break;
-                        }
+                        positions.Add(i - value._index + 1);
                     }
                 }
 
-                // The last part always ends at the end of the string
-                positions.Add(value.Length + 1);
+                // Inside Quotes
+                for (; i < end; ++i)
+                {
+                    // If a quote was found, we're now outside quotes
+                    if (array[i] == UTF8.Quote)
+                    {
+                        i++;
+                        break;
+                    }
+                }
             }
+
+            // The last part always ends at the end of the string
+            positions.Add(value.Length + 1);
 
             return new String8Set(value, 1, positions);
         }
@@ -264,7 +265,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         public static String8Set SplitAndDecodeCsvCells(String8 row, PartialArray<int> positions)
         {
             // If row is empty, return empty set
-            if (row.IsEmpty()) return new String8Set(row, 0, default(PartialArray<int>));
+            if (row.IsEmpty()) return String8Set.Empty;
 
             // Clear any previous values in the array
             positions.Clear();
@@ -311,7 +312,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
                     i++;
 
                     // Look for end quote (undoubled quote)
-                    for(; i < end; ++i, ++copyTo)
+                    for (; i < end; ++i, ++copyTo)
                     {
                         if (array[i] != UTF8.Quote)
                         {
@@ -325,7 +326,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
 
                             // End of cell [end of line]
                             if (i == end) break;
-                            
+
                             if (array[i] == UTF8.Comma)
                             {
                                 // End of cell [comma]. Copy comma, end of cell.
@@ -334,7 +335,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
                                 i++; copyTo++;
                                 break;
                             }
-                            else if(array[i] == UTF8.Quote)
+                            else if (array[i] == UTF8.Quote)
                             {
                                 // Escaped quote. Copy the second quote, continue cell.
                                 array[copyTo] = array[i];
@@ -350,7 +351,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             }
 
             // The last part always ends at the end of the (shifted) string
-            positions.Add(copyTo + 1);
+            positions.Add(copyTo - row._index + 1);
 
             // Overwrite duplicate values left from shifting to make bugs clearer
             for (; copyTo < end; ++copyTo)
@@ -392,7 +393,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             get
             {
                 if (_partPositions == default(PartialArray<int>)) return 0;
-                return _partPositions.Count - 1;
+                return Math.Max(0, _partPositions.Count - 1);
             }
         }
 
