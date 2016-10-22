@@ -117,6 +117,19 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         }
 
         /// <summary>
+        ///  Split this String8, which is a row in a CSV, into cells, and
+        ///  unescape cell values. The buffer will be overwritten with the
+        ///  cell values shifted to remove wrapping quotes and escaped quotes
+        ///  and trailing nulls are written at the end.
+        /// </summary>
+        /// <param name="positions">PartialArray&lt;int&gt; to contain split positions</param>
+        /// <returns>String8Set containing the String8 split into unescaped CSV cells</returns>
+        public String8Set SplitAndDecodeCsvCells(PartialArray<int> positions)
+        {
+            return String8Set.SplitAndDecodeCsvCells(this, positions);
+        }
+
+        /// <summary>
         ///  Get the length in bytes required to convert value.
         /// </summary>
         /// <param name="value">string to measure</param>

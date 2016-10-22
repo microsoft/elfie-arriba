@@ -74,7 +74,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             if (delimiterCode >= 128) throw new ArgumentException(String.Format(Resources.UnableToSupportMultibyteCharacter, delimiter));
             byte delimiterByte = (byte)delimiterCode;
 
-            int lengthRequired = _content.Length + (_partPositions.Count - 1) * (1 - _delimiterWidth);
+            int lengthRequired = _content.Length + (Count - 1) * (1 - _delimiterWidth);
             if (buffer.Length < lengthRequired) throw new ArgumentOutOfRangeException("buffer");
 
             int currentPosition = 0;
@@ -171,6 +171,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             return partCount;
         }
 
+        #region CSV Support
         /// <summary>
         ///  Split a string on a given delimiter only outside matching double quotes.
         ///  Used to split CSV content where the delimiters are ignored within quotes.
@@ -193,6 +194,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
                 int i = value._index;
                 int end = i + value._length;
 
+                // Walk the string. Find and mark delimiters outside of quotes only
                 while (i < end)
                 {
                     // Outside Quotes
@@ -230,6 +232,114 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
 
             return new String8Set(value, 1, positions);
         }
+
+        /// <summary>
+        ///  Split a CSV row into cells. This method splits and unencodes quoted values together.
+        ///  It changes the underlying buffer in the process.
+        /// </summary>
+        /// <param name="row">String8 containing a CSV row</param>
+        /// <param name="positions">PartialArray&lt;int&gt; to contain split positions</param>
+        /// <returns>String8Set containing unencoded cell values</returns>
+        public static String8Set SplitAndDecodeCsvCells(String8 row, PartialArray<int> positions)
+        {
+            // If row is empty, return empty set
+            if (row.IsEmpty()) return new String8Set(row, 0, default(PartialArray<int>));
+
+            // Clear any previous values in the array
+            positions.Clear();
+
+            // The first part always begins at the start of the (shifted) string
+            positions.Add(0);
+
+            byte[] array = row._buffer;
+            int i = row._index;
+            int end = i + row._length;
+
+            // We're shifting values in the string to overwrite quotes around cells
+            // and doubled quotes. copyTo is where we've written to in the unescaped
+            // string.
+            int copyTo = i;
+
+            // Walk each cell, handling quoted and unquoted cells.
+            while (i < end)
+            {
+                bool inQuote = (array[i] == UTF8.Quote);
+
+                if (!inQuote)
+                {
+                    // Unquoted cell. Copy until next comma.
+                    for (; i < end; ++i, ++copyTo)
+                    {
+                        // Copy everything as-is (no unescaping)
+                        array[copyTo] = array[i];
+
+                        // If a delimiter is found, add another split position
+                        if (array[i] == UTF8.Comma)
+                        {
+                            positions.Add(copyTo - row._index + 1);
+                            i++; copyTo++;
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    // Quoted cell.
+
+                    // Overwrite opening quote
+                    i++;
+
+                    // Look for end quote (undoubled quote)
+                    for(; i < end; ++i, ++copyTo)
+                    {
+                        if (array[i] != UTF8.Quote)
+                        {
+                            // Copy everything that wasn't an escaped quote
+                            array[copyTo] = array[i];
+                        }
+                        else
+                        {
+                            // Quote found. End of cell, escaped quote, or unescaped quote (error)?
+                            i++;
+
+                            // End of cell [end of line]
+                            if (i == end) break;
+                            
+                            if (array[i] == UTF8.Comma)
+                            {
+                                // End of cell [comma]. Copy comma, end of cell.
+                                positions.Add(copyTo - row._index + 1);
+                                array[copyTo] = array[i];
+                                i++; copyTo++;
+                                break;
+                            }
+                            else if(array[i] == UTF8.Quote)
+                            {
+                                // Escaped quote. Copy the second quote, continue cell.
+                                array[copyTo] = array[i];
+                            }
+                            else
+                            {
+                                // Unescaped quote. Abort; caller will see incomplete row and can throw
+                                return new String8Set(row, 1, positions);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // The last part always ends at the end of the (shifted) string
+            positions.Add(copyTo + 1);
+
+            // Overwrite duplicate values left from shifting to make bugs clearer
+            for (; copyTo < end; ++copyTo)
+            {
+                array[copyTo] = UTF8.Null;
+            }
+
+            return new String8Set(row, 1, positions);
+        }
+        #endregion
 
         #region IBinarySerializable
         public void WriteBinary(BinaryWriter w)

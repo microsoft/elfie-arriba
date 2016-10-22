@@ -57,6 +57,42 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
             return joined8.ToString();
         }
 
+        [TestMethod]
+        public void String8Set_SplitAndDecodeCsvCells()
+        {
+            Assert.AreEqual(string.Empty, CsvSplitAndJoin(string.Empty));
+            Assert.AreEqual("Single", CsvSplitAndJoin("Single"));
+            Assert.AreEqual("One|Two", CsvSplitAndJoin("One,Two"));
+            Assert.AreEqual("Quoted, Single", CsvSplitAndJoin("\"Quoted, Single\""));
+            Assert.AreEqual("|One||Two|", CsvSplitAndJoin(",One,,Two,"));
+            Assert.AreEqual("Empty||Quoted", CsvSplitAndJoin("Empty,\"\",Quoted"));
+
+            // Escaped Quotes right at beginning and end of cell are properly preserved
+            Assert.AreEqual("One|Escaped, \"Quotes\"|Three", CsvSplitAndJoin("One,\"Escaped, \"\"Quotes\"\"\",Three"));
+            Assert.AreEqual("\"All Quoted\"", CsvSplitAndJoin("\"\"\"All Quoted\"\"\""));
+
+            // Quote counting check - eight double quotes is a quoted cell with three literal quotes
+            Assert.AreEqual("One|\"\"\"|Two", CsvSplitAndJoin("One,\"\"\"\"\"\"\"\",Two"));
+
+            // Quoted cells are closed on EOF
+            Assert.AreEqual("One|Two|Unterminated", CsvSplitAndJoin("\"One\",Two,\"Unterminated"));
+
+            // Quotes in unquoted cells are ignored [assume bad writer didn't wrap and escape, stop on first ',']
+            Assert.AreEqual("Unquoted with unescaped \"Quote", CsvSplitAndJoin("Unquoted with unescaped \"Quote"));
+
+            // Unescaped quotes in quoted cells cause an abort
+            Assert.AreEqual("Value|With|Unterminated", CsvSplitAndJoin("Value,With,Unterminated,\"Quote \" Here\",Following"));
+        }
+
+        private string CsvSplitAndJoin(string value)
+        {
+            String8 value8 = String8.Convert(value, new byte[String8.GetLength(value)]);
+            String8Set set = value8.SplitAndDecodeCsvCells(new PartialArray<int>());
+            String8 joined8 = set.Join('|', new byte[set.Value.Length]);
+            return joined8.ToString();
+        }
+
+
 #if !DEBUG
         [TestMethod]
 #endif
