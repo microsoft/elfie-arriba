@@ -8,6 +8,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         public const byte Null = (byte)'\0';
         public const byte Quote = (byte)'"';
         public const byte Comma = (byte)',';
+        public const byte Tab = (byte)'\t';
         public const byte CR = (byte)'\r';
         public const byte LF = (byte)'\n';
         public const byte a = (byte)'a';

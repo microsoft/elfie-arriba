@@ -64,13 +64,13 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
                 writer.Write(2);
 
                 // Verify exception if too few columns are written
-                Verify.Exception<TsvWriterException>(writer.NextRow);
+                Verify.Exception<InvalidOperationException>(writer.NextRow);
 
                 writer.Write(3);
                 writer.Write(4);
 
                 // Verify exception if too many columns written
-                Verify.Exception<TsvWriterException>(() => writer.Write(5));
+                Verify.Exception<InvalidOperationException>(() => writer.Write(5));
 
                 // No trailing NextRow()
             }
