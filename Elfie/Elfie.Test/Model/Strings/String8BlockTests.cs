@@ -58,6 +58,11 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
 
             directConversion = block.GetCopy(String.Empty);
             Assert.IsTrue(directConversion.IsEmpty());
+
+            // Verify clear works (doesn't throw, GetCopy works afterward)
+            block.Clear();
+            valueCopy = block.GetCopy("Third");
+            Assert.AreEqual("Third", valueCopy.ToString());
         }
 
         [TestMethod]

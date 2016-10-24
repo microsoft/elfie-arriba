@@ -186,6 +186,15 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             // Get the next (complete) row from the current block
             String8 currentLine = _currentBlock[_nextRowIndexInBlock];
 
+            // Strip leading UTF8 BOM, if found, on first row
+            if(_currentLine == 0)
+            {
+                if(currentLine.Length >= 3 && currentLine[0] == 0xEF && currentLine[1] == 0xBB && currentLine[2] == 0xBF)
+                {
+                    currentLine = currentLine.Substring(3);
+                }
+            }
+
             // Split the line into cells
             _currentRow = SplitCells(currentLine, _cellPositionArray);
 

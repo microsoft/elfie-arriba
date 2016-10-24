@@ -159,7 +159,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
 
             // Remove other blocks and restore only the first
             this._blocks.Clear();
-            this._blocks[0] = first;
+            this._blocks.Add(first);
         }
     }
 }
