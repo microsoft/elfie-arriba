@@ -37,7 +37,7 @@ namespace Arriba.Csv
       Arriba.Csv /mode:query /table:SP500 /select:""Date, Adj Close"" /count:30
 ";
 
-        private static void Main(string[] args)
+        private static int Main(string[] args)
         {
             try
             {
@@ -59,11 +59,19 @@ namespace Arriba.Csv
                         Console.WriteLine(Usage);
                         break;
                 }
+
+                return 0;
             }
             catch (CommandLineUsageException ex)
             {
                 Console.WriteLine(ex.Message);
                 Console.WriteLine(Usage);
+                return -1;
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return -2;
             }
         }
 
