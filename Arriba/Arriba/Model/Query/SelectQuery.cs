@@ -174,6 +174,13 @@ namespace Arriba.Model.Query
 
             SelectResult result = new SelectResult(this);
 
+            // Verify that the ORDER BY column exists
+            if (!p.Columns.ContainsKey(this.OrderByColumn))
+            {
+                result.Details.AddError(ExecutionDetails.ColumnDoesNotExist, this.OrderByColumn);
+                return result;
+            }
+
             // Find the set of items matching all terms
             ShortSet whereSet = new ShortSet(p.Count);
             this.Where.TryEvaluate(p, whereSet, result.Details);
