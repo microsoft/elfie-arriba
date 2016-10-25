@@ -20,6 +20,7 @@ namespace Arriba.Serialization
         public const byte Apostrophe = (byte)39;
         public const byte Comma = (byte)44;
         public const byte Period = (byte)46;
+        public const byte Slash = (byte)47;
         public const byte Zero = (byte)48;
         public const byte Nine = (byte)57;
         public const byte Semicolon = (byte)59;
@@ -27,6 +28,7 @@ namespace Arriba.Serialization
         public const byte GreaterThan = (byte)62;
         public const byte A = (byte)65;
         public const byte Z = (byte)90;
+        public const byte Backslash = (byte)92;
         public const byte a = (byte)97;
         public const byte z = (byte)122;
 

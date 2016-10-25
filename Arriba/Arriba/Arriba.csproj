@@ -113,6 +113,7 @@
     <Compile Include="Serialization\CSV\CsvReaderSettings.cs" />
     <Compile Include="Serialization\CSV\CsvRow.cs" />
     <Compile Include="Serialization\CSV\CsvWriter.cs" />
+    <Compile Include="Serialization\RssWriter.cs" />
     <Compile Include="Serialization\SerializationContext.cs" />
     <Compile Include="Serialization\TextSerializer.cs" />
     <Compile Include="Serialization\UTF8.cs" />
