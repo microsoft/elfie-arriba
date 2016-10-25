@@ -18,6 +18,8 @@ using Arriba.Serialization;
 using Arriba.Serialization.Csv;
 using Arriba.Server.Authentication;
 using Arriba.Server.Hosting;
+using System.IO;
+using Arriba.Structures;
 
 namespace Arriba.Server
 {
@@ -74,6 +76,16 @@ namespace Arriba.Server
             Table table = this.Database[tableName];
             SelectResult result = null;
 
+            // If this is RSS, ensure the ID column is first
+            if(String.Equals(outputFormat, "rss", StringComparison.OrdinalIgnoreCase))
+            {
+                List<string> columnsWithID = new List<string>();
+                columnsWithID.Add(table.IDColumn.Name);
+                columnsWithID.AddRange(query.Columns);
+
+                query.Columns = columnsWithID;
+            }
+
             using (ctx.Monitor(MonitorEventLevel.Verbose, "Correct", type: "Table", identity: tableName, detail: query.Where.ToString()))
             {
                 // Run server correctors
@@ -97,6 +109,10 @@ namespace Arriba.Server
 
                 // Stream datablock to CSV result
                 return ToCsvResponse(result, fileName);
+            }
+            else if(String.Equals(outputFormat, "rss", StringComparison.OrdinalIgnoreCase))
+            {
+                return ToRssResponse(result, ctx.Request.Resource, ctx.Request.ResourceParameters["iURL"]);
             }
 
             // Regular, serialize result object 
@@ -195,6 +211,182 @@ namespace Arriba.Server
             resp.AddHeader("Content-Disposition", String.Concat("attachment;filename=\"", fileName, "\";"));
 
             return resp;
+        }
+
+        private const string RssHeadingFormatString = @"<?xml version=""1.0"" encoding=""UTF-8"" ?>
+<rss version=""2.0"">
+<channel>
+    <title>{0}</title>
+    <description>{0}</description>
+    <link>{0}</link>
+    <lastBuildDate>{1:r}</lastBuildDate>
+    <pubDate>{1:r}</pubDate>
+    <ttl>3600</ttl>
+";
+
+        private const string RssFooterString = "</channel></rss>";
+
+        private static IResponse ToRssResponse(SelectResult result, string queryUrl, string itemUrlWithoutId)
+        {
+            DateTime utcNow = DateTime.UtcNow;
+
+            const string outputMimeType = "application/rss+xml; encoding=utf-8";
+
+            var resp = new StreamWriterResponse(outputMimeType, async (s) =>
+            {
+                SerializationContext context = new SerializationContext(s);
+                var items = result.Values;
+
+                ByteBlock rssHeading = String.Format(RssHeadingFormatString, queryUrl, utcNow);
+                rssHeading.WriteTo(s);
+
+                // Lame: Convert literals to ByteBlocks once to avoid encoding them repeatedly
+                ByteBlock item = "<item>";
+                ByteBlock title = "<title>";
+                ByteBlock endTitle = "</title>";
+                ByteBlock description = "<description>";
+                ByteBlock table = "<table>";
+                ByteBlock tr = "<tr>";
+                ByteBlock td = "<td>";
+                ByteBlock endTd = "</td>";
+                ByteBlock endTr = "</tr>\r\n";
+                ByteBlock endTable = "</table>";
+                ByteBlock endDescription = "</description>";
+                ByteBlock link = "<link>";
+                ByteBlock baseLink = itemUrlWithoutId;
+                ByteBlock endLink = "</link>";
+                ByteBlock guid = @"<guid isPermaLink=""true"">";
+                ByteBlock endGuid = "</guid>";
+                ByteBlock pubDate = "<pubDate>";
+                ByteBlock endPubDate = "</pubDate>";
+                ByteBlock now = utcNow.ToString("r");
+                ByteBlock endItem = "</item>\r\n";
+                
+                ByteBlock[] columnNames = new ByteBlock[items.ColumnCount];
+                for (int i = 0; i < items.ColumnCount; ++i)
+                {
+                    columnNames[i] = (ByteBlock)items.Columns[i].Name;
+                }
+
+                for (int row = 0; row < items.RowCount; ++row)
+                {
+                    ByteBlock id = ConvertToByteBlock(items[row, 0]);
+                    Guid itemGuid = id.GetHashAsGuid();
+                    ByteBlock guidString = itemGuid.ToString("D");
+
+                    item.WriteTo(s);
+
+                    // Write the first column (ID) as the Title
+                    title.WriteTo(s);
+                    WriteAsHtmlText(id, s);
+                    endTitle.WriteTo(s);
+
+                    // Description: Write an unstyled Html table with each column except the first
+                    description.WriteTo(s);
+                    table.WriteTo(s);
+                    
+                    for(int col = 1; col < items.ColumnCount; ++col)
+                    {
+                        tr.WriteTo(s);
+                        td.WriteTo(s);
+                        WriteAsHtmlText(columnNames[col], s);
+                        endTd.WriteTo(s);
+
+                        ByteBlock value = ConvertToByteBlock(items[row, col]);
+                        td.WriteTo(s);
+                        WriteAsHtmlText(value, s);
+                        endTd.WriteTo(s);
+
+                        endTr.WriteTo(s);
+                    }
+                    
+                    endTable.WriteTo(s);
+                    endDescription.WriteTo(s);
+
+                    // Write the link with the ID appended as the link
+                    link.WriteTo(s);
+                    baseLink.WriteTo(s);
+                    id.WriteTo(s);
+                    endLink.WriteTo(s);
+
+                    // Write a GUID computed from the ID as the GUID
+                    guid.WriteTo(s);
+                    guidString.WriteTo(s);
+                    endGuid.WriteTo(s);
+
+                    // Write now as the pubDate
+                    pubDate.WriteTo(s);
+                    now.WriteTo(s);
+                    endPubDate.WriteTo(s);
+                    
+                    endItem.WriteTo(s);
+                }
+
+                ((ByteBlock)RssFooterString).WriteTo(s);
+
+                context.Writer.Flush();
+                await s.FlushAsync();
+            });
+
+            return resp;
+        }
+
+        private static ByteBlock ConvertToByteBlock(object value)
+        {
+            if (value == null) return ByteBlock.Zero;
+
+            if (value is ByteBlock)
+            {
+                return (ByteBlock)value;
+            }
+            else if (value is string)
+            {
+                return (ByteBlock)value;
+            }
+            else
+            {
+                return (ByteBlock)(value.ToString());
+            }
+        }
+
+        /// <summary>
+        ///  Write a ByteBlock [UTF8 text] to the given stream, escaped to be
+        ///  safe within HTML as inner text or attribute values.
+        /// </summary>
+        /// <param name="value">ByteBlock to write</param>
+        /// <param name="stream">Stream to write to</param>
+        private static void WriteAsHtmlText(ByteBlock value, Stream stream)
+        {
+            int nextIndexToCopy = value.Index;
+            int end = value.Index + value.Length;
+            int length;
+
+            for(int i = nextIndexToCopy; i < end; ++i)
+            {
+                byte c = value.Array[i];
+
+                // Escape: Amperstand, LessThan, GreaterThan, Quote, Apostrophe
+                if (c == UTF8.Amperstand || c == UTF8.LessThan || c == UTF8.GreaterThan || c == UTF8.DoubleQuote || c == UTF8.Apostrophe)
+                {
+                    // Copy characters before the one requiring escaping
+                    length = i - nextIndexToCopy - 1;
+                    if(length > 0) stream.Write(value.Array, nextIndexToCopy, length);
+
+                    // Write character as "&#xx;" with the decimal keypoint
+                    stream.WriteByte(UTF8.Amperstand);
+                    stream.WriteByte(UTF8.Pound);
+                    stream.WriteByte((byte)(UTF8.Zero + (c / 10)));
+                    stream.WriteByte((byte)(UTF8.Zero + (c % 10)));
+                    stream.WriteByte(UTF8.Semicolon);
+
+                    // Set the next character to copy (the one after this one)
+                    nextIndexToCopy = i + 1;
+                }
+            }
+
+            // Copy the remaining characters
+            length = end - nextIndexToCopy;
+            if (length > 0) stream.Write(value.Array, nextIndexToCopy, length);
         }
 
         private async Task<IResponse> Query<T, U>(IRequestContext ctx, Route route) where T : IQuery<U>, new()

@@ -15,7 +15,9 @@ namespace Arriba.Serialization
         public const byte LF = (byte)10;
         public const byte CR = (byte)13;
         public const byte DoubleQuote = (byte)34;
+        public const byte Pound = (byte)35;
         public const byte Amperstand = (byte)38;
+        public const byte Apostrophe = (byte)39;
         public const byte Comma = (byte)44;
         public const byte Period = (byte)46;
         public const byte Zero = (byte)48;
