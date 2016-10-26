@@ -108,68 +108,71 @@ namespace Arriba.Server
         protected IResponse ValidateTableAccess(IRequestContext ctx, Route routeData, PermissionScope scope, bool overrideLocalHostSameUser = false)
         {
             string tableName = GetAndValidateTableName(routeData);
-
             if (!this.Database.TableExists(tableName))
             {
                 return ArribaResponse.NotFound("Table requested does not exist.");
             }
 
+            var currentUser = ctx.Request.User;
+
+            // If we are asked if override auth, check if the request was made from a loopback address (local) and the 
+            // current process identity matches the request identity
+            if (overrideLocalHostSameUser && IsRequestOriginLoopback(ctx.Request) && IsProcessUserSame(currentUser.Identity))
+            {
+                // Log for auditing that we skipped out on checking table auth. 
+                this.EventSource.Raise(MonitorEventLevel.Warning,
+                                        MonitorEventOpCode.Mark,
+                                        entityType: "Table",
+                                        entityIdentity: tableName,
+                                        name: "Authentication Override",
+                                        user: ctx.Request.User.Identity.Name,
+                                        detail: "Skipping table authentication for local loopback user on request");
+
+                return ContinueToNextHandlerResponse;
+            }
+
+            if (!HasTableAccess(tableName, currentUser, scope))
+            {
+                return ArribaResponse.Forbidden(String.Format("Access to {0} denied for {1}.", tableName, currentUser.Identity.Name));
+            }
+            else
+            {
+                return ContinueToNextHandlerResponse;
+            }
+        }
+
+        protected bool HasTableAccess(string tableName, IPrincipal currentUser, PermissionScope scope)
+        {
             var security = this.Database.Security(tableName);
 
-            using (ctx.Monitor(MonitorEventLevel.Verbose, "Arriba.Auth"))
+            // No Table Security? Allowed.
+            if (!security.HasSecurityData)
             {
-                // No table, no problem. Table has no security data? Assume user is authenticated.
-                if (!security.HasSecurityData)
-                {
-                    return ContinueToNextHandlerResponse;
-                }
-
-                var currentUser = ctx.Request.User;
-
-                // No authentication at all? Forbidden! 
-                if (currentUser == null || !currentUser.Identity.IsAuthenticated)
-                {
-                    return ArribaResponse.Forbidden("Anonymous users do not have permissions to resource");
-                }
-
-                // If we are asked if override auth, check if the request was made from a loopback address (local) and the 
-                // current process identity matches the request identity
-                if (overrideLocalHostSameUser && IsRequestOriginLoopback(ctx.Request) && IsProcessUserSame(currentUser.Identity))
-                {
-                    // Log for auditing that we skipped out on checking table auth. 
-                    this.EventSource.Raise(MonitorEventLevel.Warning,
-                                           MonitorEventOpCode.Mark,
-                                           entityType: "Table",
-                                           entityIdentity: tableName,
-                                           name: "Authentication Override",
-                                           user: ctx.Request.User.Identity.Name,
-                                           detail: "Skipping table authentication for local loopback user on request");
-
-                    return ContinueToNextHandlerResponse;
-                }
-
-                // Try user first, cheap check. 
-                if (security.IsIdentityInPermissionScope(IdentityScope.User, currentUser.Identity.Name, scope))
-                {
-                    return ContinueToNextHandlerResponse;
-                }
-
-                // User does not have explicit permissions, save the most expensive to last, validate the user
-                // against any group memberships for the table. 
-                using (ctx.Monitor(MonitorEventLevel.Verbose, "Arriba.Auth.DomainGroupLookup"))
-                {
-                    foreach (var group in security.GetScopeIdentities(scope, IdentityScope.Group))
-                    {
-                        if (_claimsAuth.IsUserInGroup(ctx.Request.User, group.Name))
-                        {
-                            return ContinueToNextHandlerResponse;
-                        }
-                    }
-                }
-
-                // Failed all potential auth paths. Forbidden! 
-                return ArribaResponse.Forbidden(String.Format("User \"{0}\" does not have permissions to resource", ctx.Request.User.Identity.Name));
+                return true;
             }
+
+            // No user identity? Forbidden! 
+            if (currentUser == null || !currentUser.Identity.IsAuthenticated)
+            {
+                return false;
+            }
+
+            // Try user first, cheap check. 
+            if (security.IsIdentityInPermissionScope(IdentityScope.User, currentUser.Identity.Name, scope))
+            {
+                return true;
+            }
+
+            // See if the user is in any allowed groups.
+            foreach (var group in security.GetScopeIdentities(scope, IdentityScope.Group))
+            {
+                if (_claimsAuth.IsUserInGroup(currentUser, group.Name))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>

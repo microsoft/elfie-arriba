@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Composition;
 using System.Linq;
+using System.Security.Principal;
 using System.Threading.Tasks;
 
 using Arriba.Communication;
@@ -13,12 +14,12 @@ using Arriba.Communication.Application;
 using Arriba.Model;
 using Arriba.Model.Expressions;
 using Arriba.Model.Query;
+using Arriba.Model.Security;
 using Arriba.Monitoring;
 using Arriba.Serialization;
 using Arriba.Serialization.Csv;
 using Arriba.Server.Authentication;
 using Arriba.Server.Hosting;
-using System.IO;
 using Arriba.Structures;
 
 namespace Arriba.Server
@@ -48,6 +49,8 @@ namespace Arriba.Server
             this.PostAsync(new RouteSpecification("/table/:tableName", new UrlParameter("action", "aggregate")), this.ValidateReadAccessAsync, this.Aggregate);
 
             this.GetAsync(new RouteSpecification("/table/:tableName", new UrlParameter("action", "pivot")), this.ValidateReadAccessAsync, this.Pivot);
+
+            this.Get(new RouteSpecification("/allCount"), this.AllCount);
         }
 
         private async Task<IResponse> Select(IRequestContext ctx, Route route)
@@ -486,7 +489,6 @@ namespace Arriba.Server
             return query;
         }
 
-
         private static PivotDimension GetPivotDimension(PivotDimensionDescriptor pivot)
         {
             switch (pivot.Type)
@@ -576,6 +578,55 @@ namespace Arriba.Server
                 }
 
                 return String.Format("[{0} for {1} with ({2})]", this.Type, this.Column, String.Join(", ", this.Arguments));
+            }
+        }
+
+        private IResponse AllCount(IRequestContext ctx, Route route)
+        {
+            // Build a Count query
+            AggregationQuery query = new AggregationQuery("count", new string[0], ctx.Request.ResourceParameters["q"] ?? "");
+            List<CountResult> results = new List<CountResult>();
+
+            // Run server correctors
+            using (ctx.Monitor(MonitorEventLevel.Verbose, "Correct", type: "AllCount", detail: query.Where.ToString()))
+            {
+                query.Correct(this.CurrentCorrectors(ctx));
+            }
+
+            // Accumulate Results for each table
+            IPrincipal user = ctx.Request.User;
+            using (ctx.Monitor(MonitorEventLevel.Information, "AllCount", type: "AllCount", detail: query.Where.ToString()))
+            {
+                foreach (string tableName in this.Database.TableNames)
+                {
+                    if (this.HasTableAccess(tableName, user, PermissionScope.Reader))
+                    {
+                        AggregationResult tableCount = this.Database[tableName].Query(query);
+                        results.Add(new CountResult(tableName, (ulong)tableCount.Values[0, 0], true, tableCount.Details.Succeeded));
+                    }
+                    else
+                    {
+                        results.Add(new CountResult(tableName, 0, false, false));
+                    }
+                }
+            }
+
+            return ArribaResponse.Ok(results.OrderByDescending((cr) => cr.Count));
+        }
+
+        private class CountResult
+        {
+            public string TableName { get; set; }
+            public ulong Count { get; set; }
+            public bool AllowedToRead { get; set; }
+            public bool Succeeded { get; set; }
+
+            public CountResult(string tableName, ulong count, bool allowedToRead, bool succeeded)
+            {
+                this.TableName = tableName;
+                this.Count = count;
+                this.AllowedToRead = allowedToRead;
+                this.Succeeded = succeeded;
             }
         }
     }
