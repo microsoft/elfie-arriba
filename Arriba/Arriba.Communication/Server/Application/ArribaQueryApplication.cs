@@ -601,8 +601,17 @@ namespace Arriba.Server
                 {
                     if (this.HasTableAccess(tableName, user, PermissionScope.Reader))
                     {
+                        query.TableName = tableName;
                         AggregationResult tableCount = this.Database[tableName].Query(query);
-                        results.Add(new CountResult(tableName, (ulong)tableCount.Values[0, 0], true, tableCount.Details.Succeeded));
+
+                        if (!tableCount.Details.Succeeded || tableCount.Values == null)
+                        {
+                            results.Add(new CountResult(tableName, 0, true, false));
+                        }
+                        else
+                        {
+                            results.Add(new CountResult(tableName, (ulong)tableCount.Values[0, 0], true, tableCount.Details.Succeeded));
+                        }
                     }
                     else
                     {
