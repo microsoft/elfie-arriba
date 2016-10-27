@@ -52,7 +52,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         private Dictionary<string, int> _columnHeadings;
 
         private byte[] _buffer;
-        private int _currentLine;
+        private int _rowCountRead;
         private int _nextRowIndexInBlock;
         private String8Set _currentBlock;
         private String8Set _currentRow;
@@ -81,7 +81,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             _columnHeadings = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
             _buffer = new byte[64 * 1024];
-            _currentLine = 0;
+            _rowCountRead = 0;
             _nextRowIndexInBlock = 0;
             _rowPositionArray = new PartialArray<int>(64, false);
             _cellPositionArray = new PartialArray<int>(1024, false);
@@ -93,7 +93,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
 
                 for (int i = 0; i < _currentRow.Count; ++i)
                 {
-                    string columnName = CurrentRow(i).ToString();
+                    string columnName = this.Current[i].ToString();
                     _columnHeadingsList.Add(columnName);
                     _columnHeadings[columnName] = i;
                 }
@@ -109,7 +109,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         /// </summary>
         public IReadOnlyList<string> Columns
         {
-            get { return this._columnHeadingsList;  }
+            get { return this._columnHeadingsList; }
         }
 
         /// <summary>
@@ -125,37 +125,26 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             int columnIndex = 0;
             if (_columnHeadings.TryGetValue(columnName, out columnIndex)) return columnIndex;
 
-            throw new ColumnNotFoundException(String.Format("Column Name \"{0}\" not found in TSV.\nKnown Columns: \"{1}\"", columnName, String.Join(", ", _columnHeadings.Keys)));
+            throw new ColumnNotFoundException(String.Format("Column Name \"{0}\" not found in file.\nKnown Columns: \"{1}\"", columnName, String.Join(", ", _columnHeadings.Keys)));
         }
 
         /// <summary>
-        ///  Get a cell value from the current row by column index.
-        ///  Throws if not enough cells exist in the current row.
+        ///  Return the cells for the current row.
+        ///  Get a single cell with reader.Current[columnIndex]
         /// </summary>
-        /// <param name="columnIndex">Column Index for which to get value</param>
-        /// <returns>String8 with value for column in current row. Throws if not enough columns in row.</returns>
-        public String8 CurrentRow(int columnIndex)
+        /// <returns>String8Set with the cells for the current row.</returns>
+        public String8Set Current
         {
-            return _currentRow[columnIndex];
+            get { return _currentRow; }
         }
 
         /// <summary>
-        ///  Returns the full text of the current row. Useful for debugging
-        ///  incomplete or mal-formed rows.
+        ///  Returns the number of rows read so far.
+        ///  If no newlines in rows, the RowCountRead is the line number of the current row.
         /// </summary>
-        public String8 CurrentRowText
+        public int RowCountRead
         {
-            get { return _currentRow.Value; }
-        }
-
-        /// <summary>
-        ///  Returns the number of the current row (the same as the line number
-        ///  in the file). Useful to report a specific location if unexpected
-        ///  content is read.
-        /// </summary>
-        public int CurrentRowNumber
-        {
-            get { return _currentLine; }
+            get { return _rowCountRead; }
         }
 
         /// <summary>
@@ -187,7 +176,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             String8 currentLine = _currentBlock[_nextRowIndexInBlock];
 
             // Strip leading UTF8 BOM, if found, on first row
-            if(_currentLine == 0)
+            if(_rowCountRead == 0)
             {
                 if(currentLine.Length >= 3 && currentLine[0] == 0xEF && currentLine[1] == 0xBB && currentLine[2] == 0xBF)
                 {
@@ -198,7 +187,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             // Split the line into cells
             _currentRow = SplitCells(currentLine, _cellPositionArray);
 
-            _currentLine++;
+            _rowCountRead++;
             _nextRowIndexInBlock++;
 
             return true;

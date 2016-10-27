@@ -30,6 +30,11 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             set { _identifiers[index] = _strings.FindOrAddString(value); }
         }
 
+        public int IdentifierFor(int index)
+        {
+            return _identifiers[index];
+        }
+
         public int Count
         {
             get { return _identifiers.Count; }

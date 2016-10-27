@@ -50,7 +50,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
 
             using (BaseTabularWriter writer = buildWriter(stream, new string[] { "LineNumber", "Count", "Description" }))
             {
-                for (int i = 2; i <= 10000; ++i)
+                for (int i = writer.RowCountWritten; i <= 10000; ++i)
                 {
                     if (i % 100 == 99)
                     {
@@ -69,14 +69,14 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
                     else if (i == 5000)
                     {
                         // Write a huge row
-                        writer.Write(5000);
+                        writer.Write(writer.RowCountWritten);
                         writer.Write(r.Next(100000));
                         writer.Write(huge8);
                     }
                     else
                     {
                         // Write a normal row
-                        writer.Write(i);
+                        writer.Write(writer.RowCountWritten);
                         writer.Write(r.Next(100000));
                         writer.Write(abcdef);
                     }
@@ -126,7 +126,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
             using (BaseTabularReader r = buildReader(sampleFilePath, false))
             {
                 Assert.IsTrue(r.NextRow());
-                Assert.AreEqual("LineNumber", r.CurrentRow(0).ToString());
+                Assert.AreEqual("LineNumber", r.Current[0].ToString());
 
                 // Get column name (no header row read)
                 Verify.Exception<ColumnNotFoundException>(() => r.ColumnIndex("Missing"));
@@ -137,45 +137,44 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
             {
                 // Get column name (valid)
                 int lineNumberColumnIndex = r.ColumnIndex("LineNumber");
-                Assert.AreEqual(0, lineNumberColumnIndex);
+                Assert.AreEqual(0, lineNumberColumnIndex, "LineNumber column not expected");
 
                 // Get column name (different case, but valid)
                 int descriptionColumnIndex = r.ColumnIndex("deSCRiption");
-                Assert.AreEqual(2, descriptionColumnIndex);
+                Assert.AreEqual(2, descriptionColumnIndex, "Description column not expected");
 
                 // Get column name (unknown)
                 Verify.Exception<ColumnNotFoundException>(() => r.ColumnIndex("UnknownColumn"));
 
-                int rowIndex = 1;
                 while (r.NextRow())
                 {
-                    rowIndex++;
+                    int rowIndex = r.RowCountRead;
 
                     if (rowIndex % 100 == 99)
                     {
                         // Verify empty rows return no columns, have empty row text, throw on value access
-                        Assert.AreEqual(0, r.CurrentRowColumns);
-                        Assert.IsTrue(r.CurrentRowText.IsEmpty());
-                        Verify.Exception<ArgumentOutOfRangeException>(() => r.CurrentRow(lineNumberColumnIndex));
+                        Assert.AreEqual(0, r.CurrentRowColumns, "Expected column count 0 in empty rows");
+                        Assert.IsTrue(r.Current.Value.IsEmpty());
+                        Verify.Exception<ArgumentOutOfRangeException>(() => { var v = r.Current[lineNumberColumnIndex]; });
                     }
                     else if (rowIndex == 5000)
                     {
                         // Read row over 64k [block resizing logic, row values look right]
-                        String8 longDescription = r.CurrentRow(descriptionColumnIndex);
+                        String8 longDescription = r.Current[descriptionColumnIndex];
                         Assert.AreEqual(100000, longDescription.Length);
                     }
                     else
                     {
                         // Get value (valid)
-                        String8 lineNumber8 = r.CurrentRow(lineNumberColumnIndex);
+                        String8 lineNumber8 = r.Current[lineNumberColumnIndex];
                         int lineNumber = lineNumber8.ToInteger();
-                        Assert.AreEqual(rowIndex, lineNumber);
+                        Assert.AreEqual(rowIndex, lineNumber, "Expected line number to equal row number");
 
                         // Get line number
-                        Assert.AreEqual(rowIndex, r.CurrentRowNumber);
+                        Assert.AreEqual(rowIndex, r.RowCountRead, "Expected lines read to equal row number");
 
                         // Get row text (valid)
-                        String8 fullRow = r.CurrentRowText;
+                        String8 fullRow = r.Current.Value;
                     }
                 }
             }
@@ -197,7 +196,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
                     {
                         for (int i = 0; i < reader.CurrentRowColumns; ++i)
                         {
-                            writer.Write(reader.CurrentRow(i));
+                            writer.Write(reader.Current[i]);
                         }
 
                         writer.NextRow();
@@ -234,14 +233,14 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
 
                             if (r.CurrentRowColumns < 2) continue;
 
-                            String8 lineNumber8 = r.CurrentRow(lineNumberIndex);
+                            String8 lineNumber8 = r.Current[lineNumberIndex];
                             int lineNumber = lineNumber8.ToInteger();
 
                             // TODO: Get ToInteger fast enough to read overall at goal
-                            String8 count8 = r.CurrentRow(countIndex);
+                            String8 count8 = r.Current[countIndex];
                             //int count = count8.ToInteger();
 
-                            String8 description = r.CurrentRow(descriptionIndex);
+                            String8 description = r.Current[descriptionIndex];
                         }
                     }
                 }
@@ -324,7 +323,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
                         }
 
                         bytesWritten += writer.BytesWritten;
-                        rowsWritten += writer.LineNumber;
+                        rowsWritten += writer.RowCountWritten;
                     }
 
                     return bytesWritten;
@@ -371,19 +370,19 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
                 Assert.AreEqual(3, r.CurrentRowColumns);
 
                 // Verify last column doesn't have extra '\r' when terminated with '\r\n'
-                Assert.AreEqual("3", r.CurrentRow(2).ToString());
+                Assert.AreEqual("3", r.Current[2].ToString());
 
                 Assert.IsTrue(r.NextRow());
                 Assert.AreEqual(3, r.CurrentRowColumns);
 
                 // Verify last column not clipped when terminated with '\n'
-                Assert.AreEqual("6", r.CurrentRow(2).ToString());
+                Assert.AreEqual("6", r.Current[2].ToString());
 
                 Assert.IsTrue(r.NextRow());
                 Assert.AreEqual(3, r.CurrentRowColumns);
 
                 // Verify last column not clipped when unterminated [EOF]
-                Assert.AreEqual("9", r.CurrentRow(2).ToString());
+                Assert.AreEqual("9", r.Current[2].ToString());
 
                 Assert.IsFalse(r.NextRow(), "Reader didn't stop after last line without newline");
             }

@@ -30,7 +30,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
     {
         private Stream _stream;
         private int _columnCount;
-        private int _rowCount;
+        private int _rowCountWritten;
         private int _currentRowColumnCount;
         private byte[] _typeConversionBuffer;
 
@@ -60,7 +60,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             _stream = stream;
             _columnCount = columnNames.Count();
             _currentRowColumnCount = 0;
-            _rowCount = 1;
+            _rowCountWritten = 0;
 
             _typeConversionBuffer = new byte[30];
 
@@ -89,7 +89,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         /// <param name="value">String8 to write to the current row.</param>
         public void Write(String8 value)
         {
-            if (_currentRowColumnCount >= _columnCount) throw new InvalidOperationException(String.Format("Writing too many columns for row {0:n0}. Wrote {1:n0}, expected {2:n0} columns.", _rowCount, _currentRowColumnCount, _columnCount));
+            if (_currentRowColumnCount >= _columnCount) throw new InvalidOperationException(String.Format("Writing too many columns for row {0:n0}. Wrote {1:n0}, expected {2:n0} columns.", _rowCountWritten, _currentRowColumnCount, _columnCount));
             if (_currentRowColumnCount > 0) WriteCellDelimiter(_stream);
             WriteCellValue(_stream, value);
             _currentRowColumnCount++;
@@ -112,20 +112,20 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         /// </summary>
         public void NextRow()
         {
-            if (_currentRowColumnCount != _columnCount) throw new InvalidOperationException(String.Format("Wrote wrong number of columns for row {0:n0}. Wrote {1:n0}, expected {2:n0} columns.", _rowCount, _currentRowColumnCount, _columnCount));
+            if (_currentRowColumnCount != _columnCount) throw new InvalidOperationException(String.Format("Wrote wrong number of columns for row {0:n0}. Wrote {1:n0}, expected {2:n0} columns.", _rowCountWritten, _currentRowColumnCount, _columnCount));
             WriteRowSeparator(_stream);
 
             _currentRowColumnCount = 0;
-            _rowCount++;
+            _rowCountWritten++;
         }
 
         /// <summary>
-        ///  Return the line number of the current row being written, 1-based.
-        ///  The header is line one, if it was written.
+        ///  Return the number of rows written so far.
+        ///  In rows without newlines, one less than the line number of the current row.
         /// </summary>
-        public int LineNumber
+        public int RowCountWritten
         {
-            get { return _rowCount; }
+            get { return _rowCountWritten; }
         }
 
         /// <summary>

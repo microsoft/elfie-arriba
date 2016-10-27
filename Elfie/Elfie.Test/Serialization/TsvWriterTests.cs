@@ -26,12 +26,12 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
 
             using (TsvWriter writer = new TsvWriter("TsvWriter.tsv", new string[] { "LineNumber", "Count", "Description", "Source" }))
             {
-                Assert.AreEqual(2, writer.LineNumber);
+                Assert.AreEqual(2, writer.RowCountWritten);
 
                 int sum = 0;
                 for (int i = 2; i <= 10; ++i)
                 {
-                    Assert.AreEqual(i, writer.LineNumber);
+                    Assert.AreEqual(i, writer.RowCountWritten);
 
                     sum += i;
                     writer.Write(i);
