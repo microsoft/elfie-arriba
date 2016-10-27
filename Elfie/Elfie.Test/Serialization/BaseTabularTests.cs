@@ -50,7 +50,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
 
             using (BaseTabularWriter writer = buildWriter(stream, new string[] { "LineNumber", "Count", "Description" }))
             {
-                for (int i = writer.RowCountWritten; i <= 10000; ++i)
+                for (int i = writer.RowCountWritten + 1; i <= 10000; ++i)
                 {
                     if (i % 100 == 99)
                     {
@@ -69,14 +69,14 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
                     else if (i == 5000)
                     {
                         // Write a huge row
-                        writer.Write(writer.RowCountWritten);
+                        writer.Write(i);
                         writer.Write(r.Next(100000));
                         writer.Write(huge8);
                     }
                     else
                     {
                         // Write a normal row
-                        writer.Write(writer.RowCountWritten);
+                        writer.Write(i);
                         writer.Write(r.Next(100000));
                         writer.Write(abcdef);
                     }
