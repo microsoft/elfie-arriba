@@ -8,12 +8,81 @@ using Arriba.Indexing;
 using Arriba.Model;
 using Arriba.Model.Column;
 using Arriba.Structures;
+using System.Collections.Generic;
+
+using COLUMN_CREATOR = System.Func<Arriba.Model.Column.ColumnDetails, string[], ushort, Arriba.Model.IUntypedColumn>;
 
 namespace Arriba
 {
-    internal static class ColumnFactory
+    public static class ColumnFactory
     {
-        internal static SortedColumn<T> CreateSortedColumn<T>(IColumn<T> column, ushort initialCapacity) where T : IComparable<T>
+        private static Dictionary<string, COLUMN_CREATOR> ColumnCreators;
+        static ColumnFactory()
+        {
+            ColumnCreators = new Dictionary<string, COLUMN_CREATOR>();
+
+            ColumnCreators["bool"] = (details, columnComponents, initialCapacity) =>
+            {
+                AdjustColumnComponents(ref columnComponents);
+
+                Value defaultValue = Value.Create(details.Default);
+                bool defaultAsBoolean;
+                if (!defaultValue.TryConvert<bool>(out defaultAsBoolean)) defaultAsBoolean = false;
+
+                UntypedColumn<bool> utc = new UntypedColumn<bool>(new BooleanColumn(defaultAsBoolean));
+                utc.Name = details.Name;
+                return utc;
+            };
+
+            ColumnCreators["boolean"] = ColumnCreators["bool"];
+
+            ColumnCreators["byte"] = (details, columnComponents, initialCapacity) => { AdjustColumnComponents(ref columnComponents); return Build<byte>(details, columnComponents, initialCapacity); };
+
+            ColumnCreators["short"] = (details, columnComponents, initialCapacity) => { AdjustColumnComponents(ref columnComponents); return Build<short>(details, columnComponents, initialCapacity); };
+            ColumnCreators["int16"] = ColumnCreators["short"];
+
+            ColumnCreators["int"] = (details, columnComponents, initialCapacity) => { AdjustColumnComponents(ref columnComponents); return Build<int>(details, columnComponents, initialCapacity); };
+            ColumnCreators["int32"] = ColumnCreators["int"];
+
+            ColumnCreators["long"] = (details, columnComponents, initialCapacity) => { AdjustColumnComponents(ref columnComponents); return Build<long>(details, columnComponents, initialCapacity); };
+            ColumnCreators["int64"] = ColumnCreators["long"];
+
+            ColumnCreators["float"] = (details, columnComponents, initialCapacity) => { AdjustColumnComponents(ref columnComponents); return Build<float>(details, columnComponents, initialCapacity); };
+            ColumnCreators["single"] = ColumnCreators["float"];
+
+            ColumnCreators["double"] = (details, columnComponents, initialCapacity) => { AdjustColumnComponents(ref columnComponents); return Build<double>(details, columnComponents, initialCapacity); };
+
+            ColumnCreators["ushort"] = (details, columnComponents, initialCapacity) => { AdjustColumnComponents(ref columnComponents); return Build<ushort>(details, columnComponents, initialCapacity); };
+            ColumnCreators["uint16"] = ColumnCreators["ushort"];
+
+            ColumnCreators["uint"] = (details, columnComponents, initialCapacity) => { AdjustColumnComponents(ref columnComponents); return Build<uint>(details, columnComponents, initialCapacity); };
+            ColumnCreators["uint32"] = ColumnCreators["uint"];
+
+            ColumnCreators["ulong"] = (details, columnComponents, initialCapacity) => { AdjustColumnComponents(ref columnComponents); return Build<ulong>(details, columnComponents, initialCapacity); };
+            ColumnCreators["uint64"] = ColumnCreators["ulong"];
+
+            ColumnCreators["datetime"] = (details, columnComponents, initialCapacity) => { AdjustColumnComponents(ref columnComponents); return Build<DateTime>(details, columnComponents, initialCapacity); };
+
+            ColumnCreators["guid"] = (details, columnComponents, initialCapacity) => { AdjustColumnComponents(ref columnComponents); return Build<Guid>(details, columnComponents, initialCapacity); };
+
+            ColumnCreators["timespan"] = (details, columnComponents, initialCapacity) => { AdjustColumnComponents(ref columnComponents); return Build<TimeSpan>(details, columnComponents, initialCapacity); };
+
+            ColumnCreators["string"] = (details, columnComponents, initialCapacity) => { AdjustColumnComponents(ref columnComponents); return BuildByteBlock(details, columnComponents); };
+            ColumnCreators["json"] = ColumnCreators["string"];
+            ColumnCreators["html"] = ColumnCreators["string"];
+        }
+
+        public static void AddColumnCreator(string coreType, COLUMN_CREATOR creationFunc)
+        {
+            if (ColumnCreators.ContainsKey(coreType))
+            {
+                throw new ArribaException(StringExtensions.Format("Creation method for Column Type '{0}' is already registered", coreType));
+            }
+
+            ColumnCreators[coreType] = creationFunc;
+        }
+
+        public static SortedColumn<T> CreateSortedColumn<T>(IColumn<T> column, ushort initialCapacity) where T : IComparable<T>
         {
             return new FastAddSortedColumn<T>(column, initialCapacity);
         }
@@ -38,77 +107,14 @@ namespace Arriba
             string[] columnComponents = details.Type.ToLowerInvariant().Split(':');
             string coreType = columnComponents[columnComponents.Length - 1];
 
-            // Default: All columns are sorted, strings are indexed
-            if (columnComponents.Length == 1)
+            COLUMN_CREATOR creatorFunc = null;
+
+            if (ColumnCreators.TryGetValue(coreType, out creatorFunc) == false)
             {
-                if (coreType.Equals("html"))
-                {
-                    columnComponents = new string[] { "indexed[html]", "sorted", "string" };
-                    coreType = "string";
-                }
-                else if (coreType.Equals("string") || coreType.Equals("json"))
-                {
-                    columnComponents = new string[] { "indexed", "sorted", "string" };
-                    coreType = "string";
-                }
-                else
-                {
-                    columnComponents = new string[] { "sorted", coreType };
-                }
-            }
-            else if (columnComponents.Length == 2 && columnComponents[0].Equals("bare", StringComparison.OrdinalIgnoreCase))
-            {
-                // Specify x:bare to get *only* the base column
-                columnComponents = new string[] { coreType };
+                throw new ArribaException(StringExtensions.Format("Column Type '{0}' is not currently supported.", coreType));
             }
 
-            switch (coreType)
-            {
-                case "bool":
-                case "boolean":
-                    Value defaultValue = Value.Create(details.Default);
-                    bool defaultAsBoolean;
-                    if (!defaultValue.TryConvert<bool>(out defaultAsBoolean)) defaultAsBoolean = false;
-
-                    UntypedColumn<bool> utc = new UntypedColumn<bool>(new BooleanColumn(defaultAsBoolean));
-                    utc.Name = details.Name;
-                    return utc;
-                case "byte":
-                    return Build<byte>(details, columnComponents, initialCapacity);
-                case "short":
-                case "int16":
-                    return Build<short>(details, columnComponents, initialCapacity);
-                case "int":
-                case "int32":
-                    return Build<int>(details, columnComponents, initialCapacity);
-                case "long":
-                case "int64":
-                    return Build<long>(details, columnComponents, initialCapacity);
-                case "float":
-                case "single":
-                    return Build<float>(details, columnComponents, initialCapacity);
-                case "double":
-                    return Build<double>(details, columnComponents, initialCapacity);
-                case "ushort":
-                case "uint16":
-                    return Build<ushort>(details, columnComponents, initialCapacity);
-                case "uint":
-                case "uint32":
-                    return Build<uint>(details, columnComponents, initialCapacity);
-                case "ulong":
-                case "uint64":
-                    return Build<ulong>(details, columnComponents, initialCapacity);
-                case "datetime":
-                    return Build<DateTime>(details, columnComponents, initialCapacity);
-                case "guid":
-                    return Build<Guid>(details, columnComponents, initialCapacity);
-                case "timespan":
-                    return Build<TimeSpan>(details, columnComponents, initialCapacity);
-                case "string":
-                    return BuildByteBlock(details, columnComponents);
-                default:
-                    throw new ArribaException(StringExtensions.Format("Column Type '{0}' is not currently supported.", coreType));
-            }
+            return creatorFunc(details, columnComponents, initialCapacity);
         }
 
         private static IUntypedColumn Build<T>(ColumnDetails details, string[] typeComponents, ushort initialCapacity) where T : struct, IComparable<T>, IEquatable<T>
@@ -190,6 +196,37 @@ namespace Arriba
                 default:
                     throw new ArribaException(StringExtensions.Format("Word Splitter '{0}' is not currently supported.", descriptor));
             }
+        }
+
+        private static string[] AdjustColumnComponents(ref string[] columnComponents)
+        {
+            string coreType = columnComponents[columnComponents.Length - 1];
+
+            // Default: All columns are sorted, strings are indexed
+            if (columnComponents.Length == 1)
+            {
+                if (coreType.Equals("html"))
+                {
+                    columnComponents = new string[] { "indexed[html]", "sorted", "string" };
+                    coreType = "string";
+                }
+                else if (coreType.Equals("string") || coreType.Equals("json"))
+                {
+                    columnComponents = new string[] { "indexed", "sorted", "string" };
+                    coreType = "string";
+                }
+                else
+                {
+                    columnComponents = new string[] { "sorted", coreType };
+                }
+            }
+            else if (columnComponents.Length == 2 && columnComponents[0].Equals("bare", StringComparison.OrdinalIgnoreCase))
+            {
+                // Specify x:bare to get *only* the base column
+                columnComponents = new string[] { coreType };
+            }
+
+            return columnComponents;
         }
     }
 }
