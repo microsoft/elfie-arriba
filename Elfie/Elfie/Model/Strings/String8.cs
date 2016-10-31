@@ -298,6 +298,17 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             if (_length == 0) return false;
             return (_buffer[_index + _length - 1] == c);
         }
+
+        /// <summary>
+        ///  Return whether this string starts with the given other string.
+        /// </summary>
+        /// <param name="other">The potential prefix to this string</param>
+        /// <param name="ignoreCase">True for case insensitive comparison, False otherwise</param>
+        /// <returns></returns>
+        public bool StartsWith(String8 other, bool ignoreCase = false)
+        {
+            return other.CompareAsPrefixTo(this, ignoreCase) == 0;
+        }
         #endregion
 
         #region Type Conversions
@@ -590,6 +601,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         /// <returns>Byte count written</returns>
         public int WriteTo(byte[] buffer, int index)
         {
+            if (_length <= 0) return 0;
             if (index + _length > buffer.Length) throw new ArgumentException(String.Format(Resources.BufferTooSmall, index + _length, buffer.Length));
             System.Buffer.BlockCopy(_buffer, _index, buffer, index, _length);
             return _length;
@@ -602,6 +614,8 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         /// <returns>Character count written</returns>
         public int WriteTo(TextWriter writer)
         {
+            if (_length <= 0) return 0;
+
             int length = _length;
             int end = _index + length;
 

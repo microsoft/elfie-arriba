@@ -137,6 +137,18 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
         }
 
         [TestMethod]
+        public void String8_Prefix()
+        {
+            String8 full = String8.Convert("One.Two.Three", new byte[13]);
+            String8 start = String8.Convert("One", new byte[3]);
+            String8 part = String8.Convert("Two", new byte[3]);
+            String8 startInsensitive = String8.Convert("ONE", new byte[3]);
+
+            Assert.AreEqual(0, start.CompareAsPrefixTo(full));
+            
+        }
+
+        [TestMethod]
         public void String8_ToInteger()
         {
             Assert.AreEqual(-1, TryToInteger(null));
@@ -218,6 +230,12 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
 
             Assert.AreEqual(caseSensitiveExpected, ToResult(left8.CompareTo(right)), "Case sensitive String8 to string comparison result incorrect.");
             Assert.AreEqual(caseInsensitiveExpected, ToResult(left8.CompareTo(right, true)), "Case insensitive String8 to string comparison result incorrect.");
+
+            // StartsWith and CompareAsPrefixTo
+            Assert.AreEqual(left.StartsWith(right), left8.StartsWith(right8));
+            Assert.AreEqual(left.StartsWith(right, StringComparison.OrdinalIgnoreCase), left8.StartsWith(right8, true));
+            Assert.AreEqual(right.StartsWith(left), right8.StartsWith(left8));
+            Assert.AreEqual(right.StartsWith(left, StringComparison.OrdinalIgnoreCase), right8.StartsWith(left8, true));
 
             // Case Insensitive Stable is the insensitive order, then the sensitive order for ties
             CompareResult caseInsensitiveStableExpected = (caseInsensitiveExpected == CompareResult.Equal ? caseSensitiveExpected : caseInsensitiveExpected);
