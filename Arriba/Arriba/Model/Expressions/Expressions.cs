@@ -140,7 +140,7 @@ namespace Arriba.Model.Expressions
 
     public class EmptyExpression : IExpression
     {
-        internal static IList<IExpression> EmptyEnumerable;
+        public static readonly IList<IExpression> EmptyEnumerable;
 
         static EmptyExpression()
         {
