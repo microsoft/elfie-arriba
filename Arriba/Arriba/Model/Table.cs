@@ -118,6 +118,11 @@ namespace Arriba.Model
             }
         }
 
+        protected IReadOnlyList<Partition> GetPartitions()
+        {
+            return _partitions.AsReadOnly();
+        }
+
         #region Column Operations
         public ColumnDetails IDColumn
         {

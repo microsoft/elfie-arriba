@@ -6,7 +6,6 @@ using System.Text;
 
 using Arriba.Model;
 using Arriba.Model.Column;
-
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Arriba.Test.Model
@@ -15,6 +14,12 @@ namespace Arriba.Test.Model
     public class ColumnFactoryTests
     {
         private string _defaultWrappingFormatString = "UntypedColumn<{0}>;FastAddSortedColumn<{0}>;ValueTypeColumn<{0}>";
+
+        [TestCleanup]
+        public void TestCleanup()
+        {
+            ColumnFactory.ResetColumnCreators();
+        }
 
         [TestMethod]
         public void ColumnFactory_Basic()
@@ -46,6 +51,17 @@ namespace Arriba.Test.Model
             Assert.AreEqual(String.Format(_defaultWrappingFormatString, "Single"), WriteCompleteType(ColumnFactory.Build(new ColumnDetails("Unused", "Single", -1.0), 0)));
             Assert.AreEqual(String.Format(_defaultWrappingFormatString, "Single"), WriteCompleteType(ColumnFactory.Build(new ColumnDetails("Unused", "float", -1.0), 0)));
             Assert.AreEqual(String.Format(_defaultWrappingFormatString, "Double"), WriteCompleteType(ColumnFactory.Build(new ColumnDetails("Unused", "double", -1), 0)));
+        }
+
+        [TestMethod]
+        public void ColumnFactory_BasicExtensibility()
+        {
+            CustomColumnSupport.RegisterCustomColumns();
+            // Registering the same name twice throws an exception
+            Verify.Exception<ArribaException>(() => CustomColumnSupport.RegisterCustomColumns());
+
+            // Column factory can call custom column creators
+            Assert.AreEqual("UntypedColumn<ComparableColor>;ColorColumn", WriteCompleteType(ColumnFactory.Build(new ColumnDetails("Unused", "color", null), 0)));
         }
 
         /// <summary>
@@ -94,5 +110,6 @@ namespace Arriba.Test.Model
                 result.Append(">");
             }
         }
+
     }
 }

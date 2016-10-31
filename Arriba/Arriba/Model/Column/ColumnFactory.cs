@@ -19,6 +19,11 @@ namespace Arriba
         private static Dictionary<string, COLUMN_CREATOR> ColumnCreators;
         static ColumnFactory()
         {
+            ResetColumnCreators();
+        }
+
+        internal static void ResetColumnCreators()
+        {
             ColumnCreators = new Dictionary<string, COLUMN_CREATOR>();
 
             ColumnCreators["bool"] = (details, columnComponents, initialCapacity) =>
