@@ -309,6 +309,26 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         {
             return other.CompareAsPrefixTo(this, ignoreCase) == 0;
         }
+
+        /// <summary>
+        ///  Make this String8 uppercase with invariant rules (ASCII characters only). 
+        ///  This version changes the existing value in place; make a copy if you
+        ///  need to preserve the original casing.
+        /// </summary>
+        public void ToUpperInvariant()
+        {
+            if (this._length <= 0) return;
+
+            int end = this._index + this._length;
+            for(int i = this._index; i < end; ++i)
+            {
+                byte c = this._buffer[i];
+                if((byte)(c - UTF8.a) < UTF8.AlphabetLength)
+                {
+                    this._buffer[i] = (byte)(c - UTF8.ToUpperSubtract);
+                }
+            }
+        }
         #endregion
 
         #region Type Conversions

@@ -185,6 +185,17 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
         }
 
         [TestMethod]
+        public void String8_ToUpper()
+        {
+            // Verify no exception
+            String8.Empty.ToUpperInvariant();
+
+            String8 sample = String8.Convert("abcABC", new byte[6]);
+            sample.ToUpperInvariant();
+            Assert.AreEqual("ABCABC", sample.ToString());
+        }
+
+        [TestMethod]
         public void String8_GetHashCode()
         {
             byte[] buffer = new byte[20];
