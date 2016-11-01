@@ -107,7 +107,7 @@ namespace Arriba
         /// <param name="details">Name of column to create</param>
         /// <param name="initialCapacity">Initial storage capacity of the column; use to avoid resizes if the item count is known</param>
         /// <returns>IColumn of requested type</returns>
-        public static IUntypedColumn Build(ColumnDetails details, ushort initialCapacity)
+        internal static IUntypedColumn Build(ColumnDetails details, ushort initialCapacity)
         {
             string[] columnComponents = details.Type.ToLowerInvariant().Split(':');
             string coreType = columnComponents[columnComponents.Length - 1];
