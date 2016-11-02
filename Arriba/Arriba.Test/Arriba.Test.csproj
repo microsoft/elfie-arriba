@@ -97,6 +97,7 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="Model\DatabaseTests.cs" />
     <Compile Include="Verify.cs" />
     <Compile Include="Model\AggregatorTests.cs" />
     <Compile Include="Model\Correctors\ExpressionCorrectorTests.cs" />

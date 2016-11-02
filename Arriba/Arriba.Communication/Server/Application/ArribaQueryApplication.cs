@@ -21,6 +21,7 @@ using Arriba.Serialization.Csv;
 using Arriba.Server.Authentication;
 using Arriba.Server.Hosting;
 using Arriba.Structures;
+using Arriba.Model.Correctors;
 
 namespace Arriba.Server
 {
@@ -85,10 +86,24 @@ namespace Arriba.Server
                 query.Columns = new string[] { table.IDColumn.Name };
             }
 
+            ICorrector correctors = this.CurrentCorrectors(ctx);
+
             using (ctx.Monitor(MonitorEventLevel.Verbose, "Correct", type: "Table", identity: tableName, detail: query.Where.ToString()))
             {
                 // Run server correctors
-                query.Correct(this.CurrentCorrectors(ctx));
+                query.Correct(correctors);
+            }
+
+            // Get Join queries (if any)
+            IList<SelectQuery> joinQueries = ParseJoinQueries(ctx);
+            if (joinQueries.Count > 0)
+            {
+                using (ctx.Monitor(MonitorEventLevel.Verbose, "Joins", type: "Table", identity: tableName, detail: query.Where.ToString()))
+                {
+                    // Run Join corrector to join from other tables
+                    JoinCorrector j = new JoinCorrector(this.Database, correctors, joinQueries);
+                    query.Correct(j);
+                }
             }
 
             using (ctx.Monitor(MonitorEventLevel.Information, "Select", type: "Table", identity: tableName, detail: query.Where.ToString()))
@@ -164,6 +179,20 @@ namespace Arriba.Server
             }
 
             return query;
+        }
+
+        private static IList<SelectQuery> ParseJoinQueries(IRequestContext ctx)
+        {
+            List<SelectQuery> joins = new List<SelectQuery>();
+
+            for(int queryIndex = 1; ctx.Request.ResourceParameters.Contains("q" + queryIndex.ToString()); ++queryIndex)
+            {
+                string where = ctx.Request.ResourceParameters["q" + queryIndex.ToString()];
+                string table = ctx.Request.ResourceParameters["t" + queryIndex.ToString()];
+                joins.Add(new SelectQuery() { Where = SelectQuery.ParseWhere(where), TableName = table });
+            }
+
+            return joins;
         }
 
         private static IResponse ToCsvResponse(SelectResult result, string fileName)

@@ -259,11 +259,16 @@ namespace Arriba.Model.Expressions
     public class TermInExpression : IExpression
     {
         public string ColumnName;
+        public Operator Operator;
         public Array Values;
 
-        public TermInExpression(string columnName, Array values)
+        public TermInExpression(string columnName, Array values) : this(columnName, Operator.Equals, values)
+        { }
+
+        public TermInExpression(string columnName, Operator op, Array values)
         {
             this.ColumnName = columnName;
+            this.Operator = op;
             this.Values = values;
         }
 
@@ -283,7 +288,7 @@ namespace Arriba.Model.Expressions
 
                 for (int i = 0; i < this.Values.Length; ++i)
                 {
-                    column.TryWhere(Operator.Equals, this.Values.GetValue(i), result, details);
+                    column.TryWhere(this.Operator, this.Values.GetValue(i), result, details);
                 }
             }
         }
@@ -297,11 +302,19 @@ namespace Arriba.Model.Expressions
         {
             StringBuilder result = new StringBuilder();
             result.Append(this.ColumnName);
-            result.Append(" IN (");
+            result.Append(this.Operator.ToSyntaxString());
+            result.Append("IN(");
 
             for (int i = 0; i < this.Values.Length; ++i)
             {
                 if (i > 0) result.Append(", ");
+
+                if (i > 4)
+                {
+                    result.AppendFormat("... [{0:n0}]", this.Values.Length);
+                    break;
+                }
+
                 result.Append(this.Values.GetValue(i).ToString());
             }
 
