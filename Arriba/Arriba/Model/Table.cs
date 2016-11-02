@@ -398,7 +398,7 @@ namespace Arriba.Model
                 Type idColumnArrayType = idColumnArray.GetType().GetElementType();
 
                 IChooseSplit splitter = NativeContainer.CreateTypedInstance<IChooseSplit>(typeof(ChooseSplitHelper<>), idColumnArrayType);
-                splitter.ChooseSplit(this, idColumnArray, out partitionChains, out partitionChainHeads);
+                splitter.ChooseSplit(this, idColumnArray, values.RowCount, out partitionChains, out partitionChainHeads);
 
                 Action<Tuple<int, int>, ParallelLoopState> forBody =
                     delegate (Tuple<int, int> range, ParallelLoopState unused)
@@ -490,6 +490,9 @@ namespace Arriba.Model
             {
                 Stopwatch w = Stopwatch.StartNew();
                 string idColumnName = _partitions[0].IDColumn.Name;
+
+                // Notify query
+                query.OnBeforeQuery(this);
 
                 // Run all correctors
                 query.Correct(_columnAliasCorrector);
@@ -664,7 +667,7 @@ namespace Arriba.Model
         #region Split
         private interface IChooseSplit
         {
-            void ChooseSplit(Table table, Array values, out int[] partitionChains, out int[] partitionChainHeads);
+            void ChooseSplit(Table table, Array values, int rowCount, out int[] partitionChains, out int[] partitionChainHeads);
         }
 
         private class ChooseSplitHelper<T> : IChooseSplit
@@ -674,18 +677,19 @@ namespace Arriba.Model
             ///  non-overlapping linked lists.  The head of each list is returned in the array partitionChainHeads.  The next item of each list is 
             ///  kept as the value at each index in partitionChains with -1 signifying the last node.
             /// </summary>
+        /// <param name="table">Table where values will be added</param>
             /// <param name="values">DataBlock containing values to be added to the table</param>
-            /// <param name="idColumnIndex">Index of the ID column in values</param>
+        /// <param name="rowCount">Index of the row the data is populated up to</param>
             /// <param name="partitionChains">[out] storage for the set of linked lists of nodes assigned to each partition.  The index is the row number of
             /// of the matching value in the values DataBlock and the value is the index of the next item in the list.  -1 signifies the last node. </param>
             /// <param name="partitionChainHeads">[out] The set of all of the linked lists.  The index is the ID of the partition that each value in the list
             /// should be inserted into.  The value is the index of the first item in this list in the partitionsChain array.</param>
-            public void ChooseSplit(Table table, Array values, out int[] partitionChains, out int[] partitionChainHeads)
+            public void ChooseSplit(Table table, Array values, int rowCount, out int[] partitionChains, out int[] partitionChainHeads)
             {
                 // Allocate storage for our return values and preset to -1, the terminal value.
-                int itemCount = values.Length;
-                int[] localPartitionChains = new int[itemCount];
-                for (int i = 0; i < itemCount; ++i) localPartitionChains[i] = -1;
+            // Use length passed in instead of array length as array will have stale values at the end
+            int[] localPartitionChains = new int[rowCount];
+            for (int i = 0; i < rowCount; ++i) localPartitionChains[i] = -1;
 
                 int partitionCount = table._partitions.Count;
                 int[] localPartitionChainHeads = new int[partitionCount];
@@ -722,12 +726,12 @@ namespace Arriba.Model
 
                 if (table.RunParallel)
                 {
-                    var rangePartitioner = Partitioner.Create(0, itemCount);
+                var rangePartitioner = Partitioner.Create(0, rowCount);
                     Parallel.ForEach(rangePartitioner, table.ParallelOptions, forBody);
                 }
                 else
                 {
-                    var range = Tuple.Create(0, itemCount);
+                var range = Tuple.Create(0, rowCount);
                     forBody(range, null);
                 }
 

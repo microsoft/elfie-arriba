@@ -122,6 +122,7 @@ namespace Arriba.Model.Query
 
         public virtual void OnBeforeQuery(Table table)
         {
+            this.Where = this.Where ?? new AllExpression();
         }
 
         public bool RequireMerge
@@ -197,7 +198,6 @@ namespace Arriba.Model.Query
 
             // Find the set of items in the base query
             ShortSet baseWhereSet = new ShortSet(p.Count);
-            if (this.Where == null) this.Where = new AllExpression();
             this.Where.TryEvaluate(p, baseWhereSet, result.Details);
             result.Total = baseWhereSet.Count();
 
@@ -213,7 +213,7 @@ namespace Arriba.Model.Query
                     // Get the set for this value intersected with the base set
                     setForDimension.Clear();
                     dimensionValue.TryEvaluate(p, setForDimension, result.Details);
-                    if (this.Where != null) setForDimension.And(baseWhereSet);
+                    setForDimension.And(baseWhereSet);
 
                     // Compute and store the aggregate value
                     if (!setForDimension.IsEmpty())
