@@ -97,6 +97,7 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="Indexing\SetSplitterTests.cs" />
     <Compile Include="Model\DatabaseTests.cs" />
     <Compile Include="Verify.cs" />
     <Compile Include="Model\AggregatorTests.cs" />

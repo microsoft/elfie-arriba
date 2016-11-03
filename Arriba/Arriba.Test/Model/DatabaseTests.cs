@@ -5,6 +5,7 @@ using Arriba.Structures;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -17,40 +18,47 @@ namespace Arriba.Test.Model
         [TestMethod]
         public void Database_Join()
         {
-            Database d = new Database();
-            Table people = d.AddTable("People", 1000);
-            people.AddOrUpdate(new DataBlock(new string[] { "Alias", "Name", "Team" }, 3,
+            Database db = new Database();
+            Table people = db.AddTable("People", 1000);
+            people.AddOrUpdate(new DataBlock(new string[] { "Alias", "Name", "Team", "Groups" }, 3,
                 new Array[]
                 {
                     new string[] { "mikefan", "rtaket", "v-scolo" },
                     new string[] { "Michael Fanning", "Ryley Taketa", "Scott Louvau"},
-                    new string[] { "T1", "T1", "T2" }
+                    new string[] { "T1", "T1", "T2" },
+                    new string[] { "G1; G2", "G1; G3", "G4" }
                 }), new AddOrUpdateOptions() { AddMissingColumns = true });
 
-            Table orders = d.AddTable("Orders", 1000);
-            orders.AddOrUpdate(new DataBlock(new string[] { "OrderNumber", "OrderedByAlias" }, 5,
+            Table orders = db.AddTable("Orders", 1000);
+            orders.AddOrUpdate(new DataBlock(new string[] { "OrderNumber", "OrderedByAlias" }, 6,
                 new Array[]
                 {
-                    new string[] { "O1", "O2", "O3", "O4", "O5" },
-                    new string[] { "mikefan", "mikefan", "rtaket", "v-scolo", "rtaket" }
+                    new string[] { "O1", "O2", "O3", "O4", "O5", "O6" },
+                    new string[] { "mikefan", "mikefan", "rtaket", "v-scolo", "rtaket", "mikefan; rtaket" }
                 }), new AddOrUpdateOptions() { AddMissingColumns = true });
 
-            
-            // Ask for Orders where the Alias is in the joined query
-            SelectQuery q = new SelectQuery() { Where = SelectQuery.ParseWhere("OrderedByAlias=#Q1[Alias]"), TableName = "Orders" };
+            SelectResult result;
 
-            // Ask for People in Team T1
-            List<SelectQuery> querySet = new List<SelectQuery>();
-            querySet.Add(new SelectQuery() { Where = SelectQuery.ParseWhere("T1"), TableName = "People" });
+            // Get Orders where OrderedByAlias is any Alias matching "T1" in People (equals JOIN)
+            result = RunQuerySet(db,
+                new SelectQuery() { Where = SelectQuery.ParseWhere("OrderedByAlias=#Q1[Alias]"), TableName = "Orders", Columns = new string[] { "OrderNumber" } },
+                new SelectQuery[]
+                {
+                    new SelectQuery() { Where = SelectQuery.ParseWhere("T1"), TableName = "People" }
+                });
 
-            // Correct the query - should convert to OrderedByAlias IN (rtaket, mikefan)
-            JoinCorrector j = new JoinCorrector(d, null, querySet);
-            q.Correct(j);
-            Assert.AreEqual("OrderedByAlias = IN(rtaket, mikefan)", q.Where.ToString());
+            Assert.AreEqual("O5, O3, O2, O1", JoinResultColumn(result));
 
-            // Ask for the outer query result - should get all except O4
-            SelectResult result = d[q.TableName].Select(q);
-            Assert.AreEqual(4, (int)result.Total);
+            // Get People where Groups contains a Group Mike is in (contains self JOIN)
+            result = RunQuerySet(db,
+                new SelectQuery() { Where = SelectQuery.ParseWhere("Groups:#Q1[Groups]"), TableName = "People", Columns = new string[] { "Alias" } },
+                new SelectQuery[]
+                {
+                    new SelectQuery() { Where = SelectQuery.ParseWhere("mikefan"), TableName = "People" }
+                });
+
+            Assert.AreEqual("rtaket, mikefan", JoinResultColumn(result));
+
 
             // TODO:
             //  Unknown column in Join query
@@ -58,8 +66,32 @@ namespace Arriba.Test.Model
             //  Join returns nothing
             //  Join returns too many
             //  Select column from Join is unknown
-            //  Join on 'contains' (rather than equals)
             //  Nested Join
+        }
+
+        private SelectResult RunQuerySet(Database db, SelectQuery q, IList<SelectQuery> joins)
+        {
+            Trace.WriteLine(String.Format("Raw Query: {0}", q.Where));
+
+            // Correct the Query [evaluating Joins recursively]
+            JoinCorrector j = new JoinCorrector(db, null, joins);
+            q.Correct(j);
+
+            // Get direct Query results
+            Trace.WriteLine(String.Format("Joined Query: {0}", q.Where));
+            SelectResult result = db[q.TableName].Select(q);
+            return result;
+        }
+
+        private string JoinResultColumn(SelectResult result, int columnIndex = 0)
+        {
+            StringBuilder values = new StringBuilder();
+            for(int i = 0; i < result.Values.RowCount; ++i)
+            {
+                if (values.Length > 0) values.Append(", ");
+                values.Append(result.Values[i, columnIndex].ToString());
+            }
+            return values.ToString();
         }
     }
 }

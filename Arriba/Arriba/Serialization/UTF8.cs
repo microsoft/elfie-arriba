@@ -12,6 +12,7 @@ namespace Arriba.Serialization
     /// </summary>
     public static class UTF8
     {
+        public const byte Space = (byte)' ';
         public const byte LF = (byte)10;
         public const byte CR = (byte)13;
         public const byte DoubleQuote = (byte)34;

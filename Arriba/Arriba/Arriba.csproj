@@ -80,6 +80,7 @@
     <Compile Include="Extensions\StringExtensions.cs" />
     <Compile Include="FileLock.cs" />
     <Compile Include="Indexing\IWordSplitter.cs" />
+    <Compile Include="Indexing\Splitters\SetSplitter.cs" />
     <Compile Include="Model\AddOrUpdateOptions.cs" />
     <Compile Include="Model\Column\BooleanColumn.cs" />
     <Compile Include="Model\Column\ColumnDetails.cs" />

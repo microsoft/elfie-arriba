@@ -9,6 +9,7 @@ using System.Text;
 using Arriba.Extensions;
 using Arriba.Model.Query;
 using Arriba.Structures;
+using Arriba.Indexing;
 
 namespace Arriba.Model.Expressions
 {
@@ -270,6 +271,43 @@ namespace Arriba.Model.Expressions
             this.ColumnName = columnName;
             this.Operator = op;
             this.Values = values;
+            
+            // If this is a "Matches" JOIN, split the values coming in into terms
+            // which will each be matched.
+            if(op == Operator.Matches || op == Operator.MatchesExact)
+            {
+                this.Values = GetUniqueTerms(values);
+            }
+        }
+
+        private Array GetUniqueTerms(Array values)
+        {
+            HashSet<ByteBlock> uniqueValues = new HashSet<ByteBlock>();
+           
+            // Get every unique word split from every value in the array
+            SetSplitter s = new SetSplitter();
+            for (int i = 0; i < values.Length; ++i)
+            {
+                ByteBlock value = (ByteBlock)values.GetValue(i);
+                foreach (Range r in s.Split(value).Ranges)
+                {
+                    if (r.Length > 0)
+                    {
+                        uniqueValues.Add(new ByteBlock(value.Array, r.Index, r.Length));
+                    }
+                }
+            }
+
+            // Convert the result to an array
+            ByteBlock[] result = new ByteBlock[uniqueValues.Count];
+            int j = 0;
+            foreach (ByteBlock value in uniqueValues)
+            {
+                result[j] = value;
+                j++;
+            }
+
+            return result;
         }
 
         public void TryEvaluate(Partition partition, ShortSet result, ExecutionDetails details)
