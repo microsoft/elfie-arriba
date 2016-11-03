@@ -40,23 +40,23 @@ namespace Arriba.Test.Model
             SelectResult result;
 
             // Get Orders where OrderedByAlias is any Alias matching "T1" in People (equals JOIN)
-            result = RunQuerySet(db,
+            JoinQuery<SelectResult> q = new JoinQuery<SelectResult>(
+                db,
                 new SelectQuery() { Where = SelectQuery.ParseWhere("OrderedByAlias=#Q1[Alias]"), TableName = "Orders", Columns = new string[] { "OrderNumber" } },
-                new SelectQuery[]
-                {
-                    new SelectQuery() { Where = SelectQuery.ParseWhere("T1"), TableName = "People" }
-                });
+                new SelectQuery() { Where = SelectQuery.ParseWhere("T1"), TableName = "People" }
+            );
 
+            result = db.Query(q);
             Assert.AreEqual("O5, O3, O2, O1", JoinResultColumn(result));
 
             // Get People where Groups contains a Group Mike is in (contains self JOIN)
-            result = RunQuerySet(db,
+            q = new JoinQuery<SelectResult>(
+                db,
                 new SelectQuery() { Where = SelectQuery.ParseWhere("Groups:#Q1[Groups]"), TableName = "People", Columns = new string[] { "Alias" } },
-                new SelectQuery[]
-                {
-                    new SelectQuery() { Where = SelectQuery.ParseWhere("mikefan"), TableName = "People" }
-                });
+                new SelectQuery() { Where = SelectQuery.ParseWhere("mikefan"), TableName = "People" }
+            );
 
+            result = db.Query(q);
             Assert.AreEqual("rtaket, mikefan", JoinResultColumn(result));
 
 
@@ -86,7 +86,7 @@ namespace Arriba.Test.Model
         private string JoinResultColumn(SelectResult result, int columnIndex = 0)
         {
             StringBuilder values = new StringBuilder();
-            for(int i = 0; i < result.Values.RowCount; ++i)
+            for (int i = 0; i < result.Values.RowCount; ++i)
             {
                 if (values.Length > 0) values.Append(", ");
                 values.Append(result.Values[i, columnIndex].ToString());

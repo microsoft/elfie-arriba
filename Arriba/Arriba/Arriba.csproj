@@ -107,6 +107,7 @@
     <Compile Include="Model\Query\DistinctQuery.cs" />
     <Compile Include="Model\Query\DistinctResult.cs" />
     <Compile Include="Model\Query\IQuery.cs" />
+    <Compile Include="Model\Query\JoinQuery.cs" />
     <Compile Include="Serialization\BinarySerializable.cs" />
     <Compile Include="Serialization\CollectionFactory.cs" />
     <Compile Include="Serialization\CSV\CsvCellRange.cs" />
