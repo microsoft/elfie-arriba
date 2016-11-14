@@ -9,6 +9,7 @@ using System.Threading;
 
 using Arriba.Extensions;
 using Arriba.Serialization;
+using Arriba.Model.Query;
 
 namespace Arriba.Model
 {
@@ -23,6 +24,11 @@ namespace Arriba.Model
 
         public Database()
         { }
+
+        public virtual T Query<T>(IQuery<T> query)
+        {
+            return this[query.TableName].Query(query);
+        }
 
         public Table this[string tableName]
         {

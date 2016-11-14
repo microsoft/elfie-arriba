@@ -198,6 +198,8 @@ namespace Arriba
                     return new DefaultWordSplitter();
                 case "html":
                     return new HtmlWordSplitter(new DefaultWordSplitter());
+                case "set":
+                    return new SetSplitter();
                 default:
                     throw new ArribaException(StringExtensions.Format("Word Splitter '{0}' is not currently supported.", descriptor));
             }

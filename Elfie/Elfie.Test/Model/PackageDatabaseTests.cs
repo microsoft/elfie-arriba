@@ -207,21 +207,20 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model
             PartialArray<Symbol> results = new PartialArray<Symbol>(40);
 
             int iterations = 20000;
-            int searches = iterations * queries.Length;
-            Stopwatch w;
-            w = Stopwatch.StartNew();
-            for (int i = 0; i < iterations; ++i)
-            {
-                for (int j = 0; j < queries.Length; ++j)
-                {
-                    queries[j].TryFindMembers(db, ref results);
-                }
-            }
-            w.Stop();
-            Trace.WriteLine(string.Format("{0:n0} MemberQuery.TryFindMembers took {1}", searches, w.Elapsed.ToFriendlyString()));
 
             // Goal: ~1M searches per second [5 x 20k = 100k in under 100ms]
-            Assert.IsTrue(w.ElapsedMilliseconds < 200);
+            Verify.PerformanceByOperation(1 * LongExtensions.Million, () =>
+            {
+                for (int i = 0; i < iterations; ++i)
+                {
+                    for (int j = 0; j < queries.Length; ++j)
+                    {
+                        queries[j].TryFindMembers(db, ref results);
+                    }
+                }
+
+                return iterations * queries.Length;
+            });
 
             // ==== Case Sensitive ====
             for (int j = 0; j < queries.Length; ++j)
@@ -229,19 +228,19 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model
                 queries[j].IgnoreCase = true;
             }
 
-            w = Stopwatch.StartNew();
-            for (int i = 0; i < iterations; ++i)
-            {
-                for (int j = 0; j < queries.Length; ++j)
-                {
-                    queries[j].TryFindMembers(db, ref results);
-                }
-            }
-            w.Stop();
-            Trace.WriteLine(string.Format("{0:n0} MemberQuery.TryFindMembers [case sensitive] took {1}", searches, w.Elapsed.ToFriendlyString()));
-
             // Goal: ~1M searches per second [5 x 20k = 100k in under 100ms]
-            Assert.IsTrue(w.ElapsedMilliseconds < 200);
+            Verify.PerformanceByOperation(1 * LongExtensions.Million, () =>
+            {
+                for (int i = 0; i < iterations; ++i)
+                {
+                    for (int j = 0; j < queries.Length; ++j)
+                    {
+                        queries[j].TryFindMembers(db, ref results);
+                    }
+                }
+
+                return iterations * queries.Length;
+            });
         }
 
         [TestMethod]

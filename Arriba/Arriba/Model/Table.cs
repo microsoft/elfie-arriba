@@ -599,6 +599,11 @@ namespace Arriba.Model
         {
             // Route SelectQuery to the Select API. It has a different flow, but users shouldn't have to know not to call Query with SelectQuery instances.
             if (query is SelectQuery) return (T)(object)this.Select((SelectQuery)query);
+            if (query is JoinQuery<SelectResult>)
+            {
+                SelectQuery q = (SelectQuery)(((JoinQuery<SelectResult>)query).PrimaryQuery);
+                return (T)(object)this.Select(q);
+            }
 
             _locker.EnterReadLock();
             try

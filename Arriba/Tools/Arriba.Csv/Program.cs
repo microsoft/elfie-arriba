@@ -13,6 +13,7 @@ using Arriba.Model.Column;
 using Arriba.Model.Query;
 using Arriba.Serialization.Csv;
 using Arriba.Structures;
+using System.IO;
 
 namespace Arriba.Csv
 {
@@ -28,16 +29,16 @@ namespace Arriba.Csv
     'decorate' mode used to add new columns to existing rows only.
     'query' to run a query from the command line.
     
-    Arriba.Csv /mode:build /table:<TableName> /csvPath:<CsvFilePath> [/maximumCount:<RowLimitForTable>]? [/columns:""C1,C2,C3""]?
+    Arriba.Csv /mode:build /table:<TableName> /csvPath:<CsvFilePath> [/maximumCount:<RowLimitForTable>]? [/columns:""C1,C2,C3""]? [/schemaPath:<SchemaPath>]?
     Arriba.Csv /mode:query /table:<TableName> [/select:<ColumnList>]? [/orderBy:<ColumnName>]? [/count:<CountToShow>]?
-    Arriba.Csv /mode:decorate /table:<TableName> /csvPath:<CsvFilePath> [/maximumCount:<RowLimitForTable>]? [/columns:""C1,C2,C3""]?
+    Arriba.Csv /mode:decorate /table:<TableName> /csvPath:<CsvFilePath> [/maximumCount:<RowLimitForTable>]? [/columns:""C1,C2,C3""]? [/schemaPath:<SchemaPath>]?
 
     Ex:
       Arriba.Csv /mode:build /table:SP500 /csvPath:""C:\Temp\SP500 Price History.csv"" /maximumCount:50000
       Arriba.Csv /mode:query /table:SP500 /select:""Date, Adj Close"" /count:30
 ";
 
-        private static void Main(string[] args)
+        private static int Main(string[] args)
         {
             try
             {
@@ -47,10 +48,10 @@ namespace Arriba.Csv
                 switch (mode)
                 {
                     case "build":
-                        Build(true, c.GetString("table"), c.GetString("csvPath"), c.GetInt("maximumCount", 100000), c.GetString("columns", null));
+                        Build(true, c.GetString("table"), c.GetString("csvPath"), c.GetInt("maximumCount", 100000), c.GetString("columns", null), c.GetString("schemaPath", null));
                         break;
                     case "decorate":
-                        Build(false, c.GetString("table"), c.GetString("csvPath"), c.GetInt("maximumCount", 100000), c.GetString("columns", null));
+                        Build(false, c.GetString("table"), c.GetString("csvPath"), c.GetInt("maximumCount", 100000), c.GetString("columns", null), c.GetString("schemaPath", null));
                         break;
                     case "query":
                         Query(c.GetString("table"), c.GetString("select", ""), c.GetString("orderBy", ""), c.GetInt("count", QueryResultLimit));
@@ -59,15 +60,58 @@ namespace Arriba.Csv
                         Console.WriteLine(Usage);
                         break;
                 }
+
+                return 0;
             }
             catch (CommandLineUsageException ex)
             {
                 Console.WriteLine(ex.Message);
                 Console.WriteLine(Usage);
+                return -1;
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return -2;
             }
         }
 
-        private static void Build(bool build, string tableName, string csvFilePath, int maximumCount, string columns)
+        private static IList<ColumnDetails> ParseSchemaFile(string schemaFilePath)
+        {
+            List<ColumnDetails> columns = new List<ColumnDetails>();
+            foreach (string line in File.ReadAllLines(schemaFilePath))
+            {
+                string[] values = line.Split('\t');
+                ColumnDetails d;
+
+                if (values.Length == 1)
+                {
+                    d = new ColumnDetails(values[0]);
+                }
+                else if (values.Length == 2)
+                {
+                    d = new ColumnDetails(values[0], values[1], null);
+                }
+                else if (values.Length == 3)
+                {
+                    d = new ColumnDetails(values[0], values[1], null);
+                }
+                else if(values.Length == 5)
+                {
+                    d = new ColumnDetails(values[0], values[1], values[2], values[3], bool.Parse(values[4]));
+                }
+                else
+                {
+                    throw new InvalidOperationException(String.Format("Schema Files must be tab delimited, and may contain 1, 2, 3, or 5 values:\r\nName\tType?\tDefault?\tAlias?\tIsPrimaryKey\r\n. Line Read: {0}", line));
+                }
+
+                columns.Add(d);
+            }
+
+            return columns;
+        }
+
+        private static void Build(bool build, string tableName, string csvFilePath, int maximumCount, string columns, string schemaPath = null)
         {
             string action = (build ? "Building" : "Decorating");
 
@@ -86,6 +130,17 @@ namespace Arriba.Csv
             { 
                 table = new Table();
                 table.Load(tableName);
+            }
+
+            // Add schema columns, if given a schema path
+            if (!String.IsNullOrEmpty(schemaPath))
+            {
+                Console.WriteLine("Adding Schema from {0}...", schemaPath);
+                IList<ColumnDetails> schemaColumns = ParseSchemaFile(schemaPath);
+                foreach (ColumnDetails column in schemaColumns)
+                {
+                    table.AddColumn(column);
+                }
             }
 
             // Always add missing columns. Add rows only when not in 'decorate' mode

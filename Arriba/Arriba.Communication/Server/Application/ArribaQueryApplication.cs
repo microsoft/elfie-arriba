@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Composition;
 using System.Linq;
+using System.Security.Principal;
 using System.Threading.Tasks;
 
 using Arriba.Communication;
@@ -13,11 +14,14 @@ using Arriba.Communication.Application;
 using Arriba.Model;
 using Arriba.Model.Expressions;
 using Arriba.Model.Query;
+using Arriba.Model.Security;
 using Arriba.Monitoring;
 using Arriba.Serialization;
 using Arriba.Serialization.Csv;
 using Arriba.Server.Authentication;
 using Arriba.Server.Hosting;
+using Arriba.Structures;
+using Arriba.Model.Correctors;
 
 namespace Arriba.Server
 {
@@ -46,6 +50,8 @@ namespace Arriba.Server
             this.PostAsync(new RouteSpecification("/table/:tableName", new UrlParameter("action", "aggregate")), this.ValidateReadAccessAsync, this.Aggregate);
 
             this.GetAsync(new RouteSpecification("/table/:tableName", new UrlParameter("action", "pivot")), this.ValidateReadAccessAsync, this.Pivot);
+
+            this.Get(new RouteSpecification("/allCount"), this.AllCount);
         }
 
         private async Task<IResponse> Select(IRequestContext ctx, Route route)
@@ -58,32 +64,32 @@ namespace Arriba.Server
 
             string outputFormat = ctx.Request.ResourceParameters["fmt"];
 
-            SelectQuery query = new SelectQuery();
-
-            if (ctx.Request.Method == RequestVerb.Post && ctx.Request.HasBody)
-            {
-                query = await ctx.Request.ReadBodyAsync<SelectQuery>();
-            }
-            else
-            {
-                query = SelectFromUrlParameters(ctx);
-            }
-
+            SelectQuery query = await SelectQueryFromRequest(this.Database, ctx);
             query.TableName = tableName;
 
             Table table = this.Database[tableName];
             SelectResult result = null;
 
+            // If this is RSS, just get the ID column
+            if(String.Equals(outputFormat, "rss", StringComparison.OrdinalIgnoreCase))
+            {
+                query.Columns = new string[] { table.IDColumn.Name };
+            }
+
+            // Read Joins, if passed
+            IQuery<SelectResult> wrappedQuery = WrapInJoinQueryIfFound(query, this.Database, ctx);
+
+            ICorrector correctors = this.CurrentCorrectors(ctx);
             using (ctx.Monitor(MonitorEventLevel.Verbose, "Correct", type: "Table", identity: tableName, detail: query.Where.ToString()))
             {
                 // Run server correctors
-                query.Correct(this.CurrentCorrectors(ctx));
+                wrappedQuery.Correct(correctors);
             }
 
             using (ctx.Monitor(MonitorEventLevel.Information, "Select", type: "Table", identity: tableName, detail: query.Where.ToString()))
             {
                 // Run the query
-                result = table.Select(query);
+                result = this.Database.Query(wrappedQuery);
             }
 
             // Is this a CSV request? 
@@ -98,14 +104,24 @@ namespace Arriba.Server
                 // Stream datablock to CSV result
                 return ToCsvResponse(result, fileName);
             }
+            else if(String.Equals(outputFormat, "rss", StringComparison.OrdinalIgnoreCase))
+            {
+                return ToRssResponse(result, "", query.TableName + ": " + query.Where, ctx.Request.ResourceParameters["iURL"]);
+            }
 
             // Regular, serialize result object 
             return ArribaResponse.Ok(result);
         }
 
-        private static SelectQuery SelectFromUrlParameters(IRequestContext ctx)
+        private async static Task<SelectQuery> SelectQueryFromRequest(Database db, IRequestContext ctx)
         {
             SelectQuery query = new SelectQuery();
+
+            // Post with body - only SelectQuery supported
+            if (ctx.Request.Method == RequestVerb.Post && ctx.Request.HasBody)
+            {
+                return await ctx.Request.ReadBodyAsync<SelectQuery>();
+            }
 
             query.Where = SelectQuery.ParseWhere(ctx.Request.ResourceParameters["q"]);
             query.OrderByColumn = ctx.Request.ResourceParameters["ob"];
@@ -149,6 +165,27 @@ namespace Arriba.Server
             }
 
             return query;
+        }
+
+        private static IQuery<T> WrapInJoinQueryIfFound<T>(IQuery<T> primaryQuery, Database db, IRequestContext ctx)
+        {
+            List<SelectQuery> joins = new List<SelectQuery>();
+
+            for(int queryIndex = 1; ctx.Request.ResourceParameters.Contains("q" + queryIndex.ToString()); ++queryIndex)
+            {
+                string where = ctx.Request.ResourceParameters["q" + queryIndex.ToString()];
+                string table = ctx.Request.ResourceParameters["t" + queryIndex.ToString()];
+                joins.Add(new SelectQuery() { Where = SelectQuery.ParseWhere(where), TableName = table });
+            }
+
+            if(joins.Count == 0)
+            {
+                return primaryQuery;
+            }
+            else
+            {
+                return new JoinQuery<T>(db, primaryQuery, joins);
+            }
         }
 
         private static IResponse ToCsvResponse(SelectResult result, string fileName)
@@ -197,6 +234,55 @@ namespace Arriba.Server
             return resp;
         }
 
+        private static IResponse ToRssResponse(SelectResult result, string rssUrl, string query, string itemUrlWithoutId)
+        {
+            DateTime utcNow = DateTime.UtcNow;
+
+            const string outputMimeType = "application/rss+xml; encoding=utf-8";
+
+            var resp = new StreamWriterResponse(outputMimeType, async (s) =>
+            {
+                SerializationContext context = new SerializationContext(s);
+                RssWriter w = new RssWriter(context);
+
+                ByteBlock queryBB = (ByteBlock)query;
+                w.WriteRssHeader(queryBB, queryBB, rssUrl, utcNow, TimeSpan.FromHours(1));
+
+                ByteBlock baseLink = itemUrlWithoutId;
+                var items = result.Values;
+                for (int row = 0; row < items.RowCount; ++row)
+                {
+                    ByteBlock id = ConvertToByteBlock(items[row, 0]);
+                    w.WriteItem(id, id, id, baseLink, utcNow);
+                }
+
+                w.WriteRssFooter();
+
+                context.Writer.Flush();
+                await s.FlushAsync();
+            });
+
+            return resp;
+        }
+
+        private static ByteBlock ConvertToByteBlock(object value)
+        {
+            if (value == null) return ByteBlock.Zero;
+
+            if (value is ByteBlock)
+            {
+                return (ByteBlock)value;
+            }
+            else if (value is string)
+            {
+                return (ByteBlock)value;
+            }
+            else
+            {
+                return (ByteBlock)(value.ToString());
+            }
+        }
+
         private async Task<IResponse> Query<T, U>(IRequestContext ctx, Route route) where T : IQuery<U>, new()
         {
             // TODO: Roll Aggregate and Distinct to use this. Need to make a nice pattern for reading from URL parameters first.
@@ -239,16 +325,11 @@ namespace Arriba.Server
                 return ArribaResponse.NotFound("Table not found to aggregate.");
             }
 
-            AggregationQuery query = new AggregationQuery();
+            // Parse Query
+            IQuery<AggregationResult> query = await BuildAggregateFromContext(ctx);
 
-            if (ctx.Request.Method == RequestVerb.Post && ctx.Request.HasBody)
-            {
-                query = await ctx.Request.ReadBodyAsync<AggregationQuery>();
-            }
-            else
-            {
-                query = AggregateFromUrlParameters(ctx);
-            }
+            // Wrap in Joins, if found
+            query = WrapInJoinQueryIfFound(query, this.Database, ctx);
 
             query.TableName = tableName;
 
@@ -266,8 +347,13 @@ namespace Arriba.Server
             }
         }
 
-        private static AggregationQuery AggregateFromUrlParameters(IRequestContext ctx)
+        private static async Task<AggregationQuery> BuildAggregateFromContext(IRequestContext ctx)
         {
+            if (ctx.Request.Method == RequestVerb.Post && ctx.Request.HasBody)
+            {
+                return await ctx.Request.ReadBodyAsync<AggregationQuery>();
+            }
+
             string queryString = ctx.Request.ResourceParameters["q"];
             string aggregationFunction = ctx.Request.ResourceParameters["a"];
             string columnName = ctx.Request.ResourceParameters["col"];
@@ -308,16 +394,11 @@ namespace Arriba.Server
                 return ArribaResponse.NotFound("Table not found to query.");
             }
 
-            DistinctQuery query = new DistinctQuery();
+            // Build the query
+            IQuery<DistinctResult> query = await BuildDistinctFromContext(ctx);
 
-            if (ctx.Request.Method == RequestVerb.Post && ctx.Request.HasBody)
-            {
-                query = await ctx.Request.ReadBodyAsync<DistinctQuery>();
-            }
-            else
-            {
-                query = DistinctFromUrlParameters(ctx);
-            }
+            // Add joins if needed
+            query = WrapInJoinQueryIfFound(query, this.Database, ctx);
 
             using (ctx.Monitor(MonitorEventLevel.Verbose, "Correct", type: "Table", identity: tableName, detail: query.Where.ToString()))
             {
@@ -333,8 +414,13 @@ namespace Arriba.Server
             }
         }
 
-        private static DistinctQuery DistinctFromUrlParameters(IRequestContext ctx)
+        private async static Task<DistinctQuery> BuildDistinctFromContext(IRequestContext ctx)
         {
+            if (ctx.Request.Method == RequestVerb.Post && ctx.Request.HasBody)
+            {
+                return await ctx.Request.ReadBodyAsync<DistinctQuery>();
+            }
+
             DistinctQuery query = new DistinctQuery();
             query.Column = ctx.Request.ResourceParameters["col"];
 
@@ -362,32 +448,29 @@ namespace Arriba.Server
             }
             var table = this.Database[tableName];
 
-            PivotQuery query = null;
-
-            if (ctx.Request.Method == RequestVerb.Post && ctx.Request.HasBody)
-            {
-                query = await ctx.Request.ReadBodyAsync<PivotQuery>();
-            }
-            else
-            {
-                query = PivotQueryFromUrlParameters(ctx);
-            }
-
+            PivotQuery query = await BuildPivotQueryFromContext(ctx);
             if (query.AggregationColumns == null || query.AggregationColumns.Length == 0)
             {
                 // Fall back to PK
                 query.AggregationColumns = new string[] { table.IDColumn.Name };
             }
 
+            IQuery<AggregationResult> wrappedQuery = WrapInJoinQueryIfFound(query, this.Database, ctx);
+
             using (ctx.Monitor(MonitorEventLevel.Information, "Pivot", type: "Table", identity: tableName, detail: query.Where.ToString()))
             {
-                AggregationResult result = this.Database[tableName].Query(query);
+                AggregationResult result = this.Database[tableName].Query(wrappedQuery);
                 return ArribaResponse.Ok(result);
             }
         }
 
-        private static PivotQuery PivotQueryFromUrlParameters(IRequestContext ctx)
+        private async static Task<PivotQuery> BuildPivotQueryFromContext(IRequestContext ctx)
         {
+            if (ctx.Request.Method == RequestVerb.Post && ctx.Request.HasBody)
+            {
+                return await ctx.Request.ReadBodyAsync<PivotQuery>();
+            }
+
             var query = new PivotQuery
             {
                 Where = SelectQuery.ParseWhere(ctx.Request.ResourceParameters["q"] ?? ""),
@@ -424,7 +507,6 @@ namespace Arriba.Server
 
             return query;
         }
-
 
         private static PivotDimension GetPivotDimension(PivotDimensionDescriptor pivot)
         {
@@ -515,6 +597,68 @@ namespace Arriba.Server
                 }
 
                 return String.Format("[{0} for {1} with ({2})]", this.Type, this.Column, String.Join(", ", this.Arguments));
+            }
+        }
+
+        private IResponse AllCount(IRequestContext ctx, Route route)
+        {
+            List<CountResult> results = new List<CountResult>();
+
+            // Build a Count query
+            IQuery<AggregationResult> query = new AggregationQuery("count", new string[0], ctx.Request.ResourceParameters["q"] ?? "");
+
+            // Wrap in Joins, if found
+            query = WrapInJoinQueryIfFound(query, this.Database, ctx);
+
+            // Run server correctors
+            using (ctx.Monitor(MonitorEventLevel.Verbose, "Correct", type: "AllCount", detail: query.Where.ToString()))
+            {
+                query.Correct(this.CurrentCorrectors(ctx));
+            }
+
+            // Accumulate Results for each table
+            IPrincipal user = ctx.Request.User;
+            using (ctx.Monitor(MonitorEventLevel.Information, "AllCount", type: "AllCount", detail: query.Where.ToString()))
+            {
+                foreach (string tableName in this.Database.TableNames)
+                {
+                    if (this.HasTableAccess(tableName, user, PermissionScope.Reader))
+                    {
+                        query.TableName = tableName;
+                        AggregationResult tableCount = this.Database.Query(query);
+
+                        if (!tableCount.Details.Succeeded || tableCount.Values == null)
+                        {
+                            results.Add(new CountResult(tableName, 0, true, false));
+                        }
+                        else
+                        {
+                            results.Add(new CountResult(tableName, (ulong)tableCount.Values[0, 0], true, tableCount.Details.Succeeded));
+                        }
+                    }
+                    else
+                    {
+                        results.Add(new CountResult(tableName, 0, false, false));
+                    }
+                }
+            }
+
+            return ArribaResponse.Ok(results.OrderByDescending((cr) => cr.Count));
+        }
+
+        private class CountResult
+        {
+            public string TableName { get; set; }
+            public ulong Count { get; set; }
+            public bool AllowedToRead { get; set; }
+            public bool Succeeded { get; set; }
+
+            public CountResult(string tableName, ulong count, bool allowedToRead, bool succeeded)
+            {
+                this.TableName = tableName;
+                this.Count = count;
+                this.AllowedToRead = allowedToRead;
+                this.Succeeded = succeeded;
             }
         }
     }

@@ -53,16 +53,15 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         {
             BlockPart targetBlock = _current;
 
-            // If the String8 is too long, store by itself
             if (length >= StoreIndividuallyLengthBytes)
             {
+                // If the String8 is too long, store by itself
                 targetBlock = new BlockPart(length);
                 _blocks.Add(targetBlock);
             }
-
-            // If the current block is too full, start a new one
-            if (_current.Block.Length < _current.LengthUsed + length)
+            else if (_current.Block.Length < _current.LengthUsed + length)
             {
+                // If the current block is too full, start a new one
                 targetBlock = new BlockPart();
                 _blocks.Add(targetBlock);
                 _current = targetBlock;
@@ -102,22 +101,46 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             if (first.IsEmpty()) return GetCopy(second);
             if (second.IsEmpty()) return GetCopy(first);
 
-            BlockPart targetBlock;
+            BlockPart targetBlock = null;
 
-            // If "first" is the last thing on the block and there's room, add the new value after it and re-use it
-            if (_current.Block == first._buffer 
-                && _current.LengthUsed == first._index + first._length 
-                && _current.Block.Length >= _current.LengthUsed + delimiter.Length + second.Length)
+            // Find the Block hosting the value (if it is already here)
+            int blockIndex = this._blocks.Count - 1;
+            for (; blockIndex >= 0; --blockIndex)
             {
-                targetBlock = _current;
-                targetBlock.LengthUsed += delimiter.WriteTo(targetBlock.Block, targetBlock.LengthUsed);
-                targetBlock.LengthUsed += second.WriteTo(targetBlock.Block, targetBlock.LengthUsed);
-
-                return new String8(first._buffer, first._index, targetBlock.LengthUsed - first._index);
+                if(first._buffer == this._blocks[blockIndex].Block)
+                {
+                    targetBlock = this._blocks[blockIndex];
+                    break;
+                }
             }
 
-            // Otherwise, find new room for the concatenated value
-            targetBlock = GetBlockForLength(first.Length + delimiter.Length + second.Length);
+            // If "first" is the last thing on the block...
+            if(targetBlock != null && targetBlock.LengthUsed == first._index + first._length)
+            {
+                // If there's room to concatenate in place, do that
+                if (targetBlock.Block.Length >= targetBlock.LengthUsed + delimiter.Length + second.Length)
+                {
+                    targetBlock.LengthUsed += delimiter.WriteTo(targetBlock.Block, targetBlock.LengthUsed);
+                    targetBlock.LengthUsed += second.WriteTo(targetBlock.Block, targetBlock.LengthUsed);
+                    return new String8(first._buffer, first._index, targetBlock.LengthUsed - first._index);
+                }
+
+                // If not, "remove" first from the block to recycle the space
+                if(first._index == 0)
+                {
+                    // If first was alone, remove the whole block
+                    _blocks.RemoveAt(blockIndex);
+                }
+                else
+                {
+                    // Deduct the used space for "first"
+                    _blocks[blockIndex].LengthUsed -= first.Length;
+                }
+            }
+
+            // Find new room for the concatenated value
+            int requiredLength = first.Length + delimiter.Length + second.Length;
+            targetBlock = GetBlockForLength((int)(1.5 * requiredLength));
 
             // Write the parts to the chosen block and return a reference to the new copy
             int startPosition = targetBlock.LengthUsed;
@@ -159,7 +182,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
 
             // Remove other blocks and restore only the first
             this._blocks.Clear();
-            this._blocks[0] = first;
+            this._blocks.Add(first);
         }
     }
 }

@@ -9,6 +9,7 @@ using System.Text;
 using Arriba.Extensions;
 using Arriba.Model.Query;
 using Arriba.Structures;
+using Arriba.Indexing;
 
 namespace Arriba.Model.Expressions
 {
@@ -259,12 +260,54 @@ namespace Arriba.Model.Expressions
     public class TermInExpression : IExpression
     {
         public string ColumnName;
+        public Operator Operator;
         public Array Values;
 
-        public TermInExpression(string columnName, Array values)
+        public TermInExpression(string columnName, Array values) : this(columnName, Operator.Equals, values)
+        { }
+
+        public TermInExpression(string columnName, Operator op, Array values)
         {
             this.ColumnName = columnName;
+            this.Operator = op;
             this.Values = values;
+            
+            // If this is a "Matches" JOIN, split the values coming in into terms
+            // which will each be matched.
+            if(op == Operator.Matches || op == Operator.MatchesExact)
+            {
+                this.Values = GetUniqueTerms(values);
+            }
+        }
+
+        private Array GetUniqueTerms(Array values)
+        {
+            HashSet<ByteBlock> uniqueValues = new HashSet<ByteBlock>();
+           
+            // Get every unique word split from every value in the array
+            SetSplitter s = new SetSplitter();
+            for (int i = 0; i < values.Length; ++i)
+            {
+                ByteBlock value = (ByteBlock)values.GetValue(i);
+                foreach (Range r in s.Split(value).Ranges)
+                {
+                    if (r.Length > 0)
+                    {
+                        uniqueValues.Add(new ByteBlock(value.Array, r.Index, r.Length));
+                    }
+                }
+            }
+
+            // Convert the result to an array
+            ByteBlock[] result = new ByteBlock[uniqueValues.Count];
+            int j = 0;
+            foreach (ByteBlock value in uniqueValues)
+            {
+                result[j] = value;
+                j++;
+            }
+
+            return result;
         }
 
         public void TryEvaluate(Partition partition, ShortSet result, ExecutionDetails details)
@@ -283,7 +326,7 @@ namespace Arriba.Model.Expressions
 
                 for (int i = 0; i < this.Values.Length; ++i)
                 {
-                    column.TryWhere(Operator.Equals, this.Values.GetValue(i), result, details);
+                    column.TryWhere(this.Operator, this.Values.GetValue(i), result, details);
                 }
             }
         }
@@ -297,11 +340,19 @@ namespace Arriba.Model.Expressions
         {
             StringBuilder result = new StringBuilder();
             result.Append(this.ColumnName);
-            result.Append(" IN (");
+            result.Append(this.Operator.ToSyntaxString());
+            result.Append("IN(");
 
             for (int i = 0; i < this.Values.Length; ++i)
             {
                 if (i > 0) result.Append(", ");
+
+                if (i > 4)
+                {
+                    result.AppendFormat("... [{0:n0}]", this.Values.Length);
+                    break;
+                }
+
                 result.Append(this.Values.GetValue(i).ToString());
             }
 
