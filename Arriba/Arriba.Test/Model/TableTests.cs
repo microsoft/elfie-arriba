@@ -23,6 +23,12 @@ namespace Arriba.Test.Model
     [TestClass]
     public class TableTests
     {
+        [TestCleanup]
+        public void TestCleanup()
+        {
+            ColumnFactory.ResetColumnCreators();
+        }
+
         [TestMethod]
         public void Partition_RoundTrip()
         {
@@ -112,6 +118,22 @@ namespace Arriba.Test.Model
             {
                 return new Partition(PartitionMask.All);
             });
+        }
+
+        [TestMethod]
+        public void Partition_CustomColumnBasic()
+        {
+            CustomColumnSupport.RegisterCustomColumns();
+
+            ITable_CustomColumn(
+                () => new Partition(PartitionMask.All),
+                (tbl) =>
+                {
+                    tbl.AddColumn(new ColumnDetails("Color", "color", null));
+                    IUntypedColumn bugIdColumn = (tbl as Partition).Columns["Priority"];
+                    IUntypedColumn colorColumn = (tbl as Partition).Columns["Color"];
+                    (colorColumn.InnerColumn as ColorColumn).LookupColumn = (IColumn<short>)bugIdColumn.InnerColumn;
+                });
         }
 
         [TestMethod]
@@ -311,6 +333,29 @@ namespace Arriba.Test.Model
             // Verify Table only inserts rows which are "official"
             t.AddOrUpdate(b, new AddOrUpdateOptions() { AddMissingColumns = true });
             Assert.AreEqual(4, (int)t.Count);
+        }
+
+        //[TestMethod]
+        public void Table_AddAndUpdateInSameOperation()
+        {
+            // BUG: ChooseSplit produces non-deterministic ordering how rows are processed
+            // in AddOrUpdate, this can cause two updates (Add+Update or Update+Update) to 
+            // occur in opposite order than intended by caller
+            ITable_AddAndUpdateInSameOperation(() => new Table("Sample", 75000));
+        }
+
+        [TestMethod]
+        public void Table_CustomColumnBasic()
+        {
+            CustomColumnSupport.RegisterCustomColumns();
+
+            ITable_CustomColumn(
+                () => new ColorTable("Sample", 75000),
+                (tbl) =>
+                {
+                    tbl.AddColumn(new ColumnDetails("Color", "color", null));
+                    (tbl as ColorTable).BindColorColumns("Priority", "Color");
+                });
         }
 
         public void ITable_All(Func<ITable> factoryMethod, bool isEmpty = true)
@@ -856,6 +901,37 @@ Title:unused, null
             {
                 if (cd.Name.Equals(newColumnName)) Assert.Fail("Column not removed after RemoveColumn() called.");
             }
+        }
+
+        private void ITable_CustomColumn(Func<ITable> factoryMethod, Action<ITable> addCustomColumnMethod)
+        {
+            ITable table = factoryMethod();
+            AddSampleData(table);
+            addCustomColumnMethod(table);
+
+            SelectQuery query = new SelectQuery();
+            query.Columns = new string[] { "ID", "Priority", "Color" };
+            query.Count = ushort.MaxValue;
+            query.OrderByColumn = "ID";
+            SelectResult result = table.Select(query);
+
+            Assert.AreEqual("None;Green;Red;Green;Green", result.Values.GetColumn(2).Join(";"));
+
+            // Change a priority of each bug + 1
+            DataBlock items = new DataBlock(new string[] { "ID", "Priority" }, (int)result.Total);
+            for (int row = 0; row < result.Total; ++row)
+            {
+                items.SetRow(row, new object[] { (int)result.Values[row, 0], (short)result.Values[row, 1] + 1 });
+            }
+            table.AddOrUpdate(items, new AddOrUpdateOptions());
+
+            SelectQuery newQuery = new SelectQuery();
+            newQuery.Columns = new string[] { "ID", "Priority", "Color" };
+            newQuery.Count = ushort.MaxValue;
+            newQuery.OrderByColumn = "ID";
+            SelectResult newResult = table.Select(query);
+
+            Assert.AreEqual("Red;None;Blue;None;None", newResult.Values.GetColumn(2).Join(";"));
         }
 
         internal static void AddColumns(ITable table)

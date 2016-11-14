@@ -159,6 +159,7 @@ namespace Arriba.Model.Query
 
         public void OnBeforeQuery(Table table)
         {
+            this.Where = this.Where ?? new AllExpression();
         }
 
         public void Correct(ICorrector corrector)
