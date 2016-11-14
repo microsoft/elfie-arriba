@@ -48,7 +48,7 @@ namespace Arriba.Serialization
             WriteTag(linkTag, url);
             WriteTag(lastBuildDateTag, publishedDate.ToString("r"));
             WriteTag(pubDateTag, publishedDate.ToString("r"));
-            WriteTag(ttlTag, timeToLive.TotalSeconds.ToString());
+            WriteTag(ttlTag, timeToLive.TotalMinutes.ToString());
             newline.WriteTo(stream);
         }
 

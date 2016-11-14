@@ -46,6 +46,11 @@ namespace Arriba
                     columnComponents = new string[] { "indexed[html]", "sorted", "string" };
                     coreType = "string";
                 }
+                else if(coreType.Equals("stringset"))
+                {
+                    columnComponents = new string[] { "indexed[set]", "sorted", "string" };
+                    coreType = "string";
+                }
                 else if (coreType.Equals("string") || coreType.Equals("json"))
                 {
                     columnComponents = new string[] { "indexed", "sorted", "string" };
@@ -187,6 +192,8 @@ namespace Arriba
                     return new DefaultWordSplitter();
                 case "html":
                     return new HtmlWordSplitter(new DefaultWordSplitter());
+                case "set":
+                    return new SetSplitter();
                 default:
                     throw new ArribaException(StringExtensions.Format("Word Splitter '{0}' is not currently supported.", descriptor));
             }

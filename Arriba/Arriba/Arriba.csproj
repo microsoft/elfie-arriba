@@ -80,10 +80,12 @@
     <Compile Include="Extensions\StringExtensions.cs" />
     <Compile Include="FileLock.cs" />
     <Compile Include="Indexing\IWordSplitter.cs" />
+    <Compile Include="Indexing\Splitters\SetSplitter.cs" />
     <Compile Include="Model\AddOrUpdateOptions.cs" />
     <Compile Include="Model\Column\BooleanColumn.cs" />
     <Compile Include="Model\Column\ColumnDetails.cs" />
     <Compile Include="Model\Column\FastAddSortedColumn.cs" />
+    <Compile Include="Model\Correctors\JoinCorrector.cs" />
     <Compile Include="Model\Correctors\ColumnAliasCorrector.cs" />
     <Compile Include="Model\Correctors\ComposedCorrector.cs" />
     <Compile Include="Model\Correctors\TodayCorrector.cs" />
@@ -105,6 +107,7 @@
     <Compile Include="Model\Query\DistinctQuery.cs" />
     <Compile Include="Model\Query\DistinctResult.cs" />
     <Compile Include="Model\Query\IQuery.cs" />
+    <Compile Include="Model\Query\JoinQuery.cs" />
     <Compile Include="Serialization\BinarySerializable.cs" />
     <Compile Include="Serialization\CollectionFactory.cs" />
     <Compile Include="Serialization\CSV\CsvCellRange.cs" />
