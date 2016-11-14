@@ -19,6 +19,7 @@ namespace Arriba.Test.Model
         public void Database_Join()
         {
             Database db = new Database();
+
             Table people = db.AddTable("People", 1000);
             people.AddOrUpdate(new DataBlock(new string[] { "Alias", "Name", "Team", "Groups" }, 3,
                 new Array[]
@@ -46,6 +47,7 @@ namespace Arriba.Test.Model
                 new SelectQuery() { Where = SelectQuery.ParseWhere("T1"), TableName = "People" }
             );
 
+            q.Correct(null);
             result = db.Query(q);
             Assert.AreEqual("O5, O3, O2, O1", JoinResultColumn(result));
 
@@ -56,6 +58,7 @@ namespace Arriba.Test.Model
                 new SelectQuery() { Where = SelectQuery.ParseWhere("mikefan"), TableName = "People" }
             );
 
+            q.Correct(null);
             result = db.Query(q);
             Assert.AreEqual("rtaket, mikefan", JoinResultColumn(result));
 
@@ -67,20 +70,6 @@ namespace Arriba.Test.Model
             //  Join returns too many
             //  Select column from Join is unknown
             //  Nested Join
-        }
-
-        private SelectResult RunQuerySet(Database db, SelectQuery q, IList<SelectQuery> joins)
-        {
-            Trace.WriteLine(String.Format("Raw Query: {0}", q.Where));
-
-            // Correct the Query [evaluating Joins recursively]
-            JoinCorrector j = new JoinCorrector(db, null, joins);
-            q.Correct(j);
-
-            // Get direct Query results
-            Trace.WriteLine(String.Format("Joined Query: {0}", q.Where));
-            SelectResult result = db[q.TableName].Select(q);
-            return result;
         }
 
         private string JoinResultColumn(SelectResult result, int columnIndex = 0)

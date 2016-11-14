@@ -18,6 +18,11 @@ namespace Arriba.Model.Query
     ///  Then correcting 'Q' will cause the JoinCorrector to run Q1, get all
     ///  values for the 'Alias' column, split them, and replace [Members]::#Q1[Alias]
     ///  with [Members]:: IN(alias1, alias2, alias3, ...).
+    ///  
+    ///  NOTE: It's a future goal to allow the nested queries to be more generic than SelectQuery.
+    ///   This requires:
+    ///     - Must be able to set columns, count, and maybe sort order on query.
+    ///     - Must be able to get DataBlock from the result.
     /// </summary>
     public class JoinQuery<T> : IQuery<T>
     {
