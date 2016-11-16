@@ -4,16 +4,17 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 
+using Arriba.Diagnostics;
 using Arriba.Extensions;
 using Arriba.Model;
 using Arriba.Model.Column;
 using Arriba.Model.Query;
 using Arriba.Serialization.Csv;
 using Arriba.Structures;
-using System.IO;
 
 namespace Arriba.Csv
 {
@@ -69,7 +70,7 @@ namespace Arriba.Csv
                 Console.WriteLine(Usage);
                 return -1;
             }
-            catch(Exception ex)
+            catch(Exception ex) when (!Debugger.IsAttached)
             {
                 Console.WriteLine(ex.Message);
                 return -2;

@@ -17,8 +17,6 @@ namespace Arriba.Model
     {
         public const string SystemTablePrefix = "arriba";
 
-        private static Lazy<Database> s_currentInstance = new Lazy<Database>(() => new Database());
-
         private readonly object _tableLock = new object();
         private readonly Dictionary<string, Lazy<Table>> _tables = new Dictionary<string, Lazy<Table>>();
 

@@ -14,61 +14,42 @@ namespace Arriba.Model.Security
     /// </summary>
     public class SecurityPermissions : IBinarySerializable
     {
+        public SecurityPermissions()
+        {
+            this.Readers = new HashSet<SecurityIdentity>();
+            this.Writers = new HashSet<SecurityIdentity>();
+            this.Owners = new HashSet<SecurityIdentity>();
+
+            this.RestrictedColumns = new List<Tuple<SecurityIdentity, List<string>>>();
+            this.RowRestrictedUsers = new List<Tuple<SecurityIdentity, string>>();
+        }
+
         /// <summary>
         ///  Set of Identities which can read from most table columns
         /// </summary>
-        private HashSet<SecurityIdentity> _readers = new HashSet<SecurityIdentity>();
+        public HashSet<SecurityIdentity> Readers { get; set; }
 
         /// <summary>
         ///  Set of identities which can read and write to most table columns
         /// </summary>
-        private HashSet<SecurityIdentity> _writers = new HashSet<SecurityIdentity>();
+        public HashSet<SecurityIdentity> Writers { get; set; }
 
         /// <summary>
         ///  Set of identities which can read, write, alter schema, and change security on the table.
         /// </summary>
-        private HashSet<SecurityIdentity> _owners = new HashSet<SecurityIdentity>();
+        public HashSet<SecurityIdentity> Owners { get; set; }
 
         /// <summary>
         ///  List of identities with access to restricted columns and which columns they have access to.
         ///  If a user is not in the given group, all of the listed columns are excluded from queries and results.
         /// </summary>
-        private List<Tuple<SecurityIdentity, IList<string>>> _columnSecurity = new List<Tuple<SecurityIdentity, IList<string>>>();
+        public List<Tuple<SecurityIdentity, List<string>>> RestrictedColumns { get; set; }
 
         /// <summary>
-        ///  List of identities with access to restricted rows, implemented via an additional query clause
+        ///  List of identities with limited row access, implemented via an additional query clause
         ///  added to all queries.
         /// </summary>
-        private List<Tuple<SecurityIdentity, string>> _rowSecurity = new List<Tuple<SecurityIdentity, string>>();
-
-        public SecurityPermissions()
-        {
-        }
-
-        public IEnumerable<SecurityIdentity> Readers
-        {
-            get { return _readers; }
-        }
-
-        public IEnumerable<SecurityIdentity> Writers
-        {
-            get { return _writers; }
-        }
-
-        public IEnumerable<SecurityIdentity> Owners
-        {
-            get { return _owners; }
-        }
-
-        public IEnumerable<Tuple<SecurityIdentity, IList<string>>> ColumnSecurity
-        {
-            get { return _columnSecurity; }
-        }
-
-        public IEnumerable<Tuple<SecurityIdentity, string>> RowSecurity
-        {
-            get { return _rowSecurity; }
-        }
+        private List<Tuple<SecurityIdentity, string>> RowRestrictedUsers { get; set; }
 
         /// <summary>
         /// Gets a value indicating whether the this security permissions set contains any identities. 
@@ -77,7 +58,7 @@ namespace Arriba.Model.Security
         {
             get
             {
-                return _owners.Count > 0;
+                return Owners.Count > 0;
             }
         }
 
@@ -136,7 +117,7 @@ namespace Arriba.Model.Security
         /// <param name="scope">Scope of permissions to grant (Owner, Writer, Reader)</param>
         public void Grant(SecurityIdentity identity, PermissionScope scope)
         {
-            if (_owners.Count == 0 && scope != PermissionScope.Owner)
+            if (Owners.Count == 0 && scope != PermissionScope.Owner)
             {
                 throw new ArribaException(String.Format("Unable to grant permission scope {0} as there are no identities with owner scope", scope));
             }
@@ -175,7 +156,7 @@ namespace Arriba.Model.Security
         /// <param name="columnList">Set of column names only readable by this identity</param>
         public void SecureColumns(SecurityIdentity identity, IEnumerable<string> columnList)
         {
-            _columnSecurity.Add(new Tuple<SecurityIdentity, IList<string>>(identity, new List<string>(columnList)));
+            RestrictedColumns.Add(new Tuple<SecurityIdentity, List<string>>(identity, new List<string>(columnList)));
         }
 
         /// <summary>
@@ -184,11 +165,11 @@ namespace Arriba.Model.Security
         /// <param name="identity">Identity with restricted access to un-restrict</param>
         public void UnsecureColumns(SecurityIdentity identity)
         {
-            for (int i = 0; i < _columnSecurity.Count; ++i)
+            for (int i = 0; i < RestrictedColumns.Count; ++i)
             {
-                if(_columnSecurity[i].Item1.Equals(identity))
+                if(RestrictedColumns[i].Item1.Equals(identity))
                 {
-                    _columnSecurity.RemoveAt(i);
+                    RestrictedColumns.RemoveAt(i);
                     --i;
                 }
             }
@@ -201,7 +182,7 @@ namespace Arriba.Model.Security
         /// <param name="filterQuery">Query to AND with all queries to restrict rows</param>
         public void SecureRows(SecurityIdentity identity, string filterQuery)
         {
-            _rowSecurity.Add(new Tuple<SecurityIdentity, string>(identity, filterQuery));
+            RowRestrictedUsers.Add(new Tuple<SecurityIdentity, string>(identity, filterQuery));
         }
 
         /// <summary>
@@ -210,11 +191,11 @@ namespace Arriba.Model.Security
         /// <param name="identity"></param>
         public void UnsecureRows(SecurityIdentity identity)
         {
-            for(int i = 0; i < _rowSecurity.Count; ++i)
+            for(int i = 0; i < RowRestrictedUsers.Count; ++i)
             {
-                if (_rowSecurity[i].Item1.Equals(identity))
+                if (RowRestrictedUsers[i].Item1.Equals(identity))
                 {
-                    _rowSecurity.RemoveAt(i);
+                    RowRestrictedUsers.RemoveAt(i);
                     --i;
                 }
             }
@@ -228,11 +209,11 @@ namespace Arriba.Model.Security
             switch (scope)
             {
                 case PermissionScope.Owner:
-                    return _owners;
+                    return Owners;
                 case PermissionScope.Reader:
-                    return _readers;
+                    return Readers;
                 case PermissionScope.Writer:
-                    return _writers;
+                    return Writers;
                 default:
                     throw new ArribaException(String.Format("Unknown permission scope {0}", scope));
             }
@@ -243,11 +224,11 @@ namespace Arriba.Model.Security
             switch (permissions)
             {
                 case PermissionScope.Reader:
-                    return _readers.Concat(_writers).Concat(_owners);
+                    return Readers.Concat(Writers).Concat(Owners);
                 case PermissionScope.Writer:
-                    return _writers.Concat(_owners);
+                    return Writers.Concat(Owners);
                 case PermissionScope.Owner:
-                    return _owners;
+                    return Owners;
                 default:
                     throw new ArribaException(String.Format("Unknown permission scope {0}", permissions));
             }
@@ -256,12 +237,12 @@ namespace Arriba.Model.Security
         #region Serialization
         public void ReadBinary(ISerializationContext context)
         {
-            _readers = ReadHashSet(context);
-            _writers = ReadHashSet(context);
-            _owners = ReadHashSet(context);
+            Readers = ReadHashSet(context);
+            Writers = ReadHashSet(context);
+            Owners = ReadHashSet(context);
 
             // Read column security rules
-            _columnSecurity = new List<Tuple<SecurityIdentity, IList<string>>>();
+            RestrictedColumns = new List<Tuple<SecurityIdentity, List<string>>>();
             int columnRuleCount = context.Reader.ReadInt32();
             for(int i = 0; i < columnRuleCount; ++i)
             {
@@ -276,11 +257,11 @@ namespace Arriba.Model.Security
                     columnsSecured.Add(context.Reader.ReadString());
                 }
 
-                _columnSecurity.Add(new Tuple<SecurityIdentity, IList<string>>(identity, columnsSecured));
+                RestrictedColumns.Add(new Tuple<SecurityIdentity, List<string>>(identity, columnsSecured));
             }
 
             // Read row security rules
-            _rowSecurity = new List<Tuple<SecurityIdentity, string>>();
+            RowRestrictedUsers = new List<Tuple<SecurityIdentity, string>>();
             int rowRuleCount = context.Reader.ReadInt32();
             for (int i = 0; i < rowRuleCount; ++i)
             {
@@ -288,19 +269,19 @@ namespace Arriba.Model.Security
                 identity.ReadBinary(context);
 
                 string filterForIdentity = context.Reader.ReadString();
-                _rowSecurity.Add(new Tuple<SecurityIdentity, string>(identity, filterForIdentity));
+                RowRestrictedUsers.Add(new Tuple<SecurityIdentity, string>(identity, filterForIdentity));
             }
         }
 
         public void WriteBinary(ISerializationContext context)
         {
-            WriteHashSet(context, _readers);
-            WriteHashSet(context, _writers);
-            WriteHashSet(context, _owners);
+            WriteHashSet(context, Readers);
+            WriteHashSet(context, Writers);
+            WriteHashSet(context, Owners);
 
             // Write column security rules
-            context.Writer.Write(_columnSecurity.Count);
-            foreach(Tuple<SecurityIdentity, IList<string>> columnRule in _columnSecurity)
+            context.Writer.Write(RestrictedColumns.Count);
+            foreach(Tuple<SecurityIdentity, List<string>> columnRule in RestrictedColumns)
             {
                 columnRule.Item1.WriteBinary(context);
                 context.Writer.Write(columnRule.Item2.Count);
@@ -311,8 +292,8 @@ namespace Arriba.Model.Security
             }
 
             // Write row security rules
-            context.Writer.Write(_rowSecurity.Count);
-            foreach(Tuple<SecurityIdentity, string> rowRule in _rowSecurity)
+            context.Writer.Write(RowRestrictedUsers.Count);
+            foreach(Tuple<SecurityIdentity, string> rowRule in RowRestrictedUsers)
             {
                 rowRule.Item1.WriteBinary(context);
                 context.Writer.Write(rowRule.Item2);

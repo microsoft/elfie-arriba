@@ -4,8 +4,9 @@
 using System;
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Arriba.Diagnostics;
 
-namespace Arriba.Csv.Test
+namespace Arriba.Test
 {
     [TestClass]
     public class CommandLineTests
@@ -34,8 +35,8 @@ namespace Arriba.Csv.Test
             Assert.AreEqual(true, c.GetBool("load"));
 
             // Get unconvertible values (throw)
-            Verify.Exception(() => c.GetInt("orderBy"), typeof(ArgumentIsWrongTypeException), String.Format(ArgumentIsWrongTypeException.ArgumentIsWrongTypeMessage, "orderBy", "Date", "int"));
-            Verify.Exception(() => c.GetBool("orderBy"), typeof(ArgumentIsWrongTypeException), String.Format(ArgumentIsWrongTypeException.ArgumentIsWrongTypeMessage, "orderBy", "Date", "bool"));
+            Verify.Exception<ArgumentIsWrongTypeException>(() => c.GetInt("orderBy"), String.Format(ArgumentIsWrongTypeException.ArgumentIsWrongTypeMessage, "orderBy", "Date", "int"));
+            Verify.Exception<ArgumentIsWrongTypeException>(() => c.GetBool("orderBy"), String.Format(ArgumentIsWrongTypeException.ArgumentIsWrongTypeMessage, "orderBy", "Date", "bool"));
 
             // Get missing values with defaults
             Assert.AreEqual("import", c.GetString("missing", "import"));
@@ -43,9 +44,9 @@ namespace Arriba.Csv.Test
             Assert.AreEqual(false, c.GetBool("missing", false));
 
             // Get missing values without defaults [throw]
-            Verify.Exception(() => c.GetString("missing"), typeof(MissingRequiredArgumentException), String.Format(MissingRequiredArgumentException.MissingArgumentMessage, "missing"));
-            Verify.Exception(() => c.GetInt("missing"), typeof(MissingRequiredArgumentException), String.Format(MissingRequiredArgumentException.MissingArgumentMessage, "missing"));
-            Verify.Exception(() => c.GetBool("missing"), typeof(MissingRequiredArgumentException), String.Format(MissingRequiredArgumentException.MissingArgumentMessage, "missing"));
+            Verify.Exception<MissingRequiredArgumentException>(() => c.GetString("missing"), String.Format(MissingRequiredArgumentException.MissingArgumentMessage, "missing"));
+            Verify.Exception<MissingRequiredArgumentException>(() => c.GetInt("missing"), String.Format(MissingRequiredArgumentException.MissingArgumentMessage, "missing"));
+            Verify.Exception<MissingRequiredArgumentException>(() => c.GetBool("missing"), String.Format(MissingRequiredArgumentException.MissingArgumentMessage, "missing"));
         }
     }
 }
