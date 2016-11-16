@@ -75,6 +75,7 @@
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Diagnostics\CommandLine.cs" />
     <Compile Include="Diagnostics\DailyLogTraceListener.cs" />
     <Compile Include="Extensions\IEnumerableExtensions.cs" />
     <Compile Include="Extensions\StringExtensions.cs" />
