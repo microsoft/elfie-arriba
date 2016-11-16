@@ -9,7 +9,7 @@ namespace Arriba.Client.Serialization.Json
 {
     public static class ConverterFactory
     {
-        public static IEnumerable<JsonConverter> GetArribaConverters()
+        public static IList<JsonConverter> GetArribaConverters()
         {
             List<JsonConverter> converters = new List<JsonConverter>();
 

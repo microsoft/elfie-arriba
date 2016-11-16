@@ -14,7 +14,7 @@ namespace Arriba.Model.Security
     public class SecurityIdentity : IBinarySerializable
     {
         // Serialization constructor
-        internal SecurityIdentity()
+        public SecurityIdentity()
         { }
 
         public SecurityIdentity(IdentityScope type, string name)

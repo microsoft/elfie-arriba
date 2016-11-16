@@ -39,8 +39,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Arriba.ClientExample", "Arr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Arriba.Csv", "Tools\Arriba.Csv\Arriba.Csv.csproj", "{D264AFC1-C7D7-4585-9FCD-92BED4CD0D28}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Arriba.Configure", "Tools\Arriba.Configure\Arriba.Configure.csproj", "{3745E7BA-1192-446C-AB4C-B15F6FE7035E}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -137,14 +135,6 @@ Global
 		{D264AFC1-C7D7-4585-9FCD-92BED4CD0D28}.Release|Any CPU.Build.0 = Release|Any CPU
 		{D264AFC1-C7D7-4585-9FCD-92BED4CD0D28}.Release|x64.ActiveCfg = Release|Any CPU
 		{D264AFC1-C7D7-4585-9FCD-92BED4CD0D28}.Release|x64.Build.0 = Release|Any CPU
-		{3745E7BA-1192-446C-AB4C-B15F6FE7035E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{3745E7BA-1192-446C-AB4C-B15F6FE7035E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{3745E7BA-1192-446C-AB4C-B15F6FE7035E}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{3745E7BA-1192-446C-AB4C-B15F6FE7035E}.Debug|x64.Build.0 = Debug|Any CPU
-		{3745E7BA-1192-446C-AB4C-B15F6FE7035E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{3745E7BA-1192-446C-AB4C-B15F6FE7035E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{3745E7BA-1192-446C-AB4C-B15F6FE7035E}.Release|x64.ActiveCfg = Release|Any CPU
-		{3745E7BA-1192-446C-AB4C-B15F6FE7035E}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -152,6 +142,5 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{929234D3-5C09-4173-A061-3C043EACA170} = {AC459F90-C1BF-4B6A-BEC4-5C19487C3D8B}
 		{D264AFC1-C7D7-4585-9FCD-92BED4CD0D28} = {AC459F90-C1BF-4B6A-BEC4-5C19487C3D8B}
-		{3745E7BA-1192-446C-AB4C-B15F6FE7035E} = {AC459F90-C1BF-4B6A-BEC4-5C19487C3D8B}
 	EndGlobalSection
 EndGlobal
