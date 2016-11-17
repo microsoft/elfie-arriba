@@ -146,7 +146,7 @@ namespace Arriba.Server
             var security = this.Database.Security(tableName);
 
             // No Table Security? Allowed.
-            if (!security.HasSecurityData)
+            if (!security.HasTableAccessSecurity)
             {
                 return true;
             }

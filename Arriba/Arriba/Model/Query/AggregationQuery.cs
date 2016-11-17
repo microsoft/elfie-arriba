@@ -68,6 +68,15 @@ namespace Arriba.Model.Query
             this.Where = QueryParser.Parse(where);
         }
 
+        public AggregationQuery(AggregationQuery other)
+        {
+            this.Aggregator = other.Aggregator;
+            this.AggregationColumns = other.AggregationColumns;
+            this.TableName = other.TableName;
+            this.Where = other.Where;
+            this.Dimensions = other.Dimensions;
+        }
+
         public static IAggregator BuildAggregator(string aggregationFunction)
         {
             aggregationFunction = aggregationFunction.ToLowerInvariant();

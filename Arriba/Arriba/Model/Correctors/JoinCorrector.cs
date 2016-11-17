@@ -59,7 +59,7 @@ namespace Arriba.Model.Correctors
 
                     if(result.Total == 0)
                     {
-                        return new TermExpression(te.ColumnName, te.Operator, "\"\"");
+                        return new TermExpression(te.ColumnName, te.Operator, String.Empty);
                     }
                     else
                     {
