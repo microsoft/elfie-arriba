@@ -105,11 +105,13 @@
     <Compile Include="Indexing\Splitters\HtmlWordSplitter.cs" />
     <Compile Include="Model\Highlighter.cs" />
     <Compile Include="Model\ObjectCache.cs" />
+    <Compile Include="Model\Query\BaseBlockResult.cs" />
     <Compile Include="Model\Query\DeleteResult.cs" />
     <Compile Include="Model\Query\DistinctQuery.cs" />
     <Compile Include="Model\Query\DistinctResult.cs" />
     <Compile Include="Model\Query\IQuery.cs" />
     <Compile Include="Model\Query\JoinQuery.cs" />
+    <Compile Include="Model\Query\SelectResult.cs" />
     <Compile Include="Serialization\BinarySerializable.cs" />
     <Compile Include="Serialization\CollectionFactory.cs" />
     <Compile Include="Serialization\CSV\CsvCellRange.cs" />
@@ -153,7 +155,6 @@
     <Compile Include="Model\Query\QueryParser.cs" />
     <Compile Include="Model\Query\QueryScanner.cs" />
     <Compile Include="Model\Query\SelectQuery.cs" />
-    <Compile Include="Model\Query\SelectResult.cs" />
     <Compile Include="Model\Column\SortedColumn.cs" />
     <Compile Include="Model\Table.cs" />
     <Compile Include="Structures\UniqueValueMerger.cs" />
