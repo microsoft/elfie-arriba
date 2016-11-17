@@ -22,6 +22,7 @@ using Arriba.Server.Authentication;
 using Arriba.Server.Hosting;
 using Arriba.Structures;
 using Arriba.Model.Correctors;
+using Arriba.Model.Column;
 
 namespace Arriba.Server
 {
@@ -84,7 +85,7 @@ namespace Arriba.Server
             wrappedQuery = SecureQuery(ctx, wrappedQuery, preExecuteDetails);
             if(!preExecuteDetails.Succeeded)
             {
-                BaseResult errorResult = new BaseResult();
+                BaseBlockResult errorResult = new BaseBlockResult(wrappedQuery);
                 errorResult.Details = preExecuteDetails;
                 return ArribaResponse.Ok(errorResult);
             }
@@ -335,12 +336,18 @@ namespace Arriba.Server
                 // the first column name to " ID" to trick Excel. It's not perfect, but it'll do.
                 // 
                 // As a mitigation for round-tripping, the CsvReader will trim column names. Sigh. 
-                IList<string> columns = result.Query.Columns;
+                List<string> columns = new List<string>();
 
-                if (String.Equals(columns[0], "ID", StringComparison.OrdinalIgnoreCase))
+                foreach(ColumnDetails column in items.Columns)
                 {
-                    columns = new List<string>(columns);
-                    columns[0] = " ID";
+                    if(columns.Count == 0 && column.Name.Equals("ID", StringComparison.OrdinalIgnoreCase))
+                    {
+                        columns.Add(" ID");
+                    }
+                    else
+                    {
+                        columns.Add(column.Name);
+                    }
                 }
 
                 CsvWriter writer = new CsvWriter(context, columns);
@@ -500,7 +507,7 @@ namespace Arriba.Server
             wrappedQuery = SecureQuery(ctx, wrappedQuery, preExecuteDetails);
             if(!preExecuteDetails.Succeeded)
             {
-                BaseResult errorResult = new BaseResult();
+                BaseBlockResult errorResult = new BaseBlockResult(wrappedQuery);
                 errorResult.Details = preExecuteDetails;
                 return ArribaResponse.Ok(errorResult);
             }

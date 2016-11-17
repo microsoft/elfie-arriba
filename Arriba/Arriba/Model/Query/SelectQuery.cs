@@ -352,8 +352,8 @@ namespace Arriba.Model.Query
             SelectResult mergedResult = new SelectResult(this);
 
             // Aggregate the total across partitions
-            uint totalFound = 0;
-            uint totalReturned = 0;
+            long totalFound = 0;
+            long totalReturned = 0;
             for (int i = 0; i < partitionResults.Length; ++i)
             {
                 totalFound += partitionResults[i].Total;

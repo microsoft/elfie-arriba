@@ -6,7 +6,7 @@ using Arriba.Model.Expressions;
 
 namespace Arriba.Model.Query
 {
-    public interface IQuery<T>
+    public interface IQuery
     {
         /// <summary>
         ///  Table to query
@@ -35,7 +35,10 @@ namespace Arriba.Model.Query
         /// </summary>
         /// <param name="corrector">ICorrector to use for corrections</param>
         void Correct(ICorrector corrector);
+    }
 
+    public interface IQuery<T> : IQuery
+    { 
         /// <summary>
         ///  Compute a per-Partition result for the query
         /// </summary>
