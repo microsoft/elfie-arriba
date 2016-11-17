@@ -38,6 +38,10 @@ namespace Arriba.Model
         public const string WordIndexBlockSizesMismatch = "WordIndex for Column '{0}' block has {1:n0} words but {2:n0} sets; counts must match.";
         public const string WordIndexInvalidItemID = "WordIndex for Column '{0}' word '{1}' has invalid ID(s) [{2}]";
 
+        // Column Security Errors
+        public const string DisallowedColumnQuery = "Could not query column '{0}' because user does not have permissions to it.";
+        public const string DisallowedQuery = "Query type '{0}' couldn't be executed because security isn't implemented for it.";
+
         public bool Succeeded;
         private HashSet<string> _warnings;
         private HashSet<string> _errors;

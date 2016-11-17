@@ -131,35 +131,24 @@ namespace Arriba.Model.Query
         }
 
         public void Prepare(Partition p)
-        {
-            if (p == null) throw new ArgumentNullException("p");
-
-            // Expand '*' to all columns if seen
-            List<string> columns = new List<string>();
-            foreach (string column in this.Columns)
-            {
-                if (column == "*")
-                {
-                    columns.AddRange(p.ColumnNames);
-                }
-                else
-                {
-                    columns.Add(column);
-                }
-            }
-            this.Columns = columns;
-
-            // ORDER BY the ID column if nothing was provided
-            if (String.IsNullOrEmpty(this.OrderByColumn))
-            {
-                this.OrderByColumn = p.IDColumn.Name;
-                this.OrderByDescending = true;
-            }
-        }
+        { }
 
         public void OnBeforeQuery(Table table)
         {
             this.Where = this.Where ?? new AllExpression();
+
+            // Replace '*' with all columns
+            if(this.Columns.Count == 1 && this.Columns[0] == "*")
+            {
+                this.Columns = new List<string>(table.ColumnNames);
+            }
+
+            // ORDER BY the ID column if nothing was provided
+            if (String.IsNullOrEmpty(this.OrderByColumn))
+            {
+                this.OrderByColumn = table.IDColumn.Name;
+                this.OrderByDescending = true;
+            }
         }
 
         public void Correct(ICorrector corrector)
