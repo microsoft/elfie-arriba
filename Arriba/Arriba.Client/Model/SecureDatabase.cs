@@ -108,10 +108,11 @@ namespace Arriba.Model
             {
                 query.Correct(c);
             }
-            catch (ArribaCorrectorException e)
+            catch (ArribaColumnAccessDeniedException e)
             {
                 query.Where = new EmptyExpression();
-                details.AddError(e.Message);
+                details.AddDeniedColumn(e.Message);
+                details.AddError(ExecutionDetails.DisallowedColumnQuery, e.Message);
             }
 
             // If columns are excluded, remove those from the select list
@@ -130,7 +131,7 @@ namespace Arriba.Model
                     {
                         if (restrictedColumns.Contains(columnName))
                         {
-                            details.AddWarning(ExecutionDetails.DisallowedColumnQuery, columnName);
+                            details.AddDeniedColumn(columnName);
                         }
                         else
                         {
@@ -147,7 +148,7 @@ namespace Arriba.Model
                             if (filteredColumns == null) filteredColumns = new List<string>(sq.Columns);
                             filteredColumns.Remove(columnName);
 
-                            details.AddWarning(ExecutionDetails.DisallowedColumnQuery, columnName);
+                            details.AddDeniedColumn(columnName);
                         }
                     }
                 }
@@ -161,6 +162,7 @@ namespace Arriba.Model
                 {
                     if (restrictedColumns.Contains(columnName))
                     {
+                        details.AddDeniedColumn(columnName);
                         details.AddError(ExecutionDetails.DisallowedColumnQuery, columnName);
                         aq.Where = new EmptyExpression();
                     }
@@ -171,6 +173,7 @@ namespace Arriba.Model
                 DistinctQuery dq = (DistinctQuery)primaryQuery;
                 if (restrictedColumns.Contains(dq.Column))
                 {
+                    details.AddDeniedColumn(dq.Column);
                     details.AddError(ExecutionDetails.DisallowedColumnQuery, dq.Column);
                     dq.Where = new EmptyExpression();
                 }

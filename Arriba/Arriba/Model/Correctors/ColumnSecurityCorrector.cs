@@ -33,7 +33,7 @@ namespace Arriba.Model.Correctors
 
             if(RestrictedColumns.Contains(te.ColumnName))
             {
-                throw new ArribaCorrectorException(String.Format(ExecutionDetails.DisallowedColumnQuery, te.ColumnName));
+                throw new ArribaColumnAccessDeniedException(te.ColumnName);
             }
 
             return null;

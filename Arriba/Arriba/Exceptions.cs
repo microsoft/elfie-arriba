@@ -18,12 +18,12 @@ namespace Arriba
     }
 
     [Serializable]
-    public class ArribaCorrectorException : ArribaException
+    public class ArribaColumnAccessDeniedException : ArribaException
     {
-        public ArribaCorrectorException() { }
-        public ArribaCorrectorException(string message) : base(message) { }
-        public ArribaCorrectorException(string message, Exception inner) : base(message, inner) { }
-        protected ArribaCorrectorException(SerializationInfo info, StreamingContext context) : base(info, context) { }
+        public ArribaColumnAccessDeniedException() { }
+        public ArribaColumnAccessDeniedException(string message) : base(message) { }
+        public ArribaColumnAccessDeniedException(string message, Exception inner) : base(message, inner) { }
+        protected ArribaColumnAccessDeniedException(SerializationInfo info, StreamingContext context) : base(info, context) { }
     }
 
     [Serializable]
