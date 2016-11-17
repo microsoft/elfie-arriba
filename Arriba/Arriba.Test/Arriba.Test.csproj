@@ -101,6 +101,7 @@
     <Compile Include="Diagnostics\CommandLineTests.cs" />
     <Compile Include="Indexing\SetSplitterTests.cs" />
     <Compile Include="Model\DatabaseTests.cs" />
+    <Compile Include="Model\SecureDatabaseTests.cs" />
     <Compile Include="Verify.cs" />
     <Compile Include="Model\AggregatorTests.cs" />
     <Compile Include="Model\Correctors\ExpressionCorrectorTests.cs" />

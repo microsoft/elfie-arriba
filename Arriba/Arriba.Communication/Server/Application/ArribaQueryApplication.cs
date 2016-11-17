@@ -80,16 +80,6 @@ namespace Arriba.Server
             // Read Joins, if passed
             IQuery<SelectResult> wrappedQuery = WrapInJoinQueryIfFound(query, this.Database, ctx);
 
-            // Secure the query [filter rows or columns if restricted]
-            ExecutionDetails preExecuteDetails = new ExecutionDetails();
-            wrappedQuery = SecureQuery(ctx, wrappedQuery, preExecuteDetails);
-            if(!preExecuteDetails.Succeeded)
-            {
-                BaseBlockResult errorResult = new BaseBlockResult(wrappedQuery);
-                errorResult.Details = preExecuteDetails;
-                return ArribaResponse.Ok(errorResult);
-            }
-
             ICorrector correctors = this.CurrentCorrectors(ctx);
             using (ctx.Monitor(MonitorEventLevel.Verbose, "Correct", type: "Table", identity: tableName, detail: query.Where.ToString()))
             {
@@ -100,8 +90,7 @@ namespace Arriba.Server
             using (ctx.Monitor(MonitorEventLevel.Information, "Select", type: "Table", identity: tableName, detail: query.Where.ToString()))
             {
                 // Run the query
-                result = this.Database.Query(wrappedQuery);
-                result.Details.Merge(preExecuteDetails);
+                result = this.Database.Query(wrappedQuery, (si) => this.IsInIdentity(ctx.Request.User, si));
             }
 
             // Is this a CSV request? 
@@ -198,125 +187,6 @@ namespace Arriba.Server
             {
                 return new JoinQuery<T>(db, primaryQuery, joins);
             }
-        }
-
-        private IQuery<T> SecureQuery<T>(IRequestContext ctx, IQuery<T> q, ExecutionDetails details)
-        {
-            IPrincipal currentUser = ctx.Request.User;
-
-            SecurityPermissions security = this.Database.Security(q.TableName);
-
-            // If no table-level security, return query as-is
-            if (!security.HasSecurityData) return q;
-
-            // If table has row restrictions and one matches, restrict rows and allow
-            // NOTE: If restricted rows are returned, columns are NOT restricted.
-            foreach(var rowRestriction in security.RowRestrictedUsers)
-            {
-                if(IsInIdentity(currentUser, rowRestriction.Key))
-                {
-                    q.Where = new AndExpression(QueryParser.Parse(rowRestriction.Value), q.Where);
-                    return q;
-                }
-            }
-
-            // If table has column restrictions, build a list of excluded columns
-            List<string> restrictedColumns = null;
-            foreach(var columnRestriction in security.RestrictedColumns)
-            {
-                if(!IsInIdentity(currentUser, columnRestriction.Key))
-                {
-                    if (restrictedColumns == null) restrictedColumns = new List<string>();
-                    restrictedColumns.AddRange(columnRestriction.Value);
-                }
-            }
-
-            // If no columns were restricted, return query as-is
-            if (restrictedColumns == null) return q;
-
-            // Exclude disallowed columns from where clauses
-            // If a disallowed column is requested specifically, block the query and return an error
-            ColumnSecurityCorrector c = new ColumnSecurityCorrector(restrictedColumns);
-            try
-            {
-                q.Correct(c);
-            }
-            catch(ArribaCorrectorException e)
-            {
-                q.Where = new EmptyExpression();
-                details.AddError(e.Message);
-            }
-
-            // If columns are excluded, remove those from the select list
-            IQuery<T> primaryQuery = q;
-            if (q is JoinQuery<T>) primaryQuery = ((JoinQuery<T>)q).PrimaryQuery;
-
-            if (primaryQuery is SelectQuery)
-            {
-                SelectQuery sq = (SelectQuery)primaryQuery;
-                List<string> filteredColumns = null;
-
-                if (sq.Columns.Count == 1 && sq.Columns[0] == "*")
-                {
-                    filteredColumns = new List<string>();
-                    foreach (string columnName in this.Database[sq.TableName].ColumnNames)
-                    {
-                        if(restrictedColumns.Contains(columnName))
-                        {
-                            details.AddWarning(ExecutionDetails.DisallowedColumnQuery, columnName);
-                        }
-                        else
-                        {
-                            filteredColumns.Add(columnName);
-                        }
-                    }
-                }
-                else
-                {
-                    foreach (string columnName in sq.Columns)
-                    {
-                        if (restrictedColumns.Contains(columnName))
-                        {
-                            if (filteredColumns == null) filteredColumns = new List<string>(sq.Columns);
-                            filteredColumns.Remove(columnName);
-
-                            details.AddWarning(ExecutionDetails.DisallowedColumnQuery, columnName);
-                        }
-                    }
-                }
-
-                if (filteredColumns != null) sq.Columns = filteredColumns;
-            }
-            else if(primaryQuery is AggregationQuery)
-            {
-                AggregationQuery aq = (AggregationQuery)primaryQuery;
-                foreach(string columnName in aq.AggregationColumns)
-                {
-                    if(restrictedColumns.Contains(columnName))
-                    {
-                        details.AddError(ExecutionDetails.DisallowedColumnQuery, columnName);
-                        aq.Where = new EmptyExpression();
-                    }
-                }
-            }
-            else if(primaryQuery is DistinctQuery)
-            {
-                DistinctQuery dq = (DistinctQuery)primaryQuery;
-                if(restrictedColumns.Contains(dq.Column))
-                {
-                    details.AddError(ExecutionDetails.DisallowedColumnQuery, dq.Column);
-                    dq.Where = new EmptyExpression();
-                }
-            }
-            else
-            {
-                // IQuery is extensible; there's no way to ensure that user-implemented
-                // queries respect security rules.
-                details.AddError(ExecutionDetails.DisallowedQuery, primaryQuery.GetType().Name);
-                primaryQuery.Where = new EmptyExpression();
-            }
-
-            return q;
         }
 
         private static IResponse ToCsvResponse(SelectResult result, string fileName)
@@ -449,12 +319,9 @@ namespace Arriba.Server
                         query.TableName = tableName;
                         query.Where = defaultWhere;
 
-                        ExecutionDetails preExecuteDetails = new ExecutionDetails();
-                        IQuery<AggregationResult> securedQuery = SecureQuery(ctx, query, preExecuteDetails);
+                        AggregationResult tableCount = this.Database.Query(query, (si) => this.IsInIdentity(ctx.Request.User, si));
 
-                        AggregationResult tableCount = this.Database.Query(query);
-
-                        if (!preExecuteDetails.Succeeded || !tableCount.Details.Succeeded || tableCount.Values == null)
+                        if (!tableCount.Details.Succeeded || tableCount.Values == null)
                         {
                             results.Add(new CountResult(tableName, 0, true, false));
                         }
@@ -502,16 +369,6 @@ namespace Arriba.Server
 
             query.TableName = tableName;
 
-            // Restrict query using row and column security rules
-            ExecutionDetails preExecuteDetails = new ExecutionDetails();
-            wrappedQuery = SecureQuery(ctx, wrappedQuery, preExecuteDetails);
-            if(!preExecuteDetails.Succeeded)
-            {
-                BaseBlockResult errorResult = new BaseBlockResult(wrappedQuery);
-                errorResult.Details = preExecuteDetails;
-                return ArribaResponse.Ok(errorResult);
-            }
-
             // Correct the query with default correctors
             using (ctx.Monitor(MonitorEventLevel.Verbose, "Correct", type: "Table", identity: tableName, detail: query.Where.ToString()))
             {
@@ -521,10 +378,7 @@ namespace Arriba.Server
             // Execute and return results for the query
             using (ctx.Monitor(MonitorEventLevel.Information, query.GetType().Name, type: "Table", identity: tableName, detail: query.Where.ToString()))
             {
-                Table t = this.Database[tableName];
-
-                // Run the query
-                T result = t.Query(query);
+                T result = this.Database.Query(wrappedQuery, (si) => this.IsInIdentity(ctx.Request.User, si));
                 return ArribaResponse.Ok(result);
             }
         }

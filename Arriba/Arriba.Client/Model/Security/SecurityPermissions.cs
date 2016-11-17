@@ -59,7 +59,7 @@ namespace Arriba.Model.Security
         /// <summary>
         /// Gets a value indicating whether the this security permissions set contains any identities. 
         /// </summary>
-        public bool HasSecurityData
+        public bool HasTableAccessSecurity
         {
             get
             {

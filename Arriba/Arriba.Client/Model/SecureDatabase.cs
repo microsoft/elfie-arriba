@@ -5,9 +5,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 
+using Arriba.Model.Correctors;
+using Arriba.Model.Expressions;
+using Arriba.Model.Query;
 using Arriba.Model.Security;
 using Arriba.Serialization;
-
 namespace Arriba.Model
 {
     /// <summary>
@@ -49,6 +51,139 @@ namespace Arriba.Model
 
                 return security;
             }
+        }
+
+        public override T Query<T>(IQuery<T> query)
+        {
+            throw new ArribaException("Use Query overload which takes isCurrentUserIn on SecureDatabase.");
+        }
+
+        public T Query<T>(IQuery<T> query, Func<SecurityIdentity, bool> isCurrentUserIn)
+        {
+            ExecutionDetails preExecuteDetails = new ExecutionDetails();
+            query = SecureQuery(query, isCurrentUserIn, preExecuteDetails);
+
+            T result = base.Query<T>(query);
+            if(result is IBaseResult)
+            {
+                ((IBaseResult)result).Details.Merge(preExecuteDetails);
+            }
+
+            return result;
+        }
+
+        public IQuery<T> SecureQuery<T>(IQuery<T> query, Func<SecurityIdentity, bool> isCurrentUserIn, ExecutionDetails details)
+        {
+            SecurityPermissions security = this.Security(query.TableName);
+
+            // If table has row restrictions and one matches, restrict rows and allow
+            // NOTE: If restricted rows are returned, columns are NOT restricted.
+            foreach (var rowRestriction in security.RowRestrictedUsers)
+            {
+                if (isCurrentUserIn(rowRestriction.Key))
+                {
+                    query.Where = new AndExpression(QueryParser.Parse(rowRestriction.Value), query.Where);
+                    return query;
+                }
+            }
+
+            // If table has column restrictions, build a list of excluded columns
+            List<string> restrictedColumns = null;
+            foreach (var columnRestriction in security.RestrictedColumns)
+            {
+                if (!isCurrentUserIn(columnRestriction.Key))
+                {
+                    if (restrictedColumns == null) restrictedColumns = new List<string>();
+                    restrictedColumns.AddRange(columnRestriction.Value);
+                }
+            }
+
+            // If no columns were restricted, return query as-is
+            if (restrictedColumns == null) return query;
+
+            // Exclude disallowed columns from where clauses
+            // If a disallowed column is requested specifically, block the query and return an error
+            ColumnSecurityCorrector c = new ColumnSecurityCorrector(restrictedColumns);
+            try
+            {
+                query.Correct(c);
+            }
+            catch (ArribaCorrectorException e)
+            {
+                query.Where = new EmptyExpression();
+                details.AddError(e.Message);
+            }
+
+            // If columns are excluded, remove those from the select list
+            IQuery<T> primaryQuery = query;
+            if (query is JoinQuery<T>) primaryQuery = ((JoinQuery<T>)query).PrimaryQuery;
+
+            if (primaryQuery.GetType().Equals(typeof(SelectQuery)))
+            {
+                SelectQuery sq = (SelectQuery)primaryQuery;
+                List<string> filteredColumns = null;
+
+                if (sq.Columns.Count == 1 && sq.Columns[0] == "*")
+                {
+                    filteredColumns = new List<string>();
+                    foreach (string columnName in this[sq.TableName].ColumnNames)
+                    {
+                        if (restrictedColumns.Contains(columnName))
+                        {
+                            details.AddWarning(ExecutionDetails.DisallowedColumnQuery, columnName);
+                        }
+                        else
+                        {
+                            filteredColumns.Add(columnName);
+                        }
+                    }
+                }
+                else
+                {
+                    foreach (string columnName in sq.Columns)
+                    {
+                        if (restrictedColumns.Contains(columnName))
+                        {
+                            if (filteredColumns == null) filteredColumns = new List<string>(sq.Columns);
+                            filteredColumns.Remove(columnName);
+
+                            details.AddWarning(ExecutionDetails.DisallowedColumnQuery, columnName);
+                        }
+                    }
+                }
+
+                if (filteredColumns != null) sq.Columns = filteredColumns;
+            }
+            else if (primaryQuery.GetType().Equals(typeof(AggregationQuery)))
+            {
+                AggregationQuery aq = (AggregationQuery)primaryQuery;
+                foreach (string columnName in aq.AggregationColumns)
+                {
+                    if (restrictedColumns.Contains(columnName))
+                    {
+                        details.AddError(ExecutionDetails.DisallowedColumnQuery, columnName);
+                        aq.Where = new EmptyExpression();
+                    }
+                }
+            }
+            else if (primaryQuery.GetType().Equals(typeof(DistinctQuery)))
+            {
+                DistinctQuery dq = (DistinctQuery)primaryQuery;
+                if (restrictedColumns.Contains(dq.Column))
+                {
+                    details.AddError(ExecutionDetails.DisallowedColumnQuery, dq.Column);
+                    dq.Where = new EmptyExpression();
+                }
+            }
+            else
+            {
+                // IQuery is extensible; there's no way to ensure that user-implemented
+                // queries respect security rules.
+                details.AddError(ExecutionDetails.DisallowedQuery, primaryQuery.GetType().Name);
+                primaryQuery.Where = new EmptyExpression();
+            }
+
+            return query;
         }
 
         public void SetSecurity(string tableName, SecurityPermissions security)

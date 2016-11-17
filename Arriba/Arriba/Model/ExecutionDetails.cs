@@ -39,8 +39,8 @@ namespace Arriba.Model
         public const string WordIndexInvalidItemID = "WordIndex for Column '{0}' word '{1}' has invalid ID(s) [{2}]";
 
         // Column Security Errors
-        public const string DisallowedColumnQuery = "Could not query column '{0}' because user does not have permissions to it.";
-        public const string DisallowedQuery = "Query type '{0}' couldn't be executed because security isn't implemented for it.";
+        public const string DisallowedColumnQuery = "Access Denied to column '{0}'.";
+        public const string DisallowedQuery = "Security not implemented for query '{0}'.";
 
         public bool Succeeded;
         private HashSet<string> _warnings;
