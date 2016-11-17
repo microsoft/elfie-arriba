@@ -18,6 +18,15 @@ namespace Arriba
     }
 
     [Serializable]
+    public class ArribaCorrectorException : ArribaException
+    {
+        public ArribaCorrectorException() { }
+        public ArribaCorrectorException(string message) : base(message) { }
+        public ArribaCorrectorException(string message, Exception inner) : base(message, inner) { }
+        protected ArribaCorrectorException(SerializationInfo info, StreamingContext context) : base(info, context) { }
+    }
+
+    [Serializable]
     public class ArribaWriteException : ArribaException
     {
         public const string MessageFormatString = "Unable to write item ID '{0}' column '{1}' value of '{2}'. See inner exception for details.";

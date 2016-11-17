@@ -257,6 +257,63 @@ namespace Arriba.Model.Expressions
         }
     }
 
+    public class AllExceptColumnsTermExpression : IExpression
+    {
+        public HashSet<string> RestrictedColumns;
+        public Operator Operator;
+        public Value Value;
+
+        public AllExceptColumnsTermExpression(HashSet<string> restrictedColumns, Operator op, Value value)
+        {
+            this.RestrictedColumns = restrictedColumns;
+            this.Operator = op;
+            this.Value = value;
+        }
+
+        public AllExceptColumnsTermExpression(HashSet<string> restrictedColumns, TermExpression previousExpression) :
+            this(restrictedColumns, previousExpression.Operator, previousExpression.Value)
+        { }
+
+        public void TryEvaluate(Partition partition, ShortSet result, ExecutionDetails details)
+        {
+            if (details == null) throw new ArgumentNullException("details");
+            if (result == null) throw new ArgumentNullException("result");
+            if (partition == null) throw new ArgumentNullException("partition");
+
+            // Run on every column *except* excluded ones
+            bool succeeded = false;
+            ExecutionDetails perColumnDetails = new ExecutionDetails();
+
+            foreach (IColumn<object> column in partition.Columns.Values)
+            {
+                if (!this.RestrictedColumns.Contains(column.Name))
+                {
+                    perColumnDetails.Succeeded = true;
+                    column.TryWhere(this.Operator, this.Value, result, perColumnDetails);
+                    succeeded |= perColumnDetails.Succeeded;
+                }
+            }
+
+            details.Succeeded &= succeeded;
+
+            // If no column succeeded, report the full errors
+            if (!succeeded)
+            {
+                details.Merge(perColumnDetails);
+            }
+        }
+
+        public IList<IExpression> Children()
+        {
+            return EmptyExpression.EmptyEnumerable;
+        }
+
+        public override string ToString()
+        {
+            return StringExtensions.Format("~*{0}{1}", this.Operator.ToSyntaxString(), QueryScanner.WrapValue(this.Value.ToString()));
+        }
+    }
+
     public class TermInExpression : IExpression
     {
         public string ColumnName;
