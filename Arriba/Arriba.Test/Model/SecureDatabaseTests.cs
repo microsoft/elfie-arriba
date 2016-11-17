@@ -112,7 +112,7 @@ namespace Arriba.Test.Model
             result = db.Query(new SelectQuery(q) { Columns = new string[] { "Title", "SecretOwner", "SecretPriority" } }, (si) => si.Name == "g1");
             Assert.AreEqual("~*:One", result.Query.Where.ToString());
             Assert.AreEqual("Title, SecretOwner", String.Join(", ", ((SelectQuery)result.Query).Columns));
-            Assert.AreEqual(String.Format(ExecutionDetails.DisallowedColumnQuery, "SecretPriority"), result.Details.Warnings);
+            Assert.AreEqual("SecretPriority", String.Join(", ", result.Details.AccessDeniedColumns));
         }
 
         [TestMethod]
