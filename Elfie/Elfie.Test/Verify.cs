@@ -6,6 +6,8 @@ using System.IO;
 
 using Microsoft.CodeAnalysis.Elfie.Serialization;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Diagnostics;
+using Microsoft.CodeAnalysis.Elfie.Extensions;
 
 namespace Elfie.Test
 {
@@ -56,6 +58,52 @@ namespace Elfie.Test
             }
 
             return item;
+        }
+
+        public static void PerformanceByOperation(long opsPerSecondGoal, Func<long> actionReturningOperationCount)
+        {
+            // Run scenario and measure runtime
+            Stopwatch w = Stopwatch.StartNew();
+            long operationCount = actionReturningOperationCount();
+            w.Stop();
+
+            // Compute ops per second achieved
+            double opsPerMillisecondActual = (double)operationCount / w.ElapsedMilliseconds;
+            long opsPerSecondActual = (long)(opsPerMillisecondActual * (double)1000);
+
+            // Log performance vs. Goal
+            Trace.WriteLine(String.Format(
+                "{0} in {1}. Rate: {2}/s. Goal: {3}/s",
+                operationCount.CountString(),
+                w.Elapsed.ToFriendlyString(),
+                opsPerSecondActual.CountString(),
+                opsPerSecondGoal.CountString()));
+
+            // Assert performance within goal
+            Assert.IsTrue(opsPerSecondActual >= opsPerSecondGoal);
+        }
+
+        public static void PerformanceByBytes(long bytesPerSecondGoal, Func<long> actionReturningBytes)
+        {
+            // Run scenario and measure runtime
+            Stopwatch w = Stopwatch.StartNew();
+            long bytesProcessed = actionReturningBytes();
+            w.Stop();
+
+            // Compute bytes per second achieved
+            double bytesPerMillisecondActual = (double)bytesProcessed / w.ElapsedMilliseconds;
+            long bytesPerSecondActual = (long)(bytesPerMillisecondActual * (double)1000);
+
+            // Log performance vs. Goal
+            Trace.WriteLine(String.Format(
+                "{0} in {1}. Rate: {2}/s. Goal: {3}/s",
+                bytesProcessed.SizeString(),
+                w.Elapsed.ToFriendlyString(),
+                bytesPerSecondActual.SizeString(),
+                bytesPerSecondGoal.SizeString()));
+
+            // Assert performance within goal
+            Assert.IsTrue(bytesPerSecondActual >= bytesPerSecondGoal);
         }
     }
 }

@@ -81,6 +81,7 @@
     <Compile Include="Model\IMemberDatabase.cs" />
     <Compile Include="Model\Map\ImmutableItemMap.cs" />
     <Compile Include="Model\Map\ItemMap.cs" />
+    <Compile Include="Model\Map\MapEnumerator.cs" />
     <Compile Include="Model\Map\MutableItemMap.cs" />
     <Compile Include="Model\MemberQuery.cs" />
     <Compile Include="Model\MergedMembersDatabase.cs" />
@@ -127,12 +128,16 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <Compile Include="Serialization\BaseTabularWriter.cs" />
     <Compile Include="Serialization\FileIO.cs" />
     <Compile Include="Serialization\IBinarySerializable.cs" />
     <Compile Include="Model\IColumn.cs" />
     <Compile Include="Serialization\Read.cs" />
     <Compile Include="Model\Strings\String8Block.cs" />
+    <Compile Include="Serialization\BaseTabularReader.cs" />
+    <Compile Include="Serialization\CsvReader.cs" />
     <Compile Include="Serialization\TsvReader.cs" />
+    <Compile Include="Serialization\CsvWriter.cs" />
     <Compile Include="Serialization\TsvWriter.cs" />
     <Compile Include="Serialization\Write.cs" />
   </ItemGroup>

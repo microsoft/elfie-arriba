@@ -34,7 +34,7 @@ namespace Arriba.Model.Query
             this.GroupByWhere = new List<IExpression>();
         }
 
-        public AggregationDimension(string name)
+        public AggregationDimension(string name) : this()
         {
             this.Name = name;
         }

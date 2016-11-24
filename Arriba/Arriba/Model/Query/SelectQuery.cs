@@ -159,11 +159,13 @@ namespace Arriba.Model.Query
 
         public void OnBeforeQuery(Table table)
         {
+            this.Where = this.Where ?? new AllExpression();
         }
 
         public void Correct(ICorrector corrector)
         {
-            if (corrector == null) throw new ArgumentNullException("corrector");
+            // Null corrector means no corrections to make
+            if (corrector == null) return;
 
             this.Where = corrector.Correct(this.Where);
         }
@@ -173,6 +175,13 @@ namespace Arriba.Model.Query
             if (p == null) throw new ArgumentNullException("p");
 
             SelectResult result = new SelectResult(this);
+
+            // Verify that the ORDER BY column exists
+            if (!String.IsNullOrEmpty(this.OrderByColumn) && !p.Columns.ContainsKey(this.OrderByColumn))
+            {
+                result.Details.AddError(ExecutionDetails.ColumnDoesNotExist, this.OrderByColumn);
+                return result;
+            }
 
             // Find the set of items matching all terms
             ShortSet whereSet = new ShortSet(p.Count);

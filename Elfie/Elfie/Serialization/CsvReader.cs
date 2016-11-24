@@ -10,26 +10,26 @@ using Microsoft.CodeAnalysis.Elfie.Model.Structures;
 namespace Microsoft.CodeAnalysis.Elfie.Serialization
 {
     /// <summary>
-    ///  TsvReader is a high performance reader base class for TSV format.
+    ///  CsvReader is a high performance reader base class for CSV format.
     ///  See BaseTabularReader comment for details and usage.
     /// </summary>
-    public class TsvReader : BaseTabularReader
+    public class CsvReader : BaseTabularReader
     {
         /// <summary>
-        ///  Construct a TsvReader to read the given TSV file.
+        ///  Construct a CsvReader to read the given CSV file.
         /// </summary>
-        /// <param name="tsvFilePath">File Path to TSV file to read</param>
+        /// <param name="tsvFilePath">File Path to CSV file to read</param>
         /// <param name="hasHeaderRow">True to read the first row as column names, False not to pre-read anything</param>
-        public TsvReader(string tsvFilePath, bool hasHeaderRow = true) :
+        public CsvReader(string tsvFilePath, bool hasHeaderRow = true) :
             base(tsvFilePath, hasHeaderRow)
         { }
 
         /// <summary>
-        ///  Construct a TsvReader to read the given stream.
+        ///  Construct a CsvReader to read the given stream.
         /// </summary>
         /// <param name="strean">Stream to read</param>
         /// <param name="hasHeaderRow">True to read the first row as column names, False not to pre-read anything</param>
-        public TsvReader(Stream stream, bool hasHeaderRow = true) :
+        public CsvReader(Stream stream, bool hasHeaderRow = true) :
             base(stream, hasHeaderRow)
         { }
 
@@ -37,7 +37,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         {
             // Remove trailing '\r' to handle '\r\n' and '\n' line endings uniformly
             if(row.EndsWith(UTF8.CR)) row = row.Substring(0, row.Length - 1);
-            return row.Split(UTF8.Tab, cellPositionArray);
+            return row.SplitAndDecodeCsvCells(cellPositionArray);
         }
 
         protected override String8Set SplitRows(String8 block, PartialArray<int> rowPositionArray)

@@ -87,7 +87,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         /// <param name="delimiter">Delimiter on which to split</param>
         /// <param name="positionArray">int[] to contain split positions</param>
         /// <returns>String8Set containing the String8 split on the delimiter</returns>
-        public String8Set Split(char delimiter, int[] positionArray)
+        public String8Set Split(byte delimiter, int[] positionArray)
         {
             return String8Set.Split(this, delimiter, positionArray);
         }
@@ -99,11 +99,48 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         ///  String8Set.GetLength to determine the array length required.
         /// </summary>
         /// <param name="delimiter">Delimiter on which to split</param>
+        /// <param name="positionArray">int[] to contain split positions</param>
+        /// <returns>String8Set containing the String8 split on the delimiter</returns>
+        public String8Set Split(char delimiter, int[] positionArray)
+        {
+            return String8Set.Split(this, (byte)delimiter, positionArray);
+        }
+
+        /// <summary>
+        ///  Split this String8 into a String8Set with the given delimiter.
+        ///  Reuses the PartialArray to contain positions to avoid allocation.
+        /// </summary>
+        /// <param name="delimiter">Delimiter on which to split</param>
         /// <param name="positions">PartialArray&lt;int&gt; to contain split positions</param>
         /// <returns>String8Set containing the String8 split on the delimiter</returns>
-        public String8Set Split(char delimiter, PartialArray<int> positions)
+        public String8Set Split(byte delimiter, PartialArray<int> positions)
         {
             return String8Set.Split(this, delimiter, positions);
+        }
+
+        /// <summary>
+        ///  Split this String8 into a String8Set on the given delimiter,
+        ///  but only outside double-quoted sections. Used for CSV parsing.
+        /// </summary>
+        /// <param name="delimiter">Delimiter on which to split</param>
+        /// <param name="positions">PartialArray&lt;int&gt; to contain split positions</param>
+        /// <returns>String8Set containing the String8 split on the delimiter</returns>
+        public String8Set SplitOutsideQuotes(byte delimiter, PartialArray<int> positions)
+        {
+            return String8Set.SplitOutsideQuotes(this, delimiter, positions);
+        }
+
+        /// <summary>
+        ///  Split this String8, which is a row in a CSV, into cells, and
+        ///  unescape cell values. The buffer will be overwritten with the
+        ///  cell values shifted to remove wrapping quotes and escaped quotes
+        ///  and trailing nulls are written at the end.
+        /// </summary>
+        /// <param name="positions">PartialArray&lt;int&gt; to contain split positions</param>
+        /// <returns>String8Set containing the String8 split into unescaped CSV cells</returns>
+        public String8Set SplitAndDecodeCsvCells(PartialArray<int> positions)
+        {
+            return String8Set.SplitAndDecodeCsvCells(this, positions);
         }
 
         /// <summary>
@@ -249,6 +286,48 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             }
 
             return -1;
+        }
+
+        /// <summary>
+        ///  Return whether this string ends with the given character.
+        /// </summary>
+        /// <param name="c">Character to check for</param>
+        /// <returns>True if string ends with character, false otherwise</returns>
+        public bool EndsWith(byte c)
+        {
+            if (_length == 0) return false;
+            return (_buffer[_index + _length - 1] == c);
+        }
+
+        /// <summary>
+        ///  Return whether this string starts with the given other string.
+        /// </summary>
+        /// <param name="other">The potential prefix to this string</param>
+        /// <param name="ignoreCase">True for case insensitive comparison, False otherwise</param>
+        /// <returns></returns>
+        public bool StartsWith(String8 other, bool ignoreCase = false)
+        {
+            return other.CompareAsPrefixTo(this, ignoreCase) == 0;
+        }
+
+        /// <summary>
+        ///  Make this String8 uppercase with invariant rules (ASCII characters only). 
+        ///  This version changes the existing value in place; make a copy if you
+        ///  need to preserve the original casing.
+        /// </summary>
+        public void ToUpperInvariant()
+        {
+            if (this._length <= 0) return;
+
+            int end = this._index + this._length;
+            for(int i = this._index; i < end; ++i)
+            {
+                byte c = this._buffer[i];
+                if((byte)(c - UTF8.a) < UTF8.AlphabetLength)
+                {
+                    this._buffer[i] = (byte)(c - UTF8.ToUpperSubtract);
+                }
+            }
         }
         #endregion
 
@@ -542,6 +621,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         /// <returns>Byte count written</returns>
         public int WriteTo(byte[] buffer, int index)
         {
+            if (_length <= 0) return 0;
             if (index + _length > buffer.Length) throw new ArgumentException(String.Format(Resources.BufferTooSmall, index + _length, buffer.Length));
             System.Buffer.BlockCopy(_buffer, _index, buffer, index, _length);
             return _length;
@@ -554,6 +634,8 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         /// <returns>Character count written</returns>
         public int WriteTo(TextWriter writer)
         {
+            if (_length <= 0) return 0;
+
             int length = _length;
             int end = _index + length;
 

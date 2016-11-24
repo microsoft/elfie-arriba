@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.Text;
 
 using Arriba.Serialization;
+using System.IO;
 
 namespace Arriba.Structures
 {
@@ -222,6 +223,14 @@ namespace Arriba.Structures
             System.Array.Copy(this.Array, this.Index, other, position, this.Length);
         }
 
+        public void WriteTo(Stream stream)
+        {
+            if(this.Length > 0)
+            {
+                stream.Write(this.Array, this.Index, this.Length);
+            }
+        }
+
         public bool IsZero()
         {
             return this.Array == null || this.Length == 0;
@@ -270,11 +279,36 @@ namespace Arriba.Structures
             return this.CompareTo(other) == 0;
         }
 
-        public unsafe override int GetHashCode()
+        public override int GetHashCode()
+        {
+            return unchecked((int)GetHashULong());
+        }
+
+        public Guid GetHashAsGuid()
+        {
+            ulong hash = GetHashULong();
+
+            // Return a GUID with the hash ulong used twice
+            return new Guid(
+                (uint)((hash >> 32) & 0xFFFFFFFF),
+                (ushort)((hash >> 16) & 0xFFFF),
+                (ushort)(hash & 0xFFFF),
+                (byte)(hash & 0xFF),
+                (byte)((hash >> 8) & 0xFF),
+                (byte)((hash >> 16) & 0xFF),
+                (byte)((hash >> 24) & 0xFF),
+                (byte)((hash >> 32) & 0xFF),
+                (byte)((hash >> 40) & 0xFF),
+                (byte)((hash >> 48) & 0xFF),
+                (byte)((hash >> 56) & 0xFF)
+            );
+        }
+
+        private unsafe ulong GetHashULong()
         {
             fixed (byte* a = this.Array)
             {
-                return unchecked((int)Hashing.MurmurHash3(a + this.Index, this.Length, 0));
+                return Hashing.MurmurHash3(a + this.Index, this.Length, 0);
             }
         }
 
