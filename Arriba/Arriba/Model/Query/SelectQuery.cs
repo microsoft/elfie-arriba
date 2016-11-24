@@ -252,7 +252,6 @@ namespace Arriba.Model.Query
 
             // Compute the count to return - the count or the number left after skipping
             int countToReturn = Math.Min(query.Count, (int)(lids.Length));
-            if (countToReturn < 0) return new ushort[0];
 
             // If no ORDER BY is provided, the default is the ID column descending
             if (String.IsNullOrEmpty(query.OrderByColumn))
@@ -295,8 +294,6 @@ namespace Arriba.Model.Query
         private ushort[] GetLIDsToReturnDense(Partition p, SelectQuery query, SelectResult result, ShortSet whereSet)
         {
             int countToReturn = Math.Min(query.Count, (int)(result.Total));
-            if (countToReturn < 0) return new ushort[0];
-
             ushort[] lidsToReturn = new ushort[countToReturn];
 
             // If no ORDER BY is provided, the default is the ID column descending
