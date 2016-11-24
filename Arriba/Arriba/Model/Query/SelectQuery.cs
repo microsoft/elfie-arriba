@@ -31,8 +31,7 @@ namespace Arriba.Model.Query
     FROM {1}
     WHERE {2}
     ORDER BY {3}{4}
-        OFFSET {5} ROWS
-        FETCH {6} ROWS ONLY";
+        FETCH {5} ROWS ONLY";
 
         /// <summary>
         ///  Columns lists the column names of the columns to return.
@@ -67,13 +66,6 @@ namespace Arriba.Model.Query
         public ushort Count { get; set; }
 
         /// <summary>
-        ///  Skip is the number of matches to skip before returning rows.
-        ///  This is used with count to page through the results when many
-        ///  items match the query.
-        /// </summary>
-        public uint Skip { get; set; }
-
-        /// <summary>
         ///  Highlighter to use to highlight returned values. Null if no
         ///  highlighting desired.
         /// </summary>
@@ -102,7 +94,6 @@ namespace Arriba.Model.Query
             this.OrderByColumn = copyFromOther.OrderByColumn;
             this.OrderByDescending = copyFromOther.OrderByDescending;
             this.Count = copyFromOther.Count;
-            this.Skip = copyFromOther.Skip;
             this.Highlighter = copyFromOther.Highlighter;
         }
 
@@ -115,7 +106,6 @@ namespace Arriba.Model.Query
                 this.Where,
                 this.OrderByColumn,
                 this.OrderByDescending ? " DESC" : "",
-                this.Skip,
                 this.Count
             );
         }
@@ -130,17 +120,18 @@ namespace Arriba.Model.Query
             return QueryParser.Parse(whereClause);
         }
 
-        public void Prepare(Partition p)
+        private void Prepare(Table table)
         {
-            if (p == null) throw new ArgumentNullException("p");
-
             // Expand '*' to all columns if seen
             List<string> columns = new List<string>();
             foreach (string column in this.Columns)
             {
                 if (column == "*")
                 {
-                    columns.AddRange(p.ColumnNames);
+                    foreach (ColumnDetails col in table.ColumnDetails)
+                    {
+                        columns.Add(col.Name);
+                    }
                 }
                 else
                 {
@@ -152,14 +143,19 @@ namespace Arriba.Model.Query
             // ORDER BY the ID column if nothing was provided
             if (String.IsNullOrEmpty(this.OrderByColumn))
             {
-                this.OrderByColumn = p.IDColumn.Name;
+                this.OrderByColumn = table.IDColumn.Name;
                 this.OrderByDescending = true;
             }
         }
 
         public void OnBeforeQuery(Table table)
         {
+            if (table == null) throw new ArgumentNullException("table");
+
             this.Where = this.Where ?? new AllExpression();
+
+            // Prepare this query to run (expand '*', default ORDER BY column, ...)
+            Prepare(table);
         }
 
         public void Correct(ICorrector corrector)
@@ -233,7 +229,7 @@ namespace Arriba.Model.Query
             //  Dense - walk the order by column in order until we find enough matches.
             //  Walking in order measures about 20 times faster than Array.Sort() (cache locality; instruction count)
             int sparseCompareCount = (int)(result.Total * Math.Log(result.Total, 2));
-            double densePercentageToScan = Math.Min(1.0d, (double)(query.Skip + query.Count) / (double)(result.Total));
+            double densePercentageToScan = Math.Min(1.0d, (double)(query.Count) / (double)(result.Total));
             int denseCheckCount = (int)(p.Count * densePercentageToScan);
 
             if (sparseCompareCount * 20 < denseCheckCount)
@@ -255,7 +251,7 @@ namespace Arriba.Model.Query
             result.Total = (uint)(lids.Length);
 
             // Compute the count to return - the count or the number left after skipping
-            int countToReturn = Math.Min(query.Count, (int)(lids.Length - query.Skip));
+            int countToReturn = Math.Min(query.Count, (int)(lids.Length));
             if (countToReturn < 0) return new ushort[0];
 
             // If no ORDER BY is provided, the default is the ID column descending
@@ -276,13 +272,13 @@ namespace Arriba.Model.Query
             int index, end, step;
             if (query.OrderByDescending)
             {
-                index = (int)((lids.Length - 1) - query.Skip);
+                index = (int)(lids.Length - 1);
                 end = index - countToReturn;
                 step = -1;
             }
             else
             {
-                index = (int)query.Skip;
+                index = 0;
                 end = index + countToReturn;
                 step = 1;
             }
@@ -298,7 +294,7 @@ namespace Arriba.Model.Query
 
         private ushort[] GetLIDsToReturnDense(Partition p, SelectQuery query, SelectResult result, ShortSet whereSet)
         {
-            int countToReturn = Math.Min(query.Count, (int)(result.Total - query.Skip));
+            int countToReturn = Math.Min(query.Count, (int)(result.Total));
             if (countToReturn < 0) return new ushort[0];
 
             ushort[] lidsToReturn = new ushort[countToReturn];
@@ -317,24 +313,10 @@ namespace Arriba.Model.Query
             orderByColumn.TryGetSortedIndexes(out sortedLIDs, out sortedLIDsCount);
 
             // Enumerate matches in OrderBy order and return the requested columns for them
-            ushort countSkipped = 0;
             ushort countAdded = 0;
             int sortedIndex = (query.OrderByDescending ? orderByColumn.Count - 1 : 0);
             int lastIndex = (query.OrderByDescending ? -1 : orderByColumn.Count);
             int step = (query.OrderByDescending ? -1 : 1);
-
-            // Skip the first 'skip' matches
-            if (query.Skip > 0)
-            {
-                for (; sortedIndex != lastIndex; sortedIndex += step)
-                {
-                    ushort lid = sortedLIDs[sortedIndex];
-                    if (whereSet.Contains(lid))
-                    {
-                        if (++countSkipped == query.Skip) break;
-                    }
-                }
-            }
 
             // Return the next 'count' matches
             for (; sortedIndex != lastIndex; sortedIndex += step)
@@ -374,11 +356,7 @@ namespace Arriba.Model.Query
             }
 
             mergedResult.Total = totalFound;
-
-            // If there are no values to return, stop
-            if (totalReturned < this.Skip) return mergedResult;
-
-            mergedResult.CountReturned = (ushort)Math.Min(this.Count, totalReturned - this.Skip);
+            mergedResult.CountReturned = (ushort)Math.Min(this.Count, totalReturned);
 
             if (mergedResult.Details.Succeeded)
             {
@@ -393,12 +371,11 @@ namespace Arriba.Model.Query
                 int sortByColumn = (partitionResults[0].Values.ColumnCount - 1);
                 int partitionCount = partitionResults.Length;
 
-                int skipCount = (int)this.Skip;
                 int itemIndex = 0;
 
                 int[] nextIndexPerPartition = new int[partitionCount];
 
-                while (skipCount > 0 || itemIndex < mergedResult.CountReturned)
+                while (itemIndex < mergedResult.CountReturned)
                 {
                     int bestPartition = -1;
                     IComparable bestValue = null;
@@ -420,21 +397,12 @@ namespace Arriba.Model.Query
                         }
                     }
 
-                    if (skipCount > 0)
+                    for (int columnIndex = 0; columnIndex < mergedBlock.ColumnCount; ++columnIndex)
                     {
-                        // If there are more values to skip, skip this one
-                        skipCount--;
+                        mergedBlock.SetValue(itemIndex, columnIndex, partitionResults[bestPartition].Values.GetValue(nextIndexPerPartition[bestPartition], columnIndex));
                     }
-                    else
-                    {
-                        // If this value should be included, write it next
-                        for (int columnIndex = 0; columnIndex < mergedBlock.ColumnCount; ++columnIndex)
-                        {
-                            mergedBlock.SetValue(itemIndex, columnIndex, partitionResults[bestPartition].Values.GetValue(nextIndexPerPartition[bestPartition], columnIndex));
-                        }
 
-                        itemIndex++;
-                    }
+                    itemIndex++;
 
                     nextIndexPerPartition[bestPartition]++;
                 }

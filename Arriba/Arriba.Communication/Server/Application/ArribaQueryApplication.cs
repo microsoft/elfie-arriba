@@ -138,12 +138,6 @@ namespace Arriba.Server
                 query.Count = UInt16.Parse(take);
             }
 
-            string skip = ctx.Request.ResourceParameters["s"];
-            if (!String.IsNullOrEmpty(skip))
-            {
-                query.Skip = UInt32.Parse(skip);
-            }
-
             string sortOrder = ctx.Request.ResourceParameters["so"];
             if (!String.IsNullOrEmpty(sortOrder))
             {

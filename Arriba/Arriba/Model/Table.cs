@@ -497,9 +497,6 @@ namespace Arriba.Model
                 // Run all correctors
                 query.Correct(_columnAliasCorrector);
 
-                // Prepare this query to run (expand '*', default ORDER BY column, ...)
-                query.Prepare(_partitions[0]);
-
                 // If this is already an ID only query, just run it directly
                 if (query.Columns.Count == 1 && query.Columns[0].Equals(idColumnName))
                 {
@@ -526,7 +523,6 @@ namespace Arriba.Model
                 // Include the previous where clauses for highlighting
                 SelectQuery getValuesQuery = new SelectQuery(query);
                 getValuesQuery.Count = chooseItemsResult.CountReturned;
-                getValuesQuery.Skip = 0;
                 getValuesQuery.Where = new AndExpression(new TermInExpression(idColumnName, chooseItemsResult.Values.GetColumn(0)), query.Where);
                 SelectResult getValuesResult = this.SelectInner(getValuesQuery);
 
@@ -555,11 +551,6 @@ namespace Arriba.Model
             columns.Add(query.OrderByColumn);
             query.Columns = columns;
 
-            // Get all items (need to do 'skip' on merge)
-            ushort originalCount = query.Count;
-            query.Count = (ushort)(query.Count + query.Skip);
-            query.Skip = 0;
-
             // Run the query
             SelectResult[] partitionResults = new SelectResult[_partitions.Count];
             if (this.RunParallel)
@@ -580,8 +571,6 @@ namespace Arriba.Model
             // Change the column list and skip/count back
             columns.RemoveAt(columns.Count - 1);
             query.Columns = columns;
-            query.Skip = (uint)(query.Count - originalCount);
-            query.Count = originalCount;
 
             // Merge the results
             return query.Merge(partitionResults);
