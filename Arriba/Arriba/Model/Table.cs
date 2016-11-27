@@ -486,15 +486,6 @@ namespace Arriba.Model
         /// <returns>Result for Query across this ITable</returns>
         public T Query<T>(IQuery<T> query)
         {
-#if false
-            // Route SelectQuery to the Select API. It has a different flow, but users shouldn't have to know not to call Query with SelectQuery instances.
-            if (query is SelectQuery) return (T)(object)this.Query((SelectQuery)query);
-            if (query is JoinQuery<SelectResult>)
-            {
-                SelectQuery q = (SelectQuery)(((JoinQuery<SelectResult>)query).PrimaryQuery);
-                return (T)(object)this.Query(q);
-            }
-#endif
             _locker.EnterReadLock();
             try
             {
