@@ -206,7 +206,7 @@ namespace Arriba.Model
                 throw new ArgumentNullException("partialDetails");
             }
 
-            return GetDetails(partialDetails.Query((cd) => cd.Name));
+            return GetDetails(partialDetails.Select((cd) => cd.Name));
         }
         #endregion
 
