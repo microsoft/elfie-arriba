@@ -258,8 +258,8 @@ namespace Arriba.Test.Model
             var ExtraColumn = new ColumnDetails("Extra", "int", null);
 
             int[] intArray = Enumerable.Range(0, rangeMax).ToArray();
-            long[] longArray = Enumerable.Range(0, rangeMax).Query(i => (long)i).ToArray();
-            string[] stringArray = longArray.Query(l => l.ToString()).ToArray();
+            long[] longArray = Enumerable.Range(0, rangeMax).Select(i => (long)i).ToArray();
+            string[] stringArray = longArray.Select(l => l.ToString()).ToArray();
 
             var columnTypes = new string[] { "int", "long", "double" };
             var sourceTypes = new Tuple<string, Array>[] {
@@ -436,13 +436,6 @@ namespace Arriba.Test.Model
             Assert.AreEqual(2, (int)result.Total);
             Assert.AreEqual("11999", result.Values[0, 0].ToString());
             Assert.AreEqual("11643", result.Values[1, 0].ToString());
-
-            // Select a second page (not enough items)
-            //query.Skip = 50;
-            //result = table.Query(query);
-            //Assert.AreEqual(2, (int)result.Total);
-            //Assert.AreEqual(0, (int)result.CountReturned);
-            //query.Skip = 0;
 
             // Select a word in first item (cover a simple search and zero-LID handling)
             SelectQuery q2 = new SelectQuery();
