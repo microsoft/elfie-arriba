@@ -282,7 +282,6 @@ namespace Arriba.Model.Query
 
                     // Get all of the response columns and return them
                     Array columns = new Array[this.Columns.Count];
-                    //Debug.Assert(this.Columns.Count > 1);
                     for (int i = 0; i < this.Columns.Count; ++i)
                     {
                         string columnName = this.Columns[i];
@@ -306,7 +305,6 @@ namespace Arriba.Model.Query
                     result.Values = new DataBlock(p.GetDetails(this.Columns), result.CountReturned, columns);
                 }
 
-                //Debug.Assert(result.Values.Columns.Count > 1);
                 return result;
             }
 
@@ -314,6 +312,13 @@ namespace Arriba.Model.Query
             private static ushort[] GetLIDsToReturn(Partition p, SelectContext context, SelectResult result, ShortSet whereSet)
             {
                 if (result.Total == 0) return new ushort[0];
+
+                // If no ORDER BY is provided, the default is the ID column descending
+                if (String.IsNullOrEmpty(context.OrderByColumn))
+                {
+                    context.OrderByColumn = p.IDColumn.Name;
+                    context.OrderByDescending = true;
+                }
 
                 // Compute the most efficient way to scan.
                 //  Sparse - get and sort the order by values for all matches.
@@ -343,13 +348,6 @@ namespace Arriba.Model.Query
 
                 // Compute the count to return - the count or the number left after skipping
                 int countToReturn = Math.Min(context.Count, (int)(lids.Length));
-
-                // If no ORDER BY is provided, the default is the ID column descending
-                if (String.IsNullOrEmpty(context.OrderByColumn))
-                {
-                    context.OrderByColumn = p.IDColumn.Name;
-                    context.OrderByDescending = true;
-                }
 
                 // Get the values for all matches in the Order By column and IDs by the order by values
                 Array orderByValues = p.Columns[context.OrderByColumn].GetValues(lids);
@@ -386,13 +384,6 @@ namespace Arriba.Model.Query
             {
                 int countToReturn = Math.Min(context.Count, (int)(result.Total));
                 ushort[] lidsToReturn = new ushort[countToReturn];
-
-                // If no ORDER BY is provided, the default is the ID column descending
-                if (String.IsNullOrEmpty(context.OrderByColumn))
-                {
-                    context.OrderByColumn = p.IDColumn.Name;
-                    context.OrderByDescending = true;
-                }
 
                 // Enumerate in order by the OrderByColumn
                 IColumn<object> orderByColumn = p.Columns[context.OrderByColumn];
@@ -448,8 +439,8 @@ namespace Arriba.Model.Query
 
                 if (mergedResult.Details.Succeeded)
                 {
-                    // Build a DataBlock for the merged result values, remove the last column because 
-                    // it was added as the order-by column
+                    // Build a DataBlock for the merged result values, remove the last 
+                    // column (if it exists) because it was added as the order-by column
                     List<ColumnDetails> columnsWithoutSort = new List<ColumnDetails>(partitionResults[0].Values.Columns);
                     if (columnsWithoutSort.Count == this.Columns.Count)
                     {
