@@ -477,107 +477,7 @@ namespace Arriba.Model
         }
         #endregion
 
-        #region Select
-        /// <summary>
-        ///  Select returns items matching the given query from the Table, like SQL SELECT.
-        /// </summary>
-        /// <param name="query">Query to execute</param>
-        /// <returns>SelectResult with the count and values returned by the query</returns>
-        public SelectResult Select(SelectQuery query)
-        {
-            _locker.EnterReadLock();
-            try
-            {
-                Stopwatch w = Stopwatch.StartNew();
-                string idColumnName = _partitions[0].IDColumn.Name;
-
-                // Notify query
-                query.OnBeforeQuery(this);
-
-                // Run all correctors
-                query.Correct(_columnAliasCorrector);
-
-                // If this is already an ID only query, just run it directly
-                if (query.Columns.Count == 1 && query.Columns[0].Equals(idColumnName))
-                {
-                    SelectResult result = this.SelectInner(query);
-                    result.Runtime = w.Elapsed;
-                    return result;
-                }
-
-                // Otherwise, query for ID only (no highlight) to find the exact set to return
-                SelectQuery chooseItemsQuery = new SelectQuery(query);
-                chooseItemsQuery.Columns = new string[] { idColumnName };
-                chooseItemsQuery.Highlighter = null;
-                SelectResult chooseItemsResult = this.SelectInner(chooseItemsQuery);
-
-                // If the query failed or was empty, return as-is
-                if (!chooseItemsResult.Details.Succeeded || chooseItemsResult.CountReturned == 0)
-                {
-                    chooseItemsResult.Query = query;
-                    chooseItemsResult.Runtime = w.Elapsed;
-                    return chooseItemsResult;
-                }
-
-                // Requery to get all columns for the exact items by ID only
-                // Include the previous where clauses for highlighting
-                SelectQuery getValuesQuery = new SelectQuery(query);
-                getValuesQuery.Count = chooseItemsResult.CountReturned;
-                getValuesQuery.Where = new AndExpression(new TermInExpression(idColumnName, chooseItemsResult.Values.GetColumn(0)), query.Where);
-                SelectResult getValuesResult = this.SelectInner(getValuesQuery);
-
-                // Tie the original query, real total, and full runtime with the result
-                getValuesResult.Query = query;
-                getValuesResult.Total = chooseItemsResult.Total;
-                getValuesResult.Runtime = w.Elapsed;
-
-                return getValuesResult;
-            }
-            finally
-            {
-                _locker.ExitReadLock();
-            }
-        }
-
-        /// <summary>
-        ///  Select returns items matching the given query from the Table, like SQL SELECT.
-        /// </summary>
-        /// <param name="query">Query to execute</param>
-        /// <returns>SelectResult with the count and values returned by the query</returns>
-        private SelectResult SelectInner(SelectQuery query)
-        {
-            // Add the Order By Column
-            List<string> columns = new List<string>(query.Columns);
-            columns.Add(query.OrderByColumn);
-            query.Columns = columns;
-
-            // Run the query
-            SelectResult[] partitionResults = new SelectResult[_partitions.Count];
-            if (this.RunParallel)
-            {
-                Parallel.For(0, _partitions.Count, (i) =>
-                {
-                    partitionResults[i] = _partitions[i].Query(query);
-                });
-            }
-            else
-            {
-                for (int i = 0; i < _partitions.Count; ++i)
-                {
-                    partitionResults[i] = _partitions[i].Query(query);
-                }
-            }
-
-            // Change the column list and skip/count back
-            columns.RemoveAt(columns.Count - 1);
-            query.Columns = columns;
-
-            // Merge the results
-            return query.Merge(partitionResults);
-        }
-        #endregion
-
-        #region Query
+#region Query
         /// <summary>
         ///  Run the provided query and return a result across this ITable.
         /// </summary>
@@ -586,14 +486,15 @@ namespace Arriba.Model
         /// <returns>Result for Query across this ITable</returns>
         public T Query<T>(IQuery<T> query)
         {
+#if false
             // Route SelectQuery to the Select API. It has a different flow, but users shouldn't have to know not to call Query with SelectQuery instances.
-            if (query is SelectQuery) return (T)(object)this.Select((SelectQuery)query);
+            if (query is SelectQuery) return (T)(object)this.Query((SelectQuery)query);
             if (query is JoinQuery<SelectResult>)
             {
                 SelectQuery q = (SelectQuery)(((JoinQuery<SelectResult>)query).PrimaryQuery);
-                return (T)(object)this.Select(q);
+                return (T)(object)this.Query(q);
             }
-
+#endif
             _locker.EnterReadLock();
             try
             {
@@ -656,9 +557,9 @@ namespace Arriba.Model
                 _locker.ExitReadLock();
             }
         }
-        #endregion
+#endregion
 
-        #region Split
+#region Split
         private interface IChooseSplit
         {
             void ChooseSplit(Table table, Array values, int rowCount, out int[] partitionChains, out int[] partitionChainHeads);
@@ -733,9 +634,9 @@ namespace Arriba.Model
                 partitionChainHeads = localPartitionChainHeads;
             }
         }
-        #endregion
+#endregion
 
-        #region Management
+#region Management
         public void VerifyConsistency(VerificationLevel level, ExecutionDetails details)
         {
             _locker.EnterReadLock();
@@ -766,9 +667,9 @@ namespace Arriba.Model
                 _locker.ExitReadLock();
             }
         }
-        #endregion
+#endregion
 
-        #region Serialization
+#region Serialization
         /// <summary>
         ///  Returns the path where a Table with the given name will be serialized.
         ///  Used so that additional metadata (ex: security) can be written within it.
@@ -873,9 +774,9 @@ namespace Arriba.Model
                 _locker.ExitReadLock();
             }
         }
-        #endregion
+#endregion
 
-        #region Drop
+#region Drop
         public void Drop()
         {
             _locker.EnterReadLock();
@@ -902,9 +803,9 @@ namespace Arriba.Model
             // Delete everything in the table folder (including any additional data, like security)
             Directory.Delete(tablePath, true);
         }
-        #endregion
+#endregion
 
-        #region IDisposable
+#region IDisposable
         public void Dispose()
         {
             Dispose(true);
@@ -920,6 +821,6 @@ namespace Arriba.Model
                 _locker = null;
             }
         }
-        #endregion
+#endregion
     }
 }

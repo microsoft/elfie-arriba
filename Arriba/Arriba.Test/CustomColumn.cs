@@ -136,9 +136,19 @@ namespace Arriba.Test
             Count
         }
 
-        public struct ComparableColor : IComparable<ComparableColor>, IEquatable<ComparableColor>
+        public struct ComparableColor : IComparable<ComparableColor>, IEquatable<ComparableColor>, IComparable
         {
             public Color ColorValue;
+
+            public int CompareTo(object obj)
+            {
+                if (obj is ComparableColor)
+                {
+                    return this.CompareTo((ComparableColor)obj);
+                }
+
+                throw new ArgumentException("obj");
+            }
 
             public int CompareTo(ComparableColor other)
             {

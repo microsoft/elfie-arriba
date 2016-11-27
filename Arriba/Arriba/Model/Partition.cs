@@ -206,7 +206,7 @@ namespace Arriba.Model
                 throw new ArgumentNullException("partialDetails");
             }
 
-            return GetDetails(partialDetails.Select((cd) => cd.Name));
+            return GetDetails(partialDetails.Query((cd) => cd.Name));
         }
         #endregion
 
@@ -530,18 +530,6 @@ namespace Arriba.Model
         #endregion
 
         #region Query
-        /// <summary>
-        ///  Select returns items matching the given query from the Table, like SQL SELECT.
-        /// </summary>
-        /// <param name="query">Query to execute</param>
-        /// <returns>SelectResult with the count and values returned by the query</returns>
-        public SelectResult Select(SelectQuery query)
-        {
-            if (query == null) throw new ArgumentNullException("query");
-
-            return query.Compute(this);
-        }
-
         /// <summary>
         ///  Run the provided query and return a partition-specific result.
         /// </summary>
