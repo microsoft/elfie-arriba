@@ -156,22 +156,6 @@ namespace Arriba.Model
             }
         }
 
-        public ICollection<string> ColumnNames
-        {
-            get
-            {
-                _locker.EnterReadLock();
-                try
-                {
-                    return _partitions[0].ColumnNames;
-                }
-                finally
-                {
-                    _locker.ExitReadLock();
-                }
-            }
-        }
-
         public ColumnDetails GetDetails(string columnName)
         {
             _locker.EnterReadLock();

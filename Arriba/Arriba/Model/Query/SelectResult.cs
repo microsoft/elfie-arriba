@@ -1,6 +1,6 @@
 ﻿namespace Arriba.Model.Query
 {
-    public class SelectResult : BaseBlockResult
+    public class SelectResult : DataBlockResult
     {
         public ushort CountReturned { get; set; }
 
