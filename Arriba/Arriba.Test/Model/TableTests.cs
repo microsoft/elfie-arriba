@@ -53,7 +53,7 @@ namespace Arriba.Test.Model
             query.Columns = new string[] { "ID", "Priority" };
             query.Count = 3;
             query.Where = SelectQuery.ParseWhere("Priority = 3 AND ID <= 12000");
-            SelectResult result = p2.Select(query);
+            SelectResult result = p2.Query(query);
             Assert.AreEqual(2, (int)result.Total);
             Assert.AreEqual("11999", result.Values[0, 0].ToString());
             Assert.AreEqual("11643", result.Values[1, 0].ToString());
@@ -196,7 +196,7 @@ namespace Arriba.Test.Model
             Assert.AreEqual(5, (int)t.Count);
 
             SelectQuery q = new SelectQuery() { Columns = new string[] { "Title" }, Count = 10, Where = SelectQuery.ParseWhere("ID = 11512") };
-            SelectResult result = t.Select(q);
+            SelectResult result = t.Query(q);
             Assert.AreEqual("Existing Item", result.Values[0, 0].ToString());
 
             // Ask Arriba to not add items. Verify exception trying to add a new item.
@@ -387,12 +387,12 @@ namespace Arriba.Test.Model
             selectQuery.Columns = new string[] { "ID", "Priority" };
             selectQuery.Count = 3;
             selectQuery.Where = SelectQuery.ParseWhere("ID > -1");
-            SelectResult selectResult = table.Select(selectQuery);
+            SelectResult selectResult = table.Query(selectQuery);
             Assert.AreEqual(0, (int)selectResult.Total);
 
             // Verify select word match returns nothing
             selectQuery.Where = SelectQuery.ParseWhere("Title:One");
-            selectResult = table.Select(selectQuery);
+            selectResult = table.Query(selectQuery);
             Assert.AreEqual(0, (int)selectResult.Total);
 
             // Verify count returns 0
@@ -432,49 +432,42 @@ namespace Arriba.Test.Model
             query.Columns = new string[] { "ID", "Priority" };
             query.Count = 3;
             query.Where = SelectQuery.ParseWhere("Priority = 3 AND ID <= 12000");
-            SelectResult result = table.Select(query);
+            SelectResult result = table.Query(query);
             Assert.AreEqual(2, (int)result.Total);
             Assert.AreEqual("11999", result.Values[0, 0].ToString());
             Assert.AreEqual("11643", result.Values[1, 0].ToString());
-
-            // Select a second page (not enough items)
-            query.Skip = 50;
-            result = table.Select(query);
-            Assert.AreEqual(2, (int)result.Total);
-            Assert.AreEqual(0, (int)result.CountReturned);
-            query.Skip = 0;
 
             // Select a word in first item (cover a simple search and zero-LID handling)
             SelectQuery q2 = new SelectQuery();
             q2.Columns = new string[] { "ID" };
             q2.Count = 100;
             q2.Where = SelectQuery.ParseWhere("Title:One");
-            SelectResult r2 = table.Select(q2);
+            SelectResult r2 = table.Query(q2);
             Assert.AreEqual(1, (int)r2.Total);
             Assert.AreEqual("11512", r2.Values[0, 0].ToString());
 
             // Select not empty string
             SelectQuery q3 = new SelectQuery(new string[] { "ID" }, "Title != \"\"");
             q3.Count = 100;
-            SelectResult r3 = table.Select(q3);
+            SelectResult r3 = table.Query(q3);
             Assert.AreEqual(5, (int)r3.Total);
 
             // Update an item and verify it
             DataBlock updateItems = new DataBlock(new string[] { "ID", "Priority" }, 1);
             updateItems.SetRow(0, new object[] { 11643, 2 });
             table.AddOrUpdate(updateItems, new AddOrUpdateOptions());
-            result = table.Select(query);
+            result = table.Query(query);
             Assert.AreEqual(1, (int)result.Total);
             Assert.AreEqual("11999", result.Values[0, 0].ToString());
 
             // Delete an item and verify it
             DeleteResult d1 = table.Delete(SelectQuery.ParseWhere("ID = 11999 OR ID = 11512"));
             Assert.AreEqual(2, (int)d1.Count);
-            result = table.Select(query);
+            result = table.Query(query);
             Assert.AreEqual(0, (int)result.Total);
 
             query.Where = SelectQuery.ParseWhere("ID > 0");
-            result = table.Select(query);
+            result = table.Query(query);
             Assert.AreEqual(3, (int)result.Total);
 
             details = new ExecutionDetails();
@@ -497,17 +490,17 @@ namespace Arriba.Test.Model
 
             // Select bugs with false IsDuplicate
             query.Where = SelectQuery.ParseWhere("IsDuplicate = false");
-            result = table.Select(query);
+            result = table.Query(query);
             Assert.AreEqual("11512, 12505", result.Values.GetColumn(0).Join(", "));
 
             // Select bugs with false (not true) IsDuplicate
             query.Where = SelectQuery.ParseWhere("IsDuplicate != true");
-            result = table.Select(query);
+            result = table.Query(query);
             Assert.AreEqual("11512, 12505", result.Values.GetColumn(0).Join(", "));
 
             // Select bugs with ActiveTime over an hour
             query.Where = SelectQuery.ParseWhere("ActiveTime > 01:00:00");
-            result = table.Select(query);
+            result = table.Query(query);
             Assert.AreEqual("11512, 11643, 11943", result.Values.GetColumn(0).Join(", "));
         }
 
@@ -525,17 +518,17 @@ namespace Arriba.Test.Model
 
             // Verify OR works with more than two clauses
             query.Where = new OrExpression(new TermExpression("Priority", Operator.Equals, 0), new TermExpression("Priority", Operator.Equals, 1), new TermExpression("Priority", Operator.Equals, 3));
-            result = table.Select(query);
+            result = table.Query(query);
             Assert.AreEqual(5, (int)result.Total);
 
             // Verify AND works with more than two clauses
             query.Where = new AndExpression(new TermExpression("Title", Operator.Matches, "Sample"), new TermExpression("Priority", Operator.Equals, 3), new TermExpression("ID", Operator.LessThan, 12000));
-            result = table.Select(query);
+            result = table.Query(query);
             Assert.AreEqual(2, (int)result.Total);
 
             // Bug Coverage: Ensure AND stays empty with multiple clauses
             query.Where = new AndExpression(new TermExpression("Priority", Operator.Equals, 3), new TermExpression("Priority", Operator.Equals, 2), new TermExpression("Priority", Operator.Equals, 3));
-            result = table.Select(query);
+            result = table.Query(query);
             Assert.AreEqual(0, (int)result.Total);
         }
 
@@ -835,7 +828,7 @@ Title:unused, null
             query.Columns = new string[] { "ID", "Priority", "Title" };
             query.Count = ushort.MaxValue;
             query.OrderByColumn = "ID";
-            SelectResult result = table.Select(query);
+            SelectResult result = table.Query(query);
 
             Assert.AreEqual(7, (int)result.Total);
 
@@ -864,7 +857,7 @@ Title:unused, null
 
             // Verify all rows have the new default
             SelectQuery query = new SelectQuery(new string[] { "ID", newColumnName }, "");
-            SelectResult result = table.Select(query);
+            SelectResult result = table.Query(query);
 
             Assert.AreEqual(5, (int)result.Total);
             for (int i = 0; i < result.Values.RowCount; ++i)
@@ -877,7 +870,7 @@ Title:unused, null
             table.AlterColumn(new ColumnDetails(newColumnName, "ushort", newColumnSecondDefault));
 
             // Verify existing values have been re-typed
-            result = table.Select(query);
+            result = table.Query(query);
             Assert.AreEqual(5, (int)result.Total);
             for (int i = 0; i < result.Values.RowCount; ++i)
             {
@@ -890,7 +883,7 @@ Title:unused, null
             table.AddOrUpdate(items, new AddOrUpdateOptions());
 
             query = new SelectQuery(query.Columns, "ID = 12345");
-            result = table.Select(query);
+            result = table.Query(query);
             Assert.AreEqual(1, (int)result.Total);
             Assert.AreEqual(newColumnSecondDefault, result.Values[0, 1]);
 
@@ -913,7 +906,7 @@ Title:unused, null
             query.Columns = new string[] { "ID", "Priority", "Color" };
             query.Count = ushort.MaxValue;
             query.OrderByColumn = "ID";
-            SelectResult result = table.Select(query);
+            SelectResult result = table.Query(query);
 
             Assert.AreEqual("None;Green;Red;Green;Green", result.Values.GetColumn(2).Join(";"));
 
@@ -929,7 +922,7 @@ Title:unused, null
             newQuery.Columns = new string[] { "ID", "Priority", "Color" };
             newQuery.Count = ushort.MaxValue;
             newQuery.OrderByColumn = "ID";
-            SelectResult newResult = table.Select(query);
+            SelectResult newResult = table.Query(query);
 
             Assert.AreEqual("Red;None;Blue;None;None", newResult.Values.GetColumn(2).Join(";"));
         }

@@ -193,7 +193,7 @@ namespace Arriba.Csv
             q.Count = (countToShow < ushort.MaxValue ? (ushort)countToShow : ushort.MaxValue);
 
             w = Stopwatch.StartNew();
-            SelectResult result = table.Select(q);
+            SelectResult result = table.Query(q);
             w.Stop();
 
             StringBuilder output = new StringBuilder();

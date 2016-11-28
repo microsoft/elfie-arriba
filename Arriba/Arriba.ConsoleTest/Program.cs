@@ -21,13 +21,13 @@ namespace Arriba.ConsoleTest
         private static void Main(string[] args)
         {
             //SetCountPerformance();
-            FromAndPerformance();
-            //Table table = LoadTable("Sample");
+            //FromAndPerformance();
+            Table table = LoadTable("Sample");
 
             //AggregateDistinctTest(table);
             //DistinctTest(table, "Resolution", "Pri = 3");
-            //SearchTest(table, "Priority = 3", false, null);
-            //SearchTest(table, "editor Pri = 3", true, new string[] { "ID", "Title", "Resolution" });
+            SearchTest(table, "Priority = 3", false, null);
+            SearchTest(table, "editor Pri = 3", true, new string[] { "ID", "Title", "Resolution" });
             //QueryPerformanceTest(table, "Priority = 1 AND Platform");
         }
 
@@ -89,7 +89,7 @@ namespace Arriba.ConsoleTest
         {
             Table table = new Table();
 
-            Trace.Write("Loading Table '{0}'...\r\n", tableName);
+            Trace.Write(String.Format("Loading Table '{0}'...\r\n", tableName));
 
             Trace.Write(String.Format("\tDisk Size: {0}\r\n", BinarySerializable.Size(String.Format(@"Tables\{0}", tableName)).SizeString()));
             Trace.Write(String.Format("\tMemory Use: {0}\r\n", Memory.MeasureObjectSize(() => { table.Load(tableName); return table; }).SizeString()));
@@ -169,7 +169,7 @@ namespace Arriba.ConsoleTest
 
                 for (int i = 0; i < iterations; ++i)
                 {
-                    result = table.Select(query);
+                    result = table.Query(query);
                 }
             }
 
@@ -231,7 +231,7 @@ namespace Arriba.ConsoleTest
                     for (int index = 1; index <= fullQueryWhere.Length; ++index)
                     {
                         query.Where = SelectQuery.ParseWhere(fullQueryWhere.Substring(0, index));
-                        result = table.Select(query);
+                        result = table.Query(query);
                     }
 
                     p.IncrementProgress();
@@ -292,8 +292,8 @@ namespace Arriba.ConsoleTest
         {
             StringBuilder differences = new StringBuilder();
 
-            SelectResult resultExpected = expected.Select(query);
-            SelectResult resultActual = actual.Select(query);
+            SelectResult resultExpected = expected.Query(query);
+            SelectResult resultActual = actual.Query(query);
 
             if (resultExpected.Total != resultActual.Total)
             {

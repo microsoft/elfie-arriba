@@ -55,7 +55,7 @@ namespace Arriba.Model.Correctors
 
                     // Run the query
                     Table t = this.DB[joinQuery.TableName];
-                    SelectResult result = t.Select(joinQuery);
+                    SelectResult result = t.Query(joinQuery);
 
                     if(result.CountReturned == 0)
                     {
