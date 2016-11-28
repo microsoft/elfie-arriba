@@ -8,7 +8,7 @@ namespace Arriba.Model.Query
     ///  It contains a table with the aggregated values returned by each
     ///  dimension provided in the query.
     /// </summary>
-    public class AggregationResult : BaseBlockResult
+    public class AggregationResult : DataBlockResult
     {
         internal object AggregationContext { get; set; }
 

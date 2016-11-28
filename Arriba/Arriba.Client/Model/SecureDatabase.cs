@@ -10,6 +10,8 @@ using Arriba.Model.Expressions;
 using Arriba.Model.Query;
 using Arriba.Model.Security;
 using Arriba.Serialization;
+using Arriba.Model.Column;
+
 namespace Arriba.Model
 {
     /// <summary>
@@ -61,7 +63,7 @@ namespace Arriba.Model
         public T Query<T>(IQuery<T> query, Func<SecurityIdentity, bool> isCurrentUserIn)
         {
             ExecutionDetails preExecuteDetails = new ExecutionDetails();
-            query = SecureQuery(query, isCurrentUserIn, preExecuteDetails);
+            ApplyTableSecurity(query, isCurrentUserIn, preExecuteDetails);
 
             T result = base.Query<T>(query);
             if(result is IBaseResult)
@@ -72,7 +74,7 @@ namespace Arriba.Model
             return result;
         }
 
-        public IQuery<T> SecureQuery<T>(IQuery<T> query, Func<SecurityIdentity, bool> isCurrentUserIn, ExecutionDetails details)
+        protected void ApplyTableSecurity<T>(IQuery<T> query, Func<SecurityIdentity, bool> isCurrentUserIn, ExecutionDetails details)
         {
             SecurityPermissions security = this.Security(query.TableName);
 
@@ -83,7 +85,7 @@ namespace Arriba.Model
                 if (isCurrentUserIn(rowRestriction.Key))
                 {
                     query.Where = new AndExpression(QueryParser.Parse(rowRestriction.Value), query.Where);
-                    return query;
+                    return;
                 }
             }
 
@@ -99,7 +101,7 @@ namespace Arriba.Model
             }
 
             // If no columns were restricted, return query as-is
-            if (restrictedColumns == null) return query;
+            if (restrictedColumns == null) return;
 
             // Exclude disallowed columns from where clauses
             // If a disallowed column is requested specifically, block the query and return an error
@@ -127,15 +129,15 @@ namespace Arriba.Model
                 if (sq.Columns.Count == 1 && sq.Columns[0] == "*")
                 {
                     filteredColumns = new List<string>();
-                    foreach (string columnName in this[sq.TableName].ColumnNames)
+                    foreach (ColumnDetails column in this[sq.TableName].ColumnDetails)
                     {
-                        if (restrictedColumns.Contains(columnName))
+                        if (restrictedColumns.Contains(column.Name))
                         {
-                            details.AddDeniedColumn(columnName);
+                            details.AddDeniedColumn(column.Name);
                         }
                         else
                         {
-                            filteredColumns.Add(columnName);
+                            filteredColumns.Add(column.Name);
                         }
                     }
                 }
@@ -185,8 +187,6 @@ namespace Arriba.Model
                 details.AddError(ExecutionDetails.DisallowedQuery, primaryQuery.GetType().Name);
                 primaryQuery.Where = new EmptyExpression();
             }
-
-            return query;
         }
 
         public void SetSecurity(string tableName, SecurityPermissions security)

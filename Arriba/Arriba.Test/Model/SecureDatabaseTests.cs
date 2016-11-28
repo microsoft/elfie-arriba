@@ -246,6 +246,7 @@ namespace Arriba.Test.Model
             SecureDatabase db = BuildSampleDB();
 
             CustomQuery c = new Model.SecureDatabaseTests.CustomQuery();
+            c.Columns = new string[] { "ID" };
             c.TableName = sampleTableName;
             c.Where = QueryParser.Parse("One");
 
