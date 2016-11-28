@@ -531,18 +531,6 @@ namespace Arriba.Model
 
         #region Query
         /// <summary>
-        ///  Select returns items matching the given query from the Table, like SQL SELECT.
-        /// </summary>
-        /// <param name="query">Query to execute</param>
-        /// <returns>SelectResult with the count and values returned by the query</returns>
-        public SelectResult Select(SelectQuery query)
-        {
-            if (query == null) throw new ArgumentNullException("query");
-
-            return query.Compute(this);
-        }
-
-        /// <summary>
         ///  Run the provided query and return a partition-specific result.
         /// </summary>
         /// <typeparam name="T">Type of result for query</typeparam>
