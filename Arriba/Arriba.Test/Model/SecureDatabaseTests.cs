@@ -1,14 +1,11 @@
 ﻿using Arriba.Model;
-using Arriba.Model.Aggregations;
 using Arriba.Model.Column;
-using Arriba.Model.Expressions;
 using Arriba.Model.Query;
 using Arriba.Model.Security;
+using Arriba.Structures;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using Arriba.Model.Correctors;
 
 namespace Arriba.Test.Model
 {
@@ -28,7 +25,19 @@ namespace Arriba.Test.Model
             t.AddColumn(new ColumnDetails("Title", "string", ""));
             t.AddColumn(new ColumnDetails("Priority", "byte", 0));
             t.AddColumn(new ColumnDetails("SecretOwner", "string", null));
-            t.AddColumn(new ColumnDetails("SecretPriority", "string", null));
+            t.AddColumn(new ColumnDetails("SecretPriority", "byte", null));
+
+            // Add sample data (for joins)
+            DataBlock b = new DataBlock(new string[] { "ID", "Title", "Priority", "SecretOwner", "SecretPriority" }, 5,
+                new Array[]
+                {
+                    new int[] { 1, 2, 3, 4, 5 },
+                    new string[] { "One", "Two", "Three", "Four", "Five" },
+                    new byte[] { 1, 1, 3, 3, 0 },
+                    new string[] { "Bob", "Alice", "Alice", "Bob", "Bob" },
+                    new byte[] { 3, 3, 2, 2, 0 }
+                });
+            t.AddOrUpdate(b);
 
             return db;
         }
@@ -194,11 +203,11 @@ namespace Arriba.Test.Model
 
             SelectResult result;
 
-            // Run a JOIN with full access - verify no restrictions.
+            // Run a JOIN with full access - verify success (inner query expanded).
             q.Where = QueryParser.Parse("SecretPriority = 1 AND SecretOwner = #Q2[SecretOwner]");
             result = db.Query(q, (si) => si.Name == "g1" || si.Name == "g2");
             Assert.IsTrue(result.Details.Succeeded);
-            Assert.AreEqual("(SecretPriority = 1 AND SecretOwner = #Q2[SecretOwner])", result.Query.Where.ToString());
+            Assert.AreEqual("(SecretPriority = 1 AND SecretOwner = IN(Bob, Bob, Bob))", result.Query.Where.ToString());
 
             // Run a JOIN with a disallowed clause on the top query - verify error
             q.Where = QueryParser.Parse("SecretPriority = 1 AND SecretOwner = #Q1[SecretOwner]");
@@ -225,7 +234,7 @@ namespace Arriba.Test.Model
             q.Where = QueryParser.Parse("ID > 1 AND ID = #Q1[ID]");
             result = db.Query(q, (si) => false);
             Assert.IsTrue(result.Details.Succeeded);
-            Assert.AreEqual("(ID > 1 AND ID = \"\")", result.Query.Where.ToString());
+            Assert.AreEqual("(ID > 1 AND ID = IN(1))", result.Query.Where.ToString());
         }
 
         [TestMethod]
