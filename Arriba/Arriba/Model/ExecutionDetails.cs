@@ -38,9 +38,14 @@ namespace Arriba.Model
         public const string WordIndexBlockSizesMismatch = "WordIndex for Column '{0}' block has {1:n0} words but {2:n0} sets; counts must match.";
         public const string WordIndexInvalidItemID = "WordIndex for Column '{0}' word '{1}' has invalid ID(s) [{2}]";
 
+        // Column Security Errors
+        public const string DisallowedColumnQuery = "Access Denied to column '{0}'.";
+        public const string DisallowedQuery = "Security not implemented for query '{0}'.";
+
         public bool Succeeded;
         private HashSet<string> _warnings;
         private HashSet<string> _errors;
+        private HashSet<string> _accessDeniedColumns;
 
         public ExecutionDetails()
         {
@@ -83,6 +88,15 @@ namespace Arriba.Model
             }
         }
 
+        public void AddDeniedColumn(string columnName)
+        {
+            lock(this)
+            {
+                if (_accessDeniedColumns == null) _accessDeniedColumns = new HashSet<string>();
+                _accessDeniedColumns.Add(columnName);
+            }
+        }
+
         public string Warnings
         {
             get { return (_warnings == null ? String.Empty : String.Join("; ", _warnings)); }
@@ -93,25 +107,35 @@ namespace Arriba.Model
             get { return (_errors == null ? String.Empty : String.Join("; ", _errors)); }
         }
 
+        public IEnumerable<string> AccessDeniedColumns
+        {
+            get { return _accessDeniedColumns; }
+        }
+
         public void Merge(ExecutionDetails other)
         {
             if (other == null) return;
 
-            this.Succeeded &= other.Succeeded;
-
-            if (other._errors != null)
+            lock (this)
             {
-                foreach (string error in other._errors)
+                this.Succeeded &= other.Succeeded;
+
+                if (other._errors != null)
                 {
-                    AddError(error);
+                    if (this._errors == null) this._errors = new HashSet<string>();
+                    this._errors.UnionWith(other._errors);
                 }
-            }
 
-            if (other._warnings != null)
-            {
-                foreach (string warning in other._warnings)
+                if (other._warnings != null)
                 {
-                    AddWarning(warning);
+                    if (this._warnings == null) this._warnings = new HashSet<string>();
+                    this._warnings.UnionWith(other._warnings);
+                }
+
+                if (other._accessDeniedColumns != null)
+                {
+                    if (this._accessDeniedColumns == null) this._accessDeniedColumns = new HashSet<string>();
+                    this._accessDeniedColumns.UnionWith(other._accessDeniedColumns);
                 }
             }
         }

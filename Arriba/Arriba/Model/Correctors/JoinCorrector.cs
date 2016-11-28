@@ -57,9 +57,9 @@ namespace Arriba.Model.Correctors
                     Table t = this.DB[joinQuery.TableName];
                     SelectResult result = t.Query(joinQuery);
 
-                    if(result.CountReturned == 0)
+                    if(result.Total == 0)
                     {
-                        return new TermExpression(te.ColumnName, te.Operator, "\"\"");
+                        return new TermExpression(te.ColumnName, te.Operator, String.Empty);
                     }
                     else
                     {

@@ -32,21 +32,23 @@ namespace Arriba.Test.Structures
             Assert.AreEqual("string:simple, ByteBlock:simple", TryAllConversions((ByteBlock)"simple"));
             Assert.AreEqual("string:simple, ByteBlock:simple", TryAllConversions_ValueTypeReference((ByteBlock)"simple"));
 
-            // Boolean / String
+            // Boolean / String, Number
             Assert.AreEqual("string:true, ByteBlock:true, bool:True", TryAllConversions("true"));
             Assert.AreEqual("string:False, ByteBlock:False, bool:False", TryAllConversions("False"));
             Assert.AreEqual("string:True, ByteBlock:True, bool:True", TryAllConversions(true));
             Assert.AreEqual("string:True, ByteBlock:True, bool:True", TryAllConversions_ValueTypeReference(true));
             Assert.AreEqual("string:False, ByteBlock:False, bool:False", TryAllConversions(false));
             Assert.AreEqual("string:False, ByteBlock:False, bool:False", TryAllConversions_ValueTypeReference(false));
-
-            // Number / String
+            
+            // Number / String, Boolean
             Assert.AreEqual("string:50, ByteBlock:50, TimeSpan:50.00:00:00, double:50, float:50, ulong:50, long:50, uint:50, int:50, ushort:50, short:50, byte:50", TryAllConversions("50"));
             Assert.AreEqual("string:50, ByteBlock:50, double:50, float:50, ulong:50, long:50, uint:50, int:50, ushort:50, short:50, byte:50", TryAllConversions(50));
             Assert.AreEqual("string:50, ByteBlock:50, double:50, float:50, ulong:50, long:50, uint:50, int:50, ushort:50, short:50, byte:50", TryAllConversions_ValueTypeReference(50));
             Assert.AreEqual("string:-50, ByteBlock:-50, TimeSpan:-50.00:00:00, double:-50, float:-50, long:-50, int:-50, short:-50", TryAllConversions("-50"));
             Assert.AreEqual("string:-50, ByteBlock:-50, double:-50, float:-50, long:-50, int:-50, short:-50", TryAllConversions(-50));
             Assert.AreEqual("string:-50, ByteBlock:-50, double:-50, float:-50, long:-50, int:-50, short:-50", TryAllConversions_ValueTypeReference(-50));
+            Assert.AreEqual("string:1, ByteBlock:1, bool:True, double:1, float:1, ulong:1, long:1, uint:1, int:1, ushort:1, short:1, byte:1", TryAllConversions_ValueTypeReference(1));
+            Assert.AreEqual("string:0, ByteBlock:0, bool:False, double:0, float:0, ulong:0, long:0, uint:0, int:0, ushort:0, short:0, byte:0", TryAllConversions_ValueTypeReference(0));
 
             // ByteBlock to Number
             Assert.AreEqual("string:50, ByteBlock:50, TimeSpan:50.00:00:00, double:50, float:50, ulong:50, long:50, uint:50, int:50, ushort:50, short:50, byte:50", TryAllConversions((ByteBlock)"50"));
@@ -70,8 +72,8 @@ namespace Arriba.Test.Structures
             Assert.AreEqual(String.Format("string:{0}, ByteBlock:{0}, double:{0}, float:{0}, ulong:{0}, long:{0}, uint:{0}, int:{0}, ushort:{0}, short:{0}", short.MaxValue), TryAllConversions_ValueTypeReference(short.MaxValue));
             Assert.AreEqual(String.Format("string:{0}, ByteBlock:{0}, double:{0}, float:{0}, ulong:{0}, long:{0}, uint:{0}, int:{0}, ushort:{0}, short:{0}, byte:{0}", byte.MaxValue), TryAllConversions(byte.MaxValue));
             Assert.AreEqual(String.Format("string:{0}, ByteBlock:{0}, double:{0}, float:{0}, ulong:{0}, long:{0}, uint:{0}, int:{0}, ushort:{0}, short:{0}, byte:{0}", byte.MaxValue), TryAllConversions_ValueTypeReference(byte.MaxValue));
-            Assert.AreEqual(String.Format("string:{0}, ByteBlock:{0}, double:{0}, float:{0}, ulong:{0}, long:{0}, uint:{0}, int:{0}, ushort:{0}, short:{0}, byte:{0}", 0), TryAllConversions(0));
-            Assert.AreEqual(String.Format("string:{0}, ByteBlock:{0}, double:{0}, float:{0}, ulong:{0}, long:{0}, uint:{0}, int:{0}, ushort:{0}, short:{0}, byte:{0}", 0), TryAllConversions_ValueTypeReference(0));
+            Assert.AreEqual(String.Format("string:{0}, ByteBlock:{0}, bool:False, double:{0}, float:{0}, ulong:{0}, long:{0}, uint:{0}, int:{0}, ushort:{0}, short:{0}, byte:{0}", 0), TryAllConversions(0));
+            Assert.AreEqual(String.Format("string:{0}, ByteBlock:{0}, bool:False, double:{0}, float:{0}, ulong:{0}, long:{0}, uint:{0}, int:{0}, ushort:{0}, short:{0}, byte:{0}", 0), TryAllConversions_ValueTypeReference(0));
             Assert.AreEqual(String.Format("string:{0}, ByteBlock:{0}, double:{0}, float:{0}, long:{0}, int:{0}, short:{0}", -1), TryAllConversions(-1));
             Assert.AreEqual(String.Format("string:{0}, ByteBlock:{0}, double:{0}, float:{0}, long:{0}, int:{0}, short:{0}", -1), TryAllConversions_ValueTypeReference(-1));
             Assert.AreEqual(String.Format("string:{0}, ByteBlock:{0}, double:{0}, float:{0}, long:{0}, int:{0}, short:{0}", short.MinValue), TryAllConversions(short.MinValue));

@@ -146,7 +146,7 @@ namespace Arriba.Server
             var security = this.Database.Security(tableName);
 
             // No Table Security? Allowed.
-            if (!security.HasSecurityData)
+            if (!security.HasTableAccessSecurity)
             {
                 return true;
             }
@@ -173,6 +173,18 @@ namespace Arriba.Server
             }
 
             return false;
+        }
+
+        protected bool IsInIdentity(IPrincipal currentUser, SecurityIdentity targetUserOrGroup)
+        {
+            if (targetUserOrGroup.Scope == IdentityScope.User)
+            {
+                return targetUserOrGroup.Name.Equals(currentUser.Identity.Name, StringComparison.OrdinalIgnoreCase);
+            }
+            else
+            {
+                return _claimsAuth.IsUserInGroup(currentUser, targetUserOrGroup.Name);
+            }
         }
 
         /// <summary>

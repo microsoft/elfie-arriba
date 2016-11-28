@@ -22,6 +22,7 @@ using Arriba.Server.Authentication;
 using Arriba.Server.Hosting;
 using Arriba.Structures;
 using Arriba.Model.Correctors;
+using Arriba.Model.Column;
 
 namespace Arriba.Server
 {
@@ -89,7 +90,7 @@ namespace Arriba.Server
             using (ctx.Monitor(MonitorEventLevel.Information, "Select", type: "Table", identity: tableName, detail: query.Where.ToString()))
             {
                 // Run the query
-                result = this.Database.Query(wrappedQuery);
+                result = this.Database.Query(wrappedQuery, (si) => this.IsInIdentity(ctx.Request.User, si));
             }
 
             // Is this a CSV request? 
@@ -199,12 +200,18 @@ namespace Arriba.Server
                 // the first column name to " ID" to trick Excel. It's not perfect, but it'll do.
                 // 
                 // As a mitigation for round-tripping, the CsvReader will trim column names. Sigh. 
-                IList<string> columns = result.Query.Columns;
+                List<string> columns = new List<string>();
 
-                if (String.Equals(columns[0], "ID", StringComparison.OrdinalIgnoreCase))
+                foreach(ColumnDetails column in items.Columns)
                 {
-                    columns = new List<string>(columns);
-                    columns[0] = " ID";
+                    if(columns.Count == 0 && column.Name.Equals("ID", StringComparison.OrdinalIgnoreCase))
+                    {
+                        columns.Add(" ID");
+                    }
+                    else
+                    {
+                        columns.Add(column.Name);
+                    }
                 }
 
                 CsvWriter writer = new CsvWriter(context, columns);
@@ -277,68 +284,103 @@ namespace Arriba.Server
             }
         }
 
-        private async Task<IResponse> Query<T, U>(IRequestContext ctx, Route route) where T : IQuery<U>, new()
+        private IResponse AllCount(IRequestContext ctx, Route route)
         {
-            // TODO: Roll Aggregate and Distinct to use this. Need to make a nice pattern for reading from URL parameters first.
+            List<CountResult> results = new List<CountResult>();
+
+            // Build a Count query
+            IQuery<AggregationResult> query = new AggregationQuery("count", new string[0], ctx.Request.ResourceParameters["q"] ?? "");
+
+            // Wrap in Joins, if found
+            query = WrapInJoinQueryIfFound(query, this.Database, ctx);
+
+            // Run server correctors
+            using (ctx.Monitor(MonitorEventLevel.Verbose, "Correct", type: "AllCount", detail: query.Where.ToString()))
+            {
+                query.Correct(this.CurrentCorrectors(ctx));
+            }
+
+            // Accumulate Results for each table
+            IPrincipal user = ctx.Request.User;
+            using (ctx.Monitor(MonitorEventLevel.Information, "AllCount", type: "AllCount", detail: query.Where.ToString()))
+            {
+                IExpression defaultWhere = query.Where;
+
+                foreach (string tableName in this.Database.TableNames)
+                {
+                    if (this.HasTableAccess(tableName, user, PermissionScope.Reader))
+                    {
+                        query.TableName = tableName;
+                        query.Where = defaultWhere;
+
+                        AggregationResult tableCount = this.Database.Query(query, (si) => this.IsInIdentity(ctx.Request.User, si));
+
+                        if (!tableCount.Details.Succeeded || tableCount.Values == null)
+                        {
+                            results.Add(new CountResult(tableName, 0, true, false));
+                        }
+                        else
+                        {
+                            results.Add(new CountResult(tableName, (ulong)tableCount.Values[0, 0], true, tableCount.Details.Succeeded));
+                        }
+                    }
+                    else
+                    {
+                        results.Add(new CountResult(tableName, 0, false, false));
+                    }
+                }
+            }
+
+            return ArribaResponse.Ok(results.OrderByDescending((cr) => cr.Count));
+        }
+
+        private class CountResult
+        {
+            public string TableName { get; set; }
+            public ulong Count { get; set; }
+            public bool AllowedToRead { get; set; }
+            public bool Succeeded { get; set; }
+
+            public CountResult(string tableName, ulong count, bool allowedToRead, bool succeeded)
+            {
+                this.TableName = tableName;
+                this.Count = count;
+                this.AllowedToRead = allowedToRead;
+                this.Succeeded = succeeded;
+            }
+        }
+
+        private async Task<IResponse> Query<T>(IRequestContext ctx, Route route, IQuery<T> query)
+        {
+            IQuery<T> wrappedQuery = WrapInJoinQueryIfFound(query, this.Database, ctx);
+
+            // Ensure the table exists and set it on the query
             string tableName = GetAndValidateTableName(route);
             if (!this.Database.TableExists(tableName))
             {
                 return ArribaResponse.NotFound("Table not found to query.");
             }
 
-            IQuery<U> query = new T();
-
-            if (ctx.Request.Method == RequestVerb.Post && ctx.Request.HasBody)
-            {
-                query = await ctx.Request.ReadBodyAsync<T>();
-            }
-
             query.TableName = tableName;
 
+            // Correct the query with default correctors
             using (ctx.Monitor(MonitorEventLevel.Verbose, "Correct", type: "Table", identity: tableName, detail: query.Where.ToString()))
             {
-                // Run server correctors
                 query.Correct(this.CurrentCorrectors(ctx));
             }
 
-            using (ctx.Monitor(MonitorEventLevel.Information, "Query", type: "Table", identity: tableName, detail: query.Where.ToString()))
+            // Execute and return results for the query
+            using (ctx.Monitor(MonitorEventLevel.Information, query.GetType().Name, type: "Table", identity: tableName, detail: query.Where.ToString()))
             {
-                Table t = this.Database[tableName];
-
-                // Run the query
-                U result = t.Query(query);
+                T result = this.Database.Query(wrappedQuery, (si) => this.IsInIdentity(ctx.Request.User, si));
                 return ArribaResponse.Ok(result);
             }
         }
 
         private async Task<IResponse> Aggregate(IRequestContext ctx, Route route)
         {
-            string tableName = GetAndValidateTableName(route);
-            if (!this.Database.TableExists(tableName))
-            {
-                return ArribaResponse.NotFound("Table not found to aggregate.");
-            }
-
-            // Parse Query
             IQuery<AggregationResult> query = await BuildAggregateFromContext(ctx);
-
-            // Wrap in Joins, if found
-            query = WrapInJoinQueryIfFound(query, this.Database, ctx);
-
-            query.TableName = tableName;
-
-            using (ctx.Monitor(MonitorEventLevel.Verbose, "Correct", type: "Table", identity: tableName, detail: query.Where.ToString()))
-            {
-                // Run server correctors
-                query.Correct(this.CurrentCorrectors(ctx));
-            }
-
-            using (ctx.Monitor(MonitorEventLevel.Information, "Aggregate", type: "Table", identity: tableName, detail: query.Where.ToString()))
-            {
-                // Run the query
-                AggregationResult result = this.Database[tableName].Query(query);
-                return ArribaResponse.Ok(result);
-            }
+            return await Query(ctx, route, query);
         }
 
         private static async Task<AggregationQuery> BuildAggregateFromContext(IRequestContext ctx)
@@ -382,30 +424,8 @@ namespace Arriba.Server
 
         private async Task<IResponse> Distinct(IRequestContext ctx, Route route)
         {
-            string tableName = GetAndValidateTableName(route);
-            if (!this.Database.TableExists(tableName))
-            {
-                return ArribaResponse.NotFound("Table not found to query.");
-            }
-
-            // Build the query
             IQuery<DistinctResult> query = await BuildDistinctFromContext(ctx);
-
-            // Add joins if needed
-            query = WrapInJoinQueryIfFound(query, this.Database, ctx);
-
-            using (ctx.Monitor(MonitorEventLevel.Verbose, "Correct", type: "Table", identity: tableName, detail: query.Where.ToString()))
-            {
-                // Run server correctors
-                query.Correct(this.CurrentCorrectors(ctx));
-            }
-
-            using (ctx.Monitor(MonitorEventLevel.Information, "Distinct", type: "Table", identity: tableName, detail: query.Where.ToString()))
-            {
-                // Run the query
-                DistinctResult result = this.Database[tableName].Query(query);
-                return ArribaResponse.Ok(result);
-            }
+            return await Query(ctx, route, query);
         }
 
         private async static Task<DistinctQuery> BuildDistinctFromContext(IRequestContext ctx)
@@ -435,27 +455,8 @@ namespace Arriba.Server
 
         private async Task<IResponse> Pivot(IRequestContext ctx, Route route)
         {
-            string tableName = GetAndValidateTableName(route);
-            if (!this.Database.TableExists(tableName))
-            {
-                return ArribaResponse.NotFound("Table not found to query.");
-            }
-            var table = this.Database[tableName];
-
             PivotQuery query = await BuildPivotQueryFromContext(ctx);
-            if (query.AggregationColumns == null || query.AggregationColumns.Length == 0)
-            {
-                // Fall back to PK
-                query.AggregationColumns = new string[] { table.IDColumn.Name };
-            }
-
-            IQuery<AggregationResult> wrappedQuery = WrapInJoinQueryIfFound(query, this.Database, ctx);
-
-            using (ctx.Monitor(MonitorEventLevel.Information, "Pivot", type: "Table", identity: tableName, detail: query.Where.ToString()))
-            {
-                AggregationResult result = this.Database[tableName].Query(wrappedQuery);
-                return ArribaResponse.Ok(result);
-            }
+            return await Query(ctx, route, query);
         }
 
         private async static Task<PivotQuery> BuildPivotQueryFromContext(IRequestContext ctx)
@@ -591,68 +592,6 @@ namespace Arriba.Server
                 }
 
                 return String.Format("[{0} for {1} with ({2})]", this.Type, this.Column, String.Join(", ", this.Arguments));
-            }
-        }
-
-        private IResponse AllCount(IRequestContext ctx, Route route)
-        {
-            List<CountResult> results = new List<CountResult>();
-
-            // Build a Count query
-            IQuery<AggregationResult> query = new AggregationQuery("count", new string[0], ctx.Request.ResourceParameters["q"] ?? "");
-
-            // Wrap in Joins, if found
-            query = WrapInJoinQueryIfFound(query, this.Database, ctx);
-
-            // Run server correctors
-            using (ctx.Monitor(MonitorEventLevel.Verbose, "Correct", type: "AllCount", detail: query.Where.ToString()))
-            {
-                query.Correct(this.CurrentCorrectors(ctx));
-            }
-
-            // Accumulate Results for each table
-            IPrincipal user = ctx.Request.User;
-            using (ctx.Monitor(MonitorEventLevel.Information, "AllCount", type: "AllCount", detail: query.Where.ToString()))
-            {
-                foreach (string tableName in this.Database.TableNames)
-                {
-                    if (this.HasTableAccess(tableName, user, PermissionScope.Reader))
-                    {
-                        query.TableName = tableName;
-                        AggregationResult tableCount = this.Database.Query(query);
-
-                        if (!tableCount.Details.Succeeded || tableCount.Values == null)
-                        {
-                            results.Add(new CountResult(tableName, 0, true, false));
-                        }
-                        else
-                        {
-                            results.Add(new CountResult(tableName, (ulong)tableCount.Values[0, 0], true, tableCount.Details.Succeeded));
-                        }
-                    }
-                    else
-                    {
-                        results.Add(new CountResult(tableName, 0, false, false));
-                    }
-                }
-            }
-
-            return ArribaResponse.Ok(results.OrderByDescending((cr) => cr.Count));
-        }
-
-        private class CountResult
-        {
-            public string TableName { get; set; }
-            public ulong Count { get; set; }
-            public bool AllowedToRead { get; set; }
-            public bool Succeeded { get; set; }
-
-            public CountResult(string tableName, ulong count, bool allowedToRead, bool succeeded)
-            {
-                this.TableName = tableName;
-                this.Count = count;
-                this.AllowedToRead = allowedToRead;
-                this.Succeeded = succeeded;
             }
         }
     }

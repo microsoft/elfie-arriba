@@ -37,7 +37,7 @@ namespace Arriba.Model.Correctors
                 SelectResult r = this.People.Query(q);
 
                 // If one is found, return the original value or the alias
-                if (r.CountReturned > 0)
+                if (r.Total > 0)
                 {
                     return new OrExpression(te, new TermExpression(te.ColumnName, te.Operator, r.Values[0, 0]));
                 }
