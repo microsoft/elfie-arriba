@@ -3,49 +3,67 @@
 
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 
 using Arriba.Serialization;
+using Newtonsoft.Json;
 
 namespace Arriba.Model.Security
 {
+    [JsonArray]
+    public class SecuredSet<T> : Dictionary<SecurityIdentity, T>
+    { }
+
     /// <summary>
     /// Represents access permissions to a resource. 
     /// </summary>
     public class SecurityPermissions : IBinarySerializable
     {
-        private HashSet<SecurityIdentity> _readers = new HashSet<SecurityIdentity>();
-        private HashSet<SecurityIdentity> _writers = new HashSet<SecurityIdentity>();
-        private HashSet<SecurityIdentity> _owners = new HashSet<SecurityIdentity>();
-
         public SecurityPermissions()
         {
+            this.Readers = new HashSet<SecurityIdentity>();
+            this.Writers = new HashSet<SecurityIdentity>();
+            this.Owners = new HashSet<SecurityIdentity>();
+
+            this.RestrictedColumns = new SecuredSet<List<string>>();
+            this.RowRestrictedUsers = new SecuredSet<string>();
         }
 
-        public IEnumerable<SecurityIdentity> Readers
-        {
-            get { return _readers; }
-        }
+        /// <summary>
+        ///  Set of Identities which can read from most table columns
+        /// </summary>
+        public HashSet<SecurityIdentity> Readers { get; set; }
 
-        public IEnumerable<SecurityIdentity> Writers
-        {
-            get { return _writers; }
-        }
+        /// <summary>
+        ///  Set of identities which can read and write to most table columns
+        /// </summary>
+        public HashSet<SecurityIdentity> Writers { get; set; }
 
-        public IEnumerable<SecurityIdentity> Owners
-        {
-            get { return _owners; }
-        }
+        /// <summary>
+        ///  Set of identities which can read, write, alter schema, and change security on the table.
+        /// </summary>
+        public HashSet<SecurityIdentity> Owners { get; set; }
+
+        /// <summary>
+        ///  List of identities with access to restricted columns and which columns they have access to.
+        ///  If a user is not in the given group, all of the listed columns are excluded from queries and results.
+        /// </summary>
+        public SecuredSet<List<string>> RestrictedColumns { get; set; }
+
+        /// <summary>
+        ///  List of identities with limited row access, implemented via an additional query clause
+        ///  added to all queries.
+        /// </summary>
+        public SecuredSet<string> RowRestrictedUsers { get; set; }
 
         /// <summary>
         /// Gets a value indicating whether the this security permissions set contains any identities. 
         /// </summary>
-        public bool HasSecurityData
+        public bool HasTableAccessSecurity
         {
             get
             {
-                return _owners.Count > 0;
+                return Owners.Count > 0;
             }
         }
 
@@ -69,11 +87,6 @@ namespace Arriba.Model.Security
             }
 
             return enumerable;
-        }
-
-        public SecurityIdentity FindIdentityByName(string identity, PermissionScope scope)
-        {
-            return this.GetPermissionScopeSet(scope).FirstOrDefault(i => String.Equals(identity, i.Name, StringComparison.OrdinalIgnoreCase));
         }
 
         /// <summary>
@@ -109,7 +122,7 @@ namespace Arriba.Model.Security
         /// <param name="scope">Scope of permissions to grant (Owner, Writer, Reader)</param>
         public void Grant(SecurityIdentity identity, PermissionScope scope)
         {
-            if (_owners.Count == 0 && scope != PermissionScope.Owner)
+            if (Owners.Count == 0 && scope != PermissionScope.Owner)
             {
                 throw new ArribaException(String.Format("Unable to grant permission scope {0} as there are no identities with owner scope", scope));
             }
@@ -142,6 +155,44 @@ namespace Arriba.Model.Security
         }
 
         /// <summary>
+        ///  Restrict access to a column set to a specific identity.
+        /// </summary>
+        /// <param name="identity">Identity which is allowed column access</param>
+        /// <param name="columnList">Set of column names only readable by this identity</param>
+        public void SecureColumns(SecurityIdentity identity, IEnumerable<string> columnList)
+        {
+            RestrictedColumns[identity] = new List<string>(columnList);
+        }
+
+        /// <summary>
+        ///  Remove column restrictions for the given identity.
+        /// </summary>
+        /// <param name="identity">Identity with restricted access to un-restrict</param>
+        public void UnsecureColumns(SecurityIdentity identity)
+        {
+            RestrictedColumns.Remove(identity);
+        }
+
+        /// <summary>
+        ///  Restrict access for an identity to a set of rows.
+        /// </summary>
+        /// <param name="identity">Identity to restrict row access for</param>
+        /// <param name="filterQuery">Query to AND with all queries to restrict rows</param>
+        public void SecureRows(SecurityIdentity identity, string filterQuery)
+        {
+            RowRestrictedUsers[identity] = filterQuery;
+        }
+
+        /// <summary>
+        ///  Remove row restriction for identity.
+        /// </summary>
+        /// <param name="identity"></param>
+        public void UnsecureRows(SecurityIdentity identity)
+        {
+            RowRestrictedUsers.Remove(identity);
+        }
+
+        /// <summary>
         /// Gets the permission scope hashset for the specified scope.
         /// </summary>
         private HashSet<SecurityIdentity> GetSpecificPermissionsScopeHashSet(PermissionScope scope)
@@ -149,11 +200,11 @@ namespace Arriba.Model.Security
             switch (scope)
             {
                 case PermissionScope.Owner:
-                    return _owners;
+                    return Owners;
                 case PermissionScope.Reader:
-                    return _readers;
+                    return Readers;
                 case PermissionScope.Writer:
-                    return _writers;
+                    return Writers;
                 default:
                     throw new ArribaException(String.Format("Unknown permission scope {0}", scope));
             }
@@ -164,11 +215,11 @@ namespace Arriba.Model.Security
             switch (permissions)
             {
                 case PermissionScope.Reader:
-                    return _readers.Concat(_writers).Concat(_owners);
+                    return Readers.Concat(Writers).Concat(Owners);
                 case PermissionScope.Writer:
-                    return _writers.Concat(_owners);
+                    return Writers.Concat(Owners);
                 case PermissionScope.Owner:
-                    return _owners;
+                    return Owners;
                 default:
                     throw new ArribaException(String.Format("Unknown permission scope {0}", permissions));
             }
@@ -177,37 +228,89 @@ namespace Arriba.Model.Security
         #region Serialization
         public void ReadBinary(ISerializationContext context)
         {
-            _readers = ReadHashSet(context.Reader);
-            _writers = ReadHashSet(context.Reader);
-            _owners = ReadHashSet(context.Reader);
+            Readers = ReadHashSet(context);
+            Writers = ReadHashSet(context);
+            Owners = ReadHashSet(context);
+
+            // Read column security rules
+            RestrictedColumns = new SecuredSet<List<string>>();
+            int columnRuleCount = context.Reader.ReadInt32();
+            for(int i = 0; i < columnRuleCount; ++i)
+            {
+                SecurityIdentity identity = new SecurityIdentity();
+                identity.ReadBinary(context);
+
+                List<string> columnsSecured = new List<string>();
+
+                int columnsForGroupCount = context.Reader.ReadInt32();
+                for(int j = 0; j < columnsForGroupCount; ++j)
+                {
+                    columnsSecured.Add(context.Reader.ReadString());
+                }
+
+                RestrictedColumns[identity] = columnsSecured;
+            }
+
+            // Read row security rules
+            RowRestrictedUsers = new SecuredSet<string>();
+            int rowRuleCount = context.Reader.ReadInt32();
+            for (int i = 0; i < rowRuleCount; ++i)
+            {
+                SecurityIdentity identity = new SecurityIdentity();
+                identity.ReadBinary(context);
+
+                string filterForIdentity = context.Reader.ReadString();
+                RowRestrictedUsers[identity] = filterForIdentity;
+            }
         }
 
         public void WriteBinary(ISerializationContext context)
         {
-            WriteHashSet(context.Writer, _readers);
-            WriteHashSet(context.Writer, _writers);
-            WriteHashSet(context.Writer, _owners);
-        }
+            WriteHashSet(context, Readers);
+            WriteHashSet(context, Writers);
+            WriteHashSet(context, Owners);
 
-        private static void WriteHashSet(BinaryWriter binaryWriter, HashSet<SecurityIdentity> hashSet)
-        {
-            binaryWriter.Write(hashSet.Count);
-
-            foreach (var item in hashSet)
+            // Write column security rules
+            context.Writer.Write(RestrictedColumns.Count);
+            foreach(var item in RestrictedColumns)
             {
-                binaryWriter.Write((byte)item.Scope);
-                binaryWriter.Write(item.Name);
+                item.Key.WriteBinary(context);
+                context.Writer.Write(item.Value.Count);
+                foreach (string columnName in item.Value)
+                {
+                    context.Writer.Write(columnName);
+                }
+            }
+
+            // Write row security rules
+            context.Writer.Write(RowRestrictedUsers.Count);
+            foreach(var item in RowRestrictedUsers)
+            {
+                item.Key.WriteBinary(context);
+                context.Writer.Write(item.Value);
             }
         }
 
-        private static HashSet<SecurityIdentity> ReadHashSet(BinaryReader binaryReader)
+        private static void WriteHashSet(ISerializationContext context, HashSet<SecurityIdentity> hashSet)
         {
-            int count = binaryReader.ReadInt32();
+            context.Writer.Write(hashSet.Count);
+
+            foreach (var item in hashSet)
+            {
+                item.WriteBinary(context);
+            }
+        }
+
+        private static HashSet<SecurityIdentity> ReadHashSet(ISerializationContext context)
+        {
+            int count = context.Reader.ReadInt32();
             HashSet<SecurityIdentity> value = new HashSet<SecurityIdentity>();
 
             for (int i = 0; i < count; i++)
             {
-                value.Add(SecurityIdentity.Create((IdentityScope)binaryReader.ReadByte(), binaryReader.ReadString()));
+                SecurityIdentity identity = new SecurityIdentity();
+                identity.ReadBinary(context);
+                value.Add(identity);
             }
 
             return value;

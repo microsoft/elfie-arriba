@@ -7,7 +7,7 @@ using System.Runtime.Serialization;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace Arriba.Csv
+namespace Arriba.Diagnostics
 {
     public class CommandLine
     {

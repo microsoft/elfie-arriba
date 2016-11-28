@@ -75,6 +75,7 @@
     <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Diagnostics\CommandLine.cs" />
     <Compile Include="Diagnostics\DailyLogTraceListener.cs" />
     <Compile Include="Extensions\IEnumerableExtensions.cs" />
     <Compile Include="Extensions\StringExtensions.cs" />
@@ -85,6 +86,7 @@
     <Compile Include="Model\Column\BooleanColumn.cs" />
     <Compile Include="Model\Column\ColumnDetails.cs" />
     <Compile Include="Model\Column\FastAddSortedColumn.cs" />
+    <Compile Include="Model\Correctors\ColumnSecurityCorrector.cs" />
     <Compile Include="Model\Correctors\JoinCorrector.cs" />
     <Compile Include="Model\Correctors\ColumnAliasCorrector.cs" />
     <Compile Include="Model\Correctors\ComposedCorrector.cs" />
@@ -103,11 +105,13 @@
     <Compile Include="Indexing\Splitters\HtmlWordSplitter.cs" />
     <Compile Include="Model\Highlighter.cs" />
     <Compile Include="Model\ObjectCache.cs" />
+    <Compile Include="Model\Query\DataBlockResult.cs" />
     <Compile Include="Model\Query\DeleteResult.cs" />
     <Compile Include="Model\Query\DistinctQuery.cs" />
     <Compile Include="Model\Query\DistinctResult.cs" />
     <Compile Include="Model\Query\IQuery.cs" />
     <Compile Include="Model\Query\JoinQuery.cs" />
+    <Compile Include="Model\Query\SelectResult.cs" />
     <Compile Include="Serialization\BinarySerializable.cs" />
     <Compile Include="Serialization\CollectionFactory.cs" />
     <Compile Include="Serialization\CSV\CsvCellRange.cs" />
@@ -151,7 +155,6 @@
     <Compile Include="Model\Query\QueryParser.cs" />
     <Compile Include="Model\Query\QueryScanner.cs" />
     <Compile Include="Model\Query\SelectQuery.cs" />
-    <Compile Include="Model\Query\SelectResult.cs" />
     <Compile Include="Model\Column\SortedColumn.cs" />
     <Compile Include="Model\Table.cs" />
     <Compile Include="Structures\UniqueValueMerger.cs" />

@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.25123.0
+VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{46C7FEEB-4FA3-4CB1-87E6-D8DEA87F13C6}"
 	ProjectSection(SolutionItems) = preProject
@@ -38,8 +38,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Arriba.ClientExample", "Arriba.ClientExample\Arriba.ClientExample.csproj", "{8BADA412-2BD0-4026-8319-DAF8E288DE3F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Arriba.Csv", "Tools\Arriba.Csv\Arriba.Csv.csproj", "{D264AFC1-C7D7-4585-9FCD-92BED4CD0D28}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Arriba.Csv.Test", "Tools\Arriba.Csv.Test\Arriba.Csv.Test.csproj", "{D3FD3D67-D4FC-4A23-883B-CC201CFE3C33}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -137,14 +135,6 @@ Global
 		{D264AFC1-C7D7-4585-9FCD-92BED4CD0D28}.Release|Any CPU.Build.0 = Release|Any CPU
 		{D264AFC1-C7D7-4585-9FCD-92BED4CD0D28}.Release|x64.ActiveCfg = Release|Any CPU
 		{D264AFC1-C7D7-4585-9FCD-92BED4CD0D28}.Release|x64.Build.0 = Release|Any CPU
-		{D3FD3D67-D4FC-4A23-883B-CC201CFE3C33}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D3FD3D67-D4FC-4A23-883B-CC201CFE3C33}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D3FD3D67-D4FC-4A23-883B-CC201CFE3C33}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{D3FD3D67-D4FC-4A23-883B-CC201CFE3C33}.Debug|x64.Build.0 = Debug|Any CPU
-		{D3FD3D67-D4FC-4A23-883B-CC201CFE3C33}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D3FD3D67-D4FC-4A23-883B-CC201CFE3C33}.Release|Any CPU.Build.0 = Release|Any CPU
-		{D3FD3D67-D4FC-4A23-883B-CC201CFE3C33}.Release|x64.ActiveCfg = Release|Any CPU
-		{D3FD3D67-D4FC-4A23-883B-CC201CFE3C33}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -152,6 +142,5 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{929234D3-5C09-4173-A061-3C043EACA170} = {AC459F90-C1BF-4B6A-BEC4-5C19487C3D8B}
 		{D264AFC1-C7D7-4585-9FCD-92BED4CD0D28} = {AC459F90-C1BF-4B6A-BEC4-5C19487C3D8B}
-		{D3FD3D67-D4FC-4A23-883B-CC201CFE3C33} = {AC459F90-C1BF-4B6A-BEC4-5C19487C3D8B}
 	EndGlobalSection
 EndGlobal

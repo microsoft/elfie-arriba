@@ -4,16 +4,20 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 
+using Arriba.Client.Serialization.Json;
+using Arriba.Diagnostics;
 using Arriba.Extensions;
 using Arriba.Model;
 using Arriba.Model.Column;
 using Arriba.Model.Query;
 using Arriba.Serialization.Csv;
 using Arriba.Structures;
-using System.IO;
+
+using Newtonsoft.Json;
 
 namespace Arriba.Csv
 {
@@ -28,15 +32,20 @@ namespace Arriba.Csv
     'build' to create a new table and add all data.
     'decorate' mode used to add new columns to existing rows only.
     'query' to run a query from the command line.
+    'getSettings' to write out JSON settings from a table.
+    'setSettings' to configure a table from JSON settings.
     
-    Arriba.Csv /mode:build /table:<TableName> /csvPath:<CsvFilePath> [/maximumCount:<RowLimitForTable>]? [/columns:""C1,C2,C3""]? [/schemaPath:<SchemaPath>]?
+    Arriba.Csv /mode:build /table:<TableName> /csvPath:<CsvFilePath> [/maximumCount:<RowLimitForTable>]? [/columns:""C1,C2,C3""]? [/settings:<SettingsJsonPath>]?
     Arriba.Csv /mode:query /table:<TableName> [/select:<ColumnList>]? [/orderBy:<ColumnName>]? [/count:<CountToShow>]?
-    Arriba.Csv /mode:decorate /table:<TableName> /csvPath:<CsvFilePath> [/maximumCount:<RowLimitForTable>]? [/columns:""C1,C2,C3""]? [/schemaPath:<SchemaPath>]?
+    Arriba.Csv /mode:decorate /table:<TableName> /csvPath:<CsvFilePath> [/maximumCount:<RowLimitForTable>]? [/columns:""C1,C2,C3""]?
+    Arriba.Csv /mode:getSettings /table:<TableName> /path:<SettingsJsonToWritePath>
+    Arriba.Csv /mode:setSettings /table:<TableName> /path:<SettingsJsonToReadPath>
 
     Ex:
       Arriba.Csv /mode:build /table:SP500 /csvPath:""C:\Temp\SP500 Price History.csv"" /maximumCount:50000
       Arriba.Csv /mode:query /table:SP500 /select:""Date, Adj Close"" /count:30
 ";
+        private static JsonSerializerSettings serializerSettings = new JsonSerializerSettings() { Formatting = Formatting.Indented, Converters = ConverterFactory.GetArribaConverters() };
 
         private static int Main(string[] args)
         {
@@ -48,13 +57,19 @@ namespace Arriba.Csv
                 switch (mode)
                 {
                     case "build":
-                        Build(true, c.GetString("table"), c.GetString("csvPath"), c.GetInt("maximumCount", 100000), c.GetString("columns", null), c.GetString("schemaPath", null));
+                        Build(true, c.GetString("table"), c.GetString("csvPath"), c.GetInt("maximumCount", 100000), c.GetString("columns", null), c.GetString("settings", null));
                         break;
                     case "decorate":
-                        Build(false, c.GetString("table"), c.GetString("csvPath"), c.GetInt("maximumCount", 100000), c.GetString("columns", null), c.GetString("schemaPath", null));
+                        Build(false, c.GetString("table"), c.GetString("csvPath"), c.GetInt("maximumCount", 100000), c.GetString("columns", null));
                         break;
                     case "query":
                         Query(c.GetString("table"), c.GetString("select", ""), c.GetString("orderBy", ""), c.GetInt("count", QueryResultLimit));
+                        break;
+                    case "getsettings":
+                        GetSettings(c.GetString("table"), c.GetString("path"));
+                        break;
+                    case "setsettings":
+                        SetSettings(c.GetString("table"), c.GetString("path"));
                         break;
                     default:
                         Console.WriteLine(Usage);
@@ -69,7 +84,7 @@ namespace Arriba.Csv
                 Console.WriteLine(Usage);
                 return -1;
             }
-            catch(Exception ex)
+            catch(Exception ex) when (!Debugger.IsAttached)
             {
                 Console.WriteLine(ex.Message);
                 return -2;
@@ -111,7 +126,7 @@ namespace Arriba.Csv
             return columns;
         }
 
-        private static void Build(bool build, string tableName, string csvFilePath, int maximumCount, string columns, string schemaPath = null)
+        private static void Build(bool build, string tableName, string csvFilePath, int maximumCount, string columns, string settingsJsonPath = null)
         {
             string action = (build ? "Building" : "Decorating");
 
@@ -121,6 +136,7 @@ namespace Arriba.Csv
             IList<string> columnNames = null;
             if (!String.IsNullOrEmpty(columns)) columnNames = SplitAndTrim(columns);
 
+            // Build or load table
             Table table;
             if (build)
             {
@@ -132,15 +148,10 @@ namespace Arriba.Csv
                 table.Load(tableName);
             }
 
-            // Add schema columns, if given a schema path
-            if (!String.IsNullOrEmpty(schemaPath))
+            // Configure table
+            if (!String.IsNullOrEmpty(settingsJsonPath))
             {
-                Console.WriteLine("Adding Schema from {0}...", schemaPath);
-                IList<ColumnDetails> schemaColumns = ParseSchemaFile(schemaPath);
-                foreach (ColumnDetails column in schemaColumns)
-                {
-                    table.AddColumn(column);
-                }
+                SetSettings(table, LoadSettings(settingsJsonPath));
             }
 
             // Always add missing columns. Add rows only when not in 'decorate' mode
@@ -223,6 +234,63 @@ namespace Arriba.Csv
             }
 
             Console.WriteLine(output.ToString());
+        }
+
+        private static CombinedSettings LoadSettings(string settingsJsonPath)
+        { 
+            CombinedSettings settings = new CombinedSettings();
+            string settingsJson = File.ReadAllText(settingsJsonPath);
+            return JsonConvert.DeserializeObject<CombinedSettings>(settingsJson, serializerSettings);
+        }
+
+        private static void GetSettings(string tableName, string settingsJsonPath)
+        {
+            Console.WriteLine("Reading settings from '{0}' and writing to '{1}'...", tableName, settingsJsonPath);
+
+            CombinedSettings settings = new CombinedSettings();
+
+            SecureDatabase db = new SecureDatabase();
+            settings.Security = db.Security(tableName);
+
+            Table t = db[tableName];
+            settings.ItemCountLimit = t.PartitionCount * ushort.MaxValue;
+            settings.Schema = new List<ColumnDetails>(t.ColumnDetails);
+
+            string settingsJson = JsonConvert.SerializeObject(settings, serializerSettings);
+            File.WriteAllText(settingsJsonPath, settingsJson);
+        }
+
+        private static void SetSettings(string tableName, string settingsJsonPath)
+        {
+            Console.WriteLine("Applying settings from '{0}' to '{1}'...", settingsJsonPath, tableName);
+
+            // Read settings file
+            CombinedSettings settings = LoadSettings(settingsJsonPath);
+
+            // Create table, if required
+            SecureDatabase db = new SecureDatabase();
+            if (!db.TableExists(tableName))
+            {
+                db.AddTable(tableName, settings.ItemCountLimit);
+            }
+
+            // Apply the settings
+            SetSettings(db[tableName], settings);
+
+        }
+
+        private static void SetSettings(Table table, CombinedSettings settings)
+        {
+            // Set and write security
+            SecureDatabase db = new SecureDatabase();
+            db.SetSecurity(table.Name, settings.Security);
+            db.SaveSecurity(table.Name);
+
+            // Create/Modify columns
+            foreach (ColumnDetails cd in settings.Schema)
+            {
+                table.AddColumn(cd);
+            }
         }
 
         private static IList<string> SplitAndTrim(string commaDelimitedList)

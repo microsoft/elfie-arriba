@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Arriba.Serialization;
 using System;
 using System.Runtime.Serialization;
 
@@ -10,13 +11,13 @@ namespace Arriba.Model.Security
     /// Represents a security identity. 
     /// </summary>
     [DataContract]
-    public class SecurityIdentity
+    public class SecurityIdentity : IBinarySerializable
     {
         // Serialization constructor
-        private SecurityIdentity()
+        public SecurityIdentity()
         { }
 
-        private SecurityIdentity(IdentityScope type, string name)
+        public SecurityIdentity(IdentityScope type, string name)
         {
             if (name == null)
             {
@@ -71,6 +72,18 @@ namespace Arriba.Model.Security
         public static SecurityIdentity Create(IdentityScope type, string identity)
         {
             return new SecurityIdentity(type, identity);
+        }
+
+        public void ReadBinary(ISerializationContext context)
+        {
+            this.Scope = (IdentityScope)context.Reader.ReadByte();
+            this.Name = context.Reader.ReadString();
+        }
+
+        public void WriteBinary(ISerializationContext context)
+        {
+            context.Writer.Write((byte)this.Scope);
+            context.Writer.Write(this.Name);
         }
     }
 }
