@@ -71,13 +71,6 @@ namespace Arriba.Model
 
         #region Queries
         /// <summary>
-        ///  Select returns items matching the given query from the Table, like SQL SELECT.
-        /// </summary>
-        /// <param name="query">Query to execute</param>
-        /// <returns>SelectResult with the count and values returned by the query</returns>
-        SelectResult Select(SelectQuery query);
-
-        /// <summary>
         ///  Run the provided query and return a result across this ITable.
         /// </summary>
         /// <typeparam name="T">Type of result to return</typeparam>

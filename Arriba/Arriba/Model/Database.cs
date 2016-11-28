@@ -9,6 +9,7 @@ using System.Threading;
 
 using Arriba.Extensions;
 using Arriba.Serialization;
+using Arriba.Model.Query;
 
 namespace Arriba.Model
 {
@@ -16,13 +17,16 @@ namespace Arriba.Model
     {
         public const string SystemTablePrefix = "arriba";
 
-        private static Lazy<Database> s_currentInstance = new Lazy<Database>(() => new Database());
-
         private readonly object _tableLock = new object();
         private readonly Dictionary<string, Lazy<Table>> _tables = new Dictionary<string, Lazy<Table>>();
 
         public Database()
         { }
+
+        public virtual T Query<T>(IQuery<T> query)
+        {
+            return this[query.TableName].Query(query);
+        }
 
         public Table this[string tableName]
         {

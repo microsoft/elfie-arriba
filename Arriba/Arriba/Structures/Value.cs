@@ -501,6 +501,12 @@ namespace Arriba.Structures
                 return true;
             }
 
+            // If boolean and another type requested, offer as a number
+            if(idealTypeValue is bool)
+            {
+                idealTypeValue = ((bool)idealTypeValue) ? 1 : 0;
+            }
+
             // Upconvert numbers and downconvert if within range
             if (idealTypeValue is double)
             {
@@ -598,6 +604,19 @@ namespace Arriba.Structures
                 {
                     result = (double)asLong;
                     return true;
+                }
+                else if(t == typeof(bool))
+                {
+                    if(asLong == 0)
+                    {
+                        result = false;
+                        return true;
+                    }
+                    else if(asLong == 1)
+                    {
+                        result = true;
+                        return true;
+                    }
                 }
             }
 

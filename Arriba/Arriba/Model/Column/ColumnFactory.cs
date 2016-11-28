@@ -75,6 +75,7 @@ namespace Arriba
             ColumnCreators["string"] = (details, columnComponents, initialCapacity) => { AdjustColumnComponents(ref columnComponents); return BuildByteBlock(details, columnComponents); };
             ColumnCreators["json"] = ColumnCreators["string"];
             ColumnCreators["html"] = ColumnCreators["string"];
+            ColumnCreators["stringset"] = ColumnCreators["string"];
         }
 
         public static void AddColumnCreator(string coreType, COLUMN_CREATOR creationFunc)
@@ -198,6 +199,8 @@ namespace Arriba
                     return new DefaultWordSplitter();
                 case "html":
                     return new HtmlWordSplitter(new DefaultWordSplitter());
+                case "set":
+                    return new SetSplitter();
                 default:
                     throw new ArribaException(StringExtensions.Format("Word Splitter '{0}' is not currently supported.", descriptor));
             }
@@ -213,6 +216,11 @@ namespace Arriba
                 if (coreType.Equals("html"))
                 {
                     columnComponents = new string[] { "indexed[html]", "sorted", "string" };
+                    coreType = "string";
+                }
+                else if(coreType.Equals("stringset"))
+                {
+                    columnComponents = new string[] { "indexed[set]", "sorted", "string" };
                     coreType = "string";
                 }
                 else if (coreType.Equals("string") || coreType.Equals("json"))

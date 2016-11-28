@@ -9,7 +9,7 @@ namespace Arriba.Test
 {
     public static class Verify
     {
-        public static void Exception<T>(Action run) where T : Exception
+        public static void Exception<T>(Action run, string expectedMessage = null) where T : Exception
         {
             try
             {
@@ -24,6 +24,11 @@ namespace Arriba.Test
                 }
 
                 Assert.AreEqual(typeof(T), e.GetType(), "An exception was thrown but it was not of the expected type.");
+
+                if(!String.IsNullOrEmpty(expectedMessage))
+                {
+                    Assert.AreEqual(expectedMessage, e.Message, "Exception didn't have expected mesage.");
+                }
             }
         }
     }

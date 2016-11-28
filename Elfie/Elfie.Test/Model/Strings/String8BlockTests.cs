@@ -58,6 +58,11 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
 
             directConversion = block.GetCopy(String.Empty);
             Assert.IsTrue(directConversion.IsEmpty());
+
+            // Verify clear works (doesn't throw, GetCopy works afterward)
+            block.Clear();
+            valueCopy = block.GetCopy("Third");
+            Assert.AreEqual("Third", valueCopy.ToString());
         }
 
         [TestMethod]
@@ -91,6 +96,14 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
             String8 oneTwoThreeFour = block.Concatenate(oneTwoThree, delimiter, four);
             Assert.AreEqual("One; Two; Three", oneTwoThree.ToString());
             Assert.AreEqual("One; Two; Three; Four", oneTwoThreeFour.ToString());
+
+            // Concatenate over the 64K limit and ensure reasonable behavior
+            String8 eight = block.GetCopy("12345678");
+            String8 eightSet = String8.Empty;
+            for(int i = 0; i < 10000; ++i)
+            {
+                eightSet = block.Concatenate(eightSet, delimiter, eight);
+            }
         }
     }
 }

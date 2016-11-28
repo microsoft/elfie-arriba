@@ -18,6 +18,15 @@ namespace Arriba
     }
 
     [Serializable]
+    public class ArribaColumnAccessDeniedException : ArribaException
+    {
+        public ArribaColumnAccessDeniedException() { }
+        public ArribaColumnAccessDeniedException(string message) : base(message) { }
+        public ArribaColumnAccessDeniedException(string message, Exception inner) : base(message, inner) { }
+        protected ArribaColumnAccessDeniedException(SerializationInfo info, StreamingContext context) : base(info, context) { }
+    }
+
+    [Serializable]
     public class ArribaWriteException : ArribaException
     {
         public const string MessageFormatString = "Unable to write item ID '{0}' column '{1}' value of '{2}'. See inner exception for details.";

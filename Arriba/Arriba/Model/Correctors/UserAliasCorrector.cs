@@ -34,10 +34,10 @@ namespace Arriba.Model.Correctors
                 q.Where = new TermExpression("Alias", Operator.Equals, value);
                 q.Count = 1;
 
-                SelectResult r = this.People.Select(q);
+                SelectResult r = this.People.Query(q);
 
                 // If one is found, return the original value or the alias
-                if (r.CountReturned > 0)
+                if (r.Total > 0)
                 {
                     return new OrExpression(te, new TermExpression(te.ColumnName, te.Operator, r.Values[0, 0]));
                 }

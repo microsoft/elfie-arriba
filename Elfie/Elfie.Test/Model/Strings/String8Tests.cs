@@ -10,6 +10,7 @@ using System.Text;
 using Microsoft.CodeAnalysis.Elfie.Extensions;
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Elfie.Test;
 
 namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
 {
@@ -136,6 +137,18 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
         }
 
         [TestMethod]
+        public void String8_Prefix()
+        {
+            String8 full = String8.Convert("One.Two.Three", new byte[13]);
+            String8 start = String8.Convert("One", new byte[3]);
+            String8 part = String8.Convert("Two", new byte[3]);
+            String8 startInsensitive = String8.Convert("ONE", new byte[3]);
+
+            Assert.AreEqual(0, start.CompareAsPrefixTo(full));
+            
+        }
+
+        [TestMethod]
         public void String8_ToInteger()
         {
             Assert.AreEqual(-1, TryToInteger(null));
@@ -169,6 +182,17 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
         {
             String8 value8 = String8.Convert(value, new byte[String8.GetLength(value)]);
             return value8.ToInteger();
+        }
+
+        [TestMethod]
+        public void String8_ToUpper()
+        {
+            // Verify no exception
+            String8.Empty.ToUpperInvariant();
+
+            String8 sample = String8.Convert("abcABC", new byte[6]);
+            sample.ToUpperInvariant();
+            Assert.AreEqual("ABCABC", sample.ToString());
         }
 
         [TestMethod]
@@ -218,6 +242,12 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
             Assert.AreEqual(caseSensitiveExpected, ToResult(left8.CompareTo(right)), "Case sensitive String8 to string comparison result incorrect.");
             Assert.AreEqual(caseInsensitiveExpected, ToResult(left8.CompareTo(right, true)), "Case insensitive String8 to string comparison result incorrect.");
 
+            // StartsWith and CompareAsPrefixTo
+            Assert.AreEqual(left.StartsWith(right), left8.StartsWith(right8));
+            Assert.AreEqual(left.StartsWith(right, StringComparison.OrdinalIgnoreCase), left8.StartsWith(right8, true));
+            Assert.AreEqual(right.StartsWith(left), right8.StartsWith(left8));
+            Assert.AreEqual(right.StartsWith(left, StringComparison.OrdinalIgnoreCase), right8.StartsWith(left8, true));
+
             // Case Insensitive Stable is the insensitive order, then the sensitive order for ties
             CompareResult caseInsensitiveStableExpected = (caseInsensitiveExpected == CompareResult.Equal ? caseSensitiveExpected : caseInsensitiveExpected);
             Assert.AreEqual(caseInsensitiveStableExpected, ToResult(left8.CompareCaseInsensitiveStableTo(right8)), "Case insensitive stable String8 to string comparison result incorrect.");
@@ -243,20 +273,21 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
             }
 
             // Compare every combination of values (half within and half across buffers)
-            int iterations = 100000;
-            int comparisons = iterations * values.Length * values.Length;
-            Stopwatch w;
-            w = Stopwatch.StartNew();
-            RunAllComparisons(values, false, iterations);
-            w.Stop();
-            Trace.WriteLine(string.Format("{0:n0} String8.CompareTo (Ordinal) took {1}", comparisons, w.Elapsed.ToFriendlyString()));
-            Assert.IsTrue(w.ElapsedMilliseconds < 200);
 
-            w = Stopwatch.StartNew();
-            RunAllComparisons(values, true, iterations);
-            w.Stop();
-            Trace.WriteLine(string.Format("{0:n0} String8.CompareTo (OrdinalIgnoreCase) took {1}", comparisons, w.Elapsed.ToFriendlyString()));
-            Assert.IsTrue(w.ElapsedMilliseconds < 250);
+            // Goal: 500k/sec [case sensitive]
+            int iterations = 100000;
+            Verify.PerformanceByOperation(500 * LongExtensions.Thousand, () =>
+            {
+                RunAllComparisons(values, false, iterations);
+                return iterations * values.Length * values.Length;
+            });
+
+            // Goal: 400k/sec [case insensitive]
+            Verify.PerformanceByOperation(400 * LongExtensions.Thousand, () =>
+            {
+                RunAllComparisons(values, true, iterations);
+                return iterations * values.Length * values.Length;
+            });
         }
 
         private void RunAllComparisons(String8[] values, bool ignoreCase, int iterations)

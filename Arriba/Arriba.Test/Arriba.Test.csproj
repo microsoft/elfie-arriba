@@ -68,8 +68,8 @@
     <RunCodeAnalysis>true</RunCodeAnalysis>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Newtonsoft.Json">
-      <HintPath>..\packages\Newtonsoft.Json.7.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+    <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
@@ -98,6 +98,10 @@
   </Choose>
   <ItemGroup>
     <Compile Include="CustomColumn.cs" />
+    <Compile Include="Diagnostics\CommandLineTests.cs" />
+    <Compile Include="Indexing\SetSplitterTests.cs" />
+    <Compile Include="Model\DatabaseTests.cs" />
+    <Compile Include="Model\SecureDatabaseTests.cs" />
     <Compile Include="Verify.cs" />
     <Compile Include="Model\AggregatorTests.cs" />
     <Compile Include="Model\Correctors\ExpressionCorrectorTests.cs" />
