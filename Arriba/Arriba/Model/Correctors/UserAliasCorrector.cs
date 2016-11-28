@@ -34,7 +34,7 @@ namespace Arriba.Model.Correctors
                 q.Where = new TermExpression("Alias", Operator.Equals, value);
                 q.Count = 1;
 
-                SelectResult r = this.People.Select(q);
+                SelectResult r = this.People.Query(q);
 
                 // If one is found, return the original value or the alias
                 if (r.Total > 0)
