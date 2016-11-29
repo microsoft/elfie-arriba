@@ -358,6 +358,12 @@ namespace Arriba.Test.Model
                 });
         }
 
+        [TestMethod]
+        public void Table_LargeDataBasic()
+        {
+            ITable_LargeData(() => new Table("500K_Items", 500000));
+        }
+
         public void ITable_All(Func<ITable> factoryMethod, bool isEmpty = true)
         {
             if (isEmpty)
@@ -927,6 +933,19 @@ Title:unused, null
             Assert.AreEqual("Red;None;Blue;None;None", newResult.Values.GetColumn(2).Join(";"));
         }
 
+        private void ITable_LargeData(Func<ITable> factoryMethod)
+        {
+            ITable table = factoryMethod();
+            BuildLargeSampleData(table);
+
+            SelectQuery query = new SelectQuery();
+            query.Columns = new string[] { "ID", "AllOnes" };
+            query.Count = 5;
+            SelectResult result = table.Query(query);
+
+            Assert.AreEqual(5, (int)result.Total);
+        }
+
         internal static void AddColumns(ITable table)
         {
             // Define desired columns
@@ -958,6 +977,24 @@ Title:unused, null
 
             // Add some sample data (with ID column NOT first)
             DataBlock items = BuildSampleData();
+            table.AddOrUpdate(items, new AddOrUpdateOptions());
+        }
+
+        internal static void BuildLargeSampleData(ITable table)
+        {
+            const int limit = 100000;
+            var seed = Enumerable.Range(0, limit);
+
+            // Define desired columns
+            table.AddColumn(new ColumnDetails("ID", "int", -1, "i", true));
+            table.AddColumn(new ColumnDetails("AllOnes", "int", 1, "ao", false));
+            table.AddColumn(new ColumnDetails("AllEvens", "short", 0, "even", false));
+
+            DataBlock items = new DataBlock(new string[] { "ID", "AllOnes", "AllEvens" }, limit);
+            items.SetColumn(0, seed.ToArray());
+            items.SetColumn(1, seed.Select(i => 1).ToArray());
+            items.SetColumn(2, seed.Select(i => i % 2).ToArray());
+
             table.AddOrUpdate(items, new AddOrUpdateOptions());
         }
 
