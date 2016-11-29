@@ -148,6 +148,8 @@ namespace Arriba.Model.Query
                 this.OrderByColumn = table.IDColumn.Name;
                 this.OrderByDescending = true;
             }
+
+            this.Context = new SelectContext(this);
         }
 
         private void ChooseItems(Table table)
@@ -168,16 +170,13 @@ namespace Arriba.Model.Query
             Stopwatch w = Stopwatch.StartNew();
             SelectResult chooseItemsResult = table.Query(chooseItemsQuery);
 
-            // If the query failed or was empty, return as-is
-            if (!chooseItemsResult.Details.Succeeded || chooseItemsResult.CountReturned == 0)
+            chooseItemsResult.Query = this;
+            chooseItemsResult.Runtime = w.Elapsed;
+            this.Context.Pass1Results = chooseItemsResult;
+            this.Context.Count = chooseItemsResult.CountReturned;
+
+            if (chooseItemsResult.Details.Succeeded && chooseItemsResult.CountReturned > 0)
             {
-                chooseItemsResult.Query = this;
-                chooseItemsResult.Runtime = w.Elapsed;
-                this.Context.EarlyResults = chooseItemsResult;
-            }
-            else
-            {
-                this.Context.Count = chooseItemsResult.CountReturned;
                 this.Context.Where = new AndExpression(new TermInExpression(idColumnName, chooseItemsResult.Values.GetColumn(0)), this.Where);
             }
         }
@@ -188,18 +187,11 @@ namespace Arriba.Model.Query
 
             this.Where = this.Where ?? new AllExpression();
 
-            this.Context = new SelectContext(this);
-
             // Prepare this query to run (expand '*', default ORDER BY column, ...)
             Prepare(table);
 
             // Select IDs of matching items
             ChooseItems(table);
-
-            // Add the Order By Column
-            List<string> columns = new List<string>(this.Columns);
-            columns.Add(this.OrderByColumn);
-            this.Context.Columns = columns;
         }
 
         public void Correct(ICorrector corrector)
@@ -210,13 +202,34 @@ namespace Arriba.Model.Query
             this.Where = corrector.Correct(this.Where);
         }
 
+        private SelectContext SafeGetContext(Partition p)
+        {
+            SelectContext ctx = this.Context;
+
+            if (ctx == null)
+            {
+                // This case should only happen for unit tests
+                ctx = new SelectContext(this);
+                if (p != null && string.IsNullOrEmpty(this.OrderByColumn))
+                {
+                    ctx.OrderByColumn = p.IDColumn.Name;
+                    ctx.OrderByDescending = true;
+                }
+            }
+
+            return ctx;
+        }
+
         public SelectResult Compute(Partition p)
         {
-            SelectContext localContext = this.Context ?? new SelectContext(this);
+            SelectContext localContext = SafeGetContext(p);
 
-            if (localContext.EarlyResults != null)
+            if (localContext.Pass1Results != null)
             {
-                return localContext.EarlyResults;
+                if (localContext.Pass1Results.Details.Succeeded == false || localContext.Pass1Results.CountReturned == 0)
+                {
+                    return localContext.Pass1Results;
+                }
             }
 
             return localContext.Compute(p);
@@ -224,11 +237,14 @@ namespace Arriba.Model.Query
 
         public SelectResult Merge(SelectResult[] partitionResults)
         {
-            SelectContext localContext = this.Context ?? new SelectContext(this);
+            SelectContext localContext = SafeGetContext(null);
 
-            if (localContext.EarlyResults != null)
+            if (localContext.Pass1Results != null)
             {
-                return localContext.EarlyResults;
+                if (localContext.Pass1Results.Details.Succeeded == false || localContext.Pass1Results.CountReturned == 0)
+                {
+                    return localContext.Pass1Results;
+                }
             }
 
             return localContext.Merge(partitionResults);
@@ -237,7 +253,7 @@ namespace Arriba.Model.Query
         private class SelectContext
         {
             public SelectQuery Query;
-            public SelectResult EarlyResults;
+            public SelectResult Pass1Results;
             public ushort Count;
             public IExpression Where;
             public string OrderByColumn;
@@ -252,7 +268,7 @@ namespace Arriba.Model.Query
                 this.OrderByDescending = query.OrderByDescending;
                 this.Query = query;
                 this.Columns = query.Columns;
-                this.EarlyResults = null;
+                this.Pass1Results = null;
             }
 
             public SelectResult Compute(Partition p)
@@ -261,6 +277,11 @@ namespace Arriba.Model.Query
 
                 SelectResult result = new SelectResult(this.Query);
 
+
+                // Find the set of items matching all terms
+                ShortSet whereSet = new ShortSet(p.Count);
+                this.Where.TryEvaluate(p, whereSet, result.Details);
+
                 // Verify that the ORDER BY column exists
                 if (!String.IsNullOrEmpty(this.OrderByColumn) && !p.Columns.ContainsKey(this.OrderByColumn))
                 {
@@ -268,17 +289,23 @@ namespace Arriba.Model.Query
                     return result;
                 }
 
-                // Find the set of items matching all terms
-                ShortSet whereSet = new ShortSet(p.Count);
-                this.Where.TryEvaluate(p, whereSet, result.Details);
-
                 if (result.Details.Succeeded)
                 {
+                    IUntypedColumn column = null;
+
                     result.Total = whereSet.Count();
 
                     // Find the set of IDs to return for the query (up to 'Count' after 'Skip' in ORDER BY order)
                     ushort[] lidsToReturn = GetLIDsToReturn(p, this, result, whereSet);
                     result.CountReturned = (ushort)lidsToReturn.Length;
+
+                    // Get the order-by column
+                    if (!p.Columns.TryGetValue(this.OrderByColumn, out column))
+                    {
+                        result.Details.AddError(ExecutionDetails.ColumnDoesNotExist, this.OrderByColumn);
+                        return result;
+                    }
+                    Array orderByColumn = column.GetValues(lidsToReturn);
 
                     // Get all of the response columns and return them
                     Array columns = new Array[this.Columns.Count];
@@ -286,23 +313,30 @@ namespace Arriba.Model.Query
                     {
                         string columnName = this.Columns[i];
 
-                        IUntypedColumn column;
-                        if (!p.Columns.TryGetValue(columnName, out column))
+                        if (columnName == this.OrderByColumn)
                         {
-                            result.Details.AddError(ExecutionDetails.ColumnDoesNotExist, columnName);
-                            return result;
+                            columns.SetValue(orderByColumn, i);
                         }
-
-                        Array values = column.GetValues(lidsToReturn);
-                        if (Query.Highlighter != null)
+                        else
                         {
-                            Query.Highlighter.Highlight(values, column, Query);
-                        }
+                            if (!p.Columns.TryGetValue(columnName, out column))
+                            {
+                                result.Details.AddError(ExecutionDetails.ColumnDoesNotExist, columnName);
+                                return result;
+                            }
 
-                        columns.SetValue(values, i);
+                            Array values = column.GetValues(lidsToReturn);
+                            if (Query.Highlighter != null)
+                            {
+                                Query.Highlighter.Highlight(values, column, Query);
+                            }
+
+                            columns.SetValue(values, i);
+                        }
                     }
 
                     result.Values = new DataBlock(p.GetDetails(this.Columns), result.CountReturned, columns);
+                    result.OrderByValues = new DataBlock(p.GetDetails(new string[] { this.OrderByColumn }), result.CountReturned, new Array[] { orderByColumn });
                 }
 
                 return result;
@@ -439,20 +473,11 @@ namespace Arriba.Model.Query
 
                 if (mergedResult.Details.Succeeded)
                 {
-                    // Build a DataBlock for the merged result values, remove the last 
-                    // column (if it exists) because it was added as the order-by column
-                    List<ColumnDetails> columnsWithoutSort = new List<ColumnDetails>(partitionResults[0].Values.Columns);
-                    if (columnsWithoutSort.Count == this.Columns.Count)
-                    {
-                        columnsWithoutSort.RemoveAt(columnsWithoutSort.Count - 1);
-                    }
-                    Debug.Assert(columnsWithoutSort.Count != 0);
-
-                    DataBlock mergedBlock = new DataBlock(columnsWithoutSort, mergedResult.CountReturned);
+                    DataBlock mergedBlock = new DataBlock(partitionResults[0].Values.Columns, mergedResult.CountReturned);
+                    DataBlock mergedOrderbyBlock = new DataBlock(partitionResults[0].OrderByValues.Columns, mergedResult.CountReturned);
 
                     // Find the next value according to the sort order and add it until we have enough
                     bool orderByDescending = this.OrderByDescending;
-                    int sortByColumn = (partitionResults[0].Values.ColumnCount - 1);
                     int partitionCount = partitionResults.Length;
 
                     int itemIndex = 0;
@@ -469,7 +494,10 @@ namespace Arriba.Model.Query
                         {
                             int potentialIndex = nextIndexPerPartition[partitionIndex];
                             if (potentialIndex == partitionResults[partitionIndex].Values.RowCount) continue;
-                            IComparable potentialValue = (IComparable)partitionResults[partitionIndex].Values.GetValue(potentialIndex, sortByColumn);
+
+                            // TODO: in the future, we can allow multiple columns for order by as well as place the ID column 
+                            //   at the end (to ensure stable sorting).  This will need to become a cascading comparison
+                            IComparable potentialValue = (IComparable)partitionResults[partitionIndex].OrderByValues.GetValue(potentialIndex, 0);
 
                             int cmp = 0;
                             if (bestValue != null) cmp = potentialValue.CompareTo(bestValue);
@@ -484,6 +512,7 @@ namespace Arriba.Model.Query
                         for (int columnIndex = 0; columnIndex < mergedBlock.ColumnCount; ++columnIndex)
                         {
                             mergedBlock.SetValue(itemIndex, columnIndex, partitionResults[bestPartition].Values.GetValue(nextIndexPerPartition[bestPartition], columnIndex));
+                            mergedOrderbyBlock.SetValue(itemIndex, 0, partitionResults[bestPartition].OrderByValues.GetValue(nextIndexPerPartition[bestPartition], 0));
                         }
 
                         itemIndex++;
@@ -492,6 +521,7 @@ namespace Arriba.Model.Query
                     }
 
                     mergedResult.Values = mergedBlock;
+                    mergedResult.OrderByValues = mergedOrderbyBlock;
                 }
 
                 return mergedResult;
