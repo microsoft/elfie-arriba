@@ -509,11 +509,14 @@ namespace Arriba.Model.Query
                             }
                         }
 
+                        // Copy the data to the results set
                         for (int columnIndex = 0; columnIndex < mergedBlock.ColumnCount; ++columnIndex)
                         {
                             mergedBlock.SetValue(itemIndex, columnIndex, partitionResults[bestPartition].Values.GetValue(nextIndexPerPartition[bestPartition], columnIndex));
-                            mergedOrderbyBlock.SetValue(itemIndex, 0, partitionResults[bestPartition].OrderByValues.GetValue(nextIndexPerPartition[bestPartition], 0));
                         }
+
+                        // Copy the order-by fields to the result set
+                        mergedOrderbyBlock.SetValue(itemIndex, 0, partitionResults[bestPartition].OrderByValues.GetValue(nextIndexPerPartition[bestPartition], 0));
 
                         itemIndex++;
 
