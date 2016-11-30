@@ -133,7 +133,7 @@ namespace Arriba.Model.Query
         {
             this.Where = this.Where ?? new AllExpression();
 
-            if(this.AggregationColumns.Length == 0 || (this.AggregationColumns.Length == 1 && this.AggregationColumns[0] == "*"))
+            if(this.AggregationColumns != null && (this.AggregationColumns.Length == 0 || (this.AggregationColumns.Length == 1 && this.AggregationColumns[0] == "*")))
             {
                 this.AggregationColumns = new string[] { table.IDColumn.Name };
             }
