@@ -33,12 +33,12 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
     ///     int descriptionIndex = r.ColumnIndex("Description");
     ///     int itemTypeIndex = r.ColumnIndex("ItemType");
     ///
-    ///     // Use NextRow() and CurrentRow(index) to read values
+    ///     // Use NextRow() and Current[index] to read values
     ///     while (r.NextRow())
     ///     {
-    ///         String8 title = r.CurrentRow(titleIndex);
-    ///         String8 description = r.CurrentRow(descriptionIndex);
-    ///         int itemType = r.CurrentRow(itemTypeIndex).ToInteger();
+    ///         String8 title = r.Current[titleIndex];
+    ///         String8 description = r.Current[descriptionIndex];
+    ///         int itemType = r.Current[itemTypeIndex].ToInteger();
     ///         
     ///         // COPY String8s to be kept
     ///     }
