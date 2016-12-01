@@ -299,11 +299,6 @@ namespace Arriba.Model.Expressions
                 details.Merge(perColumnDetails);
             }
         }
-
-        public override string ToString()
-        {
-            return StringExtensions.Format("~*{0}{1}", this.Operator.ToSyntaxString(), QueryScanner.WrapValue(this.Value.ToString()));
-        }
     }
 
     public class TermInExpression : IExpression
