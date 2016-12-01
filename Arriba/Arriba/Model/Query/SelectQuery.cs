@@ -468,7 +468,15 @@ namespace Arriba.Model.Query
                     mergedResult.Details.Merge(partitionResults[i].Details);
                 }
 
-                mergedResult.Total = totalFound;
+                if (this.Pass1Results == null)
+                {
+                    mergedResult.Total = totalFound;
+                }
+                else
+                {
+                    mergedResult.Total = this.Pass1Results.Total;
+                }
+
                 mergedResult.CountReturned = (ushort)Math.Min(this.Count, totalReturned);
 
                 if (mergedResult.Details.Succeeded)
