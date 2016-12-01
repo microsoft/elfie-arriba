@@ -206,7 +206,7 @@ namespace Arriba.Model.Expressions
             this.Value = Value.Create(value);
         }
 
-        public void TryEvaluate(Partition partition, ShortSet result, ExecutionDetails details)
+        public virtual void TryEvaluate(Partition partition, ShortSet result, ExecutionDetails details)
         {
             if (details == null) throw new ArgumentNullException("details");
             if (result == null) throw new ArgumentNullException("result");
@@ -257,24 +257,21 @@ namespace Arriba.Model.Expressions
         }
     }
 
-    public class AllExceptColumnsTermExpression : IExpression
+    public class AllExceptColumnsTermExpression : TermExpression
     {
         public HashSet<string> RestrictedColumns;
-        public Operator Operator;
-        public Value Value;
 
-        public AllExceptColumnsTermExpression(HashSet<string> restrictedColumns, Operator op, Value value)
+        public AllExceptColumnsTermExpression(HashSet<string> restrictedColumns, Operator op, Value value) :
+            base("*", op, value)
         {
             this.RestrictedColumns = restrictedColumns;
-            this.Operator = op;
-            this.Value = value;
         }
 
         public AllExceptColumnsTermExpression(HashSet<string> restrictedColumns, TermExpression previousExpression) :
             this(restrictedColumns, previousExpression.Operator, previousExpression.Value)
         { }
 
-        public void TryEvaluate(Partition partition, ShortSet result, ExecutionDetails details)
+        public override void TryEvaluate(Partition partition, ShortSet result, ExecutionDetails details)
         {
             if (details == null) throw new ArgumentNullException("details");
             if (result == null) throw new ArgumentNullException("result");
@@ -301,11 +298,6 @@ namespace Arriba.Model.Expressions
             {
                 details.Merge(perColumnDetails);
             }
-        }
-
-        public IList<IExpression> Children()
-        {
-            return EmptyExpression.EmptyEnumerable;
         }
 
         public override string ToString()
