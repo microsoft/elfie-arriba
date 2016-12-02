@@ -160,13 +160,16 @@ namespace Arriba.Model
             else if (primaryQuery.GetType().Equals(typeof(AggregationQuery)))
             {
                 AggregationQuery aq = (AggregationQuery)primaryQuery;
-                foreach (string columnName in aq.AggregationColumns)
+                if (aq.AggregationColumns != null)
                 {
-                    if (restrictedColumns.Contains(columnName))
+                    foreach (string columnName in aq.AggregationColumns)
                     {
-                        details.AddDeniedColumn(columnName);
-                        details.AddError(ExecutionDetails.DisallowedColumnQuery, columnName);
-                        aq.Where = new EmptyExpression();
+                        if (restrictedColumns.Contains(columnName))
+                        {
+                            details.AddDeniedColumn(columnName);
+                            details.AddError(ExecutionDetails.DisallowedColumnQuery, columnName);
+                            aq.Where = new EmptyExpression();
+                        }
                     }
                 }
             }

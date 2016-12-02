@@ -289,7 +289,7 @@ namespace Arriba.Server
             List<CountResult> results = new List<CountResult>();
 
             // Build a Count query
-            IQuery<AggregationResult> query = new AggregationQuery("count", new string[0], ctx.Request.ResourceParameters["q"] ?? "");
+            IQuery<AggregationResult> query = new AggregationQuery("count", null, ctx.Request.ResourceParameters["q"] ?? "");
 
             // Wrap in Joins, if found
             query = WrapInJoinQueryIfFound(query, this.Database, ctx);
@@ -411,7 +411,7 @@ namespace Arriba.Server
 
             AggregationQuery query = new AggregationQuery();
             query.Aggregator = AggregationQuery.BuildAggregator(aggregationFunction);
-            query.AggregationColumns = new string[] { columnName };
+            query.AggregationColumns = String.IsNullOrEmpty(columnName) ? null : new string[] { columnName };
             query.Where = whereExpression;
 
             foreach (string dimension in dimensions)
