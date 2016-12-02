@@ -64,7 +64,7 @@ namespace Arriba.Model.Query
             : this()
         {
             this.Aggregator = BuildAggregator(aggregationFunction);
-            this.AggregationColumns = new List<string>(columns).ToArray();
+            this.AggregationColumns = columns == null ? null : new List<string>(columns).ToArray();
             this.Where = QueryParser.Parse(where);
         }
 
@@ -132,11 +132,6 @@ namespace Arriba.Model.Query
         public virtual void OnBeforeQuery(Table table)
         {
             this.Where = this.Where ?? new AllExpression();
-
-            if(this.AggregationColumns != null && (this.AggregationColumns.Length == 0 || (this.AggregationColumns.Length == 1 && this.AggregationColumns[0] == "*")))
-            {
-                this.AggregationColumns = new string[] { table.IDColumn.Name };
-            }
         }
 
         public bool RequireMerge
