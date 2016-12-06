@@ -132,6 +132,12 @@ namespace Arriba.Model.Query
         public virtual void OnBeforeQuery(Table table)
         {
             this.Where = this.Where ?? new AllExpression();
+
+            // Allow dimensions to do pre-query work
+            foreach (AggregationDimension dimension in this.Dimensions)
+            {
+                dimension.OnBeforeQuery(table, this.Where);
+            }
         }
 
         public bool RequireMerge
