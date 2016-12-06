@@ -157,7 +157,7 @@ namespace Arriba.Model
 
                 if (filteredColumns != null) sq.Columns = filteredColumns;
             }
-            else if (primaryQuery.GetType().Equals(typeof(AggregationQuery)))
+            else if (primaryQuery.GetType().Equals(typeof(AggregationQuery)) || primaryQuery.GetType().Equals(typeof(PivotQuery)))
             {
                 AggregationQuery aq = (AggregationQuery)primaryQuery;
                 if (aq.AggregationColumns != null)

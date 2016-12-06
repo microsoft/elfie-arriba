@@ -19,7 +19,9 @@ namespace Arriba.Model.Query
         }
 
         public PivotDimension(string column, string name) : base(name)
-        { }
+        {
+            this.Column = column;
+        }
 
         public string Column { get; set; }
 
