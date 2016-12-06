@@ -5,7 +5,7 @@ SET MsBuildPath="%ProgramFiles(x86)%\MSBuild\14.0\Bin\MSBuild.exe"
 @REM unsigned build
 %~dp0..\.nuget\NuGet.exe restore Arriba.sln 
 
-CALL :Build Arriba.sln
+CALL :Build Arriba.All.sln
 
 ENDLOCAL
 GOTO :EOF
