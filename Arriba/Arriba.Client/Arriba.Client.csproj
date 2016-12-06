@@ -125,6 +125,10 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Arriba.Query\Arriba.Query.csproj">
+      <Project>{e4d3ab4b-b37e-42a5-a718-33b419ea0170}</Project>
+      <Name>Arriba.Query</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Arriba\Arriba.csproj">
       <Project>{d89b4a01-f637-4147-9737-91a327a9da3f}</Project>
       <Name>Arriba</Name>
