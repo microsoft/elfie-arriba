@@ -100,7 +100,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
             // Concatenate over the 64K limit and ensure reasonable behavior
             String8 eight = block.GetCopy("12345678");
             String8 eightSet = String8.Empty;
-            for(int i = 0; i < 10000; ++i)
+            for (int i = 0; i < 10000; ++i)
             {
                 eightSet = block.Concatenate(eightSet, delimiter, eight);
             }
