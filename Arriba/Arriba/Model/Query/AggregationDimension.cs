@@ -52,6 +52,11 @@ namespace Arriba.Model.Query
             this.AddConditions(conditions);
         }
 
+        public virtual void OnBeforeQuery(Table table, IExpression baseWhere)
+        {
+
+        }
+
         protected void AddConditions(IEnumerable<string> conditions)
         {
             foreach (string condition in conditions)

@@ -104,18 +104,18 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             BlockPart targetBlock = null;
 
             // Find the Block hosting the value (if it is already here)
-            int blockIndex = this._blocks.Count - 1;
+            int blockIndex = _blocks.Count - 1;
             for (; blockIndex >= 0; --blockIndex)
             {
-                if(first._buffer == this._blocks[blockIndex].Block)
+                if (first._buffer == _blocks[blockIndex].Block)
                 {
-                    targetBlock = this._blocks[blockIndex];
+                    targetBlock = _blocks[blockIndex];
                     break;
                 }
             }
 
             // If "first" is the last thing on the block...
-            if(targetBlock != null && targetBlock.LengthUsed == first._index + first._length)
+            if (targetBlock != null && targetBlock.LengthUsed == first._index + first._length)
             {
                 // If there's room to concatenate in place, do that
                 if (targetBlock.Block.Length >= targetBlock.LengthUsed + delimiter.Length + second.Length)
@@ -126,7 +126,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
                 }
 
                 // If not, "remove" first from the block to recycle the space
-                if(first._index == 0)
+                if (first._index == 0)
                 {
                     // If first was alone, remove the whole block
                     _blocks.RemoveAt(blockIndex);
@@ -177,12 +177,12 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         public void Clear()
         {
             // Clear length used on the first block
-            BlockPart first = this._blocks[0];
+            BlockPart first = _blocks[0];
             first.LengthUsed = 0;
 
             // Remove other blocks and restore only the first
-            this._blocks.Clear();
-            this._blocks.Add(first);
+            _blocks.Clear();
+            _blocks.Add(first);
         }
     }
 }

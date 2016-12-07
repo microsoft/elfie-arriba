@@ -98,38 +98,6 @@ namespace Arriba.ConsoleTest
             return table;
         }
 
-        private static void AggregateDistinctTest(Table table)
-        {
-            AggregationResult result = null;
-
-            Trace.Write("Aggregating Bugs...");
-            {
-                for (int i = 0; i < 50; ++i)
-                {
-                    PivotQuery query = new PivotQuery();
-                    query.AggregationColumns = new string[] { "CID" };
-                    query.Aggregator = new CountAggregator();
-                    query.Where = SelectQuery.ParseWhere("CD > 1/1/2013");
-                    query.Dimensions.Add(new DateHistogramPivotDimension("Created Date") { Interval = DateHistogramInterval.Month });
-                    query.Dimensions.Add(new DistinctValuePivotDimension("Area Level 2"));
-                    query.Dimensions.Add(new DistinctValuePivotDimension("Area Level 3"));
-
-                    //AggregationQuery query = new AggregationQuery();
-                    //query.AggregationColumns = new string[] { "CID" };
-                    //query.Aggregator = new CountAggregator();
-                    //query.Where = SelectQuery.ParseWhere("CD > 1/1/2013");
-                    //query.Dimensions.Add(new AggregationDimension("Priority", "P0", "P1", "P2", "P3"));
-                    //query.Dimensions.Add(new AggregationDimension("Area Path", "p:Platform", "p:Fundamentals"));
-
-                    //table.RunParallel = false;
-                    result = table.Query(query);
-                }
-            }
-
-            Console.WriteLine();
-            //ShowResult(result.Values);
-        }
-
         private static void DistinctTest(Table table, string column, string where)
         {
             int iterations = 1000;
