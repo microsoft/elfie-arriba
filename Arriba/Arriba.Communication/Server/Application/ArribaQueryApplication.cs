@@ -50,8 +50,6 @@ namespace Arriba.Server
             this.GetAsync(new RouteSpecification("/table/:tableName", new UrlParameter("action", "aggregate")), this.ValidateReadAccessAsync, this.Aggregate);
             this.PostAsync(new RouteSpecification("/table/:tableName", new UrlParameter("action", "aggregate")), this.ValidateReadAccessAsync, this.Aggregate);
 
-            this.GetAsync(new RouteSpecification("/table/:tableName", new UrlParameter("action", "pivot")), this.ValidateReadAccessAsync, this.Pivot);
-
             this.Get(new RouteSpecification("/allCount"), this.AllCount);
         }
 
@@ -390,33 +388,32 @@ namespace Arriba.Server
                 return await ctx.Request.ReadBodyAsync<AggregationQuery>();
             }
 
-            string queryString = ctx.Request.ResourceParameters["q"];
             string aggregationFunction = ctx.Request.ResourceParameters["a"];
             string columnName = ctx.Request.ResourceParameters["col"];
-
-            List<string> dimensions = new List<string>();
-            int i = 1;
-            while (ctx.Request.ResourceParameters.Contains("d" + i))
-            {
-                dimensions.Add(ctx.Request.ResourceParameters["d" + i]);
-                ++i;
-            }
-
-            IExpression whereExpression = null;
-
-            using (ctx.Monitor(MonitorEventLevel.Verbose, "Arriba.ParseQuery", String.IsNullOrEmpty(queryString) ? "<none>" : queryString))
-            {
-                whereExpression = String.IsNullOrEmpty(queryString) ? new AllExpression() : SelectQuery.ParseWhere(queryString);
-            }
+            string queryString = ctx.Request.ResourceParameters["q"];
 
             AggregationQuery query = new AggregationQuery();
             query.Aggregator = AggregationQuery.BuildAggregator(aggregationFunction);
             query.AggregationColumns = String.IsNullOrEmpty(columnName) ? null : new string[] { columnName };
-            query.Where = whereExpression;
 
-            foreach (string dimension in dimensions)
+            using (ctx.Monitor(MonitorEventLevel.Verbose, "Arriba.ParseQuery", String.IsNullOrEmpty(queryString) ? "<none>" : queryString))
             {
-                query.Dimensions.Add(new AggregationDimension("", dimension.Split(',')));
+                query.Where = String.IsNullOrEmpty(queryString) ? new AllExpression() : SelectQuery.ParseWhere(queryString);
+            }
+
+            for(int i = 1; ctx.Request.ResourceParameters.Contains("d" + i); ++i)
+            {
+                string dimension = ctx.Request.ResourceParameters["d" + i];
+                string[] dimensionParts = dimension.Split(',');
+
+                if (dimensionParts.Length == 1 && dimensionParts[0].EndsWith(">"))
+                {
+                    query.Dimensions.Add(new DistinctValueDimension(dimensionParts[0].TrimEnd('>')));
+                }
+                else
+                {
+                    query.Dimensions.Add(new AggregationDimension("", dimensionParts));
+                }
             }
 
             return query;
@@ -451,148 +448,6 @@ namespace Arriba.Server
             }
 
             return query;
-        }
-
-        private async Task<IResponse> Pivot(IRequestContext ctx, Route route)
-        {
-            PivotQuery query = await BuildPivotQueryFromContext(ctx);
-            return await Query(ctx, route, query);
-        }
-
-        private async static Task<PivotQuery> BuildPivotQueryFromContext(IRequestContext ctx)
-        {
-            if (ctx.Request.Method == RequestVerb.Post && ctx.Request.HasBody)
-            {
-                return await ctx.Request.ReadBodyAsync<PivotQuery>();
-            }
-
-            var query = new PivotQuery
-            {
-                Where = SelectQuery.ParseWhere(ctx.Request.ResourceParameters["q"] ?? ""),
-                Aggregator = AggregationQuery.BuildAggregator(ctx.Request.ResourceParameters["a"] ?? "COUNT"),
-            };
-
-            if (!String.IsNullOrEmpty(ctx.Request.ResourceParameters["col"]))
-            {
-                query.AggregationColumns = new string[] { ctx.Request.ResourceParameters["col"] };
-            }
-
-
-            int i = 1;
-            while (ctx.Request.ResourceParameters.Contains("d" + i))
-            {
-                var dimensionUnparsed = ctx.Request.ResourceParameters["d" + i];
-                ++i;
-
-                PivotDimensionDescriptor descriptor;
-                if (PivotDimensionDescriptor.TryParse(dimensionUnparsed, out descriptor))
-                {
-                    var dimension = GetPivotDimension(descriptor);
-
-                    if (dimension != null)
-                    {
-                        query.Dimensions.Add(dimension);
-                        continue;
-                    }
-                }
-
-                // Parsing failed assume query.
-                query.Dimensions.Add(new AggregationDimension("", dimensionUnparsed.Split(',')));
-            }
-
-            return query;
-        }
-
-        private static PivotDimension GetPivotDimension(PivotDimensionDescriptor pivot)
-        {
-            switch (pivot.Type)
-            {
-                case "col":
-                    var distinct = new DistinctValuePivotDimension(pivot.Column);
-                    distinct.MaximumValues = pivot.GetNullableArgument<ushort?>(0);
-                    return distinct;
-
-                case "date":
-                    var dateHistogram = new DateHistogramPivotDimension(pivot.Column);
-                    dateHistogram.From = pivot.GetNullableArgument<DateTime?>(0);
-                    dateHistogram.To = pivot.GetNullableArgument<DateTime?>(1);
-                    dateHistogram.Interval = pivot.GetNullableArgument<DateHistogramInterval?>(2);
-
-                    if (dateHistogram.To == null)
-                    {
-                        dateHistogram.From = null;
-                        dateHistogram.Interval = pivot.GetNullableArgument<DateHistogramInterval?>(0);
-                    }
-
-                    return dateHistogram;
-                default:
-                    return null;
-            }
-        }
-
-        private class PivotDimensionDescriptor
-        {
-            private static readonly char[] s_columnEscapeChars = new[] { '[', ']' };
-            public string Source { get; private set; }
-            public string Type { get; private set; }
-            public string Column { get; private set; }
-            public string[] Arguments { get; private set; }
-
-            public static bool TryParse(string raw, out PivotDimensionDescriptor dimension)
-            {
-                var parts = raw.Split(new[] { ';' });
-
-                if (parts.Length < 2)
-                {
-                    dimension = null;
-                    return false;
-                }
-
-                dimension = new PivotDimensionDescriptor();
-                dimension.Source = raw;
-                dimension.Type = parts[0].ToLowerInvariant();
-                dimension.Column = parts[1].Trim(s_columnEscapeChars);
-
-                if (parts.Length > 2)
-                {
-                    dimension.Arguments = parts.Skip(2).ToArray();
-                }
-                else
-                {
-                    dimension.Arguments = new string[0];
-                }
-
-                return true;
-            }
-
-            public T GetNullableArgument<T>(int index)
-            {
-                if (index >= this.Arguments.Length)
-                {
-                    return default(T);
-                }
-
-                var converter = new NullableConverter(typeof(T));
-
-                try
-                {
-                    return (T)converter.ConvertFromInvariantString(this.Arguments[index]);
-                }
-                catch
-                {
-                    return default(T);
-                }
-            }
-
-            public override string ToString()
-            {
-                if (this.Arguments.Length == 0)
-                {
-                    return String.Format("[{0} for {1}]", this.Type, this.Column);
-                }
-
-                return String.Format("[{0} for {1} with ({2})]", this.Type, this.Column, String.Join(", ", this.Arguments));
-            }
         }
     }
 }

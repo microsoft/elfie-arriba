@@ -320,10 +320,10 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             if (this._length <= 0) return;
 
             int end = this._index + this._length;
-            for(int i = this._index; i < end; ++i)
+            for (int i = this._index; i < end; ++i)
             {
                 byte c = this._buffer[i];
-                if((byte)(c - UTF8.a) < UTF8.AlphabetLength)
+                if ((byte)(c - UTF8.a) < UTF8.AlphabetLength)
                 {
                     this._buffer[i] = (byte)(c - UTF8.ToUpperSubtract);
                 }

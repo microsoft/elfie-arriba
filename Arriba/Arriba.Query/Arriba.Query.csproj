@@ -68,10 +68,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DateHistogramPivotDimension.cs" />
-    <Compile Include="DistinctValuePivotDimension.cs" />
-    <Compile Include="PivotDimension.cs" />
-    <Compile Include="PivotQuery.cs" />
+    <Compile Include="DistinctValueDimension.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

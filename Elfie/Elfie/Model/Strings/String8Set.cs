@@ -167,7 +167,6 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         public static int GetLength(String8 value, char delimiter)
         {
             return GetLength(value, (byte)delimiter);
-
         }
         /// <summary>
         ///  Return the int[] length required for a buffer to split 'value'
