@@ -109,7 +109,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         /// </summary>
         public IReadOnlyList<string> Columns
         {
-            get { return this._columnHeadingsList; }
+            get { return _columnHeadingsList; }
         }
 
         /// <summary>
@@ -176,9 +176,9 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             String8 currentLine = _currentBlock[_nextRowIndexInBlock];
 
             // Strip leading UTF8 BOM, if found, on first row
-            if(_rowCountRead == 0)
+            if (_rowCountRead == 0)
             {
-                if(currentLine.Length >= 3 && currentLine[0] == 0xEF && currentLine[1] == 0xBB && currentLine[2] == 0xBF)
+                if (currentLine.Length >= 3 && currentLine[0] == 0xEF && currentLine[1] == 0xBB && currentLine[2] == 0xBF)
                 {
                     currentLine = currentLine.Substring(3);
                 }
