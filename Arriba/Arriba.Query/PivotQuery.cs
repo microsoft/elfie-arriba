@@ -12,7 +12,7 @@ namespace Arriba.Model.Query
 {
     public class PivotQuery : AggregationQuery
     {
-        public override void OnBeforeQuery(Table table)
+        public override void OnBeforeQuery(ITable table)
         {
             base.OnBeforeQuery(table);
 

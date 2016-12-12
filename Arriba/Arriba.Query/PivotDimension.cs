@@ -23,10 +23,10 @@ namespace Arriba.Model.Query
 
         public string Column { get; set; }
 
-        internal abstract void CalculateClauses(Table table, IExpression where);
+        internal abstract void CalculateClauses(ITable table, IExpression where);
 
 
-        protected bool TryGetScalarValue<T>(Table table, IExpression where, ScalarValueType type, out T value)
+        protected bool TryGetScalarValue<T>(ITable table, IExpression where, ScalarValueType type, out T value)
         {
             value = default(T);
             var cols = new List<string>() { this.Column, this.Column }; // BUG BUG 

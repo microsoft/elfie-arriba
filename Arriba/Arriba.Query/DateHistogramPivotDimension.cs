@@ -29,7 +29,7 @@ namespace Arriba.Model.Query
         public DateTime? To { get; set; }
         public DateHistogramInterval? Interval { get; set; }
 
-        internal override void CalculateClauses(Table table, IExpression where)
+        internal override void CalculateClauses(ITable table, IExpression where)
         {
             DateTime from, to = DateTime.Now;
 

@@ -24,7 +24,7 @@ namespace Arriba.Model.Query
             set;
         }
 
-        internal override void CalculateClauses(Table table, IExpression where)
+        internal override void CalculateClauses(ITable table, IExpression where)
         {
             var distinctQuery = new DistinctQuery
             {

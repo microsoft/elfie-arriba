@@ -129,7 +129,7 @@ namespace Arriba.Model.Query
             return result.ToString();
         }
 
-        public virtual void OnBeforeQuery(Table table)
+        public virtual void OnBeforeQuery(ITable table)
         {
             this.Where = this.Where ?? new AllExpression();
         }
