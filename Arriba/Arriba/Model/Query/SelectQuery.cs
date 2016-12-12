@@ -122,7 +122,7 @@ namespace Arriba.Model.Query
             return QueryParser.Parse(whereClause);
         }
 
-        private void Prepare(Table table)
+        private void Prepare(ITable table)
         {
             // Expand '*' to all columns if seen
             List<string> columns = new List<string>();
@@ -152,7 +152,7 @@ namespace Arriba.Model.Query
             this.Context = new SelectContext(this);
         }
 
-        private void ChooseItems(Table table)
+        private void ChooseItems(ITable table)
         {
             string idColumnName = table.IDColumn.Name;
 
@@ -181,7 +181,7 @@ namespace Arriba.Model.Query
             }
         }
 
-        public void OnBeforeQuery(Table table)
+        public void OnBeforeQuery(ITable table)
         {
             if (table == null) throw new ArgumentNullException("table");
 
