@@ -61,7 +61,7 @@ namespace Arriba.Model.Query
             get { return this.PrimaryQuery.RequireMerge; }
         }
 
-        public void OnBeforeQuery(Table table)
+        public void OnBeforeQuery(ITable table)
         {
             this.PrimaryQuery.OnBeforeQuery(table);
         }

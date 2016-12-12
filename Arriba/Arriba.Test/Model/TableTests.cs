@@ -358,12 +358,6 @@ namespace Arriba.Test.Model
                 });
         }
 
-        [TestMethod]
-        public void Table_LargeDataBasic()
-        {
-            ITable_LargeData(() => new Table("500K_Items", 500000));
-        }
-
         public void ITable_All(Func<ITable> factoryMethod, bool isEmpty = true)
         {
             if (isEmpty)
@@ -942,19 +936,6 @@ Title:unused, null
             SelectResult newResult = table.Query(query);
 
             Assert.AreEqual("Red;None;Blue;None;None", newResult.Values.GetColumn(2).Join(";"));
-        }
-
-        private void ITable_LargeData(Func<ITable> factoryMethod)
-        {
-            ITable table = factoryMethod();
-            BuildLargeSampleData(table);
-
-            SelectQuery query = new SelectQuery();
-            query.Columns = new string[] { "ID", "AllOnes" };
-            query.Count = 5;
-            SelectResult result = table.Query(query);
-
-            Assert.AreEqual(5, (int)result.CountReturned);
         }
 
         internal static void AddColumns(ITable table)
