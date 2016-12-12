@@ -33,12 +33,12 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
     ///     int descriptionIndex = r.ColumnIndex("Description");
     ///     int itemTypeIndex = r.ColumnIndex("ItemType");
     ///
-    ///     // Use NextRow() and CurrentRow(index) to read values
+    ///     // Use NextRow() and Current[index] to read values
     ///     while (r.NextRow())
     ///     {
-    ///         String8 title = r.CurrentRow(titleIndex);
-    ///         String8 description = r.CurrentRow(descriptionIndex);
-    ///         int itemType = r.CurrentRow(itemTypeIndex).ToInteger();
+    ///         String8 title = r.Current[titleIndex];
+    ///         String8 description = r.Current[descriptionIndex];
+    ///         int itemType = r.Current[itemTypeIndex].ToInteger();
     ///         
     ///         // COPY String8s to be kept
     ///     }
@@ -109,7 +109,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         /// </summary>
         public IReadOnlyList<string> Columns
         {
-            get { return this._columnHeadingsList; }
+            get { return _columnHeadingsList; }
         }
 
         /// <summary>
@@ -176,9 +176,9 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             String8 currentLine = _currentBlock[_nextRowIndexInBlock];
 
             // Strip leading UTF8 BOM, if found, on first row
-            if(_rowCountRead == 0)
+            if (_rowCountRead == 0)
             {
-                if(currentLine.Length >= 3 && currentLine[0] == 0xEF && currentLine[1] == 0xBB && currentLine[2] == 0xBF)
+                if (currentLine.Length >= 3 && currentLine[0] == 0xEF && currentLine[1] == 0xBB && currentLine[2] == 0xBF)
                 {
                     currentLine = currentLine.Substring(3);
                 }

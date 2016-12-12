@@ -7,10 +7,11 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 
+using Elfie.Test;
+
 using Microsoft.CodeAnalysis.Elfie.Extensions;
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Elfie.Test;
 
 namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
 {
@@ -145,7 +146,6 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
             String8 startInsensitive = String8.Convert("ONE", new byte[3]);
 
             Assert.AreEqual(0, start.CompareAsPrefixTo(full));
-            
         }
 
         [TestMethod]

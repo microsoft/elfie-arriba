@@ -64,7 +64,7 @@ namespace Arriba.Model.Query
             : this()
         {
             this.Aggregator = BuildAggregator(aggregationFunction);
-            this.AggregationColumns = new List<string>(columns).ToArray();
+            this.AggregationColumns = columns == null ? null : new List<string>(columns).ToArray();
             this.Where = QueryParser.Parse(where);
         }
 
@@ -132,6 +132,12 @@ namespace Arriba.Model.Query
         public virtual void OnBeforeQuery(ITable table)
         {
             this.Where = this.Where ?? new AllExpression();
+
+            // Allow dimensions to do pre-query work
+            foreach (AggregationDimension dimension in this.Dimensions)
+            {
+                dimension.OnBeforeQuery(table, this.Where);
+            }
         }
 
         public bool RequireMerge

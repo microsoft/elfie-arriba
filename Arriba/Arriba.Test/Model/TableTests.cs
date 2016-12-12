@@ -437,6 +437,17 @@ namespace Arriba.Test.Model
             Assert.AreEqual("11999", result.Values[0, 0].ToString());
             Assert.AreEqual("11643", result.Values[1, 0].ToString());
 
+            // Ask for only one item; verify one returned, total still correct
+            query.Count = 1;
+            query.OrderByColumn = "ID";
+            query.OrderByDescending = true;
+            result = table.Query(query);
+            Assert.AreEqual(2, (int)result.Total);
+            Assert.AreEqual(1, (int)result.CountReturned);
+            Assert.AreEqual(1, (int)result.Values.RowCount);
+            Assert.AreEqual("11999", result.Values[0, 0].ToString());
+            query.Count = 3;
+
             // Select a word in first item (cover a simple search and zero-LID handling)
             SelectQuery q2 = new SelectQuery();
             q2.Columns = new string[] { "ID" };

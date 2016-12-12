@@ -5,11 +5,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 
+using Elfie.Test;
+
+using Microsoft.CodeAnalysis.Elfie.Extensions;
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.CodeAnalysis.Elfie.Model.Structures;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Elfie.Test;
-using Microsoft.CodeAnalysis.Elfie.Extensions;
 
 namespace Microsoft.CodeAnalysis.Elfie.Test.Model
 {
@@ -236,71 +237,71 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model
             Assert.IsFalse(store.TryFindString(BOOLean, false, out booleanRange));
         }
 
-//#if !DEBUG
-//        [TestMethod]
-//#endif
-//        public void StringStore_Performance()
-//        {
-//            SelfIndex.EnsureSampleIndexBuilt();
-//            ImmutableStringStore store = new ImmutableStringStore();
-//            store.FileRead(SelfIndex.StringStorePath);
+        //#if !DEBUG
+        //        [TestMethod]
+        //#endif
+        //        public void StringStore_Performance()
+        //        {
+        //            SelfIndex.EnsureSampleIndexBuilt();
+        //            ImmutableStringStore store = new ImmutableStringStore();
+        //            store.FileRead(SelfIndex.StringStorePath);
 
-//            // Choose some sample values to find
-//            string[] valuesToFind =
-//            {
-//                        "BinaryReader",
-//                        "ConvertToImmutable",
-//                        "FileIO.cs",
-//                        "IBinarySerializable, string, bool",
-//                        "IWriteableString",
-//                        "string, string, bool, bool",
-//                        "WasMemberAdded",
-//                        "WriteTree",
-//                        "Action<Symbol>",
-//                        "IMemberDatabase, PartialArray<Symbol>"
-//                    };
-//            String8[] value8sToFind = new String8[valuesToFind.Length];
-//            Range[] identifiers = new Range[valuesToFind.Length];
+        //            // Choose some sample values to find
+        //            string[] valuesToFind =
+        //            {
+        //                        "BinaryReader",
+        //                        "ConvertToImmutable",
+        //                        "FileIO.cs",
+        //                        "IBinarySerializable, string, bool",
+        //                        "IWriteableString",
+        //                        "string, string, bool, bool",
+        //                        "WasMemberAdded",
+        //                        "WriteTree",
+        //                        "Action<Symbol>",
+        //                        "IMemberDatabase, PartialArray<Symbol>"
+        //                    };
+        //            String8[] value8sToFind = new String8[valuesToFind.Length];
+        //            Range[] identifiers = new Range[valuesToFind.Length];
 
-//            // Get identifiers and the values and confirm they work
-//            for (int i = 0; i < identifiers.Length; ++i)
-//            {
-//                Assert.IsTrue(store.TryFindString(valuesToFind[i], out identifiers[i]), string.Format("Could not find \"{0}\"", valuesToFind[i]));
-//                Assert.AreEqual(valuesToFind[i], store[identifiers[i].Start].ToString());
-//                value8sToFind[i] = String8.Convert(valuesToFind[i], new byte[String8.GetLength(valuesToFind[i])]);
-//            }
+        //            // Get identifiers and the values and confirm they work
+        //            for (int i = 0; i < identifiers.Length; ++i)
+        //            {
+        //                Assert.IsTrue(store.TryFindString(valuesToFind[i], out identifiers[i]), string.Format("Could not find \"{0}\"", valuesToFind[i]));
+        //                Assert.AreEqual(valuesToFind[i], store[identifiers[i].Start].ToString());
+        //                value8sToFind[i] = String8.Convert(valuesToFind[i], new byte[String8.GetLength(valuesToFind[i])]);
+        //            }
 
-//            // Measure these operations in a tight loop [~2M/sec with case insensitive range for string]
-//            // TryFindString Goal: 2M/sec
-//            Verify.PerformanceByOperation(2 * LongExtensions.Million, () =>
-//            {
-//                int iterations = 10000;
-//                for (int iteration = 0; iteration < iterations; ++iteration)
-//                {
-//                    for (int i = 0; i < identifiers.Length; ++i)
-//                    {
-//                        store.TryFindString(value8sToFind[i], out identifiers[i]);
-//                    }
-//                }
+        //            // Measure these operations in a tight loop [~2M/sec with case insensitive range for string]
+        //            // TryFindString Goal: 2M/sec
+        //            Verify.PerformanceByOperation(2 * LongExtensions.Million, () =>
+        //            {
+        //                int iterations = 10000;
+        //                for (int iteration = 0; iteration < iterations; ++iteration)
+        //                {
+        //                    for (int i = 0; i < identifiers.Length; ++i)
+        //                    {
+        //                        store.TryFindString(value8sToFind[i], out identifiers[i]);
+        //                    }
+        //                }
 
-//                return iterations * identifiers.Length;
-//            });
+        //                return iterations * identifiers.Length;
+        //            });
 
-//            // GetString Goal: 20M/sec
-//            Verify.PerformanceByOperation(20 * LongExtensions.Million, () =>
-//            {
-//                int iterations = 100000;
-//                for (int iteration = 0; iteration < iterations; ++iteration)
-//                {
-//                    for (int i = 0; i < identifiers.Length; ++i)
-//                    {
-//                        String8 value = store[identifiers[i].Start];
-//                    }
-//                }
+        //            // GetString Goal: 20M/sec
+        //            Verify.PerformanceByOperation(20 * LongExtensions.Million, () =>
+        //            {
+        //                int iterations = 100000;
+        //                for (int iteration = 0; iteration < iterations; ++iteration)
+        //                {
+        //                    for (int i = 0; i < identifiers.Length; ++i)
+        //                    {
+        //                        String8 value = store[identifiers[i].Start];
+        //                    }
+        //                }
 
-//                return iterations * identifiers.Length;
-//            });
-//        }
+        //                return iterations * identifiers.Length;
+        //            });
+        //        }
 
         private static IStringStore Convert(MutableStringStore store, int[] identifiers = null)
         {

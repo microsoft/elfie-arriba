@@ -21,7 +21,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Diagnostics
         public TraceWatch(string message)
         {
             this.Watch = Stopwatch.StartNew();
-            if(!String.IsNullOrEmpty(message)) Trace.WriteLine(message);
+            if (!String.IsNullOrEmpty(message)) Trace.WriteLine(message);
         }
 
         public TraceWatch(string format, params object[] arguments) : this(String.Format(CultureInfo.InvariantCulture, format, arguments))

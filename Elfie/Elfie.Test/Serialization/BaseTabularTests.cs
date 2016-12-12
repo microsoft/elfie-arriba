@@ -1,11 +1,16 @@
-﻿using Elfie.Test;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
+using System.Collections.Generic;
+using System.IO;
+
+using Elfie.Test;
+
 using Microsoft.CodeAnalysis.Elfie.Extensions;
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.CodeAnalysis.Elfie.Serialization;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
-using System.Collections.Generic;
-using System.IO;
 
 namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
 {
@@ -64,7 +69,6 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
 
                         // Wipe out what was written
                         stream.Seek(rowStartPosition, SeekOrigin.Begin);
-                        
                     }
                     else if (i == 5000)
                     {
@@ -210,7 +214,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
             Assert.AreEqual(fileBefore, fileAfter);
         }
 
-        public void Reader_Performance(string sampleFilePath, Func<string,bool, BaseTabularReader> buildReader)
+        public void Reader_Performance(string sampleFilePath, Func<string, bool, BaseTabularReader> buildReader)
         {
             long rowCountRead = 0;
             long xsvLengthBytes = new FileInfo(sampleFilePath).Length;
@@ -347,13 +351,13 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
                     long position = stream.Position;
                     w.NextRow();
 
-                    if(row == 0)
+                    if (row == 0)
                     {
                         // Row 0 - newline only
                         stream.Seek(position, SeekOrigin.Begin);
                         stream.WriteByte(UTF8.Newline);
                     }
-                    else if(row == 2)
+                    else if (row == 2)
                     {
                         // Row 2 - no end of line
                         stream.SetLength(position);
