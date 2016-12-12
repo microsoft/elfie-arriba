@@ -32,7 +32,7 @@ namespace Arriba.Test.Model
         [TestMethod]
         public void LargeTable_SelectBasic()
         {
-            ITable table = new Table("Sample", 1000000);
+            ITable table = CreateLargeTable();
             BuildLargeSampleData(table);
 
             SelectQuery query = new SelectQuery();
@@ -40,7 +40,7 @@ namespace Arriba.Test.Model
             query.Count = 5;
             SelectResult result = table.Query(query);
 
-            Assert.AreEqual(5, (int)result.Total);
+            Assert.AreEqual(100000, (int)result.Total);
         }
 
         //[TestMethod]
@@ -56,15 +56,7 @@ namespace Arriba.Test.Model
             // ID but that isn't considered when Compute obtains the list of 
             // LIDs to return
 
-
-            ITable table = new Table("Sample", 1000000)
-            {
-                ParallelOptions = new System.Threading.Tasks.ParallelOptions()
-                {
-                    MaxDegreeOfParallelism = 4
-                }
-            };
-
+            ITable table = CreateLargeTable();
             BuildLargeSampleData(table);
 
             SelectQuery query = new SelectQuery();
@@ -87,6 +79,19 @@ namespace Arriba.Test.Model
             {
                 AssertBlockEquals(resultArray[i].Values, expected);
             }
+        }
+
+        internal static ITable CreateLargeTable()
+        {
+            ITable table = new Table("Sample", 1000000)
+            {
+                ParallelOptions = new System.Threading.Tasks.ParallelOptions()
+                {
+                    MaxDegreeOfParallelism = 4
+                }
+            };
+
+            return table;
         }
 
         internal static void BuildLargeSampleData(ITable table)
