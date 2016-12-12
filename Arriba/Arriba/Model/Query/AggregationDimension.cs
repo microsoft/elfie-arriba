@@ -52,7 +52,7 @@ namespace Arriba.Model.Query
             this.AddConditions(conditions);
         }
 
-        public virtual void OnBeforeQuery(Table table, IExpression baseWhere)
+        public virtual void OnBeforeQuery(ITable table, IExpression baseWhere)
         {
 
         }
