@@ -115,6 +115,7 @@ namespace Arriba.Model.Query
         {
             if (partitionResults == null) throw new ArgumentNullException("partitionResults");
             if (partitionResults.Length == 0) throw new ArgumentException("Length==0 not supported", "partitionResults");
+            if (!partitionResults[0].Details.Succeeded) return partitionResults[0];
 
             DistinctResult mergedResult = new DistinctResult(this);
             mergedResult.ColumnType = partitionResults[0].ColumnType;
