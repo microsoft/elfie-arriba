@@ -167,6 +167,16 @@ namespace Arriba.Test
                 return false;
             }
 
+            public static bool operator==(ComparableColor left, ComparableColor right)
+            {
+                return left.ColorValue == right.ColorValue;
+            }
+
+            public static bool operator!=(ComparableColor left, ComparableColor right)
+            {
+                return left.ColorValue != right.ColorValue;
+            }
+
             public override int GetHashCode()
             {
                 return this.ColorValue.GetHashCode();

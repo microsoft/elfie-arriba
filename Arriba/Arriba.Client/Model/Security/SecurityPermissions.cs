@@ -4,15 +4,22 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Serialization;
 
 using Arriba.Serialization;
 using Newtonsoft.Json;
 
 namespace Arriba.Model.Security
 {
-    [JsonArray]
+    [JsonArray, Serializable]
     public class SecuredSet<T> : Dictionary<SecurityIdentity, T>
-    { }
+    {
+        public SecuredSet() : base()
+        { }
+
+        protected SecuredSet(SerializationInfo info, StreamingContext context) : base(info, context)
+        { }
+    }
 
     /// <summary>
     /// Represents access permissions to a resource. 
