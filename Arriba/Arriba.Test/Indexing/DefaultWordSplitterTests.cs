@@ -5,10 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Text;
 using System.Threading.Tasks;
 
-using Arriba.Diagnostics;
 using Arriba.Extensions;
 using Arriba.Indexing;
 using Arriba.Structures;
@@ -20,7 +18,7 @@ namespace Arriba.Test.Indexing
     [TestClass]
     public class DefaultWordSplitterTests : WordSplitterTestBase
     {
-        private const string filePath = @"..\..\..\Arriba\Model\Table.cs";
+        private const string SampleFilePath = @"..\..\Arriba\Model\Table.cs";
 
         public DefaultWordSplitterTests() :
             base(new DefaultWordSplitter())
@@ -51,7 +49,7 @@ namespace Arriba.Test.Indexing
             Stopwatch w = Stopwatch.StartNew();
             Trace.WriteLine("Splitting all bug strings (compare)");
 
-            using (System.IO.StreamReader reader = new System.IO.StreamReader(filePath))
+            using (System.IO.StreamReader reader = new System.IO.StreamReader(SampleFilePath))
             {
                 // 100ms just reading
                 string line;
@@ -100,7 +98,7 @@ namespace Arriba.Test.Indexing
             Stopwatch w = Stopwatch.StartNew();
             Trace.WriteLine("Splitting all bug strings (compare)");
 
-            using (System.IO.StreamReader reader = new System.IO.StreamReader(filePath))
+            using (System.IO.StreamReader reader = new System.IO.StreamReader(SampleFilePath))
             {
                 byte[] buffer = new byte[8 * 1024];
 
@@ -145,7 +143,7 @@ namespace Arriba.Test.Indexing
             Stopwatch w = Stopwatch.StartNew();
             Trace.WriteLine("Splitting all bug strings (compare)");
 
-            Parallel.ForEach(ReadBlocks(filePath), (buffer) =>
+            Parallel.ForEach(ReadBlocks(SampleFilePath), (buffer) =>
             {
                 // Wrong - need to figure out how to tell.
                 int length = 8 * 1024;//reader.BaseStream.Read(buffer, 0, buffer.Length);
