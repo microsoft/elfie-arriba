@@ -348,7 +348,7 @@ namespace Arriba.Server
             }
         }
 
-        private async Task<IResponse> Query<T>(IRequestContext ctx, Route route, IQuery<T> query)
+        private IResponse Query<T>(IRequestContext ctx, Route route, IQuery<T> query)
         {
             IQuery<T> wrappedQuery = WrapInJoinQueryIfFound(query, this.Database, ctx);
 
@@ -378,7 +378,7 @@ namespace Arriba.Server
         private async Task<IResponse> Aggregate(IRequestContext ctx, Route route)
         {
             IQuery<AggregationResult> query = await BuildAggregateFromContext(ctx);
-            return await Query(ctx, route, query);
+            return Query(ctx, route, query);
         }
 
         private static async Task<AggregationQuery> BuildAggregateFromContext(IRequestContext ctx)
@@ -422,7 +422,7 @@ namespace Arriba.Server
         private async Task<IResponse> Distinct(IRequestContext ctx, Route route)
         {
             IQuery<DistinctResult> query = await BuildDistinctFromContext(ctx);
-            return await Query(ctx, route, query);
+            return Query(ctx, route, query);
         }
 
         private async static Task<DistinctQuery> BuildDistinctFromContext(IRequestContext ctx)

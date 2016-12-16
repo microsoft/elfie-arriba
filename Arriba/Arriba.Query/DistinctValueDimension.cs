@@ -26,9 +26,17 @@ namespace Arriba.Model.Query
 
             var result = table.Query(distinctQuery);
 
-            for (var i = 0; i < result.Values.RowCount; i++)
+            if (result.Details.Succeeded)
             {
-                this.AddCondition(StringExtensions.Format("[{0}]=\"{1}\"", this.Column, result.Values[i, 0]));
+                for (var i = 0; i < result.Values.RowCount; i++)
+                {
+                    this.AddCondition(StringExtensions.Format("[{0}]=\"{1}\"", this.Column, result.Values[i, 0]));
+                }
+            }
+            else
+            {
+                // If the column doesn't exist or the query fails, add one dimension value so the overall AggregationQuery will return a good error
+                this.AddCondition(StringExtensions.Format("[{0}]=\"\"", this.Column));
             }
         }
     }
