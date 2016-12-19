@@ -30,16 +30,17 @@ namespace Arriba.Test.Serialization
                     writer.AppendRow(new object[] { 1523, new DateTime(2014, 01, 02), "Value\r\nrequiring escaping." });
                     writer.AppendRow(new object[] { 1524, new DateTime(2014, 01, 03), (ByteBlock)"ByteBlock Value" });
 
-                    Assert.AreEqual(
-@"ID,Changed Date,Title
-1519,2013-12-29 08:00:00Z,Value with no escaping.
-1520,2013-12-30 08:00:00Z,""Value with quote """"escaping"""".""
-1521,2013-12-31 08:00:00Z,""Value, escaping required.""
-1522,2014-01-01 08:00:00Z,""Value, escaping and """"quote wrapping"""" required.""
-1523,2014-01-02 08:00:00Z,""Value
-requiring escaping.""
-1524,2014-01-03 08:00:00Z,ByteBlock Value
-", GetStreamContent(context));
+                    string expected =
+@"ID,Changed Date,Title" + Environment.NewLine +
+@"1519,2013-12-29 08:00:00Z,Value with no escaping." + Environment.NewLine +
+@"1520,2013-12-30 08:00:00Z,""Value with quote """"escaping"""".""" + Environment.NewLine +
+@"1521,2013-12-31 08:00:00Z,""Value, escaping required.""" + Environment.NewLine +
+@"1522,2014-01-01 08:00:00Z,""Value, escaping and """"quote wrapping"""" required.""" + Environment.NewLine +
+@"1523,2014-01-02 08:00:00Z,""Value" + Environment.NewLine +
+@"requiring escaping.""" + Environment.NewLine +
+@"1524,2014-01-03 08:00:00Z,ByteBlock Value" + Environment.NewLine;
+                    string actual = GetStreamContent(context);
+                    Assert.AreEqual(expected, actual);
                 }
 
                 // Verify CsvWriter.Dispose disposed the stream
@@ -62,11 +63,12 @@ requiring escaping.""
                 writer = new CsvWriter(context, new string[] { "ID", "Changed Date", "Title" });
                 writer.AppendRow(new object[] { 1521, new DateTime(2013, 12, 31), "Value, escaping required." });
 
-                Assert.AreEqual(
-@"ID,Changed Date,Title
-1520,2013-12-30 08:00:00Z,Value with no escaping.
-1521,2013-12-31 08:00:00Z,""Value, escaping required.""
-", GetStreamContent(context));
+                string expected = 
+@"ID,Changed Date,Title" + Environment.NewLine +
+@"1520,2013-12-30 08:00:00Z,Value with no escaping." + Environment.NewLine +
+@"1521,2013-12-31 08:00:00Z,""Value, escaping required.""" + Environment.NewLine;
+                string actual = GetStreamContent(context);
+                Assert.AreEqual(expected, actual);
             }
         }
 
@@ -86,17 +88,18 @@ requiring escaping.""
                     writer.AppendRow(new object[] { new byte[] { 49, 50, 51 } });
                     writer.AppendRow(new object[] { Guid.Empty });
 
-                    Assert.AreEqual(
-@"Value
-
-True
-127
-2013-01-01 08:00:00Z
-String
-ByteBlock
-123
-00000000-0000-0000-0000-000000000000
-", GetStreamContent(context));
+                    string expected = 
+@"Value" + Environment.NewLine +
+@"" + Environment.NewLine +
+@"True" + Environment.NewLine +
+@"127" + Environment.NewLine +
+@"2013-01-01 08:00:00Z" + Environment.NewLine +
+@"String" + Environment.NewLine +
+@"ByteBlock" + Environment.NewLine +
+@"123" + Environment.NewLine +
+@"00000000-0000-0000-0000-000000000000" + Environment.NewLine;
+                    string actual = GetStreamContent(context);
+                    Assert.AreEqual(expected, actual);
                 }
             }
         }

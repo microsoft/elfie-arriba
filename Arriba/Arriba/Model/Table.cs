@@ -359,6 +359,7 @@ namespace Arriba.Model
         ///  For each item, the value for each column is set to the provided values.
         /// </summary>
         /// <param name="values">Set of Columns and values to add or update</param>
+        /// <param name="options">Options to adjust behavior of AddOrUpdate</param>
         public void AddOrUpdate(DataBlock values, AddOrUpdateOptions options)
         {
             _locker.EnterWriteLock();
