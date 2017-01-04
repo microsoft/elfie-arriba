@@ -124,12 +124,7 @@ namespace Arriba.Server
 
             query.Where = SelectQuery.ParseWhere(ctx.Request.ResourceParameters["q"]);
             query.OrderByColumn = ctx.Request.ResourceParameters["ob"];
-
-            string columns = ctx.Request.ResourceParameters["cols"];
-            if (!String.IsNullOrEmpty(columns))
-            {
-                query.Columns = columns.Split(',');
-            }
+            query.Columns = ReadParameterSet(ctx.Request, "c", "cols");
 
             string take = ctx.Request.ResourceParameters["t"];
             if (!String.IsNullOrEmpty(take))
@@ -160,15 +155,63 @@ namespace Arriba.Server
             return query;
         }
 
+        /// <summary>
+        ///  Read a set of parameters into a List (C1=X&C2=Y&C3=Z) => { "X", "Y", "Z" }.
+        /// </summary>
+        /// <param name="request">IRequest to read from</param>
+        /// <param name="baseName">Parameter name before numbered suffix ('C' -> look for 'C1', 'C2', ...)</param>
+        /// <returns>List&lt;string&gt; containing values for the parameter set, if any are found, otherwise an empty list.</returns>
+        protected static List<string> ReadParameterSet(IRequest request, string baseName)
+        {
+            List<string> result = new List<string>();
+
+            int i = 1;
+            while(true)
+            {
+                string value = request.ResourceParameters[baseName + i.ToString()];
+                if (String.IsNullOrEmpty(value)) break;
+
+                result.Add(value);
+                ++i;
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        ///  Read a set of parameters into a List, allowing a single comma-delimited fallback value.
+        ///  (C1=X&C2=Y&C3=Z or Cols=X,Y,Z) => { "X", "Y", "Z" }
+        /// </summary>
+        /// <param name="request">IRequest to read from</param>
+        /// <param name="nameIfSeparate">Parameter name prefix if parameters are passed separately ('C' -> look for 'C1', 'C2', ...)</param>
+        /// <param name="nameIfDelimited">Parameter name if parameters are passed together comma delimited ('Cols')</param>
+        /// <returns>List&lt;string&gt; containing values for the parameter set, if any are found, otherwise an empty list.</returns>
+        protected static List<string> ReadParameterSet(IRequest request, string nameIfSeparate, string nameIfDelimited)
+        {
+            List<string> result = ReadParameterSet(request, nameIfSeparate);
+
+            if (result.Count == 0)
+            {
+                string delimitedValue = request.ResourceParameters[nameIfDelimited];
+                if(!String.IsNullOrEmpty(delimitedValue))
+                {
+                    result = new List<string>(delimitedValue.Split(','));
+                }
+            }
+
+            return result;
+        }
+
         private static IQuery<T> WrapInJoinQueryIfFound<T>(IQuery<T> primaryQuery, Database db, IRequestContext ctx)
         {
             List<SelectQuery> joins = new List<SelectQuery>();
 
-            for(int queryIndex = 1; ctx.Request.ResourceParameters.Contains("q" + queryIndex.ToString()); ++queryIndex)
+            List<string> joinQueries = ReadParameterSet(ctx.Request, "q");
+            List<string> joinTables = ReadParameterSet(ctx.Request, "t");
+
+            for(int queryIndex = 0; queryIndex < Math.Min(joinQueries.Count, joinTables.Count); ++queryIndex)
             {
-                string where = ctx.Request.ResourceParameters["q" + queryIndex.ToString()];
-                string table = ctx.Request.ResourceParameters["t" + queryIndex.ToString()];
-                joins.Add(new SelectQuery() { Where = SelectQuery.ParseWhere(where), TableName = table });
+                joins.Add(new SelectQuery() { Where = SelectQuery.ParseWhere(joinQueries[queryIndex]), TableName = joinTables[queryIndex] });
             }
 
             if(joins.Count == 0)
@@ -401,12 +444,11 @@ namespace Arriba.Server
                 query.Where = String.IsNullOrEmpty(queryString) ? new AllExpression() : SelectQuery.ParseWhere(queryString);
             }
 
-            for(int i = 1; ctx.Request.ResourceParameters.Contains("d" + i); ++i)
+            for(char dimensionPrefix = 'd'; ctx.Request.ResourceParameters.Contains(dimensionPrefix.ToString() + "1"); ++dimensionPrefix)
             {
-                string dimension = ctx.Request.ResourceParameters["d" + i];
-                string[] dimensionParts = dimension.Split(',');
+                List<string> dimensionParts = ReadParameterSet(ctx.Request, dimensionPrefix.ToString());
 
-                if (dimensionParts.Length == 1 && dimensionParts[0].EndsWith(">"))
+                if (dimensionParts.Count == 1 && dimensionParts[0].EndsWith(">"))
                 {
                     query.Dimensions.Add(new DistinctValueDimension(dimensionParts[0].TrimEnd('>')));
                 }
