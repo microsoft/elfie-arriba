@@ -49,6 +49,17 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Map
             return this._immutableMap.LinksFrom(sourceItemIndex);
         }
 
+        public int Count
+        {
+            get
+            {
+                int total = 0;
+                if (this._immutableMap != null) total += this._immutableMap.Count;
+                if (this._mutableMap != null) total += this._mutableMap.Count;
+                return total;
+            }
+        }
+
         #region IColumn
         public void Clear()
         {
