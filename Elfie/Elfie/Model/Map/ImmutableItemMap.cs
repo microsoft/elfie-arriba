@@ -66,6 +66,14 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Map
             }
         }
 
+        /// <summary>
+        ///  Return the count of links in the Map (so far)
+        /// </summary>
+        public int Count
+        {
+            get { return this._memberIndices.Count; }
+        }
+
         #region IBinarySerializable
         public void ReadBinary(BinaryReader r)
         {
