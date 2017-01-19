@@ -1,0 +1,234 @@
+﻿/* Goals:
+    - Header [full width, fixed height]
+    - Left and Right sides [fixed width, full height]
+    - Middle content [remaining width and height, scrollable]
+    - Footer [full width, fixed height]
+
+   Requirements:
+    - Ancestors of the root flow element *all* must have "width: 100%; height 100%" in order to fill viewport height.
+    - All ancestors of the scrolling element must have "overflow: hidden" to coerce the main element into scrolling [Edge]
+*/
+
+/* --- Overall Layout --- */
+/* Make all root elements full height/width, unpadded, and non-scrolling */
+html, body, .viewport {
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    margin: 0;
+
+    overflow: hidden;
+}
+
+/* Make root element flow contents as columns (fill the height) */
+.viewport {
+    display: flex;
+    flex-flow: column;
+}
+
+/* Make the header fixed height */
+.header {
+    height: 64px;
+    min-height: 64px;
+
+    display: flex;
+    flex-flow: row;
+}
+
+/* Make the search bar fill header width. Make contents also fill inner width */
+.searchBar {
+    flex: 1;
+
+    display: flex;
+    flex-flow: row;
+}
+
+/* Make the middle area resize and full width.
+    - Make contents of it flow across.
+    - Ensure it's non-scrollable so the content will be scrollable
+*/
+.middle {
+    flex: 1 100%;
+    background: #999;
+
+    display: flex;
+    flex-flow: row;
+
+    overflow: hidden;
+}
+
+/* Make the footer fixed height */
+.footer {
+    background: #999;
+    height: 32px;
+    min-height: 32px;
+}
+
+/* Make the left bar fixed width */
+.mode {
+    width: 53px;
+}
+
+/* Make the center [between left and right] full width, contents share height */
+.center {
+    flex: 1 100%;
+
+    display: flex;
+    flex-flow: column;
+
+    overflow: hidden;
+}
+
+/* Make query stats fixed height */
+.queryStats {
+    height: 32px;
+}
+
+/* Make the main content panel scrollable */
+.results {
+    flex: 1 100%;
+
+    background: #F5F5F5;
+    overflow: auto;
+    padding: 16px;
+}
+
+/* Make the right bar fixed width */
+.right {
+    background: #999;
+    padding: 8px;
+    width: 100px;
+}
+
+/* --- Basic Look and Feel --- */
+
+/* Set default font, font-size, and background (light grey) */
+body {
+    font-family: "Segoe UI", "Segoe WP", Tahoma, Arial, sans-serif;
+    font-size: 14px;
+    background: #f5f5f5;
+    color: #444444;
+}
+
+/* Top Left Title - White on Dark Green, middle aligned */
+.title {
+    cursor: default;
+    padding: 16px 8px;
+    background: #00751F;
+    vertical-align: middle;
+    font-size: 18pt;
+    font-family: "Segoe UI Light", "Segoe UI", "Segoe WP", Tahoma, Arial, sans-serif;
+}
+
+.icon {
+    font-family: "Segoe UI Symbol"
+}
+
+/* Header is middle green */
+.header {
+    background: #0DBA3A;
+}
+
+/* The title is a link; fix it to look like plain text */
+.header .title a {
+    color: white;
+    font-weight: normal;
+    text-decoration: none;
+}
+
+/* Make the search box large, fill the space, well padded, slightly grey */
+.header .searchBar input {
+    font-size: 16pt;
+    box-sizing: border-box;
+    border: none;
+    margin: 8px;
+    margin-right: 0px;
+    width: 100%;
+    padding: 8px;
+    color: #666666;
+    background: #F7F7F7;
+}
+
+/* Make the search icon (magnifying glass) the same as the search box and right next to it */
+.header .searchBar .searchIcon {
+    font-size: 16pt;
+    color: #666666;
+    background: #F7F7F7;
+    padding: 8px;
+    margin: 8px;
+    margin-left: 0px;
+}
+
+/* Make the buttons (top right) large, white on dark green */
+.buttons a {
+    display: inline-block;
+    height: 48px;
+    width: 48px;
+    margin: 8px 8px 0px 0px;
+
+    font-size: 20px;
+    color: white;
+    background: #019428;
+    text-decoration: none;
+}
+
+/* Center the icons within the buttons */
+.buttons a i {
+    margin: 12px;
+}
+
+/* Make mode bar white on darker green, sized for icons, animated */
+.mode {
+    color: white;
+    background: #019428;
+    width: 53px;
+    overflow: hidden;
+    transition: all 0.3s ease-in;
+    transition-delay: 0.3s;
+}
+
+/* Make the currently selected mode grey on light grey (match main panel background) */
+.mode .selected {
+    color: #666666;
+    background: #F5F5F5;
+}
+
+/* Make the currently selected mode light up on hover but keep the matching background */
+.mode .selected:hover {
+    color: #222222;
+    background: #F5F5F5;
+}
+
+/* Make mode bar modes large icons */
+.mode a {
+    display: block;
+    width: 200px;
+    padding: 12px;
+
+    font-size: 12pt;
+    color: #EEEEEE;
+    text-decoration: none;
+
+    transition: all 0.2s ease-in;
+    transition-delay: 0s;
+}
+
+/* Make mode bar buttons glow on hover */
+.mode a:hover {
+    background: #0DBA3A;
+}
+
+/* Make mode bar icons large and spaced */
+.mode a i {
+    font-size: 22px;
+    margin-right: 12px;
+}
+
+/* Add an oversized content item to see scrolling */
+.big {
+    width: 800px;
+    height: 800px;
+    border: solid 1px black;
+    background: beige;
+}
+
