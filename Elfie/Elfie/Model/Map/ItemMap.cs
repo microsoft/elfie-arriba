@@ -34,7 +34,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Map
         /// <param name="memberIndex">Index of item to which to link</param>
         public void AddLink(int groupIndex, int memberIndex)
         {
-            if (this._mutableMap == null) throw new InvalidOperationException();
+            if (this._mutableMap == null) this._mutableMap = new MutableItemMap<T>(this._provider);
             this._mutableMap.AddLink(groupIndex, memberIndex);
         }
 
@@ -49,11 +49,22 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Map
             return this._immutableMap.LinksFrom(sourceItemIndex);
         }
 
+        public int Count
+        {
+            get
+            {
+                int total = 0;
+                if (this._immutableMap != null) total += this._immutableMap.Count;
+                if (this._mutableMap != null) total += this._mutableMap.Count;
+                return total;
+            }
+        }
+
         #region IColumn
         public void Clear()
         {
             this._immutableMap = null;
-            this._mutableMap = new MutableItemMap<T>(this._provider);
+            this._mutableMap = null;
         }
 
         public void AddItem()
@@ -75,6 +86,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Map
 
         public void ReadBinary(BinaryReader r)
         {
+            this._mutableMap = null;
             this._immutableMap = new ImmutableItemMap<T>(this._provider);
             this._immutableMap.ReadBinary(r);
         }
