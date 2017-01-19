@@ -70,5 +70,13 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Map
 
             return newMap;
         }
+
+        /// <summary>
+        ///  Return the count of links in the Map (so far)
+        /// </summary>
+        public int Count
+        {
+            get { return this._memberIndices.Count; }
+        }
     }
 }
