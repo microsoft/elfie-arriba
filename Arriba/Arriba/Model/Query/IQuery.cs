@@ -28,7 +28,7 @@ namespace Arriba.Model.Query
         ///  multi-step queries.
         /// </summary>
         /// <param name="table">Table being queried</param>
-        void OnBeforeQuery(Table table);
+        void OnBeforeQuery(ITable table);
 
         /// <summary>
         ///  Correct all IExpressions using the provided corrector before evaluation.
