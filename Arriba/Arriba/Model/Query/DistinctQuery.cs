@@ -53,7 +53,7 @@ namespace Arriba.Model.Query
             this.Count = count;
         }
 
-        public void OnBeforeQuery(Table table)
+        public void OnBeforeQuery(ITable table)
         {
             this.Where = this.Where ?? new AllExpression();
         }
