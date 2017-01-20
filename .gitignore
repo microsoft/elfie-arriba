@@ -214,8 +214,6 @@ _Pvt_Extensions/
 ModelManifest.xml
 
 Microsoft.CodeAnalysis.Elfie.dll.*
-/ActiveDirectoryExpander
-/ActiveDirectoryExpander.zip
 *.addb
-/Elfie/Elfie.Test/Sample.tsv
 *.zip
+Arriba/Arriba.Web/configuration/
