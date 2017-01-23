@@ -1,0 +1,377 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Conflux Layout Sample</title>
+    <link href="../Search.css" rel="stylesheet" />
+    <link href="../segoe-symbol.css" rel="stylesheet" />
+</head>
+<body>
+    <div id="container" class="viewport">
+        <div class="header">
+            <div class="title">
+                <a href="/">Conflux</a>
+            </div>
+            <div class="searchBar">
+                <input type="text" id="searchBox" placeholder="Search for Asset, Employees..." tabindex="1" />
+                <div class="searchIcon">
+                    <i class="icon-find"></i>
+                </div>
+            </div>
+            <div class="buttons">
+                <a href="mailto:v-scolo@microsoft.com;mikefan@microsoft.com?subject=Conflux Search%20Feedback">
+                    <i class="icon icon-emoji2" title="Feedback"></i>
+                </a>
+                <a href="/?help=true">
+                    <i class="icon icon-help" title="Help"></i>
+                </a>
+            </div>
+        </div>
+        <div class="middle">
+            <div class="mode">
+                <a>
+                    <i class="icon icon-details"></i>
+                    <span>Listing</span>
+                </a>
+                <a class="selected">
+                    <i class="icon icon-view-all-albums"></i>
+                    <span>Grid</span>
+                </a>
+            </div>
+            <div class="center">
+                <div class="queryStats">
+                    <span class="current statsForTable">
+                        <span class="countValue">136,749</span>
+                        <span class="tableName">Asset</span>
+                    </span>
+                    <span class="statsForTable">
+                        <span class="error-icon icon"></span>
+                        <span class="tableName">Employee</span>
+                    </span>
+                    <span>
+                        <!-- react-text: 35 -->for <!-- /react-text -->
+                        <span class="h">IsBaseline = 1</span>
+                    </span>
+                </div>
+                <div class="results">
+                    <div class="grid">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <td>
+                                            <div class="clickable">
+                                                <span>COUNT(*)</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="clickable">
+                                                <span>S1="Universal Store"</span>
+                                                <span class="icon-cancel icon-column-heading"></span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="clickable">
+                                                <span>S1=Xbox</span>
+                                                <span class="icon-cancel icon-column-heading"></span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="clickable">
+                                                <span>S1=Core</span>
+                                                <span class="icon-cancel icon-column-heading"></span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="clickable">
+                                                <span>S1=MDG</span>
+                                                <span class="icon-cancel icon-column-heading"></span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="clickable">
+                                                <span>All</span>
+                                                <div class="add-column-button icon-add icon-column-heading"></div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>
+                                            <div class="clickable">
+                                                <span>IsScanned=1</span>
+                                                <span class="icon-cancel icon-column-heading"></span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div style="box-shadow: rgba(88, 207, 119, 0.498039) 124.894px 0px 0px inset;">
+                                                <a href="/?t=Asset&amp;q=IsBaseline%20%3D%201%20AND%20IsScanned%20%3D%201%20AND%20S1%20%3D%20%22Universal%20Store%22"><span>65,641</span></a>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div style="box-shadow: rgba(61, 86, 194, 0.498039) 125.013px 0px 0px inset;">
+                                                <a href="/?t=Asset&amp;q=IsBaseline%20%3D%201%20AND%20IsScanned%20%3D%201%20AND%20S1%20%3D%20Xbox"><span>29,848</span></a>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div style="box-shadow: rgba(81, 164, 183, 0.498039) 121.614px 0px 0px inset;">
+                                                <a href="/?t=Asset&amp;q=IsBaseline%20%3D%201%20AND%20IsScanned%20%3D%201%20AND%20S1%20%3D%20Core"><span>17,630</span></a>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div style="box-shadow: rgba(255, 181, 108, 0.498039) 137.288px 0px 0px inset;">
+                                                <a href="/?t=Asset&amp;q=IsBaseline%20%3D%201%20AND%20IsScanned%20%3D%201%20AND%20S1%20%3D%20MDG"><span>324</span></a>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div style="box-shadow: rgba(88, 207, 119, 0.498039) 124.436px 0px 0px inset;">
+                                                <a href="/?t=Asset&amp;q=IsBaseline%20%3D%201%20AND%20IsScanned%20%3D%201"><span>113,443</span></a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="clickable">
+                                                <span>IsPatchCompliant=1</span>
+                                                <span class="icon-cancel icon-column-heading"></span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div style="box-shadow: rgba(88, 207, 119, 0.498039) 104.45px 0px 0px inset;">
+                                                <a href="/?t=Asset&amp;q=IsBaseline%20%3D%201%20AND%20IsPatchCompliant%20%3D%201%20AND%20S1%20%3D%20%22Universal%20Store%22"><span>54,896</span></a>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div style="box-shadow: rgba(61, 86, 194, 0.498039) 118.248px 0px 0px inset;">
+                                                <a href="/?t=Asset&amp;q=IsBaseline%20%3D%201%20AND%20IsPatchCompliant%20%3D%201%20AND%20S1%20%3D%20Xbox"><span>28,233</span></a>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div style="box-shadow: rgba(81, 164, 183, 0.498039) 83.2329px 0px 0px inset;">
+                                                <a href="/?t=Asset&amp;q=IsBaseline%20%3D%201%20AND%20IsPatchCompliant%20%3D%201%20AND%20S1%20%3D%20Core"><span>12,066</span></a>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div style="box-shadow: rgba(255, 181, 108, 0.498039) 129.661px 0px 0px inset;">
+                                                <a href="/?t=Asset&amp;q=IsBaseline%20%3D%201%20AND%20IsPatchCompliant%20%3D%201%20AND%20S1%20%3D%20MDG"><span>306</span></a>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div style="box-shadow: rgba(88, 207, 119, 0.498039) 104.755px 0px 0px inset;">
+                                                <a href="/?t=Asset&amp;q=IsBaseline%20%3D%201%20AND%20IsPatchCompliant%20%3D%201"><span>95,501</span></a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="clickable">
+                                                <span>LatestScanDate &gt; today-2</span>
+                                                <span class="icon-cancel icon-column-heading"></span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div style="box-shadow: rgba(88, 207, 119, 0.498039) 117.139px 0px 0px inset;">
+                                                <a href="/?t=Asset&amp;q=IsBaseline%20%3D%201%20AND%20LatestScanDate%20%3E%20%2211%2F27%2F2016%2012%3A00%3A00%20AM%22%20AND%20S1%20%3D%20%22Universal%20Store%22"><span>61,565</span></a>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div style="box-shadow: rgba(61, 86, 194, 0.498039) 124.46px 0px 0px inset;">
+                                                <a href="/?t=Asset&amp;q=IsBaseline%20%3D%201%20AND%20LatestScanDate%20%3E%20%2211%2F27%2F2016%2012%3A00%3A00%20AM%22%20AND%20S1%20%3D%20Xbox"><span>29,716</span></a>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div style="box-shadow: rgba(81, 164, 183, 0.498039) 118.669px 0px 0px inset;">
+                                                <a href="/?t=Asset&amp;q=IsBaseline%20%3D%201%20AND%20LatestScanDate%20%3E%20%2211%2F27%2F2016%2012%3A00%3A00%20AM%22%20AND%20S1%20%3D%20Core"><span>17,203</span></a>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div style="box-shadow: rgba(255, 181, 108, 0.498039) 132.627px 0px 0px inset;">
+                                                <a href="/?t=Asset&amp;q=IsBaseline%20%3D%201%20AND%20LatestScanDate%20%3E%20%2211%2F27%2F2016%2012%3A00%3A00%20AM%22%20AND%20S1%20%3D%20MDG"><span>313</span></a>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div style="box-shadow: rgba(88, 207, 119, 0.498039) 119.339px 0px 0px inset;">
+                                                <a href="/?t=Asset&amp;q=IsBaseline%20%3D%201%20AND%20LatestScanDate%20%3E%20%2211%2F27%2F2016%2012%3A00%3A00%20AM%22"><span>108,797</span></a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="clickable">
+                                                <span>IsMFA=1</span>
+                                                <span class="icon-cancel icon-column-heading"></span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div style="box-shadow: rgba(88, 207, 119, 0.498039) 141.086px 0px 0px inset;">
+                                                <a href="/?t=Asset&amp;q=IsBaseline%20%3D%201%20AND%20IsMFA%20%3D%201%20AND%20S1%20%3D%20%22Universal%20Store%22"><span>74,151</span></a>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div style="box-shadow: rgba(61, 86, 194, 0.498039) 136.798px 0px 0px inset;">
+                                                <a href="/?t=Asset&amp;q=IsBaseline%20%3D%201%20AND%20IsMFA%20%3D%201%20AND%20S1%20%3D%20Xbox"><span>32,662</span></a>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div style="box-shadow: rgba(81, 164, 183, 0.498039) 135.038px 0px 0px inset;">
+                                                <a href="/?t=Asset&amp;q=IsBaseline%20%3D%201%20AND%20IsMFA%20%3D%201%20AND%20S1%20%3D%20Core"><span>19,576</span></a>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div style="box-shadow: rgba(255, 181, 108, 0.498039) 150px 0px 0px inset;">
+                                                <a href="/?t=Asset&amp;q=IsBaseline%20%3D%201%20AND%20IsMFA%20%3D%201%20AND%20S1%20%3D%20MDG"><span>354</span></a>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div style="box-shadow: rgba(88, 207, 119, 0.498039) 139.024px 0px 0px inset;">
+                                                <a href="/?t=Asset&amp;q=IsBaseline%20%3D%201%20AND%20IsMFA%20%3D%201"><span>126,743</span></a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="clickable">
+                                                <span>IsJIT=1</span>
+                                                <span class="icon-cancel icon-column-heading"></span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div style="box-shadow: rgba(88, 207, 119, 0.498039) 36.5144px 0px 0px inset;">
+                                                <a href="/?t=Asset&amp;q=IsBaseline%20%3D%201%20AND%20IsJIT%20%3D%201%20AND%20S1%20%3D%20%22Universal%20Store%22"><span>19,191</span></a>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div style="box-shadow: rgba(61, 86, 194, 0.498039) 121.587px 0px 0px inset;">
+                                                <a href="/?t=Asset&amp;q=IsBaseline%20%3D%201%20AND%20IsJIT%20%3D%201%20AND%20S1%20%3D%20Xbox"><span>29,030</span></a>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div style="box-shadow: rgba(81, 164, 183, 0.498039) 6.09106px 0px 0px inset;">
+                                                <a href="/?t=Asset&amp;q=IsBaseline%20%3D%201%20AND%20IsJIT%20%3D%201%20AND%20S1%20%3D%20Core"><span>883</span></a>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div style="box-shadow: rgba(255, 181, 108, 0.498039) 0.423729px 0px 0px inset;">
+                                                <a href="/?t=Asset&amp;q=IsBaseline%20%3D%201%20AND%20IsJIT%20%3D%201%20AND%20S1%20%3D%20MDG"><span>1</span></a>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div style="box-shadow: rgba(88, 207, 119, 0.498039) 53.8633px 0px 0px inset;">
+                                                <a href="/?t=Asset&amp;q=IsBaseline%20%3D%201%20AND%20IsJIT%20%3D%201"><span>49,105</span></a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="clickable">
+                                                <span>IsDualHomed=1</span>
+                                                <span class="icon-cancel icon-column-heading"></span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div style="box-shadow: rgba(88, 207, 119, 0.498039) 0px 0px 0px inset;">
+                                                <a href="/?t=Asset&amp;q=IsBaseline%20%3D%201%20AND%20IsDualHomed%20%3D%201%20AND%20S1%20%3D%20%22Universal%20Store%22"><span>0</span></a>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div style="box-shadow: rgba(61, 86, 194, 0.498039) 0px 0px 0px inset;">
+                                                <a href="/?t=Asset&amp;q=IsBaseline%20%3D%201%20AND%20IsDualHomed%20%3D%201%20AND%20S1%20%3D%20Xbox"><span>0</span></a>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div style="box-shadow: rgba(81, 164, 183, 0.498039) 0px 0px 0px inset;">
+                                                <a href="/?t=Asset&amp;q=IsBaseline%20%3D%201%20AND%20IsDualHomed%20%3D%201%20AND%20S1%20%3D%20Core"><span>0</span></a>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div style="box-shadow: rgba(255, 181, 108, 0.498039) 0px 0px 0px inset;">
+                                                <a href="/?t=Asset&amp;q=IsBaseline%20%3D%201%20AND%20IsDualHomed%20%3D%201%20AND%20S1%20%3D%20MDG"><span>0</span></a>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div style="box-shadow: rgba(88, 207, 119, 0.498039) 0px 0px 0px inset;">
+                                                <a href="/?t=Asset&amp;q=IsBaseline%20%3D%201%20AND%20IsDualHomed%20%3D%201"><span>0</span></a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="clickable">
+                                                <span>IsMonitored=1</span>
+                                                <span class="icon-cancel icon-column-heading"></span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div style="box-shadow: rgba(88, 207, 119, 0.498039) 112.407px 0px 0px inset;">
+                                                <a href="/?t=Asset&amp;q=IsBaseline%20%3D%201%20AND%20IsMonitored%20%3D%201%20AND%20S1%20%3D%20%22Universal%20Store%22"><span>59,078</span></a>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div style="box-shadow: rgba(61, 86, 194, 0.498039) 143.433px 0px 0px inset;">
+                                                <a href="/?t=Asset&amp;q=IsBaseline%20%3D%201%20AND%20IsMonitored%20%3D%201%20AND%20S1%20%3D%20Xbox"><span>34,246</span></a>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div style="box-shadow: rgba(81, 164, 183, 0.498039) 123.311px 0px 0px inset;">
+                                                <a href="/?t=Asset&amp;q=IsBaseline%20%3D%201%20AND%20IsMonitored%20%3D%201%20AND%20S1%20%3D%20Core"><span>17,876</span></a>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div style="box-shadow: rgba(255, 181, 108, 0.498039) 108.475px 0px 0px inset;">
+                                                <a href="/?t=Asset&amp;q=IsBaseline%20%3D%201%20AND%20IsMonitored%20%3D%201%20AND%20S1%20%3D%20MDG"><span>256</span></a>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div style="box-shadow: rgba(88, 207, 119, 0.498039) 122.256px 0px 0px inset;">
+                                                <a href="/?t=Asset&amp;q=IsBaseline%20%3D%201%20AND%20IsMonitored%20%3D%201"><span>111,456</span></a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="clickable">
+                                                <span>All</span>
+                                                <div class="add-column-button icon-add icon-column-heading"></div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div style="box-shadow: rgba(88, 207, 119, 0.498039) 150px 0px 0px inset;">
+                                                <a href="/?t=Asset&amp;q=IsBaseline%20%3D%201%20AND%20S1%20%3D%20%22Universal%20Store%22"><span>78,836</span></a>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div style="box-shadow: rgba(61, 86, 194, 0.498039) 150px 0px 0px inset;">
+                                                <a href="/?t=Asset&amp;q=IsBaseline%20%3D%201%20AND%20S1%20%3D%20Xbox"><span>35,814</span></a>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div style="box-shadow: rgba(81, 164, 183, 0.498039) 150px 0px 0px inset;">
+                                                <a href="/?t=Asset&amp;q=IsBaseline%20%3D%201%20AND%20S1%20%3D%20Core"><span>21,745</span></a>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div style="box-shadow: rgba(255, 181, 108, 0.498039) 150px 0px 0px inset;">
+                                                <a href="/?t=Asset&amp;q=IsBaseline%20%3D%201%20AND%20S1%20%3D%20MDG"><span>354</span></a>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div style="box-shadow: rgba(88, 207, 119, 0.498039) 150px 0px 0px inset;">
+                                                <a href="/?t=Asset&amp;q=IsBaseline%20%3D%201"><span>136,749</span></a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <div class="options">
+                                <!-- react-text: 266 -->Show&nbsp;<!-- /react-text -->
+                                <select><option value="number">Number</option><option value="percentage">Percentage</option><option value="both">Both</option></select><!-- react-text: 271 -->&nbsp;of&nbsp;<!-- /react-text -->
+                                <select><option value="total">Total</option><option value="row">Row</option><option value="col">Column</option></select><!-- react-text: 276 -->&nbsp;as&nbsp;<!-- /react-text -->
+                                <select><option value="bar">Bar</option><option value="pie">Pie</option></select>
+                            </div>
+                        </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

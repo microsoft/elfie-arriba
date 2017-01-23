@@ -28,6 +28,9 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
     /// </summary>
     public abstract class BaseTabularWriter : IDisposable
     {
+        private static String8 True8 = String8.Convert("true", new byte[4]);
+        private static String8 False8 = String8.Convert("false", new byte[5]);
+
         private Stream _stream;
         private int _columnCount;
         private int _rowCountWritten;
@@ -103,6 +106,16 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         public void Write(int value)
         {
             Write(String8.FromInteger(value, _typeConversionBuffer));
+        }
+
+        /// <summary>
+        ///  Write a boolean to the current row.
+        ///  The value is converted without allocations.
+        /// </summary>
+        /// <param name="value">Value to write</param>
+        public void Write(bool value)
+        {
+            Write((value ? True8 : False8));
         }
 
         /// <summary>
