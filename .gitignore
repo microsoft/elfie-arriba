@@ -29,7 +29,6 @@ bld/
 # MSTest test Results
 [Tt]est[Rr]esult*/
 [Bb]uild[Ll]og.*
-DiskCache/
 
 # NUNIT
 *.VisualState.xml
@@ -216,4 +215,13 @@ ModelManifest.xml
 Microsoft.CodeAnalysis.Elfie.dll.*
 *.addb
 *.zip
+
+# Ignore configuration folder - this is customized per site, must be copied here to build correctly, and should not be checked into the base site.
 Arriba/Arriba.Web/configuration/
+
+# Ignore website build outputs
+Arriba/Arriba.Web/lib/
+
+# Ignore Arriba DiskCache - database data generated during development.
+DiskCache/
+
