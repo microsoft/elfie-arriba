@@ -47,6 +47,13 @@ namespace Arriba.Csv
 ";
         private static JsonSerializerSettings serializerSettings = new JsonSerializerSettings() { Formatting = Formatting.Indented, Converters = ConverterFactory.GetArribaConverters() };
 
+        public enum AddMode
+        {
+            Build = 0,
+            Append = 1,
+            Decorate = 2
+        }
+
         private static int Main(string[] args)
         {
             try
@@ -57,10 +64,13 @@ namespace Arriba.Csv
                 switch (mode)
                 {
                     case "build":
-                        Build(true, c.GetString("table"), c.GetString("csvPath"), c.GetInt("maximumCount", 100000), c.GetString("columns", null), c.GetString("settings", null));
+                        Build(AddMode.Build, c.GetString("table"), c.GetString("csvPath"), c.GetInt("maximumCount", 100000), c.GetString("columns", null), c.GetString("settings", null));
+                        break;
+                    case "append":
+                        Build(AddMode.Append, c.GetString("table"), c.GetString("csvPath"), c.GetInt("maximumCount", 100000), c.GetString("columns", null), c.GetString("settings", null));
                         break;
                     case "decorate":
-                        Build(false, c.GetString("table"), c.GetString("csvPath"), c.GetInt("maximumCount", 100000), c.GetString("columns", null));
+                        Build(AddMode.Decorate, c.GetString("table"), c.GetString("csvPath"), c.GetInt("maximumCount", 100000), c.GetString("columns", null));
                         break;
                     case "query":
                         Query(c.GetString("table"), c.GetString("select", ""), c.GetString("orderBy", ""), c.GetInt("count", QueryResultLimit));
@@ -126,19 +136,17 @@ namespace Arriba.Csv
             return columns;
         }
 
-        private static void Build(bool build, string tableName, string csvFilePath, int maximumCount, string columns, string settingsJsonPath = null)
+        private static void Build(AddMode mode, string tableName, string csvFilePath, int maximumCount, string columns, string settingsJsonPath = null)
         {
-            string action = (build ? "Building" : "Decorating");
-
             Stopwatch w = Stopwatch.StartNew();
-            Console.WriteLine("{0} Arriba table '{1}' from '{2}'...", action, tableName, csvFilePath);
+            Console.WriteLine("{0} Arriba table '{1}' from '{2}'...", mode, tableName, csvFilePath);
 
             IList<string> columnNames = null;
             if (!String.IsNullOrEmpty(columns)) columnNames = SplitAndTrim(columns);
 
             // Build or load table
             Table table;
-            if (build)
+            if (mode == AddMode.Build)
             {
                 table = new Table(tableName, maximumCount);
             }
@@ -157,7 +165,7 @@ namespace Arriba.Csv
             // Always add missing columns. Add rows only when not in 'decorate' mode
             AddOrUpdateOptions options = new AddOrUpdateOptions();
             options.AddMissingColumns = true;
-            options.Mode = (build ? AddOrUpdateMode.AddOrUpdate : AddOrUpdateMode.UpdateAndIgnoreAdds);
+            options.Mode = (mode == AddMode.Decorate ? AddOrUpdateMode.UpdateAndIgnoreAdds: AddOrUpdateMode.AddOrUpdate);
 
             using (CsvReader reader = new CsvReader(csvFilePath))
             {
