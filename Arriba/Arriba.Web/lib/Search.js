@@ -292,7 +292,8 @@ var configuration = {
     // Listing: Default Columns and Sort Order to show per table
     listingDefaults: {
         "Asset": { columns: ["Name", "IP"], sortColumn: "Name", sortOrder: "asc" },
-        "Employee": { columns: ["Alias", "Name"], sortColumn: "Alias", sortOrder: "asc" }
+        "Employee": { columns: ["Alias", "Name"], sortColumn: "Alias", sortOrder: "asc" },
+        "AzureSubscription": { columns: ["SubscriptionId", "Name"], sortColumn: "Name", sortOrder: "asc" }
     },
 
     // Listing: Default details

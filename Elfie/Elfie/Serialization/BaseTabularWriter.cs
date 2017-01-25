@@ -35,6 +35,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         private int _columnCount;
         private int _rowCountWritten;
         private int _currentRowColumnCount;
+        private bool _inPartialColumn;
         private byte[] _typeConversionBuffer;
 
         /// <summary>
@@ -85,6 +86,10 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         protected abstract void WriteCellValue(Stream stream, String8 value);
         protected abstract void WriteCellDelimiter(Stream stream);
         protected abstract void WriteRowSeparator(Stream stream);
+        protected abstract void WriteValueStart(Stream stream);
+        protected abstract void WriteValuePart(Stream stream, String8 part);
+        protected abstract void WriteValuePart(Stream stream, byte c);
+        protected abstract void WriteValueEnd(Stream stream);
 
         /// <summary>
         ///  Write a value to the current row.
@@ -93,6 +98,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         public void Write(String8 value)
         {
             if (_currentRowColumnCount >= _columnCount) throw new InvalidOperationException(String.Format("Writing too many columns for row {0:n0}. Wrote {1:n0}, expected {2:n0} columns.", _rowCountWritten, _currentRowColumnCount, _columnCount));
+            if (_inPartialColumn) throw new InvalidOperationException("Write was called while in a multi-part column. Call WriteValueStart, WriteValuePart, and WriteValueEnd only for partial columns.");
             if (_currentRowColumnCount > 0) WriteCellDelimiter(_stream);
             WriteCellValue(_stream, value);
             _currentRowColumnCount++;
@@ -116,6 +122,70 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         public void Write(bool value)
         {
             Write((value ? True8 : False8));
+        }
+
+        /// <summary>
+        ///  Write the beginning of a cell value which will be written in parts.
+        ///  Used for concatenated values.
+        /// </summary>
+        public void WriteValueStart()
+        {
+            if (_currentRowColumnCount >= _columnCount) throw new InvalidOperationException(String.Format("Writing too many columns for row {0:n0}. Wrote {1:n0}, expected {2:n0} columns.", _rowCountWritten, _currentRowColumnCount, _columnCount));
+            if (_currentRowColumnCount > 0) WriteCellDelimiter(_stream);
+            _inPartialColumn = true;
+            WriteValueStart(_stream);
+        }
+
+        /// <summary>
+        ///  Write a value as part of the current cell value.
+        /// </summary>
+        /// <param name="part">String8 to write to the current cell.</param>
+        public void WriteValuePart(String8 part)
+        {
+            if (!_inPartialColumn) throw new InvalidOperationException("WriteValueStart must be called before WriteValuePart.");
+            WriteValuePart(_stream, part);
+        }
+
+        /// <summary>
+        ///  Write a single UTF8 byte as part of the current cell value.
+        /// </summary>
+        /// <param name="c">Character to write to the current cell.</param>
+        public void WriteValuePart(byte c)
+        {
+            WriteValuePart(_stream, c);
+        }
+
+        /// <summary>
+        ///  Write the end of a cell value which was written in parts.
+        ///  Used for concatenated values.
+        /// </summary>
+        public void WriteValueEnd()
+        {
+            if (!_inPartialColumn) throw new InvalidOperationException("WriteValueEnd called but WriteValueStart was never called.");
+
+            _inPartialColumn = false;
+            WriteValueEnd(_stream);
+            _currentRowColumnCount++;
+        }
+
+        /// <summary>
+        ///  Write an integer as part of a single cell value.
+        ///  Callers must call WriteValueStart and WriteValueEnd around WriteValuePart calls.
+        /// </summary>
+        /// <param name="part">Value to write</param>
+        public void WriteValuePart(int part)
+        {
+            WriteValuePart(String8.FromInteger(part, _typeConversionBuffer));
+        }
+
+        /// <summary>
+        ///  Write a boolean as part of a single cell value.
+        ///  Callers must call WriteValueStart and WriteValueEnd around WriteValuePart calls.
+        /// </summary>
+        /// <param name="part">Value to write</param>
+        public void WriteValuePart(bool part)
+        {
+            WriteValuePart((part ? True8 : False8));
         }
 
         /// <summary>

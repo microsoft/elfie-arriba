@@ -65,7 +65,9 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
                         // Make the writer think everything is ok (it'll throw if you don't write enough values)
                         writer.Write(String8.Empty);
                         writer.Write(String8.Empty);
-                        writer.Write(String8.Empty);
+
+                        writer.WriteValueStart();
+                        writer.WriteValueEnd();
 
                         // Wipe out what was written
                         stream.Seek(rowStartPosition, SeekOrigin.Begin);
@@ -74,7 +76,11 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
                     {
                         // Write a huge row
                         writer.Write(i);
-                        writer.Write(r.Next(100000));
+
+                        writer.WriteValueStart();
+                        writer.WriteValuePart(r.Next(100000));
+                        writer.WriteValueEnd();
+
                         writer.Write(huge8);
                     }
                     else

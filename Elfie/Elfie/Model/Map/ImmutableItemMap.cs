@@ -67,6 +67,29 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Map
         }
 
         /// <summary>
+        ///  Return the number of links out from a given item.
+        /// </summary>
+        /// <param name="sourceItemIndex">Index of item.</param>
+        /// <returns>Count of links out from item.</returns>
+        public int LinkCountFrom(int sourceItemIndex)
+        {
+            int lastSourceIndex = this._firstMemberIndexForGroup.Count - 1;
+
+            if (sourceItemIndex < lastSourceIndex)
+            {
+                return this._firstMemberIndexForGroup[sourceItemIndex + 1] - this._firstMemberIndexForGroup[sourceItemIndex];
+            }
+            else if (sourceItemIndex == lastSourceIndex)
+            {
+                return this._memberIndices.Count - this._firstMemberIndexForGroup[sourceItemIndex];
+            }
+            else
+            {
+                return 0;
+            }
+        }
+
+        /// <summary>
         ///  Return the count of links in the Map (so far)
         /// </summary>
         public int Count
