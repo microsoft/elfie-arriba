@@ -69,9 +69,19 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
 
         protected override void WriteCellValue(Stream stream, String8 value)
         {
-            // Write leading quote
-            stream.WriteByte(UTF8.Quote);
+            WriteValueStart(stream);
+            WriteValuePart(stream, value);
+            WriteValueEnd(stream);
+        }
 
+        protected override void WriteValueStart(Stream stream)
+        {
+            // Partial values must be escaped (we don't know if they'll need to be)
+            stream.WriteByte(UTF8.Quote);
+        }
+
+        protected override void WriteValuePart(Stream stream, String8 value)
+        {
             // Look for quotes in string
             int nextWriteStartIndex = 0;
             int end = value._index + value._length;
@@ -92,8 +102,17 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
 
             // Write content after the last quote seen
             value.Substring(nextWriteStartIndex).WriteTo(stream);
+        }
 
-            // Write trailing quote
+        protected override void WriteValuePart(Stream stream, byte c)
+        {
+            if (c == UTF8.Quote) stream.WriteByte(UTF8.Quote);
+            stream.WriteByte(c);
+        }
+
+        protected override void WriteValueEnd(Stream stream)
+        {
+            // Partial values must be escaped (we don't know if they'll need to be)
             stream.WriteByte(UTF8.Quote);
         }
     }

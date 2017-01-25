@@ -73,5 +73,29 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
 
             value.Substring(nextWriteStartIndex).WriteTo(stream);
         }
+
+        protected override void WriteValueStart(Stream stream)
+        {
+            // TSVs don't have escaping, so there's no value prefix.
+        }
+
+        protected override void WriteValueEnd(Stream stream)
+        {
+            // TSVs don't have escaping, so there's no value suffix.
+        }
+
+        protected override void WriteValuePart(Stream stream, String8 part)
+        {
+            // Write partial values the same as whole values
+            WriteCellValue(stream, part);
+        }
+
+        protected override void WriteValuePart(Stream stream, byte c)
+        {
+            if (c != UTF8.Tab && c != UTF8.Newline)
+            {
+                stream.WriteByte(c);
+            }
+        }
     }
 }

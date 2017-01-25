@@ -58,19 +58,24 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Map
 
             // Ask for links (item with one link)
             Assert.AreEqual("3", StringExtensions.Join(", ", map.LinksFrom(2)));
+            Assert.AreEqual(1, map.LinkCountFrom(2));
 
             // Ask for links (item with many links)
             Assert.AreEqual("1, 2", StringExtensions.Join(", ", map.LinksFrom(0)));
+            Assert.AreEqual(2, map.LinkCountFrom(0));
 
             // Ask for links (verify no duplicates)
             Assert.AreEqual("2", StringExtensions.Join(", ", map.LinksFrom(1)));
 
             // Ask for links (first and last items)
             Assert.AreEqual("1, 2", StringExtensions.Join(", ", map.LinksFrom(0)));
+            Assert.AreEqual(2, map.LinkCountFrom(0));
             Assert.AreEqual("0", StringExtensions.Join(", ", map.LinksFrom(4)));
+            Assert.AreEqual(1, map.LinkCountFrom(4));
 
             // Ask for links (unknown item) (verify error)
             Assert.AreEqual("", StringExtensions.Join(", ", map.LinksFrom(5)));
+            Assert.AreEqual(0, map.LinkCountFrom(5));
 
             // MapEnumerator.Reset works (and Dispose works)
             using (MapEnumerator<SampleItem> links = map.LinksFrom(0))

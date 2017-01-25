@@ -35,7 +35,13 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
 
                     sum += i;
                     writer.Write(i);
-                    writer.Write(sum);
+
+                    writer.WriteValueStart();
+                    writer.WriteValuePart((byte)'[');
+                    writer.WriteValuePart(sum);
+                    writer.WriteValuePart((byte)']');
+                    writer.WriteValueEnd();
+
                     writer.Write(valueNoEscaping);
                     writer.Write(valueEscaping);
 
@@ -52,7 +58,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
             Assert.IsTrue(tsvContent.Contains("ValueWithIssues"));
 
             // Verify the first row fully
-            Assert.IsTrue(tsvContent.Contains("1\t1\tSample Description\tValueWithIssues\r\n"));
+            Assert.IsTrue(tsvContent.Contains("1\t[1]\tSample Description\tValueWithIssues\r\n"));
         }
     }
 }
