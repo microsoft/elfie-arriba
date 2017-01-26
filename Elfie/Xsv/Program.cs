@@ -87,7 +87,7 @@ namespace XsvConcat
             }
         }
 
-        private static BaseTabularReader BuildReader(string filePath, bool hasHeaderRow = true)
+        private static ITabularReader BuildReader(string filePath, bool hasHeaderRow = true)
         {
             string extension = Path.GetExtension(filePath).ToLowerInvariant();
 
@@ -104,9 +104,9 @@ namespace XsvConcat
             }
         }
 
-        private static BaseTabularWriter BuildWriter(string filePath, IEnumerable<string> columnNames, bool writeHeaderRow = true)
+        private static ITabularWriter BuildWriter(string filePath, IEnumerable<string> columnNames, bool writeHeaderRow = true)
         {
-            BaseTabularWriter writer = null;
+            ITabularWriter writer = null;
             string extension = Path.GetExtension(filePath).ToLowerInvariant();
 
             switch (extension)
@@ -133,7 +133,7 @@ namespace XsvConcat
             HashSet<String8> oldValues = new HashSet<String8>();
             HashSet<String8> newValues = new HashSet<String8>();
 
-            using (BaseTabularReader oldReader = BuildReader(oldFilePath))
+            using (ITabularReader oldReader = BuildReader(oldFilePath))
             {
                 int leftColumnIndex = oldReader.ColumnIndex(columnIdentifier);
                 while (oldReader.NextRow())
@@ -144,7 +144,7 @@ namespace XsvConcat
                 Console.WriteLine("Old: {0:n0} values for \"{1}\" in {2:n0} rows.", oldValues.Count, columnIdentifier, oldReader.RowCountRead);
             }
 
-            using (BaseTabularReader newReader = BuildReader(newFilePath))
+            using (ITabularReader newReader = BuildReader(newFilePath))
             {
                 int rightColumnIndex = newReader.ColumnIndex(columnIdentifier);
                 while (newReader.NextRow())
@@ -165,7 +165,7 @@ namespace XsvConcat
 
             String8 leftMarker = String8.Convert("-", new byte[1]);
             String8 rightMarker = String8.Convert("+", new byte[1]);
-            using (BaseTabularWriter writer = BuildWriter(outputFilePath, new string[] { "In", columnIdentifier }))
+            using (ITabularWriter writer = BuildWriter(outputFilePath, new string[] { "In", columnIdentifier }))
             {
                 foreach(String8 value in oldOnly)
                 {
@@ -189,7 +189,7 @@ namespace XsvConcat
             HashSet<String8> values = new HashSet<String8>();
 
             // Read values in 'onlyInInputFilePath'
-            using (BaseTabularReader reader = BuildReader(onlyInInputFilePath))
+            using (ITabularReader reader = BuildReader(onlyInInputFilePath))
             {
                 int leftColumnIndex = reader.ColumnIndex(onlyInColumnIdentifier);
                 while (reader.NextRow())
@@ -199,11 +199,11 @@ namespace XsvConcat
             }
 
             // Copy from input to output where the column value is in the "only in" set
-            using (BaseTabularReader reader = BuildReader(inputFilePath))
+            using (ITabularReader reader = BuildReader(inputFilePath))
             {
                 int valueColumnIndex = reader.ColumnIndex(onlyInColumnIdentifier);
 
-                using (BaseTabularWriter writer = BuildWriter(outputFilePath, reader.Columns))
+                using (ITabularWriter writer = BuildWriter(outputFilePath, reader.Columns))
                 {
                     while (reader.NextRow())
                     {
@@ -226,12 +226,12 @@ namespace XsvConcat
 
         private static void NotStartsWith(string inputFilePath, string outputFilePath, string valueColumnIdentifier, string nameColumnIdentifier)
         {
-            using (BaseTabularReader reader = BuildReader(inputFilePath))
+            using (ITabularReader reader = BuildReader(inputFilePath))
             {
                 int valueColumnIndex = reader.ColumnIndex(valueColumnIdentifier);
                 int nameColumnIndex = reader.ColumnIndex(nameColumnIdentifier);
 
-                using (BaseTabularWriter writer = BuildWriter(outputFilePath, reader.Columns))
+                using (ITabularWriter writer = BuildWriter(outputFilePath, reader.Columns))
                 {
                     while (reader.NextRow())
                     {
@@ -257,9 +257,9 @@ namespace XsvConcat
 
         private static void Concatenate(string inputFilePath, string outputFilePath, String8 delimiter)
         {
-            using (BaseTabularReader reader = BuildReader(inputFilePath))
+            using (ITabularReader reader = BuildReader(inputFilePath))
             {
-                using (BaseTabularWriter writer = BuildWriter(outputFilePath, reader.Columns))
+                using (ITabularWriter writer = BuildWriter(outputFilePath, reader.Columns))
                 {
                     String8Block block = new String8Block();
                     String8[] lastValues = new String8[reader.CurrentRowColumns];
@@ -313,7 +313,7 @@ namespace XsvConcat
             }
         }
 
-        private static void WriteCombinedRow(BaseTabularWriter writer, String8[] values)
+        private static void WriteCombinedRow(ITabularWriter writer, String8[] values)
         {
             for (int i = 0; i < values.Length; ++i)
             {
