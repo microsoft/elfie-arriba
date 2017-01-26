@@ -106,19 +106,25 @@ namespace XsvConcat
 
         private static BaseTabularWriter BuildWriter(string filePath, IEnumerable<string> columnNames, bool writeHeaderRow = true)
         {
+            BaseTabularWriter writer = null;
             string extension = Path.GetExtension(filePath).ToLowerInvariant();
 
             switch (extension)
             {
                 case ".csv":
-                    return new CsvWriter(filePath, columnNames, writeHeaderRow);
+                    writer = new CsvWriter(filePath, writeHeaderRow);
+                    break;
                 case ".tsv":
                 case ".tab":
                 case ".txt":
-                    return new TsvWriter(filePath, columnNames, writeHeaderRow);
+                    writer = new TsvWriter(filePath, writeHeaderRow);
+                    break;
                 default:
                     throw new NotSupportedException(String.Format("Xsv does not support file extension \"{0}\". Pass a .tsv or .csv file.", extension));
             }
+
+            writer.SetColumns(columnNames);
+            return writer;
         }
 
         private static void Compare(string oldFilePath, string newFilePath, string outputFilePath, string columnIdentifier)

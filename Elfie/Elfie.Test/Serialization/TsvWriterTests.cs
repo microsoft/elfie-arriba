@@ -24,8 +24,10 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
             String8 valueNoEscaping = block.GetCopy("Sample Description");
             String8 valueEscaping = block.GetCopy("Value\tWith\nIssues");
 
-            using (TsvWriter writer = new TsvWriter("TsvWriter.tsv", new string[] { "LineNumber", "Count", "Description", "Source" }))
+            using (TsvWriter writer = new TsvWriter("TsvWriter.tsv"))
             {
+                writer.SetColumns(new string[] { "LineNumber", "Count", "Description", "Source" });
+
                 Assert.AreEqual(1, writer.RowCountWritten);
 
                 int sum = 0;
