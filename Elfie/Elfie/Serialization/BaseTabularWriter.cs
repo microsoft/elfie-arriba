@@ -16,12 +16,22 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
     ///  to write string values (with proper escaping).
     ///  
     ///  Usage:
-    ///  using (BaseTabularWriter w = new XWriter(writeToPath, new string[] { "Name", "IPs" }))
+    ///  using (BaseTabularWriter w = new XWriter(writeToPath))
     ///  {
+    ///     w.SetColumns(new string[] { "Name", "IPs" });
+    ///     
     ///     while(/* ... data source .. */)
     ///     {
     ///         w.Write(name);
-    ///         w.Write(ips);
+    /// 
+    ///         w.WriteValueStart();
+    ///         for(int i = 0; i &lt; source.IPs.Count; ++i)
+    ///         {
+    ///             if(i > 0) w.WriteValuePart((byte)';');
+    ///             w.WriteValuePart(source.IPs[i]);
+    ///         }
+    ///         w.WriteValueEnd();
+    /// 
     ///         w.NextRow();
     ///     }
     /// }

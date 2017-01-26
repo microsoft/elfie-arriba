@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
-using System.Collections.Generic;
 using System.IO;
 
 using Elfie.Test;
@@ -29,7 +28,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
             ReaderWriterAll("Sample.tsv", (stream) => new TsvWriter(stream), (filePath, hasHeaderRow) => new TsvReader(filePath, hasHeaderRow));
         }
 
-        public void ReaderWriterAll(string sampleFilePath, Func<Stream, ITabularWriter> buildWriter, Func<string, bool, BaseTabularReader> buildReader)
+        public void ReaderWriterAll(string sampleFilePath, Func<Stream, ITabularWriter> buildWriter, Func<string, bool, ITabularReader> buildReader)
         {
             if (!File.Exists(sampleFilePath))
             {
@@ -119,7 +118,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
             }
         }
 
-        public void Reader_Basics(string sampleFilePath, Func<string, bool, BaseTabularReader> buildReader)
+        public void Reader_Basics(string sampleFilePath, Func<string, bool, ITabularReader> buildReader)
         {
             // File Not Found
             Verify.Exception<FileNotFoundException>(() => buildReader("NonExistantFile.xsv", false));
@@ -131,13 +130,13 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
             Verify.Exception<IOException>(() => buildReader("Empty.xsv", true));
 
             // Verify Reader returns false immediately if not reading headers
-            using (BaseTabularReader r = buildReader("Empty.xsv", false))
+            using (ITabularReader r = buildReader("Empty.xsv", false))
             {
                 Assert.IsFalse(r.NextRow());
             }
 
             // Verify Reader doesn't consume header row if asked not to
-            using (BaseTabularReader r = buildReader(sampleFilePath, false))
+            using (ITabularReader r = buildReader(sampleFilePath, false))
             {
                 Assert.IsTrue(r.NextRow());
                 Assert.AreEqual("LineNumber", r.Current[0].ToString());
@@ -147,7 +146,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
             }
 
             // Open the sample Tsv the 'expected' way
-            using (BaseTabularReader r = buildReader(sampleFilePath, true))
+            using (ITabularReader r = buildReader(sampleFilePath, true))
             {
                 // Get column name (valid)
                 int lineNumberColumnIndex = r.ColumnIndex("LineNumber");
@@ -194,7 +193,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
             }
         }
 
-        public void Reader_Roundtrip(Func<string, bool, BaseTabularReader> buildReader, Func<Stream, ITabularWriter> buildWriter)
+        public void Reader_Roundtrip(Func<string, bool, ITabularReader> buildReader, Func<Stream, ITabularWriter> buildWriter)
         {
             string filePath = "ValidSample.xsv";
 
@@ -202,7 +201,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
             WriteValidSample(new FileStream(filePath, FileMode.Create, FileAccess.ReadWrite), buildWriter);
 
             // Direct Copy the file from the reader to the writer - every value unescaped and then escaped
-            using (BaseTabularReader reader = buildReader(filePath, true))
+            using (ITabularReader reader = buildReader(filePath, true))
             {
                 using (ITabularWriter writer = buildWriter(new FileStream(filePath + ".new", FileMode.Create, FileAccess.ReadWrite)))
                 {
@@ -226,7 +225,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
             Assert.AreEqual(fileBefore, fileAfter);
         }
 
-        public void Reader_Performance(string sampleFilePath, Func<string, bool, BaseTabularReader> buildReader)
+        public void Reader_Performance(string sampleFilePath, Func<string, bool, ITabularReader> buildReader)
         {
             long rowCountRead = 0;
             long xsvLengthBytes = new FileInfo(sampleFilePath).Length;
@@ -237,7 +236,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
                 int iterations = 100;
                 for (int iteration = 0; iteration < iterations; ++iteration)
                 {
-                    using (BaseTabularReader r = buildReader(sampleFilePath, true))
+                    using (ITabularReader r = buildReader(sampleFilePath, true))
                     {
                         int lineNumberIndex = r.ColumnIndex("LineNumber");
                         int countIndex = r.ColumnIndex("Count");
@@ -350,7 +349,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
             }
         }
 
-        public void Reader_NewlineVariations(Func<Stream, ITabularWriter> buildWriter, Func<string, bool, BaseTabularReader> buildReader)
+        public void Reader_NewlineVariations(Func<Stream, ITabularWriter> buildWriter, Func<string, bool, ITabularReader> buildReader)
         {
             string xsvPath = "NewlineVariations.xsv";
             Stream stream = new FileStream(xsvPath, FileMode.Create, FileAccess.ReadWrite);
@@ -382,7 +381,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
                 }
             }
 
-            using (BaseTabularReader r = buildReader(xsvPath, true))
+            using (ITabularReader r = buildReader(xsvPath, true))
             {
                 // Verify column heading not clipped even though no '\r'
                 Assert.AreEqual("Three", r.Columns[2]);

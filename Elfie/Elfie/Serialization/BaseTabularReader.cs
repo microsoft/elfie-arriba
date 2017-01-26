@@ -44,7 +44,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
     ///     }
     /// }
     /// </summary>
-    public abstract class BaseTabularReader : IDisposable
+    public abstract class BaseTabularReader : ITabularReader
     {
         private Stream _reader;
 
