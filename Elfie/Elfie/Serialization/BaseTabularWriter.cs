@@ -26,12 +26,14 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
     ///     }
     /// }
     /// </summary>
-    public abstract class BaseTabularWriter : IDisposable
+    public abstract class BaseTabularWriter : ITabularWriter
     {
         private static String8 True8 = String8.Convert("true", new byte[4]);
         private static String8 False8 = String8.Convert("false", new byte[5]);
 
         private Stream _stream;
+        private bool _writeHeaderRow;
+
         private int _columnCount;
         private int _rowCountWritten;
         private int _currentRowColumnCount;
@@ -46,8 +48,8 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         /// <param name="columnNames">Column Names to write out.</param>
         /// <param name="writeHeaderRow">True to write a header row, False otherwise.</param>
         /// /// <param name="cellDelimiter">Delimiter between cells, default is tab.</param>
-        public BaseTabularWriter(string filePath, IEnumerable<string> columnNames, bool writeHeaderRow = true) :
-            this(new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None), columnNames, writeHeaderRow)
+        public BaseTabularWriter(string filePath, bool writeHeaderRow = true) :
+            this(new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None), writeHeaderRow)
         { }
 
         /// <summary>
@@ -59,17 +61,39 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         /// <param name="columnNames">Column names to write.</param>
         /// <param name="writeHeaderRow">True to write a header row, False otherwise</param>
         /// <param name="cellDelimiter">Delimiter between cells, default is tab.</param>
-        public BaseTabularWriter(Stream stream, IEnumerable<string> columnNames, bool writeHeaderRow = true)
+        public BaseTabularWriter(Stream stream, bool writeHeaderRow = true)
         {
             _stream = stream;
-            _columnCount = columnNames.Count();
+            _writeHeaderRow = writeHeaderRow;
+
             _currentRowColumnCount = 0;
             _rowCountWritten = 0;
 
             _typeConversionBuffer = new byte[30];
+        }
+
+        // Abstract methods. Descendants must implement writing whole cell values,
+        // cell and row delimiters, and partial values (for concatenated results).
+
+        protected abstract void WriteCellValue(Stream stream, String8 value);
+        protected abstract void WriteCellDelimiter(Stream stream);
+        protected abstract void WriteRowSeparator(Stream stream);
+        protected abstract void WriteValueStart(Stream stream);
+        protected abstract void WriteValuePart(Stream stream, String8 part);
+        protected abstract void WriteValuePart(Stream stream, byte c);
+        protected abstract void WriteValueEnd(Stream stream);
+
+        /// <summary>
+        ///  Identify the columns to be written.
+        ///  Must be called before anything else.
+        /// </summary>
+        /// <param name="columnNames">Set of column names each row will write.</param>
+        public void SetColumns(IEnumerable<string> columnNames)
+        {
+            _columnCount = columnNames.Count();
 
             // Write header row
-            if (writeHeaderRow)
+            if (this._writeHeaderRow)
             {
                 String8Block buffer = new String8Block();
                 foreach (string columnName in columnNames)
@@ -82,14 +106,6 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
 
             if (_columnCount == 0) throw new InvalidOperationException("No columns were passed to contructor. TSV must have at least one column.");
         }
-
-        protected abstract void WriteCellValue(Stream stream, String8 value);
-        protected abstract void WriteCellDelimiter(Stream stream);
-        protected abstract void WriteRowSeparator(Stream stream);
-        protected abstract void WriteValueStart(Stream stream);
-        protected abstract void WriteValuePart(Stream stream, String8 part);
-        protected abstract void WriteValuePart(Stream stream, byte c);
-        protected abstract void WriteValueEnd(Stream stream);
 
         /// <summary>
         ///  Write a value to the current row.
