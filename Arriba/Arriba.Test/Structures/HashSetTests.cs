@@ -15,7 +15,7 @@ namespace Arriba.Test
     /// </summary>
     public class HashSetTests
     {
-#if !DEBUG
+#if PERFORMANCE
         [TestMethod]
 #endif
         public void ShortSet_GetAndSetPerformance()
@@ -57,7 +57,7 @@ namespace Arriba.Test
             //Assert.IsTrue(operationsPerMillisecond > 10000, "Not within 200% of goal.");
         }
 
-#if !DEBUG
+#if PERFORMANCE
         [TestMethod]
 #endif
         public void ShortSet_SetPerformance()
@@ -96,7 +96,7 @@ namespace Arriba.Test
             //Assert.IsTrue(operationsPerMillisecond > 100, "Not within 200% of goal.");
         }
 
-#if !DEBUG
+#if PERFORMANCE
         [TestMethod]
 #endif
         public void ShortSet_EnumeratePerformance()
@@ -125,7 +125,7 @@ namespace Arriba.Test
             //Assert.IsTrue(operationsPerMillisecond > 5, "Not within 200% of goal.");
         }
 
-#if !DEBUG
+#if PERFORMANCE
         [TestMethod]
 #endif
         public void ShortSet_CountPerformance()

@@ -82,7 +82,7 @@ namespace Arriba.Test.Serialization
                     writer.AppendRow(new object[] { null });
                     writer.AppendRow(new object[] { true });
                     writer.AppendRow(new object[] { (byte)127 });
-                    writer.AppendRow(new object[] { new DateTime(2013, 01, 01) });
+                    writer.AppendRow(new object[] { new DateTime(2013, 01, 01, 0, 0, 0, DateTimeKind.Utc) });
                     writer.AppendRow(new object[] { "String" });
                     writer.AppendRow(new object[] { (ByteBlock)"ByteBlock" });
                     writer.AppendRow(new object[] { new byte[] { 49, 50, 51 } });
@@ -93,7 +93,7 @@ namespace Arriba.Test.Serialization
 @"" + Environment.NewLine +
 @"True" + Environment.NewLine +
 @"127" + Environment.NewLine +
-@"2013-01-01 08:00:00Z" + Environment.NewLine +
+@"2013-01-01 00:00:00Z" + Environment.NewLine +
 @"String" + Environment.NewLine +
 @"ByteBlock" + Environment.NewLine +
 @"123" + Environment.NewLine +
@@ -148,7 +148,7 @@ namespace Arriba.Test.Serialization
                 using (CsvWriter writer = new CsvWriter(context, new string[] { "ID", "Changed Date", "Title" }))
                 {
                     Verify.Exception<InvalidOperationException>(
-                            () => writer.AppendRow(new object[] { 1520, new DateTime(2013, 12, 30) })
+                            () => writer.AppendRow(new object[] { 1520, new DateTime(2013, 12, 30, 0, 0, 0, DateTimeKind.Utc) })
                         );
                 }
             }
@@ -162,7 +162,7 @@ namespace Arriba.Test.Serialization
                 using (CsvWriter writer = new CsvWriter(context, new string[] { "ID", "Changed Date", "Title" }))
                 {
                     Verify.Exception<InvalidOperationException>(
-                            () => writer.AppendRow(new object[] { 1520, new DateTime(2013, 12, 30), true, Guid.NewGuid() })
+                            () => writer.AppendRow(new object[] { 1520, new DateTime(2013, 12, 30, 0, 0, 0, DateTimeKind.Utc), true, Guid.NewGuid() })
                         );
                 }
             }
@@ -177,7 +177,7 @@ namespace Arriba.Test.Serialization
 
                 // Write one row
                 writer = new CsvWriter(context, new string[] { "ID", "Changed Date", "Title" });
-                writer.AppendRow(new object[] { 1520, new DateTime(2013, 12, 30), "Value with no \"escaping\"." });
+                writer.AppendRow(new object[] { 1520, new DateTime(2013, 12, 30, 0, 0, 0, DateTimeKind.Utc), "Value with no \"escaping\"." });
 
                 // Create another writer to append a second row (wrong header)
                 Verify.Exception<IOException>(

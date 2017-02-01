@@ -34,7 +34,7 @@ namespace Arriba.Test.Structures
             Assert.AreEqual(new DateTime(2013, 01, 01), b[0, 1]);
 
             // Verify SetRow
-            b.SetRow(1, new object[] { 11644, new DateTime(2013, 01, 03), 4 });
+            b.SetRow(1, new object[] { 11644, new DateTime(2013, 01, 03, 0, 0, 0, DateTimeKind.Utc), 4 });
             Assert.AreEqual(11512, b[0, 0]);
             Assert.AreEqual(11644, b[1, 0]);
             Assert.AreEqual(4, b[1, 2]);

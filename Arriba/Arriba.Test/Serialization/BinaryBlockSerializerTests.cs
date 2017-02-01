@@ -143,7 +143,7 @@ namespace Arriba.Test.Serialization
                 );
         }
 
-#if !DEBUG
+#if PERFORMANCE
         [TestMethod]
 #endif
         public void BinaryBlockSerializer_Performance()

@@ -38,7 +38,7 @@ namespace Arriba.Test.Indexing
             WordSplitter_ReadLinePerformance();
         }
 
-#if !DEBUG
+#if PERFORMANCE
         [TestMethod]
 #endif
         public void WordSplitter_ReadLinePerformance()
@@ -87,7 +87,7 @@ namespace Arriba.Test.Indexing
             Trace.WriteLine(String.Format("{0:n0} words found on {1:n0} lines in {2:n0}ms.", totalStrings, totalLines, w.ElapsedMilliseconds));
         }
 
-#if !DEBUG
+#if PERFORMANCE
         [TestMethod]
 #endif
         public void WordSplitter_ReadBlockPerformance()
@@ -131,7 +131,7 @@ namespace Arriba.Test.Indexing
             System.Console.WriteLine("{0:n0} words found on {1:n0} lines in {2:n0}ms.", totalStrings, totalLines, w.ElapsedMilliseconds);
         }
 
-#if !DEBUG
+#if PERFORMANCE
         [TestMethod]
 #endif
         public void WordSplitter_ParallelBlockPerformance()

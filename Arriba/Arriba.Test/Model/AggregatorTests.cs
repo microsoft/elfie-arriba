@@ -135,7 +135,7 @@ namespace Arriba.Test.Model
             TestAggregations("string", ascending, null);
 
             // Other Types
-            TestAggregations("DateTime", BuildArray(100, new DateTime(2016, 01, 01), (t) => t.AddDays(1)), null);
+            TestAggregations("DateTime", BuildArray(100, new DateTime(2016, 01, 01, 0, 0, 0, DateTimeKind.Utc), (t) => t.AddDays(1)), null);
             TestAggregations("TimeSpan", BuildArray(100, TimeSpan.Zero, (t) => TimeSpan.FromMinutes(t.TotalMinutes + 1)), TimeSpan.FromMinutes(sum).ToString());
 
             int nextGuid = 0;

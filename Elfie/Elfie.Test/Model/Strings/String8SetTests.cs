@@ -94,7 +94,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
         }
 
 
-#if !DEBUG
+#if PERFORMANCE
         [TestMethod]
 #endif
         public void String8Set_Split_Performance()
