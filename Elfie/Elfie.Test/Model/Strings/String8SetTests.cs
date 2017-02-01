@@ -103,8 +103,8 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
             String8 noDelimiters = String8.Convert("No Delimiters", new byte[25]);
             PartialArray<int> partBuffer = new PartialArray<int>(10, false);
 
-            // Goal: 256MB/sec
-            Verify.PerformanceByBytes(256 * LongExtensions.Megabyte, () =>
+            // Goal: 256MB/sec [Surface Book i7]
+            Verify.PerformanceByBytes(150 * LongExtensions.Megabyte, () =>
             {
                 int iterations = 200000;
                 for (int iteration = 0; iteration < iterations; ++iteration)

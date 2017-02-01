@@ -230,8 +230,8 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
             long rowCountRead = 0;
             long xsvLengthBytes = new FileInfo(sampleFilePath).Length;
 
-            // Goal: 100MB/sec
-            Verify.PerformanceByBytes(100 * LongExtensions.Megabyte, () =>
+            // Goal: 100MB/sec [Surface Book i7]
+            Verify.PerformanceByBytes(50 * LongExtensions.Megabyte, () =>
             {
                 int iterations = 100;
                 for (int iteration = 0; iteration < iterations; ++iteration)
@@ -307,9 +307,9 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
                 long bytesWritten = 0;
                 int rowsWritten = 0;
 
-                // Tsv Write goal: 100MB/sec
+                // Tsv Write goal: 100MB/sec [Surface Book]
                 // NOTE: Tsv Write performance is very sensitive the mix of text and numbers written. Writing integers is slower.
-                Verify.PerformanceByBytes(100 * LongExtensions.Megabyte, () =>
+                Verify.PerformanceByBytes(50 * LongExtensions.Megabyte, () =>
                 {
                     for (int iteration = 0; iteration < iterations; ++iteration)
                     {
