@@ -39,7 +39,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
             Reader_NewlineVariations(buildWriter, buildReader);
             Reader_Roundtrip(buildReader, buildWriter);
 
-#if !DEBUG
+#if PERFORMANCE
             Reader_Performance(sampleFilePath, buildReader);
             Writer_Performance(buildWriter);
 #endif

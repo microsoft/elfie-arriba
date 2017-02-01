@@ -216,7 +216,7 @@ namespace Arriba.Test
             Assert.AreEqual("1, 3", String.Join(", ", s2.Values));
         }
 
-#if !DEBUG
+#if PERFORMANCE
         [TestMethod]
 #endif
         public void ShortSet_Performance_GetAndSet()
@@ -260,7 +260,7 @@ namespace Arriba.Test
             Assert.IsTrue(operationsPerMillisecond > 75000, "Not within 200% of goal.");
         }
 
-#if !DEBUG
+#if PERFORMANCE
         [TestMethod]
 #endif
         public void ShortSet_Performance_Set()
@@ -305,7 +305,7 @@ namespace Arriba.Test
             Assert.IsTrue(operationsPerMillisecond > 100, "Not within 200% of goal.");
         }
 
-#if !DEBUG
+#if PERFORMANCE
         [TestMethod]
 #endif
         public void ShortSet_Performance_Enumerate()
@@ -334,7 +334,7 @@ namespace Arriba.Test
             Assert.IsTrue(operationsPerMillisecond > 5, "Not within 200% of goal.");
         }
 
-#if !DEBUG
+#if PERFORMANCE
         [TestMethod]
 #endif
         public void ShortSet_Performance_Count()

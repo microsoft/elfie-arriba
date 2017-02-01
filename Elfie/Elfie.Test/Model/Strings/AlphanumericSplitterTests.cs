@@ -47,7 +47,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
             Assert.AreEqual("VB3094|MSC2093", SplitAndJoin("VB3094: MSC2093"));
         }
 
-#if !DEBUG
+#if PERFORMANCE
         [TestMethod]
 #endif
         public void AlphanumericSplitter_Performance()
@@ -83,7 +83,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
             });
         }
 
-#if !DEBUG
+#if PERFORMANCE
         [TestMethod]
 #endif
         public void AlphanumericSplitter_EndToEndPerformance()

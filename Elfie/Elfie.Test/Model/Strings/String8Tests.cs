@@ -253,7 +253,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
             Assert.AreEqual(caseInsensitiveStableExpected, ToResult(left8.CompareCaseInsensitiveStableTo(right8)), "Case insensitive stable String8 to string comparison result incorrect.");
         }
 
-#if !DEBUG
+#if PERFORMANCE
         [TestMethod]
 #endif
         public void String8_ComparePerformance()
