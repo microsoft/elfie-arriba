@@ -257,7 +257,7 @@ namespace Arriba.Test
             double operationsPerMillisecond = operations / milliseconds;
             Trace.Write(String.Format("{0:n0} operations in {1:n0} milliseconds; {2:n0} per millisecond.", operations, milliseconds, operationsPerMillisecond));
 
-            Assert.IsTrue(operationsPerMillisecond > 100000, "Not within 200% of goal.");
+            Assert.IsTrue(operationsPerMillisecond > 75000, "Not within 200% of goal.");
         }
 
 #if !DEBUG
@@ -361,7 +361,7 @@ namespace Arriba.Test
             double operationsPerMillisecond = (3 * iterations) / milliseconds;
             Trace.Write(String.Format("{0:n0} operations in {1:n0} milliseconds; {2:n0} per millisecond.", iterations, milliseconds, operationsPerMillisecond));
 
-            Assert.IsTrue(operationsPerMillisecond > 100, "Not within 200% of goal.");
+            Assert.IsTrue(operationsPerMillisecond > 50, "Not within 200% of goal.");
         }
 
         public static ShortSet BuildRandom(ushort capacity, ushort itemsToSet, Random r)
