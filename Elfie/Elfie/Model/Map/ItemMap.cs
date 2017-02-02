@@ -89,7 +89,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Map
             if (this._mutableMap != null)
             {
                 // Need merging to provide this
-                if (this._immutableMap != null) throw new NotImplementedException();
+                if (this._immutableMap != null && this._immutableMap.Count > 0) throw new NotImplementedException();
 
                 this._immutableMap = this._mutableMap.ConvertToImmutable();
                 this._mutableMap = null;
