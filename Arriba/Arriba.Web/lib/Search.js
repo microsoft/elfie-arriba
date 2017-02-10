@@ -190,6 +190,19 @@ var AssetDetails = React.createClass({
             });
         }
 
+        var baselineIcon = React.createElement(
+            "div",
+            null,
+            React.createElement("span", { className: "good-icon icon", title: "IsBaseline:1" }),
+            "Baseline"
+        );
+        if (!this.props.data["IsBaseline"]) baselineIcon = React.createElement(
+            "div",
+            null,
+            React.createElement("span", { className: "warn-icon icon", title: "IsBaseline:0" }),
+            "Not Baseline"
+        );
+
         return React.createElement(
             "div",
             { className: "details" },
@@ -253,6 +266,7 @@ var AssetDetails = React.createClass({
                         React.createElement(
                             "div",
                             { className: "indent" },
+                            baselineIcon,
                             React.createElement(DetailsField, { value: this.props.data["SecurityRisk"], columnName: "SecurityRisk", label: "Security Risk" }),
                             React.createElement(AVSummary, { data: this.props.data }),
                             React.createElement(MonitoringSummary, { data: this.props.data }),

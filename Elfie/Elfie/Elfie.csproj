@@ -129,6 +129,7 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="Serialization\BaseTabularWriter.cs" />
+    <Compile Include="Serialization\ConsoleTabularWriter.cs" />
     <Compile Include="Serialization\FileIO.cs" />
     <Compile Include="Serialization\IBinarySerializable.cs" />
     <Compile Include="Model\IColumn.cs" />
