@@ -34,9 +34,11 @@ namespace XsvConcat
 
         private static int Main(string[] args)
         {
+            Trace.Listeners.Add(new ConsoleTraceListener());
+
             if (args == null || args.Length < 3)
             {
-                Console.WriteLine(Usage);
+                Trace.WriteLine(Usage);
                 return -1;
             }
 
@@ -76,13 +78,13 @@ namespace XsvConcat
             }
             catch (UsageException ex)
             {
-                Console.WriteLine(ex.Message);
-                Console.WriteLine(Usage);
+                Trace.WriteLine(ex.Message);
+                Trace.WriteLine(Usage);
                 return -2;
             }
             catch (Exception ex) when (!Debugger.IsAttached)
             {
-                Console.WriteLine("ERROR: " + ex.ToString());
+                Trace.WriteLine("ERROR: " + ex.ToString());
                 return -1;
             }
         }
@@ -141,7 +143,7 @@ namespace XsvConcat
                     oldValues.Add(block.GetCopy(oldReader.Current[leftColumnIndex]));
                 }
 
-                Console.WriteLine("Old: {0:n0} values for \"{1}\" in {2:n0} rows.", oldValues.Count, columnIdentifier, oldReader.RowCountRead);
+                Trace.WriteLine(String.Format("Old: {0:n0} values for \"{1}\" in {2:n0} rows.", oldValues.Count, columnIdentifier, oldReader.RowCountRead));
             }
 
             using (ITabularReader newReader = BuildReader(newFilePath))
@@ -152,7 +154,7 @@ namespace XsvConcat
                     newValues.Add(block.GetCopy(newReader.Current[rightColumnIndex]));
                 }
 
-                Console.WriteLine("New: {0:n0} values for \"{1}\" in {2:n0} rows.", newValues.Count, columnIdentifier, newReader.RowCountRead);
+                Trace.WriteLine(String.Format("New: {0:n0} values for \"{1}\" in {2:n0} rows.", newValues.Count, columnIdentifier, newReader.RowCountRead));
             }
 
             HashSet<String8> oldOnly = new HashSet<String8>(oldValues);
@@ -161,7 +163,7 @@ namespace XsvConcat
             HashSet<String8> newOnly = new HashSet<String8>(newValues);
             newOnly.ExceptWith(oldValues);
 
-            Console.WriteLine("{0:n0} values were only in \"{1}\".\r\n{2:n0} values were only in \"{3}\".", oldOnly.Count, oldFilePath, newOnly.Count, newFilePath);
+            Trace.WriteLine(String.Format("{0:n0} values were only in \"{1}\".\r\n{2:n0} values were only in \"{3}\".", oldOnly.Count, oldFilePath, newOnly.Count, newFilePath));
 
             String8 leftMarker = String8.Convert("-", new byte[1]);
             String8 rightMarker = String8.Convert("+", new byte[1]);
@@ -322,7 +324,7 @@ namespace XsvConcat
 
             writer.NextRow();
         }
-
+        
         [Serializable]
         public class UsageException : Exception
         {
