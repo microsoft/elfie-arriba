@@ -1715,7 +1715,7 @@ if (!configuration) {
     var configuration = {
         // Arriba Service URL to query
         // Hardcode to the name of your service. Use port 42784 for HTTP, 42785 for HTTPS.
-        url: "https://" + window.location.hostname + ":42785",
+        url: "http://" + window.location.hostname + ":42784",
 
         // Name of tool to show [top right and elsewhere]
         toolName: "Arriba",

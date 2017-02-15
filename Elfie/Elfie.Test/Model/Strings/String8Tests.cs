@@ -167,15 +167,27 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
         {
             byte[] buffer = new byte[11];
             Assert.AreEqual("0", String8.FromInteger(0, buffer).ToString());
+            Assert.AreEqual("00", String8.FromInteger(0, buffer, 0, 2).ToString());
             Assert.AreEqual("9", String8.FromInteger(9, buffer).ToString());
             Assert.AreEqual("-1", String8.FromInteger(-1, buffer).ToString());
             Assert.AreEqual("-10", String8.FromInteger(-10, buffer).ToString());
             Assert.AreEqual("99", String8.FromInteger(99, buffer).ToString());
+            Assert.AreEqual("0099", String8.FromInteger(99, buffer, 0, 4).ToString());
             Assert.AreEqual("100", String8.FromInteger(100, buffer).ToString());
             Assert.AreEqual("-999", String8.FromInteger(-999, buffer).ToString());
             Assert.AreEqual("123456789", String8.FromInteger(123456789, buffer).ToString());
             Assert.AreEqual(int.MaxValue.ToString(), String8.FromInteger(int.MaxValue, buffer).ToString());
             Assert.AreEqual(int.MinValue.ToString(), String8.FromInteger(int.MinValue, buffer).ToString());
+        }
+
+        [TestMethod]
+        public void String8_FromDateTime()
+        {
+            byte[] buffer = new byte[20];
+            Assert.AreEqual("0001-01-01", String8.FromDateTime(DateTime.MinValue, buffer).ToString());
+            Assert.AreEqual("2017-02-14", String8.FromDateTime(new DateTime(2017, 02, 14, 0, 0, 0, DateTimeKind.Utc), buffer).ToString());
+            Assert.AreEqual("2017-02-14T01:02:03Z", String8.FromDateTime(new DateTime(2017, 02, 14, 1, 2, 3, DateTimeKind.Utc), buffer).ToString());
+            Assert.AreEqual("9999-12-31T23:59:59Z", String8.FromDateTime(DateTime.MaxValue, buffer).ToString());
         }
 
         private int TryToInteger(string value)

@@ -355,19 +355,34 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             return (int)value;
         }
 
+        /// <summary>
+        ///  Convert an integer into the equivalent String8 representation, using the provided buffer.
+        ///  Buffer must be at least 11 bytes long to handle all values.
+        /// </summary>
+        /// <param name="value">Integer value to convert</param>
+        /// <param name="buffer">byte[] for conversion (at least length 11 for all values)</param>
+        /// <returns>String8 representation of integer value</returns>
         public static String8 FromInteger(int value, byte[] buffer)
         {
-            if (buffer.Length < 11) throw new ArgumentException("String8.FromInteger requires an 11 byte buffer for integer conversion.");
+            return FromInteger(value, buffer, 0, 1);
+        }
 
-            int i = 0;
+        /// <summary>
+        ///  Convert an integer into the equivalent String8 representation, using the provided buffer.
+        ///  Buffer must be at least 11 bytes long to handle all values.
+        /// </summary>
+        /// <param name="value">Integer value to convert</param>
+        /// <param name="buffer">byte[] for conversion (at least length 11 for all values)</param>
+        /// <param name="index">Index within byte[] at which to being writing</param>
+        /// <param name="minimumDigits">Minimum integer length (leading zeros written if needed)</param>
+        /// <returns>String8 representation of integer value</returns>
+        public static String8 FromInteger(int value, byte[] buffer, int index, int minimumDigits = 1)
+        {
+            bool isNegative = value < 0;
             long valueLeft = value;
 
-            // Write minus sign if negative
-            if (valueLeft < 0)
-            {
-                valueLeft = -valueLeft;
-                buffer[i++] = (byte)'-';
-            }
+            // Convert as positive value
+            if (isNegative) valueLeft = -valueLeft;
 
             // Determine how many digits in value
             int digits = 1;
@@ -378,15 +393,64 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
                 scale *= 10;
             }
 
+            // Enforce a digit minimum, if passed
+            if (digits < minimumDigits) digits = minimumDigits;
+
+            // Validate buffer is long enough
+            int requiredLength = digits;
+            if (isNegative) requiredLength++;
+            if (buffer.Length + index < requiredLength) throw new ArgumentException("String8.FromInteger requires an 11 byte buffer for integer conversion.");
+
+            // Write minus sign if negative
+            if(isNegative) buffer[index++] = (byte)'-';
+
             // Write digits right to left
-            for (int j = i + digits - 1; j >= i; --j)
+            for (int j = index + digits - 1; j >= index; --j)
             {
                 long digit = valueLeft % 10;
                 buffer[j] = (byte)(UTF8.Zero + (byte)digit);
                 valueLeft /= 10;
             }
 
-            return new String8(buffer, 0, i + digits);
+            return new String8(buffer, 0, index + digits);
+        }
+
+        /// <summary>
+        ///  Convert a UTC DateTime into an ISO-8601 format string [yyyy-MM-ddThh:mm:ssZ],
+        ///  without allocation.
+        /// </summary>
+        /// <param name="value">UTC DateTime to convert</param>
+        /// <param name="index">Index at which to convert</param>
+        /// <param name="buffer">byte[] at least 20 bytes long to convert into</param>
+        /// <returns>Converted DateTime</returns>
+        public static String8 FromDateTime(DateTime value, byte[] buffer, int index = 0)
+        {
+            if (buffer.Length + index < 20) throw new ArgumentException("String8.FromDateTime requires a 20 byte buffer for conversion.");
+
+            int length = 10;
+
+            // yyyy-MM-dd
+            FromInteger(value.Year, buffer, index + 0, 4);
+            buffer[index + 4] = UTF8.Dash;
+            FromInteger(value.Month, buffer, index + 5, 2);
+            buffer[index + 7] = UTF8.Dash;
+            FromInteger(value.Day, buffer, index + 8, 2);
+
+            // Thh:mm:ssZ
+            if(value.TimeOfDay > TimeSpan.Zero)
+            {
+                length = 20;
+
+                buffer[index + 10] = UTF8.T;
+                FromInteger(value.Hour, buffer, index + 11, 2);
+                buffer[index + 13] = UTF8.Colon;
+                FromInteger(value.Minute, buffer, index + 14, 2);
+                buffer[index + 16] = UTF8.Colon;
+                FromInteger(value.Second, buffer, index + 17, 2);
+                buffer[index + 19] = UTF8.Z;
+            }
+
+            return new String8(buffer, index, length);
         }
         #endregion
 
