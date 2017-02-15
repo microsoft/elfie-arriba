@@ -468,6 +468,70 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
 
             return new String8(buffer, index, length);
         }
+
+        /// <summary>
+        ///  Convert a String8 with an ISO-8601 UTC DateTime into the DateTime value.
+        ///  [yyyy-MM-ddThh:mm:ssZ]
+        /// </summary>
+        /// <param name="result">UTC DateTime corresponding to string, if it was a valid DateTime</param>
+        /// <returns>True if an integer was found, False otherwise.</returns>
+        public bool TryToDateTime(out DateTime result)
+        {
+            result = DateTime.MinValue;
+            if (this.IsEmpty()) return false;
+
+            // Formats are [yyyy-MM-dd] (length 10) or [yyyy-MM-ddThh:mm:ssZ] (length 20)
+            //              0123456789                  01234567890123456789
+            bool hasTimePart = (_length == 20);
+            if (_length != 10 && !hasTimePart) return false;
+
+            // Validate date part separators
+            if (_buffer[_index + 4] != UTF8.Dash) return false;
+            if (_buffer[_index + 7] != UTF8.Dash) return false;
+
+            // Validate time part separators and suffix
+            if (hasTimePart)
+            {
+                if (_buffer[_index + 10] != UTF8.T && _buffer[_index + 10] != UTF8.Space) return false;
+                if (_buffer[_index + 13] != UTF8.Colon) return false;
+                if (_buffer[_index + 16] != UTF8.Colon) return false;
+                if (_buffer[_index + 19] != UTF8.Z) return false;
+            }
+
+            int year, month, day, hour = 0, minute = 0, second = 0;
+
+            // Parse the date numbers
+            if (!this.Substring(0, 4).TryToInteger(out year)) return false;
+            if (!this.Substring(5, 2).TryToInteger(out month)) return false;
+            if (!this.Substring(8, 2).TryToInteger(out day)) return false;
+
+            // Validate the date number ranges (no month-specific day validation)
+            if (year < 0) return false;
+            if (month < 1 || month > 12) return false;
+            if (day < 1 || day > 31) return false;
+
+            if (hasTimePart)
+            {
+                // Parse the time numbers
+                if (!this.Substring(11, 2).TryToInteger(out hour)) return false;
+                if (!this.Substring(14, 2).TryToInteger(out minute)) return false;
+                if (!this.Substring(17, 2).TryToInteger(out second)) return false;
+
+                // Validate the time number ranges
+                if (hour < 0 || hour > 23) return false;
+                if (minute < 0 || minute > 59) return false;
+                if (second < 0 || second > 59) return false;
+            }
+
+            // Construct DateTime to avoid failures due to days being out of range (leap year and month length)
+            result = new DateTime(year, month, 1, hour, minute, second, DateTimeKind.Utc);
+            if(day > 1) result = result.AddDays(day - 1);
+            
+            // Return false for invalid leap days
+            if (result.Month != month) return false;
+
+            return true;
+        }
         #endregion
 
         #region IComparable
