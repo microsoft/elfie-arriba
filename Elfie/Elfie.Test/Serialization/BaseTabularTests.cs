@@ -180,8 +180,15 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
                     {
                         // Get value (valid)
                         String8 lineNumber8 = r.Current[lineNumberColumnIndex];
-                        int lineNumber = lineNumber8.ToInteger();
-                        Assert.AreEqual(rowIndex, lineNumber, "Expected line number to equal row number");
+                        int lineNumber = 0;
+                        if (lineNumber8.TryToInteger(out lineNumber))
+                        {
+                            Assert.AreEqual(rowIndex, lineNumber, "Expected line number to equal row number");
+                        }
+                        else
+                        {
+                            Assert.Fail(String.Format("\"{0}\" was not converted to an integer.", lineNumber8));
+                        }
 
                         // Get line number
                         Assert.AreEqual(rowIndex, r.RowCountRead, "Expected lines read to equal row number");
@@ -249,7 +256,8 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
                             if (r.CurrentRowColumns < 2) continue;
 
                             String8 lineNumber8 = r.Current[lineNumberIndex];
-                            int lineNumber = lineNumber8.ToInteger();
+                            int lineNumber;
+                            lineNumber8.TryToInteger(out lineNumber);
 
                             // TODO: Get ToInteger fast enough to read overall at goal
                             String8 count8 = r.Current[countIndex];

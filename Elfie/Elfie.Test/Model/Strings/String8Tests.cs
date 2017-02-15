@@ -151,15 +151,19 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
         [TestMethod]
         public void String8_ToInteger()
         {
-            Assert.AreEqual(-1, TryToInteger(null));
-            Assert.AreEqual(-1, TryToInteger(String.Empty));
+            Assert.AreEqual(null, TryToInteger(null));
+            Assert.AreEqual(null, TryToInteger(String.Empty));
             Assert.AreEqual(5, TryToInteger("5"));
             Assert.AreEqual(12345, TryToInteger("12345"));
-            Assert.AreEqual(-1, TryToInteger("-6"));
+            Assert.AreEqual(-6, TryToInteger("-6"));
+            Assert.AreEqual(-1, TryToInteger("-1"));
+            Assert.AreEqual(0, TryToInteger("0"));
+            Assert.AreEqual(1, TryToInteger("1"));
             Assert.AreEqual(int.MaxValue, TryToInteger(int.MaxValue.ToString()));
-            Assert.AreEqual(-1, TryToInteger("123g"));
-            Assert.AreEqual(-1, TryToInteger("9999999999"));
-            Assert.AreEqual(-1, TryToInteger("12345678901234567890"));
+            Assert.AreEqual(int.MinValue, TryToInteger(int.MinValue.ToString()));
+            Assert.AreEqual(null, TryToInteger("123g"));
+            Assert.AreEqual(null, TryToInteger("9999999999"));
+            Assert.AreEqual(null, TryToInteger("12345678901234567890"));
         }
 
         [TestMethod]
@@ -190,10 +194,18 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
             Assert.AreEqual("9999-12-31T23:59:59Z", String8.FromDateTime(DateTime.MaxValue, buffer).ToString());
         }
 
-        private int TryToInteger(string value)
+        private int? TryToInteger(string value)
         {
             String8 value8 = String8.Convert(value, new byte[String8.GetLength(value)]);
-            return value8.ToInteger();
+
+            int? result = null;
+            int parsed = 0;
+            if(value8.TryToInteger(out parsed))
+            {
+                result = parsed;
+            }
+
+            return result;
         }
 
         [TestMethod]

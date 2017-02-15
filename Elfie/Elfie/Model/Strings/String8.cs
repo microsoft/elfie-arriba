@@ -333,26 +333,42 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
 
         #region Type Conversions
         /// <summary>
-        ///  Convert a String8 with a non-negative integer [digits only] to the numeric value.
+        ///  Convert a String8 with an integer to the numeric value.
         /// </summary>
-        /// <returns>Numeric Value or -1 if not an integer</returns>
-        public int ToInteger()
+        /// <param name="result">Integer value found, if there was a valid integer</param>
+        /// <returns>True if an integer was found, False otherwise.</returns>
+        public bool TryToInteger(out int result)
         {
-            if (IsEmpty()) return -1;
+            result = -1;
+            if (IsEmpty()) return false;
+            if (_length > 11) return false;
 
             long value = 0;
+            int i = _index;
             int end = _index + _length;
-            for (int i = _index; i < end; ++i)
+
+            // Check for negative sign
+            bool isNegative = this._buffer[i] == UTF8.Dash;
+            if (isNegative) i++;
+
+            // Decode digits
+            for (; i < end; ++i)
             {
-                int digitValue = this._buffer[i] - UTF8.Zero;
-                if (digitValue < 0 || digitValue > 9) return -1;
+                byte digitValue = (byte)(this._buffer[i] - UTF8.Zero);
+                if (digitValue > 9) return false;
 
                 value *= 10;
                 value += digitValue;
-                if (value > int.MaxValue) return -1;
             }
 
-            return (int)value;
+            // Negate if negative sign was found
+            if (isNegative) value = -value;
+
+            // Ensure within integer bounds
+            if (value > int.MaxValue || value < int.MinValue) return false;
+
+            result = (int)value;
+            return true;
         }
 
         /// <summary>
