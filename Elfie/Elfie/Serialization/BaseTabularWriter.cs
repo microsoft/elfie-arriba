@@ -151,6 +151,28 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         }
 
         /// <summary>
+        ///  Write a single UTF8 byte to the current row.
+        ///  The value is converted without allocations.
+        /// </summary>
+        /// <param name="value">Value to write</param>
+        public void Write(byte value)
+        {
+            WriteValueStart();
+            WriteValuePart(value);
+            WriteValueEnd();
+        }
+
+        /// <summary>
+        ///  Write a single DateTime [UTC] to the current row.
+        ///  The value is converted without allocations.
+        /// </summary>
+        /// <param name="value">Value to write</param>
+        public void Write(DateTime value)
+        {
+            Write(String8.FromDateTime(value, _typeConversionBuffer));
+        }
+
+        /// <summary>
         ///  Write the beginning of a cell value which will be written in parts.
         ///  Used for concatenated values.
         /// </summary>
@@ -192,6 +214,16 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             _inPartialColumn = false;
             WriteValueEnd(_stream);
             _currentRowColumnCount++;
+        }
+
+        /// <summary>
+        ///  Write a UTC DateTime as part of a single cell value.
+        ///  Callers must call WriteValueStart and WriteValueEnd around WriteValuePart calls.
+        /// </summary>
+        /// <param name="part">Value to write</param>
+        public void WriteValuePart(DateTime part)
+        {
+            WriteValuePart(String8.FromDateTime(part, _typeConversionBuffer));
         }
 
         /// <summary>

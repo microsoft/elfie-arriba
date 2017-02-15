@@ -20,6 +20,13 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         void Write(String8 value);
 
         /// <summary>
+        ///  Write a UTC DateTime to the current row.
+        ///  The value is converted without allocations.
+        /// </summary>
+        /// <param name="value">Value to write</param>
+        void Write(DateTime value);
+
+        /// <summary>
         ///  Write an integer to the current row.
         ///  The value is converted without allocations.
         /// </summary>
@@ -32,6 +39,13 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         /// </summary>
         /// <param name="value">Value to write</param>
         void Write(bool value);
+
+        /// <summary>
+        ///  Write a single UTF8 character to the current row.
+        ///  The value is converted without allocations.
+        /// </summary>
+        /// <param name="value">Value to write</param>
+        void Write(byte value);
 
         /// <summary>
         ///  Write the beginning of a cell value which will be written in parts.
@@ -52,10 +66,11 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         void WriteValuePart(String8 part);
 
         /// <summary>
-        ///  Write a single UTF8 byte as part of the current cell value.
+        ///  Write a UTC DateTime as part of a single cell value.
+        ///  Callers must call WriteValueStart and WriteValueEnd around WriteValuePart calls.
         /// </summary>
-        /// <param name="c">Character to write to the current cell.</param>
-        void WriteValuePart(byte c);
+        /// <param name="value">Value to write</param>
+        void WriteValuePart(DateTime value);
 
         /// <summary>
         ///  Write an integer as part of a single cell value.
@@ -70,6 +85,12 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         /// </summary>
         /// <param name="part">Value to write</param>
         void WriteValuePart(bool part);
+
+        /// <summary>
+        ///  Write a single UTF8 byte as part of the current cell value.
+        /// </summary>
+        /// <param name="c">Character to write to the current cell.</param>
+        void WriteValuePart(byte c);
 
         /// <summary>
         ///  Write a row separator and start the next row.
