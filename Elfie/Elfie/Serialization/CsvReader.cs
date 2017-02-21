@@ -42,7 +42,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
 
         protected override String8Set SplitRows(String8 block, PartialArray<int> rowPositionArray)
         {
-            return block.Split(UTF8.Newline, rowPositionArray);
+            return block.SplitOutsideQuotes(UTF8.Newline, rowPositionArray);
         }
     }
 }
