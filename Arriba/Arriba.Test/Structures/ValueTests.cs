@@ -88,10 +88,8 @@ namespace Arriba.Test.Structures
             Assert.AreEqual(String.Format("string:{0}, ByteBlock:{0}, double:{0}", double.MinValue), TryAllConversions_ValueTypeReference(double.MinValue));
 
             // DateTime / String
-            Assert.AreEqual("string:2013-09-25 00:00:00Z, ByteBlock:2013-09-25 00:00:00Z, DateTime:2013-09-25 00:00:00Z", TryAllConversions(new DateTime(2013, 09, 25)));
-            Assert.AreEqual("string:2013-09-25 00:00:00Z, ByteBlock:2013-09-25 00:00:00Z, DateTime:2013-09-25 00:00:00Z", TryAllConversions_ValueTypeReference(new DateTime(2013, 09, 25)));
-            Assert.AreEqual("string:2013-09-25 07:00:00Z, ByteBlock:2013-09-25 07:00:00Z, DateTime:2013-09-25 07:00:00Z", TryAllConversions(new DateTime(2013, 09, 25).ToUniversalTime()));
-            Assert.AreEqual("string:2013-09-25 07:00:00Z, ByteBlock:2013-09-25 07:00:00Z, DateTime:2013-09-25 07:00:00Z", TryAllConversions_ValueTypeReference(new DateTime(2013, 09, 25).ToUniversalTime()));
+            Assert.AreEqual("string:2013-09-25 00:00:00Z, ByteBlock:2013-09-25 00:00:00Z, DateTime:2013-09-25 00:00:00Z", TryAllConversions(new DateTime(2013, 09, 25, 0, 0, 0, DateTimeKind.Utc)));
+            Assert.AreEqual("string:2013-09-25 00:00:00Z, ByteBlock:2013-09-25 00:00:00Z, DateTime:2013-09-25 00:00:00Z", TryAllConversions_ValueTypeReference(new DateTime(2013, 09, 25, 0, 0, 0, DateTimeKind.Utc)));
             Assert.AreEqual("string:2013-09-25, ByteBlock:2013-09-25, DateTime:2013-09-25 00:00:00Z", TryAllConversions("2013-09-25"));
             Assert.AreEqual("string:09/25/2013, ByteBlock:09/25/2013, DateTime:2013-09-25 00:00:00Z", TryAllConversions("09/25/2013"));
 
@@ -234,8 +232,8 @@ namespace Arriba.Test.Structures
         public void Value_BestType()
         {
             Assert.AreEqual("DateTime", Value.Create("2014-01-01").BestType().Name);
-            Assert.AreEqual("DateTime", Value.Create(new DateTime(2014, 01, 01)).BestType().Name);
-            Assert.AreEqual("DateTime", Value.Create(new ValueTypeReference<DateTime>(new DateTime(2014, 01, 01))).BestType().Name);
+            Assert.AreEqual("DateTime", Value.Create(new DateTime(2014, 01, 01, 0, 0, 0, DateTimeKind.Utc)).BestType().Name);
+            Assert.AreEqual("DateTime", Value.Create(new ValueTypeReference<DateTime>(new DateTime(2014, 01, 01, 0, 0, 0, DateTimeKind.Utc))).BestType().Name);
             Assert.AreEqual("Guid", Value.Create(Guid.NewGuid()).BestType().Name);
             Assert.AreEqual("Guid", Value.Create(new ValueTypeReference<Guid>(Guid.NewGuid())).BestType().Name);
             Assert.AreEqual("Boolean", Value.Create("False").BestType().Name);
@@ -379,7 +377,7 @@ namespace Arriba.Test.Structures
             TryEquivalence((ushort)12345);
             TryEquivalence((long)12345);
             TryEquivalence((ulong)12345);
-            TryEquivalence(new DateTime(2013, 09, 25));
+            TryEquivalence(new DateTime(2013, 09, 25, 0, 0, 0, DateTimeKind.Utc));
         }
 
         private void TryEquivalence<T>(T testValue) where T : IEquatable<T>
@@ -448,7 +446,7 @@ namespace Arriba.Test.Structures
             Assert.IsTrue(difference / (float)minCount < 0.05, "Distribution of items was not very even.");
         }
 
-#if !DEBUG
+#if PERFORMANCE
         [TestMethod]
 #endif
         public void Value_Performance()

@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
-using System.Collections.Generic;
 using System.IO;
 
 using Elfie.Test;
@@ -20,16 +19,16 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
         [TestMethod]
         public void CsvReaderWriter_BaseTests()
         {
-            ReaderWriterAll("Sample.csv", (stream, columns) => new CsvWriter(stream, columns), (filePath, hasHeaderRow) => new CsvReader(filePath, hasHeaderRow));
+            ReaderWriterAll("Sample.csv", (stream) => new CsvWriter(stream), (filePath, hasHeaderRow) => new CsvReader(filePath, hasHeaderRow));
         }
 
         [TestMethod]
         public void TsvReaderWriter_BaseTests()
         {
-            ReaderWriterAll("Sample.tsv", (stream, columns) => new TsvWriter(stream, columns), (filePath, hasHeaderRow) => new TsvReader(filePath, hasHeaderRow));
+            ReaderWriterAll("Sample.tsv", (stream) => new TsvWriter(stream), (filePath, hasHeaderRow) => new TsvReader(filePath, hasHeaderRow));
         }
 
-        public void ReaderWriterAll(string sampleFilePath, Func<Stream, IEnumerable<string>, BaseTabularWriter> buildWriter, Func<string, bool, BaseTabularReader> buildReader)
+        public void ReaderWriterAll(string sampleFilePath, Func<Stream, ITabularWriter> buildWriter, Func<string, bool, ITabularReader> buildReader)
         {
             if (!File.Exists(sampleFilePath))
             {
@@ -40,21 +39,23 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
             Reader_NewlineVariations(buildWriter, buildReader);
             Reader_Roundtrip(buildReader, buildWriter);
 
-#if !DEBUG
+#if PERFORMANCE
             Reader_Performance(sampleFilePath, buildReader);
             Writer_Performance(buildWriter);
 #endif
         }
 
-        private static void WriteSampleFileWithIssues(Stream stream, Func<Stream, IEnumerable<string>, BaseTabularWriter> buildWriter)
+        private static void WriteSampleFileWithIssues(Stream stream, Func<Stream, ITabularWriter> buildWriter)
         {
             Random r = new Random();
             string huge = new string('Z', 100000);
             String8 huge8 = String8.Convert(huge, new byte[String8.GetLength(huge)]);
             String8 abcdef = String8.Convert("ABCDEF", new byte[6]);
 
-            using (BaseTabularWriter writer = buildWriter(stream, new string[] { "LineNumber", "Count", "Description" }))
+            using (ITabularWriter writer = buildWriter(stream))
             {
+                writer.SetColumns(new string[] { "LineNumber", "Count", "Description" });
+
                 for (int i = writer.RowCountWritten + 1; i <= 10000; ++i)
                 {
                     if (i % 100 == 99)
@@ -65,7 +66,9 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
                         // Make the writer think everything is ok (it'll throw if you don't write enough values)
                         writer.Write(String8.Empty);
                         writer.Write(String8.Empty);
-                        writer.Write(String8.Empty);
+
+                        writer.WriteValueStart();
+                        writer.WriteValueEnd();
 
                         // Wipe out what was written
                         stream.Seek(rowStartPosition, SeekOrigin.Begin);
@@ -74,7 +77,11 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
                     {
                         // Write a huge row
                         writer.Write(i);
-                        writer.Write(r.Next(100000));
+
+                        writer.WriteValueStart();
+                        writer.WriteValuePart(r.Next(100000));
+                        writer.WriteValueEnd();
+
                         writer.Write(huge8);
                     }
                     else
@@ -90,14 +97,16 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
             }
         }
 
-        private static void WriteValidSample(Stream stream, Func<Stream, IEnumerable<string>, BaseTabularWriter> buildWriter)
+        private static void WriteValidSample(Stream stream, Func<Stream, ITabularWriter> buildWriter)
         {
             String8Block block = new String8Block();
             String8 simple = block.GetCopy("Simple");
             String8 commasAndQuotes = block.GetCopy("Value, but with \"quotes\" and commas");
 
-            using (BaseTabularWriter writer = buildWriter(stream, new string[] { "LineNumber", "Count", "Description" }))
+            using (ITabularWriter writer = buildWriter(stream))
             {
+                writer.SetColumns(new string[] { "LineNumber", "Count", "Description" });
+
                 for (int i = 2; i < 10; ++i)
                 {
                     writer.Write(i);
@@ -109,7 +118,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
             }
         }
 
-        public void Reader_Basics(string sampleFilePath, Func<string, bool, BaseTabularReader> buildReader)
+        public void Reader_Basics(string sampleFilePath, Func<string, bool, ITabularReader> buildReader)
         {
             // File Not Found
             Verify.Exception<FileNotFoundException>(() => buildReader("NonExistantFile.xsv", false));
@@ -121,13 +130,13 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
             Verify.Exception<IOException>(() => buildReader("Empty.xsv", true));
 
             // Verify Reader returns false immediately if not reading headers
-            using (BaseTabularReader r = buildReader("Empty.xsv", false))
+            using (ITabularReader r = buildReader("Empty.xsv", false))
             {
                 Assert.IsFalse(r.NextRow());
             }
 
             // Verify Reader doesn't consume header row if asked not to
-            using (BaseTabularReader r = buildReader(sampleFilePath, false))
+            using (ITabularReader r = buildReader(sampleFilePath, false))
             {
                 Assert.IsTrue(r.NextRow());
                 Assert.AreEqual("LineNumber", r.Current[0].ToString());
@@ -137,7 +146,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
             }
 
             // Open the sample Tsv the 'expected' way
-            using (BaseTabularReader r = buildReader(sampleFilePath, true))
+            using (ITabularReader r = buildReader(sampleFilePath, true))
             {
                 // Get column name (valid)
                 int lineNumberColumnIndex = r.ColumnIndex("LineNumber");
@@ -171,8 +180,15 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
                     {
                         // Get value (valid)
                         String8 lineNumber8 = r.Current[lineNumberColumnIndex];
-                        int lineNumber = lineNumber8.ToInteger();
-                        Assert.AreEqual(rowIndex, lineNumber, "Expected line number to equal row number");
+                        int lineNumber = 0;
+                        if (lineNumber8.TryToInteger(out lineNumber))
+                        {
+                            Assert.AreEqual(rowIndex, lineNumber, "Expected line number to equal row number");
+                        }
+                        else
+                        {
+                            Assert.Fail(String.Format("\"{0}\" was not converted to an integer.", lineNumber8));
+                        }
 
                         // Get line number
                         Assert.AreEqual(rowIndex, r.RowCountRead, "Expected lines read to equal row number");
@@ -184,7 +200,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
             }
         }
 
-        public void Reader_Roundtrip(Func<string, bool, BaseTabularReader> buildReader, Func<Stream, IEnumerable<string>, BaseTabularWriter> buildWriter)
+        public void Reader_Roundtrip(Func<string, bool, ITabularReader> buildReader, Func<Stream, ITabularWriter> buildWriter)
         {
             string filePath = "ValidSample.xsv";
 
@@ -192,10 +208,12 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
             WriteValidSample(new FileStream(filePath, FileMode.Create, FileAccess.ReadWrite), buildWriter);
 
             // Direct Copy the file from the reader to the writer - every value unescaped and then escaped
-            using (BaseTabularReader reader = buildReader(filePath, true))
+            using (ITabularReader reader = buildReader(filePath, true))
             {
-                using (BaseTabularWriter writer = buildWriter(new FileStream(filePath + ".new", FileMode.Create, FileAccess.ReadWrite), reader.Columns))
+                using (ITabularWriter writer = buildWriter(new FileStream(filePath + ".new", FileMode.Create, FileAccess.ReadWrite)))
                 {
+                    writer.SetColumns(reader.Columns);
+
                     while (reader.NextRow())
                     {
                         for (int i = 0; i < reader.CurrentRowColumns; ++i)
@@ -214,18 +232,18 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
             Assert.AreEqual(fileBefore, fileAfter);
         }
 
-        public void Reader_Performance(string sampleFilePath, Func<string, bool, BaseTabularReader> buildReader)
+        public void Reader_Performance(string sampleFilePath, Func<string, bool, ITabularReader> buildReader)
         {
             long rowCountRead = 0;
             long xsvLengthBytes = new FileInfo(sampleFilePath).Length;
 
-            // Goal: 100MB/sec
-            Verify.PerformanceByBytes(100 * LongExtensions.Megabyte, () =>
+            // Goal: 100MB/sec [Surface Book i7]
+            Verify.PerformanceByBytes(50 * LongExtensions.Megabyte, () =>
             {
                 int iterations = 100;
                 for (int iteration = 0; iteration < iterations; ++iteration)
                 {
-                    using (BaseTabularReader r = buildReader(sampleFilePath, true))
+                    using (ITabularReader r = buildReader(sampleFilePath, true))
                     {
                         int lineNumberIndex = r.ColumnIndex("LineNumber");
                         int countIndex = r.ColumnIndex("Count");
@@ -238,7 +256,8 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
                             if (r.CurrentRowColumns < 2) continue;
 
                             String8 lineNumber8 = r.Current[lineNumberIndex];
-                            int lineNumber = lineNumber8.ToInteger();
+                            int lineNumber;
+                            lineNumber8.TryToInteger(out lineNumber);
 
                             // TODO: Get ToInteger fast enough to read overall at goal
                             String8 count8 = r.Current[countIndex];
@@ -253,12 +272,14 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
             });
         }
 
-        public void Writer_RowValidation(Func<string, IEnumerable<string>, BaseTabularWriter> buildWriter)
+        public void Writer_RowValidation(Func<string, ITabularWriter> buildWriter)
         {
             using (MemoryStream stream = new MemoryStream())
             {
-                using (BaseTabularWriter writer = buildWriter("Writer_RowValidation.xsv", new string[] { "LineNumber", "Count", "Description", "Source" }))
+                using (ITabularWriter writer = buildWriter("Writer_RowValidation.xsv"))
                 {
+                    writer.SetColumns(new string[] { "LineNumber", "Count", "Description", "Source" });
+
                     writer.Write(1);
                     writer.Write(2);
 
@@ -280,7 +301,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
             Assert.IsTrue(content.EndsWith("\r\n"));
         }
 
-        public void Writer_Performance(Func<Stream, IEnumerable<string>, BaseTabularWriter> buildWriter)
+        public void Writer_Performance(Func<Stream, ITabularWriter> buildWriter)
         {
             String8Block block = new String8Block();
             String8 d1 = block.GetCopy("Description 1");
@@ -294,15 +315,16 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
                 long bytesWritten = 0;
                 int rowsWritten = 0;
 
-                // Tsv Write goal: 100MB/sec
+                // Tsv Write goal: 100MB/sec [Surface Book]
                 // NOTE: Tsv Write performance is very sensitive the mix of text and numbers written. Writing integers is slower.
-                Verify.PerformanceByBytes(100 * LongExtensions.Megabyte, () =>
+                Verify.PerformanceByBytes(50 * LongExtensions.Megabyte, () =>
                 {
                     for (int iteration = 0; iteration < iterations; ++iteration)
                     {
                         s.Seek(0, SeekOrigin.Begin);
 
-                        BaseTabularWriter writer = buildWriter(s, new string[] { "LineNumber", "Count", "Description", "Source" });
+                        ITabularWriter writer = buildWriter(s);
+                        writer.SetColumns(new string[] { "LineNumber", "Count", "Description", "Source" });
 
                         int sum = 0;
                         for (int row = 1; row < 10000; ++row)
@@ -335,12 +357,14 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
             }
         }
 
-        public void Reader_NewlineVariations(Func<Stream, IEnumerable<string>, BaseTabularWriter> buildWriter, Func<string, bool, BaseTabularReader> buildReader)
+        public void Reader_NewlineVariations(Func<Stream, ITabularWriter> buildWriter, Func<string, bool, ITabularReader> buildReader)
         {
             string xsvPath = "NewlineVariations.xsv";
             Stream stream = new FileStream(xsvPath, FileMode.Create, FileAccess.ReadWrite);
-            using (BaseTabularWriter w = buildWriter(stream, new string[] { "One", "Two", "Three" }))
+            using (ITabularWriter w = buildWriter(stream))
             {
+                w.SetColumns(new string[] { "One", "Two", "Three" });
+
                 for (int row = 0; row < 3; ++row)
                 {
                     w.Write(3 * row + 1);
@@ -365,7 +389,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
                 }
             }
 
-            using (BaseTabularReader r = buildReader(xsvPath, true))
+            using (ITabularReader r = buildReader(xsvPath, true))
             {
                 // Verify column heading not clipped even though no '\r'
                 Assert.AreEqual("Three", r.Columns[2]);

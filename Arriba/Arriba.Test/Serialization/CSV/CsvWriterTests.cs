@@ -23,22 +23,22 @@ namespace Arriba.Test.Serialization
             {
                 using (CsvWriter writer = new CsvWriter(context, new string[] { "ID", "Changed Date", "Title" }))
                 {
-                    writer.AppendRow(new object[] { 1519, new DateTime(2013, 12, 29), "Value with no escaping." });
-                    writer.AppendRow(new object[] { 1520, new DateTime(2013, 12, 30), "Value with quote \"escaping\"." });
-                    writer.AppendRow(new object[] { 1521, new DateTime(2013, 12, 31), "Value, escaping required." });
-                    writer.AppendRow(new object[] { 1522, new DateTime(2014, 01, 01), "Value, escaping and \"quote wrapping\" required." });
-                    writer.AppendRow(new object[] { 1523, new DateTime(2014, 01, 02), "Value\r\nrequiring escaping." });
-                    writer.AppendRow(new object[] { 1524, new DateTime(2014, 01, 03), (ByteBlock)"ByteBlock Value" });
+                    writer.AppendRow(new object[] { 1519, new DateTime(2013, 12, 29, 0, 0, 0, DateTimeKind.Utc), "Value with no escaping." });
+                    writer.AppendRow(new object[] { 1520, new DateTime(2013, 12, 30, 0, 0, 0, DateTimeKind.Utc), "Value with quote \"escaping\"." });
+                    writer.AppendRow(new object[] { 1521, new DateTime(2013, 12, 31, 0, 0, 0, DateTimeKind.Utc), "Value, escaping required." });
+                    writer.AppendRow(new object[] { 1522, new DateTime(2014, 01, 01, 0, 0, 0, DateTimeKind.Utc), "Value, escaping and \"quote wrapping\" required." });
+                    writer.AppendRow(new object[] { 1523, new DateTime(2014, 01, 02, 0, 0, 0, DateTimeKind.Utc), "Value\r\nrequiring escaping." });
+                    writer.AppendRow(new object[] { 1524, new DateTime(2014, 01, 03, 0, 0, 0, DateTimeKind.Utc), (ByteBlock)"ByteBlock Value" });
 
                     string expected =
 @"ID,Changed Date,Title" + Environment.NewLine +
-@"1519,2013-12-29 08:00:00Z,Value with no escaping." + Environment.NewLine +
-@"1520,2013-12-30 08:00:00Z,""Value with quote """"escaping"""".""" + Environment.NewLine +
-@"1521,2013-12-31 08:00:00Z,""Value, escaping required.""" + Environment.NewLine +
-@"1522,2014-01-01 08:00:00Z,""Value, escaping and """"quote wrapping"""" required.""" + Environment.NewLine +
-@"1523,2014-01-02 08:00:00Z,""Value" + Environment.NewLine +
+@"1519,2013-12-29 00:00:00Z,Value with no escaping." + Environment.NewLine +
+@"1520,2013-12-30 00:00:00Z,""Value with quote """"escaping"""".""" + Environment.NewLine +
+@"1521,2013-12-31 00:00:00Z,""Value, escaping required.""" + Environment.NewLine +
+@"1522,2014-01-01 00:00:00Z,""Value, escaping and """"quote wrapping"""" required.""" + Environment.NewLine +
+@"1523,2014-01-02 00:00:00Z,""Value" + Environment.NewLine +
 @"requiring escaping.""" + Environment.NewLine +
-@"1524,2014-01-03 08:00:00Z,ByteBlock Value" + Environment.NewLine;
+@"1524,2014-01-03 00:00:00Z,ByteBlock Value" + Environment.NewLine;
                     string actual = GetStreamContent(context);
                     Assert.AreEqual(expected, actual);
                 }
@@ -57,16 +57,16 @@ namespace Arriba.Test.Serialization
 
                 // Write one row
                 writer = new CsvWriter(context, new string[] { "ID", "Changed Date", "Title" });
-                writer.AppendRow(new object[] { 1520, new DateTime(2013, 12, 30), "Value with no escaping." });
+                writer.AppendRow(new object[] { 1520, new DateTime(2013, 12, 30, 0, 0, 0, DateTimeKind.Utc), "Value with no escaping." });
 
                 // Create another writer to append a second row
                 writer = new CsvWriter(context, new string[] { "ID", "Changed Date", "Title" });
-                writer.AppendRow(new object[] { 1521, new DateTime(2013, 12, 31), "Value, escaping required." });
+                writer.AppendRow(new object[] { 1521, new DateTime(2013, 12, 31, 0, 0, 0, DateTimeKind.Utc), "Value, escaping required." });
 
                 string expected = 
 @"ID,Changed Date,Title" + Environment.NewLine +
-@"1520,2013-12-30 08:00:00Z,Value with no escaping." + Environment.NewLine +
-@"1521,2013-12-31 08:00:00Z,""Value, escaping required.""" + Environment.NewLine;
+@"1520,2013-12-30 00:00:00Z,Value with no escaping." + Environment.NewLine +
+@"1521,2013-12-31 00:00:00Z,""Value, escaping required.""" + Environment.NewLine;
                 string actual = GetStreamContent(context);
                 Assert.AreEqual(expected, actual);
             }
@@ -82,7 +82,7 @@ namespace Arriba.Test.Serialization
                     writer.AppendRow(new object[] { null });
                     writer.AppendRow(new object[] { true });
                     writer.AppendRow(new object[] { (byte)127 });
-                    writer.AppendRow(new object[] { new DateTime(2013, 01, 01) });
+                    writer.AppendRow(new object[] { new DateTime(2013, 01, 01, 0, 0, 0, DateTimeKind.Utc) });
                     writer.AppendRow(new object[] { "String" });
                     writer.AppendRow(new object[] { (ByteBlock)"ByteBlock" });
                     writer.AppendRow(new object[] { new byte[] { 49, 50, 51 } });
@@ -93,7 +93,7 @@ namespace Arriba.Test.Serialization
 @"" + Environment.NewLine +
 @"True" + Environment.NewLine +
 @"127" + Environment.NewLine +
-@"2013-01-01 08:00:00Z" + Environment.NewLine +
+@"2013-01-01 00:00:00Z" + Environment.NewLine +
 @"String" + Environment.NewLine +
 @"ByteBlock" + Environment.NewLine +
 @"123" + Environment.NewLine +
@@ -148,7 +148,7 @@ namespace Arriba.Test.Serialization
                 using (CsvWriter writer = new CsvWriter(context, new string[] { "ID", "Changed Date", "Title" }))
                 {
                     Verify.Exception<InvalidOperationException>(
-                            () => writer.AppendRow(new object[] { 1520, new DateTime(2013, 12, 30) })
+                            () => writer.AppendRow(new object[] { 1520, new DateTime(2013, 12, 30, 0, 0, 0, DateTimeKind.Utc) })
                         );
                 }
             }
@@ -162,7 +162,7 @@ namespace Arriba.Test.Serialization
                 using (CsvWriter writer = new CsvWriter(context, new string[] { "ID", "Changed Date", "Title" }))
                 {
                     Verify.Exception<InvalidOperationException>(
-                            () => writer.AppendRow(new object[] { 1520, new DateTime(2013, 12, 30), true, Guid.NewGuid() })
+                            () => writer.AppendRow(new object[] { 1520, new DateTime(2013, 12, 30, 0, 0, 0, DateTimeKind.Utc), true, Guid.NewGuid() })
                         );
                 }
             }
@@ -177,7 +177,7 @@ namespace Arriba.Test.Serialization
 
                 // Write one row
                 writer = new CsvWriter(context, new string[] { "ID", "Changed Date", "Title" });
-                writer.AppendRow(new object[] { 1520, new DateTime(2013, 12, 30), "Value with no \"escaping\"." });
+                writer.AppendRow(new object[] { 1520, new DateTime(2013, 12, 30, 0, 0, 0, DateTimeKind.Utc), "Value with no \"escaping\"." });
 
                 // Create another writer to append a second row (wrong header)
                 Verify.Exception<IOException>(

@@ -16,25 +16,38 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
     ///  to write string values (with proper escaping).
     ///  
     ///  Usage:
-    ///  using (BaseTabularWriter w = new XWriter(writeToPath, new string[] { "Name", "IPs" }))
+    ///  using (BaseTabularWriter w = new XWriter(writeToPath))
     ///  {
+    ///     w.SetColumns(new string[] { "Name", "IPs" });
+    ///     
     ///     while(/* ... data source .. */)
     ///     {
     ///         w.Write(name);
-    ///         w.Write(ips);
+    /// 
+    ///         w.WriteValueStart();
+    ///         for(int i = 0; i &lt; source.IPs.Count; ++i)
+    ///         {
+    ///             if(i > 0) w.WriteValuePart((byte)';');
+    ///             w.WriteValuePart(source.IPs[i]);
+    ///         }
+    ///         w.WriteValueEnd();
+    /// 
     ///         w.NextRow();
     ///     }
     /// }
     /// </summary>
-    public abstract class BaseTabularWriter : IDisposable
+    public abstract class BaseTabularWriter : ITabularWriter
     {
         private static String8 True8 = String8.Convert("true", new byte[4]);
         private static String8 False8 = String8.Convert("false", new byte[5]);
 
         private Stream _stream;
+        private bool _writeHeaderRow;
+
         private int _columnCount;
         private int _rowCountWritten;
         private int _currentRowColumnCount;
+        private bool _inPartialColumn;
         private byte[] _typeConversionBuffer;
 
         /// <summary>
@@ -45,8 +58,8 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         /// <param name="columnNames">Column Names to write out.</param>
         /// <param name="writeHeaderRow">True to write a header row, False otherwise.</param>
         /// /// <param name="cellDelimiter">Delimiter between cells, default is tab.</param>
-        public BaseTabularWriter(string filePath, IEnumerable<string> columnNames, bool writeHeaderRow = true) :
-            this(new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None), columnNames, writeHeaderRow)
+        public BaseTabularWriter(string filePath, bool writeHeaderRow = true) :
+            this(new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None), writeHeaderRow)
         { }
 
         /// <summary>
@@ -58,17 +71,39 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         /// <param name="columnNames">Column names to write.</param>
         /// <param name="writeHeaderRow">True to write a header row, False otherwise</param>
         /// <param name="cellDelimiter">Delimiter between cells, default is tab.</param>
-        public BaseTabularWriter(Stream stream, IEnumerable<string> columnNames, bool writeHeaderRow = true)
+        public BaseTabularWriter(Stream stream, bool writeHeaderRow = true)
         {
             _stream = stream;
-            _columnCount = columnNames.Count();
+            _writeHeaderRow = writeHeaderRow;
+
             _currentRowColumnCount = 0;
             _rowCountWritten = 0;
 
             _typeConversionBuffer = new byte[30];
+        }
+
+        // Abstract methods. Descendants must implement writing whole cell values,
+        // cell and row delimiters, and partial values (for concatenated results).
+
+        protected abstract void WriteCellValue(Stream stream, String8 value);
+        protected abstract void WriteCellDelimiter(Stream stream);
+        protected abstract void WriteRowSeparator(Stream stream);
+        protected abstract void WriteValueStart(Stream stream);
+        protected abstract void WriteValuePart(Stream stream, String8 part);
+        protected abstract void WriteValuePart(Stream stream, byte c);
+        protected abstract void WriteValueEnd(Stream stream);
+
+        /// <summary>
+        ///  Identify the columns to be written.
+        ///  Must be called before anything else.
+        /// </summary>
+        /// <param name="columnNames">Set of column names each row will write.</param>
+        public void SetColumns(IEnumerable<string> columnNames)
+        {
+            _columnCount = columnNames.Count();
 
             // Write header row
-            if (writeHeaderRow)
+            if (this._writeHeaderRow)
             {
                 String8Block buffer = new String8Block();
                 foreach (string columnName in columnNames)
@@ -82,10 +117,6 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             if (_columnCount == 0) throw new InvalidOperationException("No columns were passed to contructor. TSV must have at least one column.");
         }
 
-        protected abstract void WriteCellValue(Stream stream, String8 value);
-        protected abstract void WriteCellDelimiter(Stream stream);
-        protected abstract void WriteRowSeparator(Stream stream);
-
         /// <summary>
         ///  Write a value to the current row.
         /// </summary>
@@ -93,6 +124,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         public void Write(String8 value)
         {
             if (_currentRowColumnCount >= _columnCount) throw new InvalidOperationException(String.Format("Writing too many columns for row {0:n0}. Wrote {1:n0}, expected {2:n0} columns.", _rowCountWritten, _currentRowColumnCount, _columnCount));
+            if (_inPartialColumn) throw new InvalidOperationException("Write was called while in a multi-part column. Call WriteValueStart, WriteValuePart, and WriteValueEnd only for partial columns.");
             if (_currentRowColumnCount > 0) WriteCellDelimiter(_stream);
             WriteCellValue(_stream, value);
             _currentRowColumnCount++;
@@ -116,6 +148,102 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         public void Write(bool value)
         {
             Write((value ? True8 : False8));
+        }
+
+        /// <summary>
+        ///  Write a single UTF8 byte to the current row.
+        ///  The value is converted without allocations.
+        /// </summary>
+        /// <param name="value">Value to write</param>
+        public void Write(byte value)
+        {
+            WriteValueStart();
+            WriteValuePart(value);
+            WriteValueEnd();
+        }
+
+        /// <summary>
+        ///  Write a single DateTime [UTC] to the current row.
+        ///  The value is converted without allocations.
+        /// </summary>
+        /// <param name="value">Value to write</param>
+        public void Write(DateTime value)
+        {
+            Write(String8.FromDateTime(value, _typeConversionBuffer));
+        }
+
+        /// <summary>
+        ///  Write the beginning of a cell value which will be written in parts.
+        ///  Used for concatenated values.
+        /// </summary>
+        public void WriteValueStart()
+        {
+            if (_currentRowColumnCount >= _columnCount) throw new InvalidOperationException(String.Format("Writing too many columns for row {0:n0}. Wrote {1:n0}, expected {2:n0} columns.", _rowCountWritten, _currentRowColumnCount, _columnCount));
+            if (_currentRowColumnCount > 0) WriteCellDelimiter(_stream);
+            _inPartialColumn = true;
+            WriteValueStart(_stream);
+        }
+
+        /// <summary>
+        ///  Write a value as part of the current cell value.
+        /// </summary>
+        /// <param name="part">String8 to write to the current cell.</param>
+        public void WriteValuePart(String8 part)
+        {
+            if (!_inPartialColumn) throw new InvalidOperationException("WriteValueStart must be called before WriteValuePart.");
+            WriteValuePart(_stream, part);
+        }
+
+        /// <summary>
+        ///  Write a single UTF8 byte as part of the current cell value.
+        /// </summary>
+        /// <param name="c">Character to write to the current cell.</param>
+        public void WriteValuePart(byte c)
+        {
+            WriteValuePart(_stream, c);
+        }
+
+        /// <summary>
+        ///  Write the end of a cell value which was written in parts.
+        ///  Used for concatenated values.
+        /// </summary>
+        public void WriteValueEnd()
+        {
+            if (!_inPartialColumn) throw new InvalidOperationException("WriteValueEnd called but WriteValueStart was never called.");
+
+            _inPartialColumn = false;
+            WriteValueEnd(_stream);
+            _currentRowColumnCount++;
+        }
+
+        /// <summary>
+        ///  Write a UTC DateTime as part of a single cell value.
+        ///  Callers must call WriteValueStart and WriteValueEnd around WriteValuePart calls.
+        /// </summary>
+        /// <param name="part">Value to write</param>
+        public void WriteValuePart(DateTime part)
+        {
+            WriteValuePart(String8.FromDateTime(part, _typeConversionBuffer));
+        }
+
+        /// <summary>
+        ///  Write an integer as part of a single cell value.
+        ///  Callers must call WriteValueStart and WriteValueEnd around WriteValuePart calls.
+        /// </summary>
+        /// <param name="part">Value to write</param>
+        public void WriteValuePart(int part)
+        {
+            WriteValuePart(String8.FromInteger(part, _typeConversionBuffer));
+        }
+
+        /// <summary>
+        ///  Write a boolean as part of a single cell value.
+        ///  Callers must call WriteValueStart and WriteValueEnd around WriteValuePart calls.
+        /// </summary>
+        /// <param name="part">Value to write</param>
+        public void WriteValuePart(bool part)
+        {
+            WriteValuePart((part ? True8 : False8));
         }
 
         /// <summary>

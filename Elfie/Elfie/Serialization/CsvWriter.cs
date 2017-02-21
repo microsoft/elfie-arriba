@@ -36,11 +36,9 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         ///  The file is overwritten if it exists.
         /// </summary>
         /// <param name="filePath">Path to file to write.</param>
-        /// <param name="columnNames">Column Names to write out.</param>
         /// <param name="writeHeaderRow">True to write a header row, False otherwise.</param>
-        /// /// <param name="cellDelimiter">Delimiter between cells, default is tab.</param>
-        public CsvWriter(string filePath, IEnumerable<string> columnNames, bool writeHeaderRow = true) :
-            base(filePath, columnNames, writeHeaderRow)
+        public CsvWriter(string filePath, bool writeHeaderRow = true) :
+            base(filePath, writeHeaderRow)
         { }
 
         /// <summary>
@@ -49,11 +47,9 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         ///  number of columns written even if a header row isn't written.
         /// </summary>
         /// <param name="stream">Stream to write to</param>
-        /// <param name="columnNames">Column names to write.</param>
         /// <param name="writeHeaderRow">True to write a header row, False otherwise</param>
-        /// <param name="cellDelimiter">Delimiter between cells, default is tab.</param>
-        public CsvWriter(Stream stream, IEnumerable<string> columnNames, bool writeHeaderRow = true) :
-            base(stream, columnNames, writeHeaderRow)
+        public CsvWriter(Stream stream, bool writeHeaderRow = true) :
+            base(stream, writeHeaderRow)
         { }
 
         protected override void WriteCellDelimiter(Stream stream)
@@ -69,9 +65,19 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
 
         protected override void WriteCellValue(Stream stream, String8 value)
         {
-            // Write leading quote
-            stream.WriteByte(UTF8.Quote);
+            WriteValueStart(stream);
+            WriteValuePart(stream, value);
+            WriteValueEnd(stream);
+        }
 
+        protected override void WriteValueStart(Stream stream)
+        {
+            // Partial values must be escaped (we don't know if they'll need to be)
+            stream.WriteByte(UTF8.Quote);
+        }
+
+        protected override void WriteValuePart(Stream stream, String8 value)
+        {
             // Look for quotes in string
             int nextWriteStartIndex = 0;
             int end = value._index + value._length;
@@ -92,8 +98,17 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
 
             // Write content after the last quote seen
             value.Substring(nextWriteStartIndex).WriteTo(stream);
+        }
 
-            // Write trailing quote
+        protected override void WriteValuePart(Stream stream, byte c)
+        {
+            if (c == UTF8.Quote) stream.WriteByte(UTF8.Quote);
+            stream.WriteByte(c);
+        }
+
+        protected override void WriteValueEnd(Stream stream)
+        {
+            // Partial values must be escaped (we don't know if they'll need to be)
             stream.WriteByte(UTF8.Quote);
         }
     }

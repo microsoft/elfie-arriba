@@ -167,7 +167,7 @@ namespace Arriba.Test.Structures
             Assert.AreNotEqual(0, comparer.CompareTo("edi"));
         }
 
-#if !DEBUG
+#if PERFORMANCE
         [TestMethod]
 #endif
         public void ByteBlock_Performance_ToLowerInvariant()
@@ -196,7 +196,7 @@ namespace Arriba.Test.Structures
             Assert.IsTrue(operationsPerMillisecond > 400, "Not within 200% of goal.");
         }
 
-#if !DEBUG
+#if PERFORMANCE
         [TestMethod]
 #endif
         public void ByteBlock_Performance_IsPrefixOf()
@@ -230,7 +230,7 @@ namespace Arriba.Test.Structures
             Assert.IsTrue(operationsPerMillisecond > 10000, "Not within 200% of goal.");
         }
 
-#if !DEBUG
+#if PERFORMANCE
         [TestMethod]
 #endif
         public void ByteBlock_Performance_CaseInsensitiveIsPrefixOf()
@@ -264,7 +264,7 @@ namespace Arriba.Test.Structures
             Assert.IsTrue(operationsPerMillisecond > 10000, "Not within 200% of goal.");
         }
 
-#if !DEBUG
+#if PERFORMANCE
         [TestMethod]
 #endif
         public void ByteBlock_Performance_CompareTo()
@@ -298,7 +298,7 @@ namespace Arriba.Test.Structures
             Assert.IsTrue(operationsPerMillisecond > 10000, "Not within 200% of goal.");
         }
 
-#if !DEBUG
+#if PERFORMANCE
         [TestMethod]
 #endif
         public void ByteBlock_Performance_GetHashCode()

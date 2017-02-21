@@ -237,7 +237,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model
             Assert.IsFalse(store.TryFindString(BOOLean, false, out booleanRange));
         }
 
-        //#if !DEBUG
+        //#if PERFORMANCE
         //        [TestMethod]
         //#endif
         //        public void StringStore_Performance()

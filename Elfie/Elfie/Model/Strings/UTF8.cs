@@ -8,6 +8,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         public const byte Null = (byte)'\0';
         public const byte Quote = (byte)'"';
         public const byte Comma = (byte)',';
+        public const byte Dash = (byte)'-';
         public const byte Period = (byte)'.';
         public const byte Backslash = (byte)'\\';
         public const byte Pipe = (byte)'|';
@@ -16,9 +17,11 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         public const byte LF = (byte)'\n';
         public const byte Newline = (byte)'\n';
         public const byte Space = (byte)' ';
+        public const byte Colon = (byte)':';
         public const byte a = (byte)'a';
         public const byte z = (byte)'z';
         public const byte A = (byte)'A';
+        public const byte T = (byte)'T';
         public const byte Z = (byte)'Z';
         public const byte Zero = (byte)'0';
         public const byte Nine = (byte)'9';

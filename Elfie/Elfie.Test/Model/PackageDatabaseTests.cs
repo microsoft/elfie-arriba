@@ -188,7 +188,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model
             query.IsFullSuffix = true;
         }
 
-#if !DEBUG
+#if PERFORMANCE
         [TestMethod]
 #endif
         public void PackageDatabase_SearchPerformance()
