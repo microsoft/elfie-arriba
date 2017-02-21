@@ -34,6 +34,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Map
         /// <param name="memberIndex">Index of item to which to link</param>
         public void AddLink(int groupIndex, int memberIndex)
         {
+            if (this._immutableMap != null) throw new InvalidOperationException();
             if (this._mutableMap == null) this._mutableMap = new MutableItemMap<T>(this._provider);
             this._mutableMap.AddLink(groupIndex, memberIndex);
         }
@@ -47,6 +48,17 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Map
         {
             if (this._immutableMap == null) throw new InvalidOperationException();
             return this._immutableMap.LinksFrom(sourceItemIndex);
+        }
+
+        /// <summary>
+        ///  Return the count of links from one item.
+        /// </summary>
+        /// <param name="sourceItemIndex">Index of item for which to get links.</param>
+        /// <returns>Count of links from item.</returns>
+        public int LinkCountFrom(int sourceItemIndex)
+        {
+            if (this._immutableMap == null) throw new InvalidOperationException();
+            return this._immutableMap.LinkCountFrom(sourceItemIndex);
         }
 
         public int Count
@@ -77,7 +89,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Map
             if (this._mutableMap != null)
             {
                 // Need merging to provide this
-                if (this._immutableMap != null) throw new NotImplementedException();
+                if (this._immutableMap != null && this._immutableMap.Count > 0) throw new NotImplementedException();
 
                 this._immutableMap = this._mutableMap.ConvertToImmutable();
                 this._mutableMap = null;
@@ -94,6 +106,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Map
         public void WriteBinary(BinaryWriter w)
         {
             ConvertToImmutable();
+            if (this._immutableMap == null) this._immutableMap = new ImmutableItemMap<T>(this._provider);
             this._immutableMap.WriteBinary(w);
         }
         #endregion

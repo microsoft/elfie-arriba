@@ -23,11 +23,9 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         ///  The file is overwritten if it exists.
         /// </summary>
         /// <param name="filePath">Path to file to write.</param>
-        /// <param name="columnNames">Column Names to write out.</param>
         /// <param name="writeHeaderRow">True to write a header row, False otherwise.</param>
-        /// /// <param name="cellDelimiter">Delimiter between cells, default is tab.</param>
-        public TsvWriter(string filePath, IEnumerable<string> columnNames, bool writeHeaderRow = true) :
-            base(filePath, columnNames, writeHeaderRow)
+        public TsvWriter(string filePath, bool writeHeaderRow = true) :
+            base(filePath, writeHeaderRow)
         { }
 
         /// <summary>
@@ -36,11 +34,9 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         ///  number of columns written even if a header row isn't written.
         /// </summary>
         /// <param name="stream">Stream to write to</param>
-        /// <param name="columnNames">Column names to write.</param>
         /// <param name="writeHeaderRow">True to write a header row, False otherwise</param>
-        /// <param name="cellDelimiter">Delimiter between cells, default is tab.</param>
-        public TsvWriter(Stream stream, IEnumerable<string> columnNames, bool writeHeaderRow = true) :
-            base(stream, columnNames, writeHeaderRow)
+        public TsvWriter(Stream stream, bool writeHeaderRow = true) :
+            base(stream, writeHeaderRow)
         { }
 
         protected override void WriteCellDelimiter(Stream stream)
@@ -72,6 +68,30 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             }
 
             value.Substring(nextWriteStartIndex).WriteTo(stream);
+        }
+
+        protected override void WriteValueStart(Stream stream)
+        {
+            // TSVs don't have escaping, so there's no value prefix.
+        }
+
+        protected override void WriteValueEnd(Stream stream)
+        {
+            // TSVs don't have escaping, so there's no value suffix.
+        }
+
+        protected override void WriteValuePart(Stream stream, String8 part)
+        {
+            // Write partial values the same as whole values
+            WriteCellValue(stream, part);
+        }
+
+        protected override void WriteValuePart(Stream stream, byte c)
+        {
+            if (c != UTF8.Tab && c != UTF8.Newline)
+            {
+                stream.WriteByte(c);
+            }
         }
     }
 }

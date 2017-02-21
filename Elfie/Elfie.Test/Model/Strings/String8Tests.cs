@@ -151,15 +151,33 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
         [TestMethod]
         public void String8_ToInteger()
         {
-            Assert.AreEqual(-1, TryToInteger(null));
-            Assert.AreEqual(-1, TryToInteger(String.Empty));
+            Assert.AreEqual(null, TryToInteger(null));
+            Assert.AreEqual(null, TryToInteger(String.Empty));
             Assert.AreEqual(5, TryToInteger("5"));
             Assert.AreEqual(12345, TryToInteger("12345"));
-            Assert.AreEqual(-1, TryToInteger("-6"));
+            Assert.AreEqual(-6, TryToInteger("-6"));
+            Assert.AreEqual(-1, TryToInteger("-1"));
+            Assert.AreEqual(0, TryToInteger("0"));
+            Assert.AreEqual(1, TryToInteger("1"));
             Assert.AreEqual(int.MaxValue, TryToInteger(int.MaxValue.ToString()));
-            Assert.AreEqual(-1, TryToInteger("123g"));
-            Assert.AreEqual(-1, TryToInteger("9999999999"));
-            Assert.AreEqual(-1, TryToInteger("12345678901234567890"));
+            Assert.AreEqual(int.MinValue, TryToInteger(int.MinValue.ToString()));
+            Assert.AreEqual(null, TryToInteger("123g"));
+            Assert.AreEqual(null, TryToInteger("9999999999"));
+            Assert.AreEqual(null, TryToInteger("12345678901234567890"));
+        }
+
+        private int? TryToInteger(string value)
+        {
+            String8 value8 = String8.Convert(value, new byte[String8.GetLength(value) + 1], 1);
+
+            int? result = null;
+            int parsed = 0;
+            if (value8.TryToInteger(out parsed))
+            {
+                result = parsed;
+            }
+
+            return result;
         }
 
         [TestMethod]
@@ -167,10 +185,12 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
         {
             byte[] buffer = new byte[11];
             Assert.AreEqual("0", String8.FromInteger(0, buffer).ToString());
+            Assert.AreEqual("00", String8.FromInteger(0, buffer, 0, 2).ToString());
             Assert.AreEqual("9", String8.FromInteger(9, buffer).ToString());
             Assert.AreEqual("-1", String8.FromInteger(-1, buffer).ToString());
             Assert.AreEqual("-10", String8.FromInteger(-10, buffer).ToString());
             Assert.AreEqual("99", String8.FromInteger(99, buffer).ToString());
+            Assert.AreEqual("0099", String8.FromInteger(99, buffer, 0, 4).ToString());
             Assert.AreEqual("100", String8.FromInteger(100, buffer).ToString());
             Assert.AreEqual("-999", String8.FromInteger(-999, buffer).ToString());
             Assert.AreEqual("123456789", String8.FromInteger(123456789, buffer).ToString());
@@ -178,10 +198,68 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
             Assert.AreEqual(int.MinValue.ToString(), String8.FromInteger(int.MinValue, buffer).ToString());
         }
 
-        private int TryToInteger(string value)
+        [TestMethod]
+        public void String8_FromDateTime()
         {
-            String8 value8 = String8.Convert(value, new byte[String8.GetLength(value)]);
-            return value8.ToInteger();
+            byte[] buffer = new byte[20];
+            Assert.AreEqual("0001-01-01", String8.FromDateTime(DateTime.MinValue, buffer).ToString());
+            Assert.AreEqual("2017-02-14", String8.FromDateTime(new DateTime(2017, 02, 14, 0, 0, 0, DateTimeKind.Utc), buffer).ToString());
+            Assert.AreEqual("2017-02-14T01:02:03Z", String8.FromDateTime(new DateTime(2017, 02, 14, 1, 2, 3, DateTimeKind.Utc), buffer).ToString());
+            Assert.AreEqual("9999-12-31T23:59:59Z", String8.FromDateTime(DateTime.MaxValue, buffer).ToString());
+        }
+
+        [TestMethod]
+        public void String8_ToDateTime()
+        {
+            // Null/Empty
+            Assert.AreEqual(null, TryToDateTime(null));
+            Assert.AreEqual(null, TryToDateTime(String.Empty));
+
+            // Valid
+            Assert.AreEqual(new DateTime(2017, 02, 15, 0, 0, 0, DateTimeKind.Utc), TryToDateTime("2017-02-15"));
+            Assert.AreEqual(new DateTime(2017, 02, 15, 11, 33, 54, DateTimeKind.Utc), TryToDateTime("2017-02-15T11:33:54Z"));
+            Assert.AreEqual(new DateTime(2017, 02, 15, 11, 33, 54, DateTimeKind.Utc), TryToDateTime("2017-02-15 11:33:54Z"));
+            Assert.AreEqual(new DateTime(1, 2, 3, 4, 5, 6, DateTimeKind.Utc), TryToDateTime("0001-02-03T04:05:06Z"));
+
+            // Min/Max
+            Assert.AreEqual(DateTime.MinValue, TryToDateTime("0001-01-01T00:00:00Z"));
+            Assert.AreEqual(new DateTime(9999, 12, 31, 23, 59, 59, DateTimeKind.Utc), TryToDateTime("9999-12-31T23:59:59Z"));
+
+            // Bad separators
+            Assert.AreEqual(null, TryToDateTime("2017:02-15T11:33:54Z"));
+            Assert.AreEqual(null, TryToDateTime("2017-02:15T11:33:54Z"));
+            Assert.AreEqual(null, TryToDateTime("2017-02-15T11-33:54Z"));
+            Assert.AreEqual(null, TryToDateTime("2017-02-15T11:33-54Z"));
+            Assert.AreEqual(null, TryToDateTime("2017-02-15t11:33:54Z"));
+            Assert.AreEqual(null, TryToDateTime("2017-02-15T11:33:54 "));
+            Assert.AreEqual(null, TryToDateTime("2017|02-15"));
+            Assert.AreEqual(null, TryToDateTime("2017-02|15"));
+
+            // Bad numbers
+            Assert.AreEqual(null, TryToDateTime("-017-02-15T11:33:54Z"));
+            Assert.AreEqual(null, TryToDateTime("2017-13-15T11:33:54Z"));
+            Assert.AreEqual(null, TryToDateTime("2017-01-32T11:33:54Z"));
+            Assert.AreEqual(null, TryToDateTime("2017-02-15T24:33:54Z"));
+            Assert.AreEqual(null, TryToDateTime("2017-02-15T11:60:54Z"));
+            Assert.AreEqual(null, TryToDateTime("2017-02-15T11:33:60Z"));
+
+            // Leap year handling
+            Assert.AreEqual(new DateTime(2016, 02, 29, 0, 0, 0, DateTimeKind.Utc), TryToDateTime("2016-02-29"));
+            Assert.AreEqual(null, TryToDateTime("2017-02-29"));
+        }
+
+        private DateTime? TryToDateTime(string value)
+        {
+            String8 value8 = String8.Convert(value, new byte[String8.GetLength(value) + 1], 1);
+
+            DateTime? result = null;
+            DateTime parsed = DateTime.MinValue;
+            if (value8.TryToDateTime(out parsed))
+            {
+                result = parsed;
+            }
+
+            return result;
         }
 
         [TestMethod]
@@ -253,7 +331,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
             Assert.AreEqual(caseInsensitiveStableExpected, ToResult(left8.CompareCaseInsensitiveStableTo(right8)), "Case insensitive stable String8 to string comparison result incorrect.");
         }
 
-#if !DEBUG
+#if PERFORMANCE
         [TestMethod]
 #endif
         public void String8_ComparePerformance()

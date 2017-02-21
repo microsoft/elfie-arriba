@@ -29,7 +29,6 @@ bld/
 # MSTest test Results
 [Tt]est[Rr]esult*/
 [Bb]uild[Ll]og.*
-DiskCache/
 
 # NUNIT
 *.VisualState.xml
@@ -216,4 +215,12 @@ ModelManifest.xml
 Microsoft.CodeAnalysis.Elfie.dll.*
 *.addb
 *.zip
+
+# Exclude Arriba.Web configuration, which is per-site but must be copied in to build.
 Arriba/Arriba.Web/configuration/
+
+# Exclude Arriba.Web build outputs
+Arriba/Arriba.Web/lib/
+
+# Exclude Arriba DiskCache, built when saving Arriba tables in a dev enlistment.
+DiskCache/

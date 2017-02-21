@@ -333,41 +333,72 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
 
         #region Type Conversions
         /// <summary>
-        ///  Convert a String8 with a non-negative integer [digits only] to the numeric value.
+        ///  Convert a String8 with an integer to the numeric value.
         /// </summary>
-        /// <returns>Numeric Value or -1 if not an integer</returns>
-        public int ToInteger()
+        /// <param name="result">Integer value found, if there was a valid integer</param>
+        /// <returns>True if an integer was found, False otherwise.</returns>
+        public bool TryToInteger(out int result)
         {
-            if (IsEmpty()) return -1;
+            result = -1;
+            if (IsEmpty()) return false;
+            if (_length > 11) return false;
 
             long value = 0;
+            int i = _index;
             int end = _index + _length;
-            for (int i = _index; i < end; ++i)
+
+            // Check for negative sign
+            bool isNegative = this._buffer[i] == UTF8.Dash;
+            if (isNegative) i++;
+
+            // Decode digits
+            for (; i < end; ++i)
             {
-                int digitValue = this._buffer[i] - UTF8.Zero;
-                if (digitValue < 0 || digitValue > 9) return -1;
+                byte digitValue = (byte)(this._buffer[i] - UTF8.Zero);
+                if (digitValue > 9) return false;
 
                 value *= 10;
                 value += digitValue;
-                if (value > int.MaxValue) return -1;
             }
 
-            return (int)value;
+            // Negate if negative sign was found
+            if (isNegative) value = -value;
+
+            // Ensure within integer bounds
+            if (value > int.MaxValue || value < int.MinValue) return false;
+
+            result = (int)value;
+            return true;
         }
 
+        /// <summary>
+        ///  Convert an integer into the equivalent String8 representation, using the provided buffer.
+        ///  Buffer must be at least 11 bytes long to handle all values.
+        /// </summary>
+        /// <param name="value">Integer value to convert</param>
+        /// <param name="buffer">byte[] for conversion (at least length 11 for all values)</param>
+        /// <returns>String8 representation of integer value</returns>
         public static String8 FromInteger(int value, byte[] buffer)
         {
-            if (buffer.Length < 11) throw new ArgumentException("String8.FromInteger requires an 11 byte buffer for integer conversion.");
+            return FromInteger(value, buffer, 0, 1);
+        }
 
-            int i = 0;
+        /// <summary>
+        ///  Convert an integer into the equivalent String8 representation, using the provided buffer.
+        ///  Buffer must be at least 11 bytes long to handle all values.
+        /// </summary>
+        /// <param name="value">Integer value to convert</param>
+        /// <param name="buffer">byte[] for conversion (at least length 11 for all values)</param>
+        /// <param name="index">Index within byte[] at which to being writing</param>
+        /// <param name="minimumDigits">Minimum integer length (leading zeros written if needed)</param>
+        /// <returns>String8 representation of integer value</returns>
+        public static String8 FromInteger(int value, byte[] buffer, int index, int minimumDigits = 1)
+        {
+            bool isNegative = value < 0;
             long valueLeft = value;
 
-            // Write minus sign if negative
-            if (valueLeft < 0)
-            {
-                valueLeft = -valueLeft;
-                buffer[i++] = (byte)'-';
-            }
+            // Convert as positive value
+            if (isNegative) valueLeft = -valueLeft;
 
             // Determine how many digits in value
             int digits = 1;
@@ -378,15 +409,128 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
                 scale *= 10;
             }
 
+            // Enforce a digit minimum, if passed
+            if (digits < minimumDigits) digits = minimumDigits;
+
+            // Validate buffer is long enough
+            int requiredLength = digits;
+            if (isNegative) requiredLength++;
+            if (buffer.Length + index < requiredLength) throw new ArgumentException("String8.FromInteger requires an 11 byte buffer for integer conversion.");
+
+            // Write minus sign if negative
+            if(isNegative) buffer[index++] = (byte)'-';
+
             // Write digits right to left
-            for (int j = i + digits - 1; j >= i; --j)
+            for (int j = index + digits - 1; j >= index; --j)
             {
                 long digit = valueLeft % 10;
                 buffer[j] = (byte)(UTF8.Zero + (byte)digit);
                 valueLeft /= 10;
             }
 
-            return new String8(buffer, 0, i + digits);
+            return new String8(buffer, 0, index + digits);
+        }
+
+        /// <summary>
+        ///  Convert a UTC DateTime into an ISO-8601 format string [yyyy-MM-ddThh:mm:ssZ],
+        ///  without allocation.
+        /// </summary>
+        /// <param name="value">UTC DateTime to convert</param>
+        /// <param name="index">Index at which to convert</param>
+        /// <param name="buffer">byte[] at least 20 bytes long to convert into</param>
+        /// <returns>Converted DateTime</returns>
+        public static String8 FromDateTime(DateTime value, byte[] buffer, int index = 0)
+        {
+            if (buffer.Length + index < 20) throw new ArgumentException("String8.FromDateTime requires a 20 byte buffer for conversion.");
+
+            int length = 10;
+
+            // yyyy-MM-dd
+            FromInteger(value.Year, buffer, index + 0, 4);
+            buffer[index + 4] = UTF8.Dash;
+            FromInteger(value.Month, buffer, index + 5, 2);
+            buffer[index + 7] = UTF8.Dash;
+            FromInteger(value.Day, buffer, index + 8, 2);
+
+            // Thh:mm:ssZ
+            if(value.TimeOfDay > TimeSpan.Zero)
+            {
+                length = 20;
+
+                buffer[index + 10] = UTF8.T;
+                FromInteger(value.Hour, buffer, index + 11, 2);
+                buffer[index + 13] = UTF8.Colon;
+                FromInteger(value.Minute, buffer, index + 14, 2);
+                buffer[index + 16] = UTF8.Colon;
+                FromInteger(value.Second, buffer, index + 17, 2);
+                buffer[index + 19] = UTF8.Z;
+            }
+
+            return new String8(buffer, index, length);
+        }
+
+        /// <summary>
+        ///  Convert a String8 with an ISO-8601 UTC DateTime into the DateTime value.
+        ///  [yyyy-MM-ddThh:mm:ssZ]
+        /// </summary>
+        /// <param name="result">UTC DateTime corresponding to string, if it was a valid DateTime</param>
+        /// <returns>True if an integer was found, False otherwise.</returns>
+        public bool TryToDateTime(out DateTime result)
+        {
+            result = DateTime.MinValue;
+            if (this.IsEmpty()) return false;
+
+            // Formats are [yyyy-MM-dd] (length 10) or [yyyy-MM-ddThh:mm:ssZ] (length 20)
+            //              0123456789                  01234567890123456789
+            bool hasTimePart = (_length == 20);
+            if (_length != 10 && !hasTimePart) return false;
+
+            // Validate date part separators
+            if (_buffer[_index + 4] != UTF8.Dash) return false;
+            if (_buffer[_index + 7] != UTF8.Dash) return false;
+
+            // Validate time part separators and suffix
+            if (hasTimePart)
+            {
+                if (_buffer[_index + 10] != UTF8.T && _buffer[_index + 10] != UTF8.Space) return false;
+                if (_buffer[_index + 13] != UTF8.Colon) return false;
+                if (_buffer[_index + 16] != UTF8.Colon) return false;
+                if (_buffer[_index + 19] != UTF8.Z) return false;
+            }
+
+            int year, month, day, hour = 0, minute = 0, second = 0;
+
+            // Parse the date numbers
+            if (!this.Substring(0, 4).TryToInteger(out year)) return false;
+            if (!this.Substring(5, 2).TryToInteger(out month)) return false;
+            if (!this.Substring(8, 2).TryToInteger(out day)) return false;
+
+            // Validate the date number ranges (no month-specific day validation)
+            if (year < 0) return false;
+            if (month < 1 || month > 12) return false;
+            if (day < 1 || day > 31) return false;
+
+            if (hasTimePart)
+            {
+                // Parse the time numbers
+                if (!this.Substring(11, 2).TryToInteger(out hour)) return false;
+                if (!this.Substring(14, 2).TryToInteger(out minute)) return false;
+                if (!this.Substring(17, 2).TryToInteger(out second)) return false;
+
+                // Validate the time number ranges
+                if (hour < 0 || hour > 23) return false;
+                if (minute < 0 || minute > 59) return false;
+                if (second < 0 || second > 59) return false;
+            }
+
+            // Construct DateTime to avoid failures due to days being out of range (leap year and month length)
+            result = new DateTime(year, month, 1, hour, minute, second, DateTimeKind.Utc);
+            if(day > 1) result = result.AddDays(day - 1);
+            
+            // Return false for invalid leap days
+            if (result.Month != month) return false;
+
+            return true;
         }
         #endregion
 

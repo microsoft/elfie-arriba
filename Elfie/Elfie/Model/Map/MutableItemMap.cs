@@ -60,12 +60,11 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Map
                     linksForgroup = new HashSet<int>();
                 }
 
-                // If we already added a link for this member, skip it
-                if (linksForgroup.Contains(member)) continue;
-
-                // Add the link and track it
-                newMap.AddLink(group, member);
-                linksForgroup.Add(member);
+                // Add a link for this member, if it wasn't already added
+                if (linksForgroup.Add(member))
+                {
+                    newMap.AddLink(group, member);
+                }
             }
 
             return newMap;

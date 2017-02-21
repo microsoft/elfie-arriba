@@ -190,6 +190,19 @@ var AssetDetails = React.createClass({
             });
         }
 
+        var baselineIcon = React.createElement(
+            "div",
+            null,
+            React.createElement("span", { className: "good-icon icon", title: "IsBaseline:1" }),
+            "Baseline"
+        );
+        if (!this.props.data["IsBaseline"]) baselineIcon = React.createElement(
+            "div",
+            null,
+            React.createElement("span", { className: "warn-icon icon", title: "IsBaseline:0" }),
+            "Not Baseline"
+        );
+
         return React.createElement(
             "div",
             { className: "details" },
@@ -253,6 +266,7 @@ var AssetDetails = React.createClass({
                         React.createElement(
                             "div",
                             { className: "indent" },
+                            baselineIcon,
                             React.createElement(DetailsField, { value: this.props.data["SecurityRisk"], columnName: "SecurityRisk", label: "Security Risk" }),
                             React.createElement(AVSummary, { data: this.props.data }),
                             React.createElement(MonitoringSummary, { data: this.props.data }),
@@ -292,7 +306,8 @@ var configuration = {
     // Listing: Default Columns and Sort Order to show per table
     listingDefaults: {
         "Asset": { columns: ["Name", "IP"], sortColumn: "Name", sortOrder: "asc" },
-        "Employee": { columns: ["Alias", "Name"], sortColumn: "Alias", sortOrder: "asc" }
+        "Employee": { columns: ["Alias", "Name"], sortColumn: "Alias", sortOrder: "asc" },
+        "AzureSubscription": { columns: ["SubscriptionId", "Name"], sortColumn: "Name", sortOrder: "asc" }
     },
 
     // Listing: Default details
@@ -1700,7 +1715,7 @@ if (!configuration) {
     var configuration = {
         // Arriba Service URL to query
         // Hardcode to the name of your service. Use port 42784 for HTTP, 42785 for HTTPS.
-        url: "https://" + window.location.hostname + ":42785",
+        url: "http://" + window.location.hostname + ":42784",
 
         // Name of tool to show [top right and elsewhere]
         toolName: "Arriba",
