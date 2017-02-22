@@ -21,7 +21,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Elfie.Search
 
         private readonly string[] _sampleDefinitionsPaths = new string[] {
             @"..\..\Elfie.Search\SampleDefinitions.cs",
-            @"..\..\..\Elfie.Test\Elfie.Search\SampleDefinitions.cs"
+            @"..\..\..\Elfie.NonCore.Test\Elfie.Search\SampleDefinitions.cs"
         };
 
         private string GetSampleDefinitionPath()
