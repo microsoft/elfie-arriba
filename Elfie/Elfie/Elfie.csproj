@@ -67,6 +67,7 @@
     <Compile Include="..\Shared\SharedAssemblyInfo.cs" />
     <Compile Include="Diagnostics\Cmd.cs" />
     <Compile Include="Diagnostics\ConsoleHighlighter.cs" />
+    <Compile Include="Diagnostics\ConsoleSearchInterface.cs" />
     <Compile Include="Diagnostics\Logger.cs" />
     <Compile Include="Diagnostics\Position.cs" />
     <Compile Include="Diagnostics\ProgressWriter.cs" />
