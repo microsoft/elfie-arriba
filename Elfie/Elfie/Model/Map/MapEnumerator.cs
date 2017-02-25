@@ -27,6 +27,11 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Map
             get { return _map._provider[_map._memberIndices[_currentIndex]]; }
         }
 
+        public int CurrentIndex
+        {
+            get { return _map._memberIndices[_currentIndex]; }
+        }
+
         object IEnumerator.Current
         {
             get { return _map._provider[_map._memberIndices[_currentIndex]]; }
