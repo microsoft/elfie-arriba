@@ -29,12 +29,8 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Map
             // Verify Save and Reload has no errors
             map = Verify.RoundTrip(map);
 
-            // Verify add after load doesn't work
-            Verify.Exception<InvalidOperationException>(() => map.AddLink(1, 2));
-
             // Verify search returns a valid but empty set from an empty map
             Assert.AreEqual(0, map.LinksFrom(0).Count);
-
 
             // Rebuild map
             map = new ItemMap<SampleItem>(set);
@@ -91,6 +87,46 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Map
             untypedLinks.MoveNext();
             object first = untypedLinks.Current;
             Assert.AreEqual("1", first.ToString());
+        }
+
+        [TestMethod]
+        public void ItemMap_ConvertMerging()
+        {
+            // Build an empty map
+            SampleSet set = new SampleSet();
+            ItemMap<SampleItem> map = new ItemMap<SampleItem>(set);
+
+            // Add initial links, including IDs with no links and dupes
+            map.AddLink(1, 2);
+            map.AddLink(2, 3);
+            map.AddLink(2, 4);
+            map.AddLink(2, 4);
+            map.AddLink(6, 4);
+
+            // Verify Save and Reload has no errors
+            map = Verify.RoundTrip(map);
+
+            // Validate links
+            Assert.AreEqual("2", StringExtensions.Join(", ", map.LinksFrom(1)));
+            Assert.AreEqual("3, 4", StringExtensions.Join(", ", map.LinksFrom(2)));
+            Assert.AreEqual("4", StringExtensions.Join(", ", map.LinksFrom(6)));
+
+            // Add links (after roundtrip), including before first mutable group, new links to existing group, and new groups
+            map.AddLink(0, 1);
+            map.AddLink(2, 5);
+            map.AddLink(2, 3);
+            map.AddLink(2, 1);
+            map.AddLink(4, 5);
+
+            // Verify Save and Reload has no errors (merging happens)
+            map = Verify.RoundTrip(map);
+
+            // Validate all links were in the merged set
+            Assert.AreEqual("1", StringExtensions.Join(", ", map.LinksFrom(0)));
+            Assert.AreEqual("2", StringExtensions.Join(", ", map.LinksFrom(1)));
+            Assert.AreEqual("3, 4, 5, 1", StringExtensions.Join(", ", map.LinksFrom(2)));
+            Assert.AreEqual("5", StringExtensions.Join(", ", map.LinksFrom(4)));
+            Assert.AreEqual("4", StringExtensions.Join(", ", map.LinksFrom(6)));
         }
     }
 }

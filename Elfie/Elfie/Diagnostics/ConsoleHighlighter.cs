@@ -3,13 +3,13 @@
 
 using System;
 
-namespace Microsoft.CodeAnalysis.Elfie.Search
+namespace Microsoft.CodeAnalysis.Elfie.Diagnostics
 {
     /// <summary>
     ///  ConsoleHighlighter writes a string value to the console, highlighting
     ///  all instances of a given substring.
     /// </summary>
-    internal static class ConsoleHighlighter
+    public static class ConsoleHighlighter
     {
         public static void WriteWithHighlight(string content, string query)
         {

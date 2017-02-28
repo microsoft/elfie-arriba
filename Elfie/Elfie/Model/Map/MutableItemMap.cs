@@ -32,39 +32,60 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Map
             _memberIndices.Add(memberIndex);
         }
 
-        public ImmutableItemMap<T> ConvertToImmutable()
+        public ImmutableItemMap<T> ConvertToImmutable(ImmutableItemMap<T> previousLinks = null)
         {
+            // If no links were added, return the previous map 
+            if (_groupIndices.Count == 0) return previousLinks;
+            
+            // Sort the new links by the group index
+            PartialArray<int>.SortKeysAndItems(_groupIndices, _memberIndices);
+
             // Build a new immutable map
             ImmutableItemMap<T> newMap = new ImmutableItemMap<T>(_provider);
 
-            // If no links were generated, return an empty map
-            if (_groupIndices.Count == 0) return newMap;
+            // Track how many of the sorted mutable links we've added so far
+            int nextIndex = 0;
 
-            // Sort the links by the group index
-            PartialArray<int>.SortKeysAndItems(_groupIndices, _memberIndices);
+            // Track the group we're adding links for and what we've linked it to (to filter duplicates)
+            int currentGroup = -1;
+            HashSet<int> linksAlreadyAddedForGroup = null;
 
-            // Add links to immutable version in order by group, removing duplicates
-            int currentgroup = _groupIndices[0];
-            HashSet<int> linksForgroup = new HashSet<int>();
-
-            for (int i = 0; i < _groupIndices.Count; ++i)
+            // If there was an immutable set, build from it first
+            if (previousLinks != null)
             {
-                int group = _groupIndices[i];
-                int member = _memberIndices[i];
-
-                // If we're looking at a new group, reset the links already added
-                // NOTE: new HashSet on each iteration much faster than HashSet.Clear().
-                if (group != currentgroup)
+                for (int groupIndex = 0; groupIndex < previousLinks._firstMemberIndexForGroup.Count; ++groupIndex)
                 {
-                    currentgroup = group;
-                    linksForgroup = new HashSet<int>();
+                    linksAlreadyAddedForGroup = new HashSet<int>();
+
+                    // Add all links in the old set from this group (if any)
+                    MapEnumerator<T> oldLinks = previousLinks.LinksFrom(groupIndex);
+                    while (oldLinks.MoveNext())
+                    {
+                        if (linksAlreadyAddedForGroup.Add(oldLinks.CurrentIndex)) newMap.AddLink(groupIndex, oldLinks.CurrentIndex);
+                    }
+
+                    // Add all links in the new set from this group (if any)
+                    while (nextIndex < _groupIndices.Count && _groupIndices[nextIndex] == groupIndex)
+                    {
+                        if (linksAlreadyAddedForGroup.Add(_memberIndices[nextIndex])) newMap.AddLink(_groupIndices[nextIndex], _memberIndices[nextIndex]);
+                        nextIndex++;
+                    }
+                }
+            }
+
+            // Add remaining links in the new set, if any are left
+            currentGroup = -1;
+            while (nextIndex < _groupIndices.Count)
+            {
+                // If we're adding links for a different group, reset the 'already added' set
+                if(_groupIndices[nextIndex] != currentGroup)
+                {
+                    currentGroup = _groupIndices[nextIndex];
+                    linksAlreadyAddedForGroup = new HashSet<int>();
                 }
 
-                // Add a link for this member, if it wasn't already added
-                if (linksForgroup.Add(member))
-                {
-                    newMap.AddLink(group, member);
-                }
+                if (linksAlreadyAddedForGroup.Add(_memberIndices[nextIndex])) newMap.AddLink(_groupIndices[nextIndex], _memberIndices[nextIndex]);
+                nextIndex++;
             }
 
             return newMap;

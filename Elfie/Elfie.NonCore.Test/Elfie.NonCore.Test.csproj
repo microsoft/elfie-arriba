@@ -65,7 +65,7 @@
     <Compile Include="Elfie.Indexer\IncrementalCrawlerTests.cs" />
     <Compile Include="Elfie.Indexer\IndexerTests.cs" />
     <Compile Include="Elfie.Search\RoslynDefinitionFinderTests.cs" />
-    <Compile Include="Elfie.Search\SampleDefinitions.cs" />
+    <EmbeddedResource Include="Elfie.Search\SampleDefinitions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SelfIndex.cs" />
   </ItemGroup>
