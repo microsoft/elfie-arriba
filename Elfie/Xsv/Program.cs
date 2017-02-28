@@ -140,7 +140,7 @@ namespace XsvConcat
                 int leftColumnIndex = oldReader.ColumnIndex(columnIdentifier);
                 while (oldReader.NextRow())
                 {
-                    oldValues.Add(block.GetCopy(oldReader.Current[leftColumnIndex]));
+                    oldValues.Add(block.GetCopy(oldReader.Current(leftColumnIndex)));
                 }
 
                 Trace.WriteLine(String.Format("Old: {0:n0} values for \"{1}\" in {2:n0} rows.", oldValues.Count, columnIdentifier, oldReader.RowCountRead));
@@ -151,7 +151,7 @@ namespace XsvConcat
                 int rightColumnIndex = newReader.ColumnIndex(columnIdentifier);
                 while (newReader.NextRow())
                 {
-                    newValues.Add(block.GetCopy(newReader.Current[rightColumnIndex]));
+                    newValues.Add(block.GetCopy(newReader.Current(rightColumnIndex)));
                 }
 
                 Trace.WriteLine(String.Format("New: {0:n0} values for \"{1}\" in {2:n0} rows.", newValues.Count, columnIdentifier, newReader.RowCountRead));
@@ -196,7 +196,7 @@ namespace XsvConcat
                 int leftColumnIndex = reader.ColumnIndex(onlyInColumnIdentifier);
                 while (reader.NextRow())
                 {
-                    values.Add(block.GetCopy(reader.Current[leftColumnIndex]));
+                    values.Add(block.GetCopy(reader.Current(leftColumnIndex)));
                 }
             }
 
@@ -209,11 +209,11 @@ namespace XsvConcat
                 {
                     while (reader.NextRow())
                     {
-                        if (values.Contains(reader.Current[valueColumnIndex]))
+                        if (values.Contains(reader.Current(valueColumnIndex).ToString8()))
                         {
                             for (int i = 0; i < reader.CurrentRowColumns; ++i)
                             {
-                                writer.Write(reader.Current[i]);
+                                writer.Write(reader.Current(i).ToString8());
                             }
 
                             writer.NextRow();
@@ -237,14 +237,14 @@ namespace XsvConcat
                 {
                     while (reader.NextRow())
                     {
-                        String8 name = reader.Current[nameColumnIndex];
-                        String8 value = reader.Current[valueColumnIndex];
+                        String8 name = reader.Current(nameColumnIndex).ToString8();
+                        String8 value = reader.Current(valueColumnIndex).ToString8();
 
                         if (!value.StartsWith(name))
                         {
                             for (int i = 0; i < reader.CurrentRowColumns; ++i)
                             {
-                                writer.Write(reader.Current[i]);
+                                writer.Write(reader.Current(i).ToString8());
                             }
 
                             writer.NextRow();
@@ -269,7 +269,7 @@ namespace XsvConcat
 
                     while (reader.NextRow())
                     {
-                        String8 firstColumn = reader.Current[0];
+                        String8 firstColumn = reader.Current(0).ToString8();
 
                         if (reader.RowCountRead == 2)
                         {
@@ -296,7 +296,7 @@ namespace XsvConcat
                         // Concatenate non-duplicate values to "row in progress"
                         for (int i = 1; i < reader.CurrentRowColumns; ++i)
                         {
-                            String8 value = reader.Current[i];
+                            String8 value = reader.Current(i).ToString8();
 
                             if (lastValues[i] != value)
                             {

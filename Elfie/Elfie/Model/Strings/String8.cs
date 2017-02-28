@@ -332,6 +332,35 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         #endregion
 
         #region Type Conversions
+        public bool TryToBoolean(out bool result)
+        {
+            result = false;
+            if (IsEmpty()) return false;
+
+            if(this.CompareTo("true", true) == 0)
+            {
+                result = true;
+                return true;
+            }
+            else if(this.CompareTo("false", true) == 0)
+            {
+                result = false;
+                return true;
+            }
+            else if(this.CompareTo("1", false) == 0)
+            {
+                result = true;
+                return true;
+            }
+            else if(this.CompareTo("0", false) == 0)
+            {
+                result = false;
+                return true;
+            }
+
+            return false;
+        }
+
         /// <summary>
         ///  Convert a String8 with an integer to the numeric value.
         /// </summary>

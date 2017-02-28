@@ -133,9 +133,11 @@
     </Compile>
     <Compile Include="Serialization\BaseTabularWriter.cs" />
     <Compile Include="Serialization\ConsoleTabularWriter.cs" />
+    <Compile Include="Serialization\DataReaderTabularReader.cs" />
     <Compile Include="Serialization\FileIO.cs" />
     <Compile Include="Serialization\IBinarySerializable.cs" />
     <Compile Include="Model\IColumn.cs" />
+    <Compile Include="Serialization\ITabularValue.cs" />
     <Compile Include="Serialization\ITabularReader.cs" />
     <Compile Include="Serialization\ITabularWriter.cs" />
     <Compile Include="Serialization\Read.cs" />

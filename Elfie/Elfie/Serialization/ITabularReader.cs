@@ -1,9 +1,43 @@
-﻿using Microsoft.CodeAnalysis.Elfie.Model.Strings;
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace Microsoft.CodeAnalysis.Elfie.Serialization
 {
+    /// <summary>
+    ///  ITabularReader implements reading tabular data from arbitrary sources.
+    ///  TabularReader returns values as ITabularValue, which can be converted to multiple types without allocation, conversion, or boxing.
+    ///  Elfie readers natively return string values as String8s, which don't require per value allocation.
+    ///  
+    ///  NOTE: Values read from ITabularReader must be copied before NextRow is called.
+    /// 
+    ///  USAGE
+    ///  =====
+    ///  String8Block block = new String8Block();
+    ///  using (BaseTabularReader r = new XReader(loadFromPath, true))
+    ///  {
+    ///     // Look up column indices outside the loop
+    ///     int titleIndex = r.ColumnIndex("Title");
+    ///     int descriptionIndex = r.ColumnIndex("Description");
+    ///     int itemTypeIndex = r.ColumnIndex("ItemType");
+    ///
+    ///     // Use NextRow() and Current[index] to read values
+    ///     while (r.NextRow())
+    ///     {
+    ///         // Copy values to be kept across rows
+    ///         String8 title = block.GetCopy(r.Current[titleIndex]);
+    ///         
+    ///         // Use values directly if used only before NextRow
+    ///         String8 description = r.Current[descriptionIndex].ToString8();
+    ///         
+    ///         // Use TryTo calls to convert values without allocation or boxing.
+    ///         int itemType;
+    ///         r.Current[itemTypeIndex].TryToInteger(out itemType);
+    ///     }
+    ///     
+    ///     // Release String8Block memory used for copies when you're done with them
+    ///     block.Clear();
+    /// }
+    /// </summary>
     public interface ITabularReader : IDisposable
     {
         /// <summary>
@@ -21,12 +55,11 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         int ColumnIndex(string columnNameOrIndex);
 
         /// <summary>
-        ///  Return the cells for the current row.
-        ///  Get a single cell with reader.Current[columnIndex]
-        ///  Converts values to 
+        ///  Return a cell for the current row.
+        ///  IConvertible has methods to convert values to String8, string, int, bool, DateTime, etc.
         /// </summary>
-        /// <returns>String8Set with the cells for the current row.</returns>
-        String8Set Current { get; }
+        /// <returns>ITabularValue for the desired column in the current row</returns>
+        ITabularValue Current(int index);
 
         /// <summary>
         ///  Returns the number of rows read so far.

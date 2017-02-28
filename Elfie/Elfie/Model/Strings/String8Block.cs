@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Microsoft.CodeAnalysis.Elfie.Serialization;
 using System.Collections.Generic;
 
 namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
@@ -68,6 +69,19 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             }
 
             return targetBlock;
+        }
+
+        /// <summary>
+        ///  Create a copy of a String8. Use when the source of the String8s
+        ///  will change (like a reader reusing the same byte[] buffer) and
+        ///  you need to keep a copy of specific values with minimal object overhead.
+        /// </summary>
+        /// <param name="source">String8 to copy</param>
+        /// <returns>String8 copy which will persist</returns>
+        public String8 GetCopy(ITabularValue source)
+        {
+            if (source is String8TabularValue) return GetCopy(source.ToString8());
+            return GetCopy(source.ToString());
         }
 
         /// <summary>

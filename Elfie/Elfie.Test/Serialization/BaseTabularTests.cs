@@ -139,7 +139,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
             using (ITabularReader r = buildReader(sampleFilePath, false))
             {
                 Assert.IsTrue(r.NextRow());
-                Assert.AreEqual("LineNumber", r.Current[0].ToString());
+                Assert.AreEqual("LineNumber", r.Current(0).ToString());
 
                 // Get column name (no header row read)
                 Verify.Exception<ColumnNotFoundException>(() => r.ColumnIndex("Missing"));
@@ -167,19 +167,18 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
                     {
                         // Verify empty rows return no columns, have empty row text, throw on value access
                         Assert.AreEqual(0, r.CurrentRowColumns, "Expected column count 0 in empty rows");
-                        Assert.IsTrue(r.Current.Value.IsEmpty());
-                        Verify.Exception<ArgumentOutOfRangeException>(() => { var v = r.Current[lineNumberColumnIndex]; });
+                        Verify.Exception<ArgumentOutOfRangeException>(() => { var v = r.Current(lineNumberColumnIndex); });
                     }
                     else if (rowIndex == 5000)
                     {
                         // Read row over 64k [block resizing logic, row values look right]
-                        String8 longDescription = r.Current[descriptionColumnIndex];
+                        String8 longDescription = r.Current(descriptionColumnIndex).ToString8();
                         Assert.AreEqual(100000, longDescription.Length);
                     }
                     else
                     {
                         // Get value (valid)
-                        String8 lineNumber8 = r.Current[lineNumberColumnIndex];
+                        String8 lineNumber8 = r.Current(lineNumberColumnIndex).ToString8();
                         int lineNumber = 0;
                         if (lineNumber8.TryToInteger(out lineNumber))
                         {
@@ -192,9 +191,6 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
 
                         // Get line number
                         Assert.AreEqual(rowIndex, r.RowCountRead, "Expected lines read to equal row number");
-
-                        // Get row text (valid)
-                        String8 fullRow = r.Current.Value;
                     }
                 }
             }
@@ -218,7 +214,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
                     {
                         for (int i = 0; i < reader.CurrentRowColumns; ++i)
                         {
-                            writer.Write(reader.Current[i]);
+                            writer.Write(reader.Current(i).ToString8());
                         }
 
                         writer.NextRow();
@@ -255,15 +251,13 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
 
                             if (r.CurrentRowColumns < 2) continue;
 
-                            String8 lineNumber8 = r.Current[lineNumberIndex];
                             int lineNumber;
-                            lineNumber8.TryToInteger(out lineNumber);
+                            r.Current(lineNumberIndex).TryToInteger(out lineNumber);
 
-                            // TODO: Get ToInteger fast enough to read overall at goal
-                            String8 count8 = r.Current[countIndex];
-                            //int count = count8.ToInteger();
+                            int count;
+                            r.Current(countIndex).TryToInteger(out count);
 
-                            String8 description = r.Current[descriptionIndex];
+                            String8 description = r.Current(descriptionIndex).ToString8();
                         }
                     }
                 }
@@ -398,19 +392,19 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
                 Assert.AreEqual(3, r.CurrentRowColumns);
 
                 // Verify last column doesn't have extra '\r' when terminated with '\r\n'
-                Assert.AreEqual("3", r.Current[2].ToString());
+                Assert.AreEqual("3", r.Current(2).ToString());
 
                 Assert.IsTrue(r.NextRow());
                 Assert.AreEqual(3, r.CurrentRowColumns);
 
                 // Verify last column not clipped when terminated with '\n'
-                Assert.AreEqual("6", r.Current[2].ToString());
+                Assert.AreEqual("6", r.Current(2).ToString());
 
                 Assert.IsTrue(r.NextRow());
                 Assert.AreEqual(3, r.CurrentRowColumns);
 
                 // Verify last column not clipped when unterminated [EOF]
-                Assert.AreEqual("9", r.Current[2].ToString());
+                Assert.AreEqual("9", r.Current(2).ToString());
 
                 Assert.IsFalse(r.NextRow(), "Reader didn't stop after last line without newline");
             }
