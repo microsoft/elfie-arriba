@@ -34,7 +34,6 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Map
         /// <param name="memberIndex">Index of item to which to link</param>
         public void AddLink(int groupIndex, int memberIndex)
         {
-            if (this._immutableMap != null) throw new InvalidOperationException();
             if (this._mutableMap == null) this._mutableMap = new MutableItemMap<T>(this._provider);
             this._mutableMap.AddLink(groupIndex, memberIndex);
         }
@@ -46,6 +45,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Map
         /// <returns>PartialArrayRange of links for item.</returns>
         public MapEnumerator<T> LinksFrom(int sourceItemIndex)
         {
+            if (this._mutableMap != null) throw new InvalidOperationException();
             if (this._immutableMap == null) throw new InvalidOperationException();
             return this._immutableMap.LinksFrom(sourceItemIndex);
         }
@@ -57,6 +57,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Map
         /// <returns>Count of links from item.</returns>
         public int LinkCountFrom(int sourceItemIndex)
         {
+            if (this._mutableMap != null) throw new InvalidOperationException();
             if (this._immutableMap == null) throw new InvalidOperationException();
             return this._immutableMap.LinkCountFrom(sourceItemIndex);
         }
@@ -88,10 +89,10 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Map
         {
             if (this._mutableMap != null)
             {
-                // Need merging to provide this
-                if (this._immutableMap != null && this._immutableMap.Count > 0) throw new NotImplementedException();
+                // Convert or merge the maps
+                this._immutableMap = this._mutableMap.ConvertToImmutable(this._immutableMap);
 
-                this._immutableMap = this._mutableMap.ConvertToImmutable();
+                // Clear the mutable map
                 this._mutableMap = null;
             }
         }

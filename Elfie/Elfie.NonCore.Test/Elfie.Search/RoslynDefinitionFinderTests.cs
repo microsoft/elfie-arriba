@@ -9,6 +9,8 @@ using System.Text;
 using Microsoft.CodeAnalysis.Elfie.Model;
 using Microsoft.CodeAnalysis.Elfie.Search;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Reflection;
+using System.Diagnostics;
 
 namespace Microsoft.CodeAnalysis.Elfie.Test.Elfie.Search
 {
@@ -17,29 +19,32 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Elfie.Search
     {
         private static readonly string s_assemblyNamespace = typeof(Microsoft.CodeAnalysis.Elfie.Indexer.Assembly).Namespace;
         private static readonly string s_rsDsSignatureNamespace = typeof(Microsoft.CodeAnalysis.Elfie.Indexer.RsDsSignature).Namespace;
-        private static readonly string s_sampleDefinitionsNamespace = typeof(SampleDefinitions).Namespace;
 
-        private readonly string[] _sampleDefinitionsPaths = new string[] {
-            @"..\..\Elfie.Search\SampleDefinitions.cs",
-            @"..\..\..\Elfie.Test\Elfie.Search\SampleDefinitions.cs"
-        };
+        private const string s_sampleDefinitionsNamespace = "Microsoft.CodeAnalysis.Elfie.Test.Elfie.Search";
+
+        private const string s_resourceStreamPath = "Elfie.NonCore.Test.Elfie.Search.SampleDefinitions.cs";
+        private const string s_sampleDefinitionPath = "SampleDefinitions.cs";
 
         private string GetSampleDefinitionPath()
         {
-            StringBuilder sb = null;
-            foreach (string sampleDefinitionPath in _sampleDefinitionsPaths)
+            // Extract the sample content as an embedded resource and write it to the current directory
+            if (!File.Exists(s_sampleDefinitionPath))
             {
-                if (File.Exists(sampleDefinitionPath))
+                Assembly thisAssembly = Assembly.GetExecutingAssembly();
+                foreach(string name in thisAssembly.GetManifestResourceNames())
                 {
-                    return sampleDefinitionPath;
+                    Trace.WriteLine(name);
                 }
-                else
+                using (Stream source = thisAssembly.GetManifestResourceStream(s_resourceStreamPath))
                 {
-                    sb = sb ?? new StringBuilder();
-                    sb.AppendLine("Could not locate:" + Path.GetFullPath(sampleDefinitionPath));
+                    using (Stream destination = File.Create(s_sampleDefinitionPath))
+                    {
+                        source.CopyTo(destination);
+                    }
                 }
             }
-            throw new InvalidOperationException(sb.ToString());
+
+            return s_sampleDefinitionPath;
         }
 
         private string _sampleDefinitionsContent;

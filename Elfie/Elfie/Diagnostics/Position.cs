@@ -4,9 +4,13 @@
 using System;
 using System.Text;
 
-namespace Microsoft.CodeAnalysis.Elfie
+namespace Microsoft.CodeAnalysis.Elfie.Diagnostics
 {
-    internal class Position
+    /// <summary>
+    ///  Position tracks the Console Window cursor position and can clear output
+    ///  between positions.
+    /// </summary>
+    public class Position
     {
         public int Left;
         public int Top;
