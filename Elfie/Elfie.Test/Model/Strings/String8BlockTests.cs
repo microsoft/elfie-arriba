@@ -53,7 +53,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
             Assert.AreEqual("Regular String", directConversion.ToString());
 
             // Verify null/empty string conversion
-            directConversion = block.GetCopy(null);
+            directConversion = block.GetCopy((string)null);
             Assert.IsTrue(directConversion.IsEmpty());
 
             directConversion = block.GetCopy(String.Empty);
