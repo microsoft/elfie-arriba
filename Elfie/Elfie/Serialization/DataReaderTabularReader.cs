@@ -49,6 +49,11 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             get { return _rowCountRead; }
         }
 
+        public long BytesRead
+        {
+            get { return -1; }
+        }
+
         public int ColumnIndex(string columnNameOrIndex)
         {
             int columnIndex;

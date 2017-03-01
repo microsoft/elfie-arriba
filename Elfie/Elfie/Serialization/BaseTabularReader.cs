@@ -165,6 +165,14 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         }
 
         /// <summary>
+        ///  Return how many bytes were read so far.
+        /// </summary>
+        public long BytesRead
+        {
+            get { return _reader.Position; }
+        }
+
+        /// <summary>
         ///  Returns the number of columns in the current row. Used to handle
         ///  rows which are shorter than expected, if desired.
         /// </summary>

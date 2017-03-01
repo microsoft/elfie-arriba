@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 
 using Microsoft.CodeAnalysis.Elfie.Diagnostics;
 using Microsoft.CodeAnalysis.Elfie.Extensions;
@@ -18,6 +17,10 @@ namespace XsvConcat
     {
         private const string Usage =
 @"Usage: Xsv <mode> <inputFile> <outputFile> [<options>]
+    Xsv copy <input> <output> [<col,col,col>]:
+     Copy the input to the output (to convert format).
+     Pass comma delimited column names to copy only specific columns.
+
    Xsv concat <input> <output>:
      Concatenate values by the first column value, excluding duplicates.
      Input must be sorted by the first column to concatenate.
@@ -50,6 +53,17 @@ namespace XsvConcat
                 {
                     switch (mode)
                     {
+                        case "copy":
+                            Trace.WriteLine(String.Format("Copy \"{0}\" to \"{1}\"...", args[1], args[2]));
+                            if (args.Length < 4)
+                            {
+                                Copy(args[1], args[2]);
+                            }
+                            else
+                            {
+                                Copy(args[1], args[2], args[3]);
+                            }
+                            break;
                         case "concat":
                             Trace.WriteLine(String.Format("Concatenating \"{0}\" values on first column into \"{1}\"...", args[1], args[2]));
                             Concatenate(args[1], args[2], String8.Convert("; ", new byte[2]));
@@ -89,44 +103,62 @@ namespace XsvConcat
             }
         }
 
-        private static ITabularReader BuildReader(string filePath, bool hasHeaderRow = true)
+        private static void Copy(string inputFilePath, string outputFilePath)
         {
-            string extension = Path.GetExtension(filePath).ToLowerInvariant();
-
-            switch (extension)
+            using (ITabularReader reader = TabularFactory.BuildReader(inputFilePath))
             {
-                case ".csv":
-                    return new CsvReader(filePath, hasHeaderRow);
-                case ".tsv":
-                case ".tab":
-                case ".txt":
-                    return new TsvReader(filePath, hasHeaderRow);
-                default:
-                    throw new NotSupportedException(String.Format("Xsv does not support file extension \"{0}\". Pass a .tsv or .csv file.", extension));
+                using (ITabularWriter writer = TabularFactory.BuildWriter(outputFilePath))
+                {
+                    writer.SetColumns(reader.Columns);
+
+                    while (reader.NextRow())
+                    {
+                        for (int i = 0; i < reader.CurrentRowColumns; ++i)
+                        {
+                            writer.Write(reader.Current(i).ToString8());
+                        }
+
+                        writer.NextRow();
+                    }
+
+                    WriteSizeSummary(reader, writer);
+                }
             }
         }
 
-        private static ITabularWriter BuildWriter(string filePath, IEnumerable<string> columnNames, bool writeHeaderRow = true)
+        private static void Copy(string inputFilePath, string outputFilePath, string columnsDelimited)
         {
-            ITabularWriter writer = null;
-            string extension = Path.GetExtension(filePath).ToLowerInvariant();
-
-            switch (extension)
+            List<string> columns = new List<string>();
+            foreach (string columnName in columnsDelimited.Split(','))
             {
-                case ".csv":
-                    writer = new CsvWriter(filePath, writeHeaderRow);
-                    break;
-                case ".tsv":
-                case ".tab":
-                case ".txt":
-                    writer = new TsvWriter(filePath, writeHeaderRow);
-                    break;
-                default:
-                    throw new NotSupportedException(String.Format("Xsv does not support file extension \"{0}\". Pass a .tsv or .csv file.", extension));
+                columns.Add(columnName.Trim());
             }
 
-            writer.SetColumns(columnNames);
-            return writer;
+            using (ITabularReader reader = TabularFactory.BuildReader(inputFilePath))
+            {
+                int[] columnIndices = new int[columns.Count];
+                for(int i = 0; i < columnIndices.Length; ++i)
+                {
+                    columnIndices[i] = reader.ColumnIndex(columns[i]);
+                }
+
+                using (ITabularWriter writer = TabularFactory.BuildWriter(outputFilePath))
+                {
+                    writer.SetColumns(columns);
+
+                    while (reader.NextRow())
+                    {
+                        for (int i = 0; i < columnIndices.Length; ++i)
+                        {
+                            writer.Write(reader.Current(columnIndices[i]).ToString8());
+                        }
+
+                        writer.NextRow();
+                    }
+
+                    WriteSizeSummary(reader, writer);
+                }
+            }
         }
 
         private static void Compare(string oldFilePath, string newFilePath, string outputFilePath, string columnIdentifier)
@@ -135,7 +167,7 @@ namespace XsvConcat
             HashSet<String8> oldValues = new HashSet<String8>();
             HashSet<String8> newValues = new HashSet<String8>();
 
-            using (ITabularReader oldReader = BuildReader(oldFilePath))
+            using (ITabularReader oldReader = TabularFactory.BuildReader(oldFilePath))
             {
                 int leftColumnIndex = oldReader.ColumnIndex(columnIdentifier);
                 while (oldReader.NextRow())
@@ -146,7 +178,7 @@ namespace XsvConcat
                 Trace.WriteLine(String.Format("Old: {0:n0} values for \"{1}\" in {2:n0} rows.", oldValues.Count, columnIdentifier, oldReader.RowCountRead));
             }
 
-            using (ITabularReader newReader = BuildReader(newFilePath))
+            using (ITabularReader newReader = TabularFactory.BuildReader(newFilePath))
             {
                 int rightColumnIndex = newReader.ColumnIndex(columnIdentifier);
                 while (newReader.NextRow())
@@ -167,8 +199,10 @@ namespace XsvConcat
 
             String8 leftMarker = String8.Convert("-", new byte[1]);
             String8 rightMarker = String8.Convert("+", new byte[1]);
-            using (ITabularWriter writer = BuildWriter(outputFilePath, new string[] { "In", columnIdentifier }))
+            using (ITabularWriter writer = TabularFactory.BuildWriter(outputFilePath))
             {
+                writer.SetColumns(new string[] { "In", columnIdentifier });
+
                 foreach(String8 value in oldOnly)
                 {
                     writer.Write(leftMarker);
@@ -191,7 +225,7 @@ namespace XsvConcat
             HashSet<String8> values = new HashSet<String8>();
 
             // Read values in 'onlyInInputFilePath'
-            using (ITabularReader reader = BuildReader(onlyInInputFilePath))
+            using (ITabularReader reader = TabularFactory.BuildReader(onlyInInputFilePath))
             {
                 int leftColumnIndex = reader.ColumnIndex(onlyInColumnIdentifier);
                 while (reader.NextRow())
@@ -201,12 +235,14 @@ namespace XsvConcat
             }
 
             // Copy from input to output where the column value is in the "only in" set
-            using (ITabularReader reader = BuildReader(inputFilePath))
+            using (ITabularReader reader = TabularFactory.BuildReader(inputFilePath))
             {
                 int valueColumnIndex = reader.ColumnIndex(onlyInColumnIdentifier);
 
-                using (ITabularWriter writer = BuildWriter(outputFilePath, reader.Columns))
+                using (ITabularWriter writer = TabularFactory.BuildWriter(outputFilePath))
                 {
+                    writer.SetColumns(reader.Columns);
+
                     while (reader.NextRow())
                     {
                         if (values.Contains(reader.Current(valueColumnIndex).ToString8()))
@@ -220,21 +256,22 @@ namespace XsvConcat
                         }
                     }
 
-                    Trace.WriteLine(String.Format("Read: {0}, {1:n0} rows.", new FileInfo(inputFilePath).Length.SizeString(), reader.RowCountRead));
-                    Trace.WriteLine(String.Format("Wrote: {0}, {1:n0} rows.", writer.BytesWritten.SizeString(), writer.RowCountWritten));
+                    WriteSizeSummary(reader, writer);
                 }
             }
         }
 
         private static void NotStartsWith(string inputFilePath, string outputFilePath, string valueColumnIdentifier, string nameColumnIdentifier)
         {
-            using (ITabularReader reader = BuildReader(inputFilePath))
+            using (ITabularReader reader = TabularFactory.BuildReader(inputFilePath))
             {
                 int valueColumnIndex = reader.ColumnIndex(valueColumnIdentifier);
                 int nameColumnIndex = reader.ColumnIndex(nameColumnIdentifier);
 
-                using (ITabularWriter writer = BuildWriter(outputFilePath, reader.Columns))
+                using (ITabularWriter writer = TabularFactory.BuildWriter(outputFilePath))
                 {
+                    writer.SetColumns(reader.Columns);
+
                     while (reader.NextRow())
                     {
                         String8 name = reader.Current(nameColumnIndex).ToString8();
@@ -251,18 +288,19 @@ namespace XsvConcat
                         }
                     }
 
-                    Trace.WriteLine(String.Format("Read: {0}, {1:n0} rows.", new FileInfo(inputFilePath).Length.SizeString(), reader.RowCountRead));
-                    Trace.WriteLine(String.Format("Wrote: {0}, {1:n0} rows.", writer.BytesWritten.SizeString(), writer.RowCountWritten));
+                    WriteSizeSummary(reader, writer);
                 }
             }
         }
 
         private static void Concatenate(string inputFilePath, string outputFilePath, String8 delimiter)
         {
-            using (ITabularReader reader = BuildReader(inputFilePath))
+            using (ITabularReader reader = TabularFactory.BuildReader(inputFilePath))
             {
-                using (ITabularWriter writer = BuildWriter(outputFilePath, reader.Columns))
+                using (ITabularWriter writer = TabularFactory.BuildWriter(outputFilePath))
                 {
+                    writer.SetColumns(reader.Columns);
+
                     String8Block block = new String8Block();
                     String8[] lastValues = new String8[reader.CurrentRowColumns];
                     String8[] combinedValues = new String8[reader.CurrentRowColumns];
@@ -308,10 +346,32 @@ namespace XsvConcat
 
                     // After last row, write out values so far
                     WriteCombinedRow(writer, combinedValues);
-
-                    Trace.WriteLine(String.Format("Read: {0}, {1:n0} rows.", new FileInfo(inputFilePath).Length.SizeString(), reader.RowCountRead));
-                    Trace.WriteLine(String.Format("Wrote: {0}, {1:n0} rows.", writer.BytesWritten.SizeString(), writer.RowCountWritten));
+                    WriteSizeSummary(reader, writer);
                 }
+            }
+        }
+
+        private static void WriteSizeSummary(ITabularReader reader, ITabularWriter writer)
+        {
+            long bytesRead = reader.BytesRead;
+
+            if (bytesRead <= 0)
+            {
+                Trace.WriteLine(String.Format("Read: {0:n0} rows.", reader.RowCountRead));
+            }
+            else
+            {
+                Trace.WriteLine(String.Format("Read: {0}, {1:n0} rows.", bytesRead.SizeString(), reader.RowCountRead));
+            }
+
+            long bytesWritten = writer.BytesWritten;
+            if (bytesWritten <= 0)
+            {
+                Trace.WriteLine(String.Format("Wrote: {0:n0} rows.", writer.RowCountWritten));
+            }
+            else
+            {
+                Trace.WriteLine(String.Format("Wrote: {0}, {1:n0} rows.", bytesWritten.SizeString(), writer.RowCountWritten));
             }
         }
 
