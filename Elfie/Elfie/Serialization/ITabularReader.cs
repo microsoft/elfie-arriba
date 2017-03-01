@@ -68,6 +68,11 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         int RowCountRead { get; }
 
         /// <summary>
+        ///  Return how many bytes were read so far, if the implementation knows.
+        /// </summary>
+        long BytesRead { get; }
+
+        /// <summary>
         ///  Returns the number of columns in the current row. Used to handle
         ///  rows which are shorter than expected, if desired.
         /// </summary>
