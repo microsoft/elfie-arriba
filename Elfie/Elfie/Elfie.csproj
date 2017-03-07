@@ -71,6 +71,7 @@
     <Compile Include="Diagnostics\Logger.cs" />
     <Compile Include="Diagnostics\Position.cs" />
     <Compile Include="Diagnostics\ProgressWriter.cs" />
+    <Compile Include="Diagnostics\SearchResult.cs" />
     <Compile Include="Extensions\DateTimeExtensions.cs" />
     <Compile Include="Extensions\IntExtensions.cs" />
     <Compile Include="Extensions\IReadOnlyListExtensions.cs" />
