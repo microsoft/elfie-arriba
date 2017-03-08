@@ -33,6 +33,11 @@ namespace Microsoft.CodeAnalysis.Elfie.Model
             _ticksValues.Add();
         }
 
+        public void SetCount(int count)
+        {
+            _ticksValues.SetCount(count);
+        }
+
         public void Clear()
         {
             _ticksValues.Clear();

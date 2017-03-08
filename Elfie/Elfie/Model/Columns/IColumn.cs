@@ -36,9 +36,30 @@ namespace Microsoft.CodeAnalysis.Elfie.Model
     /// </summary>
     public interface IColumn : IBinarySerializable
     {
+        /// <summary>
+        ///  Get the count of items in this column
+        /// </summary>
         int Count { get; }
+
+        /// <summary>
+        ///  Reset this column to be empty. May reuse previously allocated memory.
+        /// </summary>
         void Clear();
+
+        /// <summary>
+        ///  Add room for one more item (with a default value).
+        /// </summary>
         void Add();
+
+        /// <summary>
+        ///  Set the column to have the specific number of elements with default values.
+        /// </summary>
+        void SetCount(int count);
+
+        /// <summary>
+        ///  Convert this column to immutable (read only) form, if applicable.
+        ///  Add calls and sets may throw exceptions after ConvertToImmutable.
+        /// </summary>
         void ConvertToImmutable();
     }
 }

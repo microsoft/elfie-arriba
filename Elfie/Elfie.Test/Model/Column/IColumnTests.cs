@@ -50,6 +50,11 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Column
             column.Clear();
             Assert.AreEqual(0, column.Count);
             Verify.Exception<ArgumentOutOfRangeException>(() => { DateTime value = column[0]; });
+
+            // Verify SetCount works
+            column.SetCount(2);
+            Assert.AreEqual(2, column.Count);
+            Assert.AreEqual(DateTime.MinValue, column[1]);
         }
 
         [TestMethod]
@@ -98,6 +103,11 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Column
             column.Clear();
             Assert.AreEqual(0, column.Count);
             Verify.Exception<ArgumentOutOfRangeException>(() => { String8 value = column[0]; });
+
+            // Verify SetCount works
+            column.SetCount(2);
+            Assert.AreEqual(2, column.Count);
+            Assert.AreEqual(String8.Empty, column[1]);
         }
     }
 }
