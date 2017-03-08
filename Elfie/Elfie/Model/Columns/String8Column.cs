@@ -50,6 +50,11 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             _identifiers.Add();
         }
 
+        public void SetCount(int count)
+        {
+            _identifiers.SetCount(count);
+        }
+
         public void ConvertToImmutable()
         {
             _strings.ConvertToImmutable(_identifiers);
