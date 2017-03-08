@@ -70,6 +70,7 @@
     <Compile Include="Extensions\SampleSerializable.cs" />
     <Compile Include="Extensions\StringExtensionsTests.cs" />
     <Compile Include="Model\AddReferenceDatabaseTests.cs" />
+    <Compile Include="Model\Column\IColumnTests.cs" />
     <Compile Include="Model\Index\MemberIndexTests.cs" />
     <Compile Include="Model\Map\ItemMapTests.cs" />
     <Compile Include="Model\MergedMembersDatabaseTests.cs" />

@@ -149,8 +149,9 @@ namespace Microsoft.CodeAnalysis.Elfie.Test
             // Empty Set: Round trip and verify no errors
             set = new SampleSet();
             Assert.AreEqual(0, set.Count);
-            set = Verify.RoundTrip(set);
-            Assert.AreEqual(0, set.Count);
+            SampleSet readSet = new SampleSet();
+            Verify.RoundTrip(set, readSet);
+            Assert.AreEqual(0, readSet.Count);
 
             // Rebuild and add items
             DateTime now = DateTime.UtcNow;
@@ -172,13 +173,14 @@ namespace Microsoft.CodeAnalysis.Elfie.Test
             Assert.AreEqual(100, set.Count);
 
             // Serialize and load
-            set = Verify.RoundTrip(set);
-            Assert.AreEqual(100, set.Count);
+            readSet = new SampleSet();
+            Verify.RoundTrip(set, readSet);
+            Assert.AreEqual(100, readSet.Count);
 
             // Verify items are correct
-            for (int i = 0; i < set.Count; ++i)
+            for (int i = 0; i < readSet.Count; ++i)
             {
-                item = set[i];
+                item = readSet[i];
                 Assert.AreEqual(name, item.Name);
                 Assert.AreEqual(target, item.Target);
                 Assert.AreEqual((i % 2 == 0 ? SampleItemType.Basic : SampleItemType.Complex), item.Type);

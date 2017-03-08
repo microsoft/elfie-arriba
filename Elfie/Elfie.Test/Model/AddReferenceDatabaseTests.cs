@@ -334,7 +334,7 @@ P SamplePackage
             db.AddUniqueMembers(PackageDatabaseTests.BuildDefaultSample());
 
             // Overwrite version with '9' and verify binary format won't load
-            Verify.RoundTrip(db, (w) => w.Write(9));
+            Verify.RoundTrip(db, new AddReferenceDatabase(), (w) => w.Write(9));
         }
     }
 }
