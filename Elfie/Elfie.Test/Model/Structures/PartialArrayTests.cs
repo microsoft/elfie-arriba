@@ -47,7 +47,9 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Structures
             a[0] = 0;
 
             // Verify round trip works [Primitives only]
-            a = Verify.RoundTrip<PartialArray<int>>(a);
+            PartialArray<int> readArray = new PartialArray<int>();
+            Verify.RoundTrip<PartialArray<int>>(a, readArray);
+            a = readArray;
 
             // Verify count and capacity are right, IsFull is still false
             Assert.AreEqual(100, a.Count);

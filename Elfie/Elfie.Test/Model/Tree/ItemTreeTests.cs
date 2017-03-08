@@ -112,7 +112,9 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model
             Trace.WriteLine(Write.ToString((w) => fileTree.WriteTree(w, strings, 1)));
 
             // Verify roundtrip
-            fileTree = Verify.RoundTrip(fileTree);
+            ItemTree readTree = new ItemTree();
+            Verify.RoundTrip(fileTree, readTree);
+            fileTree = readTree;
 
             // Reconstruct each file path
             for (int i = 0; i < filePaths.Length; ++i)

@@ -5,9 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 
-using Elfie.Test;
-
-using Microsoft.CodeAnalysis.Elfie.Extensions;
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.CodeAnalysis.Elfie.Model.Structures;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
