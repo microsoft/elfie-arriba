@@ -500,7 +500,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
 
         /// <summary>
         ///  Convert a String8 with an ISO-8601 UTC DateTime into the DateTime value.
-        ///  [yyyy-MM-ddThh:mm:ssZ]
+        ///  [yyyy-MM-dd] or [yyyy-MM-ddThh:mm:ssZ]
         /// </summary>
         /// <param name="result">UTC DateTime corresponding to string, if it was a valid DateTime</param>
         /// <returns>True if an integer was found, False otherwise.</returns>
@@ -509,9 +509,9 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             result = DateTime.MinValue;
             if (this.IsEmpty()) return false;
 
-            // Formats are [yyyy-MM-dd] (length 10) or [yyyy-MM-ddThh:mm:ssZ] (length 20)
+            // Formats are [yyyy-MM-dd] (length 10) or [yyyy-MM-ddThh:mm:ssZ] (length 19/20)
             //              0123456789                  01234567890123456789
-            bool hasTimePart = (_length == 20);
+            bool hasTimePart = (_length == 19 || _length == 20);
             if (_length != 10 && !hasTimePart) return false;
 
             // Validate date part separators
@@ -524,7 +524,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
                 if (_buffer[_index + 10] != UTF8.T && _buffer[_index + 10] != UTF8.Space) return false;
                 if (_buffer[_index + 13] != UTF8.Colon) return false;
                 if (_buffer[_index + 16] != UTF8.Colon) return false;
-                if (_buffer[_index + 19] != UTF8.Z) return false;
+                if (_length == 20 && _buffer[_index + 19] != UTF8.Z) return false;
             }
 
             int year, month, day, hour = 0, minute = 0, second = 0;
