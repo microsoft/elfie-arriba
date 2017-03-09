@@ -58,6 +58,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         ///  Return a cell for the current row.
         ///  IConvertible has methods to convert values to String8, string, int, bool, DateTime, etc.
         /// </summary>
+        /// <param name="index">Zero-based column index</param>
         /// <returns>ITabularValue for the desired column in the current row</returns>
         ITabularValue Current(int index);
 
@@ -84,5 +85,21 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         /// </summary>
         /// <returns>True if another row exists, False if the source is out of content</returns>
         bool NextRow();
+    }
+
+    public static class ITabularReaderExtensions
+    {
+        /// <summary>
+        ///  Return a cell for the current row or String.Empty if the row doesn't have
+        ///  enough columns.
+        /// </summary>
+        /// <param name="reader">ITabularReader</param>
+        /// <param name="index">Zero-based column index</param>
+        /// <returns>ITabularValue for column</returns>
+        public static ITabularValue CurrentOrEmpty(this ITabularReader reader, int index)
+        {
+            if (reader.CurrentRowColumns > index) return reader.Current(index);
+            return String8TabularValue.Empty;
+        }
     }
 }

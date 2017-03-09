@@ -25,12 +25,40 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
     }
 
     /// <summary>
+    ///  ITabularValueExtensions provides non-Try variations of type conversions.
+    /// </summary>
+    public static class ITabularValueExtensions
+    {
+        public static DateTime ToDateTime(this ITabularValue value)
+        {
+            DateTime result;
+            if (value.TryToDateTime(out result)) return result;
+            throw new FormatException(value.ToString());
+        }
+
+        public static int ToInteger(this ITabularValue value)
+        {
+            int result;
+            if (value.TryToInteger(out result)) return result;
+            throw new FormatException(value.ToString());
+        }
+
+        public static bool ToBoolean(this ITabularValue value)
+        {
+            bool result;
+            if (value.TryToBoolean(out result)) return result;
+            throw new FormatException(value.ToString());
+        }
+    }
+
+    /// <summary>
     ///  String8TabularValue implements ITabularValue on an underlying String8.
     ///  Reuse instances of String8TabularValue across rows and call SetValue()
     ///  to avoid any per-row allocation.
     /// </summary>
     public class String8TabularValue : ITabularValue
     {
+        public static String8TabularValue Empty = new String8TabularValue();
         private String8 _value;
 
         public String8TabularValue()
@@ -105,6 +133,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         public override string ToString()
         {
             if (_value == null) return null;
+            if (_value is DateTime) return ((DateTime)_value).ToString("u");
             return _value.ToString();
         }
 
@@ -138,8 +167,11 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
 
         public bool TryToInteger(out int result)
         {
-            result = 0;
-            if(_value == null) return false;
+            if (_value == null)
+            {
+                result = 0;
+                return false;
+            }
 
             if(_value is int)
             {
@@ -151,10 +183,11 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
                 uint asUint = (uint)_value;
                 if(asUint <= int.MaxValue)
                 {
-                    _value = (int)asUint;
+                    result = (int)asUint;
                     return true;
                 }
 
+                result = 0;
                 return false;
             }
             else if (_value is long)
@@ -162,10 +195,11 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
                 long asLong = (long)_value;
                 if (asLong >= int.MinValue && asLong <= int.MaxValue)
                 {
-                    _value = (int)asLong;
+                    result = (int)asLong;
                     return true;
                 }
 
+                result = 0;
                 return false;
             }
             else if (_value is ulong)
@@ -173,30 +207,31 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
                 ulong asULong = (ulong)_value;
                 if (asULong <= int.MaxValue)
                 {
-                    _value = (int)asULong;
+                    result = (int)asULong;
                     return true;
                 }
 
+                result = 0;
                 return false;
             }
             else if(_value is short)
             {
-                result = (int)_value;
+                result = (int)(short)_value;
                 return true;
             }
             else if (_value is ushort)
             {
-                result = (int)_value;
+                result = (int)(ushort)_value;
                 return true;
             }
             else if (_value is byte)
             {
-                result = (int)_value;
+                result = (int)(byte)_value;
                 return true;
             }
             else if (_value is sbyte)
             {
-                result = (int)_value;
+                result = (int)(sbyte)_value;
                 return true;
             }
 
