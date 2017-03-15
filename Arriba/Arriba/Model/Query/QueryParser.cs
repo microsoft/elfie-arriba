@@ -170,41 +170,84 @@ namespace Arriba.Model.Query
                 bool hadExplicitNameCompletion;
                 string columnName = ParseUntilEndToken(TokenType.RightBrace, out hadExplicitNameCompletion);
 
-                // Parse operator (or error)
-                if (!IsCompareOperator(_scanner.Current.Type))
+                if (!hadExplicitNameCompletion)
                 {
-                    expression = new TermExpression(columnName, Operator.Equals, null) { HadExplicitNameCompletion = hadExplicitNameCompletion, HadExplicitBooleanOperator = hadExplicitBooleanOperator, HadExplicitCompareOperator = false, HadExplicitValueCompletion = false };
+                    // "[PartialColumnNa" -> make it a null equals term, indicate the column name needs completion
+                    expression = new TermExpression(columnName, Operator.Equals, String.Empty) { Guidance = new IntelliSenseGuidance(columnName, CurrentTokenCategory.ColumnName) };
                 }
-
-                Operator op = ConvertToOperator(_scanner.Current.Type);
-                _scanner.Next();
-
-                // Parse value
-                string value = ParseValue(out hadExplicitValueCompletion);
-                if (value != null)
+                else if (!IsCompareOperator(_scanner.Current.Type))
                 {
-                    expression = new TermExpression(columnName, op, value) { HadExplicitNameCompletion = true, HadExplicitBooleanOperator = hadExplicitBooleanOperator, HadExplicitCompareOperator = true, HadExplicitValueCompletion = hadExplicitValueCompletion };
+                    // "[ColumnName]" -> make it a null equals term, indicate operator needs completion
+                    expression = new TermExpression(columnName, Operator.Equals, String.Empty) { Guidance = new IntelliSenseGuidance(String.Empty, CurrentTokenCategory.CompareOperator) };
+                }
+                else
+                {
+                    Operator op = ConvertToOperator(_scanner.Current.Type);
+                    _scanner.Next();
+
+                    // Parse value
+                    string value = ParseValue(out hadExplicitValueCompletion);
+
+                    if (value == null)
+                    {
+                        if (String.IsNullOrEmpty(_scanner.Current.Prefix))
+                        {
+                            // "[ColumnName] =" -> if no space after operator, suggest operator until space is typed
+                            expression = new TermExpression(columnName, op, String.Empty) { Guidance = new IntelliSenseGuidance(op.ToSyntaxString(), CurrentTokenCategory.CompareOperator) };
+                        }
+                        else
+                        {
+                            // "[ColumnName] = " -> time for the value
+                            expression = new TermExpression(columnName, op, String.Empty) { Guidance = new IntelliSenseGuidance(String.Empty, CurrentTokenCategory.Value) };
+                        }
+                    }
+                    else
+                    {
+                        if (hadExplicitValueCompletion)
+                        {
+                            // "[ColumnName] = \"Value\"" -> time for next term (boolean operator, next column name, or next bare value)
+                            expression = new TermExpression(columnName, op, value) { Guidance = new IntelliSenseGuidance(String.Empty, CurrentTokenCategory.BooleanOperator | CurrentTokenCategory.ColumnName | CurrentTokenCategory.Value) };
+                        }
+                        else
+                        {
+                            // "[ColumnName] = \"Value" -> indicate value incomplete
+                            expression = new TermExpression(columnName, op, value) { Guidance = new IntelliSenseGuidance(value, CurrentTokenCategory.Value) };
+                        }
+                    }
                 }
             }
             else if (_scanner.Current.Type == TokenType.DoubleQuote)
             {
                 // ExplicitValue := '"' (NotEndQuote || '""')+ '"'
                 string value = ParseUntilEndToken(TokenType.DoubleQuote, out hadExplicitValueCompletion);
-                expression = new TermExpression(value) { HadExplicitNameCompletion = true, HadExplicitBooleanOperator = hadExplicitBooleanOperator, HadExplicitCompareOperator = false, HadExplicitValueCompletion = hadExplicitValueCompletion };
+                if (!hadExplicitValueCompletion)
+                {
+                    // "\"IncompleteQuotedValue" -> indicate value incomplete
+                    expression = new TermExpression(value) { Guidance = new IntelliSenseGuidance(value, CurrentTokenCategory.Value) };
+                }
+                else
+                {
+                    // "\"QuotedValue\" -> time for next term (boolean operator, next column name, or next bare value)
+                    expression = new TermExpression(value) { Guidance = new IntelliSenseGuidance(String.Empty, CurrentTokenCategory.BooleanOperator | CurrentTokenCategory.ColumnName | CurrentTokenCategory.Value) };
+                }
             }
             else
             {
                 // NotSpaceParenOrCompareOperator, then look for compare operator and, if found, value
-                string firstValue = ParseNotSpaceParenOrCompareOperator();
+                string firstValue = ParseNotSpaceParenOrCompareOperator(out hadExplicitValueCompletion);
 
                 // If there was no valid value left, it's the end of this term
                 if (String.IsNullOrEmpty(firstValue)) return null;
-                hadExplicitValueCompletion = _scanner.Current.Type != TokenType.End;
 
-                if (!IsCompareOperator(_scanner.Current.Type))
+                if (!hadExplicitValueCompletion)
                 {
-                    // MatchAllTerm := Value
-                    expression = new TermExpression(firstValue) { HadExplicitNameCompletion = true, HadExplicitBooleanOperator = hadExplicitBooleanOperator, HadExplicitCompareOperator = false, HadExplicitValueCompletion = hadExplicitValueCompletion };
+                    // "BareValu" -> column or value completion on this term
+                    expression = new TermExpression(firstValue) { Guidance = new IntelliSenseGuidance(firstValue, CurrentTokenCategory.ColumnName | CurrentTokenCategory.Value) };
+                }
+                else if (!IsCompareOperator(_scanner.Current.Type))
+                {
+                    // "BareValue " -> if column name, CompareOperator. If a bare value, BooleanOperator, ColumnName, Value
+                    expression = new TermExpression(firstValue) { Guidance = new IntelliSenseGuidance(String.Empty, CurrentTokenCategory.CompareOperator | CurrentTokenCategory.BooleanOperator | CurrentTokenCategory.ColumnName | CurrentTokenCategory.Value) };
                 }
                 else
                 {
@@ -212,10 +255,34 @@ namespace Arriba.Model.Query
                     Operator op = ConvertToOperator(_scanner.Current.Type);
                     _scanner.Next();
 
+                    // Parse value
                     string value = ParseValue(out hadExplicitValueCompletion);
-                    if (value != null)
+
+                    if (value == null)
                     {
-                        expression = new TermExpression(firstValue, op, value) { HadExplicitNameCompletion = true, HadExplicitBooleanOperator = hadExplicitBooleanOperator, HadExplicitCompareOperator = true, HadExplicitValueCompletion = hadExplicitValueCompletion };
+                        if (String.IsNullOrEmpty(_scanner.Current.Prefix))
+                        {
+                            // "[ColumnName] =" -> if no space after operator, suggest operator until space is typed
+                            expression = new TermExpression(firstValue, op, String.Empty) { Guidance = new IntelliSenseGuidance(op.ToSyntaxString(), CurrentTokenCategory.CompareOperator) };
+                        }
+                        else
+                        {
+                            // "[ColumnName] = " -> time for the value
+                            expression = new TermExpression(firstValue, op, String.Empty) { Guidance = new IntelliSenseGuidance(String.Empty, CurrentTokenCategory.Value) };
+                        }
+                    }
+                    else
+                    {
+                        if (hadExplicitValueCompletion)
+                        {
+                            // "[ColumnName] = \"Value\"" -> time for next term (boolean operator, next column name, or next bare value)
+                            expression = new TermExpression(firstValue, op, value) { Guidance = new IntelliSenseGuidance(String.Empty, CurrentTokenCategory.BooleanOperator | CurrentTokenCategory.ColumnName | CurrentTokenCategory.Value) };
+                        }
+                        else
+                        {
+                            // "[ColumnName] = \"Value" -> indicate value incomplete
+                            expression = new TermExpression(firstValue, op, value) { Guidance = new IntelliSenseGuidance(value, CurrentTokenCategory.Value) };
+                        }
                     }
                 }
             }
@@ -240,7 +307,9 @@ namespace Arriba.Model.Query
             {
                 // Unquoted value - accept anything without space
                 string value = ParseNotSpaceOrParen();
-                hadExplicitCompletion = _scanner.Current.Type != TokenType.End;
+
+                // Value was explicitly completed if there was any following token or trailing whitespace
+                hadExplicitCompletion = !(_scanner.Current.Type == TokenType.End && String.IsNullOrEmpty(_scanner.Current.Prefix));
 
                 // If there was no value and it was unquoted, return null to indicate incomplete term
                 if (String.IsNullOrEmpty(value)) return null;
@@ -249,7 +318,7 @@ namespace Arriba.Model.Query
             }
         }
 
-        private string ParseNotSpaceParenOrCompareOperator()
+        private string ParseNotSpaceParenOrCompareOperator(out bool hadExplicitCompletion)
         {
             StringBuilder value = new StringBuilder();
             bool isFirstToken = true;
@@ -271,7 +340,10 @@ namespace Arriba.Model.Query
                 _scanner.Next();
                 isFirstToken = false;
             }
-            
+
+            // Value was explicitly completed if there was any following token or trailing whitespace
+            hadExplicitCompletion = !(_scanner.Current.Type == TokenType.End && String.IsNullOrEmpty(_scanner.Current.Prefix));
+
             return value.ToString();
         }
 
