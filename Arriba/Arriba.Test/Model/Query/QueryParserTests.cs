@@ -129,15 +129,15 @@ namespace Arriba.Test.Model.Query
             // Nothing - no query
             Assert.AreEqual("", QueryParser.Parse("").ToString());
 
-            // Incomplete column name - no query
-            Assert.AreEqual("", QueryParser.Parse("[Starting").ToString());
+            // Incomplete column name - empty string
+            Assert.AreEqual("Starting = \"\"", QueryParser.Parse("[Starting").ToString());
 
-            // Column name without operator - no query
-            Assert.AreEqual("", QueryParser.Parse("[Title]").ToString());
+            // Column name without operator - empty string
+            Assert.AreEqual("Title = \"\"", QueryParser.Parse("[Title]").ToString());
 
-            // Column name and operator without value - no query
-            Assert.AreEqual("", QueryParser.Parse("[Title] = ").ToString());
-            Assert.AreEqual("", QueryParser.Parse("Title > ").ToString());
+            // Column name and operator without value - empty string
+            Assert.AreEqual("Title = \"\"", QueryParser.Parse("[Title] = ").ToString());
+            Assert.AreEqual("Title > \"\"", QueryParser.Parse("Title > ").ToString());
 
             // Incomplete quoted value - search value so far
             Assert.AreEqual("*:Starting", QueryParser.Parse("\"Starting").ToString());
