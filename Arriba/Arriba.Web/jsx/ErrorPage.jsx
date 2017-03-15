@@ -1,5 +1,5 @@
 // An error page to show in place of all content when access is denied or the site is down.
-var ErrorPage = React.createClass({
+export default React.createClass({
     render: function () {
         return (
             <div className="errorPage">

@@ -1,5 +1,5 @@
 ﻿// QueryStats is a bar just under the SearchHeader. It shows errors, if any, or the current query, returned count, and runtime.
-var QueryStats = React.createClass({
+export default React.createClass({
     onTableTileClick: function (name, e) {
         this.props.onSelectedTableChange(name);
     },

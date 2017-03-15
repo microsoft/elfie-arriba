@@ -1,6 +1,6 @@
 ﻿
 // Write a simple table with name and value for each property in a data set
-var DetailsTable = React.createClass({
+export default React.createClass({
     onAddClause: function (e) {
         var name = e.target.getAttribute("data");
         this.props.onAddClause(name, stripHighlight(this.props.data[name]));
