@@ -94,12 +94,14 @@ namespace Arriba.Model.Query
             List<IExpression> terms = new List<IExpression>();
 
             // Parse the first term
-            IExpression term = ParseTerm();
+            IExpression term = ParseTerm(true);
             if (term == null) return null;
             terms.Add(term);
 
             while (_scanner.Current.Type != TokenType.End)
             {
+                bool hadExplicitBooleanOperator = false;
+
                 // If this is an 'And', combine with the next expression
                 if (_scanner.Current.Type == TokenType.BooleanOperatorOr)
                 {
@@ -110,6 +112,7 @@ namespace Arriba.Model.Query
                 {
                     // If this is an explicit And, eat the operator and combine with the next expression
                     _scanner.Next();
+                    hadExplicitBooleanOperator = true;
                 }
                 else
                 {
@@ -117,7 +120,7 @@ namespace Arriba.Model.Query
                 }
 
                 // Parse the next term and add it or stop of no more terms
-                term = ParseTerm();
+                term = ParseTerm(hadExplicitBooleanOperator);
                 if (term == null) break;
                 terms.Add(term);
             }
@@ -132,8 +135,9 @@ namespace Arriba.Model.Query
             }
         }
 
-        private IExpression ParseTerm()
+        private IExpression ParseTerm(bool hadExplicitBooleanOperator)
         {
+            bool hadExplicitValueCompletion;
             IExpression expression = null;
             bool negate = false;
 
@@ -163,25 +167,30 @@ namespace Arriba.Model.Query
             else if (_scanner.Current.Type == TokenType.LeftBrace)
             {
                 // ExplicitColumnName := '[' (NotEndBrace | ']]')+ ']'
-                string columnName = ParseUntilEndToken(TokenType.RightBrace);
+                bool hadExplicitNameCompletion;
+                string columnName = ParseUntilEndToken(TokenType.RightBrace, out hadExplicitNameCompletion);
 
                 // Parse operator (or error)
-                if (!IsCompareOperator(_scanner.Current.Type)) return null;
+                if (!IsCompareOperator(_scanner.Current.Type))
+                {
+                    expression = new TermExpression(columnName, Operator.Equals, null) { HadExplicitNameCompletion = hadExplicitNameCompletion, HadExplicitBooleanOperator = hadExplicitBooleanOperator, HadExplicitCompareOperator = false, HadExplicitValueCompletion = false };
+                }
+
                 Operator op = ConvertToOperator(_scanner.Current.Type);
                 _scanner.Next();
 
                 // Parse value
-                string value = ParseValue();
+                string value = ParseValue(out hadExplicitValueCompletion);
                 if (value != null)
                 {
-                    expression = new TermExpression(columnName, op, value);
+                    expression = new TermExpression(columnName, op, value) { HadExplicitNameCompletion = true, HadExplicitBooleanOperator = hadExplicitBooleanOperator, HadExplicitCompareOperator = true, HadExplicitValueCompletion = hadExplicitValueCompletion };
                 }
             }
             else if (_scanner.Current.Type == TokenType.DoubleQuote)
             {
                 // ExplicitValue := '"' (NotEndQuote || '""')+ '"'
-                string value = ParseUntilEndToken(TokenType.DoubleQuote);
-                expression = new TermExpression("*", Operator.Matches, value);
+                string value = ParseUntilEndToken(TokenType.DoubleQuote, out hadExplicitValueCompletion);
+                expression = new TermExpression(value) { HadExplicitNameCompletion = true, HadExplicitBooleanOperator = hadExplicitBooleanOperator, HadExplicitCompareOperator = false, HadExplicitValueCompletion = hadExplicitValueCompletion };
             }
             else
             {
@@ -190,11 +199,12 @@ namespace Arriba.Model.Query
 
                 // If there was no valid value left, it's the end of this term
                 if (String.IsNullOrEmpty(firstValue)) return null;
+                hadExplicitValueCompletion = _scanner.Current.Type != TokenType.End;
 
                 if (!IsCompareOperator(_scanner.Current.Type))
                 {
                     // MatchAllTerm := Value
-                    expression = new TermExpression("*", Operator.Matches, firstValue);
+                    expression = new TermExpression(firstValue) { HadExplicitNameCompletion = true, HadExplicitBooleanOperator = hadExplicitBooleanOperator, HadExplicitCompareOperator = false, HadExplicitValueCompletion = hadExplicitValueCompletion };
                 }
                 else
                 {
@@ -202,10 +212,10 @@ namespace Arriba.Model.Query
                     Operator op = ConvertToOperator(_scanner.Current.Type);
                     _scanner.Next();
 
-                    string value = ParseValue();
+                    string value = ParseValue(out hadExplicitValueCompletion);
                     if (value != null)
                     {
-                        expression = new TermExpression(firstValue, op, value);
+                        expression = new TermExpression(firstValue, op, value) { HadExplicitNameCompletion = true, HadExplicitBooleanOperator = hadExplicitBooleanOperator, HadExplicitCompareOperator = true, HadExplicitValueCompletion = hadExplicitValueCompletion };
                     }
                 }
             }
@@ -219,17 +229,18 @@ namespace Arriba.Model.Query
             return expression;
         }
 
-        private string ParseValue()
+        private string ParseValue(out bool hadExplicitCompletion)
         {
             if (_scanner.Current.Type == TokenType.DoubleQuote)
             {
                 // Quoted value - accept anything until end quote
-                return ParseUntilEndToken(TokenType.DoubleQuote);
+                return ParseUntilEndToken(TokenType.DoubleQuote, out hadExplicitCompletion);
             }
             else
             {
                 // Unquoted value - accept anything without space
                 string value = ParseNotSpaceOrParen();
+                hadExplicitCompletion = _scanner.Current.Type != TokenType.End;
 
                 // If there was no value and it was unquoted, return null to indicate incomplete term
                 if (String.IsNullOrEmpty(value)) return null;
@@ -260,7 +271,7 @@ namespace Arriba.Model.Query
                 _scanner.Next();
                 isFirstToken = false;
             }
-
+            
             return value.ToString();
         }
 
@@ -287,9 +298,10 @@ namespace Arriba.Model.Query
             return value.ToString();
         }
 
-        private string ParseUntilEndToken(TokenType endToken)
+        private string ParseUntilEndToken(TokenType endToken, out bool hadExplicitCompletion)
         {
             StringBuilder value = new StringBuilder();
+            hadExplicitCompletion = false;
 
             // Consume start token
             _scanner.Next();
@@ -313,6 +325,7 @@ namespace Arriba.Model.Query
                     else
                     {
                         // This was the end. Stop.
+                        hadExplicitCompletion = true;
                         break;
                     }
                 }
@@ -326,7 +339,7 @@ namespace Arriba.Model.Query
                 _scanner.Next();
             }
 
-            // NOTE: End token already consumed here checking to see if it was escaped
+            // NOTE: End token consumed by above loop
 
             return value.ToString();
         }
