@@ -195,15 +195,30 @@ namespace Arriba.Model.Expressions
 
     public class TermExpression : IExpression
     {
+        // The <Column> <operator> <Value> itself
         public string ColumnName;
         public Operator Operator;
         public Value Value;
+
+        // Parsing details to drive IntelliSense.
+        public bool HadExplicitNameCompletion;
+        public bool HadExplicitCompareOperator;
+        public bool HadExplicitBooleanOperator;
+        public bool HadExplicitValueCompletion;
+
+        public TermExpression(object value) : this("*", Operator.Matches, value)
+        { }
 
         public TermExpression(string columnName, Operator op, object value)
         {
             this.ColumnName = columnName;
             this.Operator = op;
             this.Value = Value.Create(value);
+
+            this.HadExplicitNameCompletion = true;
+            this.HadExplicitCompareOperator = true;
+            this.HadExplicitBooleanOperator = true;
+            this.HadExplicitValueCompletion = true;
         }
 
         public virtual void TryEvaluate(Partition partition, ShortSet result, ExecutionDetails details)
