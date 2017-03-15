@@ -1,5 +1,7 @@
-﻿// ResultListing shows a table of items matching a query, with sortable columns
-var ResultListing = React.createClass({
+﻿import AddColumnList from "./AddColumnList";
+
+// ResultListing shows a table of items matching a query, with sortable columns
+export default React.createClass({
     getInitialState: function () {
         return { selectedIndex: -1, addColumnsShowing: false };
     },

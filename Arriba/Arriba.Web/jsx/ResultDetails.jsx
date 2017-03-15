@@ -1,5 +1,7 @@
-﻿// ResultDetails shows (default formatted) details for an item when it was clicked.
-var ResultDetails = React.createClass({
+﻿import DetailsTable from "./_Components";
+
+// ResultDetails shows (default formatted) details for an item when it was clicked.
+export default React.createClass({
     handleClose: function () {
         this.props.onClose();
     },
