@@ -1,692 +1,122 @@
-var PatchComplianceSummary = React.createClass({
-    displayName: "PatchComplianceSummary",
+/******/ (function(modules) { // webpackBootstrap
+/******/ 	// The module cache
+/******/ 	var installedModules = {};
+/******/
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+/******/
+/******/ 		// Check if module is in cache
+/******/ 		if(installedModules[moduleId])
+/******/ 			return installedModules[moduleId].exports;
+/******/
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = installedModules[moduleId] = {
+/******/ 			i: moduleId,
+/******/ 			l: false,
+/******/ 			exports: {}
+/******/ 		};
+/******/
+/******/ 		// Execute the module function
+/******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
+/******/
+/******/ 		// Flag the module as loaded
+/******/ 		module.l = true;
+/******/
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+/******/
+/******/
+/******/ 	// expose the modules object (__webpack_modules__)
+/******/ 	__webpack_require__.m = modules;
+/******/
+/******/ 	// expose the module cache
+/******/ 	__webpack_require__.c = installedModules;
+/******/
+/******/ 	// identity function for calling harmony imports with the correct context
+/******/ 	__webpack_require__.i = function(value) { return value; };
+/******/
+/******/ 	// define getter function for harmony exports
+/******/ 	__webpack_require__.d = function(exports, name, getter) {
+/******/ 		if(!__webpack_require__.o(exports, name)) {
+/******/ 			Object.defineProperty(exports, name, {
+/******/ 				configurable: false,
+/******/ 				enumerable: true,
+/******/ 				get: getter
+/******/ 			});
+/******/ 		}
+/******/ 	};
+/******/
+/******/ 	// getDefaultExport function for compatibility with non-harmony modules
+/******/ 	__webpack_require__.n = function(module) {
+/******/ 		var getter = module && module.__esModule ?
+/******/ 			function getDefault() { return module['default']; } :
+/******/ 			function getModuleExports() { return module; };
+/******/ 		__webpack_require__.d(getter, 'a', getter);
+/******/ 		return getter;
+/******/ 	};
+/******/
+/******/ 	// Object.prototype.hasOwnProperty.call
+/******/ 	__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };
+/******/
+/******/ 	// __webpack_public_path__
+/******/ 	__webpack_require__.p = "";
+/******/
+/******/ 	// Load entry module and return exports
+/******/ 	return __webpack_require__(__webpack_require__.s = 14);
+/******/ })
+/************************************************************************/
+/******/ ([
+/* 0 */
+/***/ (function(module, exports) {
+
+function webpackEmptyContext(req) {
+	throw new Error("Cannot find module '" + req + "'.");
+}
+webpackEmptyContext.keys = function() { return []; };
+webpackEmptyContext.resolve = webpackEmptyContext;
+module.exports = webpackEmptyContext;
+webpackEmptyContext.id = 0;
+
+
+/***/ }),
+/* 1 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+// An error page to show in place of all content when access is denied or the site is down.
+/* harmony default export */ __webpack_exports__["a"] = React.createClass({
+    displayName: "ErrorPage",
 
     render: function () {
-        if (this.props.data["IsPatchCompliant"]) return React.createElement(
-            "div",
-            null,
-            React.createElement("span", { className: "good-icon icon", title: "IsPatchCompliant:1" }),
-            "Patch Compliant"
-        );
-
         return React.createElement(
             "div",
-            null,
+            { className: "errorPage" },
             React.createElement(
-                "div",
+                "h1",
                 null,
-                React.createElement("span", { className: "error-icon icon" }),
-                React.createElement(
-                    "b",
-                    null,
-                    "Not Patch Compliant"
-                ),
-                React.createElement(DetailReportLink, { url: "https://insights/Report?id=07e846a5-a100-498b-8fe0-68a907b695cc&isPublished=true#assetName={ID}&_tab=0", id: this.props.data["Name"], title: "Patch Compliance Summary" })
+                this.props.title
             ),
             React.createElement(
-                "table",
-                { className: "smallTable" },
+                "article",
+                null,
                 React.createElement(
-                    "thead",
+                    "p",
                     null,
-                    React.createElement(
-                        "tr",
-                        null,
-                        React.createElement(
-                            "td",
-                            null,
-                            "\xA0"
-                        ),
-                        React.createElement(
-                            "td",
-                            null,
-                            "Sev 5"
-                        ),
-                        React.createElement(
-                            "td",
-                            null,
-                            "Sev 4"
-                        ),
-                        React.createElement(
-                            "td",
-                            null,
-                            "Sev 3"
-                        )
-                    )
-                ),
-                React.createElement(
-                    "tbody",
-                    null,
-                    React.createElement(
-                        "tr",
-                        null,
-                        React.createElement(
-                            "td",
-                            null,
-                            "Out-of-Cycle"
-                        ),
-                        React.createElement(
-                            "td",
-                            { className: "n" },
-                            React.createElement(BadUnlessZero, { value: this.props.data["Sev5_OutCycleCount"], columnName: "Sev5_OutCycleCount" })
-                        ),
-                        React.createElement(
-                            "td",
-                            { className: "n" },
-                            React.createElement(BadUnlessZero, { value: this.props.data["Sev4_OutCycleCount"], columnName: "Sev4_OutCycleCount" })
-                        ),
-                        React.createElement(
-                            "td",
-                            { className: "n" },
-                            React.createElement(BadUnlessZero, { value: this.props.data["Sev3_OutCycleCount"], columnName: "Sev3_OutCycleCount" })
-                        )
-                    ),
-                    React.createElement(
-                        "tr",
-                        null,
-                        React.createElement(
-                            "td",
-                            null,
-                            "Third Party"
-                        ),
-                        React.createElement(
-                            "td",
-                            { className: "n" },
-                            React.createElement(BadUnlessZero, { value: this.props.data["Sev5_ThirdPartyCount"], columnName: "Sev5_ThirdPartyCount" })
-                        ),
-                        React.createElement(
-                            "td",
-                            { className: "n" },
-                            React.createElement(BadUnlessZero, { value: this.props.data["Sev4_ThirdPartyCount"], columnName: "Sev4_ThirdPartyCount" })
-                        ),
-                        React.createElement(
-                            "td",
-                            { className: "n" },
-                            React.createElement(BadUnlessZero, { value: this.props.data["Sev3_ThirdPartyCount"], columnName: "Sev3_ThirdPartyCount" })
-                        )
-                    )
+                    this.props.message
                 )
             )
         );
     }
 });
 
-var AVSummary = React.createClass({
-    displayName: "AVSummary",
+/***/ }),
+/* 2 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
 
-    render: function () {
-        // If no AntiVirus, just report that
-        if (!this.props.data["HasAV"]) return React.createElement(RiskMarker, { condition: !this.props.data["HasAV"], columnName: "HasAV", label: "AV Missing" });
-
-        // Otherwise, consider details
-        return React.createElement(
-            "div",
-            null,
-            React.createElement(DetailsField, { value: this.props.data["AVName"], columnName: "AVName", label: "AV", id: this.props.data["Name"], url: "https://insights/Report?id=07e846a5-a100-498b-8fe0-68a907b695cc&isPublished=true#assetName={ID}&_tab=2", "url-title": "AV Details" }),
-            React.createElement(RelativeDateTime, { value: this.props.data["LatestScanDate"], columnName: "LatestScanDate", label: "Last Scan" }),
-            React.createElement(RiskMarker, { condition: !this.props.data["IsScanned"], columnName: "IsScanned", label: "Unscanned" }),
-            React.createElement(RiskMarker, { condition: !this.props.data["HasAuthenticatedScan"], columnName: "HasAuthenticatedScan", label: "Unauthenticated Scan" })
-        );
-    }
-});
-
-var MonitoringSummary = React.createClass({
-    displayName: "MonitoringSummary",
-
-    render: function () {
-        // If not monitored, just say that
-        if (!this.props.data["IsMonitored"]) return React.createElement(RiskMarker, { condition: !this.props.data["IsMonitored"], columnName: "IsMonitored", label: "Unmonitored" });
-
-        // Otherwise, consider details
-        return React.createElement(RelativeDateTime, { value: this.props.data["LatestMonitoredDate"], columnName: "LatestMonitoredDate", label: "Last Monitored" });
-    }
-});
-
-// AssetDetails shows details for an asset specifically when clicked.
-var AssetDetails = React.createClass({
-    displayName: "AssetDetails",
-
-    getInitialState: function () {
-        return { allTableShown: true };
-    },
-    handleClose: function () {
-        this.props.onClose();
-    },
-    toggle: function () {
-        this.setState({ allTableShown: !this.state.allTableShown });
-    },
-    render: function () {
-        if (!this.props.itemId) return null;
-        if (!this.props.data) return null;
-
-        var fullTeam = [];
-
-        fullTeam.push(React.createElement(DetailsField, { value: this.props.data["S1"], columnName: "S1", inline: "true" }));
-        if (this.props.data["S2"]) {
-            fullTeam.push(" | ");
-            fullTeam.push(React.createElement(DetailsField, { value: this.props.data["S2"], columnName: "S2", inline: "true" }));
-        }
-
-        if (this.props.data["S3"]) {
-            fullTeam.push(" | ");
-            fullTeam.push(React.createElement(DetailsField, { value: this.props.data["S3"], columnName: "S3", inline: "true" }));
-        }
-
-        if (this.props.data["S4"]) {
-            fullTeam.push(" | ");
-            fullTeam.push(React.createElement(DetailsField, { value: this.props.data["S4"], columnName: "S4", inline: "true" }));
-        }
-
-        var allTableToggle = React.createElement("span", { className: "icon-chevron-down-bold clickable", onClick: this.toggle });
-        var detailsTable = null;
-
-        if (this.state.allTableShown) {
-            allTableToggle = React.createElement("span", { className: "icon-chevron-up-bold clickable", onClick: this.toggle });
-            detailsTable = React.createElement(DetailsTable, {
-                data: this.props.data,
-                table: this.props.table,
-                query: this.props.query,
-                onAddClause: this.props.onAddClause
-            });
-        }
-
-        var baselineIcon = React.createElement(
-            "div",
-            null,
-            React.createElement("span", { className: "good-icon icon", title: "IsBaseline:1" }),
-            "Baseline"
-        );
-        if (!this.props.data["IsBaseline"]) baselineIcon = React.createElement(
-            "div",
-            null,
-            React.createElement("span", { className: "warn-icon icon", title: "IsBaseline:0" }),
-            "Not Baseline"
-        );
-
-        return React.createElement(
-            "div",
-            { className: "details" },
-            React.createElement(
-                "div",
-                { className: "commands" },
-                React.createElement(DetailReportLink, { url: "https://insights/Report?id=5337be64-6142-4dec-8191-711c3043d2bb&isPublished=true#assetName={ID}&_tab=0", id: this.props.data["Name"], title: "Insights Asset Detail" }),
-                React.createElement("span", { className: "icon icon-cancel", onClick: this.handleClose })
-            ),
-            React.createElement(
-                "div",
-                { className: "detailHeader" },
-                React.createElement(
-                    "div",
-                    { className: "detailTitle font-light" },
-                    this.props.itemId
-                ),
-                React.createElement(DetailsField, { value: "." + this.props.data["Domain"], columnName: "Domain", inline: "true" }),
-                React.createElement(DetailsField, { value: this.props.data["OU"], columnName: "OU" }),
-                React.createElement(
-                    "div",
-                    { className: "overviewBoxes" },
-                    React.createElement(
-                        "div",
-                        { className: "box" },
-                        "Asset",
-                        React.createElement(
-                            "div",
-                            { className: "indent" },
-                            React.createElement(DetailsField, { value: this.props.data["IP"], columnName: "IP", label: "IP" }),
-                            React.createElement(DetailsField, { value: this.props.data["Type"], columnName: "Type" }),
-                            React.createElement(DetailsField, { value: this.props.data["OSVersion"], columnName: "OSVersion", label: "OS" }),
-                            React.createElement(DetailsField, { value: this.props.data["Environment"], columnName: "Environment", label: "Env" }),
-                            React.createElement(DetailsField, { value: this.props.data["Asset_Source"], columnName: "Asset_Source", label: "Source" }),
-                            React.createElement(DetailsField, { value: this.props.data["XpertRole"], columnName: "XPertRole", label: "XPert Role" })
-                        ),
-                        React.createElement("br", null),
-                        "Ownership",
-                        React.createElement(
-                            "div",
-                            { className: "indent" },
-                            React.createElement(
-                                "div",
-                                null,
-                                React.createElement(
-                                    "span",
-                                    null,
-                                    "Org:"
-                                ),
-                                " ",
-                                fullTeam
-                            ),
-                            React.createElement(MailLink, { to: this.props.data["ServiceOwner"], columnName: "ServiceOwner", subject: this.props.itemId, label: "FTE" }),
-                            React.createElement(MailLink, { to: this.props.data["ServiceOwnerOperations"], columnName: "ServiceOwnerOperations", subject: this.props.itemId, label: "Ops" })
-                        )
-                    ),
-                    React.createElement(
-                        "div",
-                        { className: "box" },
-                        "Status",
-                        React.createElement(
-                            "div",
-                            { className: "indent" },
-                            baselineIcon,
-                            React.createElement(DetailsField, { value: this.props.data["SecurityRisk"], columnName: "SecurityRisk", label: "Security Risk" }),
-                            React.createElement(AVSummary, { data: this.props.data }),
-                            React.createElement(MonitoringSummary, { data: this.props.data }),
-                            React.createElement(RiskMarker, { condition: this.props.data["IsEdge"], columnName: "IsEdge", label: "Edge" }),
-                            React.createElement(RiskMarker, { condition: this.props.data["IsDualHomed"], columnName: "IsDualHomed", label: "Dual-Homed" }),
-                            React.createElement(PatchComplianceSummary, { data: this.props.data })
-                        )
-                    )
-                ),
-                React.createElement(
-                    "div",
-                    { className: "box" },
-                    allTableToggle,
-                    detailsTable
-                )
-            )
-        );
-    }
-});
-// zConfiguration.jsx contains configuration settings to configure this instance.
-//  Until the site is fixed to use a proper require() model, this must be after the components [ResultListing] and before the modes [zGrid, zSearch] 
-
-var configuration = {
-    // Arriba Service URL to query
-    //url: window.location.protocol + '//' + window.location.hostname + ":42784",
-    url: "https://confluxsearch:42785",
-
-    // Name of tool to show [top right and elsewhere]
-    toolName: "Conflux",
-
-    // Theme to use [see theme.css for options and to define others]
-    theme: "theme-green",
-
-    // E-Mail addresses to whom feedback should go
-    feedbackEmailAddresses: "v-scolo@microsoft.com;mikefan@microsoft.com",
-
-    // Listing: Default Columns and Sort Order to show per table
-    listingDefaults: {
-        "Asset": { columns: ["Name", "IP"], sortColumn: "Name", sortOrder: "asc" },
-        "Employee": { columns: ["Alias", "Name"], sortColumn: "Alias", sortOrder: "asc" },
-        "AzureSubscription": { columns: ["SubscriptionId", "Name"], sortColumn: "Name", sortOrder: "asc" }
-    },
-
-    // Listing: Default details
-    customDetailsProviders: {
-        "Asset": AssetDetails
-    },
-
-    // Grid: Pre-built Grid queries
-    gridDefaultQueries: {
-        "Clear": {},
-        "Scorecard": {
-            query: "IsBaseline=1",
-            currentTable: "Asset",
-            rows: ["HasAuthenticatedScan=1", "IsPatchCompliant=1", "LatestScanDate > today-7", "IsMFA=1", "IsJIT=1", "IsDualHomed=0", "IsMonitored=1"],
-            rowLabels: ["1.2 Vulnerability Scanning Coverage", "1.3 Scanned Servers with no Critical Vulns", "1.5 Servers with AV Installed & Scanned < 24 hrs", "2.2 Machines with MFA Implemented", "2.3 Environment Requiring JIT", "2.5 Non-Dual-Homed Assets", "3.1 Monitoring Coverage"],
-            cols: ["S1=\"Universal Store\"", "S1=Xbox", "S1=Core", "S1=MDG"],
-            colLabels: ["Uni Store All", "XSO All", "Core All", "Devices All"],
-            showPortionOf: "col"
-        },
-        "Fixcard": {
-            query: "IsBaseline=1",
-            currentTable: "Asset",
-            rows: ["!HasAuthenticatedScan=1", "!IsPatchCompliant=1", "!LatestScanDate > today-7", "!IsMFA=1", "!IsJIT=1", "!IsDualHomed=0", "!IsMonitored=1"],
-            rowLabels: ["NOT 1.2 Vulnerability Scanning Coverage", "NOT 1.3 Scanned Servers with no Critical Vulns", "NOT 1.5 Servers with AV Installed & Scanned < 24 hrs", "NOT 2.2 Machines with MFA Implemented", "NOT 2.3 Environment Requiring JIT", "NOT 2.5 Non-Dual-Homed Assets", "NOT 3.1 Monitoring Coverage"],
-            cols: ["S1=\"Universal Store\"", "S1=Xbox", "S1=Core", "S1=MDG"],
-            colLabels: ["Uni Store All", "XSO All", "Core All", "Devices All"],
-            showPortionOf: "col"
-        }
-    },
-
-    // Content to show before a query is typed
-    splashContent: React.createElement(
-        "div",
-        null,
-        "ConfluxSearch is an instant-searchable index of Asset, Employee, and Administrator data.",
-        React.createElement(
-            "div",
-            { className: "smaller" },
-            "This information is highly sensitive. You may see a limited view of the information depending on permissions."
-        )
-    ),
-
-    // Content to show if query fails due to access denied (401)
-    accessDeniedContent: React.createElement(
-        "span",
-        null,
-        "Access to ConfluxSearch denied. To request access to the overall site, please join ",
-        React.createElement(
-            "a",
-            { target: "_blank", href: "https://idweb/IdentityManagement/aspx/common/GlobalSearchResult.aspx?searchtype=e0c132db-08d8-4258-8bce-561687a8a51e&content=Conflux Report Reader" },
-            "Conflux Report Reader"
-        ),
-        ". Some content is restricted to other groups."
-    ),
-
-    // Content to show if query fails because service is unavailable (404, 500)
-    serviceUnavailableContent: React.createElement(
-        "span",
-        null,
-        "ConfluxSearch is currently unavailable. Please ",
-        React.createElement(
-            "a",
-            { href: "mailto:v-scolo@microsoft.com;mikefan@microsoft.com&subject=ConfluxSearch%20Unavailable" },
-            "report"
-        ),
-        " this issue."
-    )
-};
-// Create a styled link to another report
-var DetailReportLink = React.createClass({
-    displayName: "DetailReportLink",
-
-    urlReplace: function (urlFormat, id) {
-        var idForUrl = encodeURIComponent(id);
-        return urlFormat.replace(/{ID}/, idForUrl);
-    },
-    render: function () {
-        return React.createElement(
-            "a",
-            { className: "detailLink", target: "_blank", href: this.urlReplace(this.props.url, this.props.id), title: this.props.title },
-            React.createElement("span", { className: "icon-open-new-windows" })
-        );
-    }
-});
-
-// Creates a mailto link for the given 'to' address and optional subject, safely escaping and stripping highlight
-var MailLink = React.createClass({
-    displayName: "MailLink",
-
-    render: function () {
-        var mailToUrl = "mailto:" + encodeURIComponent(stripHighlight(this.props.to));
-        var parameters = {
-            subject: stripHighlight(this.props.subject),
-            body: window.location.href
-        };
-        mailToUrl += buildUrlParameters(parameters);
-
-        var content = React.createElement("a", { href: mailToUrl, title: this.props.columnName + ':' + stripHighlight(this.props.to), dangerouslySetInnerHTML: highlight(this.props.to) });
-        if (this.props.bold !== "false") content = React.createElement(
-            "b",
-            null,
-            content
-        );
-
-        var label = null;
-        if (this.props.label) label = React.createElement(
-            "span",
-            null,
-            this.props.label + ": "
-        );
-
-        return React.createElement(
-            "div",
-            null,
-            label,
-            " ",
-            content
-        );
-    }
-});
-
-// Writes out a field with label and highlighting, but only if the value is set
-var DetailsField = React.createClass({
-    displayName: "DetailsField",
-
-    render: function () {
-        if (!this.props.value || this.props.value === "N/A" || this.props.value === "Unknown") return null;
-
-        var link = null;
-        if (this.props.url) link = React.createElement(DetailReportLink, { url: this.props.url, id: this.props.id, title: this.props["url-title"] });
-
-        var content = React.createElement("span", { dangerouslySetInnerHTML: highlight(this.props.value), title: this.props.columnName + ':' + stripHighlight(this.props.value) });
-        if (this.props.bold) content = React.createElement(
-            "b",
-            null,
-            content
-        );
-
-        var label = null;
-        if (this.props.label) label = React.createElement(
-            "span",
-            null,
-            this.props.label + ": "
-        );
-
-        if (this.props.inline === "true") {
-            return React.createElement(
-                "span",
-                null,
-                label,
-                " ",
-                content,
-                link
-            );
-        } else {
-            return React.createElement(
-                "div",
-                null,
-                label,
-                " ",
-                content,
-                link
-            );
-        }
-    }
-});
-
-// RiskMarker emits an inline value with a red exclamation point if the given condition is
-var RiskMarker = React.createClass({
-    displayName: "RiskMarker",
-
-    render: function () {
-        if (!this.props.condition) return null;
-        return React.createElement(
-            "div",
-            null,
-            React.createElement("span", { className: "error-icon icon", title: this.props.columnName }),
-            React.createElement(
-                "b",
-                null,
-                this.props.label
-            )
-        );
-    }
-});
-
-// RiskNumber emits a number which is red if not zero
-var BadUnlessZero = React.createClass({
-    displayName: "BadUnlessZero",
-
-    render: function () {
-        if (!this.props.value || this.props.value.toString() === "0") return React.createElement(
-            "span",
-            { title: this.props.columnName + ':0' },
-            "0"
-        );
-        return React.createElement(
-            "b",
-            { title: this.props.columnName + ':' + this.props.value },
-            this.props.value
-        );
-    }
-});
-
-// RelativeDateTime writes a DateTime in terms of now (ex: 3 days ago), and highlights it yellow if over 2.5 days and red if over 6.5 days.
-var RelativeDateTime = React.createClass({
-    displayName: "RelativeDateTime",
-
-    render: function () {
-        var label = null;
-        if (this.props.label) label = React.createElement(
-            "span",
-            null,
-            this.props.label + " "
-        );
-
-        if (!this.props.value) {
-            return React.createElement(
-                "div",
-                null,
-                React.createElement("span", { className: "error-icon icon" }),
-                label,
-                " Unknown"
-            );
-        }
-
-        var dateTime = moment(this.props.value);
-        var howLongSince = moment.duration(moment().diff(dateTime));
-
-        var prefix = null;
-        if (howLongSince.asDays() > 6.5) {
-            prefix = React.createElement("span", { className: "error-icon icon" });
-        } else if (howLongSince.asDays() > 2.5) {
-            prefix = React.createElement("span", { className: "warn-icon icon" });
-        }
-
-        var content = React.createElement(
-            "span",
-            null,
-            dateTime.fromNow()
-        );
-        if (prefix) content = React.createElement(
-            "b",
-            null,
-            dateTime.fromNow()
-        );
-
-        return React.createElement(
-            "div",
-            { title: this.props.columnName + ':' + this.props.value },
-            prefix,
-            label,
-            content
-        );
-    }
-});
-// AddColumnList is the list of unselected columns which shows up in the listing when the '+' is clicked.
-var AddColumnList = React.createClass({
-    displayName: "AddColumnList",
-
-    getInitialState: function () {
-        return { filter: null, filteredColumns: this.filterColumns(null), selectedIndex: 0 };
-    },
-    filterColumns: function (filter) {
-        if (!filter) filter = "";
-        filter = filter.toLowerCase();
-
-        var filteredColumns = [];
-        for (var i = 0; i < this.props.allColumns.length; ++i) {
-            var column = this.props.allColumns[i];
-
-            // Filter columns already added and those not starting with the filter
-            if (this.props.currentColumns.indexOf(column.name) !== -1) continue;
-            if (filter && column.name.toLowerCase().indexOf(filter) !== 0) continue;
-
-            filteredColumns.push(column.name);
-        }
-
-        return filteredColumns;
-    },
-    handleKeyDown: function (e) {
-        if (e.keyCode === 27) {
-            // ESC - Close AddColumnList
-            this.setState(this.getInitialState());
-            this.props.onAddColumn(null);
-            e.stopPropagation();
-        } else if (e.keyCode === 13 || e.keyCode === 9) {
-            // ENTER/TAB - commit highlighted match
-            var currentColumn = this.state.filteredColumns[this.state.selectedIndex];
-            if (currentColumn) this.props.onAddColumn(currentColumn);
-            e.stopPropagation();
-        } else if (e.keyCode === 38) {
-            // Up Arrow - select previous
-            this.setState({ selectedIndex: this.state.selectedIndex <= 0 ? 0 : this.state.selectedIndex - 1 });
-            e.stopPropagation();
-        } else if (e.keyCode === 40) {
-            // Down Arrow - select next
-            this.setState({ selectedIndex: this.state.selectedIndex >= this.state.filteredColumns.length ? this.state.filteredColumns.length - 1 : this.state.selectedIndex + 1 });
-            e.stopPropagation();
-        }
-    },
-    handleAddColumn: function (e) {
-        this.props.onAddColumn(e.target.getAttribute("data-name"));
-        e.stopPropagation();
-    },
-    handleFilterChanged: function (e) {
-        var newFilter = e.target.value;
-        var newFilteredColumns = this.filterColumns(newFilter);
-        this.setState({ filter: newFilter, filteredColumns: newFilteredColumns, selectedIndex: 0 });
-    },
-    render: function () {
-        // Write an add column list (shown only once the '+' is clicked)
-        if (!this.props.showing) return null;
-
-        var addFunction = this.handleAddColumn;
-        var addColumns = [];
-        for (var i = 0; i < this.state.filteredColumns.length; ++i) {
-            var name = this.state.filteredColumns[i];
-            var className = i === this.state.selectedIndex ? "add-list-selected" : "";
-            addColumns.push(React.createElement(
-                "div",
-                { key: "add_" + name, "data-name": name, onClick: addFunction, className: className },
-                name
-            ));
-        }
-
-        return React.createElement(
-            "div",
-            { style: { position: "absolute" } },
-            React.createElement(
-                "div",
-                { className: "add-list", onKeyDown: this.handleKeyDown },
-                React.createElement("input", { type: "text", autoFocus: true, placeholder: "Filter", value: this.state.filter, onChange: this.handleFilterChanged, onKeyDown: this.handleKeyDown }),
-                addColumns
-            )
-        );
-    }
-});
-// InfiniteScroll provides infinite scrolling support.
-/* Usage:
-    <InfiniteScroll page={this.state.page} hasMoreData={this.state.hasMoreData} loadMore={this.getResultsPage}>
-        {content}
-    </InfiniteScroll>
-
-    Page identifies the integer page of items loaded so far, starting at zero.
-    When scrolling is required, loadMore will be called for page+1.
-    Page updating on the InfiniteScroll class tells it that it can call loadMore again (the previous loadMore is complete).
-    hasMoreData is set to false when there are no more items to load and loadMore should no longer be called.
-*/
-var InfiniteScroll = React.createClass({
-    displayName: "InfiniteScroll",
-
-    handleScroll: function (e) {
-        var element = e.target;
-        if (e.target === this.refs.scrollContainer) {
-            var pixelsFromBottom = element.scrollHeight - element.clientHeight - element.scrollTop;
-
-            if (pixelsFromBottom < 200) {
-                // Remove this listener to avoid multiple loadMore calls
-                // "page" changing in the caller will cause this to re-render and be re-attached
-                e.target.removeEventListener("onScroll", this.handleScroll);
-
-                // Load the next page of items
-                if (this.props.hasMoreData) {
-                    this.props.loadMore(this.props.page + 1);
-                }
-            }
-        }
-    },
-    render: function () {
-        return React.createElement(
-            "div",
-            { ref: "scrollContainer", className: "scrollable", onScroll: this.handleScroll },
-            this.props.children
-        );
-    }
-});
+"use strict";
 // QueryStats is a bar just under the SearchHeader. It shows errors, if any, or the current query, returned count, and runtime.
-var QueryStats = React.createClass({
+/* harmony default export */ __webpack_exports__["a"] = React.createClass({
     displayName: "QueryStats",
 
     onTableTileClick: function (name, e) {
@@ -831,236 +261,14 @@ var QueryStats = React.createClass({
         );
     }
 });
-// ResultDetails shows (default formatted) details for an item when it was clicked.
-var ResultDetails = React.createClass({
-    displayName: "ResultDetails",
 
-    handleClose: function () {
-        this.props.onClose();
-    },
-    render: function () {
-        if (!this.props.itemId) return null;
-        if (!this.props.data) return null;
+/***/ }),
+/* 3 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
 
-        return React.createElement(
-            "div",
-            { className: "details" },
-            React.createElement(
-                "div",
-                { className: "commands" },
-                React.createElement("span", { className: "icon icon-cancel", onClick: this.handleClose })
-            ),
-            React.createElement(
-                "div",
-                null,
-                React.createElement(
-                    "div",
-                    { className: "detailHeader" },
-                    React.createElement(
-                        "div",
-                        { className: "detailTitle" },
-                        this.props.itemId
-                    )
-                ),
-                React.createElement(
-                    "div",
-                    { className: "detailBody" },
-                    React.createElement(
-                        "div",
-                        { className: "box" },
-                        React.createElement(DetailsTable, {
-                            data: this.props.data,
-                            table: this.props.table,
-                            query: this.props.query,
-                            onAddClause: this.props.onAddClause })
-                    )
-                )
-            )
-        );
-    }
-});
-// ResultListing shows a table of items matching a query, with sortable columns
-var ResultListing = React.createClass({
-    displayName: "ResultListing",
-
-    getInitialState: function () {
-        return { selectedIndex: -1, addColumnsShowing: false };
-    },
-    handleResort: function (e) {
-        // If a column heading was clicked, re-sort the table
-        var columnNameClicked = e.target.getAttribute("data-name");
-        var sortOrder = "asc";
-
-        // If this column is already the sort column, toggle ascending/descending
-        if (this.props.sortColumn === columnNameClicked) {
-            sortOrder = this.props.sortOrder === "asc" ? "desc" : "asc";
-        }
-
-        // Store the sort column and order and raise the "onResort" event
-        this.props.onResort(columnNameClicked, sortOrder);
-
-        e.stopPropagation();
-    },
-    handleSelect: function (e) {
-        var rowElement = e;
-        this.setState({ selectedIndex: rowElement.props.itemIndex, addColumnsShowing: false });
-        this.props.onSelectionChanged(rowElement.props.itemId);
-    },
-    handleAdd: function (e) {
-        if (e.target === this.refs.addButton) {
-            this.setState({ addColumnsShowing: !this.state.addColumnsShowing });
-        }
-        e.stopPropagation();
-    },
-    onAddColumn: function (name) {
-        if (name) {
-            var columns = this.props.data.content.query.columns;
-            columns.push(name);
-
-            this.setState({ addColumnsShowing: false }, this.props.onSetColumns(columns));
-        } else {
-            this.setState({ addColumnsShowing: false });
-        }
-    },
-    handleRemoveColumn: function (e) {
-        var columnName = e.target.getAttribute("data-column");
-        var newColumns = this.props.data.content.query.columns.filter(function (name) {
-            return name !== columnName;
-        });
-        this.props.onSetColumns(newColumns);
-
-        e.stopPropagation();
-    },
-    handlePivot: function (e) {
-        var element = e.target;
-
-        this.props.onPivot(element.getAttribute("data-table"), element.getAttribute("data-query"));
-        e.stopPropagation();
-    },
-    selectByRelativeIndex: function (i) {
-        // Figure out the current row count
-        var count = 0;
-        if (this.props.data.content) count = this.props.data.content.values.rows.length;
-
-        // See what index the caller wants selected
-        var newSelectedIndex = this.state.selectedIndex + i;
-
-        // If nothing was selected, let down open the first item
-        if (!this.props.selectedId) newSelectedIndex = -1 + i;
-
-        // If out-of-bounds, do nothing
-        if (newSelectedIndex < 0 || newSelectedIndex >= count) return;
-
-        // Otherwise, trigger a selection change
-        var idColumnIndex = this.props.data.content.query.columns.indexOf(this.props.idColumn);
-        var row = this.props.data.content.values.rows[newSelectedIndex];
-        this.setState({ selectedIndex: newSelectedIndex });
-        this.props.onSelectionChanged(stripHighlight(row[idColumnIndex]));
-    },
-    render: function () {
-        var content = this.props.data.content;
-        if (!content || !content.details.succeeded || !this.props.idColumn) return null;
-
-        var idColumn = this.props.idColumn;
-        var idColumnIndex = content.query.columns.indexOf(this.props.idColumn);
-
-        // Write a column heading row - click to sort, remove/add columns
-        var columnCells = [];
-        for (var i = 0; i < content.values.columns.length; ++i) {
-            var column = content.values.columns[i];
-
-            var commands = [];
-
-            // Non-ID column commands
-            if (column.name !== idColumn) {
-                // Remove button
-                commands.push(React.createElement("div", { key: "remove_" + column.name, "data-column": column.name, className: "icon-cancel icon-column-heading", title: "Remove Column", onClick: this.handleRemoveColumn }));
-
-                // Add 'Pivot to Grid' URL
-                var gridUrl = "Grid.html" + buildUrlParameters({ q: content.query.where, t: content.query.tableName, R1: column.name + ">" });
-                commands.push(React.createElement("a", { href: gridUrl, className: "icon-view-all-albums icon-column-heading", title: "Grid By " + column.name }));
-            }
-
-            // Last column
-            if (i == content.values.columns.length - 1) {
-                // Add column button
-                commands.push(React.createElement(
-                    "div",
-                    { ref: "addButton", className: "add-column-button icon-add icon-column-heading", title: "Add Column", onClick: this.handleAdd },
-                    React.createElement(AddColumnList, { showing: this.state.addColumnsShowing,
-                        onAddColumn: this.onAddColumn,
-                        allColumns: this.props.allColumns,
-                        currentColumns: content.query.columns })
-                ));
-            }
-
-            columnCells.push(React.createElement(
-                "td",
-                { key: "heading_" + column.name, "data-name": column.name, onClick: this.handleResort },
-                React.createElement(
-                    "div",
-                    { className: "commands" },
-                    commands
-                ),
-                column.name
-            ));
-        }
-
-        // Write a row for each item
-        var index = 0;
-        var selectFunction = this.handleSelect;
-        var selectedId = this.props.selectedId;
-        var listingItems = content.values.rows.map(function (row) {
-            var id = stripHighlight(row[idColumnIndex]);
-            return React.createElement(ResultListingItem, { key: id, itemId: id, itemIndex: index++, data: row, onSelectionChanged: selectFunction, selected: selectedId === id });
-        });
-
-        return React.createElement(
-            "table",
-            { className: "resultTable", tabIndex: "2" },
-            React.createElement(
-                "thead",
-                null,
-                React.createElement(
-                    "tr",
-                    null,
-                    columnCells
-                )
-            ),
-            React.createElement(
-                "tbody",
-                null,
-                listingItems
-            )
-        );
-    }
-});
-
-var ResultListingItem = React.createClass({
-    displayName: "ResultListingItem",
-
-    handleClick: function (e) {
-        this.props.onSelectionChanged(this);
-    },
-    render: function () {
-        var id = this.props.itemId;
-
-        // Write a cell for each property of each item with highlighting
-        var cells = [];
-        for (var i = 0; i < this.props.data.length; ++i) {
-            var item = this.props.data[i];
-            cells[i] = React.createElement("td", { key: id + "_" + i, title: stripHighlight(item), dangerouslySetInnerHTML: highlight(item) });
-        }
-
-        return React.createElement(
-            "tr",
-            { onClick: this.handleClick, className: this.props.selected ? "selected theme-background-light" : "theme-hover-light" },
-            cells
-        );
-    }
-});
+"use strict";
 // SearchHeader contains the top bar - branching, the search box, and top-level buttons
-var SearchHeader = React.createClass({
+/* harmony default export */ __webpack_exports__["a"] = React.createClass({
     displayName: "SearchHeader",
 
     componentDidMount: function () {
@@ -1120,650 +328,87 @@ var SearchHeader = React.createClass({
         );
     }
 });
-// Inspired by https://github.com/tomkp/react-split-pane [MIT License]
-var SplitPane = React.createClass({
-    displayName: 'SplitPane',
 
-    defaultProps: { isFirstVisible: true, isSecondVisible: true },
-    onMouseUp: function () {
-        document.removeEventListener('mouseup', this.onMouseUp);
-        document.removeEventListener('mousemove', this.onMouseMove);
-    },
-    onMouseDown: function (e) {
-        document.addEventListener('mouseup', this.onMouseUp);
-        document.addEventListener('mousemove', this.onMouseMove);
+/***/ }),
+/* 4 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
 
-        this.setState({ totalWidth: this.refs.container.getBoundingClientRect().width });
-    },
-    onMouseMove: function (e) {
-        var node = ReactDOM.findDOMNode(this.refs.first);
-        var newWidth = e.clientX - node.offsetLeft;
-
-        if (this.props.minSize) {
-            if (newWidth < this.props.minSize) newWidth = this.props.minSize;
-            if (newWidth > this.state.totalWidth - this.props.minSize) newWidth = this.state.totalWidth - this.props.minSize;
-        }
-
-        node.style.width = newWidth + 'px';
-        node.style.flex = 'none';
-    },
-    render: function () {
-        if (!this.props.isFirstVisible) return this.props.children[1];
-        if (!this.props.isSecondVisible) return this.props.children[0];
-
-        return React.createElement(
-            'div',
-            { ref: 'container', className: 'splitpane' },
-            React.createElement(
-                'div',
-                { ref: 'first', className: 'pane' },
-                this.props.children[0]
-            ),
-            React.createElement('div', { ref: 'handle',
-                className: 'resizer vertical',
-                onMouseDown: this.onMouseDown }),
-            React.createElement(
-                'div',
-                { ref: 'second', className: 'pane' },
-                this.props.children[1]
-            )
-        );
-    }
-});
-var SyntaxHelp = React.createClass({
-    displayName: "SyntaxHelp",
-
-    getInitialState: function () {
-        return { showHelp: this.props.showHelp };
-    },
-    toggle: function () {
-        this.setState({ showHelp: !this.state.showHelp });
-    },
-    render: function () {
-        if (!this.state.showHelp) {
-            return React.createElement(
-                "div",
-                { className: "splash" },
-                React.createElement(
-                    "div",
-                    { style: { width: "100%" } },
-                    this.props.splashContent,
-                    React.createElement(
-                        "div",
-                        { className: "buttons" },
-                        React.createElement(
-                            "a",
-                            { className: "theme-background-dark", href: "/?help=true" },
-                            React.createElement("i", { className: "icon-help", title: "Help" })
-                        )
-                    )
-                )
-            );
-        }
-
-        return React.createElement(
-            "div",
-            { className: "helpContent" },
-            React.createElement(
-                "div",
-                { className: "helpIntro" },
-                this.props.splashContent
-            ),
-            React.createElement(
-                "div",
-                { className: "features" },
-                React.createElement(
-                    "h2",
-                    null,
-                    "Features"
-                ),
-                React.createElement(
-                    "div",
-                    null,
-                    " - Click items to see details."
-                ),
-                React.createElement(
-                    "div",
-                    null,
-                    " - Click column headings to sort."
-                ),
-                React.createElement(
-                    "div",
-                    null,
-                    " - Click ",
-                    React.createElement("span", { className: "icon-add" }),
-                    " to add columns to listing, ",
-                    React.createElement("span", { className: "icon-cancel" }),
-                    " to remove them."
-                ),
-                React.createElement(
-                    "div",
-                    null,
-                    " - Click ",
-                    React.createElement("span", { className: "icon-download" }),
-                    " to download listing (same columns, query, and order) as CSV."
-                ),
-                React.createElement(
-                    "div",
-                    null,
-                    " - Click ",
-                    React.createElement("img", { src: "icons/feed-icon-14x14.png", alt: "RSS" }),
-                    " for URL to subscribe to query."
-                )
-            ),
-            React.createElement(
-                "div",
-                { className: "syntaxIntro" },
-                React.createElement(
-                    "h2",
-                    null,
-                    "Syntax"
-                ),
-                React.createElement(
-                    "table",
-                    { className: "syntaxTable" },
-                    React.createElement(
-                        "thead",
-                        null,
-                        React.createElement(
-                            "tr",
-                            null,
-                            React.createElement(
-                                "th",
-                                { style: { width: "25%" } },
-                                "Rule"
-                            ),
-                            React.createElement(
-                                "th",
-                                { style: { width: "25%" } },
-                                "Example"
-                            ),
-                            React.createElement(
-                                "th",
-                                { style: { width: "50%" } },
-                                "Meaning"
-                            )
-                        )
-                    ),
-                    React.createElement(
-                        "tbody",
-                        null,
-                        React.createElement(
-                            "tr",
-                            null,
-                            React.createElement(
-                                "td",
-                                null,
-                                "Type anything to search across all columns."
-                            ),
-                            React.createElement(
-                                "td",
-                                { className: "font-example" },
-                                "halo Pris"
-                            ),
-                            React.createElement(
-                                "td",
-                                null,
-                                "Find items with words starting with \"halo\" and \"Pris\" anywhere, case insensitive."
-                            )
-                        ),
-                        React.createElement(
-                            "tr",
-                            null,
-                            React.createElement(
-                                "td",
-                                null,
-                                "Use <column> <operator> <value> to search one column."
-                            ),
-                            React.createElement(
-                                "td",
-                                { className: "font-example" },
-                                "Team=Central AccessLevel > 3"
-                            ),
-                            React.createElement(
-                                "td",
-                                null,
-                                "Team equals \"Central\" (case sensitive) and AccessLevel is over 3."
-                            )
-                        ),
-                        React.createElement(
-                            "tr",
-                            null,
-                            React.createElement(
-                                "td",
-                                null,
-                                "Use 'AND', 'OR', 'NOT', and parens for subexpressions."
-                            ),
-                            React.createElement(
-                                "td",
-                                { className: "font-example" },
-                                "NOT Team=Central AND (AccessLevel > 3 OR Role=Administrator)"
-                            ),
-                            React.createElement(
-                                "td",
-                                null,
-                                "Team is not Central and (AccessLevel is over 3 or Role is Administrator."
-                            )
-                        ),
-                        React.createElement(
-                            "tr",
-                            null,
-                            React.createElement(
-                                "td",
-                                null,
-                                "Use any operators from Web, SQL, or C# syntax."
-                            ),
-                            React.createElement(
-                                "td",
-                                null,
-                                React.createElement(
-                                    "table",
-                                    { className: "syntaxTable" },
-                                    React.createElement(
-                                        "tbody",
-                                        null,
-                                        React.createElement(
-                                            "tr",
-                                            null,
-                                            React.createElement(
-                                                "td",
-                                                null,
-                                                "&&"
-                                            ),
-                                            React.createElement(
-                                                "td",
-                                                null,
-                                                "&"
-                                            ),
-                                            React.createElement(
-                                                "td",
-                                                null,
-                                                "AND"
-                                            ),
-                                            React.createElement(
-                                                "td",
-                                                null,
-                                                "aNd"
-                                            )
-                                        ),
-                                        React.createElement(
-                                            "tr",
-                                            null,
-                                            React.createElement(
-                                                "td",
-                                                null,
-                                                "||"
-                                            ),
-                                            React.createElement(
-                                                "td",
-                                                null,
-                                                "|"
-                                            ),
-                                            React.createElement(
-                                                "td",
-                                                null,
-                                                "OR"
-                                            ),
-                                            React.createElement(
-                                                "td",
-                                                null,
-                                                "Or"
-                                            )
-                                        ),
-                                        React.createElement(
-                                            "tr",
-                                            null,
-                                            React.createElement(
-                                                "td",
-                                                null,
-                                                "!"
-                                            ),
-                                            React.createElement(
-                                                "td",
-                                                null,
-                                                "-"
-                                            ),
-                                            React.createElement(
-                                                "td",
-                                                null,
-                                                "NOT"
-                                            ),
-                                            React.createElement(
-                                                "td",
-                                                null,
-                                                "noT"
-                                            )
-                                        ),
-                                        React.createElement(
-                                            "tr",
-                                            null,
-                                            React.createElement(
-                                                "td",
-                                                null,
-                                                "="
-                                            ),
-                                            React.createElement(
-                                                "td",
-                                                null,
-                                                "=="
-                                            ),
-                                            React.createElement("td", null),
-                                            React.createElement("td", null)
-                                        ),
-                                        React.createElement(
-                                            "tr",
-                                            null,
-                                            React.createElement(
-                                                "td",
-                                                null,
-                                                "<>"
-                                            ),
-                                            React.createElement(
-                                                "td",
-                                                null,
-                                                "!="
-                                            ),
-                                            React.createElement("td", null),
-                                            React.createElement("td", null)
-                                        ),
-                                        React.createElement(
-                                            "tr",
-                                            null,
-                                            React.createElement(
-                                                "td",
-                                                null,
-                                                "|>"
-                                            ),
-                                            React.createElement(
-                                                "td",
-                                                null,
-                                                "STARTSWITH"
-                                            ),
-                                            React.createElement(
-                                                "td",
-                                                null,
-                                                "UNDER"
-                                            ),
-                                            React.createElement("td", null)
-                                        ),
-                                        React.createElement(
-                                            "tr",
-                                            null,
-                                            React.createElement(
-                                                "td",
-                                                null,
-                                                ":"
-                                            ),
-                                            React.createElement(
-                                                "td",
-                                                null,
-                                                "MATCH"
-                                            ),
-                                            React.createElement(
-                                                "td",
-                                                null,
-                                                "FREETEXT"
-                                            ),
-                                            React.createElement(
-                                                "td",
-                                                null,
-                                                "CONTAINS"
-                                            )
-                                        ),
-                                        React.createElement(
-                                            "tr",
-                                            null,
-                                            React.createElement(
-                                                "td",
-                                                null,
-                                                "::"
-                                            ),
-                                            React.createElement(
-                                                "td",
-                                                null,
-                                                "MATCHEXACT"
-                                            ),
-                                            React.createElement("td", null),
-                                            React.createElement("td", null)
-                                        )
-                                    )
-                                )
-                            ),
-                            React.createElement("td", null)
-                        ),
-                        React.createElement(
-                            "tr",
-                            null,
-                            React.createElement(
-                                "td",
-                                null,
-                                "Use ':' for \"has a word starting with\" or \"::\" for \"has the exact word\""
-                            ),
-                            React.createElement(
-                                "td",
-                                { className: "font-example" },
-                                "Team:Centr && Name::Will"
-                            ),
-                            React.createElement(
-                                "td",
-                                null,
-                                "Team contains words starting with \"Centr\" and Name has the full word \"Will\" (\"William\" would not match) (case insensitive)."
-                            )
-                        ),
-                        React.createElement(
-                            "tr",
-                            null,
-                            React.createElement(
-                                "td",
-                                null,
-                                "Use '|>' for starts with."
-                            ),
-                            React.createElement(
-                                "td",
-                                { className: "font-example" },
-                                "Team |> Centr"
-                            ),
-                            React.createElement(
-                                "td",
-                                null,
-                                "Team starts with \"Centr\" (\"Grand Central\" would not match) (case sensitive)."
-                            )
-                        ),
-                        React.createElement(
-                            "tr",
-                            null,
-                            React.createElement(
-                                "td",
-                                null,
-                                "Use \"\" to look for empty values."
-                            ),
-                            React.createElement(
-                                "td",
-                                { className: "font-example" },
-                                "Team=\"\""
-                            ),
-                            React.createElement(
-                                "td",
-                                null,
-                                "Team is empty."
-                            )
-                        ),
-                        React.createElement(
-                            "tr",
-                            null,
-                            React.createElement(
-                                "td",
-                                null,
-                                "Use \"today-n\" (no spaces) for relative dates."
-                            ),
-                            React.createElement(
-                                "td",
-                                { className: "font-example" },
-                                "HireDate < today-60"
-                            ),
-                            React.createElement(
-                                "td",
-                                null,
-                                "HireDate is more than 60 days ago [UTC]."
-                            )
-                        ),
-                        React.createElement(
-                            "tr",
-                            null,
-                            React.createElement(
-                                "td",
-                                null,
-                                "Use any .NET DateTime.Parse-able formats."
-                            ),
-                            React.createElement(
-                                "td",
-                                { className: "font-example" },
-                                "HireDate > \"2016-10-01 10:00AM\""
-                            ),
-                            React.createElement(
-                                "td",
-                                null,
-                                "HireDate is after Oct 1, 2016 10:00 AM [UTC]."
-                            )
-                        ),
-                        React.createElement(
-                            "tr",
-                            null,
-                            React.createElement(
-                                "td",
-                                null,
-                                "Wrap column names with braces and values with quotes if they contain spaces. Escape braces and quotes by doubling them."
-                            ),
-                            React.createElement(
-                                "td",
-                                { className: "font-example" },
-                                "[Owner [Ops]]]=\"Bilbo \"\"Ringbearer\"\" Baggins\""
-                            ),
-                            React.createElement(
-                                "td",
-                                null,
-                                "The {Owner [Ops]} column equals {Bilbo \"Ringbearer\" Baggins}."
-                            )
-                        )
-                    )
-                )
-            ),
-            React.createElement(
-                "div",
-                { className: "syntaxExamples" },
-                React.createElement(
-                    "h2",
-                    null,
-                    "Examples"
-                ),
-                React.createElement(
-                    "div",
-                    { className: "exampleBox" },
-                    React.createElement(
-                        "div",
-                        { className: "font-example" },
-                        "Team=\"Central\" AND IP:10.194"
-                    ),
-                    React.createElement(
-                        "div",
-                        null,
-                        "Find items where Team equals \"Central\", the IP address starts with \"10.194\"."
-                    ),
-                    React.createElement(
-                        "div",
-                        { className: "indent" },
-                        "The word index operators (':', '::') are not case sensitive, but all other operators ('=', '!=', '|>') are case sensitive.",
-                        React.createElement("br", null),
-                        "The word index operators only match from word boundaries, so \"Team:ent\" will not match a Team of \"Central\".",
-                        React.createElement("br", null),
-                        "Text is split into alphanumeric words and dotted phrases. (\"10.194.155.11\" splits to \"10\", \"194\", \"155\", \"11\", \"10.194.155.11\")",
-                        React.createElement("br", null),
-                        "Therefore, \"IP:10.194\" will match \"10.194.155.11\" but not \"11.10.194.155\".",
-                        React.createElement("br", null)
-                    )
-                ),
-                React.createElement(
-                    "div",
-                    { className: "exampleBox" },
-                    React.createElement(
-                        "div",
-                        { className: "font-example" },
-                        "[Team]=\"Central\" && (HireDate < today-60 || IsManager == 1)"
-                    ),
-                    React.createElement(
-                        "div",
-                        null,
-                        "Find items with Team \"Central\" which were hired in the last 60 days or are managers."
-                    ),
-                    React.createElement(
-                        "div",
-                        { className: "indent" },
-                        "\"Today\" is midnight UTC, so \"today-1\" will match 11:59p the day before yesterday (UTC).",
-                        React.createElement("br", null),
-                        "DateTimes in queries are interpreted at UTC.",
-                        React.createElement("br", null)
-                    )
-                )
-            )
-        );
-    }
-});
+"use strict";
 // zDefaultConfiguration.jsx contains default configuration settings for this site instance.
 // Add a copy in configuration\configuration.jsx to override these settings.
 
-if (!configuration) {
-    var configuration = {
-        // Arriba Service URL to query
-        // Hardcode to the name of your service. Use port 42784 for HTTP, 42785 for HTTPS.
-        url: "http://" + window.location.hostname + ":42784",
+/* harmony default export */ __webpack_exports__["a"] = {
+    // Arriba Service URL to query
+    // Hardcode to the name of your service. Use port 42784 for HTTP, 42785 for HTTPS.
+    url: "http://" + window.location.hostname + ":42784",
 
-        // Name of tool to show [top right and elsewhere]
-        toolName: "Arriba",
+    // Name of tool to show [top right and elsewhere]
+    toolName: "Arriba",
 
-        // Theme to use [see theme.css for options and to define others]
-        theme: "theme-teal",
+    // Theme to use [see theme.css for options and to define others]
+    theme: "theme-teal",
 
-        // E-Mail addresses to whom feedback should go
-        feedbackEmailAddresses: "",
+    // E-Mail addresses to whom feedback should go
+    feedbackEmailAddresses: "",
 
-        // Listing: Default Columns and Sort Order to show per table
-        listingDefaults: {
-            /* "<TableName">: { columns: ["<Col1>", "Col2", "..."], sortColumn: "<SortColumnName>", sortOrder: "asc" } */
-        },
+    // Listing: Default Columns and Sort Order to show per table
+    listingDefaults: {
+        /* "<TableName">: { columns: ["<Col1>", "Col2", "..."], sortColumn: "<SortColumnName>", sortOrder: "asc" } */
+    },
 
-        // Listing: Default details rendering per table
-        customDetailsProviders: {
-            /* "<TableName>": <ReactClassNameUnquoted> */
-        },
+    // Listing: Default details rendering per table
+    customDetailsProviders: {
+        /* "<TableName>": <ReactClassNameUnquoted> */
+    },
 
-        // Grid: Pre-defined Grid queries
-        gridDefaultQueries: {
-            "Clear": {}
-        },
+    // Grid: Pre-defined Grid queries
+    gridDefaultQueries: {
+        "Clear": {}
+    },
 
-        // Content to show before a query is typed
-        splashContent: React.createElement(
-            "div",
-            null,
-            "Arriba is a data exploration, free text search, and structured search engine."
-        ),
+    // Content to show before a query is typed
+    splashContent: React.createElement(
+        "div",
+        null,
+        "Arriba is a data exploration, free text search, and structured search engine."
+    ),
 
-        // Content to show if query fails due to access denied (401)
-        accessDeniedContent: React.createElement(
-            "span",
-            null,
-            "Access to Arriba Search denied."
-        ),
+    // Content to show if query fails due to access denied (401)
+    accessDeniedContent: React.createElement(
+        "span",
+        null,
+        "Access to Arriba Search denied."
+    ),
 
-        // Content to show if query fails because service is unavailable (404, 500)
-        serviceUnavailableContent: React.createElement(
-            "span",
-            null,
-            "Arriba Search is currently unavailable."
-        )
-    };
-}
+    // Content to show if query fails because service is unavailable (404, 500)
+    serviceUnavailableContent: React.createElement(
+        "span",
+        null,
+        "Arriba Search is currently unavailable."
+    )
+};
+
+/***/ }),
+/* 5 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__ErrorPage__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__QueryStats__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__SearchHeader__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__zDefaultConfiguration__ = __webpack_require__(4);
+
+
+
+
 // NOTE: Depends on configuration from zConfiguration.jsx.
+
+var configuration = __WEBPACK_IMPORTED_MODULE_3__zDefaultConfiguration__["a" /* default */];
+var optionalContext = __webpack_require__(0);
+if (optionalContext.keys().includes("./configuration/zConfiguration.jsx")) {
+    configuration = optionalContext("./configuration/zConfiguration.jsx").default;
+}
 
 // The GridFunctionCell is the corner cell which shows the aggregation function and column [COUNT(*)].
 var GridFunctionCell = React.createClass({
@@ -2397,7 +1042,7 @@ var GridMain = React.createClass({
         }
     },
     render: function () {
-        if (this.state.blockingErrorTitle) return React.createElement(ErrorPage, { title: this.state.blockingErrorTitle, message: this.state.blockingErrorContent });
+        if (this.state.blockingErrorTitle) return React.createElement(__WEBPACK_IMPORTED_MODULE_0__ErrorPage__["a" /* default */], { title: this.state.blockingErrorTitle, message: this.state.blockingErrorContent });
 
         var headings = [];
         var gridRows = [];
@@ -2546,7 +1191,7 @@ var GridMain = React.createClass({
         return React.createElement(
             "div",
             { className: "viewport " + configuration.theme, onKeyDown: this.handleKeyDown },
-            React.createElement(SearchHeader, { name: configuration.toolName,
+            React.createElement(__WEBPACK_IMPORTED_MODULE_2__SearchHeader__["a" /* default */], { name: configuration.toolName,
                 feedbackEmailAddresses: configuration.feedbackEmailAddresses,
                 query: this.state.query,
                 allColumns: this.state.currentTableAllColumns,
@@ -2571,7 +1216,7 @@ var GridMain = React.createClass({
                 React.createElement(
                     "div",
                     { className: "center" },
-                    React.createElement(QueryStats, { error: this.state.error,
+                    React.createElement(__WEBPACK_IMPORTED_MODULE_1__QueryStats__["a" /* default */], { error: this.state.error,
                         allCountData: this.state.allCountData,
                         selectedData: this.state.gridData,
                         currentTable: this.state.currentTable,
@@ -2598,7 +1243,40 @@ if (document.getElementById("gridContainer")) {
 
     document.title = configuration.toolName;
 }
+
+/***/ }),
+/* 6 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__ErrorPage__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__QueryStats__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__SearchHeader__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__InfiniteScroll__ = __webpack_require__(8);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__SplitPane__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__SyntaxHelp__ = __webpack_require__(12);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__ResultDetails__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__ResultListing__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__zDefaultConfiguration__ = __webpack_require__(4);
+
+
+
+
+
+
+
+
+
+
+
 // NOTE: Depends on configuration from zConfiguration.jsx.
+
+var configuration = __WEBPACK_IMPORTED_MODULE_8__zDefaultConfiguration__["a" /* default */];
+var optionalContext = __webpack_require__(0);
+if (optionalContext.keys().includes("./configuration/zConfiguration.jsx")) {
+    configuration = optionalContext("./configuration/zConfiguration.jsx").default;
+}
 
 // SearchMain wraps the overall search UI
 var SearchMain = React.createClass({
@@ -2914,23 +1592,23 @@ var SearchMain = React.createClass({
         }
     },
     render: function () {
-        if (this.state.blockingErrorTitle) return React.createElement(ErrorPage, { title: this.state.blockingErrorTitle, message: this.state.blockingErrorContent });
+        if (this.state.blockingErrorTitle) return React.createElement(__WEBPACK_IMPORTED_MODULE_0__ErrorPage__["a" /* default */], { title: this.state.blockingErrorTitle, message: this.state.blockingErrorContent });
 
         var detailsView = null;
-        var customDetailsView = ResultDetails;
+        var customDetailsView = __WEBPACK_IMPORTED_MODULE_6__ResultDetails__["a" /* default */];
         if (this.props.customDetailsProviders) customDetailsView = this.props.customDetailsProviders[this.state.currentTable] || customDetailsView;
 
         detailsView = React.createElement(customDetailsView, { itemId: this.state.userSelectedId, table: this.state.currentTable, query: this.state.query, data: this.state.selectedItemData, onClose: this.onClose, onAddClause: this.onAddClause });
 
-        var mainContent = React.createElement(SyntaxHelp, { showHelp: this.props.params.help, splashContent: configuration.splashContent });
+        var mainContent = React.createElement(__WEBPACK_IMPORTED_MODULE_5__SyntaxHelp__["a" /* default */], { showHelp: this.props.params.help, splashContent: configuration.splashContent });
         if (this.state.query) {
             mainContent = React.createElement(
-                SplitPane,
+                __WEBPACK_IMPORTED_MODULE_4__SplitPane__["a" /* default */],
                 { split: "horizontal", minSize: "300", isFirstVisible: this.state.listingData.content, isSecondVisible: this.state.userSelectedId },
                 React.createElement(
-                    InfiniteScroll,
+                    __WEBPACK_IMPORTED_MODULE_3__InfiniteScroll__["a" /* default */],
                     { page: this.state.page, hasMoreData: this.state.hasMoreData, loadMore: this.getResultsPage },
-                    React.createElement(ResultListing, { ref: "list",
+                    React.createElement(__WEBPACK_IMPORTED_MODULE_7__ResultListing__["a" /* default */], { ref: "list",
                         data: this.state.listingData,
                         idColumn: this.state.currentTableIdColumn,
                         allColumns: this.state.currentTableAllColumns,
@@ -2961,7 +1639,7 @@ var SearchMain = React.createClass({
         return React.createElement(
             "div",
             { className: "viewport " + configuration.theme, onKeyDown: this.handleKeyDown },
-            React.createElement(SearchHeader, { name: configuration.toolName,
+            React.createElement(__WEBPACK_IMPORTED_MODULE_2__SearchHeader__["a" /* default */], { name: configuration.toolName,
                 feedbackEmailAddresses: configuration.feedbackEmailAddresses,
                 query: this.state.query,
                 tables: this.state.tables,
@@ -2997,7 +1675,7 @@ var SearchMain = React.createClass({
                 React.createElement(
                     "div",
                     { className: "center" },
-                    React.createElement(QueryStats, { error: this.state.error,
+                    React.createElement(__WEBPACK_IMPORTED_MODULE_1__QueryStats__["a" /* default */], { error: this.state.error,
                         allCountData: this.state.allCountData,
                         selectedData: this.state.listingData,
                         rssUrl: rssUrl,
@@ -3024,9 +1702,994 @@ if (document.getElementById("searchContainer")) {
     document.title = configuration.toolName;
 }
 
+/***/ }),
+/* 7 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+// AddColumnList is the list of unselected columns which shows up in the listing when the '+' is clicked.
+/* harmony default export */ __webpack_exports__["a"] = React.createClass({
+    displayName: "AddColumnList",
+
+    getInitialState: function () {
+        return { filter: null, filteredColumns: this.filterColumns(null), selectedIndex: 0 };
+    },
+    filterColumns: function (filter) {
+        if (!filter) filter = "";
+        filter = filter.toLowerCase();
+
+        var filteredColumns = [];
+        for (var i = 0; i < this.props.allColumns.length; ++i) {
+            var column = this.props.allColumns[i];
+
+            // Filter columns already added and those not starting with the filter
+            if (this.props.currentColumns.indexOf(column.name) !== -1) continue;
+            if (filter && column.name.toLowerCase().indexOf(filter) !== 0) continue;
+
+            filteredColumns.push(column.name);
+        }
+
+        return filteredColumns;
+    },
+    handleKeyDown: function (e) {
+        if (e.keyCode === 27) {
+            // ESC - Close AddColumnList
+            this.setState(this.getInitialState());
+            this.props.onAddColumn(null);
+            e.stopPropagation();
+        } else if (e.keyCode === 13 || e.keyCode === 9) {
+            // ENTER/TAB - commit highlighted match
+            var currentColumn = this.state.filteredColumns[this.state.selectedIndex];
+            if (currentColumn) this.props.onAddColumn(currentColumn);
+            e.stopPropagation();
+        } else if (e.keyCode === 38) {
+            // Up Arrow - select previous
+            this.setState({ selectedIndex: this.state.selectedIndex <= 0 ? 0 : this.state.selectedIndex - 1 });
+            e.stopPropagation();
+        } else if (e.keyCode === 40) {
+            // Down Arrow - select next
+            this.setState({ selectedIndex: this.state.selectedIndex >= this.state.filteredColumns.length ? this.state.filteredColumns.length - 1 : this.state.selectedIndex + 1 });
+            e.stopPropagation();
+        }
+    },
+    handleAddColumn: function (e) {
+        this.props.onAddColumn(e.target.getAttribute("data-name"));
+        e.stopPropagation();
+    },
+    handleFilterChanged: function (e) {
+        var newFilter = e.target.value;
+        var newFilteredColumns = this.filterColumns(newFilter);
+        this.setState({ filter: newFilter, filteredColumns: newFilteredColumns, selectedIndex: 0 });
+    },
+    render: function () {
+        // Write an add column list (shown only once the '+' is clicked)
+        if (!this.props.showing) return null;
+
+        var addFunction = this.handleAddColumn;
+        var addColumns = [];
+        for (var i = 0; i < this.state.filteredColumns.length; ++i) {
+            var name = this.state.filteredColumns[i];
+            var className = i === this.state.selectedIndex ? "add-list-selected" : "";
+            addColumns.push(React.createElement(
+                "div",
+                { key: "add_" + name, "data-name": name, onClick: addFunction, className: className },
+                name
+            ));
+        }
+
+        return React.createElement(
+            "div",
+            { style: { position: "absolute" } },
+            React.createElement(
+                "div",
+                { className: "add-list", onKeyDown: this.handleKeyDown },
+                React.createElement("input", { type: "text", autoFocus: true, placeholder: "Filter", value: this.state.filter, onChange: this.handleFilterChanged, onKeyDown: this.handleKeyDown }),
+                addColumns
+            )
+        );
+    }
+});
+
+/***/ }),
+/* 8 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+// InfiniteScroll provides infinite scrolling support.
+/* Usage:
+    <InfiniteScroll page={this.state.page} hasMoreData={this.state.hasMoreData} loadMore={this.getResultsPage}>
+        {content}
+    </InfiniteScroll>
+
+    Page identifies the integer page of items loaded so far, starting at zero.
+    When scrolling is required, loadMore will be called for page+1.
+    Page updating on the InfiniteScroll class tells it that it can call loadMore again (the previous loadMore is complete).
+    hasMoreData is set to false when there are no more items to load and loadMore should no longer be called.
+*/
+/* harmony default export */ __webpack_exports__["a"] = React.createClass({
+    displayName: "InfiniteScroll",
+
+    handleScroll: function (e) {
+        var element = e.target;
+        if (e.target === this.refs.scrollContainer) {
+            var pixelsFromBottom = element.scrollHeight - element.clientHeight - element.scrollTop;
+
+            if (pixelsFromBottom < 200) {
+                // Remove this listener to avoid multiple loadMore calls
+                // "page" changing in the caller will cause this to re-render and be re-attached
+                e.target.removeEventListener("onScroll", this.handleScroll);
+
+                // Load the next page of items
+                if (this.props.hasMoreData) {
+                    this.props.loadMore(this.props.page + 1);
+                }
+            }
+        }
+    },
+    render: function () {
+        return React.createElement(
+            "div",
+            { ref: "scrollContainer", className: "scrollable", onScroll: this.handleScroll },
+            this.props.children
+        );
+    }
+});
+
+/***/ }),
+/* 9 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__Components__ = __webpack_require__(13);
+
+
+// ResultDetails shows (default formatted) details for an item when it was clicked.
+/* harmony default export */ __webpack_exports__["a"] = React.createClass({
+    displayName: "ResultDetails",
+
+    handleClose: function () {
+        this.props.onClose();
+    },
+    render: function () {
+        if (!this.props.itemId) return null;
+        if (!this.props.data) return null;
+
+        return React.createElement(
+            "div",
+            { className: "details" },
+            React.createElement(
+                "div",
+                { className: "commands" },
+                React.createElement("span", { className: "icon icon-cancel", onClick: this.handleClose })
+            ),
+            React.createElement(
+                "div",
+                null,
+                React.createElement(
+                    "div",
+                    { className: "detailHeader" },
+                    React.createElement(
+                        "div",
+                        { className: "detailTitle" },
+                        this.props.itemId
+                    )
+                ),
+                React.createElement(
+                    "div",
+                    { className: "detailBody" },
+                    React.createElement(
+                        "div",
+                        { className: "box" },
+                        React.createElement(__WEBPACK_IMPORTED_MODULE_0__Components__["a" /* default */], {
+                            data: this.props.data,
+                            table: this.props.table,
+                            query: this.props.query,
+                            onAddClause: this.props.onAddClause })
+                    )
+                )
+            )
+        );
+    }
+});
+
+/***/ }),
+/* 10 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__AddColumnList__ = __webpack_require__(7);
+
+
+// ResultListing shows a table of items matching a query, with sortable columns
+/* harmony default export */ __webpack_exports__["a"] = React.createClass({
+    displayName: "ResultListing",
+
+    getInitialState: function () {
+        return { selectedIndex: -1, addColumnsShowing: false };
+    },
+    handleResort: function (e) {
+        // If a column heading was clicked, re-sort the table
+        var columnNameClicked = e.target.getAttribute("data-name");
+        var sortOrder = "asc";
+
+        // If this column is already the sort column, toggle ascending/descending
+        if (this.props.sortColumn === columnNameClicked) {
+            sortOrder = this.props.sortOrder === "asc" ? "desc" : "asc";
+        }
+
+        // Store the sort column and order and raise the "onResort" event
+        this.props.onResort(columnNameClicked, sortOrder);
+
+        e.stopPropagation();
+    },
+    handleSelect: function (e) {
+        var rowElement = e;
+        this.setState({ selectedIndex: rowElement.props.itemIndex, addColumnsShowing: false });
+        this.props.onSelectionChanged(rowElement.props.itemId);
+    },
+    handleAdd: function (e) {
+        if (e.target === this.refs.addButton) {
+            this.setState({ addColumnsShowing: !this.state.addColumnsShowing });
+        }
+        e.stopPropagation();
+    },
+    onAddColumn: function (name) {
+        if (name) {
+            var columns = this.props.data.content.query.columns;
+            columns.push(name);
+
+            this.setState({ addColumnsShowing: false }, this.props.onSetColumns(columns));
+        } else {
+            this.setState({ addColumnsShowing: false });
+        }
+    },
+    handleRemoveColumn: function (e) {
+        var columnName = e.target.getAttribute("data-column");
+        var newColumns = this.props.data.content.query.columns.filter(function (name) {
+            return name !== columnName;
+        });
+        this.props.onSetColumns(newColumns);
+
+        e.stopPropagation();
+    },
+    handlePivot: function (e) {
+        var element = e.target;
+
+        this.props.onPivot(element.getAttribute("data-table"), element.getAttribute("data-query"));
+        e.stopPropagation();
+    },
+    selectByRelativeIndex: function (i) {
+        // Figure out the current row count
+        var count = 0;
+        if (this.props.data.content) count = this.props.data.content.values.rows.length;
+
+        // See what index the caller wants selected
+        var newSelectedIndex = this.state.selectedIndex + i;
+
+        // If nothing was selected, let down open the first item
+        if (!this.props.selectedId) newSelectedIndex = -1 + i;
+
+        // If out-of-bounds, do nothing
+        if (newSelectedIndex < 0 || newSelectedIndex >= count) return;
+
+        // Otherwise, trigger a selection change
+        var idColumnIndex = this.props.data.content.query.columns.indexOf(this.props.idColumn);
+        var row = this.props.data.content.values.rows[newSelectedIndex];
+        this.setState({ selectedIndex: newSelectedIndex });
+        this.props.onSelectionChanged(stripHighlight(row[idColumnIndex]));
+    },
+    render: function () {
+        var content = this.props.data.content;
+        if (!content || !content.details.succeeded || !this.props.idColumn) return null;
+
+        var idColumn = this.props.idColumn;
+        var idColumnIndex = content.query.columns.indexOf(this.props.idColumn);
+
+        // Write a column heading row - click to sort, remove/add columns
+        var columnCells = [];
+        for (var i = 0; i < content.values.columns.length; ++i) {
+            var column = content.values.columns[i];
+
+            var commands = [];
+
+            // Non-ID column commands
+            if (column.name !== idColumn) {
+                // Remove button
+                commands.push(React.createElement("div", { key: "remove_" + column.name, "data-column": column.name, className: "icon-cancel icon-column-heading", title: "Remove Column", onClick: this.handleRemoveColumn }));
+
+                // Add 'Pivot to Grid' URL
+                var gridUrl = "Grid.html" + buildUrlParameters({ q: content.query.where, t: content.query.tableName, R1: column.name + ">" });
+                commands.push(React.createElement("a", { href: gridUrl, className: "icon-view-all-albums icon-column-heading", title: "Grid By " + column.name }));
+            }
+
+            // Last column
+            if (i == content.values.columns.length - 1) {
+                // Add column button
+                commands.push(React.createElement(
+                    "div",
+                    { ref: "addButton", className: "add-column-button icon-add icon-column-heading", title: "Add Column", onClick: this.handleAdd },
+                    React.createElement(__WEBPACK_IMPORTED_MODULE_0__AddColumnList__["a" /* default */], { showing: this.state.addColumnsShowing,
+                        onAddColumn: this.onAddColumn,
+                        allColumns: this.props.allColumns,
+                        currentColumns: content.query.columns })
+                ));
+            }
+
+            columnCells.push(React.createElement(
+                "td",
+                { key: "heading_" + column.name, "data-name": column.name, onClick: this.handleResort },
+                React.createElement(
+                    "div",
+                    { className: "commands" },
+                    commands
+                ),
+                column.name
+            ));
+        }
+
+        // Write a row for each item
+        var index = 0;
+        var selectFunction = this.handleSelect;
+        var selectedId = this.props.selectedId;
+        var listingItems = content.values.rows.map(function (row) {
+            var id = stripHighlight(row[idColumnIndex]);
+            return React.createElement(ResultListingItem, { key: id, itemId: id, itemIndex: index++, data: row, onSelectionChanged: selectFunction, selected: selectedId === id });
+        });
+
+        return React.createElement(
+            "table",
+            { className: "resultTable", tabIndex: "2" },
+            React.createElement(
+                "thead",
+                null,
+                React.createElement(
+                    "tr",
+                    null,
+                    columnCells
+                )
+            ),
+            React.createElement(
+                "tbody",
+                null,
+                listingItems
+            )
+        );
+    }
+});
+
+var ResultListingItem = React.createClass({
+    displayName: "ResultListingItem",
+
+    handleClick: function (e) {
+        this.props.onSelectionChanged(this);
+    },
+    render: function () {
+        var id = this.props.itemId;
+
+        // Write a cell for each property of each item with highlighting
+        var cells = [];
+        for (var i = 0; i < this.props.data.length; ++i) {
+            var item = this.props.data[i];
+            cells[i] = React.createElement("td", { key: id + "_" + i, title: stripHighlight(item), dangerouslySetInnerHTML: highlight(item) });
+        }
+
+        return React.createElement(
+            "tr",
+            { onClick: this.handleClick, className: this.props.selected ? "selected theme-background-light" : "theme-hover-light" },
+            cells
+        );
+    }
+});
+
+/***/ }),
+/* 11 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+// Inspired by https://github.com/tomkp/react-split-pane [MIT License]
+/* harmony default export */ __webpack_exports__["a"] = React.createClass({
+    displayName: 'SplitPane',
+
+    defaultProps: { isFirstVisible: true, isSecondVisible: true },
+    onMouseUp: function () {
+        document.removeEventListener('mouseup', this.onMouseUp);
+        document.removeEventListener('mousemove', this.onMouseMove);
+    },
+    onMouseDown: function (e) {
+        document.addEventListener('mouseup', this.onMouseUp);
+        document.addEventListener('mousemove', this.onMouseMove);
+
+        this.setState({ totalWidth: this.refs.container.getBoundingClientRect().width });
+    },
+    onMouseMove: function (e) {
+        var node = ReactDOM.findDOMNode(this.refs.first);
+        var newWidth = e.clientX - node.offsetLeft;
+
+        if (this.props.minSize) {
+            if (newWidth < this.props.minSize) newWidth = this.props.minSize;
+            if (newWidth > this.state.totalWidth - this.props.minSize) newWidth = this.state.totalWidth - this.props.minSize;
+        }
+
+        node.style.width = newWidth + 'px';
+        node.style.flex = 'none';
+    },
+    render: function () {
+        if (!this.props.isFirstVisible) return this.props.children[1];
+        if (!this.props.isSecondVisible) return this.props.children[0];
+
+        return React.createElement(
+            'div',
+            { ref: 'container', className: 'splitpane' },
+            React.createElement(
+                'div',
+                { ref: 'first', className: 'pane' },
+                this.props.children[0]
+            ),
+            React.createElement('div', { ref: 'handle',
+                className: 'resizer vertical',
+                onMouseDown: this.onMouseDown }),
+            React.createElement(
+                'div',
+                { ref: 'second', className: 'pane' },
+                this.props.children[1]
+            )
+        );
+    }
+});
+
+/***/ }),
+/* 12 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony default export */ __webpack_exports__["a"] = React.createClass({
+    displayName: "SyntaxHelp",
+
+    getInitialState: function () {
+        return { showHelp: this.props.showHelp };
+    },
+    toggle: function () {
+        this.setState({ showHelp: !this.state.showHelp });
+    },
+    render: function () {
+        if (!this.state.showHelp) {
+            return React.createElement(
+                "div",
+                { className: "splash" },
+                React.createElement(
+                    "div",
+                    { style: { width: "100%" } },
+                    this.props.splashContent,
+                    React.createElement(
+                        "div",
+                        { className: "buttons" },
+                        React.createElement(
+                            "a",
+                            { className: "theme-background-dark", href: "/?help=true" },
+                            React.createElement("i", { className: "icon-help", title: "Help" })
+                        )
+                    )
+                )
+            );
+        }
+
+        return React.createElement(
+            "div",
+            { className: "helpContent" },
+            React.createElement(
+                "div",
+                { className: "helpIntro" },
+                this.props.splashContent
+            ),
+            React.createElement(
+                "div",
+                { className: "features" },
+                React.createElement(
+                    "h2",
+                    null,
+                    "Features"
+                ),
+                React.createElement(
+                    "div",
+                    null,
+                    " - Click items to see details."
+                ),
+                React.createElement(
+                    "div",
+                    null,
+                    " - Click column headings to sort."
+                ),
+                React.createElement(
+                    "div",
+                    null,
+                    " - Click ",
+                    React.createElement("span", { className: "icon-add" }),
+                    " to add columns to listing, ",
+                    React.createElement("span", { className: "icon-cancel" }),
+                    " to remove them."
+                ),
+                React.createElement(
+                    "div",
+                    null,
+                    " - Click ",
+                    React.createElement("span", { className: "icon-download" }),
+                    " to download listing (same columns, query, and order) as CSV."
+                ),
+                React.createElement(
+                    "div",
+                    null,
+                    " - Click ",
+                    React.createElement("img", { src: "icons/feed-icon-14x14.png", alt: "RSS" }),
+                    " for URL to subscribe to query."
+                )
+            ),
+            React.createElement(
+                "div",
+                { className: "syntaxIntro" },
+                React.createElement(
+                    "h2",
+                    null,
+                    "Syntax"
+                ),
+                React.createElement(
+                    "table",
+                    { className: "syntaxTable" },
+                    React.createElement(
+                        "thead",
+                        null,
+                        React.createElement(
+                            "tr",
+                            null,
+                            React.createElement(
+                                "th",
+                                { style: { width: "25%" } },
+                                "Rule"
+                            ),
+                            React.createElement(
+                                "th",
+                                { style: { width: "25%" } },
+                                "Example"
+                            ),
+                            React.createElement(
+                                "th",
+                                { style: { width: "50%" } },
+                                "Meaning"
+                            )
+                        )
+                    ),
+                    React.createElement(
+                        "tbody",
+                        null,
+                        React.createElement(
+                            "tr",
+                            null,
+                            React.createElement(
+                                "td",
+                                null,
+                                "Type anything to search across all columns."
+                            ),
+                            React.createElement(
+                                "td",
+                                { className: "font-example" },
+                                "halo Pris"
+                            ),
+                            React.createElement(
+                                "td",
+                                null,
+                                "Find items with words starting with \"halo\" and \"Pris\" anywhere, case insensitive."
+                            )
+                        ),
+                        React.createElement(
+                            "tr",
+                            null,
+                            React.createElement(
+                                "td",
+                                null,
+                                "Use <column> <operator> <value> to search one column."
+                            ),
+                            React.createElement(
+                                "td",
+                                { className: "font-example" },
+                                "Team=Central AccessLevel > 3"
+                            ),
+                            React.createElement(
+                                "td",
+                                null,
+                                "Team equals \"Central\" (case sensitive) and AccessLevel is over 3."
+                            )
+                        ),
+                        React.createElement(
+                            "tr",
+                            null,
+                            React.createElement(
+                                "td",
+                                null,
+                                "Use 'AND', 'OR', 'NOT', and parens for subexpressions."
+                            ),
+                            React.createElement(
+                                "td",
+                                { className: "font-example" },
+                                "NOT Team=Central AND (AccessLevel > 3 OR Role=Administrator)"
+                            ),
+                            React.createElement(
+                                "td",
+                                null,
+                                "Team is not Central and (AccessLevel is over 3 or Role is Administrator."
+                            )
+                        ),
+                        React.createElement(
+                            "tr",
+                            null,
+                            React.createElement(
+                                "td",
+                                null,
+                                "Use any operators from Web, SQL, or C# syntax."
+                            ),
+                            React.createElement(
+                                "td",
+                                null,
+                                React.createElement(
+                                    "table",
+                                    { className: "syntaxTable" },
+                                    React.createElement(
+                                        "tbody",
+                                        null,
+                                        React.createElement(
+                                            "tr",
+                                            null,
+                                            React.createElement(
+                                                "td",
+                                                null,
+                                                "&&"
+                                            ),
+                                            React.createElement(
+                                                "td",
+                                                null,
+                                                "&"
+                                            ),
+                                            React.createElement(
+                                                "td",
+                                                null,
+                                                "AND"
+                                            ),
+                                            React.createElement(
+                                                "td",
+                                                null,
+                                                "aNd"
+                                            )
+                                        ),
+                                        React.createElement(
+                                            "tr",
+                                            null,
+                                            React.createElement(
+                                                "td",
+                                                null,
+                                                "||"
+                                            ),
+                                            React.createElement(
+                                                "td",
+                                                null,
+                                                "|"
+                                            ),
+                                            React.createElement(
+                                                "td",
+                                                null,
+                                                "OR"
+                                            ),
+                                            React.createElement(
+                                                "td",
+                                                null,
+                                                "Or"
+                                            )
+                                        ),
+                                        React.createElement(
+                                            "tr",
+                                            null,
+                                            React.createElement(
+                                                "td",
+                                                null,
+                                                "!"
+                                            ),
+                                            React.createElement(
+                                                "td",
+                                                null,
+                                                "-"
+                                            ),
+                                            React.createElement(
+                                                "td",
+                                                null,
+                                                "NOT"
+                                            ),
+                                            React.createElement(
+                                                "td",
+                                                null,
+                                                "noT"
+                                            )
+                                        ),
+                                        React.createElement(
+                                            "tr",
+                                            null,
+                                            React.createElement(
+                                                "td",
+                                                null,
+                                                "="
+                                            ),
+                                            React.createElement(
+                                                "td",
+                                                null,
+                                                "=="
+                                            ),
+                                            React.createElement("td", null),
+                                            React.createElement("td", null)
+                                        ),
+                                        React.createElement(
+                                            "tr",
+                                            null,
+                                            React.createElement(
+                                                "td",
+                                                null,
+                                                "<>"
+                                            ),
+                                            React.createElement(
+                                                "td",
+                                                null,
+                                                "!="
+                                            ),
+                                            React.createElement("td", null),
+                                            React.createElement("td", null)
+                                        ),
+                                        React.createElement(
+                                            "tr",
+                                            null,
+                                            React.createElement(
+                                                "td",
+                                                null,
+                                                "|>"
+                                            ),
+                                            React.createElement(
+                                                "td",
+                                                null,
+                                                "STARTSWITH"
+                                            ),
+                                            React.createElement(
+                                                "td",
+                                                null,
+                                                "UNDER"
+                                            ),
+                                            React.createElement("td", null)
+                                        ),
+                                        React.createElement(
+                                            "tr",
+                                            null,
+                                            React.createElement(
+                                                "td",
+                                                null,
+                                                ":"
+                                            ),
+                                            React.createElement(
+                                                "td",
+                                                null,
+                                                "MATCH"
+                                            ),
+                                            React.createElement(
+                                                "td",
+                                                null,
+                                                "FREETEXT"
+                                            ),
+                                            React.createElement(
+                                                "td",
+                                                null,
+                                                "CONTAINS"
+                                            )
+                                        ),
+                                        React.createElement(
+                                            "tr",
+                                            null,
+                                            React.createElement(
+                                                "td",
+                                                null,
+                                                "::"
+                                            ),
+                                            React.createElement(
+                                                "td",
+                                                null,
+                                                "MATCHEXACT"
+                                            ),
+                                            React.createElement("td", null),
+                                            React.createElement("td", null)
+                                        )
+                                    )
+                                )
+                            ),
+                            React.createElement("td", null)
+                        ),
+                        React.createElement(
+                            "tr",
+                            null,
+                            React.createElement(
+                                "td",
+                                null,
+                                "Use ':' for \"has a word starting with\" or \"::\" for \"has the exact word\""
+                            ),
+                            React.createElement(
+                                "td",
+                                { className: "font-example" },
+                                "Team:Centr && Name::Will"
+                            ),
+                            React.createElement(
+                                "td",
+                                null,
+                                "Team contains words starting with \"Centr\" and Name has the full word \"Will\" (\"William\" would not match) (case insensitive)."
+                            )
+                        ),
+                        React.createElement(
+                            "tr",
+                            null,
+                            React.createElement(
+                                "td",
+                                null,
+                                "Use '|>' for starts with."
+                            ),
+                            React.createElement(
+                                "td",
+                                { className: "font-example" },
+                                "Team |> Centr"
+                            ),
+                            React.createElement(
+                                "td",
+                                null,
+                                "Team starts with \"Centr\" (\"Grand Central\" would not match) (case sensitive)."
+                            )
+                        ),
+                        React.createElement(
+                            "tr",
+                            null,
+                            React.createElement(
+                                "td",
+                                null,
+                                "Use \"\" to look for empty values."
+                            ),
+                            React.createElement(
+                                "td",
+                                { className: "font-example" },
+                                "Team=\"\""
+                            ),
+                            React.createElement(
+                                "td",
+                                null,
+                                "Team is empty."
+                            )
+                        ),
+                        React.createElement(
+                            "tr",
+                            null,
+                            React.createElement(
+                                "td",
+                                null,
+                                "Use \"today-n\" (no spaces) for relative dates."
+                            ),
+                            React.createElement(
+                                "td",
+                                { className: "font-example" },
+                                "HireDate < today-60"
+                            ),
+                            React.createElement(
+                                "td",
+                                null,
+                                "HireDate is more than 60 days ago [UTC]."
+                            )
+                        ),
+                        React.createElement(
+                            "tr",
+                            null,
+                            React.createElement(
+                                "td",
+                                null,
+                                "Use any .NET DateTime.Parse-able formats."
+                            ),
+                            React.createElement(
+                                "td",
+                                { className: "font-example" },
+                                "HireDate > \"2016-10-01 10:00AM\""
+                            ),
+                            React.createElement(
+                                "td",
+                                null,
+                                "HireDate is after Oct 1, 2016 10:00 AM [UTC]."
+                            )
+                        ),
+                        React.createElement(
+                            "tr",
+                            null,
+                            React.createElement(
+                                "td",
+                                null,
+                                "Wrap column names with braces and values with quotes if they contain spaces. Escape braces and quotes by doubling them."
+                            ),
+                            React.createElement(
+                                "td",
+                                { className: "font-example" },
+                                "[Owner [Ops]]]=\"Bilbo \"\"Ringbearer\"\" Baggins\""
+                            ),
+                            React.createElement(
+                                "td",
+                                null,
+                                "The {Owner [Ops]} column equals {Bilbo \"Ringbearer\" Baggins}."
+                            )
+                        )
+                    )
+                )
+            ),
+            React.createElement(
+                "div",
+                { className: "syntaxExamples" },
+                React.createElement(
+                    "h2",
+                    null,
+                    "Examples"
+                ),
+                React.createElement(
+                    "div",
+                    { className: "exampleBox" },
+                    React.createElement(
+                        "div",
+                        { className: "font-example" },
+                        "Team=\"Central\" AND IP:10.194"
+                    ),
+                    React.createElement(
+                        "div",
+                        null,
+                        "Find items where Team equals \"Central\", the IP address starts with \"10.194\"."
+                    ),
+                    React.createElement(
+                        "div",
+                        { className: "indent" },
+                        "The word index operators (':', '::') are not case sensitive, but all other operators ('=', '!=', '|>') are case sensitive.",
+                        React.createElement("br", null),
+                        "The word index operators only match from word boundaries, so \"Team:ent\" will not match a Team of \"Central\".",
+                        React.createElement("br", null),
+                        "Text is split into alphanumeric words and dotted phrases. (\"10.194.155.11\" splits to \"10\", \"194\", \"155\", \"11\", \"10.194.155.11\")",
+                        React.createElement("br", null),
+                        "Therefore, \"IP:10.194\" will match \"10.194.155.11\" but not \"11.10.194.155\".",
+                        React.createElement("br", null)
+                    )
+                ),
+                React.createElement(
+                    "div",
+                    { className: "exampleBox" },
+                    React.createElement(
+                        "div",
+                        { className: "font-example" },
+                        "[Team]=\"Central\" && (HireDate < today-60 || IsManager == 1)"
+                    ),
+                    React.createElement(
+                        "div",
+                        null,
+                        "Find items with Team \"Central\" which were hired in the last 60 days or are managers."
+                    ),
+                    React.createElement(
+                        "div",
+                        { className: "indent" },
+                        "\"Today\" is midnight UTC, so \"today-1\" will match 11:59p the day before yesterday (UTC).",
+                        React.createElement("br", null),
+                        "DateTimes in queries are interpreted at UTC.",
+                        React.createElement("br", null)
+                    )
+                )
+            )
+        );
+    }
+});
+
+/***/ }),
+/* 13 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+
 // Write a simple table with name and value for each property in a data set
-var DetailsTable = React.createClass({
-    displayName: "DetailsTable",
+/* harmony default export */ __webpack_exports__["a"] = React.createClass({
+    displayName: "_Components",
 
     onAddClause: function (e) {
         var name = e.target.getAttribute("data");
@@ -3085,30 +2748,13 @@ var DetailsTable = React.createClass({
     }
 });
 
-// An error page to show in place of all content when access is denied or the site is down.
-var ErrorPage = React.createClass({
-    displayName: "ErrorPage",
+/***/ }),
+/* 14 */
+/***/ (function(module, exports, __webpack_require__) {
 
-    render: function () {
-        return React.createElement(
-            "div",
-            { className: "errorPage" },
-            React.createElement(
-                "h1",
-                null,
-                this.props.title
-            ),
-            React.createElement(
-                "article",
-                null,
-                React.createElement(
-                    "p",
-                    null,
-                    this.props.message
-                )
-            )
-        );
-    }
-});
+__webpack_require__(5);
+module.exports = __webpack_require__(6);
 
-//# sourceMappingURL=Search.js.map
+
+/***/ })
+/******/ ]);
