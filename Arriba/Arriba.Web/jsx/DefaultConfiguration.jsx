@@ -1,10 +1,10 @@
-﻿// zDefaultConfiguration.jsx contains default configuration settings for this site instance.
+﻿// DefaultConfiguration.jsx contains default configuration settings for this site instance.
 // Add a copy in configuration\configuration.jsx to override these settings.
 
     export default {
         // Arriba Service URL to query
         // Hardcode to the name of your service. Use port 42784 for HTTP, 42785 for HTTPS.
-        url: "http://" + window.location.hostname + ":42784",
+        url: "https://confluxsearch:42785",
 
         // Name of tool to show [top right and elsewhere]
         toolName: "Arriba",
