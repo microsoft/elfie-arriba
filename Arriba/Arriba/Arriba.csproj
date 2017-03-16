@@ -111,6 +111,7 @@
     <Compile Include="Model\Query\DistinctResult.cs" />
     <Compile Include="Model\Query\IQuery.cs" />
     <Compile Include="Model\Query\JoinQuery.cs" />
+    <Compile Include="Model\Query\QueryIntelliSense.cs" />
     <Compile Include="Model\Query\SelectResult.cs" />
     <Compile Include="Serialization\BinarySerializable.cs" />
     <Compile Include="Serialization\CollectionFactory.cs" />

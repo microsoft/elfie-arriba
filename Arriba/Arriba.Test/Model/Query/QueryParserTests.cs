@@ -48,8 +48,8 @@ namespace Arriba.Test.Model.Query
             Assert.AreEqual("(Priority <= 3 AND (*:verified OR *:chec))", QueryParser.Parse("Priority <= 3 && (verified || chec").ToString());
 
             // Trailing operator
-            Assert.AreEqual("Priority <= 3", QueryParser.Parse("Priority <= 3 &&").ToString());
-            Assert.AreEqual("Priority <= 3", QueryParser.Parse("Priority <= 3 ||").ToString());
+            Assert.AreEqual("(Priority <= 3 AND *:\"\")", QueryParser.Parse("Priority <= 3 &&").ToString());
+            Assert.AreEqual("(Priority <= 3 OR *:\"\")", QueryParser.Parse("Priority <= 3 ||").ToString());
 
             // Non-identifier junk
             Assert.AreEqual("", QueryParser.Parse("<<<<>>>>").ToString());
@@ -110,8 +110,8 @@ namespace Arriba.Test.Model.Query
             // Braces escaped with spacing
             Assert.AreEqual("[Assigned [PM ]]] = something", QueryParser.Parse("[Assigned [PM ]]] = something").ToString());
 
-            // Quoted Column Name causes error; column name interpreted as value only
-            Assert.AreEqual("*:Title", QueryParser.Parse("\"Title\"=Something").ToString());
+            // Quoted Column Name causes error
+            Assert.AreEqual("", QueryParser.Parse("\"Title\"=Something").ToString());
 
             // Braced Value worked; braces don't interrupt value
             Assert.AreEqual("Title = [Something]", QueryParser.Parse("Title=[Something]").ToString());
@@ -129,15 +129,15 @@ namespace Arriba.Test.Model.Query
             // Nothing - no query
             Assert.AreEqual("", QueryParser.Parse("").ToString());
 
-            // Incomplete column name - no query
-            Assert.AreEqual("", QueryParser.Parse("[Starting").ToString());
+            // Incomplete column name - empty string
+            Assert.AreEqual("Starting = \"\"", QueryParser.Parse("[Starting").ToString());
 
-            // Column name without operator - no query
-            Assert.AreEqual("", QueryParser.Parse("[Title]").ToString());
+            // Column name without operator - empty string
+            Assert.AreEqual("Title <> \"\"", QueryParser.Parse("[Title]").ToString());
 
-            // Column name and operator without value - no query
-            Assert.AreEqual("", QueryParser.Parse("[Title] = ").ToString());
-            Assert.AreEqual("", QueryParser.Parse("Title > ").ToString());
+            // Column name and operator without value - empty string
+            Assert.AreEqual("Title = \"\"", QueryParser.Parse("[Title] = ").ToString());
+            Assert.AreEqual("Title > \"\"", QueryParser.Parse("Title > ").ToString());
 
             // Incomplete quoted value - search value so far
             Assert.AreEqual("*:Starting", QueryParser.Parse("\"Starting").ToString());
@@ -166,7 +166,7 @@ namespace Arriba.Test.Model.Query
             Assert.AreEqual("(background-image:url AND *:something)", QueryParser.Parse("background-image:url(something)").ToString());
 
             // Parens: Not allowed in column names (causes parse error here, column name interpreted as two values)
-            Assert.AreEqual("(*:background AND *:image)", QueryParser.Parse("background(image):url(something)").ToString());
+            Assert.AreEqual("", QueryParser.Parse("background(image):url(something)").ToString());
 
             // Boolean Operators: Allowed in column names or values
             Assert.AreEqual("one&two|three&&four||five:one&two|three&&four||five", QueryParser.Parse("one&two|three&&four||five:one&two|three&&four||five").ToString());

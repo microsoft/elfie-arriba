@@ -195,9 +195,16 @@ namespace Arriba.Model.Expressions
 
     public class TermExpression : IExpression
     {
+        // The <Column> <operator> <Value> itself
         public string ColumnName;
         public Operator Operator;
         public Value Value;
+
+        // Parsing details to drive IntelliSense.
+        public IntelliSenseGuidance Guidance;
+
+        public TermExpression(object value) : this("*", Operator.Matches, value)
+        { }
 
         public TermExpression(string columnName, Operator op, object value)
         {
