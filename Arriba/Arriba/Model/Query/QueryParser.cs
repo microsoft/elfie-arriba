@@ -75,12 +75,12 @@ namespace Arriba.Model.Query
                 if (_scanner.Current.Type == TokenType.End && String.IsNullOrEmpty(_scanner.Current.Prefix) && operatorText == "|")
                 {
                     // If '|' was typed and there's no follow space, keep suggesting '||'
-                    terms.Add(new TermExpression("") { Guidance = new IntelliSenseGuidance(operatorText, CurrentTokenCategory.BooleanOperator) });
+                    terms.Add(new TermExpression("") { Guidance = new IntelliSenseGuidance(operatorText, QueryTokenCategory.BooleanOperator) });
                 }
                 else
                 {
                     term = ParseAndExpression();
-                    if (term == null) term = new TermExpression("") { Guidance = new IntelliSenseGuidance("", CurrentTokenCategory.Term) };
+                    if (term == null) term = new TermExpression("") { Guidance = new IntelliSenseGuidance("", QueryTokenCategory.Term) };
                     terms.Add(term);
                 }
             }
@@ -135,23 +135,23 @@ namespace Arriba.Model.Query
                             if (operatorText == "&")
                             {
                                 // If '&' was typed and there's no following space, keep suggesting '&&'
-                                terms.Add(new TermExpression("") { Guidance = new IntelliSenseGuidance(operatorText, CurrentTokenCategory.BooleanOperator) });
+                                terms.Add(new TermExpression("") { Guidance = new IntelliSenseGuidance(operatorText, QueryTokenCategory.BooleanOperator) });
                             }
                             else if(operatorText == "&&")
                             {
                                 // If '&&', suggest next term (complete, unambiguous operator)
-                                terms.Add(new TermExpression("") { Guidance = new IntelliSenseGuidance("", CurrentTokenCategory.Term) });
+                                terms.Add(new TermExpression("") { Guidance = new IntelliSenseGuidance("", QueryTokenCategory.Term) });
                             }
                             else
                             {
                                 // If 'AND' with no space, it could still be a column name or value
-                                terms.Add(new TermExpression(operatorText) { Guidance = new IntelliSenseGuidance(operatorText, CurrentTokenCategory.BooleanOperator | CurrentTokenCategory.Term) });
+                                terms.Add(new TermExpression(operatorText) { Guidance = new IntelliSenseGuidance(operatorText, QueryTokenCategory.BooleanOperator | QueryTokenCategory.Term) });
                             }
                         }
                         else
                         {
                             // Otherwise, suggest column name or value (a new term without boolean operator)
-                            terms.Add(new TermExpression("") { Guidance = new IntelliSenseGuidance("", CurrentTokenCategory.Term) });
+                            terms.Add(new TermExpression("") { Guidance = new IntelliSenseGuidance("", QueryTokenCategory.Term) });
                         }
                     }
                 }
@@ -191,7 +191,7 @@ namespace Arriba.Model.Query
                 // If the query ends with a !, create a term to hint
                 if(_scanner.Current.Type == TokenType.End)
                 {
-                    return new TermExpression("") { Guidance = new IntelliSenseGuidance("", CurrentTokenCategory.Term) };
+                    return new TermExpression("") { Guidance = new IntelliSenseGuidance("", QueryTokenCategory.Term) };
                 }
             }
 
@@ -205,7 +205,7 @@ namespace Arriba.Model.Query
                 // If there's nothing left, add a hint expression suggesting another term
                 if (_scanner.Current.Type == TokenType.End)
                 {
-                    expression = new TermExpression("") { Guidance = new IntelliSenseGuidance("", CurrentTokenCategory.Term) };
+                    expression = new TermExpression("") { Guidance = new IntelliSenseGuidance("", QueryTokenCategory.Term) };
                 }
                 else
                 {
@@ -224,7 +224,7 @@ namespace Arriba.Model.Query
                             TermExpression lastTerm = expression.GetLastTerm();
                             if (lastTerm != null)
                             {
-                                lastTerm.Guidance = new Query.IntelliSenseGuidance("", CurrentTokenCategory.BooleanOperator | CurrentTokenCategory.Term);
+                                lastTerm.Guidance = new Query.IntelliSenseGuidance("", QueryTokenCategory.BooleanOperator | QueryTokenCategory.Term);
                             }
                         }
                     }
@@ -239,7 +239,7 @@ namespace Arriba.Model.Query
                 if (!hadExplicitNameCompletion)
                 {
                     // "[PartialColumnNa" -> make it an equals empty term, indicate the column name needs completion
-                    expression = new TermExpression(columnName, Operator.Equals, String.Empty) { Guidance = new IntelliSenseGuidance(columnName, CurrentTokenCategory.ColumnName) };
+                    expression = new TermExpression(columnName, Operator.Equals, String.Empty) { Guidance = new IntelliSenseGuidance(columnName, QueryTokenCategory.ColumnName) };
                 }
                 else
                 {
@@ -253,12 +253,12 @@ namespace Arriba.Model.Query
                 if (!hadExplicitValueCompletion)
                 {
                     // "\"IncompleteQuotedValue" -> indicate value incomplete
-                    expression = new TermExpression(value) { Guidance = new IntelliSenseGuidance(value, CurrentTokenCategory.Value) };
+                    expression = new TermExpression(value) { Guidance = new IntelliSenseGuidance(value, QueryTokenCategory.Value) };
                 }
                 else
                 {
                     // "\"QuotedValue\" -> time for next term (boolean operator, next column name, or next bare value)
-                    expression = new TermExpression(value) { Guidance = new IntelliSenseGuidance(String.Empty, CurrentTokenCategory.BooleanOperator | CurrentTokenCategory.Term) };
+                    expression = new TermExpression(value) { Guidance = new IntelliSenseGuidance(String.Empty, QueryTokenCategory.BooleanOperator | QueryTokenCategory.Term) };
                 }
             }
             else
@@ -272,8 +272,8 @@ namespace Arriba.Model.Query
                 if (!hadExplicitValueCompletion)
                 {
                     // "BareValu" -> column or value completion on this term
-                    CurrentTokenCategory options = CurrentTokenCategory.ColumnName | CurrentTokenCategory.Value;
-                    if (!hadExplicitBooleanOperator) options |= CurrentTokenCategory.BooleanOperator;
+                    QueryTokenCategory options = QueryTokenCategory.ColumnName | QueryTokenCategory.Value;
+                    if (!hadExplicitBooleanOperator) options |= QueryTokenCategory.BooleanOperator;
 
                     expression = new TermExpression(firstValue) { Guidance = new IntelliSenseGuidance(firstValue, options) };
                 }
@@ -310,19 +310,19 @@ namespace Arriba.Model.Query
                 if (wasExplicitColumnName)
                 {
                     // "[ColumnName]" -> make it a not equals empty term, indicate operator needs completion
-                    return new TermExpression(columnName, Operator.NotEquals, String.Empty) { Guidance = new IntelliSenseGuidance(possibleOperatorPrefix, CurrentTokenCategory.CompareOperator) };
+                    return new TermExpression(columnName, Operator.NotEquals, String.Empty) { Guidance = new IntelliSenseGuidance(possibleOperatorPrefix, QueryTokenCategory.CompareOperator) };
                 }
                 else
                 {
                     if (possibleOperatorPrefix == String.Empty)
                     { 
                         // "BareTerm" -> next thing could be a compare operator or another term
-                        return new TermExpression(columnName) { Guidance = new IntelliSenseGuidance(String.Empty, CurrentTokenCategory.CompareOperator | CurrentTokenCategory.BooleanOperator | CurrentTokenCategory.Term) };
+                        return new TermExpression(columnName) { Guidance = new IntelliSenseGuidance(String.Empty, QueryTokenCategory.CompareOperator | QueryTokenCategory.BooleanOperator | QueryTokenCategory.Term) };
                     }
                     else
                     {
                         // "BareTerm !" -> could be a compare operator or boolean operator, but can't be a column or term because it would require escaping
-                        return new TermExpression(columnName) { Guidance = new IntelliSenseGuidance(possibleOperatorPrefix, CurrentTokenCategory.CompareOperator | CurrentTokenCategory.BooleanOperator) };
+                        return new TermExpression(columnName) { Guidance = new IntelliSenseGuidance(possibleOperatorPrefix, QueryTokenCategory.CompareOperator | QueryTokenCategory.BooleanOperator) };
                     }
                 }
             }
@@ -340,12 +340,12 @@ namespace Arriba.Model.Query
                 if (String.IsNullOrEmpty(_scanner.Current.Prefix))
                 {
                     // "[ColumnName] =" -> if no space after operator, suggest operator until space is typed
-                    return new TermExpression(columnName, op, String.Empty) { Guidance = new IntelliSenseGuidance(opString, CurrentTokenCategory.CompareOperator) };
+                    return new TermExpression(columnName, op, String.Empty) { Guidance = new IntelliSenseGuidance(opString, QueryTokenCategory.CompareOperator) };
                 }
                 else
                 {
                     // "[ColumnName] = " -> time for the value
-                    return new TermExpression(columnName, op, String.Empty) { Guidance = new IntelliSenseGuidance(String.Empty, CurrentTokenCategory.Value) };
+                    return new TermExpression(columnName, op, String.Empty) { Guidance = new IntelliSenseGuidance(String.Empty, QueryTokenCategory.Value) };
                 }
             }
             else
@@ -353,12 +353,12 @@ namespace Arriba.Model.Query
                 if (hadExplicitValueCompletion)
                 {
                     // "[ColumnName] = \"Value\"" -> time for next term (boolean operator, next column name, or next bare value)
-                    return new TermExpression(columnName, op, value) { Guidance = new IntelliSenseGuidance(String.Empty, CurrentTokenCategory.BooleanOperator | CurrentTokenCategory.Term) };
+                    return new TermExpression(columnName, op, value) { Guidance = new IntelliSenseGuidance(String.Empty, QueryTokenCategory.BooleanOperator | QueryTokenCategory.Term) };
                 }
                 else
                 {
                     // "[ColumnName] = \"Value" -> indicate value incomplete
-                    return new TermExpression(columnName, op, value) { Guidance = new IntelliSenseGuidance(value, CurrentTokenCategory.Value) };
+                    return new TermExpression(columnName, op, value) { Guidance = new IntelliSenseGuidance(value, QueryTokenCategory.Value) };
                 }
             }
         }

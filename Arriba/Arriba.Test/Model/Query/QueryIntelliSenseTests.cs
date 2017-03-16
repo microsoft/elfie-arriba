@@ -1,114 +1,22 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using Arriba.Model;
-using Arriba.Model.Expressions;
 using Arriba.Model.Query;
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
-using System.Collections.Generic;
 
 namespace Arriba.Test.Model.Query
 {
-    public class IntelliSenseItem
-    {
-        public string Value { get; set; }
-        public string Hint { get; set; }
-        public string QueryWithCompletion { get; set; }
-
-        public IntelliSenseItem(string value, string hint, string queryWithCompletion)
-        {
-            this.Value = value;
-            this.Hint = hint;
-            this.QueryWithCompletion = queryWithCompletion;
-        }
-
-        public override string ToString()
-        {
-            return this.Value;
-        }
-    }
-
-    public class IntelliSenseResult
-    {
-        public IReadOnlyCollection<IntelliSenseItem> Suggestions;
-        public IReadOnlyList<char> CompletionCharacters;
-    }
-
-    public class QueryIntelliSenseProvider
-    {
-        private static List<IntelliSenseItem> BooleanOperators = new List<IntelliSenseItem>()
-        {
-            new IntelliSenseItem("AND", String.Empty, String.Empty),
-            new IntelliSenseItem("OR", String.Empty, String.Empty),
-            new IntelliSenseItem("&&", String.Empty, String.Empty),
-            new IntelliSenseItem("||", String.Empty, String.Empty)
-        };
-
-        private static List<IntelliSenseItem> CompareOperators = new List<IntelliSenseItem>()
-        {
-            new IntelliSenseItem(":", "contains word starting with", String.Empty),
-            new IntelliSenseItem("=", "equals [case sensitive]", String.Empty),
-            new IntelliSenseItem("==", "equals [case sensitive]", String.Empty),
-            new IntelliSenseItem("::", "contains exact word", String.Empty),
-            new IntelliSenseItem("!=", "does not equal", String.Empty),
-            new IntelliSenseItem("<>", "does not equal", String.Empty),
-            new IntelliSenseItem("<", "less than", String.Empty),
-            new IntelliSenseItem("<=", "less than or equal", String.Empty),
-            new IntelliSenseItem(">", "greater than", String.Empty),
-            new IntelliSenseItem(">=", "greater than or equal", String.Empty),
-            new IntelliSenseItem("|>", "starts with", String.Empty)
-        };
-
-
-
-        // Table or Database? How do cross table queries work for IntelliSense? How are tables ranked relative to one another?
-        // Or .. remove allCount query, put you in to quickly complete table name first? "As Na:OSGSMART" -> "Asset" | "Name:OSGSMART"
-
-        //public IntelliSenseResult GetIntelliSenseItems(string queryBeforeCursor, ITable targetTable)
-        //{
-        //    string lastComponent;
-        //    CurrentTokenOption validTokens = GetCurrentTokenOptions(queryBeforeCursor, out lastComponent);
-
-
-        //}
-
-        public IntelliSenseGuidance GetCurrentTokenOptions(string queryBeforeCursor)
-        {
-            IntelliSenseGuidance defaultGuidance = new IntelliSenseGuidance(String.Empty, CurrentTokenCategory.ColumnName | CurrentTokenCategory.Value);
-
-            // If the query is empty, return the guidance for the beginning of the first term
-            if (String.IsNullOrEmpty(queryBeforeCursor)) return defaultGuidance;
-
-            // Parse the query
-            IExpression query = QueryParser.Parse(queryBeforeCursor);
-
-            // If the query had parse errors, return empty guidance
-            if (query is EmptyExpression) return new IntelliSenseGuidance(String.Empty, CurrentTokenCategory.None);
-
-            // Get the last query term to look at the IntelliSense guidance
-            TermExpression lastTerm = query.GetLastTerm();
-
-            // If no last term, return first term guidance (ex: inside new '('
-            if (lastTerm == null) return defaultGuidance;
-
-            // Otherwise, grab the last term guidance
-            IntelliSenseGuidance guidance = lastTerm.Guidance;
-
-            return guidance;
-        }
-    }
-
     [TestClass]
-    public class QueryIntelliSenseTests
+    public class QueryIntelliSenseProviderTests
     {
         [TestMethod]
         public void QueryIntelliSense_TokenOptionWalkthrough()
         {
-            QueryIntelliSenseProvider p = new QueryIntelliSenseProvider();
+            QueryIntelliSense p = new QueryIntelliSense();
 
-            // Walkthrough types: "BareValue : Value AnotherValue !([Analyzer] == \"true\" || Something) AND \"Target\""
+            // This walkthrough checks what IntelliSense thinks while fully typing the query:
+            //    "BareValue : Value AnotherValue !([Analyzer] == \"true\" || Something) AND \"Target\""
             //  It covers:
             //   - BareValue distinguished between column name (after operator) or values (after space, next boolean operator)
             //   - ":" still suggests operator because it could be "::"
@@ -163,7 +71,7 @@ namespace Arriba.Test.Model.Query
         [TestMethod]
         public void QueryIntelliSense_TokenOptionBasics()
         {
-            QueryIntelliSenseProvider p = new QueryIntelliSenseProvider();
+            QueryIntelliSense p = new QueryIntelliSense();
 
             // "[An" -> ColumnName only [explicit column name escaping]
             Assert.AreEqual("[An] [ColumnName]", p.GetCurrentTokenOptions("[An").ToString());
