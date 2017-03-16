@@ -31,4 +31,20 @@ namespace Arriba.Model.Expressions
         /// <returns>Children of this expression, empty if none</returns>
         IList<IExpression> Children();
     }
+
+    public static class IExpressionExtensions
+    {
+        public static TermExpression GetLastTerm(this IExpression query)
+        {
+            IList<IExpression> children = query.Children();
+
+            if (children == null || children.Count == 0)
+            {
+                if (query is TermExpression) return (TermExpression)query;
+                return null;
+            }
+
+            return GetLastTerm(children[children.Count - 1]);
+        }
+    }
 }
