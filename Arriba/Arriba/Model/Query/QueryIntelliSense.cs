@@ -12,7 +12,9 @@ namespace Arriba.Model.Query
         BooleanOperator = 0x1,
         ColumnName = 0x2,
         CompareOperator = 0x4,
-        Value = 0x8
+        TermPrefixes = 0x8,
+        Value = 0x10,
+        Term = TermPrefixes | ColumnName | Value
     }
 
     public struct IntelliSenseGuidance
