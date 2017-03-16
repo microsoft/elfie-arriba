@@ -48,8 +48,8 @@ namespace Arriba.Test.Model.Query
             Assert.AreEqual("(Priority <= 3 AND (*:verified OR *:chec))", QueryParser.Parse("Priority <= 3 && (verified || chec").ToString());
 
             // Trailing operator
-            Assert.AreEqual("Priority <= 3", QueryParser.Parse("Priority <= 3 &&").ToString());
-            Assert.AreEqual("Priority <= 3", QueryParser.Parse("Priority <= 3 ||").ToString());
+            Assert.AreEqual("(Priority <= 3 AND *:\"\")", QueryParser.Parse("Priority <= 3 &&").ToString());
+            Assert.AreEqual("(Priority <= 3 OR *:\"\")", QueryParser.Parse("Priority <= 3 ||").ToString());
 
             // Non-identifier junk
             Assert.AreEqual("", QueryParser.Parse("<<<<>>>>").ToString());
