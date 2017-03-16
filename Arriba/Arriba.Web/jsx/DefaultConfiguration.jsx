@@ -1,4 +1,4 @@
-﻿// zDefaultConfiguration.jsx contains default configuration settings for this site instance.
+﻿// DefaultConfiguration.jsx contains default configuration settings for this site instance.
 // Add a copy in configuration\configuration.jsx to override these settings.
 
     export default {

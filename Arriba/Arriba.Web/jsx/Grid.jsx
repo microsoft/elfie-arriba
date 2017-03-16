@@ -3,7 +3,7 @@ import QueryStats from "./QueryStats"
 import SearchHeader from "./SearchHeader"
 
 // NOTE: Depends on configuration from zConfiguration.jsx.
-import defaultConfiguration from "./zDefaultConfiguration";
+import defaultConfiguration from "./DefaultConfiguration";
 var configuration = defaultConfiguration;
 var optionalContext = require.context("..", true, /\.\/configuration\/zConfiguration\.jsx/);
 if (optionalContext.keys().includes("./configuration/zConfiguration.jsx")) {
