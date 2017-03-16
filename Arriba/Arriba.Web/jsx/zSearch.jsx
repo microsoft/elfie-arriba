@@ -1,4 +1,21 @@
-﻿// NOTE: Depends on configuration from zConfiguration.jsx.
+﻿import ErrorPage from "./ErrorPage";
+import QueryStats from "./QueryStats";
+import SearchHeader from "./SearchHeader";
+
+import InfiniteScroll from "./InfiniteScroll";
+import SplitPane from "./SplitPane";
+import SyntaxHelp from "./SyntaxHelp";
+
+import ResultDetails from "./ResultDetails";
+import ResultListing from "./ResultListing";
+
+// NOTE: Depends on configuration from zConfiguration.jsx.
+import defaultConfiguration from "./zDefaultConfiguration";
+var configuration = defaultConfiguration;
+var optionalContext = require.context("..", true, /\.\/configuration\/zConfiguration\.jsx/);
+if (optionalContext.keys().includes("./configuration/zConfiguration.jsx")) {
+    configuration = optionalContext("./configuration/zConfiguration.jsx").default
+}
 
 // SearchMain wraps the overall search UI
 var SearchMain = React.createClass({

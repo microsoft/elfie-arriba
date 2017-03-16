@@ -8,7 +8,9 @@ IF EXIST "%1" (
 )
 
 ECHO - Building Website...
-ECHO CALL "%~dp0Arriba.Web\node_modules\.bin\babel.cmd" %BabelBuildPaths% --out-file %~dp0Arriba.Web/lib/Search.js --source-maps true
-CALL "%~dp0Arriba.Web\node_modules\.bin\babel.cmd" %BabelBuildPaths% --out-file %~dp0Arriba.Web/lib/Search.js --source-maps true
+
+pushd "%~dp0Arriba.Web
+CALL webpack
+popd
 
 :: Can add --no-comments --minified to reduce the bundle, but this version prefers easier debuggability.

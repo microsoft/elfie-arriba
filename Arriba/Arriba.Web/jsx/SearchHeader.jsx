@@ -1,5 +1,5 @@
 ﻿// SearchHeader contains the top bar - branching, the search box, and top-level buttons
-var SearchHeader = React.createClass({
+export default React.createClass({
     componentDidMount: function() {
         ReactDOM.findDOMNode(this.refs.searchBox).focus();
     },
