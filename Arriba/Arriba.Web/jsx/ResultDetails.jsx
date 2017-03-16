@@ -1,4 +1,4 @@
-﻿import DetailsTable from "./_Components";
+﻿import DetailsTable from "./DetailsTable";
 
 // ResultDetails shows (default formatted) details for an item when it was clicked.
 export default React.createClass({
