@@ -456,15 +456,27 @@ a:visited:hover {
     padding: 48px 24px;
 }
 
-/* Make the heading large white text on red, centered */
+/* Make the heading large white text on red, centered, left-aligned. */
+/* Make the status code smaller, right-aligned. */
 .errorPage h1 {
-    font-size: 24pt;
     color: white;
     background: #e81123;
     padding: 12px;
     margin: auto;
     width: 50%;
     border: 2px solid #e81123;
+    display: flex;
+    align-items: center;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.errorPage h1 > .errorTitle {
+    font-size: 24pt;
+}
+
+.errorPage h1 > .errorStatus {
+    font-size: 16px;
 }
 
 /* Make error content centered, red border, spaced */

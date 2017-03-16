@@ -3,7 +3,10 @@ export default React.createClass({
     render: function () {
         return (
             <div className="errorPage">
-                <h1>{this.props.title}</h1>
+                <h1>
+                    <span className="errorTitle">{this.props.title}</span>
+                    <span className="errorStatus">{this.props.status == 0 ? "" : this.props.status}</span>
+                </h1>
                 <article>
                     <p>
                         {this.props.message}
