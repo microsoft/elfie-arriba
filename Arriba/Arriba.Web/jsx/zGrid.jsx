@@ -447,10 +447,10 @@ var GridMain = React.createClass({
             function (xhr, status, err) {
                 this.setState({ allCountData: [], error: "Error: Server didn't respond to [" + xhr.url + "]. " + err });
 
-                if (status === 500 || status === 404) {
-                    this.setState({ blockingErrorTitle: "Service Unavailable", blockingErrorContent: this.props.serviceUnavailableContent });
-                } else {
+                if (status === 401) {
                     this.setState({ blockingErrorTitle: "Access Denied", blockingErrorContent: this.props.accessDeniedContent });
+                } else {
+                    this.setState({ blockingErrorTitle: "Service Unavailable", blockingErrorContent: this.props.serviceUnavailableContent });
                 }
                 console.error(xhr.url, status, err.toString());
             }.bind(this),
