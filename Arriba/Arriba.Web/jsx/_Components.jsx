@@ -1,6 +1,6 @@
 ﻿
 // Write a simple table with name and value for each property in a data set
-var DetailsTable = React.createClass({
+export default React.createClass({
     onAddClause: function (e) {
         var name = e.target.getAttribute("data");
         this.props.onAddClause(name, stripHighlight(this.props.data[name]));
@@ -40,22 +40,6 @@ var DetailsTable = React.createClass({
                     {details}
                 </tbody>
             </table>
-        );
-    }
-});
-
-// An error page to show in place of all content when access is denied or the site is down.
-var ErrorPage = React.createClass({
-    render: function () {
-        return (
-            <div className="errorPage">
-                <h1>{this.props.title}</h1>
-                <article>
-                    <p>
-                        {this.props.message}
-                    </p>
-                </article>
-            </div>
         );
     }
 });

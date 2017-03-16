@@ -9,7 +9,7 @@
     Page updating on the InfiniteScroll class tells it that it can call loadMore again (the previous loadMore is complete).
     hasMoreData is set to false when there are no more items to load and loadMore should no longer be called.
 */
-var InfiniteScroll = React.createClass({
+export default React.createClass({
     handleScroll: function (e) {
         var element = e.target;
         if (e.target === this.refs.scrollContainer) {

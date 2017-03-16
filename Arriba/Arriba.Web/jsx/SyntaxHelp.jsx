@@ -1,4 +1,4 @@
-﻿var SyntaxHelp = React.createClass({
+﻿export default React.createClass({
     getInitialState: function () {
         return { showHelp: (this.props.showHelp) };
     },
