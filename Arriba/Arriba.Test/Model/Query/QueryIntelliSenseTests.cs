@@ -77,19 +77,26 @@ namespace Arriba.Test.Model.Query
         public IntelliSenseGuidance GetCurrentTokenOptions(string queryBeforeCursor)
         {
             IntelliSenseGuidance defaultGuidance = new IntelliSenseGuidance(String.Empty, CurrentTokenCategory.ColumnName | CurrentTokenCategory.Value);
+
+            // If the query is empty, return the guidance for the beginning of the first term
             if (String.IsNullOrEmpty(queryBeforeCursor)) return defaultGuidance;
 
+            // Parse the query
             IExpression query = QueryParser.Parse(queryBeforeCursor);
+
+            // If the query had parse errors, return empty guidance
+            if (query is EmptyExpression) return new IntelliSenseGuidance(String.Empty, CurrentTokenCategory.None);
+
+            // Get the last query term to look at the IntelliSense guidance
             TermExpression lastTerm = GetLastTerm(query);
 
+            // If no last term, return first term guidance (ex: inside new '('
             if (lastTerm == null)
             {
                 return defaultGuidance;
             }
-            else
-            {
-                return lastTerm.Guidance;
-            }
+
+            return lastTerm.Guidance;
         }
 
         private TermExpression GetLastTerm(IExpression query)
@@ -143,19 +150,38 @@ namespace Arriba.Test.Model.Query
             Assert.AreEqual("[] [Value]", p.GetCurrentTokenOptions("Analyzer: ").ToString());
             Assert.AreEqual("[V] [Value]", p.GetCurrentTokenOptions("Analyzer:V").ToString());
 
+            // Multi-character operator prefixes *right at end* should still suggest operators
             // "Analyzer >" -> CompareOperator
+            Assert.AreEqual("[>] [CompareOperator]", p.GetCurrentTokenOptions("Analyzer >").ToString());
+            Assert.AreEqual("[>] [CompareOperator]", p.GetCurrentTokenOptions("[Analyzer] >").ToString());
 
-            // "[Analyzer] !" -> CompareOperator
-            // "[Analyzer] |" -> CompareOperator
+            Assert.AreEqual("[!] [BooleanOperator, CompareOperator]", p.GetCurrentTokenOptions("Analyzer !").ToString());
+            Assert.AreEqual("[!] [CompareOperator]", p.GetCurrentTokenOptions("[Analyzer] !").ToString());
 
+            Assert.AreEqual("[|] [BooleanOperator, CompareOperator]", p.GetCurrentTokenOptions("Analyzer |").ToString());
+            Assert.AreEqual("[|] [CompareOperator]", p.GetCurrentTokenOptions("[Analyzer] |").ToString());
 
-            // Invalid
-            // \"Analysis\"=\"Interesting\"
-            // [Analyzer] BareTerm
-            // [Analyzer] \"QuotedValue\"
-            // )
+            // Multi-character operator prefix with trailing space means it's not a comparison.
+            Assert.AreEqual("[] [Value]", p.GetCurrentTokenOptions("Analyzer > ").ToString());
+            Assert.AreEqual("[] [Value]", p.GetCurrentTokenOptions("[Analyzer] > ").ToString());
 
+            // NOT WORKING
+            // Trailing '|' will be parsed as 'OR' but no new term to indicate situation
+            // Return empty term with valid boolean operator first in this case?
+            //Assert.AreEqual("[] [ColumnName, Value]", p.GetCurrentTokenOptions("Analyzer | ").ToString());
+            //Assert.AreEqual("[] [ColumnName, Value]", p.GetCurrentTokenOptions("[Analyzer] | ").ToString());
 
+            // Trailing '!' is a negation on the next term. Should suggest term starts
+            // Return empty term with valid boolean operator first in this case?
+            //Assert.AreEqual("[] [ColumnName, Value]", p.GetCurrentTokenOptions("Analyzer ! ").ToString());
+            //Assert.AreEqual("[] [ColumnName, Value]", p.GetCurrentTokenOptions("[Analyzer] ! ").ToString());
+
+            // Explicit column name without operator or value turns into [Column] != ""
+            Assert.AreEqual("[BareTerm] [ColumnName, Value]", p.GetCurrentTokenOptions("[Analyzer] BareTerm").ToString());
+            Assert.AreEqual("[] [BooleanOperator, ColumnName, Value]", p.GetCurrentTokenOptions("[Analyzer] \"QuotedValue\"").ToString());
+
+            // Invalid Queries
+            Assert.AreEqual("[] [None]", p.GetCurrentTokenOptions("\"Analysis\"=\"Interesting\"").ToString());
         }
     }
 }

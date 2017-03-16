@@ -185,6 +185,16 @@ namespace Arriba.Model.Query
         }
 
         /// <summary>
+        ///  Return true if this is the last token (the next one will be the end)
+        ///  specifically without following whitespace.
+        /// </summary>
+        /// <returns>true if there are no more tokens or trailing whitespace, false otherwise</returns>
+        public bool IsLastToken()
+        {
+            return CurrentIndex >= Text.Length;
+        }
+
+        /// <summary>
         ///  Advance the scanner to the next Token in the source. Returns whether
         ///  the end of the input has been reached.
         /// </summary>
