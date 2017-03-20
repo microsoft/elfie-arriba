@@ -1,5 +1,7 @@
-﻿using Arriba.Model.Column;
+﻿using Arriba.Extensions;
+using Arriba.Model.Column;
 using Arriba.Model.Expressions;
+using Arriba.Structures;
 using System;
 using System.Collections.Generic;
 
@@ -51,9 +53,24 @@ namespace Arriba.Model.Query
     /// </summary>
     public class IntelliSenseItem
     {
+        /// <summary>
+        ///  Grammatical Gategory of item [BooleanOperator, ColumnName, etc]
+        /// </summary>
         public QueryTokenCategory Category { get; set; }
+
+        /// <summary>
+        ///  Value to show in IntelliSense
+        /// </summary>
         public string Value { get; set; }
+
+        /// <summary>
+        ///  Hint Text to show in IntelliSense
+        /// </summary>
         public string Hint { get; set; }
+
+        /// <summary>
+        ///  Actual value to append to query when completed
+        /// </summary>
         public string CompleteAs { get; set; }
 
         public IntelliSenseItem(QueryTokenCategory category, string value, string hint) : this(category, value, hint, value)
@@ -73,13 +90,41 @@ namespace Arriba.Model.Query
         }
     }
 
+    /// <summary>
+    ///  IntelliSenseResult is the response from GetIntelliSenseItems.
+    /// </summary>
     public class IntelliSenseResult
     {
+        /// <summary>
+        ///  The User Query for which IntelliSense items were requested.
+        /// </summary>
+        public string Query;
+
+        /// <summary>
+        ///  The last incomplete token being completed. This value must
+        ///  be removed from the end of the query and replaced with the 
+        ///  'CompleteAs' value and non-whitespace completion character to
+        ///  complete a value.
+        /// </summary>
         public string CurrentIncompleteValue;
+
+        /// <summary>
+        ///  The set of suggested completions in ranked order, best match
+        ///  first.
+        /// </summary>
         public IList<IntelliSenseItem> Suggestions;
+
+        /// <summary>
+        ///  The set of characters which should cause the selected
+        ///  IntelliSenseItem to be completed immediately in this state
+        /// </summary>
         public IReadOnlyList<char> CompletionCharacters;
     }
 
+    /// <summary>
+    ///  QueryIntelliSense provides IntelliSense support for the Arriba Query Syntax for a given set of in-scope tables
+    ///  and a provided query.
+    /// </summary>
     public class QueryIntelliSense
     {
         #region Static Token IntelliSense Items
@@ -113,11 +158,34 @@ namespace Arriba.Model.Query
         };
 
         private static IntelliSenseItem Value = new IntelliSenseItem(QueryTokenCategory.Value, "\"<value>\"", "value (quote escaped)", String.Empty);
+        private static IntelliSenseItem StringValue = new IntelliSenseItem(QueryTokenCategory.Value, "\"<string>\"", "string value (quote escaped)", String.Empty);
+        private static IntelliSenseItem DateTimeValue = new IntelliSenseItem(QueryTokenCategory.Value, "\"<DateTime>\"", "DateTime (ex: \"2017-03-20\")", String.Empty);
+        private static IntelliSenseItem TimeSpanValue = new IntelliSenseItem(QueryTokenCategory.Value, "\"<TimeSpan>\"", "TimeSpan (ex: \"7.12:00:00\")", String.Empty);
+        private static IntelliSenseItem NumericValue = new IntelliSenseItem(QueryTokenCategory.Value, "\"<Number>\"", "numeric value", String.Empty);
+
+        private static List<IntelliSenseItem> BooleanValues = new List<IntelliSenseItem>()
+        {
+            new IntelliSenseItem(QueryTokenCategory.BooleanOperator, "0", "false"),
+            new IntelliSenseItem(QueryTokenCategory.BooleanOperator, "1", "true"),
+            new IntelliSenseItem(QueryTokenCategory.BooleanOperator, "false", String.Empty),
+            new IntelliSenseItem(QueryTokenCategory.BooleanOperator, "true", String.Empty)
+        };
 
         private static char[] ColumnNameCompletionCharacters = new char[] { ':', '<', '>', '=', '!' };
         #endregion
 
-        public string GetCompletedQuery(string queryBeforeCursor, IntelliSenseResult result, IntelliSenseItem selectedItem, char completionCharacter)
+        /// <summary>
+        ///  CompleteQuery takes a query before the cursor, the IntelliSenseResult, a selected IntelliSenseItem, and the
+        ///  completion character and returns the proper completed query.
+        ///  
+        ///  It removes the token in progress, adds the 'CompleteAs' value, a space, and the non-whitespace completion character.
+        /// </summary>
+        /// <param name="queryBeforeCursor">Query up to the cursor position</param>
+        /// <param name="result">IntelliSenseResult from GetIntelliSenseItems</param>
+        /// <param name="selectedItem">IntelliSenseItem selected</param>
+        /// <param name="completionCharacter">Completion Character typed</param>
+        /// <returns>New Arriba Query after completion</returns>
+        public string CompletedQuery(string queryBeforeCursor, IntelliSenseResult result, IntelliSenseItem selectedItem, char completionCharacter)
         {
             // If there is no completion for this item (grammar suggestions), just append the character
             if (String.IsNullOrEmpty(selectedItem.CompleteAs)) return queryBeforeCursor + completionCharacter;
@@ -151,7 +219,8 @@ namespace Arriba.Model.Query
         public IntelliSenseResult GetIntelliSenseItems(string queryBeforeCursor, IReadOnlyCollection<Table> targetTables)
         {
             // Get grammatical categories valid after the query prefix
-            IntelliSenseGuidance guidance = GetCurrentTokenOptions(queryBeforeCursor);
+            TermExpression lastTerm;
+            IntelliSenseGuidance guidance = GetCurrentTokenOptions(queryBeforeCursor, out lastTerm);
 
             // Build a ranked list of suggestions - preferred token categories, filtered to the prefix already typed
             List<IntelliSenseItem> suggestions = new List<IntelliSenseItem>();
@@ -187,7 +256,34 @@ namespace Arriba.Model.Query
 
             if (guidance.Options.HasFlag(QueryTokenCategory.Value))
             {
-                suggestions.Add(Value);
+                Type columnType = FindSingleMatchingColumnType(targetTables, lastTerm);
+                if (columnType == null)
+                {
+                    suggestions.Add(Value);
+                }
+                else
+                {
+                    if(columnType == typeof(ByteBlock))
+                    {
+                        suggestions.Add(StringValue);
+                    }
+                    else if(columnType == typeof(bool))
+                    {
+                        AddWhenPrefixes(BooleanValues, guidance.Value, suggestions);
+                    }
+                    else if(columnType == typeof(DateTime))
+                    {
+                        suggestions.Add(DateTimeValue);
+                    }
+                    else if(columnType == typeof(TimeSpan))
+                    {
+                        suggestions.Add(TimeSpanValue);
+                    }
+                    else
+                    {
+                        suggestions.Add(new IntelliSenseItem(QueryTokenCategory.Value, String.Format("<{0}>", columnType.Name), String.Empty));
+                    }
+                }
             }
 
             if (guidance.Options.HasFlag(QueryTokenCategory.TermPrefixes))
@@ -205,11 +301,19 @@ namespace Arriba.Model.Query
                 completionCharacters.AddRange(ColumnNameCompletionCharacters);
             }
 
-            return new IntelliSenseResult() { CurrentIncompleteValue = guidance.Value, Suggestions = suggestions, CompletionCharacters = completionCharacters };
+            return new IntelliSenseResult() { Query = queryBeforeCursor, CurrentIncompleteValue = guidance.Value, Suggestions = suggestions, CompletionCharacters = completionCharacters };
         }
 
-        internal IntelliSenseGuidance GetCurrentTokenOptions(string queryBeforeCursor)
+        /// <summary>
+        ///  Get the grammatical categories and value being completed at the given query position.
+        ///  This is the pure grammar part of IntelliSense determination.
+        /// </summary>
+        /// <param name="queryBeforeCursor">Query up to where the cursor is placed</param>
+        /// <param name="lastTerm">The TermExpression in progress as parsed</param>
+        /// <returns>IntelliSenseGuidance showing the token in progress and possible grammar categories for it</returns>
+        internal IntelliSenseGuidance GetCurrentTokenOptions(string queryBeforeCursor, out TermExpression lastTerm)
         {
+            lastTerm = null;
             IntelliSenseGuidance defaultGuidance = new IntelliSenseGuidance(String.Empty, QueryTokenCategory.ColumnName | QueryTokenCategory.Value);
 
             // If the query is empty, return the guidance for the beginning of the first term
@@ -222,7 +326,7 @@ namespace Arriba.Model.Query
             if (query is EmptyExpression) return new IntelliSenseGuidance(String.Empty, QueryTokenCategory.None);
 
             // Get the last query term to look at the IntelliSense guidance
-            TermExpression lastTerm = query.GetLastTerm();
+            lastTerm = query.GetLastTerm();
 
             // If no last term, return first term guidance (ex: inside new '('
             if (lastTerm == null) return defaultGuidance;
@@ -231,6 +335,36 @@ namespace Arriba.Model.Query
             IntelliSenseGuidance guidance = lastTerm.Guidance;
 
             return guidance;
+        }
+
+        internal IntelliSenseGuidance GetCurrentTokenOptions(string queryBeforeCursor)
+        {
+            TermExpression unused;
+            return GetCurrentTokenOptions(queryBeforeCursor, out unused);
+        }
+
+        private static Type FindSingleMatchingColumnType(IReadOnlyCollection<Table> targetTables, TermExpression lastTerm)
+        {
+            Type matchingColumnType = null;
+
+            if (lastTerm != null && !String.IsNullOrEmpty(lastTerm.ColumnName) && lastTerm.ColumnName != "*")
+            {
+                foreach (Table table in targetTables)
+                {
+                    foreach (ColumnDetails column in table.ColumnDetails)
+                    {
+                        if (column.Name.Equals(lastTerm.ColumnName, StringComparison.OrdinalIgnoreCase))
+                        {
+                            // If there's already a match, we have multiple matches
+                            if (matchingColumnType != null) return null;
+
+                            matchingColumnType = table.GetColumnType(column.Name);
+                        }
+                    }
+                }
+            }
+
+            return matchingColumnType;
         }
 
         private static void AddWhenPrefixes(ICollection<IntelliSenseItem> items, string prefix, List<IntelliSenseItem> resultSet)
