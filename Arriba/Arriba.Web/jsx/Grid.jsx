@@ -3,11 +3,11 @@ import QueryStats from "./QueryStats"
 import SearchHeader from "./SearchHeader"
 
 // NOTE: Depends on configuration from zConfiguration.jsx.
-import defaultConfiguration from "./zDefaultConfiguration";
+import defaultConfiguration from "./DefaultConfiguration";
 var configuration = defaultConfiguration;
-var optionalContext = require.context("..", true, /\.\/configuration\/zConfiguration\.jsx/);
-if (optionalContext.keys().includes("./configuration/zConfiguration.jsx")) {
-    configuration = optionalContext("./configuration/zConfiguration.jsx").default
+var optionalContext = require.context("..", true, /\.\/configuration\/Configuration\.jsx/);
+if (optionalContext.keys().includes("./configuration/Configuration.jsx")) {
+    configuration = optionalContext("./configuration/Configuration.jsx").default
 }
 
 // The GridFunctionCell is the corner cell which shows the aggregation function and column [COUNT(*)].
@@ -294,6 +294,7 @@ var GridMain = React.createClass({
     getInitialState: function () {
         return {
             blockingErrorTitle: null,
+            blockingErrorStatus: null,
             blockingErrorContent: null,
 
             query: this.props.params.q || "",
@@ -448,9 +449,9 @@ var GridMain = React.createClass({
                 this.setState({ allCountData: [], error: "Error: Server didn't respond to [" + xhr.url + "]. " + err });
 
                 if (status === 401) {
-                    this.setState({ blockingErrorTitle: "Access Denied", blockingErrorContent: this.props.accessDeniedContent });
+                    this.setState({ blockingErrorTitle: "Access Denied", blockingErrorStatus: status, blockingErrorContent: this.props.accessDeniedContent });
                 } else {
-                    this.setState({ blockingErrorTitle: "Service Unavailable", blockingErrorContent: this.props.serviceUnavailableContent });
+                    this.setState({ blockingErrorTitle: "Service Unavailable", blockingErrorStatus: status, blockingErrorContent: this.props.serviceUnavailableContent });
                 }
                 console.error(xhr.url, status, err.toString());
             }.bind(this),
@@ -576,7 +577,7 @@ var GridMain = React.createClass({
         }
     },
     render: function () {
-        if (this.state.blockingErrorTitle) return <ErrorPage title={this.state.blockingErrorTitle} message={this.state.blockingErrorContent } />;
+        if (this.state.blockingErrorTitle) return <ErrorPage title={this.state.blockingErrorTitle} status={this.state.blockingErrorStatus} message={this.state.blockingErrorContent } />;
 
         var headings = [];
         var gridRows = [];

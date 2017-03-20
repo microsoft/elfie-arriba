@@ -10,11 +10,11 @@ import ResultDetails from "./ResultDetails";
 import ResultListing from "./ResultListing";
 
 // NOTE: Depends on configuration from zConfiguration.jsx.
-import defaultConfiguration from "./zDefaultConfiguration";
+import defaultConfiguration from "./DefaultConfiguration";
 var configuration = defaultConfiguration;
-var optionalContext = require.context("..", true, /\.\/configuration\/zConfiguration\.jsx/);
-if (optionalContext.keys().includes("./configuration/zConfiguration.jsx")) {
-    configuration = optionalContext("./configuration/zConfiguration.jsx").default
+var optionalContext = require.context("..", true, /\.\/configuration\/Configuration\.jsx/);
+if (optionalContext.keys().includes("./configuration/Configuration.jsx")) {
+    configuration = optionalContext("./configuration/Configuration.jsx").default
 }
 
 // SearchMain wraps the overall search UI
@@ -22,6 +22,7 @@ var SearchMain = React.createClass({
     getInitialState: function () {
         return {
             blockingErrorTitle: null,
+            blockingErrorStatus: null,
             blockingErrorContent: null,
 
             tables: [],
@@ -155,9 +156,9 @@ var SearchMain = React.createClass({
             }.bind(this),
             function (xhr, status, err) {
                 if (status === 401) {
-                    this.setState({ blockingErrorTitle: "Access Denied", blockingErrorContent: this.props.accessDeniedContent });
+                    this.setState({ blockingErrorTitle: "Access Denied", blockingErrorStatus: status, blockingErrorContent: this.props.accessDeniedContent });
                 } else {
-                    this.setState({ blockingErrorTitle: "Service Unavailable", blockingErrorContent: this.props.serviceUnavailableContent });
+                    this.setState({ blockingErrorTitle: "Service Unavailable", blockingErrorStatus: status, blockingErrorContent: this.props.serviceUnavailableContent });
                 }
                 console.error(xhr.url, status, err.toString());
             }.bind(this)
@@ -351,7 +352,7 @@ var SearchMain = React.createClass({
         }
     },
     render: function () {
-        if(this.state.blockingErrorTitle) return <ErrorPage title={this.state.blockingErrorTitle} message={this.state.blockingErrorContent} />;
+        if(this.state.blockingErrorTitle) return <ErrorPage title={this.state.blockingErrorTitle} status={this.state.blockingErrorStatus} message={this.state.blockingErrorContent} />;
 
         var detailsView = null;
         var customDetailsView = ResultDetails;
