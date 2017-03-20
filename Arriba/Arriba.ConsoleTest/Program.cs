@@ -6,29 +6,70 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 
-using Arriba.Diagnostics;
 using Arriba.Extensions;
 using Arriba.Model;
 using Arriba.Model.Aggregations;
 using Arriba.Model.Query;
 using Arriba.Serialization;
 using Arriba.Structures;
+using Microsoft.CodeAnalysis.Elfie.Diagnostics;
 
 namespace Arriba.ConsoleTest
 {
+    internal class Asset
+    {
+        public string Name;
+        public string IP;
+    }
+
     internal class Program
     {
+        private static IList<Asset> Query(string query, ITable table)
+        {
+            List<Asset> results = new List<Asset>();
+
+            SelectResult result = table.Query(new SelectQuery(new string[] { "Name", "IP" }, query) { Count = 20, OrderByColumn = "Name" });
+
+            if (result.Values != null)
+            {
+                for (int row = 0; row < result.Values.RowCount; ++row)
+                {
+                    results.Add(new Asset() { Name = result.Values[row, 0].ToString(), IP = result.Values[row, 1].ToString() });
+                }
+            }
+
+            return results;
+        }
+
         private static void Main(string[] args)
         {
-            //SetCountPerformance();
-            //FromAndPerformance();
-            Table table = LoadTable("Sample");
+            Table asset = LoadTable("Asset");
 
-            //AggregateDistinctTest(table);
-            //DistinctTest(table, "Resolution", "Pri = 3");
-            SearchTest(table, "Priority = 3", false, null);
-            SearchTest(table, "editor Pri = 3", true, new string[] { "ID", "Title", "Resolution" });
-            //QueryPerformanceTest(table, "Priority = 1 AND Platform");
+            List<Table> tables = new List<Table>() { asset };
+            QueryIntelliSense i = new QueryIntelliSense();
+
+            IntelliSenseConsoleSearchInterface<Asset> csi = new IntelliSenseConsoleSearchInterface<Asset>(
+                (query) => new SearchResult<Asset>(Query(query, asset)),
+                (a, output) => output.AppendFormat("{0}\t{1}\r\n", a.Name, a.IP)
+            );
+
+            csi.ConfigureIntelliSense(
+                (query) => i.GetIntelliSenseItems(query, tables),
+                (query, result, item, c) => i.CompletedQuery(query, result, item, c)
+            );
+
+            csi.Run();
+
+
+            ////SetCountPerformance();
+            ////FromAndPerformance();
+            //Table table = LoadTable("Sample");
+
+            ////AggregateDistinctTest(table);
+            ////DistinctTest(table, "Resolution", "Pri = 3");
+            //SearchTest(table, "Priority = 3", false, null);
+            //SearchTest(table, "editor Pri = 3", true, new string[] { "ID", "Title", "Resolution" });
+            ////QueryPerformanceTest(table, "Priority = 1 AND Platform");
         }
 
         private static void FromAndPerformance()
@@ -92,7 +133,7 @@ namespace Arriba.ConsoleTest
             Trace.Write(String.Format("Loading Table '{0}'...\r\n", tableName));
 
             Trace.Write(String.Format("\tDisk Size: {0}\r\n", BinarySerializable.Size(String.Format(@"Tables\{0}", tableName)).SizeString()));
-            Trace.Write(String.Format("\tMemory Use: {0}\r\n", Memory.MeasureObjectSize(() => { table.Load(tableName); return table; }).SizeString()));
+            Trace.Write(String.Format("\tMemory Use: {0}\r\n", Arriba.Diagnostics.Memory.MeasureObjectSize(() => { table.Load(tableName); return table; }).SizeString()));
 
 
             return table;
