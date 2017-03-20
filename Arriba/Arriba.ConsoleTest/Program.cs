@@ -12,55 +12,14 @@ using Arriba.Model.Aggregations;
 using Arriba.Model.Query;
 using Arriba.Serialization;
 using Arriba.Structures;
-using Microsoft.CodeAnalysis.Elfie.Diagnostics;
+using Arriba.Diagnostics;
 
 namespace Arriba.ConsoleTest
 {
-    internal class Asset
-    {
-        public string Name;
-        public string IP;
-    }
-
     internal class Program
     {
-        private static IList<Asset> Query(string query, ITable table)
-        {
-            List<Asset> results = new List<Asset>();
-
-            SelectResult result = table.Query(new SelectQuery(new string[] { "Name", "IP" }, query) { Count = 20, OrderByColumn = "Name" });
-
-            if (result.Values != null)
-            {
-                for (int row = 0; row < result.Values.RowCount; ++row)
-                {
-                    results.Add(new Asset() { Name = result.Values[row, 0].ToString(), IP = result.Values[row, 1].ToString() });
-                }
-            }
-
-            return results;
-        }
-
         private static void Main(string[] args)
         {
-            Table asset = LoadTable("Asset");
-
-            List<Table> tables = new List<Table>() { asset };
-            QueryIntelliSense i = new QueryIntelliSense();
-
-            IntelliSenseConsoleSearchInterface<Asset> csi = new IntelliSenseConsoleSearchInterface<Asset>(
-                (query) => new SearchResult<Asset>(Query(query, asset)),
-                (a, output) => output.AppendFormat("{0}\t{1}\r\n", a.Name, a.IP)
-            );
-
-            csi.ConfigureIntelliSense(
-                (query) => i.GetIntelliSenseItems(query, tables),
-                (query, result, item, c) => i.CompletedQuery(query, result, item, c)
-            );
-
-            csi.Run();
-
-
             ////SetCountPerformance();
             ////FromAndPerformance();
             //Table table = LoadTable("Sample");
