@@ -6,11 +6,22 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Reflection;
 using System.Reflection.Metadata;
-using System.Reflection.Metadata.Decoding;
 using System.Text;
 
 namespace Microsoft.CodeAnalysis.Elfie.Indexer.Crawlers
 {
+    public class DisassemblingGenericContext
+    {
+        public DisassemblingGenericContext(ImmutableArray<string> typeParameters, ImmutableArray<string> methodParameters)
+        {
+            MethodParameters = methodParameters;
+            TypeParameters = typeParameters;
+        }
+
+        public ImmutableArray<string> MethodParameters { get; }
+        public ImmutableArray<string> TypeParameters { get; }
+    }
+
     /// <summary>
     ///  StringSignatureProvider converts type names and signatures into a canonical
     ///  string form almost identical to Roslyn's MinimallyQualifiedFormat.
@@ -18,7 +29,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Indexer.Crawlers
     ///  The logic here is very similar to src/System.Reflection.Metadata/tests/Metadata/Decoding/DisassemblingTypeProvider.cs,
     ///  modified to conform to the Roslyn MinimallyQualifiedFormat.
     /// </summary>
-    public class StringSignatureProvider : ISignatureTypeProvider<string>
+    public class StringSignatureProvider : ISignatureTypeProvider<string, DisassemblingGenericContext>
     {
         public MetadataReader mdReader { get; set; }
         public TypeDefinition ContainingType { get; set; }
@@ -99,7 +110,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Indexer.Crawlers
             }
         }
 
-        public virtual string GetTypeFromDefinition(MetadataReader reader, TypeDefinitionHandle handle, SignatureTypeHandleCode code = SignatureTypeHandleCode.Unresolved)
+        public virtual string GetTypeFromDefinition(MetadataReader reader, TypeDefinitionHandle handle, byte rawTypeKind = 0)
         {
             TypeDefinition definition = reader.GetTypeDefinition(handle);
 
@@ -110,13 +121,13 @@ namespace Microsoft.CodeAnalysis.Elfie.Indexer.Crawlers
             if (this.IncludeNestedTypeContaininingTypeName && definition.Attributes.IsNested())
             {
                 TypeDefinitionHandle declaringTypeHandle = definition.GetDeclaringType();
-                return GetTypeFromDefinition(reader, declaringTypeHandle, SignatureTypeHandleCode.Unresolved) + "." + name;
+                return GetTypeFromDefinition(reader, declaringTypeHandle, 0) + "." + name;
             }
 
             return name;
         }
 
-        public virtual string GetTypeFromReference(MetadataReader reader, TypeReferenceHandle handle, SignatureTypeHandleCode code = SignatureTypeHandleCode.Unresolved)
+        public virtual string GetTypeFromReference(MetadataReader reader, TypeReferenceHandle handle, byte rawTypeKind = 0)
         {
             TypeReference reference = reader.GetTypeReference(handle);
             Handle scope = reference.ResolutionScope;
@@ -139,7 +150,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Indexer.Crawlers
                     return "[" + reader.GetString(assemblyReference.Name) + "]" + name;
 
                 case HandleKind.TypeReference:
-                    return GetTypeFromReference(reader, (TypeReferenceHandle)scope, code) + "/" + name;
+                    return GetTypeFromReference(reader, (TypeReferenceHandle)scope, rawTypeKind) + "/" + name;
 
                 default:
                     // rare cases:  ModuleDefinition means search within defs of current module (used by WinMDs for projections)
@@ -150,9 +161,9 @@ namespace Microsoft.CodeAnalysis.Elfie.Indexer.Crawlers
             }
         }
 
-        public virtual string GetTypeFromSpecification(MetadataReader reader, TypeSpecificationHandle handle, SignatureTypeHandleCode code = SignatureTypeHandleCode.Unresolved)
+        public virtual string GetTypeFromSpecification(MetadataReader reader, DisassemblingGenericContext genericContext, TypeSpecificationHandle handle, byte rawTypeKind = 0)
         {
-            return reader.GetTypeSpecification(handle).DecodeSignature(this);
+            return reader.GetTypeSpecification(handle).DecodeSignature(this, genericContext);
         }
 
         public virtual string GetSZArrayType(string elementType)
@@ -172,18 +183,14 @@ namespace Microsoft.CodeAnalysis.Elfie.Indexer.Crawlers
             return elementType;
         }
 
-        public virtual string GetGenericMethodParameter(int index)
+        public virtual string GetGenericMethodParameter(DisassemblingGenericContext genericContext, int index)
         {
-            GenericParameterHandle handle = this.ContainingMethod.GetGenericParameters()[index];
-            GenericParameter parameter = mdReader.GetGenericParameter(handle);
-            return mdReader.GetString(parameter.Name);
+            return "!!" + genericContext.MethodParameters[index];
         }
 
-        public virtual string GetGenericTypeParameter(int index)
+        public virtual string GetGenericTypeParameter(DisassemblingGenericContext genericContext, int index)
         {
-            GenericParameterHandle handle = this.ContainingType.GetGenericParameters()[index];
-            GenericParameter parameter = mdReader.GetGenericParameter(handle);
-            return mdReader.GetString(parameter.Name);
+            return "!" + genericContext.TypeParameters[index];
         }
 
         public virtual string GetPinnedType(string elementType)
@@ -191,7 +198,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Indexer.Crawlers
             return elementType + " pinned";
         }
 
-        public virtual string GetGenericInstance(string genericType, ImmutableArray<string> typeArguments)
+        public virtual string GetGenericInstantiation(string genericType, ImmutableArray<string> typeArguments)
         {
             return genericType + "<" + String.Join(", ", typeArguments) + ">";
         }
@@ -240,7 +247,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Indexer.Crawlers
             return builder.ToString();
         }
 
-        public virtual string GetTypeFromHandle(MetadataReader reader, EntityHandle handle)
+        public virtual string GetTypeFromHandle(MetadataReader reader, DisassemblingGenericContext genericContext, EntityHandle handle)
         {
             switch (handle.Kind)
             {
@@ -251,14 +258,14 @@ namespace Microsoft.CodeAnalysis.Elfie.Indexer.Crawlers
                     return GetTypeFromReference(reader, (TypeReferenceHandle)handle);
 
                 case HandleKind.TypeSpecification:
-                    return reader.GetTypeSpecification((TypeSpecificationHandle)handle).DecodeSignature(this);
+                    return GetTypeFromSpecification(reader, genericContext, (TypeSpecificationHandle)handle);
 
                 default:
                     throw new ArgumentOutOfRangeException("handle");
             }
         }
 
-        public virtual string GetModifiedType(MetadataReader reader, bool isRequired, string modifierType, string unmodifiedType)
+        public virtual string GetModifiedType(string modifierType, string unmodifiedType, bool isRequired)
         {
             return unmodifiedType + (isRequired ? " modreq(" : " modopt(") + modifierType + ")";
         }
@@ -300,6 +307,8 @@ namespace Microsoft.CodeAnalysis.Elfie.Indexer.Crawlers
             builder.Append(')');
             return builder.ToString();
         }
+
+        
     }
 
     public static class MissingExtensions
