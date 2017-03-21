@@ -7,7 +7,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Reflection.Metadata;
-using System.Reflection.Metadata.Decoding;
 using System.Reflection.Metadata.Ecma335;
 using System.Reflection.PortableExecutable;
 using System.Text;
@@ -247,7 +246,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Indexer.Crawlers
 
             StringSignatureProvider provider = new StringSignatureProvider(mdReader, mdReader.GetTypeDefinition(method.GetDeclaringType()), method);
 
-            MethodSignature<string> signature = method.DecodeSignature<string>(provider);
+            MethodSignature<string> signature = method.DecodeSignature<string, DisassemblingGenericContext>(provider, null);
             foreach (string value in signature.ParameterTypes)
             {
                 if (parameterString.Length > 0) parameterString.Append(", ");
