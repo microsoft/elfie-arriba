@@ -70,7 +70,6 @@
     <Compile Include="Extensions\SampleSerializable.cs" />
     <Compile Include="Extensions\StringExtensionsTests.cs" />
     <Compile Include="Model\AddReferenceDatabaseTests.cs" />
-    <Compile Include="Model\Column\IColumnTests.cs" />
     <Compile Include="Model\Index\MemberIndexTests.cs" />
     <Compile Include="Model\Map\ItemMapTests.cs" />
     <Compile Include="Model\MergedMembersDatabaseTests.cs" />
@@ -87,7 +86,6 @@
     <Compile Include="SampleElfieStructure.V1.cs" />
     <Compile Include="SampleElfieStructure.cs" />
     <Compile Include="Serialization\BaseTabularTests.cs" />
-    <Compile Include="Serialization\ITabularValueTests.cs" />
     <Compile Include="Serialization\TsvWriterTests.cs" />
     <Compile Include="Verify.cs" />
   </ItemGroup>
