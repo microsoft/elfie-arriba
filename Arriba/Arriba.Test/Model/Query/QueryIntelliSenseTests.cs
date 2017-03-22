@@ -98,12 +98,14 @@ namespace Arriba.Test.Model.Query
             result = qi.GetIntelliSenseItems("", Tables);
             Assert.AreEqual(allColumnNamesOrValue, string.Join(", ", result.Suggestions.Select(ii => ii.Value)));
             Assert.AreEqual("", result.CurrentIncompleteValue);
+            Assert.AreEqual("", result.CurrentCompleteValue);
             Assert.AreEqual("", result.Query);
 
             // No Query, one table: ColumnNames for single table, then bare value, then TermPrefixes
             result = qi.GetIntelliSenseItems("", new List<Table>() { Student });
             Assert.AreEqual(string.Format("Age, City, ID, Name, {0}, !, (", QueryIntelliSense.Value.Value), string.Join(", ", result.Suggestions.Select(ii => ii.Value)));
             Assert.AreEqual("", result.CurrentIncompleteValue);
+            Assert.AreEqual("", result.CurrentCompleteValue);
             Assert.AreEqual("", result.Query);
 
             // No Query, no tables: no response
@@ -117,13 +119,16 @@ namespace Arriba.Test.Model.Query
             // "Age > 10 AND (" suggests all columns (no last term)
             result = qi.GetIntelliSenseItems("Age > 10 AND ( ", Tables);
             Assert.AreEqual(allColumnNamesOrValue, string.Join(", ", result.Suggestions.Select(ii => ii.Value)));
+            Assert.AreEqual("Age > 10 AND ( ", result.CurrentCompleteValue);
             Assert.AreEqual("", result.CurrentIncompleteValue);
 
             // "[Na" must be a column name, and one of the 'Name' ones
+            // CurrentIncompleteValue is just the bare column name (no '[') for list filtering, but CurrentCompleteValue is "", so the "[" is replaced by the completion.
             result = qi.GetIntelliSenseItems("[Na", Tables);
             Assert.AreEqual("Name, Name", string.Join(", ", result.Suggestions.Select(ii => ii.Value)));
             Assert.AreEqual("Name College.Name [string] [ColumnName] ([Name]), Name Student.Name [stringset] [ColumnName] ([Name])", string.Join(", ", result.Suggestions));
             Assert.AreEqual("Na", result.CurrentIncompleteValue);
+            Assert.AreEqual("", result.CurrentCompleteValue); 
             Assert.AreEqual("[Na", result.Query);
 
             // "[SchoolSumm" should suggest nothing (no remaining column names)
@@ -158,6 +163,8 @@ namespace Arriba.Test.Model.Query
             // "WhenFounded > " suggests DateTimes
             result = qi.GetIntelliSenseItems("WhenFounded <= ", Tables);
             Assert.AreEqual(QueryIntelliSense.DateTimeValue.Value, string.Join(", ", result.Suggestions.Select(ii => ii.Value)));
+            Assert.AreEqual("WhenFounded <= ", result.CurrentCompleteValue);
+            Assert.AreEqual("", result.CurrentIncompleteValue);
 
             // "SchoolHasMascot : " suggests booleans
             result = qi.GetIntelliSenseItems("SchoolHasMascot : ", Tables);
