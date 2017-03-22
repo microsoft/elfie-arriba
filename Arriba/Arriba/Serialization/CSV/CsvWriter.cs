@@ -249,6 +249,26 @@ namespace Arriba.Serialization.Csv
             this.ColumnsInCurrentRow++;
         }
 
+        /// <summary>
+        ///  Flush the stream at the current position.
+        /// </summary>
+        public void Flush()
+        {
+            this.Context.Stream.Flush();
+        }
+
+        /// <summary>
+        ///  Return the number of bytes written out so far.
+        /// </summary>
+        public long BytesWritten
+        {
+            get
+            {
+                return this.Context.Stream.Length;
+            }
+        }
+
+
         public void Dispose()
         {
             Dispose(true);
