@@ -8,7 +8,7 @@ module.exports = {
     },
     devtool: 'source-map',
     resolve: {
-        extensions: [".jsx"]
+        extensions: [".js", ".jsx"]
     },
     module: {
         rules: [
