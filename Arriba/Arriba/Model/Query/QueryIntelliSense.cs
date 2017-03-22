@@ -226,6 +226,7 @@ namespace Arriba.Model.Query
             }
 
             // Get grammatical categories valid after the query prefix
+            bool spaceIsSafeCompletionCharacter = true;
             TermExpression lastTerm;
             IntelliSenseGuidance guidance = GetCurrentTokenOptions(queryBeforeCursor, out lastTerm);
 
@@ -253,6 +254,12 @@ namespace Arriba.Model.Query
                         if (column.Name.StartsWith(guidance.Value, StringComparison.OrdinalIgnoreCase))
                         {
                             selectedColumns.Add(new IntelliSenseItem(QueryTokenCategory.ColumnName, column.Name, String.Format("{0}.{1} [{2}]", table.Name, column.Name, column.Type), "[" + column.Name + "]"));
+
+                            if (column.Name.Length > guidance.Value.Length && column.Name[guidance.Value.Length] == ' ')
+                            {
+                                // Space is unsafe to complete with if a suggest column has a space next in the value
+                                spaceIsSafeCompletionCharacter = false;
+                            }
                         }
                     }
                 }
@@ -263,6 +270,9 @@ namespace Arriba.Model.Query
 
             if (guidance.Options.HasFlag(QueryTokenCategory.Value))
             {
+                // Space is unsafe for value completion (except when all explicit values are listed)
+                spaceIsSafeCompletionCharacter = false;
+
                 Type columnType = FindSingleMatchingColumnType(targetTables, lastTerm);
                 if (columnType == null)
                 {
@@ -277,6 +287,7 @@ namespace Arriba.Model.Query
                     else if(columnType == typeof(bool))
                     {
                         AddWhenPrefixes(BooleanValues, guidance.Value, suggestions);
+                        spaceIsSafeCompletionCharacter = true;
                     }
                     else if(columnType == typeof(DateTime))
                     {
@@ -301,6 +312,7 @@ namespace Arriba.Model.Query
             // Build a list of valid completion characters
             List<char> completionCharacters = new List<char>();
             completionCharacters.Add('\t');
+            if (spaceIsSafeCompletionCharacter) completionCharacters.Add(' ');
 
             // If column names are valid here but term prefixes or compare operators, operator start characters are valid completion characters
             if (guidance.Options.HasFlag(QueryTokenCategory.ColumnName) && !guidance.Options.HasFlag(QueryTokenCategory.CompareOperator) && !guidance.Options.HasFlag(QueryTokenCategory.TermPrefixes))
