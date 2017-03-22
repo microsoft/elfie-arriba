@@ -35,6 +35,12 @@ namespace Arriba.Test.Model.Query
             // Braced Column = Quoted Value
             Assert.AreEqual("[Created By] < \"Scott Louvau\"", QueryParser.Parse("[Created By]<\"Scott Louvau\"").ToString());
 
+            // Braced Column with trailing spaces = Defaulted Value, no space in column name
+            Assert.AreEqual("[Created By] <> \"\"", QueryParser.Parse("[Created By] ").ToString());
+
+            // Incomplete Braced Column with trailing spaces, include in partial
+            Assert.AreEqual("[Created  ] <> \"\"", QueryParser.Parse("[Created  ").ToString());
+
             // Negated Bare Value
             Assert.AreEqual("NOT(*:editor)", QueryParser.Parse("-editor").ToString());
 
@@ -130,7 +136,7 @@ namespace Arriba.Test.Model.Query
             Assert.AreEqual("", QueryParser.Parse("").ToString());
 
             // Incomplete column name - empty string
-            Assert.AreEqual("Starting = \"\"", QueryParser.Parse("[Starting").ToString());
+            Assert.AreEqual("Starting <> \"\"", QueryParser.Parse("[Starting").ToString());
 
             // Column name without operator - empty string
             Assert.AreEqual("Title <> \"\"", QueryParser.Parse("[Title]").ToString());

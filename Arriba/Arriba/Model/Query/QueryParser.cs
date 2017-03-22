@@ -239,7 +239,7 @@ namespace Arriba.Model.Query
                 if (!hadExplicitNameCompletion)
                 {
                     // "[PartialColumnNa" -> make it an equals empty term, indicate the column name needs completion
-                    expression = new TermExpression(columnName, Operator.Equals, String.Empty) { Guidance = new IntelliSenseGuidance(columnName, QueryTokenCategory.ColumnName) };
+                    expression = new TermExpression(columnName, Operator.NotEquals, String.Empty) { Guidance = new IntelliSenseGuidance(columnName, QueryTokenCategory.ColumnName) };
                 }
                 else
                 {
@@ -479,7 +479,7 @@ namespace Arriba.Model.Query
             }
             
             // If the end token wasn't seen and there's trailing whitespace, it should be part of the value
-            if(_scanner.Current.Type == TokenType.End && _scanner.Current.Prefix.Length > 0)
+            if(!hadExplicitCompletion && _scanner.Current.Type == TokenType.End && _scanner.Current.Prefix.Length > 0)
             {
                 value.Append(_scanner.Current.Prefix);
             }
