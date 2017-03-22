@@ -4,6 +4,7 @@ using Arriba.Model.Expressions;
 using Arriba.Structures;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Arriba.Model.Query
 {
@@ -86,7 +87,7 @@ namespace Arriba.Model.Query
 
         public override string ToString()
         {
-            return this.Value;
+            return String.Format("{0} {1} [{2}] ({3})", this.Value, this.Hint, this.Category, this.CompleteAs);
         }
     }
 
@@ -128,7 +129,7 @@ namespace Arriba.Model.Query
     public class QueryIntelliSense
     {
         #region Static Token IntelliSense Items
-        private static List<IntelliSenseItem> BooleanOperators = new List<IntelliSenseItem>()
+        internal static List<IntelliSenseItem> BooleanOperators = new List<IntelliSenseItem>()
         {
             new IntelliSenseItem(QueryTokenCategory.BooleanOperator, "AND", String.Empty),
             new IntelliSenseItem(QueryTokenCategory.BooleanOperator, "OR", String.Empty),
@@ -136,42 +137,42 @@ namespace Arriba.Model.Query
             new IntelliSenseItem(QueryTokenCategory.BooleanOperator, "||", String.Empty)
         };
 
-        private static List<IntelliSenseItem> CompareOperators = new List<IntelliSenseItem>()
+        internal static List<IntelliSenseItem> CompareOperators = new List<IntelliSenseItem>()
         {
             new IntelliSenseItem(QueryTokenCategory.CompareOperator, ":", "contains word starting with"),
+            new IntelliSenseItem(QueryTokenCategory.CompareOperator, "::", "contains exact word"),
             new IntelliSenseItem(QueryTokenCategory.CompareOperator, "=", "equals [case sensitive]"),
             new IntelliSenseItem(QueryTokenCategory.CompareOperator, "==", "equals [case sensitive]"),
-            new IntelliSenseItem(QueryTokenCategory.CompareOperator, "::", "contains exact word"),
-            new IntelliSenseItem(QueryTokenCategory.CompareOperator, "!=", "not equals"),
-            new IntelliSenseItem(QueryTokenCategory.CompareOperator, "<>", "not equals"),
             new IntelliSenseItem(QueryTokenCategory.CompareOperator, "<", String.Empty),
             new IntelliSenseItem(QueryTokenCategory.CompareOperator, "<=", String.Empty),
             new IntelliSenseItem(QueryTokenCategory.CompareOperator, ">", String.Empty),
             new IntelliSenseItem(QueryTokenCategory.CompareOperator, ">=", String.Empty),
+            new IntelliSenseItem(QueryTokenCategory.CompareOperator, "!=", "not equals"),
+            new IntelliSenseItem(QueryTokenCategory.CompareOperator, "<>", "not equals"),
             new IntelliSenseItem(QueryTokenCategory.CompareOperator, "|>", "starts with")
         };
 
-        private static List<IntelliSenseItem> TermPrefixes = new List<IntelliSenseItem>()
+        internal static List<IntelliSenseItem> TermPrefixes = new List<IntelliSenseItem>()
         {
             new IntelliSenseItem(QueryTokenCategory.TermPrefixes, "!", "negate next term"),
             new IntelliSenseItem(QueryTokenCategory.TermPrefixes, "(", "start subexpression")
         };
 
-        private static IntelliSenseItem Value = new IntelliSenseItem(QueryTokenCategory.Value, "\"<value>\"", "value (quote escaped)", String.Empty);
-        private static IntelliSenseItem StringValue = new IntelliSenseItem(QueryTokenCategory.Value, "\"<string>\"", "string value (quote escaped)", String.Empty);
-        private static IntelliSenseItem DateTimeValue = new IntelliSenseItem(QueryTokenCategory.Value, "\"<DateTime>\"", "DateTime (ex: \"2017-03-20\")", String.Empty);
-        private static IntelliSenseItem TimeSpanValue = new IntelliSenseItem(QueryTokenCategory.Value, "\"<TimeSpan>\"", "TimeSpan (ex: \"7.12:00:00\")", String.Empty);
-        private static IntelliSenseItem NumericValue = new IntelliSenseItem(QueryTokenCategory.Value, "\"<Number>\"", "numeric value", String.Empty);
+        internal static IntelliSenseItem Value = new IntelliSenseItem(QueryTokenCategory.Value, "\"<value>\"", "value (quote escaped)", String.Empty);
+        internal static IntelliSenseItem StringValue = new IntelliSenseItem(QueryTokenCategory.Value, "\"<string>\"", "string value (quote escaped)", String.Empty);
+        internal static IntelliSenseItem DateTimeValue = new IntelliSenseItem(QueryTokenCategory.Value, "\"<DateTime>\"", "DateTime (ex: \"2017-03-20\")", String.Empty);
+        internal static IntelliSenseItem TimeSpanValue = new IntelliSenseItem(QueryTokenCategory.Value, "\"<TimeSpan>\"", "TimeSpan (ex: \"7.12:00:00\")", String.Empty);
+        internal static IntelliSenseItem NumericValue = new IntelliSenseItem(QueryTokenCategory.Value, "\"<Number>\"", "numeric value", String.Empty);
 
-        private static List<IntelliSenseItem> BooleanValues = new List<IntelliSenseItem>()
+        internal static List<IntelliSenseItem> BooleanValues = new List<IntelliSenseItem>()
         {
-            new IntelliSenseItem(QueryTokenCategory.BooleanOperator, "0", "false"),
-            new IntelliSenseItem(QueryTokenCategory.BooleanOperator, "1", "true"),
-            new IntelliSenseItem(QueryTokenCategory.BooleanOperator, "false", String.Empty),
-            new IntelliSenseItem(QueryTokenCategory.BooleanOperator, "true", String.Empty)
+            new IntelliSenseItem(QueryTokenCategory.Value, "0", "false"),
+            new IntelliSenseItem(QueryTokenCategory.Value, "1", "true"),
+            new IntelliSenseItem(QueryTokenCategory.Value, "false", String.Empty),
+            new IntelliSenseItem(QueryTokenCategory.Value, "true", String.Empty)
         };
 
-        private static char[] ColumnNameCompletionCharacters = new char[] { ':', '<', '>', '=', '!' };
+        internal static char[] ColumnNameCompletionCharacters = new char[] { ':', '<', '>', '=', '!' };
         #endregion
 
         /// <summary>
@@ -185,10 +186,10 @@ namespace Arriba.Model.Query
         /// <param name="selectedItem">IntelliSenseItem selected</param>
         /// <param name="completionCharacter">Completion Character typed</param>
         /// <returns>New Arriba Query after completion</returns>
-        public string CompletedQuery(string queryBeforeCursor, IntelliSenseResult result, IntelliSenseItem selectedItem, char completionCharacter)
+        public string CompleteQuery(string queryBeforeCursor, IntelliSenseResult result, IntelliSenseItem selectedItem, char completionCharacter)
         {
             // If there is no completion for this item (grammar suggestions), just append the character
-            if (String.IsNullOrEmpty(selectedItem.CompleteAs)) return queryBeforeCursor + completionCharacter;
+            if (selectedItem == null || String.IsNullOrEmpty(selectedItem.CompleteAs)) return queryBeforeCursor + completionCharacter;
 
             string queryWithoutIncompleteValue = queryBeforeCursor;
 
@@ -218,6 +219,12 @@ namespace Arriba.Model.Query
         /// <returns>IntelliSenseResult reporting what to show</returns>
         public IntelliSenseResult GetIntelliSenseItems(string queryBeforeCursor, IReadOnlyCollection<Table> targetTables)
         {
+            // If no tables were passed, show no IntelliSense (hint that there's an error blocking all tables)
+            if (queryBeforeCursor == null || targetTables == null || targetTables.Count == 0)
+            {
+                return new IntelliSenseResult() { Query = queryBeforeCursor, CurrentIncompleteValue = "", CompletionCharacters = new char[0], Suggestions = new List<IntelliSenseItem>() };
+            }
+
             // Get grammatical categories valid after the query prefix
             TermExpression lastTerm;
             IntelliSenseGuidance guidance = GetCurrentTokenOptions(queryBeforeCursor, out lastTerm);
@@ -314,7 +321,7 @@ namespace Arriba.Model.Query
         internal IntelliSenseGuidance GetCurrentTokenOptions(string queryBeforeCursor, out TermExpression lastTerm)
         {
             lastTerm = null;
-            IntelliSenseGuidance defaultGuidance = new IntelliSenseGuidance(String.Empty, QueryTokenCategory.ColumnName | QueryTokenCategory.Value);
+            IntelliSenseGuidance defaultGuidance = new IntelliSenseGuidance(String.Empty, QueryTokenCategory.Term);
 
             // If the query is empty, return the guidance for the beginning of the first term
             if (String.IsNullOrEmpty(queryBeforeCursor)) return defaultGuidance;

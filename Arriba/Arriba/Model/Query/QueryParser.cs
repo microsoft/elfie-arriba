@@ -477,6 +477,12 @@ namespace Arriba.Model.Query
 
                 _scanner.Next();
             }
+            
+            // If the end token wasn't seen and there's trailing whitespace, it should be part of the value
+            if(_scanner.Current.Type == TokenType.End && _scanner.Current.Prefix.Length > 0)
+            {
+                value.Append(_scanner.Current.Prefix);
+            }
 
             // NOTE: End token consumed by above loop
 
