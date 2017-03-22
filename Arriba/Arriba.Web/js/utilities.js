@@ -2,6 +2,13 @@
 var highlightRangeRegex = new RegExp(highlightChar + '(.+?)' + highlightChar, 'g');
 var highlightCharOnlyRegex = new RegExp(highlightChar, 'g');
 
+// Polyfill for Array.includes
+if (!Array.prototype.includes) {
+    Array.prototype.includes = function() {
+        return Array.prototype.indexOf.apply(this, arguments) !== -1;
+    };
+}
+
 // Highlight values surrounded by Pi characters by wrapping them in <span class="h"></span>
 function highlight(value) {
     var replacement = '<span class="h">$1</span>';
