@@ -12,6 +12,12 @@ namespace Arriba.TfsWorkItemCrawler
         internal const string IdentityFormatExceptionFormatString = @"Identity must be of the format User:DOMAIN\name or Group:DOMAIN\name. Value passed, '{0}', doesn't fit these rules.";
 
         /// <summary>
+        ///  The URL of the Arriba Service to crawl to.
+        ///  [Ex: http://localhost:42784]
+        /// </summary>
+        public string ArribaServiceUrl { get; set; }
+
+        /// <summary>
         ///  Name of Arriba Table to create/manage
         /// </summary>
         public string ArribaTable { get; set; }

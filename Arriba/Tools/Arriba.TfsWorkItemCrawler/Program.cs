@@ -23,8 +23,6 @@ namespace Arriba.TfsWorkItemCrawler
 
             string configurationName = args[0];
             string mode = args[1].ToLowerInvariant();
-            string arribaServiceUrl = (args.Length > 2 ? args[2] : "http://localhost:42784");
-            string changedDateColumnName = (args.Length > 3 ? args[3] : "Changed Date");
 
             using (FileLock locker = FileLock.TryGet(String.Format("Arriba.TfsWorkItemCrawler.{0}.lock", configurationName)))
             {
@@ -49,7 +47,7 @@ namespace Arriba.TfsWorkItemCrawler
                     }
 
                     // Build the item consumer
-                    IItemConsumer consumer = new ArribaClientIndexerItemConsumer(config, arribaServiceUrl);
+                    IItemConsumer consumer = new ArribaClientIndexerItemConsumer(config, config.ArribaServiceUrl ?? "http://localhost:42784");
 
                     // Build the item provider
                     IItemProvider provider = ItemProviderUtilities.Build(config);
