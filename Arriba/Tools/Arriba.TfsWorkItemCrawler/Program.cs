@@ -41,7 +41,7 @@ namespace Arriba.TfsWorkItemCrawler
                     BinarySerializable.CachePath = Path.Combine(BinarySerializable.CachePath, @"..\..\DiskCache");
 
                     // Load the Configuration
-                    string configJsonPath = String.Format(@"..\..\Bung.Web\databases\{0}\config.json", configurationName);
+                    string configJsonPath = String.Format(@"..\..\Databases\{0}\config.json", configurationName);
                     string configJson = File.ReadAllText(configJsonPath);
                     CrawlerConfiguration config = JsonConvert.DeserializeObject<CrawlerConfiguration>(configJson);
 
