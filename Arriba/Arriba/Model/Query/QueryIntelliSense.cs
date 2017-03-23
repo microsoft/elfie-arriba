@@ -1,10 +1,8 @@
-﻿using Arriba.Extensions;
-using Arriba.Model.Column;
+﻿using Arriba.Model.Column;
 using Arriba.Model.Expressions;
 using Arriba.Structures;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Arriba.Model.Query
 {
@@ -139,9 +137,7 @@ namespace Arriba.Model.Query
         internal static List<IntelliSenseItem> BooleanOperators = new List<IntelliSenseItem>()
         {
             new IntelliSenseItem(QueryTokenCategory.BooleanOperator, "AND", String.Empty),
-            new IntelliSenseItem(QueryTokenCategory.BooleanOperator, "OR", String.Empty),
-            new IntelliSenseItem(QueryTokenCategory.BooleanOperator, "&&", String.Empty),
-            new IntelliSenseItem(QueryTokenCategory.BooleanOperator, "||", String.Empty)
+            new IntelliSenseItem(QueryTokenCategory.BooleanOperator, "OR", String.Empty)
         };
 
         internal static List<IntelliSenseItem> CompareOperators = new List<IntelliSenseItem>()
@@ -149,13 +145,11 @@ namespace Arriba.Model.Query
             new IntelliSenseItem(QueryTokenCategory.CompareOperator, ":", "contains word starting with"),
             new IntelliSenseItem(QueryTokenCategory.CompareOperator, "::", "contains exact word"),
             new IntelliSenseItem(QueryTokenCategory.CompareOperator, "=", "equals [case sensitive]"),
-            new IntelliSenseItem(QueryTokenCategory.CompareOperator, "==", "equals [case sensitive]"),
             new IntelliSenseItem(QueryTokenCategory.CompareOperator, "<", String.Empty),
             new IntelliSenseItem(QueryTokenCategory.CompareOperator, "<=", String.Empty),
             new IntelliSenseItem(QueryTokenCategory.CompareOperator, ">", String.Empty),
             new IntelliSenseItem(QueryTokenCategory.CompareOperator, ">=", String.Empty),
             new IntelliSenseItem(QueryTokenCategory.CompareOperator, "!=", "not equals"),
-            new IntelliSenseItem(QueryTokenCategory.CompareOperator, "<>", "not equals"),
             new IntelliSenseItem(QueryTokenCategory.CompareOperator, "|>", "starts with")
         };
 
@@ -297,7 +291,7 @@ namespace Arriba.Model.Query
                     }
                     else
                     {
-                        suggestions.Add(new IntelliSenseItem(QueryTokenCategory.Value, String.Format("<{0}>", columnType.Name), String.Empty));
+                        suggestions.Add(new IntelliSenseItem(QueryTokenCategory.Value, String.Format("<{0}>", columnType.Name), String.Empty, String.Empty));
                     }
                 }
             }

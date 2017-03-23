@@ -48,7 +48,7 @@ namespace Arriba.Test.Model.Query
             Assert.AreEqual("[ID] < 15 AND [WhenFounded] > \"1900-01-01\" ([Age] = 18)", CompleteEachKeystroke("I\t<\t15 AN\t[Whe\t>\t\"1900-01-01\" (A\t=\t18)"));
 
             // Complete with spaces where safe
-            Assert.AreEqual("[SchoolHasMascot] = true && [WhenFounded] > \"  \"", CompleteEachKeystroke("[SchoolH = tr & [When > \"  \""));
+            Assert.AreEqual("[SchoolHasMascot] = true AND [WhenFounded] > \"  \"", CompleteEachKeystroke("[SchoolH = tr AND [When > \"  \""));
 
             // No space completion when unsafe - column name has a space next, bare values, values without all values in IntelliSense
             Assert.AreEqual("[Student ", CompleteEachKeystroke("[Student "));
