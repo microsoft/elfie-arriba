@@ -1,4 +1,6 @@
-﻿import ErrorPage from "./ErrorPage"
+﻿require("../Search.css");
+
+import ErrorPage from "./ErrorPage"
 import QueryStats from "./QueryStats"
 import SearchHeader from "./SearchHeader"
 
