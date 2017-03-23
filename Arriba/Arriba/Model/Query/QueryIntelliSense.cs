@@ -344,8 +344,8 @@ namespace Arriba.Model.Query
             // If the query is empty, return the guidance for the beginning of the first term
             if (String.IsNullOrEmpty(queryBeforeCursor)) return defaultGuidance;
 
-            // Parse the query
-            IExpression query = QueryParser.Parse(queryBeforeCursor);
+            // Parse the query, asking for hint terms
+            IExpression query = QueryParser.Parse(queryBeforeCursor, true);
 
             // If the query had parse errors, return empty guidance
             if (query is EmptyExpression) return new IntelliSenseGuidance(String.Empty, QueryTokenCategory.None);
