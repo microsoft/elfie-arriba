@@ -1,6 +1,6 @@
 ﻿
 @ECHO OFF
-SET ConfigurationsFolder=%~dp0..\..\Bung.Web\databases
+SET ConfigurationsFolder=%~dp0..\..\Databases
 
 SET YearMonthDay=%DATE:~10,4%-%DATE:~4,2%-%DATE:~7,2%
 ECHO %YearMonthDay%

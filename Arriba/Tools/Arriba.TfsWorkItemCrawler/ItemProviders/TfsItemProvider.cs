@@ -1,6 +1,4 @@
-﻿using Arriba.Diagnostics;
-using Arriba.Extensions;
-using Arriba.Serialization;
+﻿using Arriba.Extensions;
 using Arriba.Structures;
 using Microsoft.TeamFoundation.Client;
 using Microsoft.TeamFoundation.WorkItemTracking.Client;
@@ -89,7 +87,7 @@ namespace Arriba.TfsWorkItemCrawler.ItemProviders
         ///  value into the file path (ex: MS.EncryptedTfsPassword.txt).
         /// </remarks>
         /// <param name="value">Tfs Online Password to encrypt</param>
-        /// <returns>Base64 encoded encrypted value to store in a file to use from a Bung config</returns>
+        /// <returns>Base64 encoded encrypted value to store in a file to use from a config</returns>
         public static string LocalUserEncryptPassword(string value)
         {
             byte[] unprotectedPasswordBytes = Encoding.UTF8.GetBytes(value);
