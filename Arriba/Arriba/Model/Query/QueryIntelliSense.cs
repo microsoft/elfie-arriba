@@ -1,10 +1,8 @@
-﻿using Arriba.Extensions;
-using Arriba.Model.Column;
+﻿using Arriba.Model.Column;
 using Arriba.Model.Expressions;
 using Arriba.Structures;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Arriba.Model.Query
 {
@@ -110,6 +108,13 @@ namespace Arriba.Model.Query
         public string CurrentIncompleteValue;
 
         /// <summary>
+        ///  The query up to the beginning of the CurrentIncompleteValue.
+        ///  This is the prefix which the 'CompleteAs' value for the
+        ///  selected IntelliSenseItem should be appended to.
+        /// </summary>
+        public string CurrentCompleteValue;
+
+        /// <summary>
         ///  The set of suggested completions in ranked order, best match
         ///  first.
         /// </summary>
@@ -132,9 +137,7 @@ namespace Arriba.Model.Query
         internal static List<IntelliSenseItem> BooleanOperators = new List<IntelliSenseItem>()
         {
             new IntelliSenseItem(QueryTokenCategory.BooleanOperator, "AND", String.Empty),
-            new IntelliSenseItem(QueryTokenCategory.BooleanOperator, "OR", String.Empty),
-            new IntelliSenseItem(QueryTokenCategory.BooleanOperator, "&&", String.Empty),
-            new IntelliSenseItem(QueryTokenCategory.BooleanOperator, "||", String.Empty)
+            new IntelliSenseItem(QueryTokenCategory.BooleanOperator, "OR", String.Empty)
         };
 
         internal static List<IntelliSenseItem> CompareOperators = new List<IntelliSenseItem>()
@@ -142,13 +145,11 @@ namespace Arriba.Model.Query
             new IntelliSenseItem(QueryTokenCategory.CompareOperator, ":", "contains word starting with"),
             new IntelliSenseItem(QueryTokenCategory.CompareOperator, "::", "contains exact word"),
             new IntelliSenseItem(QueryTokenCategory.CompareOperator, "=", "equals [case sensitive]"),
-            new IntelliSenseItem(QueryTokenCategory.CompareOperator, "==", "equals [case sensitive]"),
             new IntelliSenseItem(QueryTokenCategory.CompareOperator, "<", String.Empty),
             new IntelliSenseItem(QueryTokenCategory.CompareOperator, "<=", String.Empty),
             new IntelliSenseItem(QueryTokenCategory.CompareOperator, ">", String.Empty),
             new IntelliSenseItem(QueryTokenCategory.CompareOperator, ">=", String.Empty),
             new IntelliSenseItem(QueryTokenCategory.CompareOperator, "!=", "not equals"),
-            new IntelliSenseItem(QueryTokenCategory.CompareOperator, "<>", "not equals"),
             new IntelliSenseItem(QueryTokenCategory.CompareOperator, "|>", "starts with")
         };
 
@@ -191,17 +192,8 @@ namespace Arriba.Model.Query
             // If there is no completion for this item (grammar suggestions), just append the character
             if (selectedItem == null || String.IsNullOrEmpty(selectedItem.CompleteAs)) return queryBeforeCursor + completionCharacter;
 
-            string queryWithoutIncompleteValue = queryBeforeCursor;
-
-            // Remove the CurrentIncompleteValue from the query
-            if (!queryWithoutIncompleteValue.EndsWith(result.CurrentIncompleteValue)) throw new ArribaException("Error: IntelliSense suggestion couldn't be applied.");
-            queryWithoutIncompleteValue = queryWithoutIncompleteValue.Substring(0, queryWithoutIncompleteValue.Length - result.CurrentIncompleteValue.Length);
-
-            // If the CurrentIncompleteValue is an explicit column name, remove and re-complete that, also
-            if (queryWithoutIncompleteValue.EndsWith("[")) queryWithoutIncompleteValue = queryWithoutIncompleteValue.Substring(0, queryWithoutIncompleteValue.Length - 1);
-
             // Add the value to complete and a space to complete the value
-            string newQuery = queryWithoutIncompleteValue + selectedItem.CompleteAs + ' ';
+            string newQuery = result.CurrentCompleteValue + selectedItem.CompleteAs + ' ';
 
             // If the completion character isn't '\t' or ' ', add the completion character as well
             if (completionCharacter != '\t' && completionCharacter != ' ') newQuery += completionCharacter;
@@ -222,7 +214,7 @@ namespace Arriba.Model.Query
             // If no tables were passed, show no IntelliSense (hint that there's an error blocking all tables)
             if (queryBeforeCursor == null || targetTables == null || targetTables.Count == 0)
             {
-                return new IntelliSenseResult() { Query = queryBeforeCursor, CurrentIncompleteValue = "", CompletionCharacters = new char[0], Suggestions = new List<IntelliSenseItem>() };
+                return new IntelliSenseResult() { Query = queryBeforeCursor, CurrentIncompleteValue = "", CurrentCompleteValue = "", CompletionCharacters = new char[0], Suggestions = new List<IntelliSenseItem>() };
             }
 
             // Get grammatical categories valid after the query prefix
@@ -299,7 +291,7 @@ namespace Arriba.Model.Query
                     }
                     else
                     {
-                        suggestions.Add(new IntelliSenseItem(QueryTokenCategory.Value, String.Format("<{0}>", columnType.Name), String.Empty));
+                        suggestions.Add(new IntelliSenseItem(QueryTokenCategory.Value, String.Format("<{0}>", columnType.Name), String.Empty, String.Empty));
                     }
                 }
             }
@@ -320,7 +312,15 @@ namespace Arriba.Model.Query
                 completionCharacters.AddRange(ColumnNameCompletionCharacters);
             }
 
-            return new IntelliSenseResult() { Query = queryBeforeCursor, CurrentIncompleteValue = guidance.Value, Suggestions = suggestions, CompletionCharacters = completionCharacters };
+            // Compute the CurrentCompleteValue
+            string queryWithoutIncompleteValue = queryBeforeCursor;
+            if (!queryWithoutIncompleteValue.EndsWith(guidance.Value)) throw new ArribaException("Error: IntelliSense suggestion couldn't be applied.");
+            queryWithoutIncompleteValue = queryWithoutIncompleteValue.Substring(0, queryWithoutIncompleteValue.Length - guidance.Value.Length);
+
+            // If the CurrentIncompleteValue is an explicit column name, remove and re-complete that, also
+            if (queryWithoutIncompleteValue.EndsWith("[")) queryWithoutIncompleteValue = queryWithoutIncompleteValue.Substring(0, queryWithoutIncompleteValue.Length - 1);
+
+            return new IntelliSenseResult() { Query = queryBeforeCursor, CurrentIncompleteValue = guidance.Value, CurrentCompleteValue = queryWithoutIncompleteValue, Suggestions = suggestions, CompletionCharacters = completionCharacters };
         }
 
         /// <summary>
@@ -338,8 +338,8 @@ namespace Arriba.Model.Query
             // If the query is empty, return the guidance for the beginning of the first term
             if (String.IsNullOrEmpty(queryBeforeCursor)) return defaultGuidance;
 
-            // Parse the query
-            IExpression query = QueryParser.Parse(queryBeforeCursor);
+            // Parse the query, asking for hint terms
+            IExpression query = QueryParser.Parse(queryBeforeCursor, true);
 
             // If the query had parse errors, return empty guidance
             if (query is EmptyExpression) return new IntelliSenseGuidance(String.Empty, QueryTokenCategory.None);
