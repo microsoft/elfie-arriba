@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Arriba.Model.Column;
+using Arriba.Model.Security;
 
 namespace Arriba.TfsWorkItemCrawler.ItemConsumers
 {
@@ -16,6 +18,7 @@ namespace Arriba.TfsWorkItemCrawler.ItemConsumers
 
         private string TableName { get; set; }
         private string ChangedDateColumn { get; set; }
+        private IEnumerable<string> ColumnNames { get; set; }
         private CsvWriter Writer { get; set; }
 
         public CsvWriterItemConsumer(string tableName, string changedDateColumn)
@@ -23,6 +26,9 @@ namespace Arriba.TfsWorkItemCrawler.ItemConsumers
             this.TableName = tableName;
             this.ChangedDateColumn = changedDateColumn;
         }
+
+        public void CreateTable(IList<ColumnDetails> columns, SecurityPermissions permissions)
+        { }
 
         public void Append(DataBlock items)
         {

@@ -1,10 +1,13 @@
-﻿using Arriba.Serialization;
+﻿using Arriba.Model.Column;
+using Arriba.Serialization;
 using Arriba.TfsWorkItemCrawler.ItemConsumers;
 using Arriba.TfsWorkItemCrawler.ItemProviders;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 
 namespace Arriba.TfsWorkItemCrawler
 {
@@ -20,10 +23,8 @@ namespace Arriba.TfsWorkItemCrawler
 
             string configurationName = args[0];
             string mode = args[1].ToLowerInvariant();
-            bool toCsv = (args.Length > 2 && String.Equals(args[2], "ToCsv", StringComparison.OrdinalIgnoreCase));
-            bool fromCsv = (args.Length > 2 && String.Equals(args[2], "FromCsv", StringComparison.OrdinalIgnoreCase));
+            string arribaServiceUrl = (args.Length > 2 ? args[2] : "http://localhost:42784");
             string changedDateColumnName = (args.Length > 3 ? args[3] : "Changed Date");
-            int port = (args.Length > 4 ? int.Parse(args[4]) : 42784);
 
             using (FileLock locker = FileLock.TryGet(String.Format("Arriba.TfsWorkItemCrawler.{0}.lock", configurationName)))
             {
@@ -36,10 +37,6 @@ namespace Arriba.TfsWorkItemCrawler
                         return -2;
                     }
 
-                    // Set Crawler to use same DiskCache path as service will. Needed when using ArribaDirectIndexerItemConsumer
-                    // and keeps written CSVs together with the Arriba serialized table.
-                    BinarySerializable.CachePath = Path.Combine(BinarySerializable.CachePath, @"..\..\DiskCache");
-
                     // Load the Configuration
                     string configJsonPath = String.Format(@"..\..\Databases\{0}\config.json", configurationName);
                     string configJson = File.ReadAllText(configJsonPath);
@@ -48,46 +45,24 @@ namespace Arriba.TfsWorkItemCrawler
                     // Password storage mode
                     if (mode.Equals("-password", StringComparison.OrdinalIgnoreCase))
                     {
-                        Console.Write("Enter TFS Online Password to local user encrypt: ");
-                        string password = Console.ReadLine();
-                        if (String.IsNullOrEmpty(password)) return -1;
-
-                        string encryptedPassword = TfsItemProvider.LocalUserEncryptPassword(password);
-                        File.WriteAllText(config.TfsOnlineEncryptedPasswordFilePath, encryptedPassword);
-
-                        Console.WriteLine("Encrypted Password written to '{0}'. Run Crawler to test.", config.TfsOnlineEncryptedPasswordFilePath);
-                        Console.WriteLine();
-                        return 0;
+                        return EncryptPassword(config);
                     }
 
                     // Build the item consumer
-                    IItemConsumer consumer = null;
+                    IItemConsumer consumer = new ArribaClientIndexerItemConsumer(config, arribaServiceUrl);
 
-                    if (toCsv)
-                    {
-                        // To CSV instead of Arriba if requested
-                        consumer = new CsvWriterItemConsumer(configurationName, changedDateColumnName);
-                    }
-                    else
-                    {
-                        consumer = new ArribaClientIndexerItemConsumer(config, String.Format("http://localhost:{0}", port));
-                    }
-                    
-                    if (fromCsv)
-                    {
-                        // Csv Import mode - use CsvImporter to read everything in Date range from CSVs and import
-                        CsvImporter importer = new CsvImporter(config, configurationName, changedDateColumnName);
-                        importer.Import(consumer);
-                    }
-                    else
-                    {
-                        // Normal crawl - build the normal item provider 
-                        IItemProvider provider = ItemProviderUtilities.Build(config);
+                    // Build the item provider
+                    IItemProvider provider = ItemProviderUtilities.Build(config);
 
-                        // Build a crawler and crawl the items in restartable order
-                        DefaultCrawler crawler = new DefaultCrawler(config, configurationName, !mode.Equals("-i"));
-                        crawler.Crawl(provider, consumer);
-                    }
+                    // Determine the list of columns to crawl
+                    List<ColumnDetails> columnsToAdd = new List<ColumnDetails>(provider.GetColumns().Where(cd => !config.ColumnsToExclude.Contains(cd.Name)));
+
+                    // Create the target table (if it doesn't already exist)
+                    consumer.CreateTable(columnsToAdd, config.LoadPermissions());
+
+                    // Build a crawler and crawl the items in restartable order
+                    DefaultCrawler crawler = new DefaultCrawler(config, columnsToAdd.Select((cd) => cd.Name), configurationName, !mode.Equals("-i"));
+                    crawler.Crawl(provider, consumer);
 
                     return 0;
                 }
@@ -99,13 +74,27 @@ namespace Arriba.TfsWorkItemCrawler
             }
         }
 
+        static int EncryptPassword(CrawlerConfiguration config)
+        {
+            Console.Write("Enter TFS Online Password to local user encrypt: ");
+            string password = Console.ReadLine();
+            if (String.IsNullOrEmpty(password)) return -1;
+
+            string encryptedPassword = TfsItemProvider.LocalUserEncryptPassword(password);
+            File.WriteAllText(config.TfsOnlineEncryptedPasswordFilePath, encryptedPassword);
+
+            Console.WriteLine("Encrypted Password written to '{0}'. Run Crawler to test.", config.TfsOnlineEncryptedPasswordFilePath);
+            Console.WriteLine();
+            return 0;
+        }
+
         static void Usage()
         {
             Console.WriteLine(
 @" Usage: Arriba.TfsWorkItemCrawler <configName> <mode> [<modeArguments>]
-     'Arriba.TfsWorkItemCrawler DevDiv -i' -> Append updated DevDiv items from primary provider.
-     'Arriba.TfsWorkItemCrawler DevDiv -r' -> Rebuild all DevDiv items from primary provider.
-     'Arriba.TfsWorkItemCrawler DevDiv -password -> Local User Encrypt a TFS online password for config.
+     'Arriba.TfsWorkItemCrawler MyDatabase -i' -> Append updated MyDatabase items from primary provider.
+     'Arriba.TfsWorkItemCrawler MyDatabase -r' -> Rebuild all MyDatabase items from primary provider.
+     'Arriba.TfsWorkItemCrawler MyDatabase -password -> Local User Encrypt a TFS online password for config.
 ");
         }
 

@@ -7,6 +7,8 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using Arriba.Model.Security;
+using System.Collections.Generic;
 
 namespace Arriba.TfsWorkItemCrawler.ItemConsumers
 {
@@ -31,11 +33,9 @@ namespace Arriba.TfsWorkItemCrawler.ItemConsumers
 
             this.DiagnosticsEnabled = Debugger.IsAttached;
             this.DiagnosticsLevel = VerificationLevel.Normal;
-
-            CreateTable();
         }
 
-        public void CreateTable()
+        public void CreateTable(IList<ColumnDetails> columns, SecurityPermissions permissions)
         {
             this.Table = new Table(this.Configuration.ArribaTable, this.Configuration.ItemCountLimit);
 
@@ -43,16 +43,18 @@ namespace Arriba.TfsWorkItemCrawler.ItemConsumers
             if (BinarySerializable.EnumerateUnder(Path.Combine("Tables", this.Configuration.ArribaTable)).Count() > 0)
             {
                 Trace.WriteLine(string.Format("Loading Arriba Table '{0}'...", this.Configuration.ArribaTable));
-
                 this.Table.Load(this.Configuration.ArribaTable);
 
             }
 
             // Verify all columns match requested types [will throw if column exists but as different type]
-            foreach (ColumnDetails cd in this.Configuration.Columns)
+            foreach (ColumnDetails cd in columns)
             {
                 this.Table.AddColumn(cd);
             }
+
+            // Set the table security
+            new SecureDatabase().SetSecurity(this.Configuration.ArribaTable, permissions);
 
             // Debug Only: Verify consistency just after load
             if (this.DiagnosticsEnabled)
@@ -67,7 +69,6 @@ namespace Arriba.TfsWorkItemCrawler.ItemConsumers
                     Debugger.Break();
                     Trace.TraceError(String.Format("Consistency Errors Detected: {0}", String.Join("\r\n", d.Errors)));
                 }
-
             }
         }
 

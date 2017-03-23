@@ -26,15 +26,15 @@ namespace Arriba.TfsWorkItemCrawler
         private CrawlerConfiguration Configuration { get; set; }
         private bool Rebuild { get; set; }
 
-        private IReadOnlyList<string> ColumnNames { get; set; }
+        private IEnumerable<string> ColumnNames { get; set; }
 
-        public DefaultCrawler(CrawlerConfiguration config, string configurationName, bool rebuild)
+        public DefaultCrawler(CrawlerConfiguration config, IEnumerable<string> columnNames, string configurationName, bool rebuild)
         {
             this.ConfigurationName = configurationName;
             this.Configuration = config;
             this.Rebuild = rebuild;
 
-            this.ColumnNames = this.Configuration.ColumnNames;
+            this.ColumnNames = columnNames;
         }
 
         public void Crawl(IItemProvider provider, IItemConsumer consumer)
@@ -59,7 +59,7 @@ namespace Arriba.TfsWorkItemCrawler
                 Trace.WriteLine(string.Format("Last Updated item was updated at '{0}'...", previousLastChangedItem));
                 
                 // For clean crawl, get more than a day at a time until first items found
-                int intervalDays = ((now - previousLastChangedItem).TotalDays > 365 ? 90 : 1);
+                int intervalDays = ((now - previousLastChangedItem).TotalDays > 365 ? 365 : 1);
 
                 DateTime end;
                 for (DateTime start = previousLastChangedItem; start <= now; start = end)
@@ -67,7 +67,7 @@ namespace Arriba.TfsWorkItemCrawler
                     end = start.AddDays(intervalDays);
 
                     // Find the set of items to retrieve
-                    Trace.WriteLine(string.Format("Identifying items changed between '{0}' and '{1}...", start, end));
+                    Trace.WriteLine(string.Format("Identifying items changed between '{0}' and '{1}'...", start, end));
                     IList<ItemIdentity> itemsToGet = null;
                     itemsToGet = provider.GetItemsChangedBetween(start, end);
 
@@ -78,7 +78,7 @@ namespace Arriba.TfsWorkItemCrawler
                     }
                     else
                     {
-                        if (intervalDays != 90) intervalDays = 7;
+                        if (intervalDays != 365) intervalDays = 7;
                     }
 
                     // If no items in this batch, get the next batch
