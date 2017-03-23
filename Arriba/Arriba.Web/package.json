@@ -21,7 +21,9 @@
     "babel-core": "^6.24.0",
     "babel-loader": "^6.4.0",
     "babel-preset-react": "^6.16.0",
+    "css-loader": "^0.27.3",
     "react": "^15.4.2",
+    "style-loader": "^0.15.0",
     "webpack": "^2.2.1",
     "webpack-dev-server": "^2.4.2"
   }
