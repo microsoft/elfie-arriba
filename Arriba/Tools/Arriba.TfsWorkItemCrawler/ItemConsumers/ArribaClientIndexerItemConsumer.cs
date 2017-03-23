@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using Arriba.Model.Security;
 
 namespace Arriba.TfsWorkItemCrawler.ItemConsumers
 {
@@ -35,11 +36,9 @@ namespace Arriba.TfsWorkItemCrawler.ItemConsumers
             // Allow long timeouts (save for huge databases is slow)
             this.Client = new ArribaClient(new Uri(this.ServiceUrl), TimeSpan.FromMinutes(15));
             this.Table = this.Client[this.Configuration.ArribaTable];
-
-            CreateTable();
         }
 
-        public void CreateTable()
+        public void CreateTable(IList<ColumnDetails> columns, SecurityPermissions permissions)
         {
             HashSet<string> tables = new HashSet<string>(this.Client.Tables);
             if (!tables.Contains(this.Configuration.ArribaTable))
@@ -55,11 +54,11 @@ namespace Arriba.TfsWorkItemCrawler.ItemConsumers
             else
             {
                 // Always ensure permissions up-to-date on Table
-                this.Table.SetPermissionsAsync(this.Configuration.LoadPermissions()).Wait();
+                this.Table.SetPermissionsAsync(permissions).Wait();
             }
 
             // Verify all columns match requested types [will throw if column exists but as different type]
-            this.Table.AddColumnsAsync(this.Configuration.Columns).Wait();
+            this.Table.AddColumnsAsync(columns).Wait();
         }
 
         public void Append(DataBlock items)

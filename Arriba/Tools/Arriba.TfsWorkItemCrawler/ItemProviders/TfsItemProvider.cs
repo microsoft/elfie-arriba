@@ -1,4 +1,5 @@
 ﻿using Arriba.Extensions;
+using Arriba.Model.Column;
 using Arriba.Structures;
 using Microsoft.TeamFoundation.Client;
 using Microsoft.TeamFoundation.WorkItemTracking.Client;
@@ -19,8 +20,10 @@ namespace Arriba.TfsWorkItemCrawler.ItemProviders
 {
     public class TfsItemProvider : IItemProvider
     {
+        private const string DefaultQuery = "SELECT [System.Id], [System.ChangedDate] FROM WorkItems WHERE [System.ChangedDate] > '@Start' AND [System.ChangedDate] < '@End' ORDER BY [System.ChangedDate] DESC";
+
         private string DatabaseUri { get; set; }
-        private string QueryFile { get; set; }
+        private string Query { get; set; }
         private Dictionary<string, string> ColumnMappings { get; set; }
 
         private JsonSerializerSettings SerializerSettings { get; set; }
@@ -29,7 +32,7 @@ namespace Arriba.TfsWorkItemCrawler.ItemProviders
         public TfsItemProvider(CrawlerConfiguration config)
         {
             this.DatabaseUri = config.ItemDatabaseName;
-            this.QueryFile = config.ItemQueryFile;
+            this.Query = config.ItemQuery ?? DefaultQuery;
             this.ColumnMappings = config.ColumnMappings;
 
             this.SerializerSettings = new JsonSerializerSettings();
@@ -62,6 +65,14 @@ namespace Arriba.TfsWorkItemCrawler.ItemProviders
             else
             {
                 this.Store = new WorkItemStore(this.DatabaseUri);
+            }
+
+            using (StreamWriter writer = new StreamWriter("Louvau.Columns.txt"))
+            {
+                foreach(ColumnDetails cd in this.GetColumns())
+                {
+                    writer.WriteLine(String.Format("{0}\t{1}\t{2}\t{3}", cd.Name, cd.Type, cd.Alias, cd.IsPrimaryKey));
+                }
             }
 
             // Debug Only: Get the fields list
@@ -114,12 +125,44 @@ namespace Arriba.TfsWorkItemCrawler.ItemProviders
         #endregion
 
         #region IItemProvider
+        public IList<ColumnDetails> GetColumns()
+        {
+            List<ColumnDetails> columns = new List<ColumnDetails>();
+            foreach(FieldDefinition column in this.Store.FieldDefinitions)
+            {
+                columns.Add(new ColumnDetails(column.Name, MapType(column), null, null, column.Name == "ID"));
+            }
+            return columns;
+        }
+
+        private static string MapType(FieldDefinition column)
+        {
+            if (column.Name == "Attachements" || column.Name == "Links") return "json";
+
+            switch(column.FieldType)
+            {
+                case FieldType.Boolean:
+                    return "bool";
+                case FieldType.Integer:
+                    return "int";
+                case FieldType.History:
+                    return "json";
+                case FieldType.PicklistInteger:
+                case FieldType.PicklistString:
+                case FieldType.PlainText:
+                case FieldType.TreePath:
+                case FieldType.Internal:
+                    return "string";
+                default:
+                    return column.FieldType.ToString();
+            }
+        }
+
         public List<ItemIdentity> GetItemsChangedBetween(DateTime start, DateTime end)
         {
             List<ItemIdentity> result = new List<ItemIdentity>();
 
-            string query = LoadWiql(this.QueryFile);
-            if (!query.Contains("@Start") || !query.Contains("@End")) throw new ArgumentException(String.Format("Query file '{0}' did not contain '@Start' and '@End' for the Crawler to request only a subset of items. Stopping.", this.QueryFile));
+            if (!this.Query.Contains("@Start") || !this.Query.Contains("@End")) throw new ArgumentException(String.Format("Query file '{0}' did not contain '@Start' and '@End' for the Crawler to request only a subset of items. Stopping.", this.Query));
 
             DateTime lastLoaded = start;
             TimeSpan currentIntervalSize = end - start;
@@ -132,7 +175,7 @@ namespace Arriba.TfsWorkItemCrawler.ItemProviders
 
                 // Build a query for that range
                 DateTime nextToLoad = lastLoaded.Add(currentIntervalSize);
-                string resolvedQuery = query.Replace("@Start", lastLoaded.ToString("u")).Replace("@End", nextToLoad.ToString("u"));
+                string resolvedQuery = this.Query.Replace("@Start", lastLoaded.ToString("u")).Replace("@End", nextToLoad.ToString("u"));
 
                 if (ExtractOneSet(resolvedQuery, result) != null)
                 {
@@ -198,7 +241,7 @@ namespace Arriba.TfsWorkItemCrawler.ItemProviders
             return result;
         }
 
-        public DataBlock GetItemBlock(IEnumerable<ItemIdentity> items, IReadOnlyList<string> columnNames)
+        public DataBlock GetItemBlock(IEnumerable<ItemIdentity> items, IEnumerable<string> columnNames)
         {
             // Build a query for them
             string query = String.Format("SELECT [System.Id] FROM WorkItems WHERE [System.Id] IN ({0})", String.Join(", ", items.Select((ii) => ii.ID)));
@@ -229,17 +272,20 @@ namespace Arriba.TfsWorkItemCrawler.ItemProviders
             {
                 WorkItem item = itemCollection[itemIndex];
 
-                for (int fieldIndex = 0; fieldIndex < result.ColumnCount; ++fieldIndex)
-                {
+                int fieldIndex = 0;
+                foreach(string columnName in columnNames)
+                { 
                     try
                     {
-                        result[itemIndex, fieldIndex] = ItemProviderUtilities.Canonicalize(GetFieldValue(item, columnNames[fieldIndex]));
+                        result[itemIndex, fieldIndex] = ItemProviderUtilities.Canonicalize(GetFieldValue(item, columnName));
                     }
                     catch (Exception ex)
                     {
                         result[itemIndex, fieldIndex] = null;
-                        Trace.WriteLine(String.Format("Error Getting '{0}' from item {1}. Skipping field. Detail: {2}", columnNames[fieldIndex], item.Id, ex.ToString()));
+                        Trace.WriteLine(String.Format("Error Getting '{0}' from item {1}. Skipping field. Detail: {2}", columnName, item.Id, ex.ToString()));
                     }
+
+                    fieldIndex++;
                 }
             }
 
@@ -346,12 +392,5 @@ namespace Arriba.TfsWorkItemCrawler.ItemProviders
             return allFields;
         }
         #endregion
-
-        private static string LoadWiql(string wiqlFile)
-        {
-            XmlDocument queryFile = new XmlDocument();
-            queryFile.Load(Path.Combine("Queries", wiqlFile));
-            return queryFile.SelectSingleNode("//Wiql").InnerText;
-        }
     }
 }

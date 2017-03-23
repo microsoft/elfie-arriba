@@ -1,4 +1,5 @@
-﻿using Arriba.Structures;
+﻿using Arriba.Model.Column;
+using Arriba.Structures;
 using System;
 using System.Collections.Generic;
 
@@ -6,6 +7,12 @@ namespace Arriba.TfsWorkItemCrawler.ItemProviders
 {
     public interface IItemProvider : IDisposable
     {
+        /// <summary>
+        ///  Return a list of the available columns from this source.
+        /// </summary>
+        /// <returns></returns>
+        IList<ColumnDetails> GetColumns();
+
         /// <summary>
         ///  Return the Identities of all items changed within a given time range.
         /// </summary>
@@ -22,6 +29,6 @@ namespace Arriba.TfsWorkItemCrawler.ItemProviders
         /// <param name="items">Identities of items to return</param>
         /// <param name="columnNames">Names of columns to return</param>
         /// <returns>DataBlock with desired columns for desired items</returns>
-        DataBlock GetItemBlock(IEnumerable<ItemIdentity> items, IReadOnlyList<string> columnNames);
+        DataBlock GetItemBlock(IEnumerable<ItemIdentity> items, IEnumerable<string> columnNames);
     }
 }
