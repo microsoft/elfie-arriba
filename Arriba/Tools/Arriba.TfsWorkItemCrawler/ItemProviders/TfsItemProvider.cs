@@ -67,16 +67,9 @@ namespace Arriba.TfsWorkItemCrawler.ItemProviders
                 this.Store = new WorkItemStore(this.DatabaseUri);
             }
 
-            using (StreamWriter writer = new StreamWriter("WDGIS.Columns.txt"))
-            {
-                foreach(ColumnDetails cd in this.GetColumns())
-                {
-                    writer.WriteLine(String.Format("{0}\t{1}\t{2}\t{3}", cd.Name, cd.Type, cd.Alias, cd.IsPrimaryKey));
-                }
-            }
-
             // Debug Only: Get the fields list
             //IList<string> fields = GetStoreFields();
+            //File.WriteAllLines(string.Format("{0}.Fields.txt", config.ArribaTable), fields);
         }
 
         #region TFS Online Password Storage

@@ -1,13 +1,10 @@
 ﻿using Arriba.Client;
-using Arriba.Diagnostics;
-using Arriba.Model;
 using Arriba.Model.Column;
 using Arriba.Structures;
 using Arriba.Types;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using Arriba.Model.Security;
 
 namespace Arriba.TfsWorkItemCrawler.ItemConsumers

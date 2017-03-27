@@ -1,5 +1,4 @@
 ﻿using Arriba.Model.Column;
-using Arriba.Serialization;
 using Arriba.TfsWorkItemCrawler.ItemConsumers;
 using Arriba.TfsWorkItemCrawler.ItemProviders;
 using Newtonsoft.Json;
@@ -47,7 +46,15 @@ namespace Arriba.TfsWorkItemCrawler
                     }
 
                     // Build the item consumer
-                    IItemConsumer consumer = new ArribaClientIndexerItemConsumer(config, config.ArribaServiceUrl ?? "http://localhost:42784");
+                    IItemConsumer consumer;
+                    if (config.UseDirectConsumer)
+                    {
+                        consumer = new ArribaDirectIndexerItemConsumer(config);
+                    }
+                    else
+                    {
+                        consumer = new ArribaClientIndexerItemConsumer(config, config.ArribaServiceUrl ?? "http://localhost:42784");
+                    }
 
                     // Build the item provider
                     IItemProvider provider = ItemProviderUtilities.Build(config);
