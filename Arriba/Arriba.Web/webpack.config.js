@@ -3,8 +3,8 @@ var path = require("path");
 module.exports = {
     entry: ["./jsx/Grid.jsx", "./jsx/Search.jsx"],
     output: {
-        path: path.join(__dirname, "lib"),
-        filename: "Search.js"
+        path: __dirname,
+        filename: "bundle.js"
     },
     devtool: 'source-map',
     resolve: {
