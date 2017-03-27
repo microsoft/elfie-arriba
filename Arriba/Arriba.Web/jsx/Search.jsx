@@ -13,10 +13,10 @@ import ResultListing from "./ResultListing";
 
 // NOTE: Depends on configuration from zConfiguration.jsx.
 import defaultConfiguration from "./DefaultConfiguration";
-var configuration = defaultConfiguration;
+window.configuration = defaultConfiguration;
 var optionalContext = require.context("..", true, /\.\/configuration\/Configuration\.jsx/);
 if (optionalContext.keys().includes("./configuration/Configuration.jsx")) {
-    configuration = optionalContext("./configuration/Configuration.jsx").default
+    window.configuration = optionalContext("./configuration/Configuration.jsx").default
 }
 
 // SearchMain wraps the overall search UI
