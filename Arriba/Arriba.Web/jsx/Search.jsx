@@ -184,7 +184,7 @@ var SearchMain = React.createClass({
         this.addPivotClauses(params);
 
         // Get the count of matches from each accessible table
-        jsonQuery(
+        this.jsonQueryWithError(
             this.props.url + "/allCount",
             function (data) {
                 var tableToShow = this.state.userSelectedTable;
@@ -192,16 +192,12 @@ var SearchMain = React.createClass({
 
                 this.setState({ allCountData: data, currentTable: tableToShow, error: null }, this.getTableBasics);
             }.bind(this),
-            function (xhr, status, err) {
-                this.setState({ allCountData: [], listingData: [], selectedItemData: null,  error: "Error: Server didn't respond to [" + xhr.url + "]. " + err });
-                console.error(xhr.url, status, err.toString());
-            }.bind(this),
             params
         );
     },
     getTableBasics: function () {
         // Once a table is selected, find out the columns and primary key column for the table
-        jsonQuery(this.props.url + "/table/" + this.state.currentTable,
+        this.jsonQueryWithError(this.props.url + "/table/" + this.state.currentTable,
             data => {
                 var idColumn = data.content.columns.find(col => col.isPrimaryKey).name || "";
 
@@ -220,11 +216,7 @@ var SearchMain = React.createClass({
                     if (this.state.query) this.getResultsPage();
                     if (this.state.userSelectedId) this.getDetails();
                 });
-            },
-            function (xhr, status, err) {
-                this.setState({ allCountData: [], listingData: [], selectedItemData: null, error: "Error: Server didn't respond to [" + xhr.url + "]. " + err });
-                console.error(xhr.url, status, err.toString());
-            }.bind(this)
+            }
         );
     },
     getResultsPage: function (i) {
@@ -238,14 +230,10 @@ var SearchMain = React.createClass({
         var pageSize = 50 * (i + 1);
 
         // Get a page of matches for the given query for the desired columns and sort order, with highlighting.
-        jsonQuery(
+        this.jsonQueryWithError(
             this.buildQueryUrl() + "&h=%CF%80&t=" + pageSize,
             function (data) {
                 this.setState({ listingData: data, hasMoreData: data.content.total > pageSize, page: i, error: null });
-            }.bind(this),
-            function (xhr, status, err) {
-                this.setState({ allCountData: [], listingData: [], selectedItemData: null, error: "Error: Server didn't respond to [" + xhr.url + "]. " + err });
-                console.error(xhr.url, status, err.toString());
             }.bind(this)
         );
     },
@@ -269,7 +257,7 @@ var SearchMain = React.createClass({
         this.addPivotClauses(params);
 
         // Select all columns for the selected item, with highlighting
-        jsonQuery(
+        this.jsonQueryWithError(
             this.props.url + "/table/" + this.state.currentTable,
             function (data) {
                 if (data.content.values) {
@@ -282,14 +270,21 @@ var SearchMain = React.createClass({
                     }
                 }
             }.bind(this),
-            function (xhr, status, err) {
-                this.setState({ allCountData: [], listingData: [], selectedItemData: null, error: "Error: Server didn't respond to [" + xhr.url + "]. " + err });
-                console.error(xhr.url, status, err.toString());
-            }.bind(this),
             params
         );
 
         this.setHistory();
+    },
+    jsonQueryWithError: function (url, onSuccess, parameters) {
+        jsonQuery(
+            url,
+            onSuccess,
+            function (xhr, status, err) {
+                this.setState({ allCountData: [], listingData: [], selectedItemData: null, error: "Error: Server didn't respond to [" + xhr.url + "]. " + err });
+                console.error(xhr.url, status, err.toString());
+            }.bind(this),
+            parameters
+        );
     },
     setHistory: function () {
         var url = this.buildThisUrl(true);
