@@ -419,8 +419,8 @@ var GridMain = React.createClass({
         }
 
     },
-    onSearchChange: function (e) {
-        this.setState({ query: e.target.value }, this.delayedRunSearch);
+    onSearchChange: function (value) {
+        this.setState({ query: value }, this.delayedRunSearch);
     },
     delayedRunSearch: function () {
         // Only query every 250 milliseconds while typing

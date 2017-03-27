@@ -136,8 +136,8 @@ var SearchMain = React.createClass({
         pivots.push({ q: this.state.query, t: this.state.currentTable });
         this.setState({ pivotQueries: pivots, query: baseQuery, currentTable: table, userSelectedTable: table }, this.runSearch);
     },
-    onSearchChange: function (e) {
-        this.setState({ query: e.target.value, userSelectedId: null }, this.delayedRunSearch);
+    onSearchChange: function (value) {
+        this.setState({ query: value, userSelectedId: null }, this.delayedRunSearch);
     },
     delayedRunSearch: function () {
         // Only query every 250 milliseconds while typing
