@@ -42,6 +42,8 @@ html, body, .viewport {
 
     display: flex;
     flex-flow: row;
+
+    position: relative;
 }
 
 /* Make the middle area resize and full width.
@@ -761,4 +763,33 @@ a:visited:hover {
 
     display: flex;
     overflow: hidden;
+}
+
+.suggestions {
+    position: absolute;
+    top: 58px; /* Todo: Don't hard code the top. */
+    left: 8px;
+    background-color: white;
+    box-shadow: 0 3px 8px 0 rgba(0,0,0,0.2), 0 0 0 1px rgba(0,0,0,0.08);
+    z-index: 1;
+    max-height: 70vh;
+    min-width: 150px;
+    overflow-y: scroll;
+}
+
+.suggestions .suggestion {
+    font-size: 12pt;
+    font-weight: 600;
+    padding: 8px;
+    cursor: pointer;
+    box-sizing: border-box;
+    white-space: nowrap;
+}
+
+.suggestions .suggestion:hover {
+     background-color: rgba(0, 0, 0, 0.02); 
+}
+
+.suggestions .suggestion-sel {
+    background-color: rgba(180, 210, 255, 0.5);
 }
