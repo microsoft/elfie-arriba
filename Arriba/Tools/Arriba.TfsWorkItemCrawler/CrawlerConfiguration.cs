@@ -51,14 +51,48 @@ namespace Arriba.TfsWorkItemCrawler
         /// </summary>
         public List<string> ColumnsToExclude { get; set; }
 
+        /// <summary>
+        ///  Name of IItemProvider to use for crawl. [TfsItemProvider]
+        /// </summary>
         public string ItemProvider { get; set; }
+
+        /// <summary>
+        ///  Name/Url of source database. [https://projectName.visualstudio.com]
+        /// </summary>
         public string ItemDatabaseName { get; set; }
+
+        /// <summary>
+        ///  WIQL Query for items to index. If not provided, all items are retrieved.
+        ///  Query must contain [AND ChangedDate &gt;= @Start AND ChangedDate &lt;= @End]
+        ///  so that the crawler can scope items to retrieve on each pass.
+        /// </summary>
         public string ItemQuery { get; set; }
 
-        public string TfsOnlineUserName { get; set; }
-        public string TfsOnlineEncryptedPasswordFilePath { get; set; }
+        /// <summary>
+        ///  True to use AAD authentication with the current user for a TFS connection.
+        /// </summary>
         public bool UseAADForTFSAuth { get; set; }
 
+        /// <summary>
+        ///  Set to use the given user name for Tfs authentication
+        /// </summary>
+        public string TfsOnlineUserName { get; set; }
+
+        /// <summary>
+        ///  Set to look for an encrypted password in the given file path for Tfs authentication.
+        ///  Provide the password by running the crawler with -Password.
+        /// </summary>
+        public string TfsOnlineEncryptedPasswordFilePath { get; set; }
+        
+        /// <summary>
+        ///  True to build the Arriba database in process rather than writing new and changed
+        ///  items to the live service URL
+        /// </summary>
+        public bool UseDirectConsumer { get; set; }
+
+        /// <summary>
+        ///  List of columns to be renamed from the source, if any.
+        /// </summary>
         public Dictionary<string, string> ColumnMappings { get; set; }
 
         public CrawlerConfiguration()

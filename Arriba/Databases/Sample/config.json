@@ -1,0 +1,27 @@
+﻿{
+	/* See Arriba\Tools\Arriba.TfsWorkItemCrawler\CrawlerConfiguration.cs for all available properties. */
+
+	/* The name of the Arriba table to create for these items. */
+	"arribaTable": "Sample",
+
+	/* The maximum number of items the table will contain. Determines how many partitions must be created. */
+	"itemCountLimit": 100000,
+
+	/* Identities which can read/write/delete/change permissions on the table.
+	   Syntax: 'u:Domain\UserName' or 'g:Domain\GroupName' */
+	"owners": [ "u:Domain\\CrawlerUser" ],
+
+	/* Identities which can read the table. */
+	"readers": [ "g:Domain\\SecurityGroupAlias", "g:Domain\\SecurityGroupAlias2" ],
+
+	/* Which IItemProvider to use to populate the table */
+	"itemProvider": "TfsItemProvider",
+
+	/* The Name or URL of the database to crawl. Use the VSO URL for TFS.
+	   ex: https://<myProject>.visualstudio.com */
+	"itemDatabaseName": "https://myProject.visualstudio.com",
+
+	/* True to use Azure Active Directory for the identity running the crawler
+	   to authenticate with TFS. */
+	"UseAADForTFSAuth":  "true"
+}
