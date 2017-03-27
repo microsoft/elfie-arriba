@@ -4,15 +4,8 @@ export default React.createClass({
         ReactDOM.findDOMNode(this.refs.searchBox).focus();
     },
     render: function () {
-        var placeholderText = "Search for ";
-        if (this.props.tables) {
-            for (var i = 0; i < this.props.tables.length; ++i) {
-                if (i > 0) placeholderText += ", ";
-                placeholderText += this.props.tables[i];
-            }
         }
-        placeholderText += "...";
-
+        var tables = this.props.tables || [];
         return (
             <div className="header theme-background-medium">
                 <div className="title font-light theme-background-vdark">
@@ -20,7 +13,7 @@ export default React.createClass({
                 </div>
 
                 <div className="searchBar">
-                    <input id="searchBox" ref="searchBox" type="text" placeholder={placeholderText} tabIndex="1" onInput={this.props.onSearchChange} value={this.props.query} />
+                    <input id="searchBox" ref="searchBox" type="text" placeholder={"Search for " + tables.join(", ") + "..."} tabIndex="1" onInput={this.props.onSearchChange} value={this.props.query} />
                     <div className="searchIcon">
                         <i className="icon-find"></i>
                     </div>
