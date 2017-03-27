@@ -335,35 +335,35 @@ var SearchMain = React.createClass({
     render: function () {
         if(this.state.blockingErrorTitle) return <ErrorPage title={this.state.blockingErrorTitle} status={this.state.blockingErrorStatus} message={this.state.blockingErrorContent} />;
 
-        var detailsView = null;
-        var customDetailsView = ResultDetails;
-        if (this.props.customDetailsProviders) customDetailsView = this.props.customDetailsProviders[this.state.currentTable] || customDetailsView;
+        var customDetailsView = (this.props.customDetailsProviders && this.props.customDetailsProviders[this.state.currentTable]) || ResultDetails;
 
-        detailsView = React.createElement(customDetailsView, { itemId: this.state.userSelectedId, table: this.state.currentTable, query: this.state.query, data: this.state.selectedItemData, onClose: this.onClose, onAddClause: this.onAddClause });
-
-        var mainContent = <SyntaxHelp showHelp={this.props.params.help} splashContent={configuration.splashContent} />;
-        if (this.state.query) {
-            mainContent = (
-                <SplitPane split="horizontal" minSize="300" isFirstVisible={this.state.listingData.content} isSecondVisible={this.state.userSelectedId}>
-                    <InfiniteScroll page={this.state.page} hasMoreData={this.state.hasMoreData} loadMore={this.getResultsPage }>
-                        <ResultListing ref={"list"}
-                            data={this.state.listingData}
-                            idColumn={this.state.currentTableIdColumn}
-                            allColumns={this.state.currentTableAllColumns}
-                            sortColumn={this.state.currentSortColumn}
-                            sortOrder={this.state.currentSortOrder}
-                            selectedId={this.state.userSelectedId}
-                            onResort={this.onResort}
-                            onSelectionChanged={this.onSelectionChanged}
-                            onSetColumns={this.onSetColumns}
-                            onPivot={this.onPivot} />
-                    </InfiniteScroll>
-                    <div className="scrollable">
-                        {detailsView}
-                    </div>
-                </SplitPane>
-            );
-        }
+        var mainContent = this.state.query
+            ? <SplitPane split="horizontal" minSize="300" isFirstVisible={this.state.listingData.content} isSecondVisible={this.state.userSelectedId}>
+                <InfiniteScroll page={this.state.page} hasMoreData={this.state.hasMoreData} loadMore={this.getResultsPage }>
+                    <ResultListing ref={"list"}
+                        data={this.state.listingData}
+                        idColumn={this.state.currentTableIdColumn}
+                        allColumns={this.state.currentTableAllColumns}
+                        sortColumn={this.state.currentSortColumn}
+                        sortOrder={this.state.currentSortOrder}
+                        selectedId={this.state.userSelectedId}
+                        onResort={this.onResort}
+                        onSelectionChanged={this.onSelectionChanged}
+                        onSetColumns={this.onSetColumns}
+                        onPivot={this.onPivot} />
+                </InfiniteScroll>
+                <div className="scrollable">
+                    {React.createElement(customDetailsView, { 
+                        itemId: this.state.userSelectedId, 
+                        table: this.state.currentTable, 
+                        query: this.state.query, 
+                        data: this.state.selectedItemData, 
+                        onClose: this.onClose, 
+                        onAddClause: this.onAddClause 
+                    })}
+                </div>
+            </SplitPane>
+            : <SyntaxHelp showHelp={this.props.params.help} splashContent={configuration.splashContent} />
 
         var queryUrl = this.buildQueryUrl();
         var baseUrl = this.buildThisUrl(false);
