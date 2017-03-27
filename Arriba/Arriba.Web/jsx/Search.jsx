@@ -197,27 +197,25 @@ var SearchMain = React.createClass({
     },
     getTableBasics: function () {
         // Once a table is selected, find out the columns and primary key column for the table
-        this.jsonQueryWithError(this.props.url + "/table/" + this.state.currentTable,
-            data => {
-                var idColumn = data.content.columns.find(col => col.isPrimaryKey).name || "";
+        this.jsonQueryWithError(this.props.url + "/table/" + this.state.currentTable, data => {
+            var idColumn = data.content.columns.find(col => col.isPrimaryKey).name || "";
 
-                // Choose columns, sort column, sort order
-                var defaultsForTable = (this.props.listingDefaults && this.props.listingDefaults[this.state.currentTable]) || {};
+            // Choose columns, sort column, sort order
+            var defaultsForTable = (this.props.listingDefaults && this.props.listingDefaults[this.state.currentTable]) || {};
 
-                // Set the ID column, all columns, and listing columns
-                this.setState({
-                    currentTableIdColumn: idColumn,
-                    currentTableAllColumns: data.content.columns,
-                    currentListingColumns: firstNonEmptyArray(this.state.userSelectedColumns, defaultsForTable.columns, [idColumn]),
-                    currentSortColumn: this.state.userSelectedSortColumn || defaultsForTable.sortColumn || idColumn,
-                    currentSortOrder: this.state.userSelectedSortOrder || defaultsForTable.sortOrder || "asc",
-                    error: null
-                }, () => {
-                    if (this.state.query) this.getResultsPage();
-                    if (this.state.userSelectedId) this.getDetails();
-                });
-            }
-        );
+            // Set the ID column, all columns, and listing columns
+            this.setState({
+                currentTableIdColumn: idColumn,
+                currentTableAllColumns: data.content.columns,
+                currentListingColumns: firstNonEmptyArray(this.state.userSelectedColumns, defaultsForTable.columns, [idColumn]),
+                currentSortColumn: this.state.userSelectedSortColumn || defaultsForTable.sortColumn || idColumn,
+                currentSortOrder: this.state.userSelectedSortOrder || defaultsForTable.sortOrder || "asc",
+                error: null
+            }, () => {
+                if (this.state.query) this.getResultsPage();
+                if (this.state.userSelectedId) this.getDetails();
+            });
+        });
     },
     getResultsPage: function (i) {
         // Once the counts query runs and table basics are loaded, get a page of results
@@ -311,10 +309,10 @@ var SearchMain = React.createClass({
         var relevantParams = {};
         this.addPivotClauses(relevantParams);
 
-        if (this.state.userSelectedTable) relevantParams.t = this.state.userSelectedTable;
-        if (this.state.query) relevantParams.q = this.state.query;        
-        if (this.state.userSelectedSortColumn) relevantParams.ob = this.state.userSelectedSortColumn;
-        if (this.state.userSelectedSortOrder === "desc") relevantParams.so = this.state.userSelectedSortOrder;
+        if (this.state.userSelectedTable)                   relevantParams.t = this.state.userSelectedTable;
+        if (this.state.query)                               relevantParams.q = this.state.query;        
+        if (this.state.userSelectedSortColumn)              relevantParams.ob = this.state.userSelectedSortColumn;
+        if (this.state.userSelectedSortOrder === "desc")    relevantParams.so = this.state.userSelectedSortOrder;
 
         for (var i = 0; i < this.state.userSelectedColumns.length; ++i) {
             relevantParams["c" + (i + 1).toString()] = this.state.userSelectedColumns[i];
