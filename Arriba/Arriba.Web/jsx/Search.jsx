@@ -202,41 +202,25 @@ var SearchMain = React.createClass({
     getTableBasics: function () {
         // Once a table is selected, find out the columns and primary key column for the table
         jsonQuery(this.props.url + "/table/" + this.state.currentTable,
-            function (data) {
-                var idColumn = "";
-
-                // Find the ID column
-                for (var j = 0; j < data.content.columns.length; ++j) {
-                    if (data.content.columns[j].isPrimaryKey) {
-                        idColumn = data.content.columns[j].name;
-                        break;
-                    }
-                }
+            data => {
+                var idColumn = data.content.columns.find(col => col.isPrimaryKey).name || "";
 
                 // Choose columns, sort column, sort order
-                var defaultsForTable = (this.props.listingDefaults ? this.props.listingDefaults[this.state.currentTable] : null);
-                if (!defaultsForTable) defaultsForTable = {};
-
-                var columns = firstNonEmptyArray(this.state.userSelectedColumns, defaultsForTable.columns, [idColumn]);
-                var sortColumn = this.state.userSelectedSortColumn || defaultsForTable.sortColumn || idColumn;
-                var sortOrder = this.state.userSelectedSortOrder || defaultsForTable.sortOrder || "asc";
-
-                var next = function () {
-                    if (this.state.query) this.getResultsPage();
-                    if (this.state.userSelectedId) this.getDetails();
-                };
+                var defaultsForTable = (this.props.listingDefaults && this.props.listingDefaults[this.state.currentTable]) || {};
 
                 // Set the ID column, all columns, and listing columns
-                this.setState(
-                    {
-                        currentTableIdColumn: idColumn,
-                        currentTableAllColumns: data.content.columns,
-                        currentListingColumns: columns,
-                        currentSortColumn: sortColumn,
-                        currentSortOrder: sortOrder,
-                        error: null
-                    }, next);
-            }.bind(this),
+                this.setState({
+                    currentTableIdColumn: idColumn,
+                    currentTableAllColumns: data.content.columns,
+                    currentListingColumns: firstNonEmptyArray(this.state.userSelectedColumns, defaultsForTable.columns, [idColumn]),
+                    currentSortColumn: this.state.userSelectedSortColumn || defaultsForTable.sortColumn || idColumn,
+                    currentSortOrder: this.state.userSelectedSortOrder || defaultsForTable.sortOrder || "asc",
+                    error: null
+                }, () => {
+                    if (this.state.query) this.getResultsPage();
+                    if (this.state.userSelectedId) this.getDetails();
+                });
+            },
             function (xhr, status, err) {
                 this.setState({ allCountData: [], listingData: [], selectedItemData: null, error: "Error: Server didn't respond to [" + xhr.url + "]. " + err });
                 console.error(xhr.url, status, err.toString());
