@@ -51,6 +51,7 @@ namespace Arriba.Server
             this.PostAsync(new RouteSpecification("/table/:tableName", new UrlParameter("action", "aggregate")), this.ValidateReadAccessAsync, this.Aggregate);
 
             this.Get(new RouteSpecification("/allCount"), this.AllCount);
+            this.Get(new RouteSpecification("/suggest"), this.Suggest);
         }
 
         private async Task<IResponse> Select(IRequestContext ctx, Route route)
@@ -389,6 +390,37 @@ namespace Arriba.Server
                 this.AllowedToRead = allowedToRead;
                 this.Succeeded = succeeded;
             }
+        }
+
+        private IResponse Suggest(IRequestContext ctx, Route route)
+        {
+            string query = ctx.Request.ResourceParameters["q"];
+            string selectedTable = ctx.Request.ResourceParameters["t"];
+            IPrincipal user = ctx.Request.User;
+
+            IntelliSenseResult result = null;
+
+            using (ctx.Monitor(MonitorEventLevel.Verbose, "Suggest", type: "Suggest", detail: query))
+            {
+                // Get all available tables
+                List<Table> tables = new List<Table>();
+                foreach (string tableName in this.Database.TableNames)
+                {
+                    if (this.HasTableAccess(tableName, user, PermissionScope.Reader))
+                    {
+                        if(String.IsNullOrEmpty(selectedTable) || selectedTable.Equals(tableName, StringComparison.OrdinalIgnoreCase))
+                        {
+                            tables.Add(this.Database[tableName]);
+                        }
+                    }
+                }
+
+                // Get IntelliSense results and return
+                QueryIntelliSense qi = new QueryIntelliSense();
+                result = qi.GetIntelliSenseItems(query, tables);
+            }
+
+            return ArribaResponse.Ok(result);
         }
 
         private IResponse Query<T>(IRequestContext ctx, Route route, IQuery<T> query)
