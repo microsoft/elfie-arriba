@@ -65,8 +65,9 @@ export default React.createClass({
             <div className="suggestions" >
                 {this.state.suggestions.map((item, index) =>
                     <div className={"suggestion " + (this.state.sel == index ? "suggestion-sel" : "" )}
-                        onClick={ this.handleClick.bind(this, item) }
-                        ><span style={{opacity: 0.3}}>{this.state.completed}</span>{item.display}
+                        onClick={ this.handleClick.bind(this, item) }>
+                        <span><span style={{opacity: 0.3}}>{this.state.completed}</span>{item.display}</span>
+                        <span className="suggestion-hint">{item.hint}</span>
                     </div>
                 )}
             </div>;
