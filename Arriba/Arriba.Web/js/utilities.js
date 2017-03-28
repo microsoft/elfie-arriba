@@ -2,12 +2,24 @@
 var highlightRangeRegex = new RegExp(highlightChar + '(.+?)' + highlightChar, 'g');
 var highlightCharOnlyRegex = new RegExp(highlightChar, 'g');
 
+Number.prototype.clamp = function(min, max) {
+    return Math.min(Math.max(this, min), max);
+};
+
 // Polyfill for Array.includes
 if (!Array.prototype.includes) {
     Array.prototype.includes = function() {
         return Array.prototype.indexOf.apply(this, arguments) !== -1;
     };
 }
+
+// Polyfill.
+Array.prototype.find = Array.prototype.find || function(predicate) {
+    for (var i = 0; i < this.length; i++) {
+        var element = this[i];
+        if (predicate.call(arguments[1], element, i, this)) return element;
+    }
+};
 
 // Highlight values surrounded by Pi characters by wrapping them in <span class="h"></span>
 function highlight(value) {
@@ -71,6 +83,8 @@ function jsonQuery(url, onSuccess, onError, parameters) {
     }
 
     request.send();
+
+    return request;
 }
 
 // Build an object with a property for each querystring parameter

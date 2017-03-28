@@ -1,13 +1,15 @@
-﻿import ErrorPage from "./ErrorPage"
+﻿require("../Search.css");
+
+import ErrorPage from "./ErrorPage"
 import QueryStats from "./QueryStats"
 import SearchHeader from "./SearchHeader"
 
 // NOTE: Depends on configuration from zConfiguration.jsx.
 import defaultConfiguration from "./DefaultConfiguration";
-var configuration = defaultConfiguration;
+window.configuration = defaultConfiguration;
 var optionalContext = require.context("..", true, /\.\/configuration\/Configuration\.jsx/);
 if (optionalContext.keys().includes("./configuration/Configuration.jsx")) {
-    configuration = optionalContext("./configuration/Configuration.jsx").default
+    window.configuration = optionalContext("./configuration/Configuration.jsx").default
 }
 
 // The GridFunctionCell is the corner cell which shows the aggregation function and column [COUNT(*)].
@@ -417,8 +419,8 @@ var GridMain = React.createClass({
         }
 
     },
-    onSearchChange: function (e) {
-        this.setState({ query: e.target.value }, this.delayedRunSearch);
+    onSearchChange: function (value) {
+        this.setState({ query: value }, this.delayedRunSearch);
     },
     delayedRunSearch: function () {
         // Only query every 250 milliseconds while typing

@@ -35,6 +35,12 @@ namespace Arriba.Test.Model.Query
             // Braced Column = Quoted Value
             Assert.AreEqual("[Created By] < \"Scott Louvau\"", QueryParser.Parse("[Created By]<\"Scott Louvau\"").ToString());
 
+            // Braced Column with trailing spaces, requesting hint = Defaulted Value, no space in column name
+            Assert.AreEqual("[Created By] <> \"\"", QueryParser.Parse("[Created By] ", true).ToString());
+
+            // Incomplete Braced Column with trailing spaces, requesting hint include in partial
+            Assert.AreEqual("[Created  ] <> \"\"", QueryParser.Parse("[Created  ", true).ToString());
+
             // Negated Bare Value
             Assert.AreEqual("NOT(*:editor)", QueryParser.Parse("-editor").ToString());
 
@@ -47,9 +53,13 @@ namespace Arriba.Test.Model.Query
             // Unclosed subquery
             Assert.AreEqual("(Priority <= 3 AND (*:verified OR *:chec))", QueryParser.Parse("Priority <= 3 && (verified || chec").ToString());
 
-            // Trailing operator
-            Assert.AreEqual("(Priority <= 3 AND *:\"\")", QueryParser.Parse("Priority <= 3 &&").ToString());
-            Assert.AreEqual("(Priority <= 3 OR *:\"\")", QueryParser.Parse("Priority <= 3 ||").ToString());
+            // Trailing operator - with hint, hint term
+            Assert.AreEqual("(Priority <= 3 AND *:\"\")", QueryParser.Parse("Priority <= 3 &&", true).ToString());
+            Assert.AreEqual("(Priority <= 3 OR *:\"\")", QueryParser.Parse("Priority <= 3 ||", true).ToString());
+
+            // Trailing operator - no hint, no next clause
+            Assert.AreEqual("Priority <= 3", QueryParser.Parse("Priority <= 3 &&").ToString());
+            Assert.AreEqual("Priority <= 3", QueryParser.Parse("Priority <= 3 ||").ToString());
 
             // Non-identifier junk
             Assert.AreEqual("", QueryParser.Parse("<<<<>>>>").ToString());
@@ -129,15 +139,22 @@ namespace Arriba.Test.Model.Query
             // Nothing - no query
             Assert.AreEqual("", QueryParser.Parse("").ToString());
 
+            // Negation only - no query
+            Assert.AreEqual("", QueryParser.Parse("!").ToString());
+
+            // Paren only - no query
+            Assert.AreEqual("", QueryParser.Parse("(").ToString());
+
             // Incomplete column name - empty string
-            Assert.AreEqual("Starting = \"\"", QueryParser.Parse("[Starting").ToString());
+            Assert.AreEqual("", QueryParser.Parse("[Starting").ToString());
 
             // Column name without operator - empty string
-            Assert.AreEqual("Title <> \"\"", QueryParser.Parse("[Title]").ToString());
+            Assert.AreEqual("", QueryParser.Parse("[Title]").ToString());
 
             // Column name and operator without value - empty string
-            Assert.AreEqual("Title = \"\"", QueryParser.Parse("[Title] = ").ToString());
-            Assert.AreEqual("Title > \"\"", QueryParser.Parse("Title > ").ToString());
+            Assert.AreEqual("", QueryParser.Parse("[Title] =").ToString());
+            Assert.AreEqual("", QueryParser.Parse("[Title] = ").ToString());
+            Assert.AreEqual("", QueryParser.Parse("Title > ").ToString());
 
             // Incomplete quoted value - search value so far
             Assert.AreEqual("*:Starting", QueryParser.Parse("\"Starting").ToString());
