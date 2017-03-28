@@ -403,7 +403,8 @@ namespace Arriba.Model.Query
                 {
                     if (column.Name.StartsWith(guidance.Value, StringComparison.OrdinalIgnoreCase))
                     {
-                        // Add the matching column (with bare column name initially so sort order is correct ([Count], then [Count Of X]))
+                        // Add the matching column
+                        // Hack: Set the Display value to the bare column name and CompleteAs to the wrapped [ColumnName], so sort order is right
                         selectedColumns.Add(new IntelliSenseItem(QueryTokenCategory.ColumnName, column.Name, String.Format("{0}, {1}", column.Type, table.Name), "[" + column.Name + "]"));
 
                         if (column.Name.Length > guidance.Value.Length && column.Name[guidance.Value.Length] == ' ')
@@ -415,21 +416,21 @@ namespace Arriba.Model.Query
                 }
             }
 
-            // Sort selected columns alphabetically *by bare column name*
+            // Sort selected columns alphabetically *by bare column name*, so [Count] will be before [Count of Options].
             selectedColumns.Sort((left, right) => left.Display.CompareTo(right.Display));
 
-            // After sort, get the wrapped column names to show
+            // Unhack: Set the display value back to the wrapped [ColumnName]
             foreach (IntelliSenseItem item in selectedColumns)
             {
                 item.Display = item.CompleteAs;
             }
 
-            // Remove duplicates, wrap names
+            // Remove entries where the same column name was suggested by multiple tables (set the hint to '<Multiple Tables>')
             for (int i = 1; i < selectedColumns.Count; ++i)
             {
                 if(selectedColumns[i - 1].Display == selectedColumns[i].Display)
                 {
-                    selectedColumns[i - 1].Hint = "<Multiple Tables>";
+                    selectedColumns[i - 1].Hint = MultipleTables;
                     selectedColumns.RemoveAt(i);
                     --i;
                 }
