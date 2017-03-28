@@ -169,6 +169,28 @@ namespace Arriba.Model
             }
         }
 
+        public Type GetColumnType(string columnName)
+        {
+            _locker.EnterReadLock();
+            
+            try
+            {
+                IUntypedColumn column;
+                if(_partitions[0].Columns.TryGetValue(columnName, out column))
+                {
+                    return column.ColumnType;
+                }
+                else
+                {
+                    return null;
+                }
+            }
+            finally
+            {
+                _locker.ExitReadLock();
+            }
+        }
+
         /// <summary>
         ///  Add a new column with the given type descriptor and default.
         ///  Columns must be added before values can be set on them.

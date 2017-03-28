@@ -6,13 +6,13 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 
-using Arriba.Diagnostics;
 using Arriba.Extensions;
 using Arriba.Model;
 using Arriba.Model.Aggregations;
 using Arriba.Model.Query;
 using Arriba.Serialization;
 using Arriba.Structures;
+using Arriba.Diagnostics;
 
 namespace Arriba.ConsoleTest
 {
@@ -20,15 +20,15 @@ namespace Arriba.ConsoleTest
     {
         private static void Main(string[] args)
         {
-            //SetCountPerformance();
-            //FromAndPerformance();
-            Table table = LoadTable("Sample");
+            ////SetCountPerformance();
+            ////FromAndPerformance();
+            //Table table = LoadTable("Sample");
 
-            //AggregateDistinctTest(table);
-            //DistinctTest(table, "Resolution", "Pri = 3");
-            SearchTest(table, "Priority = 3", false, null);
-            SearchTest(table, "editor Pri = 3", true, new string[] { "ID", "Title", "Resolution" });
-            //QueryPerformanceTest(table, "Priority = 1 AND Platform");
+            ////AggregateDistinctTest(table);
+            ////DistinctTest(table, "Resolution", "Pri = 3");
+            //SearchTest(table, "Priority = 3", false, null);
+            //SearchTest(table, "editor Pri = 3", true, new string[] { "ID", "Title", "Resolution" });
+            ////QueryPerformanceTest(table, "Priority = 1 AND Platform");
         }
 
         private static void FromAndPerformance()
@@ -92,7 +92,7 @@ namespace Arriba.ConsoleTest
             Trace.Write(String.Format("Loading Table '{0}'...\r\n", tableName));
 
             Trace.Write(String.Format("\tDisk Size: {0}\r\n", BinarySerializable.Size(String.Format(@"Tables\{0}", tableName)).SizeString()));
-            Trace.Write(String.Format("\tMemory Use: {0}\r\n", Memory.MeasureObjectSize(() => { table.Load(tableName); return table; }).SizeString()));
+            Trace.Write(String.Format("\tMemory Use: {0}\r\n", Arriba.Diagnostics.Memory.MeasureObjectSize(() => { table.Load(tableName); return table; }).SizeString()));
 
 
             return table;
