@@ -89,10 +89,24 @@ namespace Arriba.Server.Application
             var table = this.Database[tableName];
 
             TableInformation ti = new TableInformation();
-            ti.Name = tableName;
-            ti.Columns = table.ColumnDetails;
+            ti.Name = tableName;            
             ti.PartitionCount = table.PartitionCount;
             ti.RowCount = table.Count;
+
+            IList<string> restrictedColumns = this.Database.GetRestrictedColumns(tableName, (si) => this.IsInIdentity(ctx.Request.User, si));
+            if (restrictedColumns == null)
+            {
+                ti.Columns = table.ColumnDetails;
+            }
+            else
+            {
+                List<ColumnDetails> allowedColumns = new List<ColumnDetails>();
+                foreach(ColumnDetails column in table.ColumnDetails)
+                {
+                    if (!restrictedColumns.Contains(column.Name)) allowedColumns.Add(column);
+                }
+                ti.Columns = allowedColumns;
+            }
 
             return ArribaResponse.Ok(ti);
         }
