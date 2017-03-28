@@ -94,7 +94,7 @@ namespace Arriba.Test.Model.Query
             Assert.AreEqual(0, result.Suggestions.Count);
 
             // No Query: ColumnNames, alphabetical, with duplicates, then bare value, then TermPrefixes
-            string allColumnNamesOrValue = "Age, City, ID, ID, Name, Name, SchoolHasMascot, SchoolYearLength, Student Count, WhenFounded, !, (";
+            string allColumnNamesOrValue = "[Age], [City], [ID], [ID], [Name], [Name], [SchoolHasMascot], [SchoolYearLength], [Student Count], [WhenFounded], !, (";
             result = qi.GetIntelliSenseItems("", Tables);
             Assert.AreEqual(allColumnNamesOrValue, string.Join(", ", result.Suggestions.Select(ii => ii.Display)));
             Assert.AreEqual("", result.SyntaxHint);
@@ -104,7 +104,7 @@ namespace Arriba.Test.Model.Query
 
             // No Query, one table: ColumnNames for single table, then bare value, then TermPrefixes
             result = qi.GetIntelliSenseItems("", new List<Table>() { Student });
-            Assert.AreEqual("Age, City, ID, Name, !, (", string.Join(", ", result.Suggestions.Select(ii => ii.Display)));
+            Assert.AreEqual("[Age], [City], [ID], [Name], !, (", string.Join(", ", result.Suggestions.Select(ii => ii.Display)));
             Assert.AreEqual("", result.SyntaxHint);
             Assert.AreEqual("", result.Incomplete);
             Assert.AreEqual("", result.Complete);
@@ -127,14 +127,14 @@ namespace Arriba.Test.Model.Query
             // "[Na" must be a column name, and one of the 'Name' ones
             // CurrentIncompleteValue is just the bare column name (no '[') for list filtering, but CurrentCompleteValue is "", so the "[" is replaced by the completion.
             result = qi.GetIntelliSenseItems("[Na", Tables);
-            Assert.AreEqual("Name, Name", string.Join(", ", result.Suggestions.Select(ii => ii.Display)));
-            Assert.AreEqual("Name College.Name [string] [ColumnName] ([Name]), Name Student.Name [stringset] [ColumnName] ([Name])", string.Join(", ", result.Suggestions));
+            Assert.AreEqual("[Name], [Name]", string.Join(", ", result.Suggestions.Select(ii => ii.Display)));
+            Assert.AreEqual("[Name] | College.Name [string] | ColumnName | [Name], [Name] | Student.Name [stringset] | ColumnName | [Name]", string.Join(", ", result.Suggestions));
             Assert.AreEqual("Na", result.Incomplete);
             Assert.AreEqual("", result.Complete); 
             Assert.AreEqual("[Na", result.Query);
 
             // "[SchoolSumm" should suggest nothing (no remaining column names)
-            result = qi.GetIntelliSenseItems("[SchoolSUmm", Tables);
+            result = qi.GetIntelliSenseItems("[SchoolSumm", Tables);
             Assert.AreEqual("", string.Join(", ", result.Suggestions.Select(ii => ii.Display)));
 
             // "[Name] " should suggest operators
@@ -150,7 +150,7 @@ namespace Arriba.Test.Model.Query
 
             // "[Student " should match 'Student Count' (space in column filtering is correct)
             result = qi.GetIntelliSenseItems("[Student ", Tables);
-            Assert.AreEqual("Student Count", string.Join(", ", result.Suggestions.Select(ii => ii.Display)));
+            Assert.AreEqual("[Student Count]", string.Join(", ", result.Suggestions.Select(ii => ii.Display)));
             Assert.AreEqual("Student ", result.Incomplete);
 
             // "[Student  " should not match 'Student Count' (second space means non-match)
@@ -186,7 +186,7 @@ namespace Arriba.Test.Model.Query
 
             // "[Student Count] < 7000 AN" filters to "AND", "Age"
             result = qi.GetIntelliSenseItems("[Student Count] < 7000 A", Tables);
-            Assert.AreEqual("AND, Age", string.Join(", ", result.Suggestions.Select(ii => ii.Display)));
+            Assert.AreEqual("AND, [Age]", string.Join(", ", result.Suggestions.Select(ii => ii.Display)));
 
             // "[Student Count] < 7000 &&" suggests column, value, term prefix
             result = qi.GetIntelliSenseItems("[Student Count] < 7000 &&", Tables);
@@ -210,6 +210,7 @@ namespace Arriba.Test.Model.Query
             //   - Explicit Column names while unterminated, right after terminator
             //   - "==" still suggests operator after "=" because it could still be "=="
             //   - Explicit Value while unterminated, right after terminator
+            //   - Nothing suggested until space typed after quoted value
             //   - "||" still suggests boolean operator after "|" because it could be "||"
             //   - ")" terminates previous value
             //   - "AND" still suggests column name or value until complete with space
@@ -237,7 +238,8 @@ namespace Arriba.Test.Model.Query
             Assert.AreEqual("[] [Value]", qi.GetCurrentTokenOptions("BareValue : Value AnotherValue !([Analyzer] == ").ToString());
             Assert.AreEqual("[] [Value]", qi.GetCurrentTokenOptions("BareValue : Value AnotherValue !([Analyzer] == \"").ToString());
             Assert.AreEqual("[tr] [Value]", qi.GetCurrentTokenOptions("BareValue : Value AnotherValue !([Analyzer] == \"tr").ToString());
-            Assert.AreEqual("[] [BooleanOperator, Term]", qi.GetCurrentTokenOptions("BareValue : Value AnotherValue !([Analyzer] == \"true\"").ToString());
+            Assert.AreEqual("[] [None]", qi.GetCurrentTokenOptions("BareValue : Value AnotherValue !([Analyzer] == \"true\"").ToString());
+            Assert.AreEqual("[] [BooleanOperator, Term]", qi.GetCurrentTokenOptions("BareValue : Value AnotherValue !([Analyzer] == \"true\" ").ToString());
             Assert.AreEqual("[|] [BooleanOperator]", qi.GetCurrentTokenOptions("BareValue : Value AnotherValue !([Analyzer] == \"true\" |").ToString());
             Assert.AreEqual("[] [Term]", qi.GetCurrentTokenOptions("BareValue : Value AnotherValue !([Analyzer] == \"true\" ||").ToString());
             Assert.AreEqual("[] [Term]", qi.GetCurrentTokenOptions("BareValue : Value AnotherValue !([Analyzer] == \"true\" || ").ToString());
@@ -249,7 +251,8 @@ namespace Arriba.Test.Model.Query
             Assert.AreEqual("[] [Value]", qi.GetCurrentTokenOptions("BareValue : Value AnotherValue !([Analyzer] == \"true\" || Something) AND \"").ToString());
             Assert.AreEqual("[Target] [Value]", qi.GetCurrentTokenOptions("BareValue : Value AnotherValue !([Analyzer] == \"true\" || Something) AND \"Target").ToString());
             Assert.AreEqual("[Target ] [Value]", qi.GetCurrentTokenOptions("BareValue : Value AnotherValue !([Analyzer] == \"true\" || Something) AND \"Target ").ToString());
-            Assert.AreEqual("[] [BooleanOperator, Term]", qi.GetCurrentTokenOptions("BareValue : Value AnotherValue !([Analyzer] == \"true\" || Something) AND \"Target \"").ToString());
+            Assert.AreEqual("[] [None]", qi.GetCurrentTokenOptions("BareValue : Value AnotherValue !([Analyzer] == \"true\" || Something) AND \"Target \"").ToString());
+            Assert.AreEqual("[] [BooleanOperator, Term]", qi.GetCurrentTokenOptions("BareValue : Value AnotherValue !([Analyzer] == \"true\" || Something) AND \"Target \" ").ToString());
         }
 
         [TestMethod]
@@ -267,8 +270,8 @@ namespace Arriba.Test.Model.Query
             Assert.AreEqual("[] [CompareOperator]", p.GetCurrentTokenOptions("[Analyzer]").ToString());
             Assert.AreEqual("[] [CompareOperator]", p.GetCurrentTokenOptions("[Analyzer] ").ToString());
 
-            // "\"Analysis\"" -> BooleanOperator, ColumnName, Value [a bare term explicitly closed]
-            Assert.AreEqual("[] [BooleanOperator, Term]", p.GetCurrentTokenOptions("\"Analysis\"").ToString());
+            // "\"Analysis\"" -> BooleanOperator, Term [a bare term explicitly closed, *only after space*]
+            Assert.AreEqual("[] [None]", p.GetCurrentTokenOptions("\"Analysis\"").ToString());
             Assert.AreEqual("[] [BooleanOperator, Term]", p.GetCurrentTokenOptions("\"Analysis\" ").ToString());
 
             // "Analyzer:" -> Operator [suggest operators until space afterward]
@@ -309,7 +312,8 @@ namespace Arriba.Test.Model.Query
 
             // Explicit column name without operator or value turns into [Column] != ""
             Assert.AreEqual("[BareTerm] [BooleanOperator, ColumnName, Value]", p.GetCurrentTokenOptions("[Analyzer] BareTerm").ToString());
-            Assert.AreEqual("[] [BooleanOperator, Term]", p.GetCurrentTokenOptions("[Analyzer] \"QuotedValue\"").ToString());
+            Assert.AreEqual("[] [None]", p.GetCurrentTokenOptions("[Analyzer] \"QuotedValue\"").ToString());
+            Assert.AreEqual("[] [BooleanOperator, Term]", p.GetCurrentTokenOptions("[Analyzer] \"QuotedValue\" ").ToString());
 
             // Invalid Queries
             Assert.AreEqual("[] [None]", p.GetCurrentTokenOptions("\"Analysis\"=\"Interesting\"").ToString());

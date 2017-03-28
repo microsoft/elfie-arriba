@@ -85,7 +85,7 @@ namespace Arriba.Model.Query
 
         public override string ToString()
         {
-            return String.Format("{0} {1} [{2}] ({3})", this.Display, this.Hint, this.Category, this.CompleteAs);
+            return String.Format("{0} | {1} | {2} | {3}", this.Display, this.Hint, this.Category, this.CompleteAs);
         }
     }
 
@@ -218,12 +218,11 @@ namespace Arriba.Model.Query
         /// <returns>IntelliSenseResult reporting what to show</returns>
         public IntelliSenseResult GetIntelliSenseItems(string queryBeforeCursor, IReadOnlyCollection<Table> targetTables)
         {
-            IntelliSenseResult result = new IntelliSenseResult() { Query = queryBeforeCursor, Incomplete = "", Complete = "", SyntaxHint = "", Suggestions = new List<IntelliSenseItem>() };
+            IntelliSenseResult result = new IntelliSenseResult() { Query = queryBeforeCursor, Incomplete = "", Complete = "", SyntaxHint = "", CompletionCharacters = new char[0], Suggestions = new List<IntelliSenseItem>() };
 
             // If no tables were passed, show no IntelliSense (hint that there's an error blocking all tables)
             if (queryBeforeCursor == null || targetTables == null || targetTables.Count == 0)
             {
-                result.CompletionCharacters = new char[0];
                 return result;
             }
 
@@ -231,6 +230,12 @@ namespace Arriba.Model.Query
             TermExpression lastTerm;
             IntelliSenseGuidance guidance = GetCurrentTokenOptions(queryBeforeCursor, out lastTerm);
             bool spaceIsSafeCompletionCharacter = !String.IsNullOrEmpty(guidance.Value);
+
+            // If there are no tokens suggested here, return empty completion
+            if(guidance.Options == QueryTokenCategory.None)
+            {
+                return result;
+            }
 
             // Build a ranked list of suggestions - preferred token categories, filtered to the prefix already typed
             List<IntelliSenseItem> suggestions = new List<IntelliSenseItem>();
@@ -255,7 +260,7 @@ namespace Arriba.Model.Query
                     {
                         if (column.Name.StartsWith(guidance.Value, StringComparison.OrdinalIgnoreCase))
                         {
-                            selectedColumns.Add(new IntelliSenseItem(QueryTokenCategory.ColumnName, column.Name, String.Format("{0}.{1} [{2}]", table.Name, column.Name, column.Type), "[" + column.Name + "]"));
+                            selectedColumns.Add(new IntelliSenseItem(QueryTokenCategory.ColumnName, "[" + column.Name + "]", String.Format("{0}.{1} [{2}]", table.Name, column.Name, column.Type)));
 
                             if (column.Name.Length > guidance.Value.Length && column.Name[guidance.Value.Length] == ' ')
                             {
