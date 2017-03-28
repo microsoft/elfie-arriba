@@ -164,10 +164,10 @@ namespace Arriba.Model.Query
             new IntelliSenseItem(QueryTokenCategory.CompareOperator, "::", "contains exact word"),
             new IntelliSenseItem(QueryTokenCategory.CompareOperator, "=", "equals exact case"),
             new IntelliSenseItem(QueryTokenCategory.CompareOperator, "!=", "not equals"),
-            new IntelliSenseItem(QueryTokenCategory.CompareOperator, "<", String.Empty),
-            new IntelliSenseItem(QueryTokenCategory.CompareOperator, "<=", String.Empty),
-            new IntelliSenseItem(QueryTokenCategory.CompareOperator, ">", String.Empty),
-            new IntelliSenseItem(QueryTokenCategory.CompareOperator, ">=", String.Empty),
+            new IntelliSenseItem(QueryTokenCategory.CompareOperator, "<", "less than"),
+            new IntelliSenseItem(QueryTokenCategory.CompareOperator, "<=", "less or equal"),
+            new IntelliSenseItem(QueryTokenCategory.CompareOperator, ">", "greater than"),
+            new IntelliSenseItem(QueryTokenCategory.CompareOperator, ">=", "greater or equal"),
             new IntelliSenseItem(QueryTokenCategory.CompareOperator, "|>", "starts with")
         };
 
@@ -175,10 +175,10 @@ namespace Arriba.Model.Query
         {
             new IntelliSenseItem(QueryTokenCategory.CompareOperator, "=", "equals"),
             new IntelliSenseItem(QueryTokenCategory.CompareOperator, "!=", "not equals"),
-            new IntelliSenseItem(QueryTokenCategory.CompareOperator, "<", String.Empty),
-            new IntelliSenseItem(QueryTokenCategory.CompareOperator, "<=", String.Empty),
-            new IntelliSenseItem(QueryTokenCategory.CompareOperator, ">", String.Empty),
-            new IntelliSenseItem(QueryTokenCategory.CompareOperator, ">=", String.Empty)
+            new IntelliSenseItem(QueryTokenCategory.CompareOperator, "<", "less than"),
+            new IntelliSenseItem(QueryTokenCategory.CompareOperator, "<=", "less or equal"),
+            new IntelliSenseItem(QueryTokenCategory.CompareOperator, ">", "greater than"),
+            new IntelliSenseItem(QueryTokenCategory.CompareOperator, ">=", "greater or equal"),
         };
 
         internal static string Value = "\"<value>\"";
@@ -281,16 +281,25 @@ namespace Arriba.Model.Query
                 spaceIsSafeCompletionCharacter = AddSuggestionsForColumnNames(targetTables, guidance, spaceIsSafeCompletionCharacter, suggestions);
             }
 
+            // Space isn't safe to complete values (except when all explicit values shown, bool below)
             if (guidance.Options.HasFlag(QueryTokenCategory.Value))
             {
-                // Space is unsafe for value completion (except when all explicit values are listed)
                 spaceIsSafeCompletionCharacter = false;
             }
 
-            // If *only* a value is valid here, provide a syntax hint for the value type
+            // If *only* a value is valid here, provide a syntax hint for the value type (and reconsider if space is safe to complete)
             if (guidance.Options == QueryTokenCategory.Value)
             {
                 spaceIsSafeCompletionCharacter = AddSuggestionsForValue(targetTables, result, lastTerm, guidance, spaceIsSafeCompletionCharacter, suggestions);
+            }
+
+            if (guidance.Options.HasFlag(QueryTokenCategory.Value))
+            {
+                // Add a suggestion for this literal value if it's a bare term
+                if (guidance.Options.HasFlag(QueryTokenCategory.ColumnName) && !String.IsNullOrEmpty(guidance.Value))
+                {
+                    suggestions.Add(new IntelliSenseItem(QueryTokenCategory.Value, "\"" + guidance.Value + "\"", "find word anywhere"));
+                }
             }
 
             if (guidance.Options.HasFlag(QueryTokenCategory.TermPrefixes))
@@ -390,7 +399,8 @@ namespace Arriba.Model.Query
                 {
                     if (column.Name.StartsWith(guidance.Value, StringComparison.OrdinalIgnoreCase))
                     {
-                        selectedColumns.Add(new IntelliSenseItem(QueryTokenCategory.ColumnName, "[" + column.Name + "]", String.Format("{0} [{1}]", table.Name, column.Type)));
+                        // Add the matching column (with bare column name initially so sort order is correct ([Count], then [Count Of X]))
+                        selectedColumns.Add(new IntelliSenseItem(QueryTokenCategory.ColumnName, column.Name, String.Format("{0}, {1}", column.Type, table.Name), "[" + column.Name + "]"));
 
                         if (column.Name.Length > guidance.Value.Length && column.Name[guidance.Value.Length] == ' ')
                         {
@@ -401,11 +411,17 @@ namespace Arriba.Model.Query
                 }
             }
 
-            // Sort selected columns alphabetically
+            // Sort selected columns alphabetically *by bare column name*
             selectedColumns.Sort((left, right) => left.Display.CompareTo(right.Display));
 
-            // Remove duplicates
-            for(int i = 1; i < selectedColumns.Count; ++i)
+            // After sort, get the wrapped column names to show
+            foreach (IntelliSenseItem item in selectedColumns)
+            {
+                item.Display = item.CompleteAs;
+            }
+
+            // Remove duplicates, wrap names
+            for (int i = 1; i < selectedColumns.Count; ++i)
             {
                 if(selectedColumns[i - 1].Display == selectedColumns[i].Display)
                 {
