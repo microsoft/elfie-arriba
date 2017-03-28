@@ -220,7 +220,8 @@ Microsoft.CodeAnalysis.Elfie.dll.*
 Arriba/Arriba.Web/configuration/
 
 # Exclude Arriba.Web build outputs
-Arriba/Arriba.Web/lib/
+Arriba/Arriba.Web/bundle.js
+Arriba/Arriba.Web/bundle.js.map
 
 # Exclude Arriba DiskCache, built when saving Arriba tables in a dev enlistment.
 DiskCache/
