@@ -784,6 +784,9 @@ a:visited:hover {
     cursor: pointer;
     box-sizing: border-box;
     white-space: nowrap;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .suggestions .suggestion:hover {
@@ -792,4 +795,10 @@ a:visited:hover {
 
 .suggestions .suggestion-sel {
     background-color: rgba(180, 210, 255, 0.5);
+}
+
+.suggestions .suggestion-hint {
+    color: #829ac9; /* hsla(220, 40%, 65%, 1); */
+    margin-left: 30px;
+    font-size: 9pt;
 }

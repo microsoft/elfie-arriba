@@ -6,12 +6,10 @@ Number.prototype.clamp = function(min, max) {
     return Math.min(Math.max(this, min), max);
 };
 
-// Polyfill for Array.includes
-if (!Array.prototype.includes) {
-    Array.prototype.includes = function() {
-        return Array.prototype.indexOf.apply(this, arguments) !== -1;
-    };
-}
+// Polyfill.
+Array.prototype.includes = Array.prototype.includes || function() {
+    return Array.prototype.indexOf.apply(this, arguments) !== -1;
+};
 
 // Polyfill.
 Array.prototype.find = Array.prototype.find || function(predicate) {
