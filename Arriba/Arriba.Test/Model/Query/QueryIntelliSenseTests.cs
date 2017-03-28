@@ -94,7 +94,7 @@ namespace Arriba.Test.Model.Query
             Assert.AreEqual(0, result.Suggestions.Count);
 
             // No Query: ColumnNames, alphabetical, with no duplicates, then bare value, then TermPrefixes
-            string allColumnNamesOrTerm = "[Age], [City], [ID], [Name], [SchoolHasMascot], [SchoolYearLength], [Student Count], [WhenFounded], !, (";
+            string allColumnNamesOrTerm = "[Age], [City], [ID], [Name], [SchoolHasMascot], [SchoolYearLength], [Student Count], [WhenFounded], [*], !, (";
             result = qi.GetIntelliSenseItems("", Tables);
             Assert.AreEqual(allColumnNamesOrTerm, string.Join(", ", result.Suggestions.Select(ii => ii.Display)));
             Assert.AreEqual("", result.SyntaxHint);
@@ -103,7 +103,7 @@ namespace Arriba.Test.Model.Query
             Assert.AreEqual("", result.Query);
 
             // No Query, one table: ColumnNames for single table, then bare value, then TermPrefixes
-            string studentTableNamesOrTerm = "[Age], [City], [ID], [Name], !, (";
+            string studentTableNamesOrTerm = "[Age], [City], [ID], [Name], [*], !, (";
             result = qi.GetIntelliSenseItems("", new List<Table>() { Student });
             Assert.AreEqual(studentTableNamesOrTerm, string.Join(", ", result.Suggestions.Select(ii => ii.Display)));
             Assert.AreEqual("", result.SyntaxHint);
@@ -133,6 +133,10 @@ namespace Arriba.Test.Model.Query
             Assert.AreEqual(studentTableNamesOrTerm, string.Join(", ", result.Suggestions.Select(ii => ii.Display)));
             Assert.AreEqual("Age > 10 AND ( ", result.Complete);
             Assert.AreEqual("", result.Incomplete);
+
+            // "* : 10 AND " suggests all column only ('*' doesn't filter anything)
+            result = qi.GetIntelliSenseItems("* : 10 AND ", Tables);
+            Assert.AreEqual(allColumnNamesOrTerm, string.Join(", ", result.Suggestions.Select(ii => ii.Display)));
 
             // "[Na" must be a column name, and one of the 'Name' ones
             // CurrentIncompleteValue is just the bare column name (no '[') for list filtering, but CurrentCompleteValue is "", so the "[" is replaced by the completion.
@@ -203,7 +207,7 @@ namespace Arriba.Test.Model.Query
             Assert.AreEqual(string.Join(", ", QueryIntelliSense.BooleanOperators.Select(ii => ii.Display)), string.Join(", ", result.Suggestions.Where(ii => ii.Category == QueryTokenCategory.BooleanOperator).Select(ii => ii.Display)));
 
             // "[Student Count] < 7000 &&" suggests column, value, term prefix
-            string collegeNamesOrTerm = "[ID], [Name], [SchoolHasMascot], [SchoolYearLength], [Student Count], [WhenFounded], !, (";
+            string collegeNamesOrTerm = "[ID], [Name], [SchoolHasMascot], [SchoolYearLength], [Student Count], [WhenFounded], [*], !, (";
             result = qi.GetIntelliSenseItems("[Student Count] < 7000 &&", Tables);
             Assert.AreEqual(collegeNamesOrTerm, string.Join(", ", result.Suggestions.Select(ii => ii.Display)));
 

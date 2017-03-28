@@ -181,12 +181,14 @@ namespace Arriba.Model.Query
             new IntelliSenseItem(QueryTokenCategory.CompareOperator, ">=", "greater or equal"),
         };
 
-        internal static string Value = "\"<value>\"";
-        internal static string StringValue = "\"<string>\"";
-        internal static string DateTimeValue = "\"1999-12-31\"";
-        internal static string TimeSpanValue = "\"6.23:59:59\"";
-        internal static string FloatValue = "123.45";
-        internal static string IntegerValue = "12345";
+        internal const string Value = "\"<value>\"";
+        internal const string StringValue = "\"<string>\"";
+        internal const string DateTimeValue = "\"1999-12-31\"";
+        internal const string TimeSpanValue = "\"6.23:59:59\"";
+        internal const string FloatValue = "123.45";
+        internal const string IntegerValue = "12345";
+
+        internal const string MultipleTables = "<Multiple Tables>";
 
         internal static List<IntelliSenseItem> BooleanValues = new List<IntelliSenseItem>()
         {
@@ -195,6 +197,8 @@ namespace Arriba.Model.Query
             new IntelliSenseItem(QueryTokenCategory.Value, "false", String.Empty),
             new IntelliSenseItem(QueryTokenCategory.Value, "true", String.Empty)
         };
+
+        internal static IntelliSenseItem AllColumnNames = new IntelliSenseItem(QueryTokenCategory.ColumnName, "[*]", "all columns");
 
         internal static char[] ColumnNameCompletionCharacters = new char[] { ':', '<', '>', '=', '!' };
         #endregion
@@ -278,7 +282,7 @@ namespace Arriba.Model.Query
 
             if (guidance.Options.HasFlag(QueryTokenCategory.ColumnName))
             {
-                spaceIsSafeCompletionCharacter = AddSuggestionsForColumnNames(targetTables, guidance, spaceIsSafeCompletionCharacter, suggestions);
+                AddSuggestionsForColumnNames(targetTables, guidance, ref spaceIsSafeCompletionCharacter, suggestions);
             }
 
             // Space isn't safe to complete values (except when all explicit values shown, bool below)
@@ -290,7 +294,7 @@ namespace Arriba.Model.Query
             // If *only* a value is valid here, provide a syntax hint for the value type (and reconsider if space is safe to complete)
             if (guidance.Options == QueryTokenCategory.Value)
             {
-                spaceIsSafeCompletionCharacter = AddSuggestionsForValue(targetTables, result, lastTerm, guidance, spaceIsSafeCompletionCharacter, suggestions);
+                AddSuggestionsForValue(targetTables, result, lastTerm, guidance, ref spaceIsSafeCompletionCharacter, suggestions);
             }
 
             if (guidance.Options.HasFlag(QueryTokenCategory.Value))
@@ -389,7 +393,7 @@ namespace Arriba.Model.Query
             }
         }
 
-        private static bool AddSuggestionsForColumnNames(IReadOnlyCollection<Table> targetTables, IntelliSenseGuidance guidance, bool spaceIsSafeCompletionCharacter, List<IntelliSenseItem> suggestions)
+        private static void AddSuggestionsForColumnNames(IReadOnlyCollection<Table> targetTables, IntelliSenseGuidance guidance, ref bool spaceIsSafeCompletionCharacter, List<IntelliSenseItem> suggestions)
         {
             List<IntelliSenseItem> selectedColumns = new List<IntelliSenseItem>();
 
@@ -431,11 +435,17 @@ namespace Arriba.Model.Query
                 }
             }
 
+            // Add 'All Columns' hint (last, only if nothing or '*' typed so far)
+            if ("*".StartsWith(guidance.Value))
+            {
+                selectedColumns.Add(AllColumnNames);
+            }
+
+            // Add results to IntelliSense suggestions
             suggestions.AddRange(selectedColumns);
-            return spaceIsSafeCompletionCharacter;
         }
 
-        private static bool AddSuggestionsForValue(IReadOnlyCollection<Table> targetTables, IntelliSenseResult result, TermExpression lastTerm, IntelliSenseGuidance guidance, bool spaceIsSafeCompletionCharacter, List<IntelliSenseItem> suggestions)
+        private static void AddSuggestionsForValue(IReadOnlyCollection<Table> targetTables, IntelliSenseResult result, TermExpression lastTerm, IntelliSenseGuidance guidance, ref bool spaceIsSafeCompletionCharacter, List<IntelliSenseItem> suggestions)
         {
             Type columnType = FindSingleMatchingColumnType(targetTables, lastTerm);
             if (columnType == null)
@@ -474,8 +484,6 @@ namespace Arriba.Model.Query
                     result.SyntaxHint = String.Format("<{0}>", columnType.Name);
                 }
             }
-
-            return spaceIsSafeCompletionCharacter;
         }
 
         /// <summary>
