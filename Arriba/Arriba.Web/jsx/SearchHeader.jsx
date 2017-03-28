@@ -28,7 +28,7 @@ export default React.createClass({
             e.stopPropagation();
         }
         if (e.key === "Enter" || this.state.completionCharacters.includes(e.key)) {
-            var suffix = (e.key === "Enter" || e.key === "Tab") ? "" : e.key;
+            var suffix = (e.key === "Enter" || e.key === "Tab" || e.key === " ") ? "" : e.key;
             var newQuery = this.state.completed + this.state.suggestions[this.state.sel].completeAs + " " + suffix;
             this.setQuery(newQuery);
             e.preventDefault(); // Suppress focus tabbing.
@@ -49,9 +49,9 @@ export default React.createClass({
             configuration.url + "/suggest?q=" + encodeURIComponent(query),
             data => {
                 this.setState({
-                    suggestions: data.content.suggestions.filter(x => x.completeAs),
+                    suggestions: data.content.suggestions,
                     sel: 0,
-                    completed: data.content.currentCompleteValue, 
+                    completed: data.content.complete, 
                     completionCharacters: data.content.completionCharacters.map(c => ({ "\t": "Tab" })[c] || c),
                 });
             },
@@ -66,7 +66,7 @@ export default React.createClass({
                 {this.state.suggestions.map((item, index) =>
                     <div className={"suggestion " + (this.state.sel == index ? "suggestion-sel" : "" )}
                         onClick={ this.handleClick.bind(this, item) }
-                        ><span style={{opacity: 0.3}}>{this.state.completed}</span>{item.value}
+                        ><span style={{opacity: 0.3}}>{this.state.completed}</span>{item.display}
                     </div>
                 )}
             </div>;
