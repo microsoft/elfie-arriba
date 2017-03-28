@@ -94,18 +94,20 @@ namespace Arriba.Test.Model.Query
             Assert.AreEqual(0, result.Suggestions.Count);
 
             // No Query: ColumnNames, alphabetical, with duplicates, then bare value, then TermPrefixes
-            string allColumnNamesOrValue = string.Format("Age, City, ID, ID, Name, Name, SchoolHasMascot, SchoolYearLength, Student Count, WhenFounded, {0}, !, (", QueryIntelliSense.Value.Value);
+            string allColumnNamesOrValue = "Age, City, ID, ID, Name, Name, SchoolHasMascot, SchoolYearLength, Student Count, WhenFounded, !, (";
             result = qi.GetIntelliSenseItems("", Tables);
-            Assert.AreEqual(allColumnNamesOrValue, string.Join(", ", result.Suggestions.Select(ii => ii.Value)));
-            Assert.AreEqual("", result.CurrentIncompleteValue);
-            Assert.AreEqual("", result.CurrentCompleteValue);
+            Assert.AreEqual(allColumnNamesOrValue, string.Join(", ", result.Suggestions.Select(ii => ii.Display)));
+            Assert.AreEqual("", result.SyntaxHint);
+            Assert.AreEqual("", result.Incomplete);
+            Assert.AreEqual("", result.Complete);
             Assert.AreEqual("", result.Query);
 
             // No Query, one table: ColumnNames for single table, then bare value, then TermPrefixes
             result = qi.GetIntelliSenseItems("", new List<Table>() { Student });
-            Assert.AreEqual(string.Format("Age, City, ID, Name, {0}, !, (", QueryIntelliSense.Value.Value), string.Join(", ", result.Suggestions.Select(ii => ii.Value)));
-            Assert.AreEqual("", result.CurrentIncompleteValue);
-            Assert.AreEqual("", result.CurrentCompleteValue);
+            Assert.AreEqual("Age, City, ID, Name, !, (", string.Join(", ", result.Suggestions.Select(ii => ii.Display)));
+            Assert.AreEqual("", result.SyntaxHint);
+            Assert.AreEqual("", result.Incomplete);
+            Assert.AreEqual("", result.Complete);
             Assert.AreEqual("", result.Query);
 
             // No Query, no tables: no response
@@ -118,77 +120,77 @@ namespace Arriba.Test.Model.Query
 
             // "Age > 10 AND (" suggests all columns (no last term)
             result = qi.GetIntelliSenseItems("Age > 10 AND ( ", Tables);
-            Assert.AreEqual(allColumnNamesOrValue, string.Join(", ", result.Suggestions.Select(ii => ii.Value)));
-            Assert.AreEqual("Age > 10 AND ( ", result.CurrentCompleteValue);
-            Assert.AreEqual("", result.CurrentIncompleteValue);
+            Assert.AreEqual(allColumnNamesOrValue, string.Join(", ", result.Suggestions.Select(ii => ii.Display)));
+            Assert.AreEqual("Age > 10 AND ( ", result.Complete);
+            Assert.AreEqual("", result.Incomplete);
 
             // "[Na" must be a column name, and one of the 'Name' ones
             // CurrentIncompleteValue is just the bare column name (no '[') for list filtering, but CurrentCompleteValue is "", so the "[" is replaced by the completion.
             result = qi.GetIntelliSenseItems("[Na", Tables);
-            Assert.AreEqual("Name, Name", string.Join(", ", result.Suggestions.Select(ii => ii.Value)));
+            Assert.AreEqual("Name, Name", string.Join(", ", result.Suggestions.Select(ii => ii.Display)));
             Assert.AreEqual("Name College.Name [string] [ColumnName] ([Name]), Name Student.Name [stringset] [ColumnName] ([Name])", string.Join(", ", result.Suggestions));
-            Assert.AreEqual("Na", result.CurrentIncompleteValue);
-            Assert.AreEqual("", result.CurrentCompleteValue); 
+            Assert.AreEqual("Na", result.Incomplete);
+            Assert.AreEqual("", result.Complete); 
             Assert.AreEqual("[Na", result.Query);
 
             // "[SchoolSumm" should suggest nothing (no remaining column names)
             result = qi.GetIntelliSenseItems("[SchoolSUmm", Tables);
-            Assert.AreEqual("", string.Join(", ", result.Suggestions.Select(ii => ii.Value)));
+            Assert.AreEqual("", string.Join(", ", result.Suggestions.Select(ii => ii.Display)));
 
             // "[Name] " should suggest operators
             result = qi.GetIntelliSenseItems("[Name] ", Tables);
-            Assert.AreEqual(string.Join(", ", QueryIntelliSense.CompareOperators.Select(ii => ii.Value)), string.Join(", ", result.Suggestions.Select(ii => ii.Value)));
-            Assert.AreEqual("", result.CurrentIncompleteValue);
+            Assert.AreEqual(string.Join(", ", QueryIntelliSense.CompareOperators.Select(ii => ii.Display)), string.Join(", ", result.Suggestions.Select(ii => ii.Display)));
+            Assert.AreEqual("", result.Incomplete);
             Assert.AreEqual("[Name] ", result.Query);
 
             // "[Name] = " should suggest value but doesn't know the type (multiple matches)
             result = qi.GetIntelliSenseItems("[Name] = ", Tables);
-            Assert.AreEqual(QueryIntelliSense.Value.Value, string.Join(", ", result.Suggestions.Select(ii => ii.Value)));
-            Assert.AreEqual("", result.CurrentIncompleteValue);
+            Assert.AreEqual(QueryIntelliSense.Value, result.SyntaxHint);
+            Assert.AreEqual("", result.Incomplete);
 
             // "[Student " should match 'Student Count' (space in column filtering is correct)
             result = qi.GetIntelliSenseItems("[Student ", Tables);
-            Assert.AreEqual("Student Count", string.Join(", ", result.Suggestions.Select(ii => ii.Value)));
-            Assert.AreEqual("Student ", result.CurrentIncompleteValue);
+            Assert.AreEqual("Student Count", string.Join(", ", result.Suggestions.Select(ii => ii.Display)));
+            Assert.AreEqual("Student ", result.Incomplete);
 
             // "[Student  " should not match 'Student Count' (second space means non-match)
             result = qi.GetIntelliSenseItems("[Student  ", Tables);
-            Assert.AreEqual("", string.Join(", ", result.Suggestions.Select(ii => ii.Value)));
-            Assert.AreEqual("Student  ", result.CurrentIncompleteValue);
+            Assert.AreEqual("", string.Join(", ", result.Suggestions.Select(ii => ii.Display)));
+            Assert.AreEqual("Student  ", result.Incomplete);
 
             // "Age > " suggests TimeSpans
             result = qi.GetIntelliSenseItems("Age > ", Tables);
-            Assert.AreEqual(QueryIntelliSense.TimeSpanValue.Value, string.Join(", ", result.Suggestions.Select(ii => ii.Value)));
+            Assert.AreEqual(QueryIntelliSense.TimeSpanValue, result.SyntaxHint);
 
             // "WhenFounded > " suggests DateTimes
             result = qi.GetIntelliSenseItems("WhenFounded <= ", Tables);
-            Assert.AreEqual(QueryIntelliSense.DateTimeValue.Value, string.Join(", ", result.Suggestions.Select(ii => ii.Value)));
-            Assert.AreEqual("WhenFounded <= ", result.CurrentCompleteValue);
-            Assert.AreEqual("", result.CurrentIncompleteValue);
+            Assert.AreEqual(QueryIntelliSense.DateTimeValue, result.SyntaxHint);
+            Assert.AreEqual("WhenFounded <= ", result.Complete);
+            Assert.AreEqual("", result.Incomplete);
 
             // "SchoolHasMascot : " suggests booleans
             result = qi.GetIntelliSenseItems("SchoolHasMascot : ", Tables);
-            Assert.AreEqual(string.Join(", ", QueryIntelliSense.BooleanValues.Select(ii => ii.Value)), string.Join(", ", result.Suggestions.Select(ii => ii.Value)));
+            Assert.AreEqual(string.Join(", ", QueryIntelliSense.BooleanValues.Select(ii => ii.Display)), string.Join(", ", result.Suggestions.Select(ii => ii.Display)));
 
             // "City : " suggests string
             result = qi.GetIntelliSenseItems("City : ", Tables);
-            Assert.AreEqual(QueryIntelliSense.StringValue.Value, string.Join(", ", result.Suggestions.Select(ii => ii.Value)));
+            Assert.AreEqual(QueryIntelliSense.StringValue, result.SyntaxHint);
 
             // "[Student Count] < " suggests that type
             result = qi.GetIntelliSenseItems("[Student Count] < ", Tables);
-            Assert.AreEqual("<Int64>", string.Join(", ", result.Suggestions.Select(ii => ii.Value)));
+            Assert.AreEqual(QueryIntelliSense.IntegerValue, result.SyntaxHint);
 
             // "[Student Count] < 7000 " suggests boolean, column, value
             result = qi.GetIntelliSenseItems("[Student Count] < 7000 ", Tables);
-            Assert.AreEqual(string.Join(", ", QueryIntelliSense.BooleanOperators.Select(ii => ii.Value)), string.Join(", ", result.Suggestions.Where(ii => ii.Category == QueryTokenCategory.BooleanOperator).Select(ii => ii.Value)));
+            Assert.AreEqual(string.Join(", ", QueryIntelliSense.BooleanOperators.Select(ii => ii.Display)), string.Join(", ", result.Suggestions.Where(ii => ii.Category == QueryTokenCategory.BooleanOperator).Select(ii => ii.Display)));
 
             // "[Student Count] < 7000 AN" filters to "AND", "Age"
             result = qi.GetIntelliSenseItems("[Student Count] < 7000 A", Tables);
-            Assert.AreEqual(string.Format("AND, Age, {0}", QueryIntelliSense.Value.Value), string.Join(", ", result.Suggestions.Select(ii => ii.Value)));
+            Assert.AreEqual("AND, Age", string.Join(", ", result.Suggestions.Select(ii => ii.Display)));
 
             // "[Student Count] < 7000 &&" suggests column, value, term prefix
             result = qi.GetIntelliSenseItems("[Student Count] < 7000 &&", Tables);
-            Assert.AreEqual(allColumnNamesOrValue, string.Join(", ", result.Suggestions.Select(ii => ii.Value)));
+            Assert.AreEqual(allColumnNamesOrValue, string.Join(", ", result.Suggestions.Select(ii => ii.Display)));
         }
 
         [TestMethod]
