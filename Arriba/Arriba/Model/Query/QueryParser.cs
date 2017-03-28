@@ -255,9 +255,14 @@ namespace Arriba.Model.Query
                     // "\"IncompleteQuotedValue" -> indicate value incomplete
                     expression = new TermExpression(value) { Guidance = new IntelliSenseGuidance(value, QueryTokenCategory.Value) };
                 }
+                else if (_scanner.Current.Type == TokenType.End && String.IsNullOrEmpty(_scanner.Current.Prefix))
+                {
+                    // "\"QuotedValue\"", no trailing space -> don't suggest the next thing yet
+                    expression = new TermExpression(value) { Guidance = new IntelliSenseGuidance(String.Empty, QueryTokenCategory.None) };
+                }
                 else
                 {
-                    // "\"QuotedValue\" -> time for next term (boolean operator, next column name, or next bare value)
+                    // "\"QuotedValue\" ", trailing space -> suggest the next operator or term
                     expression = new TermExpression(value) { Guidance = new IntelliSenseGuidance(String.Empty, QueryTokenCategory.BooleanOperator | QueryTokenCategory.Term) };
                 }
             }
@@ -371,15 +376,20 @@ namespace Arriba.Model.Query
             }
             else
             {
-                if (hadExplicitValueCompletion)
-                {
-                    // "[ColumnName] = \"Value\"" -> time for next term (boolean operator, next column name, or next bare value)
-                    return new TermExpression(columnName, op, value) { Guidance = new IntelliSenseGuidance(String.Empty, QueryTokenCategory.BooleanOperator | QueryTokenCategory.Term) };
-                }
-                else
+                if (!hadExplicitValueCompletion)
                 {
                     // "[ColumnName] = \"Value" -> indicate value incomplete
                     return new TermExpression(columnName, op, value) { Guidance = new IntelliSenseGuidance(value, QueryTokenCategory.Value) };
+                }
+                else if(_scanner.Current.Type == TokenType.End && String.IsNullOrEmpty(_scanner.Current.Prefix))
+                { 
+                    // "[ColumnName] = \"Value\"" [no trailing space] -> don't suggest anything yet
+                    return new TermExpression(columnName, op, value) { Guidance = new IntelliSenseGuidance(String.Empty, QueryTokenCategory.None) };
+                }
+                else
+                {
+                    // "[ColumnName] = \"Value\" " [trailing space] -> time for next term (boolean operator, next column name, or next bare value)
+                    return new TermExpression(columnName, op, value) { Guidance = new IntelliSenseGuidance(String.Empty, QueryTokenCategory.BooleanOperator | QueryTokenCategory.Term) };
                 }
             }
         }
