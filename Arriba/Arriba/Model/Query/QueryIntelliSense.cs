@@ -1,5 +1,4 @@
-﻿using Arriba.Extensions;
-using Arriba.Model.Column;
+﻿using Arriba.Model.Column;
 using Arriba.Model.Expressions;
 using Arriba.Structures;
 using System;
@@ -61,7 +60,7 @@ namespace Arriba.Model.Query
         /// <summary>
         ///  Value to show in IntelliSense
         /// </summary>
-        public string Value { get; set; }
+        public string Display { get; set; }
 
         /// <summary>
         ///  Hint Text to show in IntelliSense
@@ -76,17 +75,17 @@ namespace Arriba.Model.Query
         public IntelliSenseItem(QueryTokenCategory category, string value, string hint) : this(category, value, hint, value)
         { }
 
-        public IntelliSenseItem(QueryTokenCategory category, string value, string hint, string completeAs)
+        public IntelliSenseItem(QueryTokenCategory category, string display, string hint, string completeAs)
         {
             this.Category = category;
-            this.Value = value;
+            this.Display = display;
             this.Hint = hint;
             this.CompleteAs = completeAs;
         }
 
         public override string ToString()
         {
-            return this.Value;
+            return String.Format("{0} | {1} | {2} | {3}", this.Display, this.Hint, this.Category, this.CompleteAs);
         }
     }
 
@@ -106,7 +105,20 @@ namespace Arriba.Model.Query
         ///  'CompleteAs' value and non-whitespace completion character to
         ///  complete a value.
         /// </summary>
-        public string CurrentIncompleteValue;
+        public string Incomplete;
+
+        /// <summary>
+        ///  The query up to the beginning of the CurrentIncompleteValue.
+        ///  This is the prefix which the 'CompleteAs' value for the
+        ///  selected IntelliSenseItem should be appended to.
+        /// </summary>
+        public string Complete;
+
+        /// <summary>
+        ///  A hint about valid syntax in the current location, to show
+        ///  as a watermark after the typed-so-far query.
+        /// </summary>
+        public string SyntaxHint;
 
         /// <summary>
         ///  The set of suggested completions in ranked order, best match
@@ -128,50 +140,47 @@ namespace Arriba.Model.Query
     public class QueryIntelliSense
     {
         #region Static Token IntelliSense Items
-        private static List<IntelliSenseItem> BooleanOperators = new List<IntelliSenseItem>()
+        internal static List<IntelliSenseItem> BooleanOperators = new List<IntelliSenseItem>()
         {
             new IntelliSenseItem(QueryTokenCategory.BooleanOperator, "AND", String.Empty),
-            new IntelliSenseItem(QueryTokenCategory.BooleanOperator, "OR", String.Empty),
-            new IntelliSenseItem(QueryTokenCategory.BooleanOperator, "&&", String.Empty),
-            new IntelliSenseItem(QueryTokenCategory.BooleanOperator, "||", String.Empty)
+            new IntelliSenseItem(QueryTokenCategory.BooleanOperator, "OR", String.Empty)
         };
 
-        private static List<IntelliSenseItem> CompareOperators = new List<IntelliSenseItem>()
+        internal static List<IntelliSenseItem> CompareOperators = new List<IntelliSenseItem>()
         {
             new IntelliSenseItem(QueryTokenCategory.CompareOperator, ":", "contains word starting with"),
-            new IntelliSenseItem(QueryTokenCategory.CompareOperator, "=", "equals [case sensitive]"),
-            new IntelliSenseItem(QueryTokenCategory.CompareOperator, "==", "equals [case sensitive]"),
             new IntelliSenseItem(QueryTokenCategory.CompareOperator, "::", "contains exact word"),
-            new IntelliSenseItem(QueryTokenCategory.CompareOperator, "!=", "not equals"),
-            new IntelliSenseItem(QueryTokenCategory.CompareOperator, "<>", "not equals"),
+            new IntelliSenseItem(QueryTokenCategory.CompareOperator, "=", "equals [case sensitive]"),
             new IntelliSenseItem(QueryTokenCategory.CompareOperator, "<", String.Empty),
             new IntelliSenseItem(QueryTokenCategory.CompareOperator, "<=", String.Empty),
             new IntelliSenseItem(QueryTokenCategory.CompareOperator, ">", String.Empty),
             new IntelliSenseItem(QueryTokenCategory.CompareOperator, ">=", String.Empty),
+            new IntelliSenseItem(QueryTokenCategory.CompareOperator, "!=", "not equals"),
             new IntelliSenseItem(QueryTokenCategory.CompareOperator, "|>", "starts with")
         };
 
-        private static List<IntelliSenseItem> TermPrefixes = new List<IntelliSenseItem>()
+        internal static List<IntelliSenseItem> TermPrefixes = new List<IntelliSenseItem>()
         {
             new IntelliSenseItem(QueryTokenCategory.TermPrefixes, "!", "negate next term"),
             new IntelliSenseItem(QueryTokenCategory.TermPrefixes, "(", "start subexpression")
         };
 
-        private static IntelliSenseItem Value = new IntelliSenseItem(QueryTokenCategory.Value, "\"<value>\"", "value (quote escaped)", String.Empty);
-        private static IntelliSenseItem StringValue = new IntelliSenseItem(QueryTokenCategory.Value, "\"<string>\"", "string value (quote escaped)", String.Empty);
-        private static IntelliSenseItem DateTimeValue = new IntelliSenseItem(QueryTokenCategory.Value, "\"<DateTime>\"", "DateTime (ex: \"2017-03-20\")", String.Empty);
-        private static IntelliSenseItem TimeSpanValue = new IntelliSenseItem(QueryTokenCategory.Value, "\"<TimeSpan>\"", "TimeSpan (ex: \"7.12:00:00\")", String.Empty);
-        private static IntelliSenseItem NumericValue = new IntelliSenseItem(QueryTokenCategory.Value, "\"<Number>\"", "numeric value", String.Empty);
+        internal static string Value = "\"<value>\"";
+        internal static string StringValue = "\"<string>\"";
+        internal static string DateTimeValue = "\"1999-12-31\"";
+        internal static string TimeSpanValue = "\"6.23:59:59\"";
+        internal static string FloatValue = "123.45";
+        internal static string IntegerValue = "12345";
 
-        private static List<IntelliSenseItem> BooleanValues = new List<IntelliSenseItem>()
+        internal static List<IntelliSenseItem> BooleanValues = new List<IntelliSenseItem>()
         {
-            new IntelliSenseItem(QueryTokenCategory.BooleanOperator, "0", "false"),
-            new IntelliSenseItem(QueryTokenCategory.BooleanOperator, "1", "true"),
-            new IntelliSenseItem(QueryTokenCategory.BooleanOperator, "false", String.Empty),
-            new IntelliSenseItem(QueryTokenCategory.BooleanOperator, "true", String.Empty)
+            new IntelliSenseItem(QueryTokenCategory.Value, "0", "false"),
+            new IntelliSenseItem(QueryTokenCategory.Value, "1", "true"),
+            new IntelliSenseItem(QueryTokenCategory.Value, "false", String.Empty),
+            new IntelliSenseItem(QueryTokenCategory.Value, "true", String.Empty)
         };
 
-        private static char[] ColumnNameCompletionCharacters = new char[] { ':', '<', '>', '=', '!' };
+        internal static char[] ColumnNameCompletionCharacters = new char[] { ':', '<', '>', '=', '!' };
         #endregion
 
         /// <summary>
@@ -185,22 +194,13 @@ namespace Arriba.Model.Query
         /// <param name="selectedItem">IntelliSenseItem selected</param>
         /// <param name="completionCharacter">Completion Character typed</param>
         /// <returns>New Arriba Query after completion</returns>
-        public string CompletedQuery(string queryBeforeCursor, IntelliSenseResult result, IntelliSenseItem selectedItem, char completionCharacter)
+        public string CompleteQuery(string queryBeforeCursor, IntelliSenseResult result, IntelliSenseItem selectedItem, char completionCharacter)
         {
             // If there is no completion for this item (grammar suggestions), just append the character
-            if (String.IsNullOrEmpty(selectedItem.CompleteAs)) return queryBeforeCursor + completionCharacter;
-
-            string queryWithoutIncompleteValue = queryBeforeCursor;
-
-            // Remove the CurrentIncompleteValue from the query
-            if (!queryWithoutIncompleteValue.EndsWith(result.CurrentIncompleteValue)) throw new ArribaException("Error: IntelliSense suggestion couldn't be applied.");
-            queryWithoutIncompleteValue = queryWithoutIncompleteValue.Substring(0, queryWithoutIncompleteValue.Length - result.CurrentIncompleteValue.Length);
-
-            // If the CurrentIncompleteValue is an explicit column name, remove and re-complete that, also
-            if (queryWithoutIncompleteValue.EndsWith("[")) queryWithoutIncompleteValue = queryWithoutIncompleteValue.Substring(0, queryWithoutIncompleteValue.Length - 1);
+            if (selectedItem == null || String.IsNullOrEmpty(selectedItem.CompleteAs)) return queryBeforeCursor + completionCharacter;
 
             // Add the value to complete and a space to complete the value
-            string newQuery = queryWithoutIncompleteValue + selectedItem.CompleteAs + ' ';
+            string newQuery = result.Complete + selectedItem.CompleteAs + ' ';
 
             // If the completion character isn't '\t' or ' ', add the completion character as well
             if (completionCharacter != '\t' && completionCharacter != ' ') newQuery += completionCharacter;
@@ -218,9 +218,24 @@ namespace Arriba.Model.Query
         /// <returns>IntelliSenseResult reporting what to show</returns>
         public IntelliSenseResult GetIntelliSenseItems(string queryBeforeCursor, IReadOnlyCollection<Table> targetTables)
         {
+            IntelliSenseResult result = new IntelliSenseResult() { Query = queryBeforeCursor, Incomplete = "", Complete = "", SyntaxHint = "", CompletionCharacters = new char[0], Suggestions = new List<IntelliSenseItem>() };
+
+            // If no tables were passed, show no IntelliSense (hint that there's an error blocking all tables)
+            if (queryBeforeCursor == null || targetTables == null || targetTables.Count == 0)
+            {
+                return result;
+            }
+
             // Get grammatical categories valid after the query prefix
             TermExpression lastTerm;
             IntelliSenseGuidance guidance = GetCurrentTokenOptions(queryBeforeCursor, out lastTerm);
+            bool spaceIsSafeCompletionCharacter = !String.IsNullOrEmpty(guidance.Value);
+
+            // If there are no tokens suggested here, return empty completion
+            if(guidance.Options == QueryTokenCategory.None)
+            {
+                return result;
+            }
 
             // Build a ranked list of suggestions - preferred token categories, filtered to the prefix already typed
             List<IntelliSenseItem> suggestions = new List<IntelliSenseItem>();
@@ -245,43 +260,65 @@ namespace Arriba.Model.Query
                     {
                         if (column.Name.StartsWith(guidance.Value, StringComparison.OrdinalIgnoreCase))
                         {
-                            selectedColumns.Add(new IntelliSenseItem(QueryTokenCategory.ColumnName, column.Name, String.Format("{0}.{1} [{2}]", table.Name, column.Name, column.Type), "[" + column.Name + "]"));
+                            selectedColumns.Add(new IntelliSenseItem(QueryTokenCategory.ColumnName, "[" + column.Name + "]", String.Format("{0}.{1} [{2}]", table.Name, column.Name, column.Type)));
+
+                            if (column.Name.Length > guidance.Value.Length && column.Name[guidance.Value.Length] == ' ')
+                            {
+                                // Space is unsafe to complete with if a suggest column has a space next in the value
+                                spaceIsSafeCompletionCharacter = false;
+                            }
                         }
                     }
                 }
 
-                selectedColumns.Sort((left, right) => left.Value.CompareTo(right.Value));
+                selectedColumns.Sort((left, right) => left.Display.CompareTo(right.Display));
                 suggestions.AddRange(selectedColumns);
             }
 
-            if (guidance.Options.HasFlag(QueryTokenCategory.Value))
+            if(guidance.Options.HasFlag(QueryTokenCategory.Value))
+            {
+                // Space is unsafe for value completion (except when all explicit values are listed)
+                spaceIsSafeCompletionCharacter = false;
+            }
+
+            // If *only* a value is valid here, provide a syntax hint for the value type
+            if (guidance.Options == QueryTokenCategory.Value)
             {
                 Type columnType = FindSingleMatchingColumnType(targetTables, lastTerm);
                 if (columnType == null)
                 {
-                    suggestions.Add(Value);
+                    result.SyntaxHint = Value;
                 }
                 else
                 {
                     if(columnType == typeof(ByteBlock))
                     {
-                        suggestions.Add(StringValue);
+                        result.SyntaxHint = StringValue;
                     }
                     else if(columnType == typeof(bool))
                     {
                         AddWhenPrefixes(BooleanValues, guidance.Value, suggestions);
+                        spaceIsSafeCompletionCharacter = true;
                     }
                     else if(columnType == typeof(DateTime))
                     {
-                        suggestions.Add(DateTimeValue);
+                        result.SyntaxHint = DateTimeValue;
                     }
                     else if(columnType == typeof(TimeSpan))
                     {
-                        suggestions.Add(TimeSpanValue);
+                        result.SyntaxHint = TimeSpanValue;
                     }
-                    else
+                    else if(columnType == typeof(float) || columnType == typeof(double))
                     {
-                        suggestions.Add(new IntelliSenseItem(QueryTokenCategory.Value, String.Format("<{0}>", columnType.Name), String.Empty));
+                        result.SyntaxHint = FloatValue;
+                    }
+                    else if(columnType == typeof(byte) || columnType == typeof(sbyte) || columnType == typeof(short) || columnType == typeof(ushort) || columnType == typeof(int) || columnType == typeof(uint) || columnType == typeof(long) || columnType == typeof(ulong))
+                    {
+                        result.SyntaxHint = IntegerValue;
+                    }
+                    else 
+                    {
+                        result.SyntaxHint = String.Format("<{0}>", columnType.Name);
                     }
                 }
             }
@@ -294,6 +331,7 @@ namespace Arriba.Model.Query
             // Build a list of valid completion characters
             List<char> completionCharacters = new List<char>();
             completionCharacters.Add('\t');
+            if (spaceIsSafeCompletionCharacter) completionCharacters.Add(' ');
 
             // If column names are valid here but term prefixes or compare operators, operator start characters are valid completion characters
             if (guidance.Options.HasFlag(QueryTokenCategory.ColumnName) && !guidance.Options.HasFlag(QueryTokenCategory.CompareOperator) && !guidance.Options.HasFlag(QueryTokenCategory.TermPrefixes))
@@ -301,7 +339,20 @@ namespace Arriba.Model.Query
                 completionCharacters.AddRange(ColumnNameCompletionCharacters);
             }
 
-            return new IntelliSenseResult() { Query = queryBeforeCursor, CurrentIncompleteValue = guidance.Value, Suggestions = suggestions, CompletionCharacters = completionCharacters };
+            // Compute the CurrentCompleteValue
+            string queryWithoutIncompleteValue = queryBeforeCursor;
+            if (!queryWithoutIncompleteValue.EndsWith(guidance.Value)) throw new ArribaException("Error: IntelliSense suggestion couldn't be applied.");
+            queryWithoutIncompleteValue = queryWithoutIncompleteValue.Substring(0, queryWithoutIncompleteValue.Length - guidance.Value.Length);
+
+            // If the CurrentIncompleteValue is an explicit column name, remove and re-complete that, also
+            if (queryWithoutIncompleteValue.EndsWith("[")) queryWithoutIncompleteValue = queryWithoutIncompleteValue.Substring(0, queryWithoutIncompleteValue.Length - 1);
+
+
+            result.Complete = queryWithoutIncompleteValue;
+            result.Incomplete = guidance.Value;
+            result.Suggestions = suggestions;
+            result.CompletionCharacters = completionCharacters;
+            return result;
         }
 
         /// <summary>
@@ -314,13 +365,13 @@ namespace Arriba.Model.Query
         internal IntelliSenseGuidance GetCurrentTokenOptions(string queryBeforeCursor, out TermExpression lastTerm)
         {
             lastTerm = null;
-            IntelliSenseGuidance defaultGuidance = new IntelliSenseGuidance(String.Empty, QueryTokenCategory.ColumnName | QueryTokenCategory.Value);
+            IntelliSenseGuidance defaultGuidance = new IntelliSenseGuidance(String.Empty, QueryTokenCategory.Term);
 
             // If the query is empty, return the guidance for the beginning of the first term
             if (String.IsNullOrEmpty(queryBeforeCursor)) return defaultGuidance;
 
-            // Parse the query
-            IExpression query = QueryParser.Parse(queryBeforeCursor);
+            // Parse the query, asking for hint terms
+            IExpression query = QueryParser.Parse(queryBeforeCursor, true);
 
             // If the query had parse errors, return empty guidance
             if (query is EmptyExpression) return new IntelliSenseGuidance(String.Empty, QueryTokenCategory.None);
@@ -377,7 +428,7 @@ namespace Arriba.Model.Query
             {
                 foreach (IntelliSenseItem item in items)
                 {
-                    if (item.Value.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                    if (item.Display.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
                     {
                         resultSet.Add(item);
                     }

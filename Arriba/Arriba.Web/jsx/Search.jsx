@@ -1,4 +1,6 @@
-﻿import ErrorPage from "./ErrorPage";
+﻿require("../Search.css");
+
+import ErrorPage from "./ErrorPage";
 import QueryStats from "./QueryStats";
 import SearchHeader from "./SearchHeader";
 
@@ -11,10 +13,10 @@ import ResultListing from "./ResultListing";
 
 // NOTE: Depends on configuration from zConfiguration.jsx.
 import defaultConfiguration from "./DefaultConfiguration";
-var configuration = defaultConfiguration;
+window.configuration = defaultConfiguration;
 var optionalContext = require.context("..", true, /\.\/configuration\/Configuration\.jsx/);
 if (optionalContext.keys().includes("./configuration/Configuration.jsx")) {
-    configuration = optionalContext("./configuration/Configuration.jsx").default
+    window.configuration = optionalContext("./configuration/Configuration.jsx").default
 }
 
 // SearchMain wraps the overall search UI
@@ -134,8 +136,8 @@ var SearchMain = React.createClass({
         pivots.push({ q: this.state.query, t: this.state.currentTable });
         this.setState({ pivotQueries: pivots, query: baseQuery, currentTable: table, userSelectedTable: table }, this.runSearch);
     },
-    onSearchChange: function (e) {
-        this.setState({ query: e.target.value, userSelectedId: null }, this.delayedRunSearch);
+    onSearchChange: function (value) {
+        this.setState({ query: value, userSelectedId: null }, this.delayedRunSearch);
     },
     delayedRunSearch: function () {
         // Only query every 250 milliseconds while typing
@@ -182,7 +184,7 @@ var SearchMain = React.createClass({
         this.addPivotClauses(params);
 
         // Get the count of matches from each accessible table
-        jsonQuery(
+        this.jsonQueryWithError(
             this.props.url + "/allCount",
             function (data) {
                 var tableToShow = this.state.userSelectedTable;
@@ -190,56 +192,30 @@ var SearchMain = React.createClass({
 
                 this.setState({ allCountData: data, currentTable: tableToShow, error: null }, this.getTableBasics);
             }.bind(this),
-            function (xhr, status, err) {
-                this.setState({ allCountData: [], listingData: [], selectedItemData: null,  error: "Error: Server didn't respond to [" + xhr.url + "]. " + err });
-                console.error(xhr.url, status, err.toString());
-            }.bind(this),
             params
         );
     },
     getTableBasics: function () {
         // Once a table is selected, find out the columns and primary key column for the table
-        jsonQuery(this.props.url + "/table/" + this.state.currentTable,
-            function (data) {
-                var idColumn = "";
+        this.jsonQueryWithError(this.props.url + "/table/" + this.state.currentTable, data => {
+            var idColumn = data.content.columns.find(col => col.isPrimaryKey).name || "";
 
-                // Find the ID column
-                for (var j = 0; j < data.content.columns.length; ++j) {
-                    if (data.content.columns[j].isPrimaryKey) {
-                        idColumn = data.content.columns[j].name;
-                        break;
-                    }
-                }
+            // Choose columns, sort column, sort order
+            var defaultsForTable = (this.props.listingDefaults && this.props.listingDefaults[this.state.currentTable]) || {};
 
-                // Choose columns, sort column, sort order
-                var defaultsForTable = (this.props.listingDefaults ? this.props.listingDefaults[this.state.currentTable] : null);
-                if (!defaultsForTable) defaultsForTable = {};
-
-                var columns = firstNonEmptyArray(this.state.userSelectedColumns, defaultsForTable.columns, [idColumn]);
-                var sortColumn = this.state.userSelectedSortColumn || defaultsForTable.sortColumn || idColumn;
-                var sortOrder = this.state.userSelectedSortOrder || defaultsForTable.sortOrder || "asc";
-
-                var next = function () {
-                    if (this.state.query) this.getResultsPage();
-                    if (this.state.userSelectedId) this.getDetails();
-                };
-
-                // Set the ID column, all columns, and listing columns
-                this.setState(
-                    {
-                        currentTableIdColumn: idColumn,
-                        currentTableAllColumns: data.content.columns,
-                        currentListingColumns: columns,
-                        currentSortColumn: sortColumn,
-                        currentSortOrder: sortOrder,
-                        error: null
-                    }, next);
-            }.bind(this),
-            function (xhr, status, err) {
-                this.setState({ allCountData: [], listingData: [], selectedItemData: null, error: "Error: Server didn't respond to [" + xhr.url + "]. " + err });
-                console.error(xhr.url, status, err.toString());
-            }.bind(this)
-        );
+            // Set the ID column, all columns, and listing columns
+            this.setState({
+                currentTableIdColumn: idColumn,
+                currentTableAllColumns: data.content.columns,
+                currentListingColumns: firstNonEmptyArray(this.state.userSelectedColumns, defaultsForTable.columns, [idColumn]),
+                currentSortColumn: this.state.userSelectedSortColumn || defaultsForTable.sortColumn || idColumn,
+                currentSortOrder: this.state.userSelectedSortOrder || defaultsForTable.sortOrder || "asc",
+                error: null
+            }, () => {
+                if (this.state.query) this.getResultsPage();
+                if (this.state.userSelectedId) this.getDetails();
+            });
+        });
     },
     getResultsPage: function (i) {
         // Once the counts query runs and table basics are loaded, get a page of results
@@ -252,14 +228,10 @@ var SearchMain = React.createClass({
         var pageSize = 50 * (i + 1);
 
         // Get a page of matches for the given query for the desired columns and sort order, with highlighting.
-        jsonQuery(
+        this.jsonQueryWithError(
             this.buildQueryUrl() + "&h=%CF%80&t=" + pageSize,
             function (data) {
                 this.setState({ listingData: data, hasMoreData: data.content.total > pageSize, page: i, error: null });
-            }.bind(this),
-            function (xhr, status, err) {
-                this.setState({ allCountData: [], listingData: [], selectedItemData: null, error: "Error: Server didn't respond to [" + xhr.url + "]. " + err });
-                console.error(xhr.url, status, err.toString());
             }.bind(this)
         );
     },
@@ -283,7 +255,7 @@ var SearchMain = React.createClass({
         this.addPivotClauses(params);
 
         // Select all columns for the selected item, with highlighting
-        jsonQuery(
+        this.jsonQueryWithError(
             this.props.url + "/table/" + this.state.currentTable,
             function (data) {
                 if (data.content.values) {
@@ -296,14 +268,21 @@ var SearchMain = React.createClass({
                     }
                 }
             }.bind(this),
-            function (xhr, status, err) {
-                this.setState({ allCountData: [], listingData: [], selectedItemData: null, error: "Error: Server didn't respond to [" + xhr.url + "]. " + err });
-                console.error(xhr.url, status, err.toString());
-            }.bind(this),
             params
         );
 
         this.setHistory();
+    },
+    jsonQueryWithError: function (url, onSuccess, parameters) {
+        jsonQuery(
+            url,
+            onSuccess,
+            function (xhr, status, err) {
+                this.setState({ allCountData: [], listingData: [], selectedItemData: null, error: "Error: Server didn't respond to [" + xhr.url + "]. " + err });
+                console.error(xhr.url, status, err.toString());
+            }.bind(this),
+            parameters
+        );
     },
     setHistory: function () {
         var url = this.buildThisUrl(true);
@@ -330,10 +309,10 @@ var SearchMain = React.createClass({
         var relevantParams = {};
         this.addPivotClauses(relevantParams);
 
-        if (this.state.userSelectedTable) relevantParams.t = this.state.userSelectedTable;
-        if (this.state.query) relevantParams.q = this.state.query;        
-        if (this.state.userSelectedSortColumn) relevantParams.ob = this.state.userSelectedSortColumn;
-        if (this.state.userSelectedSortOrder === "desc") relevantParams.so = this.state.userSelectedSortOrder;
+        if (this.state.userSelectedTable)                   relevantParams.t = this.state.userSelectedTable;
+        if (this.state.query)                               relevantParams.q = this.state.query;        
+        if (this.state.userSelectedSortColumn)              relevantParams.ob = this.state.userSelectedSortColumn;
+        if (this.state.userSelectedSortOrder === "desc")    relevantParams.so = this.state.userSelectedSortOrder;
 
         for (var i = 0; i < this.state.userSelectedColumns.length; ++i) {
             relevantParams["c" + (i + 1).toString()] = this.state.userSelectedColumns[i];
@@ -354,35 +333,35 @@ var SearchMain = React.createClass({
     render: function () {
         if(this.state.blockingErrorTitle) return <ErrorPage title={this.state.blockingErrorTitle} status={this.state.blockingErrorStatus} message={this.state.blockingErrorContent} />;
 
-        var detailsView = null;
-        var customDetailsView = ResultDetails;
-        if (this.props.customDetailsProviders) customDetailsView = this.props.customDetailsProviders[this.state.currentTable] || customDetailsView;
+        var customDetailsView = (this.props.customDetailsProviders && this.props.customDetailsProviders[this.state.currentTable]) || ResultDetails;
 
-        detailsView = React.createElement(customDetailsView, { itemId: this.state.userSelectedId, table: this.state.currentTable, query: this.state.query, data: this.state.selectedItemData, onClose: this.onClose, onAddClause: this.onAddClause });
-
-        var mainContent = <SyntaxHelp showHelp={this.props.params.help} splashContent={configuration.splashContent} />;
-        if (this.state.query) {
-            mainContent = (
-                <SplitPane split="horizontal" minSize="300" isFirstVisible={this.state.listingData.content} isSecondVisible={this.state.userSelectedId}>
-                    <InfiniteScroll page={this.state.page} hasMoreData={this.state.hasMoreData} loadMore={this.getResultsPage }>
-                        <ResultListing ref={"list"}
-                            data={this.state.listingData}
-                            idColumn={this.state.currentTableIdColumn}
-                            allColumns={this.state.currentTableAllColumns}
-                            sortColumn={this.state.currentSortColumn}
-                            sortOrder={this.state.currentSortOrder}
-                            selectedId={this.state.userSelectedId}
-                            onResort={this.onResort}
-                            onSelectionChanged={this.onSelectionChanged}
-                            onSetColumns={this.onSetColumns}
-                            onPivot={this.onPivot} />
-                    </InfiniteScroll>
-                    <div className="scrollable">
-                        {detailsView}
-                    </div>
-                </SplitPane>
-            );
-        }
+        var mainContent = this.state.query
+            ? <SplitPane split="horizontal" minSize="300" isFirstVisible={this.state.listingData.content} isSecondVisible={this.state.userSelectedId}>
+                <InfiniteScroll page={this.state.page} hasMoreData={this.state.hasMoreData} loadMore={this.getResultsPage }>
+                    <ResultListing ref={"list"}
+                        data={this.state.listingData}
+                        idColumn={this.state.currentTableIdColumn}
+                        allColumns={this.state.currentTableAllColumns}
+                        sortColumn={this.state.currentSortColumn}
+                        sortOrder={this.state.currentSortOrder}
+                        selectedId={this.state.userSelectedId}
+                        onResort={this.onResort}
+                        onSelectionChanged={this.onSelectionChanged}
+                        onSetColumns={this.onSetColumns}
+                        onPivot={this.onPivot} />
+                </InfiniteScroll>
+                <div className="scrollable">
+                    {React.createElement(customDetailsView, { 
+                        itemId: this.state.userSelectedId, 
+                        table: this.state.currentTable, 
+                        query: this.state.query, 
+                        data: this.state.selectedItemData, 
+                        onClose: this.onClose, 
+                        onAddClause: this.onAddClause 
+                    })}
+                </div>
+            </SplitPane>
+            : <SyntaxHelp showHelp={this.props.params.help} splashContent={configuration.splashContent} />
 
         var queryUrl = this.buildQueryUrl();
         var baseUrl = this.buildThisUrl(false);
