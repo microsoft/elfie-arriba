@@ -80,7 +80,10 @@ export default React.createClass({
                 </div>
 
                 <div className="searchBar">
-                    <input id="searchBox" ref="searchBox" type="text" placeholder={"Search for " + tables.join(", ") + "..."} tabIndex="1" onInput={this.onInput} value={this.props.query} onKeyDown={this.handleKeyDown}/>
+                    <input id="searchBox" ref="searchBox" type="text" 
+                        placeholder={"Search for " + tables.join(", ") + "..."} 
+                        tabIndex="1" onInput={this.onInput} value={this.props.query} 
+                        onKeyDown={this.handleKeyDown}/>
                     <div className="searchIcon">
                         <i className="icon-find"></i>
                     </div>
