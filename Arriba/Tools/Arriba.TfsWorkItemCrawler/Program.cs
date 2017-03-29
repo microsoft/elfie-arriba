@@ -71,6 +71,15 @@ namespace Arriba.TfsWorkItemCrawler
 
                     return 0;
                 }
+                catch (AggregateException ex)
+                {
+                    foreach(Exception inner in ex.InnerExceptions)
+                    {
+                        Trace.TraceError(String.Format("ERROR: {0}\r\n{1}", Environment.CommandLine, inner));
+                    }
+
+                    return -2;
+                }
                 catch (Exception ex)
                 {
                     Trace.TraceError(String.Format("ERROR: {0}\r\n{1}", Environment.CommandLine, ex));
