@@ -21,7 +21,10 @@
 	   ex: https://<myProject>.visualstudio.com */
 	"itemDatabaseName": "https://myProject.visualstudio.com",
 
-	/* True to use Azure Active Directory for the identity running the crawler
-	   to authenticate with TFS. */
-	"UseAADForTFSAuth":  "true"
+	/* Authentication Mode to use with provider (provider specific).
+       For TfsItemProvider: integrated (default), aad, alternate (deprecated) */
+	"authenticationMode":  "aad",
+
+    /* For TFS alternate authentication mode, include the user name. */
+	"userName": "user@domain.com"
 }
