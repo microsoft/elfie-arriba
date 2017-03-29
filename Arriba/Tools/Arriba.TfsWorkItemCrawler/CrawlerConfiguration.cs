@@ -72,7 +72,7 @@ namespace Arriba.TfsWorkItemCrawler
 
         /// <summary>
         ///  Authentication Mode to use with provider (provider specific).
-        ///  For TfsItemProvider: integrated (default), aad, token
+        ///  For TfsItemProvider: integrated (default), aad, alternate (deprecated)
         /// </summary>
         public string AuthenticationMode { get; set; }
 
