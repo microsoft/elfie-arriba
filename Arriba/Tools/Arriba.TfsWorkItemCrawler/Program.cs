@@ -37,12 +37,14 @@ namespace Arriba.TfsWorkItemCrawler
                     // Load the Configuration
                     string configJsonPath = String.Format(@"..\..\Databases\{0}\config.json", configurationName);
                     string configJson = File.ReadAllText(configJsonPath);
+
                     CrawlerConfiguration config = JsonConvert.DeserializeObject<CrawlerConfiguration>(configJson);
+                    config.ConfigurationName = configurationName;
 
                     // Password storage mode
                     if (mode.Equals("-password", StringComparison.OrdinalIgnoreCase))
                     {
-                        return EncryptPassword(config);
+                        return TfsItemProvider.EncryptPassword(config);
                     }
 
                     // Build the item consumer
@@ -86,20 +88,6 @@ namespace Arriba.TfsWorkItemCrawler
                     return -2;
                 }
             }
-        }
-
-        static int EncryptPassword(CrawlerConfiguration config)
-        {
-            Console.Write("Enter TFS Online Password to local user encrypt: ");
-            string password = Console.ReadLine();
-            if (String.IsNullOrEmpty(password)) return -1;
-
-            string encryptedPassword = TfsItemProvider.LocalUserEncryptPassword(password);
-            File.WriteAllText(config.TfsOnlineEncryptedPasswordFilePath, encryptedPassword);
-
-            Console.WriteLine("Encrypted Password written to '{0}'. Run Crawler to test.", config.TfsOnlineEncryptedPasswordFilePath);
-            Console.WriteLine();
-            return 0;
         }
 
         static void Usage()
