@@ -38,7 +38,7 @@ export default React.createClass({
             this.setState({ suggestions: [] });
         }
     },
-    handleClick: function (item) {
+    handleClickSuggestion: function (item) {
         this.setQuery(this.state.completed + item.completeAs + " ");
         searchBox.focus();
     },
@@ -66,7 +66,7 @@ export default React.createClass({
             <div className="suggestions" >
                 {this.state.suggestions.map((item, index) =>
                     <div className={"suggestion " + (this.state.sel == index ? "suggestion-sel" : "" )}
-                        onClick={ this.handleClick.bind(this, item) }>
+                        onClick={ this.handleClickSuggestion.bind(this, item) }>
                         <span><span style={{opacity: 0.3}}>{this.state.completed}</span>{item.display}</span>
                         <span className="suggestion-hint">{item.hint}</span>
                     </div>
