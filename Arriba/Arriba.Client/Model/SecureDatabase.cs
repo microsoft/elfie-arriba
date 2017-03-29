@@ -20,6 +20,7 @@ namespace Arriba.Model
     /// </summary>
     public class SecureDatabase : Database
     {
+        private readonly object _tableLock = new object();
         private Dictionary<string, SecurityPermissions> _securityByTable;
 
         public SecureDatabase() : base()
@@ -49,7 +50,10 @@ namespace Arriba.Model
                 }
 
                 // Cache the created|loaded security
-                _securityByTable[tableName] = security;
+                lock (_tableLock)
+                {
+                    _securityByTable[tableName] = security;
+                }
 
                 return security;
             }
@@ -194,7 +198,10 @@ namespace Arriba.Model
 
         public void SetSecurity(string tableName, SecurityPermissions security)
         {
-            _securityByTable[tableName] = security;
+            lock (_tableLock)
+            {
+                _securityByTable[tableName] = security;
+            }
         }
 
         public void SaveSecurity(string tableName)
