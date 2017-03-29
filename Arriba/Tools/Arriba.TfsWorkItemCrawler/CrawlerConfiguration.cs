@@ -1,15 +1,17 @@
-﻿using Arriba.Model;
-using Arriba.Model.Column;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Arriba.Model.Security;
-using System.Linq;
 
 namespace Arriba.TfsWorkItemCrawler
 {
     public class CrawlerConfiguration
     {
         internal const string IdentityFormatExceptionFormatString = @"Identity must be of the format User:DOMAIN\name or Group:DOMAIN\name. Value passed, '{0}', doesn't fit these rules.";
+
+        /// <summary>
+        ///  The name of the configuration itself [Sample]
+        /// </summary>
+        public string ConfigurationName { get; set; }
 
         /// <summary>
         ///  The URL of the Arriba Service to crawl to.
@@ -69,20 +71,15 @@ namespace Arriba.TfsWorkItemCrawler
         public string ItemQuery { get; set; }
 
         /// <summary>
-        ///  True to use AAD authentication with the current user for a TFS connection.
+        ///  Authentication Mode to use with provider (provider specific).
+        ///  For TfsItemProvider: integrated (default), aad, token
         /// </summary>
-        public bool UseAADForTFSAuth { get; set; }
+        public string AuthenticationMode { get; set; }
 
         /// <summary>
-        ///  Set to use the given user name for Tfs authentication
+        ///  The User Name to use for provider authentication (if the mode requires one)
         /// </summary>
-        public string TfsOnlineUserName { get; set; }
-
-        /// <summary>
-        ///  Set to look for an encrypted password in the given file path for Tfs authentication.
-        ///  Provide the password by running the crawler with -Password.
-        /// </summary>
-        public string TfsOnlineEncryptedPasswordFilePath { get; set; }
+        public string UserName { get; set; }
         
         /// <summary>
         ///  True to build the Arriba database in process rather than writing new and changed

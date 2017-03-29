@@ -11,15 +11,16 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Xml;
 
 namespace Arriba.TfsWorkItemCrawler.ItemProviders
 {
     public class TfsItemProvider : IItemProvider
     {
+        internal const string EncryptedPasswordFilePathFormat = "{0}.Token.bin";
         private const string DefaultQuery = "SELECT [System.Id], [System.ChangedDate] FROM WorkItems WHERE [System.ChangedDate] > '@Start' AND [System.ChangedDate] < '@End' ORDER BY [System.ChangedDate] DESC";
 
         private string DatabaseUri { get; set; }
@@ -40,31 +41,36 @@ namespace Arriba.TfsWorkItemCrawler.ItemProviders
             this.SerializerSettings.Converters.Add(new LinkCollectionJsonConverter());
             this.SerializerSettings.Converters.Add(new RevisionCollectionJsonConverter());
 
+            // TODO: Figure out Personal Access Tokens (may only work for REST APIs)
+            // https://www.visualstudio.com/en-us/docs/setup-admin/team-services/use-personal-access-tokens-to-authenticate
+
             // Connect to TFS, using encrypted credentials if found or the current user identity otherwise
-            Trace.WriteLine(string.Format("Connecting to '{0}'...", this.DatabaseUri));
+            switch ((config.AuthenticationMode ?? String.Empty).ToLowerInvariant())
+            {
+                case "aad":
+                    // https://www.visualstudio.com/en-us/docs/setup-admin/team-services/manage-organization-access-for-your-account-vs
+                    Trace.WriteLine(string.Format("Connecting to '{0}' [AAD]...", this.DatabaseUri));
+                    this.Store = new WorkItemStore(new TfsTeamProjectCollection(new Uri(this.DatabaseUri), new VssAadCredential()));
+                    break;
+                // Deprecated, but works.
+                //case "alternate":
+                //    Trace.WriteLine(string.Format("Connecting to '{0}' [Alternate]...", this.DatabaseUri));
+                //    string encryptedBase64Password = File.ReadAllText(string.Format(EncryptedPasswordFilePathFormat, config.ConfigurationName));
+                //    string unprotectedPassword = DecryptLocalUserPassword(encryptedBase64Password);
 
-            if (config.UseAADForTFSAuth)
-            {
-                Trace.WriteLine("Getting the TFS Team Project Collection [AAD]");
-                
-                var credentials = new VssAadCredential();
-                TfsTeamProjectCollection tpc = new TfsTeamProjectCollection(new Uri(this.DatabaseUri), credentials);
-                this.Store = tpc.GetService<WorkItemStore>();
-            }
-            else if (!String.IsNullOrEmpty(config.TfsOnlineUserName) && File.Exists(config.TfsOnlineEncryptedPasswordFilePath))
-            {
-                Trace.WriteLine("Getting the TFS Team Project Collection [Password] for {0}", config.TfsOnlineUserName);
-                string encryptedBase64Password = File.ReadAllText(config.TfsOnlineEncryptedPasswordFilePath);
-                string unprotectedPassword = DecryptLocalUserPassword(encryptedBase64Password);
+                //    //var credential = new TfsClientCredentials(new Microsoft.TeamFoundation.Client.WindowsCredential(new NetworkCredential(config.UserName, unprotectedPassword)));
+                //    //credential.AllowInteractive = false;
 
-                // https://www.visualstudio.com/en-us/docs/setup-admin/team-services/use-personal-access-tokens-to-authenticate
-                VssClientCredentials credentials = new VssClientCredentials(new VssBasicCredential(config.TfsOnlineUserName, unprotectedPassword));
-                TfsTeamProjectCollection tpc = new TfsTeamProjectCollection(new Uri(this.DatabaseUri), credentials);
-                this.Store = new WorkItemStore(tpc);
-            }
-            else
-            {
-                this.Store = new WorkItemStore(this.DatabaseUri);
+                //    var tpc = new TfsTeamProjectCollection(new Uri(this.DatabaseUri), credential);
+                //    this.Store = new WorkItemStore(tpc);
+                //    break;
+                case "integrated":
+                case "":
+                    Trace.WriteLine(string.Format("Connecting to '{0}' [Integrated Auth]...", this.DatabaseUri));
+                    this.Store = new WorkItemStore(this.DatabaseUri);
+                    break;
+                default:
+                    throw new NotImplementedException(string.Format("TfsItemProvider has no implementation for authenticationMode \"{0}\". Use 'aad', 'token', or 'integrated'.", config.AuthenticationMode));
             }
 
             // Debug Only: Get the fields list
@@ -73,12 +79,25 @@ namespace Arriba.TfsWorkItemCrawler.ItemProviders
         }
 
         #region TFS Online Password Storage
+        public static int EncryptPassword(CrawlerConfiguration config)
+        {
+            Console.Write("Enter TFS Online Password to local user encrypt: ");
+            string password = Console.ReadLine();
+            if (String.IsNullOrEmpty(password)) return -1;
+
+            string encryptedPasswordPath = string.Format(TfsItemProvider.EncryptedPasswordFilePathFormat, config.ConfigurationName);
+            string encryptedPassword = TfsItemProvider.LocalUserEncryptPassword(password);
+            File.WriteAllText(encryptedPasswordPath, encryptedPassword);
+
+            Console.WriteLine("Encrypted Password written to '{0}'. Run Crawler to test.", encryptedPasswordPath);
+            Console.WriteLine();
+
+            return 0;
+        }
+
         /// <summary>
         ///  Encrypt a TfsOnline password using local user secure storage and return
         ///  the protected password to store in a file referenced by config. 
-        ///  
-        ///  In config.json, set tfsOnlineUserName and tfsOnlineEncryptedPasswordFilePath 
-        ///  to tell the TfsItemProvider to decrypt and use these credentials.
         /// </summary>
         /// <remarks>
         ///  Reliable access to TFS online requires a stored web password, because otherwise
