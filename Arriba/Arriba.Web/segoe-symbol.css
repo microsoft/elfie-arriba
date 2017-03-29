@@ -14,7 +14,7 @@
 
 [class^="icon-"],
 [class*=" icon-"] {
-  font-family: 'Segoe UI Symbol', segoe-ui-symbol, segoe-ui-symbol-ie;
+  font-family: 'Segoe UI Symbol', segoe-ui-symbol, segoe-ui-symbol-ie !important; /* Otherwise would be superceeded by rules such as: .grid * { font-family: "Segoe UI Semibold" } */
   font-weight: normal;
   font-style: normal;
   text-decoration: inherit;
