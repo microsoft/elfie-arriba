@@ -22,6 +22,7 @@ export default React.createClass({
         if (e.key === "ArrowUp") {
             this.setState({ sel: (this.state.sel - 1).clamp(0, this.state.suggestions.length - 1) });
             e.stopPropagation();
+            e.preventDefault(); // Prevent cursor moving to beginning of line.
         }
         if (e.key === "ArrowDown") {
             this.setState({ sel: (this.state.sel + 1).clamp(0, this.state.suggestions.length - 1) });
