@@ -219,7 +219,8 @@ Microsoft.CodeAnalysis.Elfie.dll.*
 # Exclude Arriba.Web configuration, which is per-site but must be copied in to build.
 Arriba/Arriba.Web/configuration/
 
-# Exclude Arriba.Web build outputs
+# Exclude Arriba.Web build outputs [old and current]
+Arriba/Arriba.Web/lib
 Arriba/Arriba.Web/bundle.js
 Arriba/Arriba.Web/bundle.js.map
 
