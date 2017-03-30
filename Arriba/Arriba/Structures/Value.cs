@@ -36,6 +36,13 @@ namespace Arriba.Structures
 
         public void Assign(object o)
         {
+            // Unwrap ValueTypeReference<object> *first*
+            if (o is ValueTypeReference<object>)
+            {
+                o = (o as ValueTypeReference<object>).Value;
+            }
+
+            // Copy properties if o is already a Value
             if (o != null && o is Value)
             {
                 Value v = (Value)o;
@@ -46,14 +53,7 @@ namespace Arriba.Structures
             }
             else
             {
-                if (o is ValueTypeReference<object>)
-                {
-                    _value = (o as ValueTypeReference<object>).Value;
-                }
-                else
-                {
-                    _value = o;
-                }
+                _value = o;
                 _cachedByteBlock = ByteBlock.Zero;
                 _cachedIdealTypeValue = null;
                 _cachedHashCode = 0;
@@ -264,59 +264,69 @@ namespace Arriba.Structures
 
         private object TryAsString()
         {
-            if (_value is string || _value is ValueTypeReference<string>)
+            string asString;
+
+            // Try to get string representation of value
+            if(_value is string)
             {
-                string asString = (_value is ValueTypeReference<string>) ? (_value as ValueTypeReference<string>).Value : (string)_value;
-
-                DateTime asDateTime = default(DateTime);
-                Guid asGuid = default(Guid);
-                bool asBool = default(bool);
-                double asDouble = default(double);
-                long asLong = default(long);
-                ulong asULong = default(ulong);
-                TimeSpan asTimeSpan = default(TimeSpan);
-
-                if (DateTime.TryParse(asString, DateTimeFormatInfo.CurrentInfo, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out asDateTime))
-                {
-                    return asDateTime;
-                }
-                else if (Guid.TryParse(asString, out asGuid))
-                {
-                    return asGuid;
-                }
-                else if (bool.TryParse(asString, out asBool))
-                {
-                    return asBool;
-                }
-                else if (long.TryParse(asString, out asLong))
-                {
-                    return asLong;
-                }
-                else if (ulong.TryParse(asString, out asULong))
-                {
-                    return asULong;
-                }
-                else if ((asString.StartsWith("0x", StringComparison.OrdinalIgnoreCase)) && ulong.TryParse(asString.TrimStart('0', 'x', 'X'), NumberStyles.HexNumber, null, out asULong))
-                {
-                    return asULong;
-                }
-                else if (double.TryParse(asString, out asDouble))
-                {
-                    return asDouble;
-                }
-                else if (TimeSpan.TryParse(asString, out asTimeSpan))
-                {
-                    // NOTE: TimeSpan must be after numeric types so that plain numbers are preferred as numeric types.
-                    // If some values to bestType can only be TimeSpans, that type will be picked.
-                    return asTimeSpan;
-                }
-                else
-                {
-                    return asString;
-                }
+                asString = (string)_value;
+            }
+            else if(_value is ValueTypeReference<string>)
+            {
+                asString = (_value as ValueTypeReference<string>).Value;
+            }
+            else
+            {
+                return null;
             }
 
-            return null;
+            // If gotten, try parsing conversions to other types
+            DateTime asDateTime = default(DateTime);
+            Guid asGuid = default(Guid);
+            bool asBool = default(bool);
+            double asDouble = default(double);
+            long asLong = default(long);
+            ulong asULong = default(ulong);
+            TimeSpan asTimeSpan = default(TimeSpan);
+
+            if (DateTime.TryParse(asString, DateTimeFormatInfo.CurrentInfo, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out asDateTime))
+            {
+                return asDateTime;
+            }
+            else if (Guid.TryParse(asString, out asGuid))
+            {
+                return asGuid;
+            }
+            else if (bool.TryParse(asString, out asBool))
+            {
+                return asBool;
+            }
+            else if (long.TryParse(asString, out asLong))
+            {
+                return asLong;
+            }
+            else if (ulong.TryParse(asString, out asULong))
+            {
+                return asULong;
+            }
+            else if ((asString.StartsWith("0x", StringComparison.OrdinalIgnoreCase)) && ulong.TryParse(asString.TrimStart('0', 'x', 'X'), NumberStyles.HexNumber, null, out asULong))
+            {
+                return asULong;
+            }
+            else if (double.TryParse(asString, out asDouble))
+            {
+                return asDouble;
+            }
+            else if (TimeSpan.TryParse(asString, out asTimeSpan))
+            {
+                // NOTE: TimeSpan must be after numeric types so that plain numbers are preferred as numeric types.
+                // If some values to bestType can only be TimeSpans, that type will be picked.
+                return asTimeSpan;
+            }
+            else
+            {
+                return asString;
+            }
         }
         #endregion
 
