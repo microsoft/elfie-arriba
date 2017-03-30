@@ -370,6 +370,7 @@ namespace Arriba.Test.Structures
         public void Value_ValueTypeReferenceEquivalence()
         {
             TryEquivalence(0);
+            TryEquivalence("hello");
             TryEquivalence(12345);
             TryEquivalence(true);
             TryEquivalence(false);
@@ -382,17 +383,30 @@ namespace Arriba.Test.Structures
 
         private void TryEquivalence<T>(T testValue) where T : IEquatable<T>
         {
-            Value v1 = Value.Create(testValue);
-            Value v2 = Value.Create(testValue);
-            Value v3 = Value.Create(new ValueTypeReference<T>(testValue));
-            Value v4 = Value.Create(new ValueTypeReference<T>(testValue));
+            // Ensure different wrappings of a value all hash and compare as the same.
+            // DataBlock Json Serialization ends up with Value.Create(value.ToString()).
+            // ChooseSplit of a deserialized DataBlock ends up with Value.Create(new ValueTypeReference<object>(Value.Create(value.ToString()))).
+            Value[] values = new Value[]
+            {
+                Value.Create(testValue),
+                Value.Create(testValue.ToString()),
+                Value.Create(new ValueTypeReference<T>(testValue)),
+                Value.Create(new ValueTypeReference<object>(testValue)),
+                Value.Create(new ValueTypeReference<object>(testValue.ToString())),
+                Value.Create(new ValueTypeReference<string>(testValue.ToString())),
+                Value.Create(new ValueTypeReference<object>(Value.Create(testValue.ToString())))
+            };
 
-            Assert.AreEqual(v1.GetHashCode(), v2.GetHashCode(), "Hash for Value and Value not equivelent for type: " + typeof(T));
-            Assert.AreEqual(v1.GetHashCode(), v3.GetHashCode(), "Hash for Value and ValueTypeReference not equivelent for type: " + typeof(T));
-            Assert.AreEqual(v3.GetHashCode(), v4.GetHashCode(), "Hash for ValueTypeReference and ValueTypeReference not equivelent for type: " + typeof(T));
-            Assert.AreEqual(v1, v2, "Value and Value are not equivelent for type: " + typeof(T));
-            Assert.AreEqual(v1, v3, "Value and ValueTypeReference are not equivelent for type: " + typeof(T));
-            Assert.AreEqual(v3, v4, "ValueTypeReference and ValueTypeReference are not equivelent for type: " + typeof(T));
+            Assert.AreEqual(values[0].GetHashCode(), values[3].GetHashCode());
+
+            for(int i = 0; i < values.Length; ++i)
+            {
+                for(int j = 0; j < values.Length; ++j)
+                {
+                    Assert.AreEqual(values[i], values[j], "The same value wrapped differently wasn't equal. Indexes: {0}, {1}", i, j);
+                    Assert.AreEqual(values[i].GetHashCode(), values[j].GetHashCode(), "The same value wrapped differently had different GetHashCodes. Indexes: {0}, {1}", i, j);
+                }
+            }
         }
 
         [TestMethod]
