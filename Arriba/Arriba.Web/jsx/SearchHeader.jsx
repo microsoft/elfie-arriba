@@ -1,4 +1,9 @@
-﻿// SearchHeader contains the top bar - branching, the search box, and top-level buttons
+﻿function isIE () {
+    // Both Chrome and Edge report as "Chrome", only IE doesn't.
+    return navigator.userAgent.indexOf('Chrome') === -1;
+}
+
+// SearchHeader contains the top bar - branching, the search box, and top-level buttons
 export default React.createClass({
     getInitialState: function () {
         return { suggestions: [], sel: 0, completed: "", completionCharacters: [] };   
@@ -14,7 +19,14 @@ export default React.createClass({
     componentWillUnmount: function() {
         document.removeEventListener("click", this.handleClickDocument);
     },
+    handleFocusOrBlur: function () {
+        if (isIE()) this.bypassInputOnce = true;
+    },
     onInput: function (e) {
+        if (this.bypassInputOnce) {
+            this.bypassInputOnce = false;
+            return;
+        }
         this.setQuery(e.target.value);
     },
     handleKeyDown: function (e) {
@@ -38,7 +50,7 @@ export default React.createClass({
             this.setState({ suggestions: [] });
         }
     },
-    handleClick: function (item) {
+    handleClickSuggestion: function (item) {
         this.setQuery(this.state.completed + item.completeAs + " ");
         searchBox.focus();
     },
@@ -66,7 +78,7 @@ export default React.createClass({
             <div className="suggestions" >
                 {this.state.suggestions.map((item, index) =>
                     <div className={"suggestion " + (this.state.sel == index ? "suggestion-sel" : "" )}
-                        onClick={ this.handleClick.bind(this, item) }>
+                        onClick={ this.handleClickSuggestion.bind(this, item) }>
                         <span><span style={{opacity: 0.3}}>{this.state.completed}</span>{item.display}</span>
                         <span className="suggestion-hint">{item.hint}</span>
                     </div>
@@ -79,8 +91,12 @@ export default React.createClass({
                     <a href="/">{this.props.name}</a>
                 </div>
 
-                <div className="searchBar">
-                    <input id="searchBox" ref="searchBox" type="text" placeholder={"Search for " + tables.join(", ") + "..."} tabIndex="1" onInput={this.onInput} value={this.props.query} onKeyDown={this.handleKeyDown}/>
+               <div className="searchBar">
+                    <input id="searchBox" ref="searchBox" type="text" 
+                        placeholder={"Search for " + tables.join(", ") + "..."} 
+                        tabIndex="1" onInput={this.onInput} value={this.props.query} 
+                        onKeyDown={this.handleKeyDown} 
+                        onFocus={this.handleFocusOrBlur} onBlur={this.handleFocusOrBlur}/>
                     <div className="searchIcon">
                         <i className="icon-find"></i>
                     </div>
