@@ -226,3 +226,7 @@ Arriba/Arriba.Web/bundle.js.map
 
 # Exclude Arriba DiskCache, built when saving Arriba tables in a dev enlistment.
 DiskCache/
+
+# Exclude Arriba Database Configurations
+Arriba/Databases
+!Arriba/Databases/Sample

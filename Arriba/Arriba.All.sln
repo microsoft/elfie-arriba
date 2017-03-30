@@ -37,6 +37,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Arriba.Csv", "Tools\Arriba.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Arriba.IIS", "Arriba.IIS\Arriba.IIS.csproj", "{069A2B95-DBF0-42EF-B7E4-CE840DD3B76C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Arriba.TfsWorkItemCrawler", "Tools\Arriba.TfsWorkItemCrawler\Arriba.TfsWorkItemCrawler.csproj", "{FA9A437A-4299-4645-957D-EEABB17396C5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -125,11 +127,20 @@ Global
 		{069A2B95-DBF0-42EF-B7E4-CE840DD3B76C}.Release|Any CPU.Build.0 = Release|Any CPU
 		{069A2B95-DBF0-42EF-B7E4-CE840DD3B76C}.Release|x64.ActiveCfg = Release|x64
 		{069A2B95-DBF0-42EF-B7E4-CE840DD3B76C}.Release|x64.Build.0 = Release|x64
+		{FA9A437A-4299-4645-957D-EEABB17396C5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FA9A437A-4299-4645-957D-EEABB17396C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FA9A437A-4299-4645-957D-EEABB17396C5}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{FA9A437A-4299-4645-957D-EEABB17396C5}.Debug|x64.Build.0 = Debug|Any CPU
+		{FA9A437A-4299-4645-957D-EEABB17396C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FA9A437A-4299-4645-957D-EEABB17396C5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FA9A437A-4299-4645-957D-EEABB17396C5}.Release|x64.ActiveCfg = Release|Any CPU
+		{FA9A437A-4299-4645-957D-EEABB17396C5}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{D264AFC1-C7D7-4585-9FCD-92BED4CD0D28} = {AC459F90-C1BF-4B6A-BEC4-5C19487C3D8B}
+		{FA9A437A-4299-4645-957D-EEABB17396C5} = {AC459F90-C1BF-4B6A-BEC4-5C19487C3D8B}
 	EndGlobalSection
 EndGlobal
