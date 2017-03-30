@@ -373,7 +373,16 @@ namespace Arriba.Server
                 }
             }
 
-            return ArribaResponse.Ok(results.OrderByDescending((cr) => cr.Count));
+            // Sort results so that succeeding tables are first and are subsorted by count [descending]
+            results.Sort((left, right) =>
+            {
+                int result = right.Succeeded.CompareTo(left.Succeeded);
+                if (result != 0) return result;
+
+                return right.Count.CompareTo(left.Count);
+            });
+
+            return ArribaResponse.Ok(results);
         }
 
         private class CountResult

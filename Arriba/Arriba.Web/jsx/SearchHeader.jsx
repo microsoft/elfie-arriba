@@ -91,7 +91,7 @@ export default React.createClass({
                     <a href="/">{this.props.name}</a>
                 </div>
 
-                <div className="searchBar">
+               <div className="searchBar">
                     <input id="searchBox" ref="searchBox" type="text" 
                         placeholder={"Search for " + tables.join(", ") + "..."} 
                         tabIndex="1" onInput={this.onInput} value={this.props.query} 
