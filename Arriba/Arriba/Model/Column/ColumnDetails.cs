@@ -116,7 +116,7 @@ namespace Arriba.Model.Column
 
             context.Writer.Write(this.Name);
             context.Writer.Write(this.Type);
-            context.Writer.Write(this.Alias);
+            context.Writer.Write(this.Alias ?? String.Empty);
             context.Writer.Write((this.Default ?? String.Empty).ToString());
             context.Writer.Write(this.IsPrimaryKey);
         }
