@@ -29,6 +29,11 @@ export default React.createClass({
         }
         this.setQuery(e.target.value);
     },
+    handleClick: function (e) {
+        // Re-show the suggestion list even if the textbox already has focus.
+        // Limiting to "", to avoid spurious re-shows if clicking around existing text.
+        if (e.target.value === "") this.setQuery("");
+    },
     handleKeyDown: function (e) {
         if (!this.state.suggestions.length) return;
         if (e.key === "ArrowUp") {
@@ -95,7 +100,7 @@ export default React.createClass({
                     <input id="searchBox" ref="searchBox" type="text" 
                         placeholder={"Search for " + tables.join(", ") + "..."} 
                         tabIndex="1" onInput={this.onInput} value={this.props.query} 
-                        onKeyDown={this.handleKeyDown} 
+                        onKeyDown={this.handleKeyDown} onClick={this.handleClick} 
                         onFocus={this.handleFocusOrBlur} onBlur={this.handleFocusOrBlur}/>
                     <div className="searchIcon">
                         <i className="icon-find"></i>
