@@ -1,4 +1,4 @@
-﻿require("../Search.css");
+﻿require("../Search.scss");
 
 import ErrorPage from "./ErrorPage";
 import QueryStats from "./QueryStats";
