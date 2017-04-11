@@ -332,19 +332,26 @@ a:visited:hover {
 
 /* Make the per-table buttons dark grey and spaced out */
 .queryStats .statsForTable {
-    border: 1px solid #999999;
-    padding: 2px 4px;
     margin-right: 8px;
 
-    /* Make the selected table white */
-    &.current {
-        background-color: white;
-    }
+    & > span {
+        border: 1px solid #999999;
+        padding: 2px 6px;
 
-    /* Make the per-table counts bold and add spacing before the table name */
-    & .countValue {
-        padding-right: 4px;
-        font-weight: bold;
+        &:not(:first-child) {
+            border-left: 0;
+        }
+
+        /* Make the selected table white */
+        &.current {
+            background-color: white;
+        }
+
+        /* Make the per-table counts bold and add spacing before the table name */
+        & .countValue {
+            padding-right: 4px;
+            font-weight: bold;
+        }
     }
 }
 
