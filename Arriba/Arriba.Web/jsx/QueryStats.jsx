@@ -31,7 +31,7 @@ export default React.createClass({
                 }
 
                 tiles.push(
-                    <span key={"tableTile_" + tableResult.tableName} className={cssClasses + " statsForTable clickable"} onClick={this.onTableTileClick.bind(this, tableResult.tableName)}>
+                    <span key={"tableTile_" + tableResult.tableName} className={cssClasses + " clickable"} onClick={this.onTableTileClick.bind(this, tableResult.tableName)}>
                         {parts}
                         <span>{tableResult.tableName}</span>
                     </span>
@@ -85,7 +85,7 @@ export default React.createClass({
 
         return (
             <div className="queryStats">
-                {tiles}
+                <span className="statsForTable">{tiles}</span>
                 {selectedDetails}
             </div>
         );
