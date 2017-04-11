@@ -335,17 +335,17 @@ a:visited:hover {
     border: 1px solid #999999;
     padding: 2px 4px;
     margin-right: 8px;
-}
 
-/* Make the selected table white */
-.queryStats .statsForTable.current {
-    background-color: white;
-}
+    /* Make the selected table white */
+    &.current {
+        background-color: white;
+    }
 
-/* Make the per-table counts bold and add spacing before the table name */
-.queryStats .statsForTable .countValue {
-    padding-right: 4px;
-    font-weight: bold;
+    /* Make the per-table counts bold and add spacing before the table name */
+    & .countValue {
+        padding-right: 4px;
+        font-weight: bold;
+    }
 }
 
 /* Space out the QueryStats buttons a bit */
