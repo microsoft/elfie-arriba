@@ -186,7 +186,7 @@ var SearchMain = React.createClass({
         this.setState({ loading: true });
 
         var params = { q: this.state.query };
-        this.addPivotClauses(params); return;
+        this.addPivotClauses(params);
 
         // Get the count of matches from each accessible table
         this.jsonQueryWithError(
