@@ -96,28 +96,31 @@ export default React.createClass({
                     <a href="/">{this.props.name}</a>
                 </div>
 
-                <div className="searchBar">
-                    <input id="searchBox" ref="searchBox" type="text" 
-                        placeholder={"Search for " + tables.join(", ") + "..."} 
-                        tabIndex="1" onInput={this.onInput} value={this.props.query} 
-                        onKeyDown={this.handleKeyDown} onClick={this.handleClick} 
-                        onFocus={this.handleFocusOrBlur} onBlur={this.handleFocusOrBlur}/>
-                    <div className="searchIcon">
-                        <i className="icon-find"></i>
+                <div className="searchBarAndButtons">
+                    <div className="searchBar">
+                        { this.props.stillLoading ? <div className="progress"></div> : null }
+                        <input id="searchBox" ref="searchBox" type="text" 
+                            placeholder={"Search for " + tables.join(", ") + "..."} 
+                            tabIndex="1" onInput={this.onInput} value={this.props.query} 
+                            onKeyDown={this.handleKeyDown} onClick={this.handleClick} 
+                            onFocus={this.handleFocusOrBlur} onBlur={this.handleFocusOrBlur}/>
+                        <div className="searchIcon">
+                            <i className="icon-find"></i>
+                        </div>
+                        {suggestions}
                     </div>
-                    {suggestions}
-                </div>
 
-                <div className="buttons">
-                    <a className="theme-background-dark" href={"mailto:?subject=" + encodeURIComponent(this.props.name) + ": " + encodeURIComponent(this.props.query) + "&body=" + encodeURIComponent(window.location.href)}>
-                        <i className="icon-mail" title="Mail"></i>
-                    </a>
-                    <a className="theme-background-dark" href={"mailto:" + encodeURIComponent(this.props.feedbackEmailAddresses) + "?subject=" + encodeURIComponent(this.props.name) + " Feedback"}>
-                        <i className="icon-emoji2" title="Feedback"></i>
-                    </a>
-                    <a className="theme-background-dark" href="/?help=true">
-                        <i className="icon-help" title="Help"></i>
-                    </a>
+                    <div className="buttons">
+                        <a className="theme-background-dark" href={"mailto:?subject=" + encodeURIComponent(this.props.name) + ": " + encodeURIComponent(this.props.query) + "&body=" + encodeURIComponent(window.location.href)}>
+                            <i className="icon-mail" title="Mail"></i>
+                        </a>
+                        <a className="theme-background-dark" href={"mailto:" + encodeURIComponent(this.props.feedbackEmailAddresses) + "?subject=" + encodeURIComponent(this.props.name) + " Feedback"}>
+                            <i className="icon-emoji2" title="Feedback"></i>
+                        </a>
+                        <a className="theme-background-dark" href="/?help=true">
+                            <i className="icon-help" title="Help"></i>
+                        </a>
+                    </div>
                 </div>
             </div>
         );

@@ -169,6 +169,9 @@ var SearchMain = React.createClass({
     getAllCounts: function () {
         // On query, ask for the count from every table.
 
+        // Always cancel the slow server timer regardless of query state.
+        if (this.slowServerTimer) window.clearTimeout(this.slowServerTimer);
+
         // If there's no query, clear results and do nothing else
         if (!this.state.query) {
             var cleared = {};
@@ -179,6 +182,8 @@ var SearchMain = React.createClass({
             this.setState(cleared);
             return;
         }
+
+        this.slowServerTimer = window.setTimeout(() => { this.setState( { stillLoading: true }) }, 500);
 
         var params = { q: this.state.query };
         this.addPivotClauses(params);
@@ -191,6 +196,9 @@ var SearchMain = React.createClass({
                 if (!tableToShow) tableToShow = data.content[0].tableName;
 
                 this.setState({ allCountData: data, currentTable: tableToShow, error: null }, this.getTableBasics);
+
+                if (this.slowServerTimer) window.clearTimeout(this.slowServerTimer);
+                this.setState({ stillLoading: false });
             }.bind(this),
             params
         );
@@ -378,7 +386,8 @@ var SearchMain = React.createClass({
                               query={this.state.query}
                               tables={this.state.tables}
                               allColumns={this.state.currentTableAllColumns}
-                              onSearchChange={this.onSearchChange} />
+                              onSearchChange={this.onSearchChange}
+                              stillLoading={this.state.stillLoading} />
 
                 <div className="middle">
                     <nav className="mode theme-background-dark">
