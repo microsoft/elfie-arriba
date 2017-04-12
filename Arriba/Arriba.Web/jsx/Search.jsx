@@ -33,6 +33,7 @@ var SearchMain = React.createClass({
             selectedItemData: null,
 
             allItemCount: 0,
+            loading: false,
 
             page: 0,
             hasMoreData: false,
@@ -175,13 +176,17 @@ var SearchMain = React.createClass({
             cleared.allCountData = [];
             cleared.listingData = [];
             cleared.selectedItemData = null;
+            cleared.loading = false;
 
             this.setState(cleared);
             return;
         }
 
+        // Notify any listeners (such as the loading animation).
+        this.setState({ loading: true });
+
         var params = { q: this.state.query };
-        this.addPivotClauses(params);
+        this.addPivotClauses(params); return;
 
         // Get the count of matches from each accessible table
         this.jsonQueryWithError(
@@ -190,7 +195,7 @@ var SearchMain = React.createClass({
                 var tableToShow = this.state.userSelectedTable;
                 if (!tableToShow) tableToShow = data.content[0].tableName;
 
-                this.setState({ allCountData: data, currentTable: tableToShow, error: null }, this.getTableBasics);
+                this.setState({ allCountData: data, currentTable: tableToShow, loading: false, error: null }, this.getTableBasics);
             }.bind(this),
             params
         );
@@ -278,7 +283,7 @@ var SearchMain = React.createClass({
             url,
             onSuccess,
             function (xhr, status, err) {
-                this.setState({ allCountData: [], listingData: [], selectedItemData: null, error: "Error: Server didn't respond to [" + xhr.url + "]. " + err });
+                this.setState({ allCountData: [], listingData: [], selectedItemData: null, loading: false, error: "Error: Server didn't respond to [" + xhr.url + "]. " + err });
                 console.error(xhr.url, status, err.toString());
             }.bind(this),
             parameters
@@ -378,7 +383,8 @@ var SearchMain = React.createClass({
                               query={this.state.query}
                               tables={this.state.tables}
                               allColumns={this.state.currentTableAllColumns}
-                              onSearchChange={this.onSearchChange} />
+                              onSearchChange={this.onSearchChange}
+                              loading={this.state.loading} />
 
                 <div className="middle">
                     <nav className="mode theme-background-dark">
