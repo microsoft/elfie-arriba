@@ -36,12 +36,17 @@ html, body, .viewport {
     flex-flow: row;
 }
 
+.searchBarAndButtons {
+    flex: 1;
+    display: flex;
+    padding: 8px;
+}
+
 /* Make the search bar fill header width. Make contents also fill inner width */
 .searchBar {
     flex: 1;
 
     display: flex;
-    flex-flow: row;
 
     position: relative;
 }
@@ -280,7 +285,6 @@ a:visited:hover {
     font-size: 16pt;
     box-sizing: border-box;
     border: none;
-    margin: 8px;
     margin-right: 0px;
     width: 100%;
     padding: 8px;
@@ -294,8 +298,22 @@ a:visited:hover {
     color: #666666;
     background: #F7F7F7;
     padding: 8px;
-    margin: 8px;
     margin-left: 0px;
+}
+
+.header .searchBar .progress {
+    position: absolute;
+    bottom: 0;
+    height: 2px;
+    width: 100%;
+    background: linear-gradient(90deg, transparent, hsl(136, 100%, 23%) 15%, transparent 30%);
+    background-size: 200%;
+    animation: AnimationName 1.5s linear infinite;
+
+    @keyframes AnimationName {
+        0%    { background-position: 200% 50% }
+        100%  { background-position: 0% 50% }
+    }
 }
 
 /* Make the buttons (top right) large, white on dark green */
@@ -305,7 +323,7 @@ a:visited:hover {
     color: white;
     height: 48px;
     width: 48px;
-    margin: 8px 8px 0px 0px;
+    margin-left: 8px;
 }
 
 .buttons a:hover {
@@ -774,8 +792,8 @@ a:visited:hover {
 
 .suggestions {
     position: absolute;
-    top: 58px; /* Todo: Don't hard code the top. */
-    left: 8px;
+    top: 50px; /* Todo: Don't hard code the top. */
+    left: 0;
     background-color: white;
     box-shadow: 0 3px 8px 0 rgba(0,0,0,0.2), 0 0 0 1px rgba(0,0,0,0.08);
     z-index: 1;
