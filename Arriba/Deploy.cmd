@@ -9,10 +9,10 @@ SET TargetLocation=\\%1\Production
 PUSHD "%~dp0"
 
 ECHO - Deploying Arriba...
-ROBOCOPY /E /XO /NJH /NJS /MIR "bin\Release" "%TargetLocation%\bin\Release"
-ROBOCOPY /E /XO /NJH /NJS /MIR "Arriba.IIS" "%TargetLocation%\Arriba.IIS"
-ROBOCOPY /E /XO /NJH /NJS "Arriba.Web" "%TargetLocation%\Arriba.Web" /XD node_modules
-ROBOCOPY /E /XO /NJH /NJS /MIR "Redirect" "%TargetLocation%\Redirect"
-ROBOCOPY /E /XO /NJH /NJS "Configuration" "%TargetLocation%\Configuration"
+ROBOCOPY /E /NJH /NJS /MIR "bin\Release" "%TargetLocation%\bin\Release"
+ROBOCOPY /E /NJH /NJS /MIR "Arriba.IIS" "%TargetLocation%\Arriba.IIS"
+ROBOCOPY /E /NJH /NJS /MIR "Arriba.Web" "%TargetLocation%\Arriba.Web" /XD node_modules
+ROBOCOPY /E /NJH /NJS /MIR "Redirect" "%TargetLocation%\Redirect"
+ROBOCOPY /E /NJH /NJS "Configuration" "%TargetLocation%\Configuration"
 
 POPD
