@@ -96,7 +96,9 @@ namespace Arriba.Test.Model
             DataBlock block = BuildSampleData();
             int[] partitionChains = new int[] { 1, -1, 3, 4, -1 };
             int[] partitionChainHeads = new int[] { 0, 2 };
-            p.AddOrUpdate(block, new AddOrUpdateOptions(), partitionChains, partitionChainHeads[1]);
+            ReadOnlyDataBlock roBlock = block.AsReadOnly();
+            ReadOnlyDataBlock chainProjection = roBlock.ProjectChain(partitionChains, partitionChainHeads[1]);
+            p.AddOrUpdate(chainProjection, new AddOrUpdateOptions());
 
             // Verify only the right items were added
             SelectQuery q = new SelectQuery();
@@ -181,7 +183,7 @@ namespace Arriba.Test.Model
         public void Table_AddOrUpdate_NoAddRows()
         {
             Table t = new Table("Sample", 50000);
-            t.AddOrUpdate(BuildSampleData(), new AddOrUpdateOptions() { AddMissingColumns = true });
+            t.AddOrUpdate(BuildSampleData().AsReadOnly(), new AddOrUpdateOptions() { AddMissingColumns = true });
 
             // Add one new item and update an item
             DataBlock newData = new DataBlock(new string[] { "ID", "Title" }, 2,
@@ -192,7 +194,7 @@ namespace Arriba.Test.Model
                 });
 
             // Ask Arriba to ignore new items. Verify no items added, existing item updated
-            t.AddOrUpdate(newData, new AddOrUpdateOptions() { Mode = AddOrUpdateMode.UpdateAndIgnoreAdds });
+            t.AddOrUpdate(newData.AsReadOnly(), new AddOrUpdateOptions() { Mode = AddOrUpdateMode.UpdateAndIgnoreAdds });
             Assert.AreEqual(5, (int)t.Count);
 
             SelectQuery q = new SelectQuery() { Columns = new string[] { "Title" }, Count = 10, Where = SelectQuery.ParseWhere("ID = 11512") };
@@ -200,14 +202,14 @@ namespace Arriba.Test.Model
             Assert.AreEqual("Existing Item", result.Values[0, 0].ToString());
 
             // Ask Arriba to not add items. Verify exception trying to add a new item.
-            Verify.Exception<ArribaWriteException>(() => t.AddOrUpdate(newData, new AddOrUpdateOptions() { Mode = AddOrUpdateMode.UpdateOnly }));
+            Verify.Exception<ArribaWriteException>(() => t.AddOrUpdate(newData.AsReadOnly(), new AddOrUpdateOptions() { Mode = AddOrUpdateMode.UpdateOnly }));
         }
 
         [TestMethod]
         public void Table_DynamicColumnCreation()
         {
             Table t = new Table("Sample", 50000);
-            t.AddOrUpdate(BuildSampleData(), new AddOrUpdateOptions() { AddMissingColumns = true });
+            t.AddOrUpdate(BuildSampleData().AsReadOnly(), new AddOrUpdateOptions() { AddMissingColumns = true });
 
             // When empty, table should automatically add columns
             Assert.AreEqual(5, t.ColumnDetails.Count);
@@ -230,7 +232,7 @@ namespace Arriba.Test.Model
             block.SetRow(0, new object[] { 12345, 1, "New Value" });
 
             // Verify AddOrUpdate won't add columns by default (option must be set)
-            Verify.Exception<ArribaException>(() => t.AddOrUpdate(block));
+            Verify.Exception<ArribaException>(() => t.AddOrUpdate(block.AsReadOnly()));
 
             // Verify add didn't partially happen
             Assert.AreEqual(5, (int)t.Count);
@@ -244,7 +246,7 @@ namespace Arriba.Test.Model
                 });
 
             // Verify AddOrUpdate with option set will add the new column
-            t.AddOrUpdate(newData, new AddOrUpdateOptions() { AddMissingColumns = true });
+            t.AddOrUpdate(newData.AsReadOnly(), new AddOrUpdateOptions() { AddMissingColumns = true });
 
             Assert.AreEqual(7, (int)t.Count);
         }
@@ -285,7 +287,7 @@ namespace Arriba.Test.Model
                     block.SetColumn(0, sourceType.Item2);
                     block.SetColumn(1, intArray);
 
-                    t.AddOrUpdate(block);
+                    t.AddOrUpdate(block.AsReadOnly());
                     Assert.AreEqual(t.Count, (uint)rangeMax);
                 }
             }
@@ -307,7 +309,7 @@ namespace Arriba.Test.Model
                     block.SetColumn(0, intArray);
                     block.SetColumn(1, sourceType.Item2);
 
-                    t.AddOrUpdate(block);
+                    t.AddOrUpdate(block.AsReadOnly());
                     Assert.AreEqual(t.Count, (uint)rangeMax);
                 }
             }
@@ -331,7 +333,7 @@ namespace Arriba.Test.Model
             Assert.AreEqual(4, b.RowCount);
 
             // Verify Table only inserts rows which are "official"
-            t.AddOrUpdate(b, new AddOrUpdateOptions() { AddMissingColumns = true });
+            t.AddOrUpdate(b.AsReadOnly(), new AddOrUpdateOptions() { AddMissingColumns = true });
             Assert.AreEqual(4, (int)t.Count);
         }
 
@@ -466,7 +468,7 @@ namespace Arriba.Test.Model
             // Update an item and verify it
             DataBlock updateItems = new DataBlock(new string[] { "ID", "Priority" }, 1);
             updateItems.SetRow(0, new object[] { 11643, 2 });
-            table.AddOrUpdate(updateItems, new AddOrUpdateOptions());
+            table.AddOrUpdate(updateItems.AsReadOnly(), new AddOrUpdateOptions());
             result = table.Query(query);
             Assert.AreEqual(1, (int)result.Total);
             Assert.AreEqual("11999", result.Values[0, 0].ToString());
@@ -833,7 +835,7 @@ Title:unused, null
             items.SetRow(2, new object[] { 1, "Newly Added - should be modified", 99999, false, 3 });
             items.SetRow(3, new object[] { 2, "Modified Added", 99999, false, 3 });
 
-            table.AddOrUpdate(items, new AddOrUpdateOptions());
+            table.AddOrUpdate(items.AsReadOnly(), new AddOrUpdateOptions());
 
             SelectQuery query = new SelectQuery();
             query.Columns = new string[] { "ID", "Priority", "Title" };
@@ -891,7 +893,7 @@ Title:unused, null
             // Verify column knows the new default
             DataBlock items = new DataBlock(new string[] { "ID" }, 1);
             items[0, 0] = 12345;
-            table.AddOrUpdate(items, new AddOrUpdateOptions());
+            table.AddOrUpdate(items.AsReadOnly(), new AddOrUpdateOptions());
 
             query = new SelectQuery(query.Columns, "ID = 12345");
             result = table.Query(query);
@@ -927,7 +929,7 @@ Title:unused, null
             {
                 items.SetRow(row, new object[] { (int)result.Values[row, 0], (short)result.Values[row, 1] + 1 });
             }
-            table.AddOrUpdate(items, new AddOrUpdateOptions());
+            table.AddOrUpdate(items.AsReadOnly(), new AddOrUpdateOptions());
 
             SelectQuery newQuery = new SelectQuery();
             newQuery.Columns = new string[] { "ID", "Priority", "Color" };
@@ -969,7 +971,7 @@ Title:unused, null
 
             // Add some sample data (with ID column NOT first)
             DataBlock items = BuildSampleData();
-            table.AddOrUpdate(items, new AddOrUpdateOptions());
+            table.AddOrUpdate(items.AsReadOnly(), new AddOrUpdateOptions());
         }
 
         internal static void BuildLargeSampleData(ITable table)
@@ -987,7 +989,7 @@ Title:unused, null
             items.SetColumn(1, seed.Select(i => 1).ToArray());
             items.SetColumn(2, seed.Select(i => i % 2).ToArray());
 
-            table.AddOrUpdate(items, new AddOrUpdateOptions());
+            table.AddOrUpdate(items.AsReadOnly(), new AddOrUpdateOptions());
         }
 
         private static T FindColumnComponent<T>(IColumn column)

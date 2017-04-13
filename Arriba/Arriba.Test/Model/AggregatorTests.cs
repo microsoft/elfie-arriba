@@ -150,7 +150,7 @@ namespace Arriba.Test.Model
             // Add to a table with the desired column type, big enough to have multiple partitions
             Table table = new Table("Sample", 100000);
             table.AddColumn(new ColumnDetails("ID", columnType, null, "", true));
-            table.AddOrUpdate(block);
+            table.AddOrUpdate(block.AsReadOnly());
 
             // Build an AggregationQuery
             AggregationQuery q = new AggregationQuery();

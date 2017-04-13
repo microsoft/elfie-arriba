@@ -282,5 +282,130 @@ namespace Arriba.Structures
 
             this.RowCount = count;
         }
+
+        /// <summary>
+        /// Returns a read-only projection of this datablock
+        /// </summary>
+        /// <returns>this datablock wrapped as a readonly projection</returns>
+        public ReadOnlyDataBlock AsReadOnly()
+        {
+            return new ReadOnlyDataBlock(this);
+        }
+    }
+
+    public class ReadOnlyDataBlock
+    {
+        public ReadOnlyDataBlock(DataBlock block) : this(block, null, -1)
+        {
+        }
+
+        private ReadOnlyDataBlock(DataBlock block, int[] partitionChains, int startingIndex)
+        {
+            _block = block;
+            _partitionChains = partitionChains;
+            _startingIndex = startingIndex;
+            _currentChainIndex = _startingIndex;
+            _currentRowIndex = 0;
+
+            if (partitionChains == null)
+            {
+                RowCount = block.RowCount;
+            }
+            else if (startingIndex == -1)
+            {
+                RowCount = 0;
+            }
+            else
+            {
+                // Count the # of rows
+                RowCount = 1;
+                int nextItemIndex = partitionChains[startingIndex];
+                while (nextItemIndex != -1)
+                {
+                    RowCount++;
+                    nextItemIndex = partitionChains[nextItemIndex];
+                }
+            }
+        }
+
+        public IList<ColumnDetails> Columns { get { return _block.Columns; } }
+
+        public int ColumnCount { get { return _block.ColumnCount; } }
+
+        public int RowCount { get; private set; }
+
+        public object this[int rowIndex, int columnIndex]
+        {
+            get
+            {
+                int realRowIndex = GetRealIndex(rowIndex);
+                return _block[realRowIndex, columnIndex];
+            }
+        }
+
+        public object GetValue(int rowIndex, int columnIndex)
+        {
+            int realRowIndex = GetRealIndex(rowIndex);
+            return _block.GetValue(realRowIndex, columnIndex);
+        }
+
+        public int IndexOfColumn(string name)
+        {
+            return _block.IndexOfColumn(name);
+        }
+
+        internal IEnumerable<T> IterateColumn<T>(int columnIndex)
+        {
+            T[] array = (T[])_block.GetColumn(columnIndex);
+            for (int i = 0; i < RowCount; ++i)
+            {
+                int realRowIndex = GetRealIndex(i);
+                yield return array[realRowIndex];
+            }
+        }
+
+        internal Type GetTypeForColumn(int columnIndex)
+        {
+            Array sourceData = _block.GetColumn(columnIndex);
+            return sourceData.GetType().GetElementType();
+        }
+
+        internal Array GetColumn(int columnIndex)
+        {
+            if (_partitionChains != null)
+                throw new NotSupportedException("Getting a column array of a chain is not supported");
+
+            return _block.GetColumn(columnIndex);
+        }
+
+        internal ReadOnlyDataBlock ProjectChain(int[] partitionChains, int startingIndex)
+        {
+            return new ReadOnlyDataBlock(_block, partitionChains, startingIndex);
+        }
+
+        private int GetRealIndex(int rowIndex)
+        {
+            if (_partitionChains == null) { return rowIndex; }
+
+            if (rowIndex < _currentRowIndex)
+            {
+                _currentChainIndex = _startingIndex;
+                _currentRowIndex = 0;
+            }
+
+            while (_currentRowIndex < rowIndex)
+            {
+                _currentChainIndex = _partitionChains[_currentChainIndex];
+                _currentRowIndex++;
+            }
+
+            return _currentChainIndex;
+        }
+
+        private int _currentRowIndex;
+        private int _currentChainIndex;
+        private int[] _partitionChains;
+        private int _startingIndex;
+        private DataBlock _block;
     }
 }
