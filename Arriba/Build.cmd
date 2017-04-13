@@ -1,6 +1,6 @@
 @ECHO OFF
 SETLOCAL ENABLEDELAYEDEXPANSION
-SET MsBuildPath=%WINDIR%\Microsoft.NET\Framework\v4.0.30319\MSBuild.exe
+CALL "%~dp0..\FindMSBuild.cmd"
 
 @REM unsigned build
 %~dp0..\.nuget\NuGet.exe restore %~dp0Arriba.All.sln 
