@@ -1,7 +1,6 @@
 @ECHO OFF
 SETLOCAL ENABLEDELAYEDEXPANSION
-SET MsBuildPath=%ProgramFiles(x86)%\MSBuild\14.0\Bin\MSBuild.exe
-IF NOT EXIST "%MsBuildPath%" SET MSBuildPath=%ProgramFiles(x86)%\Microsoft Visual Studio\2017\Enterprise\MSBuild\15.0\Bin\MSBuild.exe
+SET MsBuildPath=%WINDIR%\Microsoft.NET\Framework\v4.0.30319\MSBuild.exe
 
 @REM unsigned build
 %~dp0..\.nuget\NuGet.exe restore %~dp0Arriba.All.sln 
