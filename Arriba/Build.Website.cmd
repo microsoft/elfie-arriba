@@ -3,7 +3,7 @@
 IF EXIST "%1" (
   ECHO - Synchronizing Configuration...
   ROBOCOPY /E /XO /NJH /NJS "%~dp0Arriba.Web\configuration" "%1"
-  ROBOCOPY /E /XO /NJH /NJS /MIR "%1" "%~dp0Arriba.Web\configuration"
+  ROBOCOPY /E /NJH /NJS /MIR "%1" "%~dp0Arriba.Web\configuration"
 ) ELSE (
   IF EXIST "%~dp0Arriba.Web\configuration" (
     IF EXIST "%~dp0Arriba.Web\configuration.BAK" RMDIR /S /Q "%~dp0Arriba.Web\configuration.BAK"
