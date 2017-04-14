@@ -189,7 +189,7 @@ var SearchMain = React.createClass({
                 var tableToShow = this.state.userSelectedTable;
                 if (!tableToShow) tableToShow = data.content[0].tableName;
 
-                this.setState({ allCountData: data, currentTable: tableToShow, loading: false, error: null }, this.getTableBasics);
+                this.setState({ allCountData: data, currentTable: tableToShow, loading: false }, this.getTableBasics);
             }.bind(this),
             params
         );
@@ -208,8 +208,7 @@ var SearchMain = React.createClass({
                 currentTableAllColumns: data.content.columns,
                 currentListingColumns: firstNonEmptyArray(this.state.userSelectedColumns, defaultsForTable.columns, [idColumn]),
                 currentSortColumn: this.state.userSelectedSortColumn || defaultsForTable.sortColumn || idColumn,
-                currentSortOrder: this.state.userSelectedSortOrder || defaultsForTable.sortOrder || "asc",
-                error: null
+                currentSortOrder: this.state.userSelectedSortOrder || defaultsForTable.sortOrder || "asc"
             }, () => {
                 if (this.state.query) this.getResultsPage();
                 if (this.state.userSelectedId) this.getDetails();
@@ -230,7 +229,7 @@ var SearchMain = React.createClass({
         this.jsonQueryWithError(
             this.buildQueryUrl() + "&h=%CF%80&t=" + pageSize,
             function (data) {
-                this.setState({ listingData: data, hasMoreData: data.content.total > pageSize, page: i, error: null });
+                this.setState({ listingData: data, hasMoreData: data.content.total > pageSize, page: i });
             }.bind(this)
         );
     },
@@ -275,7 +274,10 @@ var SearchMain = React.createClass({
     jsonQueryWithError: function (url, onSuccess, parameters) {
         jsonQuery(
             url,
-            onSuccess,
+            data => {
+                this.setState({ error: null });
+                onSuccess(data);
+            },
             function (xhr, status, err) {
                 this.setState({ allCountData: [], listingData: [], selectedItemData: null, loading: false, error: "Error: Server didn't respond to [" + xhr.url + "]. " + err });
                 console.error(xhr.url, status, err.toString());
