@@ -23,9 +23,7 @@ if (optionalContext.keys().includes("./configuration/Configuration.jsx")) {
 var SearchMain = React.createClass({
     getInitialState: function () {
         return {
-            blockingErrorTitle: null,
             blockingErrorStatus: null,
-            blockingErrorContent: null,
 
             tables: [],
             allCountData: [],
@@ -157,14 +155,10 @@ var SearchMain = React.createClass({
             function (data) {
                 this.setState({ tables: data.content, error: null }, callback);
             }.bind(this),
-            function (xhr, status, err) {
-                if (status === 401) {
-                    this.setState({ blockingErrorTitle: "Access Denied", blockingErrorStatus: status, blockingErrorContent: this.props.accessDeniedContent });
-                } else {
-                    this.setState({ blockingErrorTitle: "Service Unavailable", blockingErrorStatus: status, blockingErrorContent: this.props.serviceUnavailableContent });
-                }
+            (xhr, status, err) => {
+                this.setState({ blockingErrorStatus: status });
                 console.error(xhr.url, status, err.toString());
-            }.bind(this)
+            }
         );
     },
     getAllCounts: function () {
@@ -336,7 +330,7 @@ var SearchMain = React.createClass({
         }
     },
     render: function () {
-        if(this.state.blockingErrorTitle) return <ErrorPage title={this.state.blockingErrorTitle} status={this.state.blockingErrorStatus} message={this.state.blockingErrorContent} />;
+        if (this.state.blockingErrorStatus != null) return <ErrorPage status={this.state.blockingErrorStatus} />;
 
         var customDetailsView = (configuration.customDetailsProviders && configuration.customDetailsProviders[this.state.currentTable]) || ResultDetails;
 
@@ -409,8 +403,6 @@ var SearchMain = React.createClass({
 
 if (document.getElementById("searchContainer")) {
     ReactDOM.render(
-            accessDeniedContent={configuration.accessDeniedContent}
-            serviceUnavailableContent={configuration.serviceUnavailableContent}
         <SearchMain params={getQueryStringParameters()} />,
         document.getElementById("searchContainer")
     );
