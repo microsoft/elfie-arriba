@@ -66,7 +66,7 @@ var SearchMain = React.createClass({
     componentDidMount: function () {
         // On Page load, find the list of known table names
         jsonQuery(configuration.url,
-            data => this.setState({ tables: data.content, error: null }),
+            data => this.setState({ tables: data.content }),
             (xhr, status, err) => {
                 this.setState({ blockingErrorStatus: status });
                 console.error(xhr.url, status, err.toString());
