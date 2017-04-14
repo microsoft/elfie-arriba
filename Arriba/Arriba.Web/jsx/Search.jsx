@@ -64,8 +64,14 @@ var SearchMain = React.createClass({
         };
     },
     componentDidMount: function () {
-        // Load table details
-        this.getTables();
+        // On Page load, find the list of known table names
+        jsonQuery(configuration.url,
+            data => this.setState({ tables: data.content, error: null }),
+            (xhr, status, err) => {
+                this.setState({ blockingErrorStatus: status });
+                console.error(xhr.url, status, err.toString());
+            }
+        );
 
         if (this.state.query) {
             // If there's a query, run it
@@ -148,18 +154,6 @@ var SearchMain = React.createClass({
         this.timer = null;
         this.getAllCounts();
         this.setHistory();
-    },
-    getTables: function () {
-        // On Page load, find the list of known table names
-        jsonQuery(configuration.url,
-            function (data) {
-                this.setState({ tables: data.content, error: null });
-            }.bind(this),
-            (xhr, status, err) => {
-                this.setState({ blockingErrorStatus: status });
-                console.error(xhr.url, status, err.toString());
-            }
-        );
     },
     getAllCounts: function () {
         // On query, ask for the count from every table.
