@@ -65,15 +65,15 @@ var SearchMain = React.createClass({
     },
     componentDidMount: function () {
         // Load table details
-        this.getTables(function () {
-            if (this.state.query) {
-                // If there's a query, run it
-                this.runSearch();
-            } else if (this.state.userSelectedId) {
-                // If there's an item to open, open it
-                this.getTableBasics();
-            }
-        });
+        this.getTables();
+
+        if (this.state.query) {
+            // If there's a query, run it
+            this.runSearch();
+        } else if (this.state.userSelectedId) {
+            // If there's an item to open, open it
+            this.getTableBasics();
+        }
     },
     handleKeyDown: function (e) {
         // Backspace: Clear state *if query empty*
@@ -149,11 +149,11 @@ var SearchMain = React.createClass({
         this.getAllCounts();
         this.setHistory();
     },
-    getTables: function (callback) {
+    getTables: function () {
         // On Page load, find the list of known table names
         jsonQuery(configuration.url,
             function (data) {
-                this.setState({ tables: data.content, error: null }, callback);
+                this.setState({ tables: data.content, error: null });
             }.bind(this),
             (xhr, status, err) => {
                 this.setState({ blockingErrorStatus: status });
