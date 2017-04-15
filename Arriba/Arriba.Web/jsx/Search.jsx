@@ -179,12 +179,13 @@ var SearchMain = React.createClass({
         // Get the count of matches from each accessible table
         this.jsonQueryWithError(
             configuration.url + "/allCount",
-            function (data) {
-                var tableToShow = this.state.userSelectedTable;
-                if (!tableToShow) tableToShow = data.content[0].tableName;
-
-                this.setState({ allCountData: data, currentTable: tableToShow, loading: false }, this.getTableBasics);
-            }.bind(this),
+            data => {
+                this.setState({
+                    allCountData: data, 
+                    currentTable: this.state.userSelectedTable || data.content[0].tableName, 
+                    loading: false
+                }, this.getTableBasics);
+            },
             params
         );
     },
