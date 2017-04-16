@@ -293,21 +293,29 @@ namespace Arriba.Structures
         }
     }
 
-    public class ReadOnlyDataBlock
+    public struct ReadOnlyDataBlock
     {
-        public ReadOnlyDataBlock(DataBlock block) : this(block, null, -1)
+        public ReadOnlyDataBlock(DataBlock block) : this(block, null, -1, -1)
         {
         }
 
-        private ReadOnlyDataBlock(DataBlock block, int[] partitionChains, int startingIndex)
+        private ReadOnlyDataBlock(DataBlock block, int[] itemIndexes, int startingIndex, int length)
         {
-            _block = block;
-            _partitionChains = partitionChains;
-            _startingIndex = startingIndex;
-            _currentChainIndex = _startingIndex;
-            _currentRowIndex = 0;
+            if (block == null)
+                throw new ArgumentNullException("block");
 
-            if (partitionChains == null)
+            if (itemIndexes != null)
+            {
+                if (itemIndexes.Length != block.RowCount) throw new ArgumentException("itemIndexes");
+                if (startingIndex >= itemIndexes.Length) throw new IndexOutOfRangeException("startingIndex");
+                if (startingIndex + length > itemIndexes.Length) throw new IndexOutOfRangeException("length");
+            }
+
+            _block = block;
+            _itemIndexes = itemIndexes;
+            _startingIndex = startingIndex;
+
+            if (itemIndexes == null)
             {
                 RowCount = block.RowCount;
             }
@@ -317,14 +325,7 @@ namespace Arriba.Structures
             }
             else
             {
-                // Count the # of rows
-                RowCount = 1;
-                int nextItemIndex = partitionChains[startingIndex];
-                while (nextItemIndex != -1)
-                {
-                    RowCount++;
-                    nextItemIndex = partitionChains[nextItemIndex];
-                }
+                RowCount = length;
             }
         }
 
@@ -372,39 +373,28 @@ namespace Arriba.Structures
 
         internal Array GetColumn(int columnIndex)
         {
-            if (_partitionChains != null)
-                throw new NotSupportedException("Getting a column array of a chain is not supported");
+            if (_itemIndexes != null)
+                throw new NotSupportedException("Getting a column array of a projection is not supported");
 
             return _block.GetColumn(columnIndex);
         }
 
-        internal ReadOnlyDataBlock ProjectChain(int[] partitionChains, int startingIndex)
+        internal ReadOnlyDataBlock ProjectChain(int[] itemIndexes, int startingIndex, int length)
         {
-            return new ReadOnlyDataBlock(_block, partitionChains, startingIndex);
+            return new ReadOnlyDataBlock(_block, itemIndexes, startingIndex, length);
         }
 
         private int GetRealIndex(int rowIndex)
         {
-            if (_partitionChains == null) { return rowIndex; }
+            if (_itemIndexes == null) { return rowIndex; }
 
-            if (rowIndex < _currentRowIndex)
-            {
-                _currentChainIndex = _startingIndex;
-                _currentRowIndex = 0;
-            }
+            if (rowIndex < 0 || rowIndex > RowCount)
+                throw new ArgumentException("rowIndex");
 
-            while (_currentRowIndex < rowIndex)
-            {
-                _currentChainIndex = _partitionChains[_currentChainIndex];
-                _currentRowIndex++;
-            }
-
-            return _currentChainIndex;
+            return _itemIndexes[_startingIndex + rowIndex];
         }
 
-        private int _currentRowIndex;
-        private int _currentChainIndex;
-        private int[] _partitionChains;
+        private int[] _itemIndexes;
         private int _startingIndex;
         private DataBlock _block;
     }

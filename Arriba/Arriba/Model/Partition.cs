@@ -221,8 +221,6 @@ namespace Arriba.Model
         /// <param name="chainHead">starting index for the list of items that this partition should add</param>
         public void AddOrUpdate(ReadOnlyDataBlock values, AddOrUpdateOptions options)
         {
-            if (values == null) throw new ArgumentNullException("values");
-
             int columnCount = values.ColumnCount;
             int idColumnIndex = values.IndexOfColumn(this.IDColumn.Name);
 

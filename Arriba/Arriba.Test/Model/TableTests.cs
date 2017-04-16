@@ -94,10 +94,10 @@ namespace Arriba.Test.Model
 
             // Get sample items but ask the partition only to add some of them
             DataBlock block = BuildSampleData();
-            int[] partitionChains = new int[] { 1, -1, 3, 4, -1 };
-            int[] partitionChainHeads = new int[] { 0, 2 };
+            int[] itemIndexes = new int[] { 0, 1, 2, 3, 4 };
+            int[] partitionStartIndexes = new int[] { 0, 2 };
             ReadOnlyDataBlock roBlock = block.AsReadOnly();
-            ReadOnlyDataBlock chainProjection = roBlock.ProjectChain(partitionChains, partitionChainHeads[1]);
+            ReadOnlyDataBlock chainProjection = roBlock.ProjectChain(itemIndexes, partitionStartIndexes[1], 3);
             p.AddOrUpdate(chainProjection, new AddOrUpdateOptions());
 
             // Verify only the right items were added
@@ -337,12 +337,9 @@ namespace Arriba.Test.Model
             Assert.AreEqual(4, (int)t.Count);
         }
 
-        //[TestMethod]
+        [TestMethod]
         public void Table_AddAndUpdateInSameOperation()
         {
-            // BUG: ChooseSplit produces non-deterministic ordering how rows are processed
-            // in AddOrUpdate, this can cause two updates (Add+Update or Update+Update) to 
-            // occur in opposite order than intended by caller
             ITable_AddAndUpdateInSameOperation(() => new Table("Sample", 75000));
         }
 
