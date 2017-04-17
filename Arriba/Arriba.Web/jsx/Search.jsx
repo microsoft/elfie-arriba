@@ -370,7 +370,6 @@ var SearchMain = React.createClass({
             <div className={"viewport " + configuration.theme} onKeyDown={this.handleKeyDown}>
                 <SearchHeader query={this.state.query}
                               tables={this.state.tables}
-                              allColumns={this.state.currentTableAllColumns}
                               onSearchChange={this.onSearchChange}
                               loading={this.state.loading} />
 
