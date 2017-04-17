@@ -19,6 +19,14 @@ Array.prototype.find = Array.prototype.find || function(predicate) {
     }
 };
 
+Storage.prototype.getJson = function(keyName) {
+    return JSON.parse(this.getItem(keyName));
+};
+
+Storage.prototype.setJson = function(keyName, keyValue) {
+    this.setItem(keyName, JSON.stringify(keyValue));
+};
+
 // Highlight values surrounded by Pi characters by wrapping them in <span class="h"></span>
 function highlight(value) {
     var replacement = '<span class="h">$1</span>';
