@@ -295,9 +295,7 @@ var GridValueCell = React.createClass({
 var GridMain = React.createClass({
     getInitialState: function () {
         return {
-            blockingErrorTitle: null,
             blockingErrorStatus: null,
-            blockingErrorContent: null,
 
             query: this.props.params.q || "",
             pivotQueries: [],
@@ -447,16 +445,11 @@ var GridMain = React.createClass({
 
                 this.setState({ allCountData: data, currentTable: tableToShow, error: null }, this.getTableBasics.bind(this, this.getGrid));
             }.bind(this),
-            function (xhr, status, err) {
+            (xhr, status, err) => {
                 this.setState({ allCountData: [], error: "Error: Server didn't respond to [" + xhr.url + "]. " + err });
-
-                if (status === 401) {
-                    this.setState({ blockingErrorTitle: "Access Denied", blockingErrorStatus: status, blockingErrorContent: this.props.accessDeniedContent });
-                } else {
-                    this.setState({ blockingErrorTitle: "Service Unavailable", blockingErrorStatus: status, blockingErrorContent: this.props.serviceUnavailableContent });
-                }
+                this.setState({ blockingErrorStatus: status });
                 console.error(xhr.url, status, err.toString());
-            }.bind(this),
+            },
             params
         );
     },
@@ -579,7 +572,7 @@ var GridMain = React.createClass({
         }
     },
     render: function () {
-        if (this.state.blockingErrorTitle) return <ErrorPage title={this.state.blockingErrorTitle} status={this.state.blockingErrorStatus} message={this.state.blockingErrorContent } />;
+         if (this.state.blockingErrorStatus != null) return <ErrorPage status={this.state.blockingErrorStatus} />;
 
         var headings = [];
         var gridRows = [];
@@ -705,8 +698,6 @@ if (document.getElementById("gridContainer")) {
         <GridMain 
             url={configuration.url} 
             gridDefaultQueries={configuration.gridDefaultQueries} 
-            accessDeniedContent={configuration.accessDeniedContent}
-            serviceUnavailableContent={configuration.serviceUnavailableContent}
             params={params}  />,
         document.getElementById("gridContainer")
     );
