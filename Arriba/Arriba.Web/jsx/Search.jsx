@@ -22,6 +22,11 @@ if (optionalContext.keys().includes("./configuration/Configuration.jsx")) {
 // SearchMain wraps the overall search UI
 var SearchMain = React.createClass({
     getInitialState: function () {
+        var table = this.props.params.t;
+        var columns = getParameterArrayForPrefix(this.props.params, "c");
+
+        if (table && columns.length) localStorage.setJson("columns-" + table, columns);
+
         return {
             blockingErrorStatus: null,
 
@@ -39,15 +44,15 @@ var SearchMain = React.createClass({
             query: this.props.params.q || "",
             pivotQueries: [],
 
-            currentTable: this.props.params.t,
+            currentTable: table,
             currentTableIdColumn: "",
             currentTableAllColumns: [],
             currentListingColumns: [],
             currentSortColumn: "",
             currentSortOrder: "",
 
-            userSelectedTable: this.props.params.t,
-            userSelectedColumns: getParameterArrayForPrefix(this.props.params, "c"),
+            userSelectedTable: table,
+            userSelectedColumns: columns,
             userSelectedSortColumn: this.props.params.ob,
             userSelectedSortOrder: this.props.params.so,
             userSelectedId: this.props.params.open
@@ -121,7 +126,10 @@ var SearchMain = React.createClass({
         this.setState({ query: this.state.query + " AND [" + name + "]=\"" + value + "\"" }, this.runSearch);
     },
     onSetColumns: function (columns) {
-        this.setState({ userSelectedTable: this.state.currentTable, userSelectedColumns: columns }, this.runSearch);
+        localStorage.setJson("columns-" + this.state.currentTable, columns);
+
+        // Clear the userSelectedColumns to and rely on getTableBasics to recalcuate it.
+        this.setState({ userSelectedTable: this.state.currentTable, userSelectedColumns: [] }, this.runSearch);
     },
     onSelectedTableChange: function (name) {
         this.setState({ userSelectedTable: name }, this.runSearch);
@@ -198,11 +206,17 @@ var SearchMain = React.createClass({
             // Choose columns, sort column, sort order
             var defaultsForTable = (configuration.listingDefaults && configuration.listingDefaults[this.state.currentTable]) || {};
 
+            // If user did not specify default columns, fetch from local storage.
+            // Must write to userSelectedColumns (and not directly to currentListingColumns) so the URL can refect this.
+            // If a table was switched getAllCounts would have wiped userSelectedColumns and localStorage would show through.
+            var userSelectedColumns = firstNonEmptyArray(this.state.userSelectedColumns, localStorage.getJson("columns-" + this.state.currentTable));
+
             // Set the ID column, all columns, and listing columns
             this.setState({
+                userSelectedColumns: userSelectedColumns,
                 currentTableIdColumn: idColumn,
                 currentTableAllColumns: data.content.columns,
-                currentListingColumns: firstNonEmptyArray(this.state.userSelectedColumns, defaultsForTable.columns, [idColumn]),
+                currentListingColumns: firstNonEmptyArray(userSelectedColumns, defaultsForTable.columns, [idColumn]),
                 currentSortColumn: this.state.userSelectedSortColumn || defaultsForTable.sortColumn || idColumn,
                 currentSortOrder: this.state.userSelectedSortOrder || defaultsForTable.sortOrder || "asc"
             }, () => {
