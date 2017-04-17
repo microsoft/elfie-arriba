@@ -124,22 +124,14 @@ var SearchMain = React.createClass({
         this.setState({ userSelectedTable: this.state.currentTable, userSelectedColumns: columns }, this.runSearch);
     },
     onSelectedTableChange: function (name) {
-        if (this.state.currentTable === name) {
-            // If the selected table is clicked, just mark it actively selected and fix the URL
-            this.setState({ userSelectedTable: name }, this.setHistory);
-        } else {
-            // Otherwise, clear the columns/sort/sortOrder and query the new selected table
-            var cleared = this.getClearedUserSelections();
-            cleared.userSelectedTable = name;
-            cleared.currentTable = name;
-            this.setState(cleared, this.runSearch);
-        }
-
+        this.setState({ userSelectedTable: name }, this.runSearch);
     },
     onPivot: function (table, baseQuery) {
-        var pivots = this.state.pivotQueries;
-        pivots.push({ q: this.state.query, t: this.state.currentTable });
-        this.setState({ pivotQueries: pivots, query: baseQuery, currentTable: table, userSelectedTable: table }, this.runSearch);
+        this.setState({
+            pivotQueries: this.state.pivotQueries.push({ q: this.state.query, t: this.state.currentTable }), 
+            query: baseQuery
+        });
+        this.onSelectedTableChange(table);
     },
     onSearchChange: function (value) {
         this.setState({ query: value, userSelectedId: null }, this.delayedRunSearch);
@@ -179,12 +171,22 @@ var SearchMain = React.createClass({
         // Get the count of matches from each accessible table
         this.jsonQueryWithError(
             configuration.url + "/allCount",
-            function (data) {
-                var tableToShow = this.state.userSelectedTable;
-                if (!tableToShow) tableToShow = data.content[0].tableName;
-
-                this.setState({ allCountData: data, currentTable: tableToShow, loading: false }, this.getTableBasics);
-            }.bind(this),
+            data => {
+                var currentTable = this.state.userSelectedTable || data.content[0].tableName;
+                if (this.state.currentTable !== currentTable) {
+                    this.setState({
+                        userSelectedColumns: [],
+                        userSelectedSortColumn: null,
+                        userSelectedSortOrder: null,
+                        userSelectedId: null
+                    });
+                }
+                this.setState({
+                    allCountData: data, 
+                    currentTable: currentTable,
+                    loading: false
+                }, this.getTableBasics);
+            },
             params
         );
     },
@@ -370,7 +372,6 @@ var SearchMain = React.createClass({
             <div className={"viewport " + configuration.theme} onKeyDown={this.handleKeyDown}>
                 <SearchHeader query={this.state.query}
                               tables={this.state.tables}
-                              allColumns={this.state.currentTableAllColumns}
                               onSearchChange={this.onSearchChange}
                               loading={this.state.loading} />
 
