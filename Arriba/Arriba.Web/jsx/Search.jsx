@@ -134,7 +134,6 @@ var SearchMain = React.createClass({
             cleared.currentTable = name;
             this.setState(cleared, this.runSearch);
         }
-
     },
     onPivot: function (table, baseQuery) {
         var pivots = this.state.pivotQueries;
