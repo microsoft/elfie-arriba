@@ -23,9 +23,7 @@ if (optionalContext.keys().includes("./configuration/Configuration.jsx")) {
 var SearchMain = React.createClass({
     getInitialState: function () {
         return {
-            blockingErrorTitle: null,
             blockingErrorStatus: null,
-            blockingErrorContent: null,
 
             tables: [],
             allCountData: [],
@@ -66,16 +64,22 @@ var SearchMain = React.createClass({
         };
     },
     componentDidMount: function () {
-        // Load table details
-        this.getTables(function () {
-            if (this.state.query) {
-                // If there's a query, run it
-                this.runSearch();
-            } else if (this.state.userSelectedId) {
-                // If there's an item to open, open it
-                this.getTableBasics();
+        // On Page load, find the list of known table names
+        jsonQuery(configuration.url,
+            data => this.setState({ tables: data.content }),
+            (xhr, status, err) => {
+                this.setState({ blockingErrorStatus: status });
+                console.error(xhr.url, status, err.toString());
             }
-        });
+        );
+
+        if (this.state.query) {
+            // If there's a query, run it
+            this.runSearch();
+        } else if (this.state.userSelectedId) {
+            // If there's an item to open, open it
+            this.getTableBasics();
+        }
     },
     handleKeyDown: function (e) {
         // Backspace: Clear state *if query empty*
@@ -151,22 +155,6 @@ var SearchMain = React.createClass({
         this.getAllCounts();
         this.setHistory();
     },
-    getTables: function (callback) {
-        // On Page load, find the list of known table names
-        jsonQuery(this.props.url,
-            function (data) {
-                this.setState({ tables: data.content, error: null }, callback);
-            }.bind(this),
-            function (xhr, status, err) {
-                if (status === 401) {
-                    this.setState({ blockingErrorTitle: "Access Denied", blockingErrorStatus: status, blockingErrorContent: this.props.accessDeniedContent });
-                } else {
-                    this.setState({ blockingErrorTitle: "Service Unavailable", blockingErrorStatus: status, blockingErrorContent: this.props.serviceUnavailableContent });
-                }
-                console.error(xhr.url, status, err.toString());
-            }.bind(this)
-        );
-    },
     getAllCounts: function () {
         // On query, ask for the count from every table.
 
@@ -190,23 +178,23 @@ var SearchMain = React.createClass({
 
         // Get the count of matches from each accessible table
         this.jsonQueryWithError(
-            this.props.url + "/allCount",
+            configuration.url + "/allCount",
             function (data) {
                 var tableToShow = this.state.userSelectedTable;
                 if (!tableToShow) tableToShow = data.content[0].tableName;
 
-                this.setState({ allCountData: data, currentTable: tableToShow, loading: false, error: null }, this.getTableBasics);
+                this.setState({ allCountData: data, currentTable: tableToShow, loading: false }, this.getTableBasics);
             }.bind(this),
             params
         );
     },
     getTableBasics: function () {
         // Once a table is selected, find out the columns and primary key column for the table
-        this.jsonQueryWithError(this.props.url + "/table/" + this.state.currentTable, data => {
+        this.jsonQueryWithError(configuration.url + "/table/" + this.state.currentTable, data => {
             var idColumn = data.content.columns.find(col => col.isPrimaryKey).name || "";
 
             // Choose columns, sort column, sort order
-            var defaultsForTable = (this.props.listingDefaults && this.props.listingDefaults[this.state.currentTable]) || {};
+            var defaultsForTable = (configuration.listingDefaults && configuration.listingDefaults[this.state.currentTable]) || {};
 
             // Set the ID column, all columns, and listing columns
             this.setState({
@@ -214,8 +202,7 @@ var SearchMain = React.createClass({
                 currentTableAllColumns: data.content.columns,
                 currentListingColumns: firstNonEmptyArray(this.state.userSelectedColumns, defaultsForTable.columns, [idColumn]),
                 currentSortColumn: this.state.userSelectedSortColumn || defaultsForTable.sortColumn || idColumn,
-                currentSortOrder: this.state.userSelectedSortOrder || defaultsForTable.sortOrder || "asc",
-                error: null
+                currentSortOrder: this.state.userSelectedSortOrder || defaultsForTable.sortOrder || "asc"
             }, () => {
                 if (this.state.query) this.getResultsPage();
                 if (this.state.userSelectedId) this.getDetails();
@@ -236,7 +223,7 @@ var SearchMain = React.createClass({
         this.jsonQueryWithError(
             this.buildQueryUrl() + "&h=%CF%80&t=" + pageSize,
             function (data) {
-                this.setState({ listingData: data, hasMoreData: data.content.total > pageSize, page: i, error: null });
+                this.setState({ listingData: data, hasMoreData: data.content.total > pageSize, page: i });
             }.bind(this)
         );
     },
@@ -261,7 +248,7 @@ var SearchMain = React.createClass({
 
         // Select all columns for the selected item, with highlighting
         this.jsonQueryWithError(
-            this.props.url + "/table/" + this.state.currentTable,
+            configuration.url + "/table/" + this.state.currentTable,
             function (data) {
                 if (data.content.values) {
                     this.setState({ selectedItemData: arribaRowToObject(data.content.values, 0) });
@@ -281,7 +268,10 @@ var SearchMain = React.createClass({
     jsonQueryWithError: function (url, onSuccess, parameters) {
         jsonQuery(
             url,
-            onSuccess,
+            data => {
+                this.setState({ error: null });
+                onSuccess(data);
+            },
             function (xhr, status, err) {
                 this.setState({ allCountData: [], listingData: [], selectedItemData: null, loading: false, error: "Error: Server didn't respond to [" + xhr.url + "]. " + err });
                 console.error(xhr.url, status, err.toString());
@@ -308,7 +298,7 @@ var SearchMain = React.createClass({
         this.addPivotClauses(parameters);
 
         var queryString = buildUrlParameters(parameters);
-        return this.props.url + "/table/" + this.state.currentTable + queryString;
+        return configuration.url + "/table/" + this.state.currentTable + queryString;
     },
     buildThisUrl: function (includeOpen) {
         var relevantParams = {};
@@ -336,9 +326,9 @@ var SearchMain = React.createClass({
         }
     },
     render: function () {
-        if(this.state.blockingErrorTitle) return <ErrorPage title={this.state.blockingErrorTitle} status={this.state.blockingErrorStatus} message={this.state.blockingErrorContent} />;
+        if (this.state.blockingErrorStatus != null) return <ErrorPage status={this.state.blockingErrorStatus} />;
 
-        var customDetailsView = (this.props.customDetailsProviders && this.props.customDetailsProviders[this.state.currentTable]) || ResultDetails;
+        var customDetailsView = (configuration.customDetailsProviders && configuration.customDetailsProviders[this.state.currentTable]) || ResultDetails;
 
         var mainContent = this.state.query
             ? <SplitPane split="horizontal" minSize="300" isFirstVisible={this.state.listingData.content} isSecondVisible={this.state.userSelectedId}>
@@ -366,7 +356,7 @@ var SearchMain = React.createClass({
                     })}
                 </div>
             </SplitPane>
-            : <SyntaxHelp showHelp={this.props.params.help} splashContent={configuration.splashContent} />
+            : <SyntaxHelp showHelp={this.props.params.help} />
 
         var queryUrl = this.buildQueryUrl();
         var baseUrl = this.buildThisUrl(false);
@@ -378,9 +368,7 @@ var SearchMain = React.createClass({
 
         return (
             <div className={"viewport " + configuration.theme} onKeyDown={this.handleKeyDown}>
-                <SearchHeader name={configuration.toolName}
-                              feedbackEmailAddresses={configuration.feedbackEmailAddresses}
-                              query={this.state.query}
+                <SearchHeader query={this.state.query}
                               tables={this.state.tables}
                               allColumns={this.state.currentTableAllColumns}
                               onSearchChange={this.onSearchChange}
@@ -410,15 +398,8 @@ var SearchMain = React.createClass({
 });
 
 if (document.getElementById("searchContainer")) {
-    var params = getQueryStringParameters();
     ReactDOM.render(
-        <SearchMain 
-            url={configuration.url} 
-            listingDefaults={configuration.listingDefaults} 
-            customDetailsProviders={configuration.customDetailsProviders} 
-            accessDeniedContent={configuration.accessDeniedContent}
-            serviceUnavailableContent={configuration.serviceUnavailableContent}
-            params={params} />,
+        <SearchMain params={getQueryStringParameters()} />,
         document.getElementById("searchContainer")
     );
 

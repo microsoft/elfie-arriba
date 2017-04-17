@@ -10,7 +10,7 @@
             return (
                 <div className="splash">
                     <div style={{ width: "100%" } }>
-                        {this.props.splashContent}
+                        {configuration.splashContent}
                         <div className="buttons">
                             <a className="theme-background-dark" href="/?help=true">
                                 <i className="icon-help" title="Help"></i>
@@ -24,7 +24,7 @@
         return (
             <div className="helpContent">
                 <div className="helpIntro">
-                    {this.props.splashContent}
+                    {configuration.splashContent}
                 </div>
                 <div className="features">
                     <h2>Features</h2>
