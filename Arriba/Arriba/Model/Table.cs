@@ -392,44 +392,31 @@ namespace Arriba.Model
 
                 // Determine the partition each item should go to
                 int[] partitionIds;
+                TargetPartitionInfo[] partitionInfo;
                 Type idColumnArrayType = values.GetTypeForColumn(idColumnIndex);
-                IComputPartition splitter = NativeContainer.CreateTypedInstance<IComputPartition>(typeof(ComputePartitionHelper<>), idColumnArrayType);
-                splitter.ComputePartition(this, values, idColumnIndex, out partitionIds);
+                IComputePartition splitter = NativeContainer.CreateTypedInstance<IComputePartition>(typeof(ComputePartitionHelper<>), idColumnArrayType);
+                splitter.ComputePartition(this, values, idColumnIndex, out partitionIds, out partitionInfo);
 
                 // Sort/group the incoming items by paritition and then by index to ensure they 
                 // are processed in the order they were presented in the input ReadOnlyDataBlock
-                int[] sortOrder = Enumerable.Range(0, values.RowCount).ToArray();
-                Array.Sort(sortOrder, (x, y) =>
+                int[] sortOrder = new int[values.RowCount];
+                for (int i = 0; i < values.RowCount; ++i)
                 {
-                    if (partitionIds[x] == partitionIds[y])
-                        return x.CompareTo(y);
-                    else
-                        return partitionIds[x].CompareTo(partitionIds[y]);
-                });
-
-                // Identify the boundaries in the sortOrder where each partitions elements exist
-                int[] partitionStarts = new int[_partitions.Count];
-                int sortOrderIndex = 0;
-                for (int partition = 0; partition < _partitions.Count; ++partition)
-                {
-                    int partitionStartIndex = partitionIds[sortOrder[sortOrderIndex]] == partition ? sortOrderIndex : -1;
-                    while (sortOrderIndex < sortOrder.Length && partitionIds[sortOrder[sortOrderIndex]] == partition)
-                    {
-                        sortOrderIndex++;
-                    }
-                    partitionStarts[partition] = partitionStartIndex;
+                    int p = partitionIds[i];
+                    int startIndex = partitionInfo[p].StartIndex + partitionInfo[p].Count;
+                    sortOrder[startIndex] = i;
+                    partitionInfo[p].Count++;
                 }
 
                 Action<Tuple<int, int>, ParallelLoopState> forBody =
                     delegate (Tuple<int, int> range, ParallelLoopState unused)
                     {
-                        for (int i = range.Item1; i < range.Item2; ++i)
+                        for (int p = range.Item1; p < range.Item2; ++p)
                         {
-                            int startIndex = partitionStarts[i];
-                            int upperBound = i == (partitionStarts.Length-1) ? sortOrder.Length : partitionStarts[i + 1];
-                            int length = startIndex == -1 ? 0 : upperBound - startIndex;
+                            int startIndex = partitionInfo[p].StartIndex;
+                            int length = partitionInfo[p].Count;                            
                             ReadOnlyDataBlock partitionValues = values.ProjectChain(sortOrder, startIndex, length);
-                            _partitions[i].AddOrUpdate(partitionValues, options);
+                            _partitions[p].AddOrUpdate(partitionValues, options);
                         }
                     };
 
@@ -451,6 +438,11 @@ namespace Arriba.Model
             }
         }
 
+        struct TargetPartitionInfo
+        {
+            public int StartIndex;
+            public int Count;
+        }
         #endregion
 
         #region Delete
@@ -576,12 +568,12 @@ namespace Arriba.Model
         #endregion
 
         #region Split
-        private interface IComputPartition
+        private interface IComputePartition
         {
-            void ComputePartition(Table table, ReadOnlyDataBlock values, int idColumnIndex, out int[] partitionIds);
+            void ComputePartition(Table table, ReadOnlyDataBlock values, int idColumnIndex, out int[] partitionIds, out TargetPartitionInfo[] partitionInfo);
         }
 
-        private class ComputePartitionHelper<T> : IComputPartition
+        private class ComputePartitionHelper<T> : IComputePartition
         {
             /// <summary>
             /// Computes the target partition for each item in the ReadOnlyDataBlock
@@ -590,7 +582,7 @@ namespace Arriba.Model
             /// <param name="values">DataBlock containing values to be added to the table</param>
             /// <param name="idColumnIndex">Index of the id column</param>
             /// <param name="partitionIds">[Out] array of the partition ids for each element</param>
-            public void ComputePartition(Table table, ReadOnlyDataBlock values, int idColumnIndex, out int[] partitionIds)
+            public void ComputePartition(Table table, ReadOnlyDataBlock values, int idColumnIndex, out int[] partitionIds, out TargetPartitionInfo[] partitionInfo)
             {
                 int rowCount = values.RowCount;
 
@@ -601,6 +593,7 @@ namespace Arriba.Model
                 T[] idColumn = (T[])values.GetColumn(idColumnIndex);
 
                 int[] localPartitionIds = new int[rowCount];
+                TargetPartitionInfo[] localPartitionInfo = new TargetPartitionInfo[table.PartitionCount];
 
                 var rangePartitioner = Partitioner.Create(0, rowCount);
                 Parallel.ForEach(rangePartitioner,
@@ -617,15 +610,36 @@ namespace Arriba.Model
                             int partitionId = PartitionMask.IndexOfHash(idHash, table._partitionBits);
 
                             localPartitionIds[i] = partitionId;
+                            Interlocked.Increment(ref localPartitionInfo[partitionId].Count);
                         }
                     });
 
+                int nextStartIndex = 0;
+                for (int i = 0; i < table.PartitionCount; ++i)
+                {
+                    if (localPartitionInfo[i].Count == 0)
+                    {
+                        localPartitionInfo[i].StartIndex = -1;
+                    }
+                    else
+                    {
+                        localPartitionInfo[i].StartIndex = nextStartIndex;
+                        nextStartIndex += localPartitionInfo[i].Count;
+
+                        // NOTE: Count field is cleared here because it is
+                        //   reused to track per-partition indexes when 
+                        //   building up the sort key data 
+                        localPartitionInfo[i].Count = 0;
+                    }
+                }
+
                 partitionIds = localPartitionIds;
+                partitionInfo = localPartitionInfo;
             }
         }
-        #endregion
+#endregion
 
-        #region Management
+#region Management
         public void VerifyConsistency(VerificationLevel level, ExecutionDetails details)
         {
             _locker.EnterReadLock();
@@ -656,9 +670,9 @@ namespace Arriba.Model
                 _locker.ExitReadLock();
             }
         }
-        #endregion
+#endregion
 
-        #region Serialization
+#region Serialization
         /// <summary>
         ///  Returns the path where a Table with the given name will be serialized.
         ///  Used so that additional metadata (ex: security) can be written within it.
@@ -763,9 +777,9 @@ namespace Arriba.Model
                 _locker.ExitReadLock();
             }
         }
-        #endregion
+#endregion
 
-        #region Drop
+#region Drop
         public void Drop()
         {
             _locker.EnterReadLock();
@@ -792,9 +806,9 @@ namespace Arriba.Model
             // Delete everything in the table folder (including any additional data, like security)
             Directory.Delete(tablePath, true);
         }
-        #endregion
+#endregion
 
-        #region IDisposable
+#region IDisposable
         public void Dispose()
         {
             Dispose(true);
@@ -810,6 +824,6 @@ namespace Arriba.Model
                 _locker = null;
             }
         }
-        #endregion
+#endregion
     }
 }
