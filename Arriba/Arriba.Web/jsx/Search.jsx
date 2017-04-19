@@ -337,7 +337,7 @@ var SearchMain = React.createClass({
         var userTableSettings = this.state.userTableSettings;
         var relevantParams = Object.clean({
             t: this.state.userSelectedTable ? this.state.userSelectedTable : undefined,
-            q: this.state.query ? this.state.query : undefined,
+            q: this.state.query || undefined,
             ob: userTableSettings.sortColumn,
             so: userTableSettings.sortOrder
         });
