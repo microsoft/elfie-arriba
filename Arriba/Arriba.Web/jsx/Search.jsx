@@ -63,7 +63,7 @@ var SearchMain = React.createClass({
     },
     getClearedUserSelections: function () {
         return {
-            userSelectedTable: null,
+            userSelectedTable: undefined,
             userTableSettings: {},
             userSelectedId: null,
             pivotQueries: []
@@ -336,7 +336,7 @@ var SearchMain = React.createClass({
     buildThisUrl: function (includeOpen) {
         var userTableSettings = this.state.userTableSettings;
         var relevantParams = Object.clean({
-            t: this.state.userSelectedTable ? this.state.userSelectedTable : undefined,
+            t: this.state.userSelectedTable,
             q: this.state.query || undefined,
             ob: userTableSettings.sortColumn,
             so: userTableSettings.sortOrder
