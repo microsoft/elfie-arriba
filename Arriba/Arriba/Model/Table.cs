@@ -32,6 +32,7 @@ namespace Arriba.Model
         private ReaderWriterLockSlim _locker;
         private List<Partition> _partitions;
         private ColumnAliasCorrector _columnAliasCorrector;
+        private Tuple<Type, IComputePartition> _splitter;
 
         private byte _partitionBits;
 
@@ -120,7 +121,7 @@ namespace Arriba.Model
 
         protected IReadOnlyList<Partition> GetPartitions()
         {
-            return _partitions.AsReadOnly();
+            return _partitions;
         }
 
         #region Column Operations
@@ -302,7 +303,7 @@ namespace Arriba.Model
         #endregion
 
         #region AddOrUpdate (insert, update)
-        public void AddColumnsFromBlock(ReadOnlyDataBlock values)
+        public void AddColumnsFromBlock(DataBlock.ReadOnlyDataBlock values)
         {
             bool foundIdColumn = (_partitions[0].IDColumn != null);
             List<ColumnDetails> discoveredNewColumns = new List<ColumnDetails>();
@@ -348,7 +349,7 @@ namespace Arriba.Model
         ///  For each item, the value for each column is set to the provided values.
         /// </summary>
         /// <param name="values">Set of Columns and values to add or update</param>
-        public void AddOrUpdate(ReadOnlyDataBlock values)
+        public void AddOrUpdate(DataBlock.ReadOnlyDataBlock values)
         {
             AddOrUpdate(values, new AddOrUpdateOptions());
         }
@@ -360,7 +361,7 @@ namespace Arriba.Model
         /// </summary>
         /// <param name="values">Set of Columns and values to add or update</param>
         /// <param name="options">Options to adjust behavior of AddOrUpdate</param>
-        public void AddOrUpdate(ReadOnlyDataBlock values, AddOrUpdateOptions options)
+        public void AddOrUpdate(DataBlock.ReadOnlyDataBlock values, AddOrUpdateOptions options)
         {
             _locker.EnterWriteLock();
             try
@@ -394,8 +395,12 @@ namespace Arriba.Model
                 int[] partitionIds;
                 TargetPartitionInfo[] partitionInfo;
                 Type idColumnArrayType = values.GetTypeForColumn(idColumnIndex);
-                IComputePartition splitter = NativeContainer.CreateTypedInstance<IComputePartition>(typeof(ComputePartitionHelper<>), idColumnArrayType);
-                splitter.ComputePartition(this, values, idColumnIndex, out partitionIds, out partitionInfo);
+                if (_splitter == null || _splitter.Item2 == null || _splitter.Item1 != idColumnArrayType)
+                {
+                    IComputePartition splitter = NativeContainer.CreateTypedInstance<IComputePartition>(typeof(ComputePartitionHelper<>), idColumnArrayType);
+                    _splitter = Tuple.Create(idColumnArrayType, splitter);
+                }
+                _splitter.Item2.ComputePartition(this, values, idColumnIndex, out partitionIds, out partitionInfo);
 
                 // Sort/group the incoming items by paritition and then by index to ensure they 
                 // are processed in the order they were presented in the input ReadOnlyDataBlock
@@ -414,8 +419,8 @@ namespace Arriba.Model
                         for (int p = range.Item1; p < range.Item2; ++p)
                         {
                             int startIndex = partitionInfo[p].StartIndex;
-                            int length = partitionInfo[p].Count;                            
-                            ReadOnlyDataBlock partitionValues = values.ProjectChain(sortOrder, startIndex, length);
+                            int length = partitionInfo[p].Count;
+                            DataBlock.ReadOnlyDataBlock partitionValues = values.ProjectChain(sortOrder, startIndex, length);
                             _partitions[p].AddOrUpdate(partitionValues, options);
                         }
                     };
@@ -570,7 +575,7 @@ namespace Arriba.Model
         #region Split
         private interface IComputePartition
         {
-            void ComputePartition(Table table, ReadOnlyDataBlock values, int idColumnIndex, out int[] partitionIds, out TargetPartitionInfo[] partitionInfo);
+            void ComputePartition(Table table, DataBlock.ReadOnlyDataBlock values, int idColumnIndex, out int[] partitionIds, out TargetPartitionInfo[] partitionInfo);
         }
 
         private class ComputePartitionHelper<T> : IComputePartition
@@ -582,7 +587,7 @@ namespace Arriba.Model
             /// <param name="values">DataBlock containing values to be added to the table</param>
             /// <param name="idColumnIndex">Index of the id column</param>
             /// <param name="partitionIds">[Out] array of the partition ids for each element</param>
-            public void ComputePartition(Table table, ReadOnlyDataBlock values, int idColumnIndex, out int[] partitionIds, out TargetPartitionInfo[] partitionInfo)
+            public void ComputePartition(Table table, DataBlock.ReadOnlyDataBlock values, int idColumnIndex, out int[] partitionIds, out TargetPartitionInfo[] partitionInfo)
             {
                 int rowCount = values.RowCount;
 
