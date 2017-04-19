@@ -59,13 +59,6 @@ var SearchMain = React.createClass({
             userSelectedId: this.props.params.open
         };
     },
-    getClearedUserSelections: function () {
-        return {
-            userSelectedTable: undefined,
-            userTableSettings: {},
-            userSelectedId: null
-        };
-    },
     componentDidMount: function () {
         // On Page load, find the list of known table names
         jsonQuery(configuration.url,
@@ -86,15 +79,15 @@ var SearchMain = React.createClass({
     },
     handleKeyDown: function (e) {
         // Backspace: Clear state *if query empty*
-        if (e.keyCode === 8) {
-            if (!this.state.query) {
-                var cleared = this.getClearedUserSelections();
-                cleared.allCountData = [];
-                cleared.listingData = [];
-                cleared.selectedItemData = null;
-
-                this.setState(cleared, this.setHistory);
-            }
+        if (e.keyCode === 8 && !this.state.query) {
+            this.setState({
+                allCountData: [],
+                listingData: [],
+                selectedItemData: null,
+                userSelectedTable: undefined,
+                userTableSettings: {},
+                userSelectedId: null
+            }, this.setHistory);
         }
 
         // ESC: Close
