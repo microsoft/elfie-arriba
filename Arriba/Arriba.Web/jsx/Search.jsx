@@ -318,13 +318,8 @@ var SearchMain = React.createClass({
             so: userTableSettings.sortOrder
         });
 
-        var columns = userTableSettings.columns || [];
-        for (var i = 0; i < columns.length; ++i) {
-            relevantParams["c" + (i + 1)] = columns[i];
-        }
-        if (columns.length || userTableSettings.sortColumn || userTableSettings.sortOrder) {
-            relevantParams.t = this.state.currentTable;
-        }
+        addArrayParameters(relevantParams, "c", userTableSettings.columns);
+        if (Object.keys(userTableSettings).length) relevantParams.t = this.state.currentTable;
 
         if (includeOpen && this.state.userSelectedId) {
             relevantParams.open = this.state.userSelectedId;
