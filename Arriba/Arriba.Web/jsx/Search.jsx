@@ -38,15 +38,14 @@ var SearchMain = React.createClass({
 
         return {
             blockingErrorStatus: null,
+            loading: false,
 
             tables: [],
             allCountData: [],
             listingData: [],
-            selectedItemData: null,
-            loading: false,
-
             page: 0,
             hasMoreData: false,
+            selectedItemData: null,
 
             query: this.props.params.q || "",
             pivotQueries: [],
