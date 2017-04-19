@@ -13,6 +13,8 @@ using Arriba.Model.Aggregations;
 using Arriba.Model.Query;
 using Arriba.Serialization;
 using Arriba.Structures;
+using Arriba.Model.Column;
+using System.Linq;
 
 namespace Arriba.ConsoleTest
 {
@@ -22,13 +24,52 @@ namespace Arriba.ConsoleTest
         {
             //SetCountPerformance();
             //FromAndPerformance();
-            Table table = LoadTable("Sample");
+            //Table table = LoadTable("Sample");
 
             //AggregateDistinctTest(table);
             //DistinctTest(table, "Resolution", "Pri = 3");
-            SearchTest(table, "Priority = 3", false, null);
-            SearchTest(table, "editor Pri = 3", true, new string[] { "ID", "Title", "Resolution" });
+            //SearchTest(table, "Priority = 3", false, null);
+            //SearchTest(table, "editor Pri = 3", true, new string[] { "ID", "Title", "Resolution" });
             //QueryPerformanceTest(table, "Priority = 1 AND Platform");
+
+            InsertPerformance(32);
+            InsertPerformance(128);
+        }
+
+        private static void InsertPerformance(int numPartitions)
+        {
+            const int insertSize = 1000000;
+            int maxRows = numPartitions * ushort.MaxValue;
+
+            if (maxRows < insertSize) throw new ArgumentOutOfRangeException("need more partitions for this test");
+
+            Table table = new Table("InsertPerf", numPartitions * ushort.MaxValue);
+            table.Drop();
+
+            const int limit = 1000000;
+            var seed = Enumerable.Range(0, limit);
+
+            // Define desired columns
+            table.AddColumn(new ColumnDetails("ID", "int", -1, "i", true));
+            table.AddColumn(new ColumnDetails("AllOnes", "int", 1, "ao", false));
+            table.AddColumn(new ColumnDetails("AllEvens", "short", 0, "even", false));
+            table.AddColumn(new ColumnDetails("Tens", "int", 0, "tens", false));
+            table.AddColumn(new ColumnDetails("Hundreds", "int", 0, "hundreds", false));
+            table.AddColumn(new ColumnDetails("Thousands", "int", 0, "thousands", false));
+
+            DataBlock items = new DataBlock(new string[] { "ID", "AllOnes", "AllEvens", "Tens", "Hundreds", "Thousands" }, limit);
+            items.SetColumn(0, seed.ToArray());
+            items.SetColumn(1, seed.Select(i => 1).ToArray());
+            items.SetColumn(2, seed.Select(i => i % 2).ToArray());
+            items.SetColumn(3, seed.Select(i => i / 10).ToArray());
+            items.SetColumn(4, seed.Select(i => i / 100).ToArray());
+            items.SetColumn(5, seed.Select(i => i / 1000).ToArray());
+
+            Stopwatch timer = Stopwatch.StartNew();
+            table.AddOrUpdate(items.AsReadOnly(), new AddOrUpdateOptions());
+            timer.Stop();
+
+            Console.WriteLine("Took {0} ms to insert {1} items into {2} partitions", timer.ElapsedMilliseconds, limit, numPartitions);
         }
 
         private static void FromAndPerformance()

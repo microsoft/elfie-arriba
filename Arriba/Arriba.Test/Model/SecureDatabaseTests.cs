@@ -38,7 +38,7 @@ namespace Arriba.Test.Model
                     new string[] { "Bob", "Alice", "Alice", "Bob", "Bob" },
                     new byte[] { 3, 3, 2, 2, 0 }
                 });
-            t.AddOrUpdate(b);
+            t.AddOrUpdate(b.AsReadOnly());
 
             return db;
         }

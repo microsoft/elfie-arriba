@@ -115,7 +115,7 @@ namespace Arriba.Test.Model
             items.SetColumn(4, seed.Select(i => i / 100).ToArray());
             items.SetColumn(5, seed.Select(i => i / 1000).ToArray());
 
-            table.AddOrUpdate(items, new AddOrUpdateOptions());
+            table.AddOrUpdate(items.AsReadOnly(), new AddOrUpdateOptions());
         }
 
         private static T FindColumnComponent<T>(IColumn column)
