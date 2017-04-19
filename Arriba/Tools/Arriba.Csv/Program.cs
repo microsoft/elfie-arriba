@@ -176,7 +176,7 @@ namespace Arriba.Csv
                     DataBlock toInsert = block;
                     if (columnNames != null) toInsert = toInsert.StripToColumns(columnNames);
 
-                    table.AddOrUpdate(toInsert, options);
+                    table.AddOrUpdate(toInsert.AsReadOnly(), options);
 
                     rowsImported += toInsert.RowCount;
                     Console.Write(".");

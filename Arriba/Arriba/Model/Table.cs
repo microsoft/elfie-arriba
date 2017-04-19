@@ -302,7 +302,7 @@ namespace Arriba.Model
         #endregion
 
         #region AddOrUpdate (insert, update)
-        public void AddColumnsFromBlock(DataBlock values)
+        public void AddColumnsFromBlock(ReadOnlyDataBlock values)
         {
             bool foundIdColumn = (_partitions[0].IDColumn != null);
             List<ColumnDetails> discoveredNewColumns = new List<ColumnDetails>();
@@ -348,7 +348,7 @@ namespace Arriba.Model
         ///  For each item, the value for each column is set to the provided values.
         /// </summary>
         /// <param name="values">Set of Columns and values to add or update</param>
-        public void AddOrUpdate(DataBlock values)
+        public void AddOrUpdate(ReadOnlyDataBlock values)
         {
             AddOrUpdate(values, new AddOrUpdateOptions());
         }
@@ -360,13 +360,11 @@ namespace Arriba.Model
         /// </summary>
         /// <param name="values">Set of Columns and values to add or update</param>
         /// <param name="options">Options to adjust behavior of AddOrUpdate</param>
-        public void AddOrUpdate(DataBlock values, AddOrUpdateOptions options)
+        public void AddOrUpdate(ReadOnlyDataBlock values, AddOrUpdateOptions options)
         {
             _locker.EnterWriteLock();
             try
             {
-                if (values == null) throw new ArgumentNullException("values");
-
                 // Add columns from data, if this is the first data and columns weren't predefined
                 if (options.AddMissingColumns) AddColumnsFromBlock(values);
 
@@ -393,20 +391,32 @@ namespace Arriba.Model
                 }
 
                 // Determine the partition each item should go to
-                int[] partitionChains = null;
-                int[] partitionChainHeads = null;
-                Array idColumnArray = values.GetColumn(idColumnIndex);
-                Type idColumnArrayType = idColumnArray.GetType().GetElementType();
+                int[] partitionIds;
+                TargetPartitionInfo[] partitionInfo;
+                Type idColumnArrayType = values.GetTypeForColumn(idColumnIndex);
+                IComputePartition splitter = NativeContainer.CreateTypedInstance<IComputePartition>(typeof(ComputePartitionHelper<>), idColumnArrayType);
+                splitter.ComputePartition(this, values, idColumnIndex, out partitionIds, out partitionInfo);
 
-                IChooseSplit splitter = NativeContainer.CreateTypedInstance<IChooseSplit>(typeof(ChooseSplitHelper<>), idColumnArrayType);
-                splitter.ChooseSplit(this, idColumnArray, values.RowCount, out partitionChains, out partitionChainHeads);
+                // Sort/group the incoming items by paritition and then by index to ensure they 
+                // are processed in the order they were presented in the input ReadOnlyDataBlock
+                int[] sortOrder = new int[values.RowCount];
+                for (int i = 0; i < values.RowCount; ++i)
+                {
+                    int p = partitionIds[i];
+                    int startIndex = partitionInfo[p].StartIndex + partitionInfo[p].Count;
+                    sortOrder[startIndex] = i;
+                    partitionInfo[p].Count++;
+                }
 
                 Action<Tuple<int, int>, ParallelLoopState> forBody =
                     delegate (Tuple<int, int> range, ParallelLoopState unused)
                     {
-                        for (int i = range.Item1; i < range.Item2; ++i)
+                        for (int p = range.Item1; p < range.Item2; ++p)
                         {
-                            _partitions[i].AddOrUpdate(values, options, partitionChains, partitionChainHeads[i]);
+                            int startIndex = partitionInfo[p].StartIndex;
+                            int length = partitionInfo[p].Count;                            
+                            ReadOnlyDataBlock partitionValues = values.ProjectChain(sortOrder, startIndex, length);
+                            _partitions[p].AddOrUpdate(partitionValues, options);
                         }
                     };
 
@@ -426,6 +436,12 @@ namespace Arriba.Model
             {
                 _locker.ExitWriteLock();
             }
+        }
+
+        struct TargetPartitionInfo
+        {
+            public int StartIndex;
+            public int Count;
         }
         #endregion
 
@@ -478,7 +494,7 @@ namespace Arriba.Model
         }
         #endregion
 
-#region Query
+        #region Query
         /// <summary>
         ///  Run the provided query and return a result across this ITable.
         /// </summary>
@@ -549,40 +565,38 @@ namespace Arriba.Model
                 _locker.ExitReadLock();
             }
         }
-#endregion
+        #endregion
 
-#region Split
-        private interface IChooseSplit
+        #region Split
+        private interface IComputePartition
         {
-            void ChooseSplit(Table table, Array values, int rowCount, out int[] partitionChains, out int[] partitionChainHeads);
+            void ComputePartition(Table table, ReadOnlyDataBlock values, int idColumnIndex, out int[] partitionIds, out TargetPartitionInfo[] partitionInfo);
         }
 
-        private class ChooseSplitHelper<T> : IChooseSplit
+        private class ComputePartitionHelper<T> : IComputePartition
         {
             /// <summary>
-            ///  Identify the Partition for each item to go to and return a map in the form if an array which contains Partitions.Count number of 
-            ///  non-overlapping linked lists.  The head of each list is returned in the array partitionChainHeads.  The next item of each list is 
-            ///  kept as the value at each index in partitionChains with -1 signifying the last node.
+            /// Computes the target partition for each item in the ReadOnlyDataBlock
             /// </summary>
-        /// <param name="table">Table where values will be added</param>
+            /// <param name="table">Table where values will be added</param>
             /// <param name="values">DataBlock containing values to be added to the table</param>
-        /// <param name="rowCount">Index of the row the data is populated up to</param>
-            /// <param name="partitionChains">[out] storage for the set of linked lists of nodes assigned to each partition.  The index is the row number of
-            /// of the matching value in the values DataBlock and the value is the index of the next item in the list.  -1 signifies the last node. </param>
-            /// <param name="partitionChainHeads">[out] The set of all of the linked lists.  The index is the ID of the partition that each value in the list
-            /// should be inserted into.  The value is the index of the first item in this list in the partitionsChain array.</param>
-            public void ChooseSplit(Table table, Array values, int rowCount, out int[] partitionChains, out int[] partitionChainHeads)
+            /// <param name="idColumnIndex">Index of the id column</param>
+            /// <param name="partitionIds">[Out] array of the partition ids for each element</param>
+            public void ComputePartition(Table table, ReadOnlyDataBlock values, int idColumnIndex, out int[] partitionIds, out TargetPartitionInfo[] partitionInfo)
             {
-                // Allocate storage for our return values and preset to -1, the terminal value.
-            // Use length passed in instead of array length as array will have stale values at the end
-            int[] localPartitionChains = new int[rowCount];
-            for (int i = 0; i < rowCount; ++i) localPartitionChains[i] = -1;
+                int rowCount = values.RowCount;
 
-                int partitionCount = table._partitions.Count;
-                int[] localPartitionChainHeads = new int[partitionCount];
-                for (int i = 0; i < partitionCount; ++i) localPartitionChainHeads[i] = -1;
+                // TODO: [danny chen] it would be nice if I could get rid of this tunneling of GetColumn
+                // from the ReadOnlyDataBlock (and avoid the special casing for non-projected blocks)
+                // but I can't see a way to allow strongly types random access without a bunch of work
+                // incurred on each access (fetch, cast the array).
+                T[] idColumn = (T[])values.GetColumn(idColumnIndex);
 
-                Action<Tuple<int, int>, ParallelLoopState> forBody =
+                int[] localPartitionIds = new int[rowCount];
+                TargetPartitionInfo[] localPartitionInfo = new TargetPartitionInfo[table.PartitionCount];
+
+                var rangePartitioner = Partitioner.Create(0, rowCount);
+                Parallel.ForEach(rangePartitioner,
                     delegate (Tuple<int, int> range, ParallelLoopState unused)
                     {
                         ValueTypeReference<T> vtr = new ValueTypeReference<T>();
@@ -590,40 +604,37 @@ namespace Arriba.Model
                         for (int i = range.Item1; i < range.Item2; ++i)
                         {
                             // Hash the ID for each item and compute the partition that the item belongs to
-                            vtr.Value = ((T[])values)[i];
+                            vtr.Value = idColumn[i];
                             v.Assign(vtr);
                             int idHash = v.GetHashCode();
                             int partitionId = PartitionMask.IndexOfHash(idHash, table._partitionBits);
 
-                            // Add a link into the list for the matching partition including the index of the current item
-                            // order doesn't mattter for the linked list, only that the final list is accurate.
-                            // It's possible for 2 threads to compute the same partitionId at the same time.  If that happens, 
-                            // one will "win" at getting the current head index while the other will get the index from the thread
-                            // that was just set.  Both links will then be inserted in to localPartitionChains at the same time and the
-                            // full list will still be accurate.
-
-                            // First, insert ourself as the head of the list while retreiving the former head.  
-                            // The former head is the next item in the chain with respect to ourself.
-                            int oldHead = Interlocked.Exchange(ref localPartitionChainHeads[partitionId], i);
-
-                            // Store the former head as being behind this value in the linked list.
-                            localPartitionChains[i] = oldHead;
+                            localPartitionIds[i] = partitionId;
+                            Interlocked.Increment(ref localPartitionInfo[partitionId].Count);
                         }
-                    };
+                    });
 
-                if (table.RunParallel)
+                int nextStartIndex = 0;
+                for (int i = 0; i < table.PartitionCount; ++i)
                 {
-                var rangePartitioner = Partitioner.Create(0, rowCount);
-                    Parallel.ForEach(rangePartitioner, table.ParallelOptions, forBody);
-                }
-                else
-                {
-                var range = Tuple.Create(0, rowCount);
-                    forBody(range, null);
+                    if (localPartitionInfo[i].Count == 0)
+                    {
+                        localPartitionInfo[i].StartIndex = -1;
+                    }
+                    else
+                    {
+                        localPartitionInfo[i].StartIndex = nextStartIndex;
+                        nextStartIndex += localPartitionInfo[i].Count;
+
+                        // NOTE: Count field is cleared here because it is
+                        //   reused to track per-partition indexes when 
+                        //   building up the sort key data 
+                        localPartitionInfo[i].Count = 0;
+                    }
                 }
 
-                partitionChains = localPartitionChains;
-                partitionChainHeads = localPartitionChainHeads;
+                partitionIds = localPartitionIds;
+                partitionInfo = localPartitionInfo;
             }
         }
 #endregion
