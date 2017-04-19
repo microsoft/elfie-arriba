@@ -158,14 +158,13 @@ var SearchMain = React.createClass({
 
         // If there's no query, clear results and do nothing else
         if (!this.state.query) {
-            var cleared = {};
-            cleared.allCountData = [];
-            cleared.listingData = [];
-            cleared.selectedItemData = null;
-            cleared.loading = false;
-            cleared.userTableSettings = {};
-
-            this.setState(cleared);
+            this.setState({
+                loading: false,
+                allCountData: [],
+                listingData: [],
+                selectedItemData: null,
+                userTableSettings: {}
+            });
             return;
         }
 
