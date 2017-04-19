@@ -38,20 +38,16 @@ var SearchMain = React.createClass({
 
         return {
             blockingErrorStatus: null,
+            loading: false,
 
             tables: [],
             allCountData: [],
             listingData: [],
-            selectedItemData: null,
-
-            allItemCount: 0,
-            loading: false,
-
             page: 0,
             hasMoreData: false,
+            selectedItemData: null,
 
             query: this.props.params.q || "",
-            pivotQueries: [],
 
             currentTable: table,
             currentTableIdColumn: "",
@@ -61,14 +57,6 @@ var SearchMain = React.createClass({
             userSelectedTable: table,
             userTableSettings: {}, // {} denote no state, do not set to null.
             userSelectedId: this.props.params.open
-        };
-    },
-    getClearedUserSelections: function () {
-        return {
-            userSelectedTable: null,
-            userTableSettings: {},
-            userSelectedId: null,
-            pivotQueries: []
         };
     },
     componentDidMount: function () {
@@ -91,15 +79,15 @@ var SearchMain = React.createClass({
     },
     handleKeyDown: function (e) {
         // Backspace: Clear state *if query empty*
-        if (e.keyCode === 8) {
-            if (!this.state.query) {
-                var cleared = this.getClearedUserSelections();
-                cleared.allCountData = [];
-                cleared.listingData = [];
-                cleared.selectedItemData = null;
-
-                this.setState(cleared, this.setHistory);
-            }
+        if (e.keyCode === 8 && !this.state.query) {
+            this.setState({
+                allCountData: [],
+                listingData: [],
+                selectedItemData: null,
+                userSelectedTable: undefined,
+                userTableSettings: {},
+                userSelectedId: null
+            }, this.setHistory);
         }
 
         // ESC: Close
@@ -151,13 +139,6 @@ var SearchMain = React.createClass({
     onSelectedTableChange: function (name) {
         this.setState({ userSelectedTable: name }, this.runSearch);
     },
-    onPivot: function (table, baseQuery) {
-        this.setState({
-            pivotQueries: this.state.pivotQueries.push({ q: this.state.query, t: this.state.currentTable }), 
-            query: baseQuery
-        });
-        this.onSelectedTableChange(table);
-    },
     onSearchChange: function (value) {
         this.setState({ query: value, userSelectedId: null }, this.delayedRunSearch);
     },
@@ -177,22 +158,18 @@ var SearchMain = React.createClass({
 
         // If there's no query, clear results and do nothing else
         if (!this.state.query) {
-            var cleared = {};
-            cleared.allCountData = [];
-            cleared.listingData = [];
-            cleared.selectedItemData = null;
-            cleared.loading = false;
-            cleared.userTableSettings = {};
-
-            this.setState(cleared);
+            this.setState({
+                loading: false,
+                allCountData: [],
+                listingData: [],
+                selectedItemData: null,
+                userTableSettings: {}
+            });
             return;
         }
 
         // Notify any listeners (such as the loading animation).
         this.setState({ loading: true });
-
-        var params = { q: this.state.query };
-        this.addPivotClauses(params);
 
         // Get the count of matches from each accessible table
         this.jsonQueryWithError(
@@ -211,7 +188,7 @@ var SearchMain = React.createClass({
                     loading: false
                 }, this.getTableBasics);
             },
-            params
+            { q: this.state.query }
         );
     },
     getTableBasics: function () {
@@ -271,16 +248,6 @@ var SearchMain = React.createClass({
         var detailsQuery = this.state.currentTableIdColumn + '="' + this.state.userSelectedId + '"';
         if (this.state.query) detailsQuery = detailsQuery + " AND " + this.state.query;
 
-        var params = {
-            q: detailsQuery,
-            c1: "*",
-            action: "select",
-            h: "π",
-            s: 0,
-            t: 1
-        };
-        this.addPivotClauses(params);
-
         // Select all columns for the selected item, with highlighting
         this.jsonQueryWithError(
             configuration.url + "/table/" + this.state.currentTable,
@@ -295,7 +262,14 @@ var SearchMain = React.createClass({
                     }
                 }
             }.bind(this),
-            params
+            {
+                q: detailsQuery,
+                c1: "*",
+                action: "select",
+                h: "π",
+                s: 0,
+                t: 1
+            }
         );
 
         this.setHistory();
@@ -330,7 +304,6 @@ var SearchMain = React.createClass({
         };
 
         addArrayParameters(parameters, "c", this.state.currentTableSettings.columns);
-        this.addPivotClauses(parameters);
 
         var queryString = buildUrlParameters(parameters);
         return configuration.url + "/table/" + this.state.currentTable + queryString;
@@ -338,32 +311,20 @@ var SearchMain = React.createClass({
     buildThisUrl: function (includeOpen) {
         var userTableSettings = this.state.userTableSettings;
         var relevantParams = Object.clean({
-            t: this.state.userSelectedTable ? this.state.userSelectedTable : undefined,
-            q: this.state.query ? this.state.query : undefined,
+            t: this.state.userSelectedTable,
+            q: this.state.query || undefined,
             ob: userTableSettings.sortColumn,
             so: userTableSettings.sortOrder
         });
-        this.addPivotClauses(relevantParams);
 
-        var columns = userTableSettings.columns || [];
-        for (var i = 0; i < columns.length; ++i) {
-            relevantParams["c" + (i + 1)] = columns[i];
-        }
-        if (columns.length || userTableSettings.sortColumn || userTableSettings.sortOrder) {
-            relevantParams.t = this.state.currentTable;
-        }
+        addArrayParameters(relevantParams, "c", userTableSettings.columns);
+        if (Object.keys(userTableSettings).length) relevantParams.t = this.state.currentTable;
 
         if (includeOpen && this.state.userSelectedId) {
             relevantParams.open = this.state.userSelectedId;
         }
 
         return window.location.protocol + '//' + window.location.host + window.location.pathname + buildUrlParameters(relevantParams);
-    },
-    addPivotClauses: function (set) {
-        for (var i = 0; i < this.state.pivotQueries.length; ++i) {
-            set["q" + (i + 1)] = this.state.pivotQueries[i].q;
-            set["t" + (i + 1)] = this.state.pivotQueries[i].t;
-        }
     },
     render: function () {
         if (this.state.blockingErrorStatus != null) return <ErrorPage status={this.state.blockingErrorStatus} />;
@@ -382,8 +343,7 @@ var SearchMain = React.createClass({
                         selectedId={this.state.userSelectedId}
                         onResort={this.onResort}
                         onSelectionChanged={this.onSelectionChanged}
-                        onSetColumns={this.onSetColumns}
-                        onPivot={this.onPivot} />
+                        onSetColumns={this.onSetColumns} />
                 </InfiniteScroll>
                 <div className="scrollable">
                     {React.createElement(customDetailsView, { 
