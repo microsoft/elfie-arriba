@@ -22,10 +22,19 @@ if (optionalContext.keys().includes("./configuration/Configuration.jsx")) {
 // SearchMain wraps the overall search UI
 var SearchMain = React.createClass({
     getInitialState: function () {
+        // For schema detection and possible migration.
+        localStorage.setItem("version", 1);
+
         var table = this.props.params.t;
         var columns = getParameterArrayForPrefix(this.props.params, "c");
 
-        if (table && columns.length) localStorage.setJson("columns-" + table, columns);
+        if (table) {
+            localStorage.updateJson("table-" + table, Object.clean({
+                columns: columns.emptyToUndefined(),
+                sortColumn: this.props.params.ob,
+                sortOrder: this.props.params.so
+            }));
+        }
 
         return {
             blockingErrorStatus: null,
@@ -47,23 +56,17 @@ var SearchMain = React.createClass({
             currentTable: table,
             currentTableIdColumn: "",
             currentTableAllColumns: [],
-            currentListingColumns: [],
-            currentSortColumn: "",
-            currentSortOrder: "",
+            currentTableSettings: {}, // {} denote no state, do not set to null.
 
             userSelectedTable: table,
-            userSelectedColumns: columns,
-            userSelectedSortColumn: this.props.params.ob,
-            userSelectedSortOrder: this.props.params.so,
+            userTableSettings: {}, // {} denote no state, do not set to null.
             userSelectedId: this.props.params.open
         };
     },
     getClearedUserSelections: function () {
         return {
             userSelectedTable: null,
-            userSelectedColumns: [],
-            userSelectedSortColumn: null,
-            userSelectedSortOrder: null,
+            userTableSettings: {},
             userSelectedId: null,
             pivotQueries: []
         };
@@ -119,17 +122,31 @@ var SearchMain = React.createClass({
         this.setState({ userSelectedId: null }, this.setHistory);
     },
     onResort: function (sortColumn, sortOrder) {
+        localStorage.updateJson("table-" + this.state.currentTable, {
+            sortColumn: sortColumn,
+            sortOrder: sortOrder
+        });
+
         // If a column heading was clicked, re-query with a new sort order
-        this.setState({ userSelectedTable: this.state.currentTable, userSelectedSortColumn: sortColumn, userSelectedSortOrder: sortOrder }, this.runSearch);
+        this.setState({
+            userSelectedTable: this.state.currentTable,
+            userTableSettings: {}
+        }, this.runSearch);
+
     },
     onAddClause: function (name, value) {
         this.setState({ query: this.state.query + " AND [" + name + "]=\"" + value + "\"" }, this.runSearch);
     },
     onSetColumns: function (columns) {
-        localStorage.setJson("columns-" + this.state.currentTable, columns);
+        localStorage.updateJson("table-" + this.state.currentTable, {
+            columns: columns
+        });
 
         // Clear the userSelectedColumns to and rely on getTableBasics to recalcuate it.
-        this.setState({ userSelectedTable: this.state.currentTable, userSelectedColumns: [] }, this.runSearch);
+        this.setState({
+            userSelectedTable: this.state.currentTable,
+            userTableSettings: {}
+        }, this.runSearch);
     },
     onSelectedTableChange: function (name) {
         this.setState({ userSelectedTable: name }, this.runSearch);
@@ -165,6 +182,7 @@ var SearchMain = React.createClass({
             cleared.listingData = [];
             cleared.selectedItemData = null;
             cleared.loading = false;
+            cleared.userTableSettings = {};
 
             this.setState(cleared);
             return;
@@ -183,9 +201,7 @@ var SearchMain = React.createClass({
                 var currentTable = this.state.userSelectedTable || data.content[0].tableName;
                 if (this.state.currentTable !== currentTable) {
                     this.setState({
-                        userSelectedColumns: [],
-                        userSelectedSortColumn: null,
-                        userSelectedSortOrder: null,
+                        userTableSettings: {},
                         userSelectedId: null
                     });
                 }
@@ -201,25 +217,28 @@ var SearchMain = React.createClass({
     getTableBasics: function () {
         // Once a table is selected, find out the columns and primary key column for the table
         this.jsonQueryWithError(configuration.url + "/table/" + this.state.currentTable, data => {
+            // Choose columns, sort column, sort order
+
             var idColumn = data.content.columns.find(col => col.isPrimaryKey).name || "";
 
-            // Choose columns, sort column, sort order
-            var defaultsForTable = (configuration.listingDefaults && configuration.listingDefaults[this.state.currentTable]) || {};
-
             // If user did not specify default columns, fetch from local storage.
-            // Must write to userSelectedColumns (and not directly to currentListingColumns) so the URL can refect this.
-            // If a table was switched getAllCounts would have wiped userSelectedColumns and localStorage would show through.
-            var userSelectedColumns = firstNonEmptyArray(this.state.userSelectedColumns, localStorage.getJson("columns-" + this.state.currentTable));
+            // Must write to userTableSettings (and not directly to currentTableSettings) so the URL can refect this.
+            // If a table was switched getAllCounts would have wiped userTableSettings and localStorage would show through.
+            var userTableSettings = Object.merge(
+                localStorage.getJson("table-" + this.state.currentTable),
+                this.state.userTableSettings);
 
             // Set the ID column, all columns, and listing columns
             this.setState({
-                userSelectedColumns: userSelectedColumns,
+                userTableSettings: userTableSettings,
                 currentTableIdColumn: idColumn,
                 currentTableAllColumns: data.content.columns,
-                currentListingColumns: firstNonEmptyArray(userSelectedColumns, defaultsForTable.columns, [idColumn]),
-                currentSortColumn: this.state.userSelectedSortColumn || defaultsForTable.sortColumn || idColumn,
-                currentSortOrder: this.state.userSelectedSortOrder || defaultsForTable.sortOrder || "asc"
+                currentTableSettings: Object.merge(
+                    { columns: [idColumn], sortColumn: idColumn, sortOrder: "asc" },
+                    configuration.listingDefaults && configuration.listingDefaults[this.state.currentTable],
+                    userTableSettings)
             }, () => {
+                this.setHistory(); // Due to userTableSettings being set.
                 if (this.state.query) this.getResultsPage();
                 if (this.state.userSelectedId) this.getDetails();
             });
@@ -305,28 +324,33 @@ var SearchMain = React.createClass({
         var parameters = {
             action: "select",
             q: this.state.query,
-            ob: this.state.currentSortColumn,
-            so: this.state.currentSortOrder,
+            ob: this.state.currentTableSettings.sortColumn,
+            so: this.state.currentTableSettings.sortOrder,
             s: 0
         };
 
-        addArrayParameters(parameters, "c", this.state.currentListingColumns);
+        addArrayParameters(parameters, "c", this.state.currentTableSettings.columns);
         this.addPivotClauses(parameters);
 
         var queryString = buildUrlParameters(parameters);
         return configuration.url + "/table/" + this.state.currentTable + queryString;
     },
     buildThisUrl: function (includeOpen) {
-        var relevantParams = {};
+        var userTableSettings = this.state.userTableSettings;
+        var relevantParams = Object.clean({
+            t: this.state.userSelectedTable ? this.state.userSelectedTable : undefined,
+            q: this.state.query ? this.state.query : undefined,
+            ob: userTableSettings.sortColumn,
+            so: userTableSettings.sortOrder
+        });
         this.addPivotClauses(relevantParams);
 
-        if (this.state.userSelectedTable)                   relevantParams.t = this.state.userSelectedTable;
-        if (this.state.query)                               relevantParams.q = this.state.query;        
-        if (this.state.userSelectedSortColumn)              relevantParams.ob = this.state.userSelectedSortColumn;
-        if (this.state.userSelectedSortOrder === "desc")    relevantParams.so = this.state.userSelectedSortOrder;
-
-        for (var i = 0; i < this.state.userSelectedColumns.length; ++i) {
-            relevantParams["c" + (i + 1).toString()] = this.state.userSelectedColumns[i];
+        var columns = userTableSettings.columns || [];
+        for (var i = 0; i < columns.length; ++i) {
+            relevantParams["c" + (i + 1)] = columns[i];
+        }
+        if (columns.length || userTableSettings.sortColumn || userTableSettings.sortOrder) {
+            relevantParams.t = this.state.currentTable;
         }
 
         if (includeOpen && this.state.userSelectedId) {
@@ -353,8 +377,8 @@ var SearchMain = React.createClass({
                         data={this.state.listingData}
                         idColumn={this.state.currentTableIdColumn}
                         allColumns={this.state.currentTableAllColumns}
-                        sortColumn={this.state.currentSortColumn}
-                        sortOrder={this.state.currentSortOrder}
+                        sortColumn={this.state.currentTableSettings.sortColumn}
+                        sortOrder={this.state.currentTableSettings.sortOrder}
                         selectedId={this.state.userSelectedId}
                         onResort={this.onResort}
                         onSelectionChanged={this.onSelectionChanged}

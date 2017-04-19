@@ -2,6 +2,38 @@
 var highlightRangeRegex = new RegExp(highlightChar + '(.+?)' + highlightChar, 'g');
 var highlightCharOnlyRegex = new RegExp(highlightChar, 'g');
 
+// From: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign
+Object.assign = Object.assign || function(target, varArgs) { // .length of function is 2
+    'use strict';
+    if (target == null) { // TypeError if undefined or null
+        throw new TypeError('Cannot convert undefined or null to object');
+    }
+    var to = Object(target);
+    for (var index = 1; index < arguments.length; index++) {
+        var nextSource = arguments[index];
+        if (nextSource != null) { // Skip over if undefined or null
+            for (var nextKey in nextSource) {
+                // Avoid bugs when hasOwnProperty is shadowed
+                if (Object.prototype.hasOwnProperty.call(nextSource, nextKey)) {
+                    to[nextKey] = nextSource[nextKey];
+                }
+            }
+        }
+    }
+    return to;
+};
+
+// Like Object.assign, but undefined properties do not overwrite the base.
+Object.merge = function() {
+    var args = [].slice.call(arguments).map(function(arg) { return Object.clean(arg || {}) });
+    return Object.assign.apply(this, args);
+}
+
+// Strips undefined properties.
+Object.clean = function(o) {
+    return JSON.parse(JSON.stringify(o));
+};
+
 Number.prototype.clamp = function(min, max) {
     return Math.min(Math.max(this, min), max);
 };
@@ -19,6 +51,10 @@ Array.prototype.find = Array.prototype.find || function(predicate) {
     }
 };
 
+Array.prototype.emptyToUndefined = function() {
+    return this.length ? this : undefined;
+}
+
 Storage.prototype.getJson = function(keyName) {
     return JSON.parse(this.getItem(keyName));
 };
@@ -26,6 +62,12 @@ Storage.prototype.getJson = function(keyName) {
 Storage.prototype.setJson = function(keyName, keyValue) {
     this.setItem(keyName, JSON.stringify(keyValue));
 };
+
+// Shallow merge the keyObject into localStorage.
+Storage.prototype.updateJson = function(keyName, keyObject) {
+    if (typeof keyObject !== "object") return;
+    this.setJson(keyName, Object.merge(localStorage.getJson(keyName), keyObject));
+}
 
 // Highlight values surrounded by Pi characters by wrapping them in <span class="h"></span>
 function highlight(value) {
@@ -134,6 +176,7 @@ function getParameterArrayForPrefix(parameters, prefix) {
 
 // Put an array of parameters onto a parameters object with a prefix ({}, "P", [ "One", "Two", "Three" ]) => { "P1": "One", "P2": "Two", "P3": "Three" }
 function addArrayParameters(parameters, prefix, array) {
+    if (!array) return;
     for (var i = 0; i < array.length; ++i) {
         parameters[prefix + (i + 1).toString()] = array[i];
     }
