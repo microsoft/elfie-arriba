@@ -298,7 +298,6 @@ var GridMain = React.createClass({
             blockingErrorStatus: null,
 
             query: this.props.params.q || "",
-            pivotQueries: [],
             currentTable: this.props.params.t,
             currentTableAllColumns: [],
 
@@ -433,9 +432,6 @@ var GridMain = React.createClass({
     },
     getAllCounts: function () {
         // On query, ask for the count from every table.
-        var params = { q: this.state.query };
-        this.addPivotClauses(params);
-
         // Get the count of matches from each accessible table
         jsonQuery(
             this.props.url + "/allCount",
@@ -450,7 +446,7 @@ var GridMain = React.createClass({
                 this.setState({ blockingErrorStatus: status });
                 console.error(xhr.url, status, err.toString());
             },
-            params
+            { q: this.state.query }
         );
     },
     getTableBasics: function (next) {
@@ -564,12 +560,6 @@ var GridMain = React.createClass({
 
         return window.location.protocol + '//' + window.location.host + window.location.pathname + buildUrlParameters(relevantParams);
 
-    },
-    addPivotClauses: function (set) {
-        for (var i = 0; i < this.state.pivotQueries.length; ++i) {
-            set["q" + (i + 1)] = this.state.pivotQueries[i].q;
-            set["t" + (i + 1)] = this.state.pivotQueries[i].t;
-        }
     },
     render: function () {
          if (this.state.blockingErrorStatus != null) return <ErrorPage status={this.state.blockingErrorStatus} />;
