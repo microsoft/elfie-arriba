@@ -48,7 +48,6 @@ var SearchMain = React.createClass({
             selectedItemData: null,
 
             query: this.props.params.q || "",
-            pivotQueries: [],
 
             currentTable: table,
             currentTableIdColumn: "",
@@ -64,8 +63,7 @@ var SearchMain = React.createClass({
         return {
             userSelectedTable: undefined,
             userTableSettings: {},
-            userSelectedId: null,
-            pivotQueries: []
+            userSelectedId: null
         };
     },
     componentDidMount: function () {
@@ -148,13 +146,6 @@ var SearchMain = React.createClass({
     onSelectedTableChange: function (name) {
         this.setState({ userSelectedTable: name }, this.runSearch);
     },
-    onPivot: function (table, baseQuery) {
-        this.setState({
-            pivotQueries: this.state.pivotQueries.push({ q: this.state.query, t: this.state.currentTable }), 
-            query: baseQuery
-        });
-        this.onSelectedTableChange(table);
-    },
     onSearchChange: function (value) {
         this.setState({ query: value, userSelectedId: null }, this.delayedRunSearch);
     },
@@ -188,9 +179,6 @@ var SearchMain = React.createClass({
         // Notify any listeners (such as the loading animation).
         this.setState({ loading: true });
 
-        var params = { q: this.state.query };
-        this.addPivotClauses(params);
-
         // Get the count of matches from each accessible table
         this.jsonQueryWithError(
             configuration.url + "/allCount",
@@ -208,7 +196,7 @@ var SearchMain = React.createClass({
                     loading: false
                 }, this.getTableBasics);
             },
-            params
+            { q: this.state.query }
         );
     },
     getTableBasics: function () {
@@ -268,16 +256,6 @@ var SearchMain = React.createClass({
         var detailsQuery = this.state.currentTableIdColumn + '="' + this.state.userSelectedId + '"';
         if (this.state.query) detailsQuery = detailsQuery + " AND " + this.state.query;
 
-        var params = {
-            q: detailsQuery,
-            c1: "*",
-            action: "select",
-            h: "π",
-            s: 0,
-            t: 1
-        };
-        this.addPivotClauses(params);
-
         // Select all columns for the selected item, with highlighting
         this.jsonQueryWithError(
             configuration.url + "/table/" + this.state.currentTable,
@@ -292,7 +270,14 @@ var SearchMain = React.createClass({
                     }
                 }
             }.bind(this),
-            params
+            {
+                q: detailsQuery,
+                c1: "*",
+                action: "select",
+                h: "π",
+                s: 0,
+                t: 1
+            }
         );
 
         this.setHistory();
@@ -327,7 +312,6 @@ var SearchMain = React.createClass({
         };
 
         addArrayParameters(parameters, "c", this.state.currentTableSettings.columns);
-        this.addPivotClauses(parameters);
 
         var queryString = buildUrlParameters(parameters);
         return configuration.url + "/table/" + this.state.currentTable + queryString;
@@ -340,7 +324,6 @@ var SearchMain = React.createClass({
             ob: userTableSettings.sortColumn,
             so: userTableSettings.sortOrder
         });
-        this.addPivotClauses(relevantParams);
 
         var columns = userTableSettings.columns || [];
         for (var i = 0; i < columns.length; ++i) {
@@ -355,12 +338,6 @@ var SearchMain = React.createClass({
         }
 
         return window.location.protocol + '//' + window.location.host + window.location.pathname + buildUrlParameters(relevantParams);
-    },
-    addPivotClauses: function (set) {
-        for (var i = 0; i < this.state.pivotQueries.length; ++i) {
-            set["q" + (i + 1)] = this.state.pivotQueries[i].q;
-            set["t" + (i + 1)] = this.state.pivotQueries[i].t;
-        }
     },
     render: function () {
         if (this.state.blockingErrorStatus != null) return <ErrorPage status={this.state.blockingErrorStatus} />;
@@ -379,8 +356,7 @@ var SearchMain = React.createClass({
                         selectedId={this.state.userSelectedId}
                         onResort={this.onResort}
                         onSelectionChanged={this.onSelectionChanged}
-                        onSetColumns={this.onSetColumns}
-                        onPivot={this.onPivot} />
+                        onSetColumns={this.onSetColumns} />
                 </InfiniteScroll>
                 <div className="scrollable">
                     {React.createElement(customDetailsView, { 
