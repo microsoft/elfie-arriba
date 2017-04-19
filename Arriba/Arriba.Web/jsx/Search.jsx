@@ -43,8 +43,6 @@ var SearchMain = React.createClass({
             allCountData: [],
             listingData: [],
             selectedItemData: null,
-
-            allItemCount: 0,
             loading: false,
 
             page: 0,
