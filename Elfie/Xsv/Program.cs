@@ -33,6 +33,10 @@ namespace XsvConcat
 
   Xsv onlyIn <input> <output> <onlyInFilePath> <onlyInColumnIdentifier>
      Copy rows from input to output if the 'onlyInColumnIdentifier' was also found in 'onlyInFilePath'.
+
+  Xsv sanitize <input> <output> <specFile> <hashKey>
+     Sanitize (re-map identifying values) from input to output using specFile rules.
+     Makes safe sample data from sensitive data by remapping values.
             ";
 
         private static int Main(string[] args)
@@ -82,6 +86,12 @@ namespace XsvConcat
                             if (args.Length < 5) throw new UsageException("onlyIn requires a second input file and column identifier");
                             Trace.WriteLine(String.Format("Writing \"{0}\" values into \"{1}\" where \"{2}\" also had the same \"{3}\"...", args[1], args[2], args[3], args[4]));
                             OnlyIn(args[1], args[2], args[3], args[4]);
+                            break;
+                        case "sanitize":
+                            if (args.Length < 5) throw new UsageException("sanitize requires input, output, specFile, hashKey");
+                            Trace.WriteLine(String.Format("Sanitizing \"{0}\" into \"{1}\" using \"{2}\"...", args[1], args[2], args[3]));
+                            Xsv.Sanitize.Sanitizer s = new Xsv.Sanitize.Sanitizer(args[3], args[4]);
+                            s.Sanitize(args[1], args[2]);
                             break;
                         default:
                             throw new NotSupportedException(String.Format("XSV mode \"{0}\" is unknown. Run without arguments to see valid modes.", mode));
@@ -384,14 +394,14 @@ namespace XsvConcat
 
             writer.NextRow();
         }
-        
-        [Serializable]
-        public class UsageException : Exception
-        {
-            public UsageException() { }
-            public UsageException(string message) : base(message) { }
-            public UsageException(string message, Exception inner) : base(message, inner) { }
-            protected UsageException(SerializationInfo info, StreamingContext context) : base(info, context) { }
-        }
+    }
+
+    [Serializable]
+    public class UsageException : Exception
+    {
+        public UsageException() { }
+        public UsageException(string message) : base(message) { }
+        public UsageException(string message, Exception inner) : base(message, inner) { }
+        protected UsageException(SerializationInfo info, StreamingContext context) : base(info, context) { }
     }
 }
