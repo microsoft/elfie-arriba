@@ -50,40 +50,36 @@ namespace Xsv.Sanitize
                     switch (command.ToLowerInvariant())
                     {
                         case "sample":
+                            // Sample,ColumnName,Probability
                             this.SampleColumnName = columnName;
                             this.SampleProbability = double.Parse(r.Current(2).ToString());
                             if (this.SampleProbability < 0.0 || this.SampleProbability > 1.0) throw new UsageException($"SanitizeSpec sample probability ({r.Current(2)}) is out of range. It must be between zero and one.");
                             break;
                         case "echo":
+                            // Echo,Value1,Value2,...
                             for (int i = 1; i < r.CurrentRowColumns; ++i)
                             {
                                 this.EchoValues.Add(r.Current(i).ToString8());
                             }
                             break;
                         case "drop":
+                            // Drop,ColumnName
                             this.DropColumns.Add(columnName);
                             break;
                         case "map":
-                            this.HandlersByColumn.Add(columnName, new EchoColumnHandler(this.EchoValues, new MapColumnHandler(this.HashKeyHash, r.Current(2).ToString(), this.Provider, RowToArray(r, 3))));
+                            // Map,ColumnName,MapperName
+                            this.HandlersByColumn.Add(columnName, new EchoColumnHandler(this.EchoValues, new MapColumnHandler(this.HashKeyHash, this.Provider.Mapper(r.Current(2).ToString()))));
+                            break;
+                        case "regex":
+                            // Regex,ColumnName,Expression,MapperName
+                            MapColumnHandler handler = new MapColumnHandler(this.HashKeyHash, this.Provider.Mapper(r.Current(3).ToString()));
+                            this.HandlersByColumn.Add(columnName, new EchoColumnHandler(this.EchoValues, new RegexColumnHandler(r.Current(2).ToString(), handler)));
                             break;
                         default:
                             throw new UsageException($"SanitizeSpec mode '{command}' is unknown. Supported modes: sample, echo, drop, map.");
                     }
                 }
             }
-        }
-
-        internal static string[] RowToArray(ITabularReader reader, int fromColumnIndex = 0)
-        {
-            int length = reader.CurrentRowColumns - fromColumnIndex;
-
-            string[] result = new string[length];
-            for (int i = 0; i < length; ++i)
-            {
-                result[i] = reader.Current(fromColumnIndex + i).ToString();
-            }
-
-            return result;
         }
 
         private IColumnHandler[] GetHandlersByColumnIndex(IReadOnlyList<string> columnNames, out List<string> columnNamesToOutput)

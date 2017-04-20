@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System;
+using System.Text;
 
 namespace Xsv.Sanitize
 {
@@ -14,10 +15,10 @@ namespace Xsv.Sanitize
             this.ComputerNameWords = Resource.ReadAllStreamLines(@"Xsv.Sanitize.Data.ComputerNames.txt");
         }
 
-        public string Generate(ISanitizeContext context)
+        public string Generate(uint hash)
         {
             StringBuilder result = new StringBuilder();
-            uint hashRemaining = context.Hash;
+            uint hashRemaining = hash;
 
             // Acronym
             for (int i = 0; i < 3; ++i)
