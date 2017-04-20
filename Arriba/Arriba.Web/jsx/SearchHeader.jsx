@@ -93,7 +93,7 @@ export default React.createClass({
         return (
             <div className="header theme-background-medium">
                 <div className="title font-light theme-background-vdark">
-                    <a href="/">{this.props.name}</a>
+                    <a href="/">{configuration.toolName}</a>
                 </div>
 
                 <div className="searchBarAndButtons">
@@ -111,10 +111,10 @@ export default React.createClass({
                     </div>
 
                     <div className="buttons">
-                        <a className="theme-background-dark" href={"mailto:?subject=" + encodeURIComponent(this.props.name) + ": " + encodeURIComponent(this.props.query) + "&body=" + encodeURIComponent(window.location.href)}>
+                        <a className="theme-background-dark" href={"mailto:?subject=" + encodeURIComponent(configuration.toolName) + ": " + encodeURIComponent(this.props.query) + "&body=" + encodeURIComponent(window.location.href)}>
                             <i className="icon-mail" title="Mail"></i>
                         </a>
-                        <a className="theme-background-dark" href={"mailto:" + encodeURIComponent(this.props.feedbackEmailAddresses) + "?subject=" + encodeURIComponent(this.props.name) + " Feedback"}>
+                        <a className="theme-background-dark" href={"mailto:" + encodeURIComponent(configuration.feedbackEmailAddresses) + "?subject=" + encodeURIComponent(configuration.toolName) + " Feedback"}>
                             <i className="icon-emoji2" title="Feedback"></i>
                         </a>
                         <a className="theme-background-dark" href="/?help=true">

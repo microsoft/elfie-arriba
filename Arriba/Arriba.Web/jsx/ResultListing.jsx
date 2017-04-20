@@ -48,12 +48,6 @@ export default React.createClass({
 
         e.stopPropagation();
     },
-    handlePivot: function (e) {
-        var element = e.target;
-
-        this.props.onPivot(element.getAttribute("data-table"), element.getAttribute("data-query"));
-        e.stopPropagation();
-    },
     selectByRelativeIndex: function (i) {
         // Figure out the current row count
         var count = 0;
@@ -111,7 +105,11 @@ export default React.createClass({
                 );
             }
 
-            columnCells.push(<td key={"heading_" + column.name} data-name={column.name} onClick={this.handleResort}><div className="commands">{commands}</div>{column.name}</td>);
+            var sort = this.props.sortColumn === column.name
+                ? this.props.sortOrder === "asc" ? " ↓" : " ↑"
+                : "";
+
+            columnCells.push(<td key={"heading_" + column.name} data-name={column.name} onClick={this.handleResort}><div className="commands">{commands}</div>{column.name}{sort}</td>);
         }
 
         // Write a row for each item
