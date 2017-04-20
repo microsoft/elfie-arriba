@@ -86,7 +86,7 @@ var SearchMain = React.createClass({
                 selectedItemData: null,
                 userSelectedTable: undefined,
                 userTableSettings: {},
-                userSelectedId: null
+                userSelectedId: undefined
             }, this.setHistory);
         }
 
@@ -107,7 +107,7 @@ var SearchMain = React.createClass({
         this.setState({ userSelectedId: e }, this.getDetails);
     },
     onClose: function () {
-        this.setState({ userSelectedId: null }, this.setHistory);
+        this.setState({ userSelectedId: undefined }, this.setHistory);
     },
     onResort: function (sortColumn, sortOrder) {
         localStorage.updateJson("table-" + this.state.currentTable, {
@@ -140,7 +140,7 @@ var SearchMain = React.createClass({
         this.setState({ userSelectedTable: name }, this.runSearch);
     },
     onSearchChange: function (value) {
-        this.setState({ query: value, userSelectedId: null }, this.delayedRunSearch);
+        this.setState({ query: value, userSelectedId: undefined }, this.delayedRunSearch);
     },
     delayedRunSearch: function () {
         // Only query every 250 milliseconds while typing
@@ -179,7 +179,7 @@ var SearchMain = React.createClass({
                 if (this.state.currentTable !== currentTable) {
                     this.setState({
                         userTableSettings: {},
-                        userSelectedId: null
+                        userSelectedId: undefined
                     });
                 }
                 this.setState({
@@ -258,7 +258,7 @@ var SearchMain = React.createClass({
                     if (!this.state.query) {
                         this.setState({ selectedItemData: null, error: "Item '" + this.state.userSelectedId + "' not found." })
                     } else {
-                        this.setState({ selectedItemData: null, userSelectedId: null }, this.setHistory);
+                        this.setState({ selectedItemData: null, userSelectedId: undefined }, this.setHistory);
                     }
                 }
             }.bind(this),
