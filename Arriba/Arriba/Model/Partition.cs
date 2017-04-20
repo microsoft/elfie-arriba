@@ -254,11 +254,12 @@ namespace Arriba.Model
 
             // If the insert array matches types with the column then we can use the native type to do a direct assignment from the input array
             // to the column array.  If the types do not match, we need to fallback to object to allow the Value class to handle the type conversion
-            //ITypedAddOrUpdateWorker worker = NativeContainer.CreateTypedInstance<ITypedAddOrUpdateWorker>(typeof(AddOrUpdateWorker<>), idColumnDataType);
-            ITypedAddOrUpdateWorker worker = GetTypedWorker(idColumnDataType);
+            ITypedAddOrUpdateWorker worker = NativeContainer.CreateTypedInstance<ITypedAddOrUpdateWorker>(typeof(AddOrUpdateWorker<>), idColumnDataType);
 
             return worker.FindOrAssignLIDs(this, values, idColumnIndex, mode);
         }
+
+        private Value _cachedValue = Value.Create(null);
 
         private void FillPartitionColumn(DataBlock.ReadOnlyDataBlock values, int columnIndex, ushort[] itemLIDs)
         {
@@ -269,8 +270,7 @@ namespace Arriba.Model
 
             // If the insert array matches types with the column then we can use the native type to do a direct assignment from the input array
             // to the column array.  If the types do not match, we need to fallback to object to allow the Value class to handle the type conversion
-            //ITypedAddOrUpdateWorker worker = NativeContainer.CreateTypedInstance<ITypedAddOrUpdateWorker>(typeof(AddOrUpdateWorker<>), dataBlockColumnDataType);
-            ITypedAddOrUpdateWorker worker = GetTypedWorker(dataBlockColumnDataType);
+            ITypedAddOrUpdateWorker worker = NativeContainer.CreateTypedInstance<ITypedAddOrUpdateWorker>(typeof(AddOrUpdateWorker<>), dataBlockColumnDataType);
 
             worker.FillPartitionColumn(this, values, columnIndex, itemLIDs);
         }
@@ -292,9 +292,9 @@ namespace Arriba.Model
             {
                 // TODO: consider keeping one instance of the worker long term? if so, this becomes a private class field
                 ValueTypeReference<T> vtr = new ValueTypeReference<T>();
+                Value v = Value.Create(null);
 
                 ushort[] itemLIDs = new ushort[values.RowCount];
-                Value v = Value.Create(null);
                 int addCount = 0;
 
                 IUntypedColumn idColumn = p.Columns[p.IDColumn.Name];
@@ -580,24 +580,6 @@ namespace Arriba.Model
             {
                 this.DetailsByColumn[columnName].WriteBinary(context);
                 this.Columns[columnName].WriteBinary(context);
-            }
-        }
-        #endregion
-
-        #region Type Worker Cache
-        private static Dictionary<Type, ITypedAddOrUpdateWorker> _workerCache = new Dictionary<Type, ITypedAddOrUpdateWorker>();
-        private static ITypedAddOrUpdateWorker GetTypedWorker(Type type)
-        {
-            lock (_workerCache)
-            {
-                ITypedAddOrUpdateWorker instance;
-                if (_workerCache.TryGetValue(type, out instance) == false)
-                {
-                    instance = NativeContainer.CreateTypedInstance<ITypedAddOrUpdateWorker>(typeof(AddOrUpdateWorker<>), type);
-                    _workerCache.Add(type, instance);
-                }
-
-                return instance;
             }
         }
         #endregion
