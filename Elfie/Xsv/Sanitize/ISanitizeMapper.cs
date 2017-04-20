@@ -8,10 +8,9 @@
     {
         /// <summary>
         ///  Generate a sanitized value for a given hash.
-        ///  Value must be unique for every distinct hash value.
         /// </summary>
-        /// <param name="context">Context from which to generate result.</param>
-        /// <returns>Properly typed output unique to hash</returns>
-        string Generate(ISanitizeContext context);
+        /// <param name="hash">Hash value from which to generate result</param>
+        /// <returns>Output value of the type the mapper produces</returns>
+        string Generate(uint hash);
     }
 }

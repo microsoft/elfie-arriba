@@ -15,11 +15,11 @@ namespace Xsv.Sanitize
             this.TopWords = Resource.ReadAllStreamLines(@"Xsv.Sanitize.Data.TopWords.txt");
         }
 
-        public string Generate(ISanitizeContext context)
+        public string Generate(uint hash)
         {
             StringBuilder result = new StringBuilder();
 
-            uint hashRemaining = context.Hash;
+            uint hashRemaining = hash;
             while (hashRemaining > 0)
             {
                 int index = Uint.Extract(ref hashRemaining, this.TopWords.Length);

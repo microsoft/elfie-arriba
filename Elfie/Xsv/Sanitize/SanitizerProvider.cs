@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Diagnostics;
 using System.Reflection;
+using XsvConcat;
 
 namespace Xsv.Sanitize
 {
@@ -31,8 +32,12 @@ namespace Xsv.Sanitize
 
             // Register default mappers
             Mappers[string.Empty] = Mappers["Phrase"] = new PhraseMapper();
+            Mappers["Alias"] = new AliasMapper();
             Mappers["IP"] = new IpMapper();
+            Mappers["PersonName"] = new PersonNameMapper();
             Mappers["ComputerName"] = new ComputerNameMapper();
+            Mappers["Int"] = new IntMapper();
+            Mappers["Guid"] = new GuidMapper();
 
             // Register ISanitizeMappers from app.config
             foreach (string key in ConfigurationManager.AppSettings.AllKeys)
@@ -73,7 +78,9 @@ namespace Xsv.Sanitize
 
         public ISanitizeMapper Mapper(string name)
         {
-            return Mappers[name];
+            ISanitizeMapper result;
+            if (!Mappers.TryGetValue(name, out result)) throw new UsageException($"SanitizerProvider doesn't have a provider for '{name}'.");
+            return result;
         }
     }
 }

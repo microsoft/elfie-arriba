@@ -22,9 +22,9 @@ namespace Xsv.Sanitize
             if (middleNamesNeeded > this.FirstAndMiddleNames.Length) throw new InvalidOperationException("Name sources didn't contain enough unique values.");
         }
 
-        public string Generate(ISanitizeContext context)
+        public string Generate(uint hash)
         {
-            uint hashRemaining = context.Hash;
+            uint hashRemaining = hash;
 
             string last = this.LastNames[Uint.Extract(ref hashRemaining, this.LastNames.Length)];
             string first = this.FirstAndMiddleNames[Uint.Extract(ref hashRemaining, this.FirstAndMiddleNames.Length)];

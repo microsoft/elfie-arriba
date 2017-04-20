@@ -7,10 +7,10 @@ namespace Xsv.Sanitize
     /// </summary>
     public class IpMapper : ISanitizeMapper
     {
-        public string Generate(ISanitizeContext context)
+        public string Generate(uint hash)
         {
             StringBuilder result = new StringBuilder();
-            uint hashRemaining = context.Hash;
+            uint hashRemaining = hash;
 
             for (int i = 0; i < 4; ++i)
             {
