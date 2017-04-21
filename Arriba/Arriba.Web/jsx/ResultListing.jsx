@@ -106,7 +106,7 @@ export default React.createClass({
             }
 
             var sort = this.props.sortColumn === column.name
-                ? this.props.sortOrder === "asc" ? " ↓" : " ↑"
+                ? this.props.sortOrder === "asc" ? " ↑" : " ↓"
                 : "";
 
             columnCells.push(<td key={"heading_" + column.name} data-name={column.name} onClick={this.handleResort}><div className="commands">{commands}</div>{column.name}{sort}</td>);
