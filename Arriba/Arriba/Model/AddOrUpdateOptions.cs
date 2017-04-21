@@ -19,6 +19,8 @@
     /// </summary>
     public class AddOrUpdateOptions
     {
+        public static AddOrUpdateOptions Default = new AddOrUpdateOptions();
+
         /// <summary>
         ///  Mode determines what to do with items with new IDs.
         ///  By default, rows are added for items with new IDs.
