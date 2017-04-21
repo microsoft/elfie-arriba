@@ -28,7 +28,7 @@ namespace Arriba.Test.Model
                     new string[] { "Michael Fanning", "Ryley Taketa", "Scott Louvau"},
                     new string[] { "T1", "T1", "T2" },
                     new string[] { "G1; G2", "G1; G3", "G4" }
-                }).AsReadOnly(), new AddOrUpdateOptions() { AddMissingColumns = true });
+                }), new AddOrUpdateOptions() { AddMissingColumns = true });
 
             Table orders = db.AddTable("Orders", 1000);
             orders.AddOrUpdate(new DataBlock(new string[] { "OrderNumber", "OrderedByAlias" }, 6,
@@ -36,7 +36,7 @@ namespace Arriba.Test.Model
                 {
                     new string[] { "O1", "O2", "O3", "O4", "O5", "O6" },
                     new string[] { "mikefan", "mikefan", "rtaket", "v-scolo", "rtaket", "mikefan; rtaket" }
-                }).AsReadOnly(), new AddOrUpdateOptions() { AddMissingColumns = true });
+                }), new AddOrUpdateOptions() { AddMissingColumns = true });
 
             SelectResult result;
 

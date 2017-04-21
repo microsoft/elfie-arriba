@@ -291,111 +291,113 @@ namespace Arriba.Structures
         {
             return new ReadOnlyDataBlock(this);
         }
-    }
 
-    public struct ReadOnlyDataBlock
-    {
-        public ReadOnlyDataBlock(DataBlock block) : this(block, null, -1, -1)
+        public static implicit operator ReadOnlyDataBlock(DataBlock b)
         {
+            return b.AsReadOnly();
         }
-
-        private ReadOnlyDataBlock(DataBlock block, int[] itemIndexes, int startingIndex, int length)
+        
+        public struct ReadOnlyDataBlock
         {
-            if (block == null)
-                throw new ArgumentNullException("block");
-
-            if (itemIndexes != null)
+            public ReadOnlyDataBlock(DataBlock block) : this(block, null, -1, -1)
             {
-                if (itemIndexes.Length != block.RowCount) throw new ArgumentException("itemIndexes");
-                if (startingIndex >= itemIndexes.Length) throw new IndexOutOfRangeException("startingIndex");
-                if (startingIndex + length > itemIndexes.Length) throw new IndexOutOfRangeException("length");
             }
 
-            _block = block;
-            _itemIndexes = itemIndexes;
-            _startingIndex = startingIndex;
-
-            if (itemIndexes == null)
+            private ReadOnlyDataBlock(DataBlock block, int[] itemIndexes, int startingIndex, int length)
             {
-                RowCount = block.RowCount;
+                if (block == null)
+                    throw new ArgumentNullException("block");
+
+                if (itemIndexes != null)
+                {
+                    if (itemIndexes.Length != block.RowCount) throw new ArgumentException("itemIndexes");
+                    if (startingIndex >= itemIndexes.Length) throw new IndexOutOfRangeException("startingIndex");
+                    if (startingIndex + length > itemIndexes.Length) throw new IndexOutOfRangeException("length");
+                }
+
+                _block = block;
+                _itemIndexes = itemIndexes;
+                _startingIndex = startingIndex;
+
+                if (itemIndexes == null)
+                {
+                    RowCount = block.RowCount;
+                }
+                else if (startingIndex == -1)
+                {
+                    RowCount = 0;
+                }
+                else
+                {
+                    RowCount = length;
+                }
             }
-            else if (startingIndex == -1)
+
+            public IList<ColumnDetails> Columns { get { return _block.Columns; } }
+
+            public int ColumnCount { get { return _block.ColumnCount; } }
+
+            public int RowCount { get; private set; }
+
+            public object this[int rowIndex, int columnIndex]
             {
-                RowCount = 0;
+                get
+                {
+                    int realRowIndex = GetRealIndex(rowIndex);
+                    return _block[realRowIndex, columnIndex];
+                }
             }
-            else
-            {
-                RowCount = length;
-            }
-        }
 
-        public IList<ColumnDetails> Columns { get { return _block.Columns; } }
-
-        public int ColumnCount { get { return _block.ColumnCount; } }
-
-        public int RowCount { get; private set; }
-
-        public object this[int rowIndex, int columnIndex]
-        {
-            get
+            public object GetValue(int rowIndex, int columnIndex)
             {
                 int realRowIndex = GetRealIndex(rowIndex);
-                return _block[realRowIndex, columnIndex];
+                return _block.GetValue(realRowIndex, columnIndex);
             }
-        }
 
-        public object GetValue(int rowIndex, int columnIndex)
-        {
-            int realRowIndex = GetRealIndex(rowIndex);
-            return _block.GetValue(realRowIndex, columnIndex);
-        }
-
-        public int IndexOfColumn(string name)
-        {
-            return _block.IndexOfColumn(name);
-        }
-
-        internal IEnumerable<T> IterateColumn<T>(int columnIndex)
-        {
-            T[] array = (T[])_block.GetColumn(columnIndex);
-            for (int i = 0; i < RowCount; ++i)
+            public int IndexOfColumn(string name)
             {
-                int realRowIndex = GetRealIndex(i);
-                yield return array[realRowIndex];
+                return _block.IndexOfColumn(name);
             }
+
+            public T GetValueT<T>(int rowIndex, int columnIndex)
+            {
+                T[] array = (T[])_block._valuesByColumn[columnIndex];
+                int realRowIndex = GetRealIndex(rowIndex);
+                return array[realRowIndex];
+            }
+
+            internal Type GetTypeForColumn(int columnIndex)
+            {
+                Array sourceData = _block.GetColumn(columnIndex);
+                return sourceData.GetType().GetElementType();
+            }
+
+            internal Array GetColumn(int columnIndex)
+            {
+                if (_itemIndexes != null)
+                    throw new NotSupportedException("Getting a column array of a projection is not supported");
+
+                return _block.GetColumn(columnIndex);
+            }
+
+            internal ReadOnlyDataBlock ProjectChain(int[] itemIndexes, int startingIndex, int length)
+            {
+                return new ReadOnlyDataBlock(_block, itemIndexes, startingIndex, length);
+            }
+
+            private int GetRealIndex(int rowIndex)
+            {
+                if (_itemIndexes == null) { return rowIndex; }
+
+                if (rowIndex < 0 || rowIndex > RowCount)
+                    throw new ArgumentException("rowIndex");
+
+                return _itemIndexes[_startingIndex + rowIndex];
+            }
+
+            private int[] _itemIndexes;
+            private int _startingIndex;
+            private DataBlock _block;
         }
-
-        internal Type GetTypeForColumn(int columnIndex)
-        {
-            Array sourceData = _block.GetColumn(columnIndex);
-            return sourceData.GetType().GetElementType();
-        }
-
-        internal Array GetColumn(int columnIndex)
-        {
-            if (_itemIndexes != null)
-                throw new NotSupportedException("Getting a column array of a projection is not supported");
-
-            return _block.GetColumn(columnIndex);
-        }
-
-        internal ReadOnlyDataBlock ProjectChain(int[] itemIndexes, int startingIndex, int length)
-        {
-            return new ReadOnlyDataBlock(_block, itemIndexes, startingIndex, length);
-        }
-
-        private int GetRealIndex(int rowIndex)
-        {
-            if (_itemIndexes == null) { return rowIndex; }
-
-            if (rowIndex < 0 || rowIndex > RowCount)
-                throw new ArgumentException("rowIndex");
-
-            return _itemIndexes[_startingIndex + rowIndex];
-        }
-
-        private int[] _itemIndexes;
-        private int _startingIndex;
-        private DataBlock _block;
     }
 }

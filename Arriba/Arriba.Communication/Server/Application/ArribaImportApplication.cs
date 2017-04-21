@@ -77,7 +77,7 @@ namespace Arriba.Server.Application
                     foreach (var blockBatch in reader.ReadAsDataBlockBatch(BatchSize))
                     {
                         response.RowCount += blockBatch.RowCount;
-                        table.AddOrUpdate(blockBatch.AsReadOnly());
+                        table.AddOrUpdate(blockBatch);
                     }
                 }
             }
@@ -98,7 +98,7 @@ namespace Arriba.Server.Application
             using (ctx.Monitor(MonitorEventLevel.Information, "Import.DataBlock", type: "Table", identity: tableName))
             {
                 DataBlock block = await ctx.Request.ReadBodyAsync<DataBlock>();
-                table.AddOrUpdate(block.AsReadOnly());
+                table.AddOrUpdate(block);
 
                 ImportResponse response = new ImportResponse();
                 response.TableName = tableName;
@@ -183,7 +183,7 @@ namespace Arriba.Server.Application
                         }
                     }
 
-                    table.AddOrUpdate(block.AsReadOnly());
+                    table.AddOrUpdate(block);
                 }
 
                 using (ctx.Monitor(MonitorEventLevel.Verbose, "table.save"))

@@ -11,6 +11,7 @@ using Arriba.Model.Expressions;
 using Arriba.Model.Query;
 using Arriba.Serialization;
 using Arriba.Structures;
+using System.Collections.Concurrent;
 
 namespace Arriba.Model
 {
@@ -219,7 +220,7 @@ namespace Arriba.Model
         /// <param name="partitionChains">storage for the set of linked lists indicating which values are in each partition.  The index is the row number in values
         /// of the corresponding item.  The value is the next item in the chain with -1 indicating the end.</param>
         /// <param name="chainHead">starting index for the list of items that this partition should add</param>
-        public void AddOrUpdate(ReadOnlyDataBlock values, AddOrUpdateOptions options)
+        public void AddOrUpdate(DataBlock.ReadOnlyDataBlock values, AddOrUpdateOptions options)
         {
             int columnCount = values.ColumnCount;
             int idColumnIndex = values.IndexOfColumn(this.IDColumn.Name);
@@ -247,7 +248,7 @@ namespace Arriba.Model
             }
         }
 
-        private ushort[] FindOrAssignLIDs(ReadOnlyDataBlock values, int idColumnIndex, AddOrUpdateMode mode)
+        private ushort[] FindOrAssignLIDs(DataBlock.ReadOnlyDataBlock values, int idColumnIndex, AddOrUpdateMode mode)
         {
             Type idColumnDataType = values.GetTypeForColumn(idColumnIndex);
 
@@ -258,7 +259,9 @@ namespace Arriba.Model
             return worker.FindOrAssignLIDs(this, values, idColumnIndex, mode);
         }
 
-        private void FillPartitionColumn(ReadOnlyDataBlock values, int columnIndex, ushort[] itemLIDs)
+        private Value _cachedValue = Value.Create(null);
+
+        private void FillPartitionColumn(DataBlock.ReadOnlyDataBlock values, int columnIndex, ushort[] itemLIDs)
         {
             string columnName = values.Columns[columnIndex].Name;
             if (columnName.Equals(this.IDColumn.Name, StringComparison.OrdinalIgnoreCase)) return;
@@ -275,8 +278,8 @@ namespace Arriba.Model
 
         private interface ITypedAddOrUpdateWorker
         {
-            ushort[] FindOrAssignLIDs(Partition p, ReadOnlyDataBlock values, int idColumnIndex, AddOrUpdateMode mode);
-            void FillPartitionColumn(Partition p, ReadOnlyDataBlock values, int columnIndex, ushort[] itemLIDs);
+            ushort[] FindOrAssignLIDs(Partition p, DataBlock.ReadOnlyDataBlock values, int idColumnIndex, AddOrUpdateMode mode);
+            void FillPartitionColumn(Partition p, DataBlock.ReadOnlyDataBlock values, int columnIndex, ushort[] itemLIDs);
         }
 
         /// <summary>
@@ -285,13 +288,13 @@ namespace Arriba.Model
         /// <typeparam name="T">Type of the column array</typeparam>
         private class AddOrUpdateWorker<T> : ITypedAddOrUpdateWorker
         {
-            public ushort[] FindOrAssignLIDs(Partition p, ReadOnlyDataBlock values, int idColumnIndex, AddOrUpdateMode mode)
+            public ushort[] FindOrAssignLIDs(Partition p, DataBlock.ReadOnlyDataBlock values, int idColumnIndex, AddOrUpdateMode mode)
             {
                 // TODO: consider keeping one instance of the worker long term? if so, this becomes a private class field
                 ValueTypeReference<T> vtr = new ValueTypeReference<T>();
+                Value v = Value.Create(null);
 
                 ushort[] itemLIDs = new ushort[values.RowCount];
-                Value v = Value.Create(null);
                 int addCount = 0;
 
                 IUntypedColumn idColumn = p.Columns[p.IDColumn.Name];
@@ -302,11 +305,10 @@ namespace Arriba.Model
                     typedIdColumn = (IColumn<T>)idColumn.InnerColumn;
                 }
 
-                int index = 0;
-                foreach (T idValue in values.IterateColumn<T>(idColumnIndex))
+                for( int index = 0; index < values.RowCount; ++index)
                 {
                     // Look for the LIDs a
-                    T externalID = idValue;
+                    T externalID = values.GetValueT<T>(index, idColumnIndex);
                     if (typedIdColumn != null)
                     {
                         typedIdColumn.TryGetIndexOf(externalID, out itemLIDs[index]);
@@ -326,8 +328,6 @@ namespace Arriba.Model
                     {
                         throw new ArribaException(StringExtensions.Format("Item with ID '{0}', hash '{1:x}' incorrectly routed to Partition {2}.", externalID, idHash, p.Mask));
                     }
-
-                    index++;
                 }
 
                 // Go back and add the items which need to be added in a batch
@@ -335,9 +335,9 @@ namespace Arriba.Model
                 {
                     Dictionary<T, ushort> newlyAssignedLIDs = null;
 
-                    index = 0;
-                    foreach (T idValue in values.IterateColumn<T>(idColumnIndex))
+                    for (int index = 0; index < values.RowCount; ++index)
                     {
+                        T idValue = values.GetValueT<T>(index, idColumnIndex);
                         ushort lid = itemLIDs[index];
 
                         // If this is an add...
@@ -384,7 +384,6 @@ namespace Arriba.Model
                         }
 
                         itemLIDs[index] = lid;
-                        index++;
                     }
 
                     // Commit the updates to the values column if the column requires it (FastAddSortedColumn does)
@@ -394,7 +393,7 @@ namespace Arriba.Model
                 return itemLIDs;
             }
 
-            public void FillPartitionColumn(Partition p, ReadOnlyDataBlock values, int columnIndex, ushort[] itemLIDs)
+            public void FillPartitionColumn(Partition p, DataBlock.ReadOnlyDataBlock values, int columnIndex, ushort[] itemLIDs)
             {
                 string columnName = values.Columns[columnIndex].Name;
                 if (columnName.Equals(p.IDColumn.Name, StringComparison.OrdinalIgnoreCase)) return;
@@ -407,9 +406,9 @@ namespace Arriba.Model
                     typedColumn = (IColumn<T>)untypedColumn.InnerColumn;
                 }
 
-                int rowIndex = 0;
-                foreach (T value in values.IterateColumn<T>(columnIndex))
+                for( int rowIndex = 0; rowIndex < values.RowCount; ++rowIndex)
                 {
+                    T value = values.GetValueT<T>(rowIndex, columnIndex);
                     // If the item is new and no LID was assigned, we don't set values
                     if (itemLIDs[rowIndex] == ushort.MaxValue) continue;
                     try
@@ -428,7 +427,6 @@ namespace Arriba.Model
                         throw new ArribaWriteException(values[rowIndex, 0], columnName, value, ex);
                     }
 
-                    rowIndex++;
                 }
             }
         }
