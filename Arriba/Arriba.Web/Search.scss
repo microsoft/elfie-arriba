@@ -286,7 +286,7 @@ a:visited:hover {
     box-sizing: border-box;
     border: none;
     margin-right: 0px;
-    width: 100%;
+    flex: 1;
     padding: 8px;
     color: #666666;
     background: #F7F7F7;
@@ -299,6 +299,8 @@ a:visited:hover {
     background: #F7F7F7;
     padding: 8px;
     margin-left: 0px;
+
+    i { margin-left: 5px; }
 }
 
 /* The indefinite progress bar to when waiting for the server */

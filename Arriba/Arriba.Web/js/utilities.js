@@ -38,6 +38,12 @@ Number.prototype.clamp = function(min, max) {
     return Math.min(Math.max(this, min), max);
 };
 
+String.prototype.trimIf = function(prefix) {
+    return this.startsWith(prefix)
+        ? this.substring(prefix.length)
+        : this;
+}
+
 // Polyfill.
 Array.prototype.includes = Array.prototype.includes || function() {
     return Array.prototype.indexOf.apply(this, arguments) !== -1;
@@ -49,6 +55,15 @@ Array.prototype.find = Array.prototype.find || function(predicate) {
         var element = this[i];
         if (predicate.call(arguments[1], element, i, this)) return element;
     }
+};
+
+Array.prototype.remove = function(item) {
+    var i = this.indexOf(item);
+    if (i >= 0) return this.splice(i, 1)[0];
+};
+
+Array.prototype.toggle = function(item) {
+    this.includes(item) ? this.remove(item) : this.push(item);
 };
 
 Array.prototype.emptyToUndefined = function() {
