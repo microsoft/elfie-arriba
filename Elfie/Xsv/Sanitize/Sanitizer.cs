@@ -9,7 +9,7 @@ namespace Xsv.Sanitize
     public class Sanitizer
     {
         public ISanitizerProvider Provider { get; set; }
-        public int HashKeyHash { get; set; }
+        public uint HashKeyHash { get; set; }
         public string SpecFilePath { get; set; }
 
         public string SampleColumnName { get; set; }
@@ -22,7 +22,7 @@ namespace Xsv.Sanitize
         public Sanitizer(string specFilePath, string hashKey)
         {
             this.Provider = new SanitizerProvider();
-            this.HashKeyHash = hashKey.GetHashCode();
+            this.HashKeyHash = Hashing.Hash(String8.Convert(hashKey, new byte[String8.GetLength(hashKey)]), 0);
             this.SpecFilePath = specFilePath;
 
             // Track values to Echo. Empty string is always Echoed.
@@ -70,13 +70,16 @@ namespace Xsv.Sanitize
                             // Map,ColumnName,MapperName
                             this.HandlersByColumn.Add(columnName, new EchoColumnHandler(this.EchoValues, new MapColumnHandler(this.HashKeyHash, this.Provider.Mapper(r.Current(2).ToString()))));
                             break;
+                        case "keep":
+                            // Keep is the default behavior, so it is in the sanispec only as a comment
+                            break;
                         case "regex":
                             // Regex,ColumnName,Expression,MapperName
                             MapColumnHandler handler = new MapColumnHandler(this.HashKeyHash, this.Provider.Mapper(r.Current(3).ToString()));
                             this.HandlersByColumn.Add(columnName, new EchoColumnHandler(this.EchoValues, new RegexColumnHandler(r.Current(2).ToString(), handler)));
                             break;
                         default:
-                            throw new UsageException($"SanitizeSpec mode '{command}' is unknown. Supported modes: sample, echo, drop, map.");
+                            throw new UsageException($"SanitizeSpec mode '{command}' is unknown. Supported modes: sample, echo, drop, map, keep, regex.");
                     }
                 }
             }
@@ -130,7 +133,8 @@ namespace Xsv.Sanitize
                     {
                         if(sampleColumnIndex > -1)
                         {
-                            uint sampleValueHash = MapColumnHandler.Hash(reader.Current(sampleColumnIndex).ToString8(), 0);
+                            // Sample *without* the hashkey, so the same rows are consistently included or excluded.
+                            uint sampleValueHash = Hashing.Hash(reader.Current(sampleColumnIndex).ToString8(), 0);
                             if (sampleValueHash > sampleInclusionCutoff) continue;
                         }
 
