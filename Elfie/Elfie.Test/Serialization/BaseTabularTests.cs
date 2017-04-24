@@ -10,6 +10,7 @@ using Microsoft.CodeAnalysis.Elfie.Extensions;
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.CodeAnalysis.Elfie.Serialization;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Collections.Generic;
 
 namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
 {
@@ -38,6 +39,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
             Reader_Basics(sampleFilePath, buildReader);
             Reader_NewlineVariations(buildWriter, buildReader);
             Reader_Roundtrip(buildReader, buildWriter);
+            Reader_Roundtrip_NoHeader(buildReader, buildWriter);
 
 #if PERFORMANCE
             Reader_Performance(sampleFilePath, buildReader);
@@ -210,6 +212,46 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
                 {
                     writer.SetColumns(reader.Columns);
 
+                    while (reader.NextRow())
+                    {
+                        for (int i = 0; i < reader.CurrentRowColumns; ++i)
+                        {
+                            writer.Write(reader.Current(i).ToString8());
+                        }
+
+                        writer.NextRow();
+                    }
+                }
+            }
+
+            // Verify files are identical
+            string fileBefore = File.ReadAllText(filePath);
+            string fileAfter = File.ReadAllText(filePath + ".new");
+            Assert.AreEqual(fileBefore, fileAfter);
+        }
+
+        public void Reader_Roundtrip_NoHeader(Func<string, bool, ITabularReader> buildReader, Func<Stream, ITabularWriter> buildWriter)
+        {
+            string filePath = "ValidSample.xsv";
+
+            // Write a valid file with some values which require CSV escaping
+            WriteValidSample(new FileStream(filePath, FileMode.Create, FileAccess.ReadWrite), buildWriter);
+
+            // Direct Copy the file from the reader to the writer - every value unescaped and then escaped
+            using (ITabularReader reader = buildReader(filePath, false))
+            {
+                using (ITabularWriter writer = buildWriter(new FileStream(filePath + ".new", FileMode.Create, FileAccess.ReadWrite)))
+                {
+                    // Get first row and output as header
+                    reader.NextRow();
+                    List<string> firstRowValues = new List<string>();
+                    for(int i = 0; i < reader.CurrentRowColumns; ++i)
+                    {
+                        firstRowValues.Add(reader.Current(i).ToString());
+                    }
+                    writer.SetColumns(firstRowValues);
+
+                    // Copy remaining rows
                     while (reader.NextRow())
                     {
                         for (int i = 0; i < reader.CurrentRowColumns; ++i)
