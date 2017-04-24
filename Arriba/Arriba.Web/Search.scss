@@ -219,18 +219,17 @@ table thead th, table thead td {
     cursor: pointer;
     float: right;
     padding: 0px 2px;
-}
 
-/* Column controls which are links shouldn't be blue when visited */
-.icon-column-heading:visited {
-    color: #BBB;
-}
+    /* Column controls which are links shouldn't be blue when visited */
+    &:visited {
+        color: #BBB;
+    }
 
-/* Make column controls highlight slightly on mouseover. Don't underline ones which are links */
-.icon-column-heading:hover {
-    color: #999;
-
-    text-decoration: none;
+    /* Make column controls highlight slightly on mouseover. Don't underline ones which are links */
+    &:hover {
+        color: #999;
+        text-decoration: none;
+    }
 }
 
 /* Indicate things are clickable with the pointer (hand) mouse cursor and a hover color */
@@ -596,35 +595,35 @@ a:visited:hover {
 .details {
     background-color: white;
     padding: 12px;
-}
 
-/* Make commands float on the right side */
-.details .commands {
-    float: right;
-    font-size: 133%;
-}
+    /* Make commands float on the right side */
+    .commands {
+        float: right;
+        font-size: 133%;
+    }
 
-/* Space the commands out and make sure they're clickable */
-.details .commands * {
-    margin: 0px 4px;
-    cursor: pointer;
-}
+    /* Space the commands out and make sure they're clickable */
+    .commands * {
+        margin: 0px 4px;
+        cursor: pointer;
+    }
 
-/* Make the title large and share a line */
-.details .detailTitle {
-    display: inline-block;
-    font-size: 28px;
-}
+    /* Make the title large and share a line */
+    .detailTitle {
+        display: inline-block;
+        font-size: 28px;
+    }
 
-/* Make the detail boxes columns */
-.details .overviewBoxes {
-    margin-top: 16px;
-    display: flex;
-    flex-direction: row;
-}
+    /* Make the detail boxes columns */
+    .overviewBoxes {
+        margin-top: 16px;
+        display: flex;
+        flex-direction: row;
+    }
 
-.details .box {
-    flex: 1;
+    .box {
+        flex: 1;
+    }
 }
 
 /* Space the detail links from the text slightly */
