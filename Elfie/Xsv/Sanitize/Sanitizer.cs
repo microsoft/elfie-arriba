@@ -97,7 +97,7 @@ namespace Xsv.Sanitize
                 IColumnHandler handler;
                 if(this.DropColumns.Contains(columnName))
                 {
-                    handler = new DropColumnHandler();
+                    handler = null;
                 }
                 else
                 {
@@ -140,13 +140,32 @@ namespace Xsv.Sanitize
 
                         for(int i = 0; i < reader.CurrentRowColumns; ++i)
                         {
-                            handlers[i].Sanitize(reader.Current(i), writer);
+                            IColumnHandler handler = handlers[i];
+                            if (handler != null)
+                            {
+                                String8 value = reader.Current(i).ToString8();
+                                String8 replacement = handler.Sanitize(value);
+                                writer.Write(replacement);
+                            }
                         }
 
                         writer.NextRow();
                     }
                 }
             }
+        }
+
+        public string Translate(string value, string columnName)
+        {
+            IColumnHandler handler;
+
+            // If there's no handler, there's no re-mapping
+            if (!this.HandlersByColumn.TryGetValue(columnName, out handler)) return value;
+
+            // Convert and return the value
+            String8 value8 = String8.Convert(value, new byte[String8.GetLength(value)]);
+            String8 replacement = this.HandlersByColumn[columnName].Sanitize(value8);
+            return replacement.ToString();
         }
     }
 }

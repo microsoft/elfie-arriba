@@ -1,14 +1,14 @@
 ﻿using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.CodeAnalysis.Elfie.Serialization;
 using System.Collections.Generic;
+using System.Text;
 using System.Text.RegularExpressions;
-using System;
 
 namespace Xsv.Sanitize
 {
     public interface IColumnHandler
     {
-        void Sanitize(ITabularValue value, ITabularWriter writer);
+        String8 Sanitize(String8 value);
     }
 
     /// <summary>
@@ -16,21 +16,10 @@ namespace Xsv.Sanitize
     /// </summary>
     public class KeepColumnHandler : IColumnHandler
     {
-        public void Sanitize(ITabularValue value, ITabularWriter writer)
+        public String8 Sanitize(String8 value)
         {
             // Write the value as-is
-            writer.Write(value.ToString8());
-        }
-    }
-
-    /// <summary>
-    ///  DropColumnHandler excludes a column from the output.
-    /// </summary>
-    public class DropColumnHandler : IColumnHandler
-    {
-        public void Sanitize(ITabularValue value, ITabularWriter writer)
-        {
-            // Don't output the column at all
+            return value;
         }
     }
 
@@ -50,19 +39,11 @@ namespace Xsv.Sanitize
             this.Block = new String8Block();
         }
 
-        public string Sanitize(ITabularValue value)
+        public String8 Sanitize(String8 value)
         {
-            uint hash = Hashing.Hash(value.ToString8(), this.HashKeyHash);
-            return this.Mapper.Generate(hash);
-        }
-
-        public void Sanitize(ITabularValue value, ITabularWriter writer)
-        {
-            string sanitized = Sanitize(value);
-            writer.Write(this.Block.GetCopy(sanitized));
-
-            // Clear the String8Block space to reuse
             this.Block.Clear();
+            uint hash = Hashing.Hash(value, this.HashKeyHash);
+            return this.Block.GetCopy(this.Mapper.Generate(hash));
         }
     }
 
@@ -80,17 +61,10 @@ namespace Xsv.Sanitize
             this.Inner = inner;
         }
 
-        public void Sanitize(ITabularValue value, ITabularWriter writer)
+        public String8 Sanitize(String8 value)
         {
-            String8 value8 = value.ToString8();
-            if (this.EchoValues.Contains(value8))
-            {
-                writer.Write(value8);
-            }
-            else
-            {
-                this.Inner.Sanitize(value, writer);
-            }
+            if (this.EchoValues.Contains(value)) return value;
+            return this.Inner.Sanitize(value);
         }
     }
 
@@ -103,7 +77,6 @@ namespace Xsv.Sanitize
         private MapColumnHandler Inner { get; set; }
 
         private String8Block Block { get; set; }
-        private ObjectTabularValue ValueWrapper { get; set; }
 
         public RegexColumnHandler(string regex, MapColumnHandler inner)
         {
@@ -112,14 +85,14 @@ namespace Xsv.Sanitize
             this.Inner = inner;
 
             this.Block = new String8Block();
-            this.ValueWrapper = new ObjectTabularValue(this.Block);
         }
 
-        public void Sanitize(ITabularValue valueTV, ITabularWriter writer)
+        public String8 Sanitize(String8 value8)
         {
-            writer.WriteValueStart();
+            this.Block.Clear();
+            StringBuilder result = new StringBuilder();
 
-            string value = valueTV.ToString();
+            string value = value8.ToString();
             int nextIndexToWrite = 0;
 
             foreach (Match m in this.Regex.Matches(value))
@@ -129,14 +102,11 @@ namespace Xsv.Sanitize
                 if (m.Groups.Count > 1) g = m.Groups[1];
 
                 // Write content before this match
-                writer.WriteValuePart(this.Block.GetCopy(value.Substring(nextIndexToWrite, g.Index - nextIndexToWrite)));
+                result.Append(value.Substring(nextIndexToWrite, g.Index - nextIndexToWrite));
 
                 // Convert and write the match
-                this.ValueWrapper.SetValue(g.Value);
-                writer.WriteValuePart(this.Block.GetCopy(this.Inner.Sanitize(this.ValueWrapper)));
-
-                // Clear the Block (so we don't keep allocating)
-                this.Block.Clear();
+                String8 part = this.Inner.Sanitize(this.Block.GetCopy(g.Value));
+                result.Append(part.ToString());
 
                 // Set the next non-match we need to write
                 nextIndexToWrite = g.Index + g.Length;
@@ -145,11 +115,10 @@ namespace Xsv.Sanitize
             // Write anything after the last match
             if(nextIndexToWrite < value.Length)
             {
-                writer.WriteValuePart(this.Block.GetCopy(value.Substring(nextIndexToWrite)));
-                this.Block.Clear();
+                result.Append(value.Substring(nextIndexToWrite));
             }
 
-            writer.WriteValueEnd();
+            return this.Block.GetCopy(result.ToString());
         }
     }
 }
