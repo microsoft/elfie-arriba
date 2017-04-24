@@ -6,7 +6,7 @@
 // SearchHeader contains the top bar - branching, the search box, and top-level buttons
 export default React.createClass({
     getInitialState: function () {
-        return { suggestions: [], sel: 0, completed: "", completionCharacters: [] };   
+        return { suggestions: [], sel: 0, completed: "", completionCharacters: [], favs: localStorage.getJson("favorites") || [] };   
     },
     componentDidMount: function () {
         searchBox.focus();
@@ -47,7 +47,8 @@ export default React.createClass({
         }
         if (e.key === "Enter" || this.state.completionCharacters.includes(e.key)) {
             var suffix = (e.key === "Enter" || e.key === "Tab" || e.key === " ") ? "" : e.key;
-            var newQuery = this.state.completed + this.state.suggestions[this.state.sel].completeAs + " " + suffix;
+            var item = this.state.suggestions[this.state.sel];
+            var newQuery = item.replaceAs || (this.state.completed + item.completeAs + " " + suffix);
             this.setQuery(newQuery);
             e.preventDefault(); // Suppress focus tabbing.
         }
@@ -56,7 +57,7 @@ export default React.createClass({
         }
     },
     handleClickSuggestion: function (item) {
-        this.setQuery(this.state.completed + item.completeAs + " ");
+        this.setQuery(item.replaceAs || this.state.completed + item.completeAs + " ");
         searchBox.focus();
     },
     setQuery: function (query) {
@@ -66,8 +67,18 @@ export default React.createClass({
         this.lastRequest = jsonQuery(
             configuration.url + "/suggest?q=" + encodeURIComponent(query),
             data => {
+                var favs = this.state.favs
+                    .filter(fav => 
+                        this.props.query.length < fav.length &&
+                        fav.toUpperCase().trimIf("[").startsWith(this.props.query.toUpperCase().trimIf("["))
+                    ).map(fav => ({
+                        display: fav,
+                        hint: "\u2605",
+                        replaceAs: fav
+                    }));
+
                 this.setState({
-                    suggestions: data.content.suggestions,
+                    suggestions: favs.concat(data.content.suggestions),
                     sel: 0,
                     completed: data.content.complete, 
                     completionCharacters: data.content.completionCharacters.map(c => ({ "\t": "Tab" })[c] || c),
@@ -75,6 +86,12 @@ export default React.createClass({
             },
             (xhr, status, err) => console.error(xhr.url, status, err.toString())
         );
+    },
+    toggleFavorite: function () {
+        if (!this.props.query) return;
+
+        this.state.favs.toggle(this.props.query.trim());
+        localStorage.setJson("favorites", this.state.favs);
     },
     render: function () {
         var tables = this.props.tables || [];
@@ -84,7 +101,7 @@ export default React.createClass({
                 {this.state.suggestions.map((item, index) =>
                     <div className={"suggestion " + (this.state.sel == index ? "suggestion-sel" : "" )}
                         onClick={ this.handleClickSuggestion.bind(this, item) }>
-                        <span><span style={{opacity: 0.3}}>{this.state.completed}</span>{item.display}</span>
+                        <span><span style={{opacity: 0.3}}>{item.replaceAs ? "" : this.state.completed}</span>{item.display}</span>
                         <span className="suggestion-hint">{item.hint}</span>
                     </div>
                 )}
@@ -105,6 +122,7 @@ export default React.createClass({
                             onKeyDown={this.handleKeyDown} onClick={this.handleClick} 
                             onFocus={this.handleFocusOrBlur} onBlur={this.handleFocusOrBlur}/>
                         <div className="searchIcon">
+                            <i className={this.state.favs.includes(this.props.query.trim()) ? "icon-solid-star" : "icon-outlined-star"} onClick={this.toggleFavorite}></i>
                             <i className="icon-find"></i>
                         </div>
                         {suggestions}
