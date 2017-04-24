@@ -22,7 +22,7 @@ namespace Xsv.Sanitize
             uint hashRemaining = hash;
             while (hashRemaining > 0)
             {
-                int index = Uint.Extract(ref hashRemaining, this.TopWords.Length);
+                int index = Hashing.Extract(ref hashRemaining, this.TopWords.Length);
                 string word = this.TopWords[index];
                 result.Append(Char.ToUpper(word[0]));
                 result.Append(word.Substring(1));

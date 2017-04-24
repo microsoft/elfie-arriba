@@ -42,7 +42,7 @@ namespace Xsv.Sanitize
             // Register ISanitizeMappers from app.config
             foreach (string key in ConfigurationManager.AppSettings.AllKeys)
             {
-                if (key.StartsWith("ISanitizerMapper", StringComparison.OrdinalIgnoreCase))
+                if (key.StartsWith("ISanitizeMapper", StringComparison.OrdinalIgnoreCase))
                 {
                     string[] settings = ConfigurationManager.AppSettings[key].Split(';');
                     ISanitizeMapper instance = Construct(key, settings[1], settings[2]);
@@ -73,7 +73,7 @@ namespace Xsv.Sanitize
                 return null;
             }
 
-            return (ISanitizeMapper)ctor.Invoke(new object[0]);
+            return ctor.Invoke(new object[0]) as ISanitizeMapper;
         }
 
         public ISanitizeMapper Mapper(string name)
@@ -81,6 +81,11 @@ namespace Xsv.Sanitize
             ISanitizeMapper result;
             if (!Mappers.TryGetValue(name, out result)) throw new UsageException($"SanitizerProvider doesn't have a provider for '{name}'.");
             return result;
+        }
+
+        public ICollection<string> MapperTypes()
+        {
+            return Mappers.Keys;
         }
     }
 }

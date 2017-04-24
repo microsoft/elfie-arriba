@@ -13,7 +13,7 @@ using System.Runtime.Serialization;
 
 namespace XsvConcat
 {
-    internal class Program
+    public class Program
     {
         private const string Usage =
 @"Usage: Xsv <mode> <inputFile> <outputFile> [<options>]
@@ -39,7 +39,7 @@ namespace XsvConcat
      Makes safe sample data from sensitive data by remapping values.
             ";
 
-        private static int Main(string[] args)
+        public static int Main(string[] args)
         {
             Trace.Listeners.Add(new ConsoleTraceListener());
 

@@ -15,7 +15,7 @@ namespace Xsv.Sanitize
             for (int i = 0; i < 4; ++i)
             {
                 if (i > 0) result.Append(".");
-                result.Append(Uint.Extract(ref hashRemaining, 256));
+                result.Append(Hashing.Extract(ref hashRemaining, 256));
             }
 
             return result.ToString();

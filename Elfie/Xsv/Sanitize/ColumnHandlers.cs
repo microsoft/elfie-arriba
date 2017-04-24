@@ -39,11 +39,11 @@ namespace Xsv.Sanitize
     /// </summary>
     public class MapColumnHandler : IColumnHandler
     {
-        private int HashKeyHash { get; set; }
+        private uint HashKeyHash { get; set; }
         private ISanitizeMapper Mapper { get; set; }
         private String8Block Block { get; set; }
 
-        public MapColumnHandler(int hashKeyHash, ISanitizeMapper mapper)
+        public MapColumnHandler(uint hashKeyHash, ISanitizeMapper mapper)
         {
             this.HashKeyHash = hashKeyHash;
             this.Mapper = mapper;
@@ -52,7 +52,7 @@ namespace Xsv.Sanitize
 
         public string Sanitize(ITabularValue value)
         {
-            uint hash = Hash(value.ToString8(), this.HashKeyHash);
+            uint hash = Hashing.Hash(value.ToString8(), this.HashKeyHash);
             return this.Mapper.Generate(hash);
         }
 
@@ -63,11 +63,6 @@ namespace Xsv.Sanitize
 
             // Clear the String8Block space to reuse
             this.Block.Clear();
-        }
-
-        public static uint Hash(object value, int hashKeyHash)
-        {
-            return (uint)((value.GetHashCode() ^ hashKeyHash).GetHashCode());
         }
     }
 

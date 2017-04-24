@@ -1,0 +1,7 @@
+ID,Path,Owner,IsEmptyPath,IsUnderXsv
+1,Elfie\Xsv\Sanitize,Bill,false,true
+2,Elfie\Xsv\Sanitize\Data,Bill,false,true
+3,,Bill,true,false
+4,,Fred,true,false
+5,Elfie,Fred,false,false
+6,Elfie\Xsv,Fred,false,true

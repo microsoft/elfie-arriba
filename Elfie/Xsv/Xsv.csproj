@@ -58,7 +58,7 @@
     <Compile Include="Sanitize\Resource.cs" />
     <Compile Include="Sanitize\Sanitizer.cs" />
     <Compile Include="Sanitize\SanitizerProvider.cs" />
-    <Compile Include="Sanitize\Uint.cs" />
+    <Compile Include="Sanitize\Hashing.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

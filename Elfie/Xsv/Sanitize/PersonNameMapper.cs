@@ -26,11 +26,12 @@ namespace Xsv.Sanitize
         {
             uint hashRemaining = hash;
 
-            string last = this.LastNames[Uint.Extract(ref hashRemaining, this.LastNames.Length)];
-            string first = this.FirstAndMiddleNames[Uint.Extract(ref hashRemaining, this.FirstAndMiddleNames.Length)];
-            string middle = this.FirstAndMiddleNames[Uint.Extract(ref hashRemaining, this.FirstAndMiddleNames.Length)];
+            string last = this.LastNames[Hashing.Extract(ref hashRemaining, this.LastNames.Length)];
+            string first = this.FirstAndMiddleNames[Hashing.Extract(ref hashRemaining, this.FirstAndMiddleNames.Length)];
+            string middle = this.FirstAndMiddleNames[Hashing.Extract(ref hashRemaining, this.FirstAndMiddleNames.Length)];
 
-            return $"{first} {middle} {last}";
+            string result = $"{first} {middle} {last}";
+            return result;
         }
     }
 }

@@ -19,7 +19,7 @@ namespace Xsv.Sanitize
 
             while(hashRemaining > 0)
             {
-                result.Append((char)('A' + Uint.Extract(ref hashRemaining, 26)));
+                result.Append((char)('A' + Hashing.Extract(ref hashRemaining, 26)));
             }
 
             return result.ToString();

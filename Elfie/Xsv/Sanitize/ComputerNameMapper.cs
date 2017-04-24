@@ -23,17 +23,17 @@ namespace Xsv.Sanitize
             // Acronym
             for (int i = 0; i < 3; ++i)
             {
-                result.Append((char)('a' + Uint.Extract(ref hashRemaining, 26)));
+                result.Append((char)('a' + Hashing.Extract(ref hashRemaining, 26)));
             }
 
             // -?
-            if (Uint.Extract(ref hashRemaining, 2) == 1) result.Append("-");
+            if (Hashing.Extract(ref hashRemaining, 2) == 1) result.Append("-");
 
             // Word
-            result.Append(this.ComputerNameWords[Uint.Extract(ref hashRemaining, this.ComputerNameWords.Length)]);
+            result.Append(this.ComputerNameWords[Hashing.Extract(ref hashRemaining, this.ComputerNameWords.Length)]);
 
             // -?
-            if (Uint.Extract(ref hashRemaining, 2) == 1) result.Append("-");
+            if (Hashing.Extract(ref hashRemaining, 2) == 1) result.Append("-");
 
             // Number Suffix
             result.Append(hashRemaining);
