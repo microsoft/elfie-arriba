@@ -9,6 +9,14 @@
     - All ancestors of the scrolling element must have "overflow: hidden" to coerce the main element into scrolling [Edge]
 */
 
+/* --- Mixins --- */
+
+@mixin ellipsis {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
 /* --- Overall Layout --- */
 
 /* Make all root elements full height/width, unpadded, and non-scrolling */
@@ -349,10 +357,7 @@ a:visited:hover {
 .queryStats {
     padding: 6px;
     background: #E3E3E3;
-    
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
+    @include ellipsis;
 }
 
 /* Make the per-table buttons dark grey and spaced out */
@@ -542,9 +547,7 @@ a:visited:hover {
     min-width: 120px;
     max-width: 400px;
 
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
+    @include ellipsis;
 }
 
 /* Make the selected listing row white on color, bold */
@@ -661,9 +664,7 @@ a:visited:hover {
 .grid table td div {
     padding: 8px 8px;
 
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
+    @include ellipsis;
 
     transition: all 0.15s ease-in;
     transition-delay: 0s;
@@ -689,9 +690,7 @@ a:visited:hover {
     min-width: 125px;
     max-width: 125px;
 
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
+    @include ellipsis;
 }
 
 /* Allow *Row* heading divs to be wider */
