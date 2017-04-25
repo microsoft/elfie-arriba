@@ -13,6 +13,13 @@ export default React.createClass({
     handleScroll: function (e) {
         var element = e.target;
         if (e.target === this.refs.scrollContainer) {
+            // Need to re-find the cells each event just in case the columns changed.
+            // Selecting td/th instead of thead for IE/Edge compat.
+            var cells = [].slice.apply(this.refs.scrollContainer.querySelectorAll("thead > tr > *"));
+
+            // Position relative works equally well.
+            cells.forEach(cell => cell.style.transform = "translate(0," + element.scrollTop + "px)");
+
             var pixelsFromBottom = (element.scrollHeight - element.clientHeight - element.scrollTop);
 
             if (pixelsFromBottom < 200) {
