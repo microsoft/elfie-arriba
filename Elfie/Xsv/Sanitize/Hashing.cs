@@ -5,6 +5,7 @@ namespace Xsv.Sanitize
 {
     public static class Hashing
     {
+        private static HashAlgorithm hasher;
         private static byte[] buffer;
 
         /// <summary>
@@ -31,6 +32,7 @@ namespace Xsv.Sanitize
         /// <returns>uint of hash result</returns>
         public static uint Hash(String8 value, uint hashKeyHash)
         {
+            if (hasher == null) hasher = SHA256Managed.Create();
             if (buffer == null || buffer.Length < value.Length + 4) buffer = new byte[value.Length + 4];
 
             buffer[0] = (byte)(hashKeyHash & 0xFF);
@@ -39,9 +41,7 @@ namespace Xsv.Sanitize
             buffer[3] = (byte)((hashKeyHash >> 24) & 0xFF);
             value.WriteTo(buffer, 4);
 
-            HashAlgorithm hasher = SHA256Managed.Create();
             byte[] hash = hasher.ComputeHash(buffer, 0, value.Length + 4);
-
             uint result = (uint)((hash[0] << 24) + (hash[1] << 16) + (hash[2] << 8) + hash[3]);
             return result;
         }
