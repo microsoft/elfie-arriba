@@ -427,15 +427,22 @@ namespace Arriba.Test.Model
             table.VerifyConsistency(VerificationLevel.Full, details);
             Assert.IsTrue(details.Succeeded);
 
-            // Select top 3 bugs with Priority = 3 and ID <= 12000, order by ID
             SelectQuery query = new SelectQuery();
+            SelectResult result;
+
+            // Select top 3 bugs with Priority = 3 and ID <= 12000, order by ID
             query.Columns = new string[] { "ID", "Priority" };
             query.Count = 3;
             query.Where = SelectQuery.ParseWhere("Priority = 3 AND ID <= 12000");
-            SelectResult result = table.Query(query);
+            result = table.Query(query);
             Assert.AreEqual(2, (int)result.Total);
             Assert.AreEqual("11999", result.Values[0, 0].ToString());
             Assert.AreEqual("11643", result.Values[1, 0].ToString());
+
+            // Select top 3 bugs with Priority = 3 and ID <= 12000, order by IsDuplicate (a bool without Sort information)
+            query.OrderByColumn = "IsDuplicate";
+            result = table.Query(query);
+            Assert.AreEqual(2, (int)result.Total);
 
             // Ask for only one item; verify one returned, total still correct
             query.Count = 1;

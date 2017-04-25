@@ -232,7 +232,7 @@ namespace Arriba.Model.Query
                 // Get all LIDs in sorted order
                 IList<ushort> sortedIndexes;
                 int sortedIndexesCount;
-                column.TryGetSortedIndexes(out sortedIndexes, out sortedIndexesCount);
+                if (!column.TryGetSortedIndexes(out sortedIndexes, out sortedIndexesCount)) throw new ArribaException(String.Format("Unable to sort by non-sorted column {0}", column.Name));
 
                 int uniqueValuesCount = 0;
                 T prevValue = default(T);
