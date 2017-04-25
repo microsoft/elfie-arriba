@@ -56,7 +56,7 @@
     <Compile Include="Sanitize\AliasMapper.cs" />
     <Compile Include="Sanitize\PersonNameMapper.cs" />
     <Compile Include="Sanitize\PhraseMapper.cs" />
-    <Compile Include="Sanitize\Resource.cs" />
+    <Compile Include="Resource.cs" />
     <Compile Include="Sanitize\Sanitizer.cs" />
     <Compile Include="Sanitize\SanitizerProvider.cs" />
     <Compile Include="Sanitize\Hashing.cs" />

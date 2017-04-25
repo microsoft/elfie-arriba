@@ -21,24 +21,24 @@ namespace XsvConcat
      Copy the input to the output (to convert format).
      Pass comma delimited column names to copy only specific columns.
 
-   Xsv concat <input> <output>:
+    Xsv concat <input> <output>:
      Concatenate values by the first column value, excluding duplicates.
      Input must be sorted by the first column to concatenate.
 
-  Xsv notStartsWith <input> <output> <valueColumnIndexOrName> <nameColumnIndexOrName>:
+    Xsv notStartsWith <input> <output> <valueColumnIndexOrName> <nameColumnIndexOrName>:
      Copy the input, excluding rows where row[valueIndex].StartsWith(row[nameIndex]).
 
-  Xsv compare <oldInputPath> <newInputPath> <output> <columnIndexOrName>
+    Xsv compare <oldInputPath> <newInputPath> <output> <columnIndexOrName>
      Compare the set of values for the column between the two inputs and write the differences.
 
-  Xsv onlyIn <input> <output> <onlyInFilePath> <onlyInColumnIdentifier>
+    Xsv onlyIn <input> <output> <onlyInFilePath> <onlyInColumnIdentifier>
      Copy rows from input to output if the 'onlyInColumnIdentifier' was also found in 'onlyInFilePath'.
 
-  Xsv sanitize <input> <output> <specFile> <hashKey>
+    Xsv sanitize <input> <output> <specFile> <hashKey>
      Sanitize (re-map identifying values) from input to output using specFile rules.
      Makes safe sample data from sensitive data by remapping values.
 
-  Xsv sanitizeValue <value> <columnName> <specFile> <hashKey>
+    Xsv sanitizeValue <value> <columnName> <specFile> <hashKey>
      Translate a single value from a given column. Used to map values to allow
      investigations on sanitized data.
 
