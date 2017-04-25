@@ -31,8 +31,8 @@ var SearchMain = React.createClass({
         if (table) {
             localStorage.updateJson("table-" + table, Object.clean({
                 columns: columns.emptyToUndefined(),
-                sortColumn: this.props.params.ob,
-                sortOrder: this.props.params.so
+                sortColumn: this.props.params.ob || undefined, // Filter out empty strings.
+                sortOrder: this.props.params.so || undefined
             }));
         }
 
