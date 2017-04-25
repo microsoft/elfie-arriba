@@ -66,12 +66,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-    <None Include="Sanitize\SanitizeSampleSource.csv">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Sanitize\SanitizeSampleSource.sanispec">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
+    <EmbeddedResource Include="Sanitize\SanitizeSampleSource.csv" />
+    <EmbeddedResource Include="Sanitize\SanitizeSampleSource.sanispec" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

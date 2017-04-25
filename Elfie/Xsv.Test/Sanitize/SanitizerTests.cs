@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using Xsv.Sanitize;
 using XsvConcat;
 
@@ -105,12 +106,16 @@ namespace Xsv.Test
         [TestMethod]
         public void Sanitize_EndToEnd()
         {
+            Assembly xsvTest = Assembly.GetExecutingAssembly();
+            Resource.SaveStreamTo("Xsv.Test.Sanitize.SanitizeSampleSource.csv", "SanitizeSampleSource.csv", xsvTest);
+            Resource.SaveStreamTo("Xsv.Test.Sanitize.SanitizeSampleSource.sanispec", "SanitizeSampleSource.sanispec", xsvTest);
+
             // Verify UsageException if no key is passed
-            Assert.AreEqual(-2, Program.Main(new string[] { "sanitize", @"Sanitize\SanitizeSampleSource.csv", "SanitizeOutput.csv", @"Sanitize\SanitizeSampleSource.sanispec" }));
+            Assert.AreEqual(-2, Program.Main(new string[] { "sanitize", @"SanitizeSampleSource.csv", "SanitizeOutput.csv", @"SanitizeSampleSource.sanispec" }));
 
             // Verify success for base sanitize
             File.Delete("SanitizeOutput.csv");
-            Assert.AreEqual(0, Program.Main(new string[] { "sanitize", @"Sanitize\SanitizeSampleSource.csv", "SanitizeOutput.csv", @"Sanitize\SanitizeSampleSource.sanispec", "Key1" }));
+            Assert.AreEqual(0, Program.Main(new string[] { "sanitize", @"SanitizeSampleSource.csv", "SanitizeOutput.csv", @"SanitizeSampleSource.sanispec", "Key1" }));
 
             // Validate the result
             using (ITabularReader r = TabularFactory.BuildReader("SanitizeOutput.csv"))
@@ -145,7 +150,7 @@ namespace Xsv.Test
             }
 
             // Run with another key
-            Assert.AreEqual(0, Program.Main(new string[] { "sanitize", @"Sanitize\SanitizeSampleSource.csv", "SanitizeOutput2.csv", @"Sanitize\SanitizeSampleSource.sanispec", "Key2" }));
+            Assert.AreEqual(0, Program.Main(new string[] { "sanitize", @"SanitizeSampleSource.csv", "SanitizeOutput2.csv", @"SanitizeSampleSource.sanispec", "Key2" }));
 
             // Verify mappings are different
             Assert.AreNotEqual(File.ReadAllText("SanitizeOutput2.csv"), File.ReadAllText("SanitizeOutput.csv"));
