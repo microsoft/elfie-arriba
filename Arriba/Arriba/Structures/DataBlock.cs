@@ -282,5 +282,122 @@ namespace Arriba.Structures
 
             this.RowCount = count;
         }
+
+        /// <summary>
+        /// Returns a read-only projection of this datablock
+        /// </summary>
+        /// <returns>this datablock wrapped as a readonly projection</returns>
+        public ReadOnlyDataBlock AsReadOnly()
+        {
+            return new ReadOnlyDataBlock(this);
+        }
+
+        public static implicit operator ReadOnlyDataBlock(DataBlock b)
+        {
+            return b.AsReadOnly();
+        }
+        
+        public struct ReadOnlyDataBlock
+        {
+            public ReadOnlyDataBlock(DataBlock block) : this(block, null, -1, -1)
+            {
+            }
+
+            private ReadOnlyDataBlock(DataBlock block, int[] itemIndexes, int startingIndex, int length)
+            {
+                if (block == null)
+                    throw new ArgumentNullException("block");
+
+                if (itemIndexes != null)
+                {
+                    if (itemIndexes.Length != block.RowCount) throw new ArgumentException("itemIndexes");
+                    if (startingIndex >= itemIndexes.Length) throw new IndexOutOfRangeException("startingIndex");
+                    if (startingIndex + length > itemIndexes.Length) throw new IndexOutOfRangeException("length");
+                }
+
+                _block = block;
+                _itemIndexes = itemIndexes;
+                _startingIndex = startingIndex;
+
+                if (itemIndexes == null)
+                {
+                    RowCount = block.RowCount;
+                }
+                else if (startingIndex == -1)
+                {
+                    RowCount = 0;
+                }
+                else
+                {
+                    RowCount = length;
+                }
+            }
+
+            public IList<ColumnDetails> Columns { get { return _block.Columns; } }
+
+            public int ColumnCount { get { return _block.ColumnCount; } }
+
+            public int RowCount { get; private set; }
+
+            public object this[int rowIndex, int columnIndex]
+            {
+                get
+                {
+                    int realRowIndex = GetRealIndex(rowIndex);
+                    return _block[realRowIndex, columnIndex];
+                }
+            }
+
+            public object GetValue(int rowIndex, int columnIndex)
+            {
+                int realRowIndex = GetRealIndex(rowIndex);
+                return _block.GetValue(realRowIndex, columnIndex);
+            }
+
+            public int IndexOfColumn(string name)
+            {
+                return _block.IndexOfColumn(name);
+            }
+
+            public T GetValueT<T>(int rowIndex, int columnIndex)
+            {
+                T[] array = (T[])_block._valuesByColumn[columnIndex];
+                int realRowIndex = GetRealIndex(rowIndex);
+                return array[realRowIndex];
+            }
+
+            internal Type GetTypeForColumn(int columnIndex)
+            {
+                Array sourceData = _block.GetColumn(columnIndex);
+                return sourceData.GetType().GetElementType();
+            }
+
+            internal Array GetColumn(int columnIndex)
+            {
+                if (_itemIndexes != null)
+                    throw new NotSupportedException("Getting a column array of a projection is not supported");
+
+                return _block.GetColumn(columnIndex);
+            }
+
+            internal ReadOnlyDataBlock ProjectChain(int[] itemIndexes, int startingIndex, int length)
+            {
+                return new ReadOnlyDataBlock(_block, itemIndexes, startingIndex, length);
+            }
+
+            private int GetRealIndex(int rowIndex)
+            {
+                if (_itemIndexes == null) { return rowIndex; }
+
+                if (rowIndex < 0 || rowIndex > RowCount)
+                    throw new ArgumentException("rowIndex");
+
+                return _itemIndexes[_startingIndex + rowIndex];
+            }
+
+            private int[] _itemIndexes;
+            private int _startingIndex;
+            private DataBlock _block;
+        }
     }
 }
