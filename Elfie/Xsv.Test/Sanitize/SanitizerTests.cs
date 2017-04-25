@@ -91,13 +91,13 @@ namespace Xsv.Test
             Random r = new Random(0);
             HashSet<uint> hashes = new HashSet<uint>();
             HashSet<string> results = new HashSet<string>();
-            for(int i = 0; i < 10000; ++i)
+            while(hashes.Count < 10000)
             {
                 // If the hash isn't a duplicate, verify the result isn't either
                 uint hash = (uint)r.Next();
                 if (hashes.Add(hash))
                 {
-                    Assert.IsTrue(results.Add(mapper.Generate(hash)), $"Mapper {mapper.GetType().Name} produced collision for {i}.");
+                    Assert.IsTrue(results.Add(mapper.Generate(hash)), $"Mapper {mapper.GetType().Name} produced collision for {hash}.");
                 }
             }
         }
