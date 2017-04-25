@@ -84,12 +84,12 @@ export default React.createClass({
 
             // Non-ID column commands
             if (column.name !== idColumn) {
-                // Remove button
-                commands.push(<div key={"remove_" + column.name} data-column={column.name} className="icon-cancel icon-column-heading" title="Remove Column" onClick={this.handleRemoveColumn} />);
-
                 // Add 'Pivot to Grid' URL
                 var gridUrl = "Grid.html" + buildUrlParameters({ q: content.query.where, t: content.query.tableName, R1: column.name + ">" });
                 commands.push(<a href={gridUrl} className="icon-view-all-albums icon-column-heading" title={"Grid By " + column.name } />);
+
+                // Remove button
+                commands.push(<div key={"remove_" + column.name} data-column={column.name} className="icon-cancel icon-column-heading" title="Remove Column" onClick={this.handleRemoveColumn} />);
             }
 
             // Last column
@@ -109,7 +109,13 @@ export default React.createClass({
                 ? this.props.sortOrder === "asc" ? " ↓" : " ↑"
                 : "";
 
-            columnCells.push(<td key={"heading_" + column.name} data-name={column.name} onClick={this.handleResort}><div className="commands">{commands}</div>{column.name}{sort}</td>);
+            // Extra element div.th-inner because display:flex cannot be applied to td as td is already display:table.
+            columnCells.push(<td key={"heading_" + column.name} data-name={column.name} onClick={this.handleResort}>
+                <div className="th-inner">
+                    <span className="th-title">{column.name}{sort}</span>
+                    {commands}
+                </div>
+            </td>);
         }
 
         // Write a row for each item
