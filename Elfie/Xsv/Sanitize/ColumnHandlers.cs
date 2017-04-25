@@ -6,6 +6,11 @@ using System.Text.RegularExpressions;
 
 namespace Xsv.Sanitize
 {
+    /// <summary>
+    ///  IColumnHandlers map known values from the source file to a value to write.
+    ///  This is less generic than ISanitizeMapper, but this level of abstraction
+    ///  allows echo, keep, regex.
+    /// </summary>
     public interface IColumnHandler
     {
         String8 Sanitize(String8 value);

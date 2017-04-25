@@ -115,13 +115,20 @@ namespace Xsv.Sanitize
             return handlers;
         }
 
+        /// <summary>
+        ///  Sanitize an input file into a given output file using this Sanitizer's configuration.
+        /// </summary>
+        /// <param name="inputFile">File Path to input file</param>
+        /// <param name="outputFile">File Path to output file</param>
         public void Sanitize(string inputFile, string outputFile)
         {
             using (ITabularReader reader = TabularFactory.BuildReader(inputFile))
             {
+                // Build an array of what we'll do with each input column, and the list of columns we'll actually write
                 List<string> columnsToOutput;
                 IColumnHandler[] handlers = GetHandlersByColumnIndex(reader.Columns, out columnsToOutput);
 
+                // Find the sample column index, if any, and calculate a hash cutoff for including rows
                 int sampleColumnIndex = (String.IsNullOrEmpty(this.SampleColumnName) ? -1 : reader.ColumnIndex(this.SampleColumnName));
                 uint sampleInclusionCutoff = (uint)(uint.MaxValue * this.SampleProbability);
 
@@ -131,6 +138,7 @@ namespace Xsv.Sanitize
 
                     while(reader.NextRow())
                     {
+                        // If there's a sample column, decide whether to include this row
                         if(sampleColumnIndex > -1)
                         {
                             // Sample *without* the hashkey, so the same rows are consistently included or excluded.
@@ -138,6 +146,7 @@ namespace Xsv.Sanitize
                             if (sampleValueHash > sampleInclusionCutoff) continue;
                         }
 
+                        // Run the handler for every input column, writing the output if there is one
                         for(int i = 0; i < reader.CurrentRowColumns; ++i)
                         {
                             IColumnHandler handler = handlers[i];
@@ -155,12 +164,20 @@ namespace Xsv.Sanitize
             }
         }
 
+        /// <summary>
+        ///  Translate a single literal value to the sanitized form, given the value
+        ///  and which column it is from. Uses the mapper configured for the column in
+        ///  the spec file.
+        /// </summary>
+        /// <param name="value">Value to convert</param>
+        /// <param name="columnName">ColumnName value is from</param>
+        /// <returns>Sanitized version of value</returns>
         public string Translate(string value, string columnName)
         {
             IColumnHandler handler;
 
             // If there's no handler, there's no re-mapping
-            if (!this.HandlersByColumn.TryGetValue(columnName, out handler)) return value;
+            if (!this.HandlersByColumn.TryGetValue(columnName, out handler)) handler = new KeepColumnHandler();
 
             // Convert and return the value
             String8 value8 = String8.Convert(value, new byte[String8.GetLength(value)]);
