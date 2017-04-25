@@ -9,6 +9,14 @@
     - All ancestors of the scrolling element must have "overflow: hidden" to coerce the main element into scrolling [Edge]
 */
 
+/* --- Mixins --- */
+
+@mixin ellipsis {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
 /* --- Overall Layout --- */
 
 /* Make all root elements full height/width, unpadded, and non-scrolling */
@@ -219,18 +227,17 @@ table thead th, table thead td {
     cursor: pointer;
     float: right;
     padding: 0px 2px;
-}
 
-/* Column controls which are links shouldn't be blue when visited */
-.icon-column-heading:visited {
-    color: #BBB;
-}
+    /* Column controls which are links shouldn't be blue when visited */
+    &:visited {
+        color: #BBB;
+    }
 
-/* Make column controls highlight slightly on mouseover. Don't underline ones which are links */
-.icon-column-heading:hover {
-    color: #999;
-
-    text-decoration: none;
+    /* Make column controls highlight slightly on mouseover. Don't underline ones which are links */
+    &:hover {
+        color: #999;
+        text-decoration: none;
+    }
 }
 
 /* Indicate things are clickable with the pointer (hand) mouse cursor and a hover color */
@@ -350,10 +357,7 @@ a:visited:hover {
 .queryStats {
     padding: 6px;
     background: #E3E3E3;
-    
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
+    @include ellipsis;
 }
 
 /* Make the per-table buttons dark grey and spaced out */
@@ -526,9 +530,46 @@ a:visited:hover {
 
 /* --- Listing UX --- */
 
+/* So far only used within the context of the resultTable. */
+@mixin border-collapse($border-color, $border-width: 1px, $border-style: solid) {
+    border-collapse: separate;
+    border-spacing: 0;
+
+    thead td, thead th {
+        border-top: $border-width $border-style $border-color;
+    }
+    td {
+        border-color: $border-color;
+        border-width: 0 $border-width $border-width 0;
+        &:first-child { border-left-width: $border-width; }
+    }
+}
+
 /* Make the result listing take the full available width */
 .resultTable {
     width: 100%;
+
+    // Manually create the effect for border-collapse to enable frozen headers.
+    // Otherwise the borders won't stick to the frozen headers.
+    @include border-collapse(#ccc);
+
+    // Special-casing td so items (ex: AddCol) can be attached to it.
+    thead td {
+        overflow: visible; // Undo.
+
+        & > .th-inner {
+            display: flex;
+
+            & > :first-child { // Typically the title.
+                flex: 1;
+                @include ellipsis;
+            }
+
+            .icon-column-heading {
+                float: none; // Undo.
+            }
+        }
+    }
 }
 
 /* Show that table rows are all clickable (to open details) */
@@ -539,13 +580,8 @@ a:visited:hover {
 /* Make listing table slightly more padded, ellipse on overflow */
 .resultTable td {
     padding: 6px;
-
-    min-width: 120px;
-    max-width: 400px;
-
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
+    max-width: 400px; // Acts like min-width.
+    @include ellipsis;
 }
 
 /* Make the selected listing row white on color, bold */
@@ -596,35 +632,35 @@ a:visited:hover {
 .details {
     background-color: white;
     padding: 12px;
-}
 
-/* Make commands float on the right side */
-.details .commands {
-    float: right;
-    font-size: 133%;
-}
+    /* Make commands float on the right side */
+    .commands {
+        float: right;
+        font-size: 133%;
+    }
 
-/* Space the commands out and make sure they're clickable */
-.details .commands * {
-    margin: 0px 4px;
-    cursor: pointer;
-}
+    /* Space the commands out and make sure they're clickable */
+    .commands * {
+        margin: 0px 4px;
+        cursor: pointer;
+    }
 
-/* Make the title large and share a line */
-.details .detailTitle {
-    display: inline-block;
-    font-size: 28px;
-}
+    /* Make the title large and share a line */
+    .detailTitle {
+        display: inline-block;
+        font-size: 28px;
+    }
 
-/* Make the detail boxes columns */
-.details .overviewBoxes {
-    margin-top: 16px;
-    display: flex;
-    flex-direction: row;
-}
+    /* Make the detail boxes columns */
+    .overviewBoxes {
+        margin-top: 16px;
+        display: flex;
+        flex-direction: row;
+    }
 
-.details .box {
-    flex: 1;
+    .box {
+        flex: 1;
+    }
 }
 
 /* Space the detail links from the text slightly */
@@ -662,9 +698,7 @@ a:visited:hover {
 .grid table td div {
     padding: 8px 8px;
 
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
+    @include ellipsis;
 
     transition: all 0.15s ease-in;
     transition-delay: 0s;
@@ -690,9 +724,7 @@ a:visited:hover {
     min-width: 125px;
     max-width: 125px;
 
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
+    @include ellipsis;
 }
 
 /* Allow *Row* heading divs to be wider */
