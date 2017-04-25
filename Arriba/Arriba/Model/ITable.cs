@@ -59,7 +59,7 @@ namespace Arriba.Model
         ///  For each item, the value for each column is set to the provided values.
         /// </summary>
         /// <param name="values">Set of Columns and values to add or update</param>
-        void AddOrUpdate(DataBlock values, AddOrUpdateOptions options);
+        void AddOrUpdate(DataBlock.ReadOnlyDataBlock values, AddOrUpdateOptions options);
 
         /// <summary>
         ///  Delete items from this Table which meet the provided criteria.
