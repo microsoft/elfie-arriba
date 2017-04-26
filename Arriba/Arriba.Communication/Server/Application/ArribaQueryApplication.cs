@@ -70,8 +70,8 @@ namespace Arriba.Server
             Table table = this.Database[tableName];
             SelectResult result = null;
 
-            // If this is RSS, just get the ID column
-            if(String.Equals(outputFormat, "rss", StringComparison.OrdinalIgnoreCase))
+            // If no columns were requested or this is RSS, get only the ID column
+            if(query.Columns == null || query.Columns.Count == 0 || String.Equals(outputFormat, "rss", StringComparison.OrdinalIgnoreCase))
             {
                 query.Columns = new string[] { table.IDColumn.Name };
             }
@@ -92,8 +92,12 @@ namespace Arriba.Server
                 result = this.Database.Query(wrappedQuery, (si) => this.IsInIdentity(ctx.Request.User, si));
             }
 
-            // Is this a CSV request? 
-            if (String.Equals(outputFormat, "csv", StringComparison.OrdinalIgnoreCase))
+            // Format the result in the return format
+            if(String.IsNullOrEmpty(outputFormat))
+            {
+                // No problem - default return format
+            }
+            else if (String.Equals(outputFormat, "csv", StringComparison.OrdinalIgnoreCase))
             {
                 // Do we want to include headers? 
                 bool includeHeaders = !String.Equals(ctx.Request.ResourceParameters["h"], "false", StringComparison.OrdinalIgnoreCase);
@@ -107,6 +111,10 @@ namespace Arriba.Server
             else if(String.Equals(outputFormat, "rss", StringComparison.OrdinalIgnoreCase))
             {
                 return ToRssResponse(result, "", query.TableName + ": " + query.Where, ctx.Request.ResourceParameters["iURL"]);
+            }
+            else
+            {
+                throw new ArgumentException($"OutputFormat [fmt] passed, '{outputFormat}', was invalid.");
             }
 
             // Regular, serialize result object 
@@ -128,15 +136,13 @@ namespace Arriba.Server
             query.Columns = ReadParameterSet(ctx.Request, "c", "cols");
 
             string take = ctx.Request.ResourceParameters["t"];
-            if (!String.IsNullOrEmpty(take))
-            {
-                query.Count = UInt16.Parse(take);
-            }
+            if (!String.IsNullOrEmpty(take)) query.Count = UInt16.Parse(take);
 
             string sortOrder = ctx.Request.ResourceParameters["so"];
             if (!String.IsNullOrEmpty(sortOrder))
             {
                 query.OrderByDescending = sortOrder.Equals("desc", StringComparison.OrdinalIgnoreCase);
+                if (!query.OrderByDescending && !sortOrder.Equals("asc", StringComparison.OrdinalIgnoreCase)) throw new ArgumentException($"SortOrder [so] passed, '{sortOrder}' was not 'asc' or 'desc'.");
             }
 
             string highlightString = ctx.Request.ResourceParameters["h"];
@@ -145,11 +151,7 @@ namespace Arriba.Server
             if (!String.IsNullOrEmpty(highlightString))
             {
                 // Set the end highlight string to the start highlight string if it is not set. 
-                if (String.IsNullOrEmpty(highlightStringEnd))
-                {
-                    highlightStringEnd = highlightString;
-                }
-
+                if (String.IsNullOrEmpty(highlightStringEnd)) highlightStringEnd = highlightString;
                 query.Highlighter = new Highlighter(highlightString, highlightStringEnd);
             }
 
@@ -472,7 +474,7 @@ namespace Arriba.Server
                 return await ctx.Request.ReadBodyAsync<AggregationQuery>();
             }
 
-            string aggregationFunction = ctx.Request.ResourceParameters["a"];
+            string aggregationFunction = ctx.Request.ResourceParameters["a"] ?? "count";
             string columnName = ctx.Request.ResourceParameters["col"];
             string queryString = ctx.Request.ResourceParameters["q"];
 
@@ -517,6 +519,7 @@ namespace Arriba.Server
 
             DistinctQuery query = new DistinctQuery();
             query.Column = ctx.Request.ResourceParameters["col"];
+            if (String.IsNullOrEmpty(query.Column)) throw new ArgumentException("Distinct Column [col] must be passed.");
 
             string queryString = ctx.Request.ResourceParameters["q"];
             using (ctx.Monitor(MonitorEventLevel.Verbose, "Arriba.ParseQuery", String.IsNullOrEmpty(queryString) ? "<none>" : queryString))
@@ -525,10 +528,7 @@ namespace Arriba.Server
             }
 
             string take = ctx.Request.ResourceParameters["t"];
-            if (!String.IsNullOrEmpty(take))
-            {
-                query.Count = UInt16.Parse(take);
-            }
+            if (!String.IsNullOrEmpty(take)) query.Count = UInt16.Parse(take);
 
             return query;
         }
