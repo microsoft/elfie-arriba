@@ -110,7 +110,7 @@ export default React.createClass({
         return (
             <div className="header theme-background-medium">
                 <div className="title font-light theme-background-vdark">
-                    <a href="/">{configuration.toolName}</a>
+                    <a href="/Search.html">{configuration.toolName}</a>
                 </div>
 
                 <div className="searchBarAndButtons">
