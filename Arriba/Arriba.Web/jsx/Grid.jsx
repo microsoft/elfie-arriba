@@ -336,8 +336,9 @@ var GridMain = React.createClass({
         };
     },
     componentDidMount: function () {
-        if (this.props.params.p) {
-            this.selectDefaultQuery(this.props.params.p);
+        var defaultQuery = (this.props.params.p === "default" ? configuration.gridDefault : this.props.params.p);
+        if (defaultQuery) {
+            this.selectDefaultQuery(defaultQuery);
         } else {
             this.runSearch();
         }
@@ -349,8 +350,9 @@ var GridMain = React.createClass({
     selectDefaultQuery: function(name) {
         var query = this.props.gridDefaultQueries[name];
         if (query) {
-            this.setState(this.getClearedUserSelections());
-            this.setState(query, this.runSearch);
+            var state = this.getClearedUserSelections();
+            Object.assign(state, query);
+            this.setState(state, this.runSearch);
         }
     },
     handleChangeAggregation: function(aggregationFunction, aggregateColumn) {
@@ -480,9 +482,8 @@ var GridMain = React.createClass({
                     var dimensions = data.content.query.dimensions;
                     var dimensionIndex = 0;
 
-                    if (this.state.rows && this.state.rows.length === 1) {
-                        var lastRow = this.state.rows[0];
-                        if (lastRow.indexOf(">") === lastRow.length - 1) {
+                    if (this.state.rows && this.state.rows.length > 0) {
+                        if(this.state.rows.length === 1 && this.state.rows[0].endsWith(">")) {
                             state.rows = (dimensions[dimensionIndex] ? dimensions[dimensionIndex].groupByWhere : []);
                             state.rowLabels = [];
                         }
@@ -490,9 +491,8 @@ var GridMain = React.createClass({
                         dimensionIndex++;
                     }
 
-                    if (this.state.cols && this.state.cols.length === 1) {
-                        var lastColumn = this.state.cols[0];
-                        if (lastColumn.indexOf(">") === lastColumn.length - 1) {
+                    if (this.state.cols && this.state.cols.length > 0) {
+                        if(this.state.cols.length === 1 && this.state.cols[0].endsWith(">")) {
                             state.cols = (dimensions[dimensionIndex] ? dimensions[dimensionIndex].groupByWhere : []);
                             state.colLabels = [];
                         }
@@ -649,7 +649,7 @@ var GridMain = React.createClass({
             );
         }
 
-        var listingUrl = "/" + buildUrlParameters({ t: this.state.currentTable, q: this.state.query });
+        var listingUrl = "/Search.html" + buildUrlParameters({ t: this.state.currentTable, q: this.state.query });
 
         return (
             <div className={"viewport " + configuration.theme} onKeyDown={this.handleKeyDown}>
