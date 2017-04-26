@@ -364,7 +364,7 @@ var SearchMain = React.createClass({
         var csvUrl = queryUrl + "&fmt=csv&t=50000";
 
         var gridUrl = "/Grid.html" + buildUrlParameters({ t: this.state.currentTable, q: this.state.query });
-        if (!this.state.query) gridUrl = "/Grid.html?p=Scorecard";
+        if (!this.state.query) gridUrl = "/Grid.html?p=default";
 
         return (
             <div className={"viewport " + configuration.theme} onKeyDown={this.handleKeyDown}>

@@ -70,8 +70,8 @@ namespace Arriba.Server
             Table table = this.Database[tableName];
             SelectResult result = null;
 
-            // If this is RSS, just get the ID column
-            if(String.Equals(outputFormat, "rss", StringComparison.OrdinalIgnoreCase))
+            // If no columns were requested or this is RSS, get only the ID column
+            if(query.Columns == null || query.Columns.Count == 0 || String.Equals(outputFormat, "rss", StringComparison.OrdinalIgnoreCase))
             {
                 query.Columns = new string[] { table.IDColumn.Name };
             }
@@ -92,25 +92,19 @@ namespace Arriba.Server
                 result = this.Database.Query(wrappedQuery, (si) => this.IsInIdentity(ctx.Request.User, si));
             }
 
-            // Is this a CSV request? 
-            if (String.Equals(outputFormat, "csv", StringComparison.OrdinalIgnoreCase))
+            // Format the result in the return format
+            switch((outputFormat ?? "").ToLowerInvariant())
             {
-                // Do we want to include headers? 
-                bool includeHeaders = !String.Equals(ctx.Request.ResourceParameters["h"], "false", StringComparison.OrdinalIgnoreCase);
-
-                // Generate a filename of {TableName}-{Ticks}.csv
-                var fileName = String.Format("{0}-{1:yyyyMMdd}.csv", tableName, DateTime.Now);
-
-                // Stream datablock to CSV result
-                return ToCsvResponse(result, fileName);
+                case "":
+                case "json":
+                    return ArribaResponse.Ok(result);
+                case "csv":
+                    return ToCsvResponse(result, $"{tableName}-{DateTime.Now:yyyyMMdd}.csv");
+                case "rss":
+                    return ToRssResponse(result, "", query.TableName + ": " + query.Where, ctx.Request.ResourceParameters["iURL"]);
+                default:
+                    throw new ArgumentException($"OutputFormat [fmt] passed, '{outputFormat}', was invalid.");
             }
-            else if(String.Equals(outputFormat, "rss", StringComparison.OrdinalIgnoreCase))
-            {
-                return ToRssResponse(result, "", query.TableName + ": " + query.Where, ctx.Request.ResourceParameters["iURL"]);
-            }
-
-            // Regular, serialize result object 
-            return ArribaResponse.Ok(result);
         }
 
         private async static Task<SelectQuery> SelectQueryFromRequest(Database db, IRequestContext ctx)
@@ -128,29 +122,27 @@ namespace Arriba.Server
             query.Columns = ReadParameterSet(ctx.Request, "c", "cols");
 
             string take = ctx.Request.ResourceParameters["t"];
-            if (!String.IsNullOrEmpty(take))
-            {
-                query.Count = UInt16.Parse(take);
-            }
+            if (!String.IsNullOrEmpty(take)) query.Count = UInt16.Parse(take);
 
-            string sortOrder = ctx.Request.ResourceParameters["so"];
-            if (!String.IsNullOrEmpty(sortOrder))
+            string sortOrder = ctx.Request.ResourceParameters["so"] ?? "";
+            switch(sortOrder.ToLowerInvariant())
             {
-                query.OrderByDescending = sortOrder.Equals("desc", StringComparison.OrdinalIgnoreCase);
+                case "":
+                case "asc":
+                    query.OrderByDescending = false;
+                    break;
+                case "desc":
+                    query.OrderByDescending = true;
+                    break;
+                default:
+                    throw new ArgumentException($"SortOrder [so] passed, '{sortOrder}' was not 'asc' or 'desc'.");
             }
 
             string highlightString = ctx.Request.ResourceParameters["h"];
-            string highlightStringEnd = ctx.Request.ResourceParameters["h2"];
-
             if (!String.IsNullOrEmpty(highlightString))
             {
                 // Set the end highlight string to the start highlight string if it is not set. 
-                if (String.IsNullOrEmpty(highlightStringEnd))
-                {
-                    highlightStringEnd = highlightString;
-                }
-
-                query.Highlighter = new Highlighter(highlightString, highlightStringEnd);
+                query.Highlighter = new Highlighter(highlightString, ctx.Request.ResourceParameters["h2"] ?? highlightString);
             }
 
             return query;
@@ -472,7 +464,7 @@ namespace Arriba.Server
                 return await ctx.Request.ReadBodyAsync<AggregationQuery>();
             }
 
-            string aggregationFunction = ctx.Request.ResourceParameters["a"];
+            string aggregationFunction = ctx.Request.ResourceParameters["a"] ?? "count";
             string columnName = ctx.Request.ResourceParameters["col"];
             string queryString = ctx.Request.ResourceParameters["q"];
 
@@ -517,6 +509,7 @@ namespace Arriba.Server
 
             DistinctQuery query = new DistinctQuery();
             query.Column = ctx.Request.ResourceParameters["col"];
+            if (String.IsNullOrEmpty(query.Column)) throw new ArgumentException("Distinct Column [col] must be passed.");
 
             string queryString = ctx.Request.ResourceParameters["q"];
             using (ctx.Monitor(MonitorEventLevel.Verbose, "Arriba.ParseQuery", String.IsNullOrEmpty(queryString) ? "<none>" : queryString))
@@ -525,10 +518,7 @@ namespace Arriba.Server
             }
 
             string take = ctx.Request.ResourceParameters["t"];
-            if (!String.IsNullOrEmpty(take))
-            {
-                query.Count = UInt16.Parse(take);
-            }
+            if (!String.IsNullOrEmpty(take)) query.Count = UInt16.Parse(take);
 
             return query;
         }
