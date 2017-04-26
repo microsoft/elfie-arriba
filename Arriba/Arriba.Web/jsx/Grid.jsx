@@ -348,12 +348,7 @@ var GridMain = React.createClass({
         this.selectDefaultQuery(name);
     },
     selectDefaultQuery: function(name) {
-        var query = this.props.gridDefaultQueries[name];
-        if (query) {
-            var state = this.getClearedUserSelections();
-            Object.assign(state, query);
-            this.setState(state, this.runSearch);
-        }
+        this.setState(Object.assign(this.getClearedUserSelections(), this.props.gridDefaultQueries[name]), this.runSearch);
     },
     handleChangeAggregation: function(aggregationFunction, aggregateColumn) {
         this.setState({ aggregationFunction: aggregationFunction, aggregateColumn: aggregateColumn, userSelectedTable: this.state.currentTable }, this.runSearch);

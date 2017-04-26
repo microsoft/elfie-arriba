@@ -93,32 +93,18 @@ namespace Arriba.Server
             }
 
             // Format the result in the return format
-            if(String.IsNullOrEmpty(outputFormat))
+            switch((outputFormat ?? "").ToLowerInvariant())
             {
-                // No problem - default return format
+                case "":
+                case "json":
+                    return ArribaResponse.Ok(result);
+                case "csv":
+                    return ToCsvResponse(result, $"{tableName}-{DateTime.Now:yyyyMMdd}.csv");
+                case "rss":
+                    return ToRssResponse(result, "", query.TableName + ": " + query.Where, ctx.Request.ResourceParameters["iURL"]);
+                default:
+                    throw new ArgumentException($"OutputFormat [fmt] passed, '{outputFormat}', was invalid.");
             }
-            else if (String.Equals(outputFormat, "csv", StringComparison.OrdinalIgnoreCase))
-            {
-                // Do we want to include headers? 
-                bool includeHeaders = !String.Equals(ctx.Request.ResourceParameters["h"], "false", StringComparison.OrdinalIgnoreCase);
-
-                // Generate a filename of {TableName}-{Ticks}.csv
-                var fileName = String.Format("{0}-{1:yyyyMMdd}.csv", tableName, DateTime.Now);
-
-                // Stream datablock to CSV result
-                return ToCsvResponse(result, fileName);
-            }
-            else if(String.Equals(outputFormat, "rss", StringComparison.OrdinalIgnoreCase))
-            {
-                return ToRssResponse(result, "", query.TableName + ": " + query.Where, ctx.Request.ResourceParameters["iURL"]);
-            }
-            else
-            {
-                throw new ArgumentException($"OutputFormat [fmt] passed, '{outputFormat}', was invalid.");
-            }
-
-            // Regular, serialize result object 
-            return ArribaResponse.Ok(result);
         }
 
         private async static Task<SelectQuery> SelectQueryFromRequest(Database db, IRequestContext ctx)
@@ -138,21 +124,25 @@ namespace Arriba.Server
             string take = ctx.Request.ResourceParameters["t"];
             if (!String.IsNullOrEmpty(take)) query.Count = UInt16.Parse(take);
 
-            string sortOrder = ctx.Request.ResourceParameters["so"];
-            if (!String.IsNullOrEmpty(sortOrder))
+            string sortOrder = ctx.Request.ResourceParameters["so"] ?? "";
+            switch(sortOrder.ToLowerInvariant())
             {
-                query.OrderByDescending = sortOrder.Equals("desc", StringComparison.OrdinalIgnoreCase);
-                if (!query.OrderByDescending && !sortOrder.Equals("asc", StringComparison.OrdinalIgnoreCase)) throw new ArgumentException($"SortOrder [so] passed, '{sortOrder}' was not 'asc' or 'desc'.");
+                case "":
+                case "asc":
+                    query.OrderByDescending = false;
+                    break;
+                case "desc":
+                    query.OrderByDescending = true;
+                    break;
+                default:
+                    throw new ArgumentException($"SortOrder [so] passed, '{sortOrder}' was not 'asc' or 'desc'.");
             }
 
             string highlightString = ctx.Request.ResourceParameters["h"];
-            string highlightStringEnd = ctx.Request.ResourceParameters["h2"];
-
             if (!String.IsNullOrEmpty(highlightString))
             {
                 // Set the end highlight string to the start highlight string if it is not set. 
-                if (String.IsNullOrEmpty(highlightStringEnd)) highlightStringEnd = highlightString;
-                query.Highlighter = new Highlighter(highlightString, highlightStringEnd);
+                query.Highlighter = new Highlighter(highlightString, ctx.Request.ResourceParameters["h2"] ?? highlightString);
             }
 
             return query;
