@@ -228,14 +228,14 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         /// <returns>String8 with the value of this string starting at index</returns>
         public String8 Substring(int index)
         {
-            // Length Default: Return rest of string
-            int length = _length - index;
+            // Verify index non-negative
+            if (index < 0 || index > _length) throw new ArgumentOutOfRangeException("index");
 
-            // Verify in bounds
-            if (length < 0) throw new ArgumentOutOfRangeException("length");
+            // If index is zero, return the same instance
+            if (index == 0) return this;
 
             // Build a substring tied to the same buffer
-            return new String8(_buffer, _index + index, length);
+            return new String8(_buffer, _index + index, _length - index);
         }
 
         /// <summary>
@@ -248,7 +248,8 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         public String8 Substring(int index, int length)
         {
             // Verify in bounds
-            if (index + length > _length) throw new ArgumentOutOfRangeException("length");
+            if (index < 0) throw new ArgumentOutOfRangeException("index");
+            if (length < 0 || index + length > _length) throw new ArgumentOutOfRangeException("length");
 
             // Build a substring tied to the same buffer
             return new String8(_buffer, _index + index, length);
@@ -337,22 +338,22 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             result = false;
             if (IsEmpty()) return false;
 
-            if(this.CompareTo("true", true) == 0)
+            if (this.CompareTo("true", true) == 0)
             {
                 result = true;
                 return true;
             }
-            else if(this.CompareTo("false", true) == 0)
+            else if (this.CompareTo("false", true) == 0)
             {
                 result = false;
                 return true;
             }
-            else if(this.CompareTo("1", false) == 0)
+            else if (this.CompareTo("1", false) == 0)
             {
                 result = true;
                 return true;
             }
-            else if(this.CompareTo("0", false) == 0)
+            else if (this.CompareTo("0", false) == 0)
             {
                 result = false;
                 return true;
@@ -447,7 +448,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             if (buffer.Length + index < requiredLength) throw new ArgumentException("String8.FromInteger requires an 11 byte buffer for integer conversion.");
 
             // Write minus sign if negative
-            if(isNegative) buffer[index++] = (byte)'-';
+            if (isNegative) buffer[index++] = (byte)'-';
 
             // Write digits right to left
             for (int j = index + digits - 1; j >= index; --j)
@@ -482,7 +483,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             FromInteger(value.Day, buffer, index + 8, 2);
 
             // Thh:mm:ssZ
-            if(value.TimeOfDay > TimeSpan.Zero)
+            if (value.TimeOfDay > TimeSpan.Zero)
             {
                 length = 20;
 
@@ -554,8 +555,8 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
 
             // Construct DateTime to avoid failures due to days being out of range (leap year and month length)
             result = new DateTime(year, month, 1, hour, minute, second, DateTimeKind.Utc);
-            if(day > 1) result = result.AddDays(day - 1);
-            
+            if (day > 1) result = result.AddDays(day - 1);
+
             // Return false for invalid leap days
             if (result.Month != month) return false;
 
