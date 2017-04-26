@@ -26,6 +26,7 @@
         },
 
         // Grid: Pre-defined Grid queries
+        /* gridDefault: "<NameOfDefaultPredefinedQuery>", */
         gridDefaultQueries: {
             "Clear": {},
             /*"<PredefinedQueryName>": {
