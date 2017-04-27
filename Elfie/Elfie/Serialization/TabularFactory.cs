@@ -90,6 +90,8 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             if (Writers == null) LoadReadersAndWriters();
 
             string extension = Path.GetExtension(filePath).ToLowerInvariant().TrimStart('.');
+            if (String.IsNullOrEmpty(extension)) extension = filePath;
+
             Func<string, ITabularWriter> ctor;
             if (Writers.TryGetValue(extension, out ctor)) return ctor(filePath);
 
