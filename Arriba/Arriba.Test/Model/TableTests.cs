@@ -369,6 +369,7 @@ namespace Arriba.Test.Model
             ITable_TypesCheck(factoryMethod);
             ITable_ComplexAndOr(factoryMethod);
             ITable_Distinct(factoryMethod);
+            ITable_DistinctTop(factoryMethod);
             ITable_Aggregate_Count(factoryMethod);
             ITable_Aggregate_Sum(factoryMethod);
             ITable_Aggregate_Min(factoryMethod);
@@ -591,6 +592,44 @@ namespace Arriba.Test.Model
                 ("0" == result.Values.GetColumn(0).Join(", ")) ||
                 ("3" == result.Values.GetColumn(0).Join(", ")));
 
+            Assert.IsFalse(result.AllValuesReturned);
+        }
+
+        public void ITable_DistinctTop(Func<ITable> factoryMethod)
+        {
+            // Define columns and add sample data
+            ITable table = factoryMethod();
+            AddSampleData(table);
+
+            // Get Distinct Priority for all bugs, verify three (3, 0, 1)
+            DistinctQueryTop query = new DistinctQueryTop("Priority", "", 5);
+            DistinctResult result = table.Query(query);
+
+            // Verify "3" is first, it's in 3 items, all values are returned, three distinct were returned
+            Assert.AreEqual("3", result.Values[0, 0].ToString());
+            Assert.AreEqual("3", result.Values[0, 1].ToString());
+            Assert.AreEqual(3, result.Values.RowCount);
+            Assert.AreEqual(5, result.Total);
+            Assert.IsTrue(result.AllValuesReturned);
+
+            // Verify distinct priority where priority is not 1 has only two values
+            query.Where = QueryParser.Parse("Priority != 1");
+            result = table.Query(query);
+
+            Assert.AreEqual("3, 0", result.Values.GetColumn(0).Join(", "));
+            Assert.AreEqual(2, result.Values.RowCount);
+            Assert.AreEqual(4, result.Total);
+            Assert.IsTrue(result.AllValuesReturned);
+
+            // Verify the result converts to a dimension properly
+            AggregationDimension dimension = result.ToAggregationDimension();
+            Assert.AreEqual("Query [Priority = 3,Priority = 0]", dimension.ToString());
+
+            // Verify if we only ask for one value, query reports more values left
+            query.Count = 1;
+            result = table.Query(query);
+            Assert.AreEqual("3", result.Values[0, 0].ToString());
+            Assert.AreEqual(1, result.Values.RowCount);
             Assert.IsFalse(result.AllValuesReturned);
         }
 
