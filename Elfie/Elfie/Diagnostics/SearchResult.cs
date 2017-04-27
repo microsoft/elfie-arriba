@@ -36,11 +36,15 @@ namespace Microsoft.CodeAnalysis.Elfie.Diagnostics
 
         public IEnumerator<T> GetEnumerator()
         {
+            // Give an enumerator pointing to the first item again. Breaks multiple simultaneous use. (Design Issue)
+            this.Matches.Reset();
             return this.Matches;
         }
 
         IEnumerator IEnumerable.GetEnumerator()
         {
+            // Give an enumerator pointing to the first item again. Breaks multiple simultaneous use. (Design Issue)
+            this.Matches.Reset();
             return this.Matches;
         }
     }
