@@ -507,7 +507,7 @@ namespace Arriba.Server
                 return await ctx.Request.ReadBodyAsync<DistinctQuery>();
             }
 
-            DistinctQuery query = new DistinctQuery();
+            DistinctQueryTop query = new DistinctQueryTop();
             query.Column = ctx.Request.ResourceParameters["col"];
             if (String.IsNullOrEmpty(query.Column)) throw new ArgumentException("Distinct Column [col] must be passed.");
 
