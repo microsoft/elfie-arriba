@@ -469,34 +469,31 @@ var GridMain = React.createClass({
         jsonQuery(
             this.buildQueryUrl(),
             function (data) {
-                var state = { gridData: data, error: null };
+                var newState = { gridData: data, error: null };
 
                 // If the rows or columns were expanded by the query, use the expanded values so subsequent editing works
                 // NOTE: Track the dimension for rows and columns; if only columns were passed, dimensions[0] is the column.
-                if (data.content && data.content.query && data.content.query.dimensions) {
-                    var dimensions = data.content.query.dimensions;
+                var dimensions = data.content && data.content.query && data.content.query.dimensions;
+                if (dimensions) {
                     var dimensionIndex = 0;
 
-                    if (this.state.rows && this.state.rows.length > 0) {
-                        if(this.state.rows.length === 1 && this.state.rows[0].endsWith(">")) {
-                            state.rows = (dimensions[dimensionIndex] ? dimensions[dimensionIndex].groupByWhere : []);
-                            state.rowLabels = [];
+                    var fetch = (key) => {
+                        var list = this.state[key + "s"];
+                        if (list && list.length) {
+                            if (list.length === 1 && list[0].endsWith(">")) {
+                                var dim = dimensions[dimensionIndex];
+                                newState[key + "s"] = dim && dim.groupByWhere || [];
+                                newState[key + "Labels"] = [];
+                            }
+                            dimensionIndex++;
                         }
-
-                        dimensionIndex++;
                     }
 
-                    if (this.state.cols && this.state.cols.length > 0) {
-                        if(this.state.cols.length === 1 && this.state.cols[0].endsWith(">")) {
-                            state.cols = (dimensions[dimensionIndex] ? dimensions[dimensionIndex].groupByWhere : []);
-                            state.colLabels = [];
-                        }
-
-                        dimensionIndex++;
-                    }
+                    fetch("row");
+                    fetch("col");
                 }
 
-                this.setState(state);
+                this.setState(newState);
             }.bind(this),
             function (xhr, status, err) {
                 this.setState({ gridData: [], error: "Error: Server didn't respond to [" + xhr.url + "]. " + err });
