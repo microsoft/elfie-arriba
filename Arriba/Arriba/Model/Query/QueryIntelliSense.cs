@@ -267,6 +267,17 @@ namespace Arriba.Model.Query
                 return result;
             }
 
+            // Compute the CurrentCompleteValue, *before* considering values, so value IntelliSense can use them
+            string queryWithoutIncompleteValue = queryBeforeCursor;
+            if (!queryWithoutIncompleteValue.EndsWith(guidance.Value)) throw new ArribaException("Error: IntelliSense suggestion couldn't be applied.");
+            queryWithoutIncompleteValue = queryWithoutIncompleteValue.Substring(0, queryWithoutIncompleteValue.Length - guidance.Value.Length);
+
+            // If the CurrentIncompleteValue is an explicit column name, remove and re-complete that, also
+            if (queryWithoutIncompleteValue.EndsWith("[")) queryWithoutIncompleteValue = queryWithoutIncompleteValue.Substring(0, queryWithoutIncompleteValue.Length - 1);
+
+            result.Complete = queryWithoutIncompleteValue;
+            result.Incomplete = guidance.Value;
+
             // Build a ranked list of suggestions - preferred token categories, filtered to the prefix already typed
             List<IntelliSenseItem> suggestions = new List<IntelliSenseItem>();
 
@@ -322,18 +333,10 @@ namespace Arriba.Model.Query
                 completionCharacters.AddRange(ColumnNameCompletionCharacters);
             }
 
-            // Compute the CurrentCompleteValue
-            string queryWithoutIncompleteValue = queryBeforeCursor;
-            if (!queryWithoutIncompleteValue.EndsWith(guidance.Value)) throw new ArribaException("Error: IntelliSense suggestion couldn't be applied.");
-            queryWithoutIncompleteValue = queryWithoutIncompleteValue.Substring(0, queryWithoutIncompleteValue.Length - guidance.Value.Length);
-
-            // If the CurrentIncompleteValue is an explicit column name, remove and re-complete that, also
-            if (queryWithoutIncompleteValue.EndsWith("[")) queryWithoutIncompleteValue = queryWithoutIncompleteValue.Substring(0, queryWithoutIncompleteValue.Length - 1);
-
-            result.Complete = queryWithoutIncompleteValue;
-            result.Incomplete = guidance.Value;
+            // Finish populating the result
             result.Suggestions = suggestions;
             result.CompletionCharacters = completionCharacters;
+
             return result;
         }
 
@@ -373,7 +376,14 @@ namespace Arriba.Model.Query
 
         private static void AddSuggestionsForCompareOperator(IReadOnlyCollection<Table> targetTables, TermExpression lastTerm, IntelliSenseGuidance guidance, List<IntelliSenseItem> suggestions)
         {
-            Type columnType = FindSingleMatchingColumnType(targetTables, lastTerm);
+            Type columnType = null;
+            Table singleTable;
+            ColumnDetails singleColumn;
+
+            if (TryFindSingleMatchingColumn(targetTables, lastTerm, out singleTable, out singleColumn))
+            {
+                columnType = singleTable.GetColumnType(singleColumn.Name);
+            }
 
             if (columnType == null)
             {
@@ -448,20 +458,47 @@ namespace Arriba.Model.Query
 
         private static void AddSuggestionsForValue(IReadOnlyCollection<Table> targetTables, IntelliSenseResult result, TermExpression lastTerm, IntelliSenseGuidance guidance, ref bool spaceIsSafeCompletionCharacter, List<IntelliSenseItem> suggestions)
         {
-            Type columnType = FindSingleMatchingColumnType(targetTables, lastTerm);
-            if (columnType == null)
+            Table singleTable;
+            ColumnDetails singleColumn;
+            TryFindSingleMatchingColumn(targetTables, lastTerm, out singleTable, out singleColumn);
+
+            if (!TryFindSingleMatchingColumn(targetTables, lastTerm, out singleTable, out singleColumn))
             {
+                // If more than one table has the column, we can't recommend anything
                 result.SyntaxHint = Value;
             }
             else
             {
+                // Lame, to turn single terms into AllQuery [normally they return nothing]
+                string completeQuery = QueryParser.Parse(result.Complete).ToString();
+
+                // Recommend the top ten values in the column with the prefix typed so far
+                DistinctResult topValues = singleTable.Query(new DistinctQueryTop(singleColumn.Name, completeQuery, 10));
+                if (topValues.Total > 0)
+                {
+                    for (int i = 0; i < topValues.Values.RowCount; ++i)
+                    {
+                        string value = topValues.Values[i, 0].ToString();
+                        int countForValue = (int)topValues.Values[i, 1];
+                        double frequency = (double)countForValue / (double)(topValues.Total);
+
+                        if (countForValue > 1 /*&& frequency >= 0.05 */ && value.StartsWith(guidance.Value, StringComparison.OrdinalIgnoreCase))
+                        {
+                            string hint = (countForValue == topValues.Total ? "all" : frequency.ToString("P0"));
+                            suggestions.Add(new IntelliSenseItem(QueryTokenCategory.Value, QueryScanner.WrapValue(value), hint));
+                        }
+                    }
+                }
+
+                Type columnType = singleTable.GetColumnType(singleColumn.Name);
+
                 if (columnType == typeof(ByteBlock))
                 {
                     result.SyntaxHint = StringValue;
                 }
                 else if (columnType == typeof(bool))
                 {
-                    AddWhenPrefixes(BooleanValues, guidance.Value, suggestions);
+                    if(suggestions.Count == 0) AddWhenPrefixes(BooleanValues, guidance.Value, suggestions);
                     spaceIsSafeCompletionCharacter = true;
                 }
                 else if (columnType == typeof(DateTime))
@@ -528,9 +565,10 @@ namespace Arriba.Model.Query
             return GetCurrentTokenOptions(queryBeforeCursor, out unusedTerm, out unusedQuery);
         }
 
-        private static Type FindSingleMatchingColumnType(IReadOnlyCollection<Table> targetTables, TermExpression lastTerm)
+        private static bool TryFindSingleMatchingColumn(IReadOnlyCollection<Table> targetTables, TermExpression lastTerm, out Table matchTable, out ColumnDetails matchColumn)
         {
-            Type matchingColumnType = null;
+            matchTable = null;
+            matchColumn = null;
 
             if (lastTerm != null && !String.IsNullOrEmpty(lastTerm.ColumnName) && lastTerm.ColumnName != "*")
             {
@@ -541,15 +579,21 @@ namespace Arriba.Model.Query
                         if (column.Name.Equals(lastTerm.ColumnName, StringComparison.OrdinalIgnoreCase))
                         {
                             // If there's already a match, we have multiple matches
-                            if (matchingColumnType != null) return null;
+                            if (matchColumn != null)
+                            {
+                                matchTable = null;
+                                matchColumn = null;
+                                return false;
+                            }
 
-                            matchingColumnType = table.GetColumnType(column.Name);
+                            matchTable = table;
+                            matchColumn = column;
                         }
                     }
                 }
             }
 
-            return matchingColumnType;
+            return matchColumn != null;
         }
 
         private static void AddWhenPrefixes(ICollection<IntelliSenseItem> items, string prefix, List<IntelliSenseItem> resultSet)
