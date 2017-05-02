@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Arriba.Model.Expressions;
-using Arriba.Structures;
 
 namespace Arriba.Model.Query
 {
@@ -10,17 +9,13 @@ namespace Arriba.Model.Query
     ///  DistinctResult is the object returned from a DistinctQuery.
     ///  It contains the set of distinct values in a one-column DataBlock.
     /// </summary>
-    public class DistinctResult : BaseResult
+    public class DistinctResult : DataBlockResult
     {
-        public DistinctQuery Query { get; set; }
-        public DataBlock Values { get; set; }
         public System.Type ColumnType { get; set; }
         public bool AllValuesReturned { get; set; }
 
-        public DistinctResult(DistinctQuery query) : base()
-        {
-            this.Query = query;
-        }
+        public DistinctResult(DistinctQuery query) : base(query)
+        { }
 
         /// <summary>
         ///  Convert the set of values returned into a dimension for an aggregation.
@@ -30,11 +25,11 @@ namespace Arriba.Model.Query
         public AggregationDimension ToAggregationDimension()
         {
             AggregationDimension d = new AggregationDimension();
-            d.Name = this.Query.Column;
+            d.Name = ((DistinctQuery)this.Query).Column;
 
             for (int rowIndex = 0; rowIndex < this.Values.RowCount; ++rowIndex)
             {
-                d.GroupByWhere.Add(new TermExpression(this.Query.Column, Operator.Equals, this.Values[rowIndex, 0]));
+                d.GroupByWhere.Add(new TermExpression(d.Name, Operator.Equals, this.Values[rowIndex, 0]));
             }
 
             return d;

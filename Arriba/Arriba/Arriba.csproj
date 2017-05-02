@@ -108,6 +108,7 @@
     <Compile Include="Model\ObjectCache.cs" />
     <Compile Include="Model\Query\DataBlockResult.cs" />
     <Compile Include="Model\Query\DeleteResult.cs" />
+    <Compile Include="Model\Query\DistinctQueryTop.cs" />
     <Compile Include="Model\Query\DistinctQuery.cs" />
     <Compile Include="Model\Query\DistinctResult.cs" />
     <Compile Include="Model\Query\IQuery.cs" />
