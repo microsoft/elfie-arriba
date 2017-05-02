@@ -469,26 +469,7 @@ namespace Arriba.Model.Query
             }
             else
             {
-                // Lame, to turn single terms into AllQuery [normally they return nothing]
-                string completeQuery = QueryParser.Parse(result.Complete).ToString();
-
-                // Recommend the top ten values in the column with the prefix typed so far
-                DistinctResult topValues = singleTable.Query(new DistinctQueryTop(singleColumn.Name, completeQuery, 10));
-                if (topValues.Total > 0)
-                {
-                    for (int i = 0; i < topValues.Values.RowCount; ++i)
-                    {
-                        string value = topValues.Values[i, 0].ToString();
-                        int countForValue = (int)topValues.Values[i, 1];
-                        double frequency = (double)countForValue / (double)(topValues.Total);
-
-                        if (countForValue > 1 /*&& frequency >= 0.05 */ && value.StartsWith(guidance.Value, StringComparison.OrdinalIgnoreCase))
-                        {
-                            string hint = (countForValue == topValues.Total ? "all" : frequency.ToString("P0"));
-                            suggestions.Add(new IntelliSenseItem(QueryTokenCategory.Value, QueryScanner.WrapValue(value), hint));
-                        }
-                    }
-                }
+                AddTopColumnValues(result, lastTerm, guidance, suggestions, singleTable, singleColumn);
 
                 Type columnType = singleTable.GetColumnType(singleColumn.Name);
 
@@ -498,7 +479,7 @@ namespace Arriba.Model.Query
                 }
                 else if (columnType == typeof(bool))
                 {
-                    if(suggestions.Count == 0) AddWhenPrefixes(BooleanValues, guidance.Value, suggestions);
+                    if (suggestions.Count == 0) AddWhenPrefixes(BooleanValues, guidance.Value, suggestions);
                     spaceIsSafeCompletionCharacter = true;
                 }
                 else if (columnType == typeof(DateTime))
@@ -520,6 +501,37 @@ namespace Arriba.Model.Query
                 else
                 {
                     result.SyntaxHint = String.Format("<{0}>", columnType.Name);
+                }
+            }
+        }
+
+        private static void AddTopColumnValues(IntelliSenseResult result, TermExpression lastTerm, IntelliSenseGuidance guidance, List<IntelliSenseItem> suggestions, Table singleTable, ColumnDetails singleColumn)
+        {
+            // Lame, to turn single terms into AllQuery [normally they return nothing]
+            string completeQuery = QueryParser.Parse(result.Complete).ToString();
+
+            // Recommend the top ten values in the column with the prefix typed so far
+            DistinctResult topValues = singleTable.Query(new DistinctQueryTop(singleColumn.Name, completeQuery, 10));
+            if (topValues.Total > 0)
+            {
+                // Walk values in order for ==, :, ::, backwards with inverse percentages for !=
+                bool isNotEquals = lastTerm.Operator == Operator.NotEquals;
+                int start = isNotEquals ? topValues.Values.RowCount - 1 : 0;
+                int end = isNotEquals ? -1 : topValues.Values.RowCount;
+                int step = isNotEquals ? -1 : 1;
+
+                for (int i = start; i != end; i += step)
+                {
+                    string value = topValues.Values[i, 0].ToString();
+                    int countForValue = (int)topValues.Values[i, 1];
+                    if (isNotEquals) countForValue = (int)topValues.Total - countForValue;
+                    double frequency = (double)countForValue / (double)(topValues.Total);
+
+                    if (countForValue > 1 && value.StartsWith(guidance.Value, StringComparison.OrdinalIgnoreCase))
+                    {
+                        string hint = (countForValue == topValues.Total ? "all" : frequency.ToString("P0"));
+                        suggestions.Add(new IntelliSenseItem(QueryTokenCategory.Value, QueryScanner.WrapValue(value), hint));
+                    }
                 }
             }
         }
