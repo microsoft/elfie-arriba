@@ -1,7 +1,7 @@
 ﻿// SearchHeader contains the top bar - branching, the search box, and top-level buttons
 export default React.createClass({
     getInitialState: function () {
-        return { suggestions: [], sel: 0, completed: "", completionCharacters: [], favs: localStorage.getJson("favorites") || [] };   
+        return { suggestions: [], sel: 0, completed: "", completionCharacters: [] };   
     },
     componentDidMount: function () {
         searchBox.focus();
@@ -10,9 +10,14 @@ export default React.createClass({
             this.setState({ suggestions: [] });
         }
         document.addEventListener("click", this.handleClickDocument);
+        window.addEventListener("storage", this);
     },
     componentWillUnmount: function() {
         document.removeEventListener("click", this.handleClickDocument);
+        window.removeEventListener("storage", this);
+    },
+    handleEvent: function(e) {
+        if (e.type === "storage" && e.key == "favorites") setTimeout(() => this.forceUpdate());
     },
     handleFocusOrBlur: function () {
         if (isIE()) this.bypassInputOnce = true;
@@ -62,7 +67,7 @@ export default React.createClass({
         this.lastRequest = jsonQuery(
             configuration.url + "/suggest?q=" + encodeURIComponent(query),
             data => {
-                var favs = this.state.favs
+                var favs = (localStorage.getJson("favorites") || [])
                     .filter(fav => 
                         this.props.query.length < fav.length &&
                         fav.toUpperCase().trimIf("[").startsWith(this.props.query.toUpperCase().trimIf("["))
@@ -84,9 +89,7 @@ export default React.createClass({
     },
     toggleFavorite: function () {
         if (!this.props.query) return;
-
-        this.state.favs.toggle(this.props.query.trim());
-        localStorage.setJson("favorites", this.state.favs);
+        localStorage.updateJson("favorites", favs => favs.toggle(this.props.query.trim()));
     },
     render: function () {
         var tables = this.props.tables || [];
@@ -117,7 +120,7 @@ export default React.createClass({
                             onKeyDown={this.handleKeyDown} onClick={this.handleClick} 
                             onFocus={this.handleFocusOrBlur} onBlur={this.handleFocusOrBlur}/>
                         <div className="searchIcon">
-                            <i className={this.state.favs.includes(this.props.query.trim()) ? "icon-solid-star" : "icon-outlined-star"} onClick={this.toggleFavorite}></i>
+                            <i className={(localStorage.getJson("favorites") || []).includes(this.props.query.trim()) ? "icon-solid-star" : "icon-outlined-star"} onClick={this.toggleFavorite}></i>
                             <i className="icon-find"></i>
                         </div>
                         {suggestions}

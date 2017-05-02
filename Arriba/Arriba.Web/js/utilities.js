@@ -64,12 +64,14 @@ Array.prototype.find = Array.prototype.find || function(predicate) {
 
 Array.prototype.remove = function(item) {
     var i = this.indexOf(item);
-    if (i >= 0) return this.splice(i, 1)[0];
+    if (i >= 0) this.splice(i, 1);
+    return this;
 };
 
 Array.prototype.toggle = function(item) {
     this.includes(item) ? this.remove(item) : this.push(item);
-};
+    return this;
+}
 
 Array.prototype.emptyToUndefined = function() {
     return this.length ? this : undefined;
@@ -81,12 +83,28 @@ Storage.prototype.getJson = function(keyName) {
 
 Storage.prototype.setJson = function(keyName, keyValue) {
     this.setItem(keyName, JSON.stringify(keyValue));
+    this.dispatch(keyName);
 };
+
+Storage.prototype.updateJson = function(keyName, f) {
+    if (typeof f !== "function") return;
+    var value = localStorage.getJson(keyName);
+    this.setJson(keyName, f(value));
+    this.dispatch(keyName);
+}
 
 // Shallow merge the keyObject into localStorage.
 Storage.prototype.mergeJson = function(keyName, keyObject) {
     if (typeof keyObject !== "object") return;
     this.setJson(keyName, Object.merge(localStorage.getJson(keyName), keyObject));
+    this.dispatch(keyName);
+}
+
+// Chrome and Edge do not dispatch the storage event to the current tag (only other tabs).
+// IE dispatches to all tabs. In this case we desire the IE behavior and dispatch makes the other browsers simulate it.
+Storage.prototype.dispatch = function(keyName) {
+    if (isIE()) return; 
+    window.dispatchEvent(new StorageEvent("storage", { key: keyName }));
 }
 
 // Highlight values surrounded by Pi characters by wrapping them in <span class="h"></span>
