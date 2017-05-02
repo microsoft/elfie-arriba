@@ -22,7 +22,7 @@ namespace Arriba.Model.Query
 
         public override void OnBeforeQuery(ITable table, IExpression where)
         {
-            var distinctQuery = new DistinctQuery(this.Column, "", MaximumValues ?? DefaultMaximumValues) { Where = where };
+            var distinctQuery = new DistinctQueryTop(this.Column, "", MaximumValues ?? DefaultMaximumValues) { Where = where };
 
             var result = table.Query(distinctQuery);
 
