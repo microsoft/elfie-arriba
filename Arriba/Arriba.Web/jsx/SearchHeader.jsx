@@ -1,9 +1,4 @@
-﻿function isIE () {
-    // Both Chrome and Edge report as "Chrome", only IE doesn't.
-    return navigator.userAgent.indexOf('Chrome') === -1;
-}
-
-// SearchHeader contains the top bar - branching, the search box, and top-level buttons
+﻿// SearchHeader contains the top bar - branching, the search box, and top-level buttons
 export default React.createClass({
     getInitialState: function () {
         return { suggestions: [], sel: 0, completed: "", completionCharacters: [], favs: localStorage.getJson("favorites") || [] };   

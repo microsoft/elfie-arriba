@@ -2,6 +2,11 @@
 var highlightRangeRegex = new RegExp(highlightChar + '(.+?)' + highlightChar, 'g');
 var highlightCharOnlyRegex = new RegExp(highlightChar, 'g');
 
+function isIE () {
+    // Both Chrome and Edge report as "Chrome", only IE doesn't.
+    return navigator.userAgent.indexOf('Chrome') === -1;
+}
+
 // From: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign
 Object.assign = Object.assign || function(target, varArgs) { // .length of function is 2
     'use strict';
