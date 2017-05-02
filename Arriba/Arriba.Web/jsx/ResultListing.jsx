@@ -5,9 +5,8 @@ export default React.createClass({
     getInitialState: function () {
         return { selectedIndex: -1, addColumnsShowing: false };
     },
-    handleResort: function (e) {
+    handleResort: function (columnNameClicked, e) {
         // If a column heading was clicked, re-sort the table
-        var columnNameClicked = e.target.getAttribute("data-name");
         var sortOrder = "asc";
 
         // If this column is already the sort column, toggle ascending/descending
@@ -110,7 +109,7 @@ export default React.createClass({
                 : "";
 
             // Extra element div.th-inner because display:flex cannot be applied to td as td is already display:table.
-            columnCells.push(<td key={"heading_" + column.name} data-name={column.name} onClick={this.handleResort}>
+            columnCells.push(<td key={"heading_" + column.name} onClick={this.handleResort.bind(this, column.name)}>
                 <div className="th-inner">
                     <span className="th-title">{column.name}{sort}</span>
                     {commands}

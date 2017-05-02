@@ -336,8 +336,9 @@ var GridMain = React.createClass({
         };
     },
     componentDidMount: function () {
-        if (this.props.params.p) {
-            this.selectDefaultQuery(this.props.params.p);
+        var defaultQuery = (this.props.params.p === "default" ? configuration.gridDefault : this.props.params.p);
+        if (defaultQuery) {
+            this.selectDefaultQuery(defaultQuery);
         } else {
             this.runSearch();
         }
@@ -347,11 +348,7 @@ var GridMain = React.createClass({
         this.selectDefaultQuery(name);
     },
     selectDefaultQuery: function(name) {
-        var query = this.props.gridDefaultQueries[name];
-        if (query) {
-            this.setState(this.getClearedUserSelections());
-            this.setState(query, this.runSearch);
-        }
+        this.setState(Object.assign(this.getClearedUserSelections(), this.props.gridDefaultQueries[name]), this.runSearch);
     },
     handleChangeAggregation: function(aggregationFunction, aggregateColumn) {
         this.setState({ aggregationFunction: aggregationFunction, aggregateColumn: aggregateColumn, userSelectedTable: this.state.currentTable }, this.runSearch);
@@ -472,36 +469,31 @@ var GridMain = React.createClass({
         jsonQuery(
             this.buildQueryUrl(),
             function (data) {
-                var state = { gridData: data, error: null };
+                var newState = { gridData: data, error: null };
 
                 // If the rows or columns were expanded by the query, use the expanded values so subsequent editing works
                 // NOTE: Track the dimension for rows and columns; if only columns were passed, dimensions[0] is the column.
-                if (data.content && data.content.query && data.content.query.dimensions) {
-                    var dimensions = data.content.query.dimensions;
+                var dimensions = data.content && data.content.query && data.content.query.dimensions;
+                if (dimensions) {
                     var dimensionIndex = 0;
 
-                    if (this.state.rows && this.state.rows.length === 1) {
-                        var lastRow = this.state.rows[0];
-                        if (lastRow.indexOf(">") === lastRow.length - 1) {
-                            state.rows = (dimensions[dimensionIndex] ? dimensions[dimensionIndex].groupByWhere : []);
-                            state.rowLabels = [];
+                    var fetch = (key) => {
+                        var list = this.state[key + "s"];
+                        if (list && list.length) {
+                            if (list.length === 1 && list[0].endsWith(">")) {
+                                var dim = dimensions[dimensionIndex];
+                                newState[key + "s"] = dim && dim.groupByWhere || [];
+                                newState[key + "Labels"] = [];
+                            }
+                            dimensionIndex++;
                         }
-
-                        dimensionIndex++;
                     }
 
-                    if (this.state.cols && this.state.cols.length === 1) {
-                        var lastColumn = this.state.cols[0];
-                        if (lastColumn.indexOf(">") === lastColumn.length - 1) {
-                            state.cols = (dimensions[dimensionIndex] ? dimensions[dimensionIndex].groupByWhere : []);
-                            state.colLabels = [];
-                        }
-
-                        dimensionIndex++;
-                    }
+                    fetch("row");
+                    fetch("col");
                 }
 
-                this.setState(state);
+                this.setState(newState);
             }.bind(this),
             function (xhr, status, err) {
                 this.setState({ gridData: [], error: "Error: Server didn't respond to [" + xhr.url + "]. " + err });
@@ -649,7 +641,7 @@ var GridMain = React.createClass({
             );
         }
 
-        var listingUrl = "/" + buildUrlParameters({ t: this.state.currentTable, q: this.state.query });
+        var listingUrl = "/Search.html" + buildUrlParameters({ t: this.state.currentTable, q: this.state.query });
 
         return (
             <div className={"viewport " + configuration.theme} onKeyDown={this.handleKeyDown}>
