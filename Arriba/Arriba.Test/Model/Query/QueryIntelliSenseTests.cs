@@ -213,7 +213,7 @@ namespace Arriba.Test.Model.Query
 
             // "[Name] : Hey A" shows both "AND", "Age" (either valid at this point)
             result = qi.GetIntelliSenseItems("[Name] : Hey A", Tables);
-            Assert.AreEqual("AND, [Age], \"A\"", string.Join(", ", result.Suggestions.Select(ii => ii.Display)));
+            Assert.AreEqual("AND, [Age]", string.Join(", ", result.Suggestions.Select(ii => ii.Display)));
         }
 
         [TestMethod]
