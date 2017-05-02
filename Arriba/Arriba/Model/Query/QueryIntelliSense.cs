@@ -512,26 +512,25 @@ namespace Arriba.Model.Query
 
             // Recommend the top ten values in the column with the prefix typed so far
             DistinctResult topValues = singleTable.Query(new DistinctQueryTop(singleColumn.Name, completeQuery, 10));
-            if (topValues.Total > 0)
+            if (topValues.Total == 0) return;
+
+            // Walk values in order for ==, :, ::, backwards with inverse percentages for !=
+            bool isNotEquals = lastTerm.Operator == Operator.NotEquals;
+            int start = isNotEquals ? topValues.Values.RowCount - 1 : 0;
+            int end = isNotEquals ? -1 : topValues.Values.RowCount;
+            int step = isNotEquals ? -1 : 1;
+
+            for (int i = start; i != end; i += step)
             {
-                // Walk values in order for ==, :, ::, backwards with inverse percentages for !=
-                bool isNotEquals = lastTerm.Operator == Operator.NotEquals;
-                int start = isNotEquals ? topValues.Values.RowCount - 1 : 0;
-                int end = isNotEquals ? -1 : topValues.Values.RowCount;
-                int step = isNotEquals ? -1 : 1;
+                string value = topValues.Values[i, 0].ToString();
+                int countForValue = (int)topValues.Values[i, 1];
+                if (isNotEquals) countForValue = (int)topValues.Total - countForValue;
+                double frequency = (double)countForValue / (double)(topValues.Total);
 
-                for (int i = start; i != end; i += step)
+                if (countForValue > 1 && value.StartsWith(guidance.Value, StringComparison.OrdinalIgnoreCase))
                 {
-                    string value = topValues.Values[i, 0].ToString();
-                    int countForValue = (int)topValues.Values[i, 1];
-                    if (isNotEquals) countForValue = (int)topValues.Total - countForValue;
-                    double frequency = (double)countForValue / (double)(topValues.Total);
-
-                    if (countForValue > 1 && value.StartsWith(guidance.Value, StringComparison.OrdinalIgnoreCase))
-                    {
-                        string hint = (countForValue == topValues.Total ? "all" : frequency.ToString("P0"));
-                        suggestions.Add(new IntelliSenseItem(QueryTokenCategory.Value, QueryScanner.WrapValue(value), hint));
-                    }
+                    string hint = (countForValue == topValues.Total ? "all" : frequency.ToString("P0"));
+                    suggestions.Add(new IntelliSenseItem(QueryTokenCategory.Value, QueryScanner.WrapValue(value), hint));
                 }
             }
         }
@@ -581,26 +580,24 @@ namespace Arriba.Model.Query
         {
             matchTable = null;
             matchColumn = null;
+            if (lastTerm == null || String.IsNullOrEmpty(lastTerm.ColumnName) || lastTerm.ColumnName == "*") return false;
 
-            if (lastTerm != null && !String.IsNullOrEmpty(lastTerm.ColumnName) && lastTerm.ColumnName != "*")
+            foreach (Table table in targetTables)
             {
-                foreach (Table table in targetTables)
+                foreach (ColumnDetails column in table.ColumnDetails)
                 {
-                    foreach (ColumnDetails column in table.ColumnDetails)
+                    if (column.Name.Equals(lastTerm.ColumnName, StringComparison.OrdinalIgnoreCase))
                     {
-                        if (column.Name.Equals(lastTerm.ColumnName, StringComparison.OrdinalIgnoreCase))
+                        // If there's already a match, we have multiple matches
+                        if (matchColumn != null)
                         {
-                            // If there's already a match, we have multiple matches
-                            if (matchColumn != null)
-                            {
-                                matchTable = null;
-                                matchColumn = null;
-                                return false;
-                            }
-
-                            matchTable = table;
-                            matchColumn = column;
+                            matchTable = null;
+                            matchColumn = null;
+                            return false;
                         }
+
+                        matchTable = table;
+                        matchColumn = column;
                     }
                 }
             }
