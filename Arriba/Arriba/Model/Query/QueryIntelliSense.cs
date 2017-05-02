@@ -308,15 +308,6 @@ namespace Arriba.Model.Query
                 AddSuggestionsForValue(targetTables, result, lastTerm, guidance, ref spaceIsSafeCompletionCharacter, suggestions);
             }
 
-            if (guidance.Options.HasFlag(QueryTokenCategory.Value))
-            {
-                // Add a suggestion for this literal value if it's a bare term
-                if (guidance.Options.HasFlag(QueryTokenCategory.ColumnName) && !String.IsNullOrEmpty(guidance.Value))
-                {
-                    suggestions.Add(new IntelliSenseItem(QueryTokenCategory.Value, "\"" + guidance.Value + "\"", "find word anywhere"));
-                }
-            }
-
             if (guidance.Options.HasFlag(QueryTokenCategory.TermPrefixes))
             {
                 AddWhenPrefixes(TermPrefixes, guidance.Value, suggestions);
