@@ -29,7 +29,7 @@ var SearchMain = React.createClass({
         var columns = getParameterArrayForPrefix(this.props.params, "c");
 
         if (table) {
-            localStorage.updateJson("table-" + table, Object.clean({
+            localStorage.mergeJson("table-" + table, Object.clean({
                 columns: columns.emptyToUndefined(),
                 sortColumn: this.props.params.ob || undefined, // Filter out empty strings.
                 sortOrder: this.props.params.so || undefined
@@ -110,7 +110,7 @@ var SearchMain = React.createClass({
         this.setState({ userSelectedId: undefined }, this.setHistory);
     },
     onResort: function (sortColumn, sortOrder) {
-        localStorage.updateJson("table-" + this.state.currentTable, {
+        localStorage.mergeJson("table-" + this.state.currentTable, {
             sortColumn: sortColumn,
             sortOrder: sortOrder
         });
@@ -126,7 +126,7 @@ var SearchMain = React.createClass({
         this.setState({ query: this.state.query + " AND [" + name + "]=\"" + value + "\"" }, this.runSearch);
     },
     onSetColumns: function (columns) {
-        localStorage.updateJson("table-" + this.state.currentTable, {
+        localStorage.mergeJson("table-" + this.state.currentTable, {
             columns: columns
         });
 

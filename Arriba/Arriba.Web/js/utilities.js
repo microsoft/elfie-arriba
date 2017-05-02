@@ -84,7 +84,7 @@ Storage.prototype.setJson = function(keyName, keyValue) {
 };
 
 // Shallow merge the keyObject into localStorage.
-Storage.prototype.updateJson = function(keyName, keyObject) {
+Storage.prototype.mergeJson = function(keyName, keyObject) {
     if (typeof keyObject !== "object") return;
     this.setJson(keyName, Object.merge(localStorage.getJson(keyName), keyObject));
 }
