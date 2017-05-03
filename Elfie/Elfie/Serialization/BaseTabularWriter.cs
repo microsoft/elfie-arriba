@@ -38,9 +38,6 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
     /// </summary>
     public abstract class BaseTabularWriter : ITabularWriter
     {
-        private static String8 True8 = String8.Convert("true", new byte[4]);
-        private static String8 False8 = String8.Convert("false", new byte[5]);
-
         private Stream _stream;
         private bool _writeHeaderRow;
 
@@ -96,6 +93,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         /// <param name="columnNames">Set of column names each row will write.</param>
         public void SetColumns(IEnumerable<string> columnNames)
         {
+            if (_columnCount != 0) throw new InvalidOperationException("SetColumns may only be called once on a JsonTabularWriter.");
             _columnCount = columnNames.Count();
 
             // Write header row
@@ -108,6 +106,9 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
                 }
 
                 NextRow();
+
+                // Header row shouldn't count toward row count written.
+                _rowCountWritten = 0;
             }
 
             if (_columnCount == 0) throw new InvalidOperationException("No columns were passed to contructor. TSV must have at least one column.");
@@ -143,7 +144,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         /// <param name="value">Value to write</param>
         public void Write(bool value)
         {
-            Write((value ? True8 : False8));
+            Write(String8.FromBoolean(value));
         }
 
         /// <summary>
@@ -239,7 +240,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         /// <param name="part">Value to write</param>
         public void WriteValuePart(bool part)
         {
-            WriteValuePart((part ? True8 : False8));
+            WriteValuePart(String8.FromBoolean(part));
         }
 
         /// <summary>

@@ -11,6 +11,7 @@ using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.CodeAnalysis.Elfie.Serialization;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
 {
@@ -29,6 +30,20 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
             ReaderWriterAll("Sample.tsv", (stream) => new TsvWriter(stream), (filePath, hasHeaderRow) => new TsvReader(filePath, hasHeaderRow));
         }
 
+        [TestMethod]
+        public void JsonTabularWriter_BaseTests()
+        {
+            WriterOnlyAll("Sample.json", (stream) => new JsonTabularWriter(stream));
+
+            string content = File.ReadAllText("Sample.json");
+
+            // Validate rows:
+            //   - Don't quote numbers and booleans, do escape byte and string
+            //   - Wrap values in an array with spacing, separators, array closing, comma for next row
+            //   - Concatenate values within a single set of quotes
+            Assert.IsTrue(content.IndexOf("[ 7, false, \"\\\\\", \"2017-05-03\", \"\\\\Barry\\\\\", \"8true\\\"2017-05-01\\\\Barry\\\\\" ],") > 0);
+        }
+
         public void ReaderWriterAll(string sampleFilePath, Func<Stream, ITabularWriter> buildWriter, Func<string, bool, ITabularReader> buildReader)
         {
             if (!File.Exists(sampleFilePath))
@@ -41,8 +56,22 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
             Reader_Roundtrip(buildReader, buildWriter);
             Reader_Roundtrip_NoHeader(buildReader, buildWriter);
 
+            Writer_WriteValidUsingAllOverloads(new FileStream(sampleFilePath, FileMode.Create, FileAccess.ReadWrite), buildWriter);
+            Writer_CheckValidation(buildWriter);
+
 #if PERFORMANCE
             Reader_Performance(sampleFilePath, buildReader);
+            Writer_Performance(buildWriter);
+#endif
+        }
+
+        public void WriterOnlyAll(string sampleFilePath, Func<Stream, ITabularWriter> buildWriter)
+        {
+            WriteValidSample(new FileStream(sampleFilePath, FileMode.Create, FileAccess.ReadWrite), buildWriter);
+            Writer_WriteValidUsingAllOverloads(new FileStream(sampleFilePath, FileMode.Create, FileAccess.ReadWrite), buildWriter);
+            Writer_CheckValidation(buildWriter);
+
+#if PERFORMANCE
             Writer_Performance(buildWriter);
 #endif
         }
@@ -116,6 +145,83 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
                     writer.Write(commasAndQuotes);
 
                     writer.NextRow();
+                }
+            }
+        }
+
+        public void Writer_WriteValidUsingAllOverloads(Stream stream, Func<Stream, ITabularWriter> buildWriter)
+        {
+            String8Set names = String8Set.Split(String8.Convert("Jeff,Bill,Todd,\\Barry\\", new byte[30]), UTF8.Comma, new int[5]);
+
+            using (ITabularWriter w = buildWriter(stream))
+            {
+                Assert.AreEqual(0, w.RowCountWritten);
+                w.SetColumns(new string[] { "ID", "IsEven", "Backslash", "Today", "Name", "Description" });
+                Assert.AreEqual(0, w.RowCountWritten);
+
+                for (int i = 0; i < 10; ++i)
+                {
+                    w.Write(i);
+                    w.Write(i % 2 == 0);
+                    w.Write(UTF8.Backslash);
+                    w.Write(new DateTime(2017, 05, 03, 0, 0, 0, DateTimeKind.Utc));
+                    w.Write(names[i % names.Count]);
+
+                    w.WriteValueStart();
+                    w.WriteValuePart(i + 1);
+                    w.WriteValuePart(i % 2 == 1);
+                    w.WriteValuePart(UTF8.Quote);
+                    w.WriteValuePart(new DateTime(2017, 05, 01, 0, 0, 0, DateTimeKind.Utc));
+                    w.WriteValuePart(names[i % names.Count]);
+                    w.WriteValueEnd();
+
+                    Assert.AreEqual(i, w.RowCountWritten);
+                    w.NextRow();
+                    Assert.AreEqual(i + 1, w.RowCountWritten);
+
+                    Assert.AreEqual(stream.Position, w.BytesWritten);
+                }
+            }
+        }
+
+        public void Writer_CheckValidation(Func<Stream, ITabularWriter> buildWriter)
+        {
+            using (MemoryStream s = new MemoryStream())
+            {
+                using (ITabularWriter w = buildWriter(s))
+                {
+                    // Write before SetColumns
+                    Verify.Exception<InvalidOperationException>(() => w.Write(0));
+
+                    w.SetColumns(new string[] { "ID", "IsEven" });
+
+                    // SetColumns already called
+                    Verify.Exception<InvalidOperationException>(() => w.SetColumns(new string[] { "Three", "Four" }));
+
+                    w.Write(0);
+
+                    // Not enough columns
+                    Verify.Exception<InvalidOperationException>(() => w.NextRow());
+
+                    w.Write(true);
+
+                    // Too many columns
+                    Verify.Exception<InvalidOperationException>(() => w.Write(String8.FromBoolean(false)));
+
+                    w.NextRow();
+
+                    // WriteValuePart without WriteValueStart
+                    Verify.Exception<InvalidOperationException>(() => w.WriteValuePart(true));
+
+                    // WriteValueEnd not in partial value
+                    Verify.Exception<InvalidOperationException>(() => w.WriteValueEnd());
+
+                    w.WriteValueStart();
+
+                    // Write in partial value
+                    Verify.Exception<InvalidOperationException>(() => w.Write(true));
+
+                    w.WriteValueEnd();
                 }
             }
         }
@@ -306,35 +412,6 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
 
                 return iterations * xsvLengthBytes;
             });
-        }
-
-        public void Writer_RowValidation(Func<string, ITabularWriter> buildWriter)
-        {
-            using (MemoryStream stream = new MemoryStream())
-            {
-                using (ITabularWriter writer = buildWriter("Writer_RowValidation.xsv"))
-                {
-                    writer.SetColumns(new string[] { "LineNumber", "Count", "Description", "Source" });
-
-                    writer.Write(1);
-                    writer.Write(2);
-
-                    // Verify exception if too few columns are written
-                    Verify.Exception<InvalidOperationException>(writer.NextRow);
-
-                    writer.Write(3);
-                    writer.Write(4);
-
-                    // Verify exception if too many columns written
-                    Verify.Exception<InvalidOperationException>(() => writer.Write(5));
-
-                    // No trailing NextRow()
-                }
-            }
-
-            // Verify last row terminated (despite no trailing NextRow)
-            string content = File.ReadAllText("Writer_RowValidation.xsv");
-            Assert.IsTrue(content.EndsWith("\r\n"));
         }
 
         public void Writer_Performance(Func<Stream, ITabularWriter> buildWriter)
