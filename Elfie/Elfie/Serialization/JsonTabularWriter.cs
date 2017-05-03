@@ -5,21 +5,39 @@ using System.IO;
 
 namespace Microsoft.CodeAnalysis.Elfie.Serialization
 {
+    /// <summary>
+    ///  JsonTabularWriter writes tabular data to a compact JSON form.
+    ///  This form writes the column names only once, adds minimal structural overhead,
+    ///  and can still be easily read in JavaScript and translated to a normal "array of objects" form.
+    /// 
+    ///  {
+    ///     "colIndex": { "ColumnName1": 0, "ColumnName2": 1, ... },
+    ///     "rows": [
+    ///        [ "Row1Col1", "Row1Col2" ],
+    ///        [ "Row2Col1", "Row2Col2" ],
+    ///        ...
+    ///      ]
+    ///  }
+    ///  
+    ///  Values can be read from JavaScript like:
+    ///  var value = data.rows[rowIndex][data.colIndex["ColumnName"]];
+    /// </summary>
     public class JsonTabularWriter : ITabularWriter
     {
-        private static String8 True8 = String8.Convert("true", new byte[4]);
-        private static String8 False8 = String8.Convert("false", new byte[5]);
+        private static String8 BeforeColumnNames = String8.Convert("{\n\"colIndex\": { ", new byte[16]);
+        private static String8 AfterColumnNames = String8.Convert(" },\n\"rows\": [\n", new byte[14]);
+        private static String8 EscapedCharPrefix = String8.Convert("\\u00", new byte[4]);
+        private static String8 ValueDelimiter = String8.Convert(", ", new byte[2]);
 
         private Stream _stream;
+        private byte[] _typeConversionBuffer;
 
         private int _columnCount;
+
         private int _rowCountWritten;
         private int _currentRowColumnCount;
         private bool _inPartialColumn;
-        private byte[] _typeConversionBuffer;
-
-        private String8[] _columnNames;
-
+        
         /// <summary>
         ///  Construct a new writer to write to the given file path.
         ///  The file is overwritten if it exists.
@@ -38,124 +56,206 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         public JsonTabularWriter(Stream stream)
         {
             _stream = stream;
-
-            _currentRowColumnCount = 0;
-            _rowCountWritten = 0;
-
             _typeConversionBuffer = new byte[30];
+
+            _rowCountWritten = 0;
+            _currentRowColumnCount = 0;
+            _inPartialColumn = false;            
+        }
+
+        #region Escaping
+        /// <summary>
+        ///  Write a single byte properly escaped for a quoted string.
+        /// </summary>
+        /// <param name="c">UTF8 byte to write</param>
+        private void WriteEscaped(byte c)
+        {
+            if (c < 32)
+            {
+                EscapedCharPrefix.WriteTo(_stream);
+                _stream.WriteByte((byte)(UTF8.Zero + (byte)(c / 16)));
+                _stream.WriteByte((byte)(UTF8.Zero + (byte)(c & 0xF)));
+            }
+            else if (c == UTF8.Quote || c == UTF8.Backslash)
+            {
+                _stream.WriteByte(UTF8.Backslash);
+                _stream.WriteByte(c);
+            }
+            else
+            {
+                _stream.WriteByte(c);
+            }
+        }
+
+        /// <summary>
+        ///  Write UTF8 content escaped properly to be in double-quotes, but don't
+        ///  write the surrounding quotes.
+        /// </summary>
+        /// <param name="value">UTF8 value to write</param>
+        private void WriteEscaped(String8 value)
+        {
+            int nextWriteStartIndex = 0;
+
+            int end = value._index + value._length;
+            for (int i = value._index; i < end; ++i)
+            {
+                byte c = value._buffer[i];
+                bool isControl = c < 32;
+
+                if (isControl || c == UTF8.Backslash || c == UTF8.Quote)
+                {
+                    int inStringIndex = i - value._index;
+
+                    // Write everything before this escaped portion
+                    value.Substring(nextWriteStartIndex, inStringIndex - nextWriteStartIndex).WriteTo(_stream);
+
+                    // Write the escaped character
+                    if (isControl)
+                    {
+                        EscapedCharPrefix.WriteTo(_stream);
+                        _stream.WriteByte((byte)(UTF8.Zero + (byte)(c / 16)));
+                        _stream.WriteByte((byte)(UTF8.Zero + (byte)(c & 0xF)));
+                    }
+                    else
+                    {
+                        _stream.WriteByte(UTF8.Backslash);
+                        _stream.WriteByte(c);
+                    }
+
+                    // Track the next block which doesn't need escaping
+                    nextWriteStartIndex = inStringIndex + 1;
+                }
+            }
+
+            // Write the trailing unescaped block
+            value.Substring(nextWriteStartIndex).WriteTo(_stream);
+        }
+        #endregion
+
+        public void SetColumns(IEnumerable<string> columnNames)
+        {
+            if (_columnCount != 0) throw new InvalidOperationException("SetColumns may only be called once on a JsonTabularWriter.");
+
+            //  {
+            //     "colIndex": { 
+            BeforeColumnNames.WriteTo(_stream);
+
+            int columnIndex = 0;
+
+            foreach (string columnName in columnNames)
+            {
+                int length = String8.GetLength(columnName);
+                if (_typeConversionBuffer == null || _typeConversionBuffer.Length < length) _typeConversionBuffer = new byte[length];
+
+                // , 
+                if (columnIndex > 0) ValueDelimiter.WriteTo(_stream);
+
+                // "ColumnName"
+                _stream.WriteByte(UTF8.Quote);
+                WriteEscaped(String8.Convert(columnName, _typeConversionBuffer));
+                _stream.WriteByte(UTF8.Quote);
+
+                // : 0
+                _stream.WriteByte(UTF8.Colon);
+                _stream.WriteByte(UTF8.Space);
+                String8.FromInteger(columnIndex, _typeConversionBuffer).WriteTo(_stream);
+                columnIndex++;
+            }
+
+            // },
+            // "rows": { 
+            AfterColumnNames.WriteTo(_stream);
+
+            _columnCount = columnIndex;
         }
 
         public void NextRow()
         {
             if (_currentRowColumnCount != _columnCount) throw new InvalidOperationException(String.Format("Wrote wrong number of columns for row {0:n0}. Wrote {1:n0}, expected {2:n0} columns.", _rowCountWritten, _currentRowColumnCount, _columnCount));
 
-            _stream.WriteByte((byte)'}');
+            // Write ] to end this row array
+            _stream.WriteByte(UTF8.Space);
+            _stream.WriteByte(UTF8.RightBracket);
+
+            // Comma and newline aren't written until next row begins
 
             _currentRowColumnCount = 0;
             _rowCountWritten++;
         }
 
-        public void SetColumns(IEnumerable<string> columnNames)
+        #region Write overloads
+        private void WriteColumnSeparator()
         {
-            List<String8> set = new List<String8>();
+            if (_currentRowColumnCount >= _columnCount) throw new InvalidOperationException(String.Format("Writing too many columns for row {0:n0}. Wrote {1:n0}, expected {2:n0} columns.", _rowCountWritten, _currentRowColumnCount, _columnCount));
+            if (_inPartialColumn) throw new InvalidOperationException("Write was called while in a multi-part column. Call WriteValueStart, WriteValuePart, and WriteValueEnd only for partial columns.");
 
-            foreach(string columnName in columnNames)
+            if (_currentRowColumnCount == 0)
             {
-                set.Add(String8.Convert(columnName, new byte[String8.GetLength(columnName)]));
-            }
-
-            this._columnNames = set.ToArray();
-            _columnCount = this._columnNames.Length;
-        }
-
-        private void WriteColumnName()
-        {
-            // Start new object on new line
-            if(_currentRowColumnCount == 0)
-            {
+                // Write comma and newline after previous row
                 if(_rowCountWritten > 0)
                 {
                     _stream.WriteByte(UTF8.Comma);
                     _stream.WriteByte(UTF8.Newline);
                 }
-                else
-                {
-                    _stream.WriteByte((byte)'[');
-                    _stream.WriteByte(UTF8.Newline);
-                }
 
-                _stream.WriteByte((byte)'{');
+                // Right [ to start this row array
+                _stream.WriteByte(UTF8.LeftBracket);
+                _stream.WriteByte(UTF8.Space);
+            }
+            else
+            {
+                // ", "
+                ValueDelimiter.WriteTo(_stream);
             }
 
-            // Write comma after previous value
-            if (_currentRowColumnCount > 0) _stream.WriteByte(UTF8.Comma);
-
-            // Write the column name
-            _stream.WriteByte(UTF8.Quote);
-            WriteValuePart(_columnNames[_currentRowColumnCount]);
-            _stream.WriteByte(UTF8.Quote);
-
-            // :
-            _stream.WriteByte(UTF8.Colon);
-        }
-
-        private void WriteCellDelimiter(Stream stream)
-        {
-            stream.WriteByte((byte)',');
+            _currentRowColumnCount++;
         }
 
         public void Write(bool value)
         {
-            WriteUnwrapped(value ? True8 : False8);
-        }
-
-        public void Write(byte value)
-        {
-            WriteValueStart();
-            WriteValuePart(value);
-            WriteValueEnd();
+            // Booleans are written without quotes and never need escaping. "ColumnName": true
+            WriteColumnSeparator();
+            String8.FromBoolean(value).WriteTo(_stream);
         }
 
         public void Write(int value)
         {
-            WriteUnwrapped(String8.FromInteger(value, _typeConversionBuffer));
-        }
-
-        public void Write(DateTime value)
-        {
-            Write(String8.FromDateTime(value, _typeConversionBuffer));
+            // Numbers are written without quotes and never need escaping. "ColumnName": -1234
+            WriteColumnSeparator();
+            String8.FromInteger(value, _typeConversionBuffer).WriteTo(_stream);
         }
 
         public void Write(String8 value)
         {
-            if (_currentRowColumnCount >= _columnCount) throw new InvalidOperationException(String.Format("Writing too many columns for row {0:n0}. Wrote {1:n0}, expected {2:n0} columns.", _rowCountWritten, _currentRowColumnCount, _columnCount));
-            if (_inPartialColumn) throw new InvalidOperationException("Write was called while in a multi-part column. Call WriteValueStart, WriteValuePart, and WriteValueEnd only for partial columns.");
-            if (_currentRowColumnCount > 0) WriteCellDelimiter(_stream);
-            _currentRowColumnCount++;
-
-            WriteValueStart();
-            WriteValuePart(value);
-            WriteValueEnd();
+            // Strings are quoted and escaped. "ColumnName": "Value \"Quoted\"."
+            WriteColumnSeparator();
+            _stream.WriteByte(UTF8.Quote);
+            WriteEscaped(value);
+            _stream.WriteByte(UTF8.Quote);
         }
 
-        protected void WriteUnwrapped(String8 value)
+        public void Write(byte value)
         {
-            if (_currentRowColumnCount >= _columnCount) throw new InvalidOperationException(String.Format("Writing too many columns for row {0:n0}. Wrote {1:n0}, expected {2:n0} columns.", _rowCountWritten, _currentRowColumnCount, _columnCount));
-            if (_inPartialColumn) throw new InvalidOperationException("Write was called while in a multi-part column. Call WriteValueStart, WriteValuePart, and WriteValueEnd only for partial columns.");
-            if (_currentRowColumnCount > 0) WriteCellDelimiter(_stream);
-            _currentRowColumnCount++;
+            // Bytes are quoted and escaped. "ColumnName": "\\"
+            WriteColumnSeparator();
+            _stream.WriteByte(UTF8.Quote);
+            WriteEscaped(value);
+            _stream.WriteByte(UTF8.Quote);
+        }
 
-            WriteColumnName();
-            value.WriteTo(_stream);
+        public void Write(DateTime value)
+        {
+            // DateTimes are quoted but never need escaping. "ColumnName": "2017-05-03T12:43:21Z"
+            WriteColumnSeparator();
+            _stream.WriteByte(UTF8.Quote);
+            String8.FromDateTime(value, _typeConversionBuffer).WriteTo(_stream);
+            _stream.WriteByte(UTF8.Quote);
         }
 
         public void WriteValueStart()
         {
-            if (_currentRowColumnCount >= _columnCount) throw new InvalidOperationException(String.Format("Writing too many columns for row {0:n0}. Wrote {1:n0}, expected {2:n0} columns.", _rowCountWritten, _currentRowColumnCount, _columnCount));
-            if (_currentRowColumnCount > 0) WriteCellDelimiter(_stream);
+            WriteColumnSeparator();
             _inPartialColumn = true;
-
-            WriteColumnName();
 
             // Write the value leading quote
             _stream.WriteByte(UTF8.Quote);
@@ -165,77 +265,42 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         {
             if (!_inPartialColumn) throw new InvalidOperationException("WriteValueEnd called but WriteValueStart was never called.");
 
-            _inPartialColumn = false;
+            // Write the trailing quote
             _stream.WriteByte(UTF8.Quote);
-            _currentRowColumnCount++;
+
+            _inPartialColumn = false;
         }
 
         public void WriteValuePart(int part)
         {
+            if (!_inPartialColumn) throw new InvalidOperationException("WriteValueStart must be called before WriteValuePart.");
             String8.FromInteger(part, _typeConversionBuffer).WriteTo(_stream);
-        }
-
-        public void WriteValuePart(byte c)
-        {
-            _stream.WriteByte(c);
         }
 
         public void WriteValuePart(bool part)
         {
-            (part ? True8 : False8).WriteTo(_stream);
+            if (!_inPartialColumn) throw new InvalidOperationException("WriteValueStart must be called before WriteValuePart.");
+            String8.FromBoolean(part).WriteTo(_stream);
         }
 
         public void WriteValuePart(DateTime value)
         {
+            if (!_inPartialColumn) throw new InvalidOperationException("WriteValueStart must be called before WriteValuePart.");
             String8.FromDateTime(value, _typeConversionBuffer).WriteTo(_stream);
+        }
+
+        public void WriteValuePart(byte c)
+        {
+            if (!_inPartialColumn) throw new InvalidOperationException("WriteValueStart must be called before WriteValuePart.");
+            WriteEscaped(c);
         }
 
         public void WriteValuePart(String8 value)
         {
-            int nextWriteStartIndex = 0;
-            int end = value._index + value._length;
-            for (int i = value._index; i < end; ++i)
-            {
-                byte c = value._buffer[i];
-                if (c == UTF8.Backslash || c == UTF8.Slash || c == UTF8.Quote || c < 16)
-                {
-                    int inStringIndex = i - value._index;
-
-                    // Write everything before this escaped portion
-                    value.Substring(nextWriteStartIndex, inStringIndex - nextWriteStartIndex).WriteTo(_stream);
-
-                    // Write backslash
-                    _stream.WriteByte(UTF8.Backslash);
-
-                    if (c < 16)
-                    {
-                        // Control Chars: write \uXXXX
-                        _stream.WriteByte((byte)'u');
-                        _stream.WriteByte(UTF8.Zero);
-                        _stream.WriteByte(UTF8.Zero);
-                        _stream.WriteByte(UTF8.Zero);
-
-                        if (c < 10)
-                        {
-                            _stream.WriteByte((byte)(UTF8.Zero + c));
-                        }
-                        else
-                        {
-                            _stream.WriteByte((byte)(UTF8.a + c - 10));
-                        }
-                    }
-                    else
-                    {
-                        // Others: write \\, \/, \"
-                        _stream.WriteByte(c);
-                    }
-
-                    nextWriteStartIndex = inStringIndex + 1;
-                }
-            }
-
-            value.Substring(nextWriteStartIndex).WriteTo(_stream);
+            if (!_inPartialColumn) throw new InvalidOperationException("WriteValueStart must be called before WriteValuePart.");
+            WriteEscaped(value);
         }
+#endregion
 
         public long BytesWritten
         {
@@ -251,10 +316,15 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         {
             if (_stream != null)
             {
+                // <closing 'rows'>
+                //    ]
+                // }
                 if(_rowCountWritten > 0)
                 {
                     _stream.WriteByte(UTF8.Newline);
-                    _stream.WriteByte((byte)']');
+                    _stream.WriteByte(UTF8.RightBracket);
+                    _stream.WriteByte(UTF8.Newline);
+                    _stream.WriteByte(UTF8.RightBrace);
                 }
                 
                 _stream.Dispose();

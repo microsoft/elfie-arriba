@@ -27,6 +27,11 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         public const byte Zero = (byte)'0';
         public const byte Nine = (byte)'9';
 
+        public const byte LeftBrace = (byte)'{';
+        public const byte RightBrace = (byte)'}';
+        public const byte LeftBracket = (byte)'[';
+        public const byte RightBracket = (byte)']';
+
         public const byte ToUpperSubtract = 'a' - 'A';
         public const byte AlphabetLength = 'z' - 'a' + 1;
         public const byte DigitsLength = '9' - '0' + 1;
