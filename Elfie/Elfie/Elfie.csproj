@@ -143,6 +143,7 @@
     <Compile Include="Serialization\ITabularValue.cs" />
     <Compile Include="Serialization\ITabularReader.cs" />
     <Compile Include="Serialization\ITabularWriter.cs" />
+    <Compile Include="Serialization\JsonTabularWriter.cs" />
     <Compile Include="Serialization\Read.cs" />
     <Compile Include="Model\Strings\String8Block.cs" />
     <Compile Include="Serialization\BaseTabularReader.cs" />

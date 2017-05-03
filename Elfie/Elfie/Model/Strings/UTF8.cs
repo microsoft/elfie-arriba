@@ -11,6 +11,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         public const byte Dash = (byte)'-';
         public const byte Period = (byte)'.';
         public const byte Backslash = (byte)'\\';
+        public const byte Slash = (byte)'/';
         public const byte Pipe = (byte)'|';
         public const byte Tab = (byte)'\t';
         public const byte CR = (byte)'\r';
