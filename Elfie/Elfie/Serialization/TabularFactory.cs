@@ -24,6 +24,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             Writers["cout"] = (path) => new ConsoleTabularWriter();
             Writers["csv"] = (path) => new CsvWriter(path, true);
             Writers["tsv"] = (path) => new TsvWriter(path, true);
+            Writers["json"] = (path) => new JsonTabularWriter(path);
 
             // Register ITabularReader and ITabularWriter ctors from app.config
             foreach(string key in ConfigurationManager.AppSettings.AllKeys)
