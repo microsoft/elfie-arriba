@@ -64,6 +64,11 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         }
 
         #region Escaping
+        private byte ToHexDigit(int b)
+        {
+            return (b < 10 ? (byte)(UTF8.Zero + b) : (byte)(UTF8.A + b - 10));
+        }
+
         /// <summary>
         ///  Write a single byte properly escaped for a quoted string.
         /// </summary>
@@ -73,8 +78,8 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             if (c < 32)
             {
                 EscapedCharPrefix.WriteTo(_stream);
-                _stream.WriteByte((byte)(UTF8.Zero + (byte)(c / 16)));
-                _stream.WriteByte((byte)(UTF8.Zero + (byte)(c & 0xF)));
+                _stream.WriteByte(ToHexDigit(c / 16));
+                _stream.WriteByte(ToHexDigit(c & 0xF));
             }
             else if (c == UTF8.Quote || c == UTF8.Backslash)
             {
@@ -113,8 +118,8 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
                     if (isControl)
                     {
                         EscapedCharPrefix.WriteTo(_stream);
-                        _stream.WriteByte((byte)(UTF8.Zero + (byte)(c / 16)));
-                        _stream.WriteByte((byte)(UTF8.Zero + (byte)(c & 0xF)));
+                        _stream.WriteByte(ToHexDigit(c / 16));
+                        _stream.WriteByte(ToHexDigit(c & 0xF));
                     }
                     else
                     {
