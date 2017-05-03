@@ -55,9 +55,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         ///  The file is overwritten if it exists.
         /// </summary>
         /// <param name="filePath">Path to file to write.</param>
-        /// <param name="columnNames">Column Names to write out.</param>
         /// <param name="writeHeaderRow">True to write a header row, False otherwise.</param>
-        /// /// <param name="cellDelimiter">Delimiter between cells, default is tab.</param>
         public BaseTabularWriter(string filePath, bool writeHeaderRow = true) :
             this(new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None), writeHeaderRow)
         { }
@@ -68,9 +66,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         ///  number of columns written even if a header row isn't written.
         /// </summary>
         /// <param name="stream">Stream to write to</param>
-        /// <param name="columnNames">Column names to write.</param>
         /// <param name="writeHeaderRow">True to write a header row, False otherwise</param>
-        /// <param name="cellDelimiter">Delimiter between cells, default is tab.</param>
         public BaseTabularWriter(Stream stream, bool writeHeaderRow = true)
         {
             _stream = stream;
