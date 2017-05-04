@@ -351,6 +351,12 @@ a:visited:hover {
     padding: 6px;
     background: #E3E3E3;
     @include ellipsis;
+
+    .explanation {
+        border: 1px solid hsl(0, 0, 75%);
+        padding: 2px 4px;
+        margin-left: 3px;
+    }
 }
 
 /* Make the per-table buttons dark grey and spaced out */
@@ -358,7 +364,7 @@ a:visited:hover {
     margin-right: 8px;
 
     & > span {
-        border: 1px solid #999999;
+        border: 1px solid hsl(0, 0, 75%);
         padding: 2px 6px;
 
         &:not(:first-child) {
