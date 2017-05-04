@@ -114,7 +114,7 @@ export default React.createClass({
                 <div className="searchBarAndButtons">
                     <div className="searchBar">
                         <div className={ "loading " + (this.props.loading ? "loading-active" : "") }></div>
-                        <input id="searchBox" ref="searchBox" type="text" 
+                        <input id="searchBox" ref="searchBox" type="text" spellCheck="false"
                             placeholder={"Search for " + tables.join(", ") + "..."} 
                             tabIndex="1" onInput={this.onInput} value={this.props.query} 
                             onKeyDown={this.handleKeyDown} onClick={this.handleClick} 
