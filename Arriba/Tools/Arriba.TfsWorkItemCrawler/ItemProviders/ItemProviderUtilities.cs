@@ -12,18 +12,15 @@ namespace Arriba.TfsWorkItemCrawler.ItemProviders
 
         public static IItemProvider Build(CrawlerConfiguration config)
         {
-            if (config == null)
-            {
-                throw new ArgumentNullException("config", "config is null.");
-            }
+            if (config == null) throw new ArgumentNullException("config", "config is null.");
 
-            if (String.Equals(config.ItemProvider, "TfsItemProvider", StringComparison.InvariantCultureIgnoreCase))
+            switch (config.ItemProvider.ToLowerInvariant())
             {
-                return new TfsItemProvider(config);
-            }
-            else
-            {
-                throw new InvalidOperationException(String.Format("{0} is an unknown Item Provider", config.ItemProvider));
+                case "":
+                case "tfsitemprovider":
+                    return new TfsItemProvider(config);
+                default:
+                    throw new InvalidOperationException(String.Format("{0} is an unknown Item Provider", config.ItemProvider));
             }
         }
 
