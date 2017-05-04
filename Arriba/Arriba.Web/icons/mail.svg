@@ -1,0 +1,12 @@
+<svg width="14" height="10" viewBox="0 0 14 10" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:figma="http://www.figma.com/figma/ns">
+<title>mail</title>
+<desc>Created using Figma</desc>
+<g id="Canvas" transform="translate(-1235 -190)" figma:type="canvas">
+<g id="mail" figma:type="vector">
+<use xlink:href="#path0_stroke" transform="translate(1235.5 190.5)" fill="#595959"/>
+</g>
+</g>
+<defs>
+<path id="path0_stroke" d="M 0 0L 0 -0.5L -0.5 -0.5L -0.5 0L 0 0ZM 0 9L -0.5 9L -0.5 9.5L 0 9.5L 0 9ZM 13 9L 13 9.5L 13.5 9.5L 13.5 9L 13 9ZM 13 0L 13.5 0L 13.5 -0.5L 13 -0.5L 13 0ZM 6.5 4.5L 6.2154 4.9111L 6.5 5.10813L 6.7846 4.9111L 6.5 4.5ZM -0.5 0L -0.5 9L 0.5 9L 0.5 0L -0.5 0ZM 0 9.5L 13 9.5L 13 8.5L 0 8.5L 0 9.5ZM 13.5 9L 13.5 0L 12.5 0L 12.5 9L 13.5 9ZM 13 -0.5L 0 -0.5L 0 0.5L 13 0.5L 13 -0.5ZM 6.7846 4.0889L 0.284605 -0.411096L -0.284605 0.411096L 6.2154 4.9111L 6.7846 4.0889ZM 12.7154 -0.411096L 6.2154 4.0889L 6.7846 4.9111L 13.2846 0.411096L 12.7154 -0.411096Z"/>
+</defs>
+</svg>
