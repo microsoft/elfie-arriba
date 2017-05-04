@@ -127,11 +127,11 @@ export default React.createClass({
                     </div>
 
                     <div className="buttons">
-                        <a href={"mailto:" + encodeURIComponent(configuration.feedbackEmailAddresses) + "?subject=" + encodeURIComponent(configuration.toolName) + " Feedback"}>
-                            <img src="/icons/feedback.svg" alt="feedback" title="Feedback"/>
+                        <a title="Feedback" href={"mailto:" + encodeURIComponent(configuration.feedbackEmailAddresses) + "?subject=" + encodeURIComponent(configuration.toolName) + " Feedback"}>
+                            <img src="/icons/feedback.svg" alt="feedback"/>
                         </a>
-                        <a href="/Search.html?help=true">
-                            <img src="/icons/help.svg" alt="help" title="Help"/>
+                        <a title="Help" href="/Search.html?help=true">
+                            <img src="/icons/help.svg" alt="help"/>
                         </a>
                     </div>
                 </div>
