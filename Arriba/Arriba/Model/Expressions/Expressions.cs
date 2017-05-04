@@ -46,7 +46,7 @@ namespace Arriba.Model.Expressions
 
         public override string ToString()
         {
-            return StringExtensions.Format("({0})", String.Join(" OR ", (IList<IExpression>)_set));
+            return String.Join(" OR ", (IList<IExpression>)_set);
         }
     }
 
@@ -99,7 +99,26 @@ namespace Arriba.Model.Expressions
 
         public override string ToString()
         {
-            return StringExtensions.Format("({0})", String.Join(" AND ", (IList<IExpression>)_set));
+            StringBuilder result = new StringBuilder();
+            foreach(IExpression part in _set)
+            {
+                if (result.Length > 0) result.Append(" AND ");
+
+                if(part is OrExpression)
+                {
+                    // Explicit parenthesis are only required on an OR expression inside and AND expression.
+                    // AND takes precedence over OR, so A OR B AND C OR D => (A OR (B AND C) OR D)
+                    result.Append("(");
+                    result.Append(part);
+                    result.Append(")");
+                }
+                else
+                {
+                    result.Append(part);
+                }
+            }
+
+            return result.ToString();
         }
     }
 
@@ -390,7 +409,7 @@ namespace Arriba.Model.Expressions
         public override string ToString()
         {
             StringBuilder result = new StringBuilder();
-            result.Append(this.ColumnName);
+            result.Append(QueryScanner.WrapColumnName(this.ColumnName));
             result.Append(this.Operator.ToSyntaxString());
             result.Append("IN(");
 
@@ -404,7 +423,7 @@ namespace Arriba.Model.Expressions
                     break;
                 }
 
-                result.Append(this.Values.GetValue(i).ToString());
+                result.Append(QueryScanner.WrapValue(this.Values.GetValue(i).ToString()));
             }
 
             result.Append(")");
