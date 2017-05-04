@@ -44,7 +44,7 @@ export default React.createClass({
                 var selectedContent = this.props.selectedData.content;
 
                 if(selectedContent.query.where) {
-                    selectedDetails.push(<span>for <span className="h">{selectedContent.query.where}</span></span>);
+                    selectedDetails.push(<span>for <span className="explanation">{selectedContent.query.where}</span></span>);
                 }
 
                 if (selectedContent.details.errors) {
