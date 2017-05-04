@@ -27,6 +27,8 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Elfie.Indexer
             PackageDatabase db = ic.Walk(".");
             Assert.IsTrue(counter.Count >= 3);
 
+            db.ConvertToImmutable();
+
             DateTime utcNow = DateTime.UtcNow;
 
             // Walk again. Verify nothing is new.

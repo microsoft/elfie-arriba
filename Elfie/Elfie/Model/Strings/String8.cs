@@ -33,6 +33,8 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         }
 
         public static String8 Empty = new String8(null, 0, 0);
+        private static String8 True8 = String8.Convert("true", new byte[4]);
+        private static String8 False8 = String8.Convert("false", new byte[5]);
 
         #region Conversion
         /// <summary>
@@ -399,6 +401,16 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
 
             result = (int)value;
             return true;
+        }
+
+        /// <summary>
+        ///  Convert a boolean to a String8 value.
+        /// </summary>
+        /// <param name="value">Boolean to convert</param>
+        /// <returns>String8 for boolean: "True" or "False"</returns>
+        public static String8 FromBoolean(bool value)
+        {
+            return (value ? True8 : False8);
         }
 
         /// <summary>
