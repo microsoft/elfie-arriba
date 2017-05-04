@@ -98,8 +98,8 @@ html, body, .viewport {
 
 /* Make query stats fixed height */
 .queryStats {
-    min-height: 20px;
-    max-height: 20px;
+    min-height: 32px;
+    max-height: 32px;
 }
 
 /* Make the right bar fixed width */
@@ -348,14 +348,20 @@ a:visited:hover {
 
 /* Make the QueryStats grey and hide overflowing content */
 .queryStats {
-    padding: 6px;
+    padding-left: 6px;
     background: #E3E3E3;
     @include ellipsis;
+    display: flex;
+    & > * { padding: 6px 0; }
 
     .explanation {
         border: 1px solid hsl(0, 0, 75%);
         padding: 2px 4px;
         margin-left: 3px;
+    }
+
+    .spacer {
+        flex-grow: 1;
     }
 }
 
@@ -386,7 +392,10 @@ a:visited:hover {
 
 /* Space out the QueryStats buttons a bit */
 .queryStats a {
-    padding-left: 6px;
+    font-size: 0; // Discard white space.
+    padding: 11px 7px;
+    &:last-child { padding-right: 7px + 5px; }
+    &:hover { background-color: hsl(0, 0, 75%); }
 }
 
 

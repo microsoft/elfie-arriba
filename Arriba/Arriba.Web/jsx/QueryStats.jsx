@@ -65,18 +65,28 @@ export default React.createClass({
                     selectedDetails.push(<span>&nbsp;<span className="icon-lock icon" title={deniedColumnList} /></span>);
                 }
 
-                if (this.props.rssUrl && selectedContent.details.succeeded) {
-                    selectedDetails.push(
-                        <a title="RSS Link" target="_blank" href={this.props.rssUrl}>
-                            <img className="rss" src="icons/feed-icon-14x14.png" style={{ position: "relative", top: "1px" }} alt="RSS" />
-                        </a>
-                    );
-                }
+                selectedDetails.push(<span className="spacer"></span>)
 
-                if (this.props.csvUrl && selectedContent.details.succeeded) {
+                if (selectedContent.details.succeeded) {
+                    if (this.props.rssUrl) {
+                        selectedDetails.push(
+                            <a title="RSS Link" target="_blank" href={this.props.rssUrl}>
+                                <img src="/icons/rss.svg" alt="rss"/>
+                            </a>
+                        );
+                    }
+
+                    if (this.props.csvUrl) {
+                        selectedDetails.push(
+                            <a title="Download CSV" target="_blank" href={this.props.csvUrl}>
+                                <img src="/icons/download.svg" alt="download"/>
+                            </a>
+                        );
+                    }
+
                     selectedDetails.push(
-                        <a title="Download CSV" target="_blank" href={this.props.csvUrl}>
-                            <span className="icon-download" />
+                        <a title="Mail" href={"mailto:?subject=" + encodeURIComponent(configuration.toolName) + ": " + encodeURIComponent(this.props.query) + "&body=" + encodeURIComponent(window.location.href)}>
+                            <img src="/icons/mail.svg" alt="mail"/>
                         </a>
                     );
                 }
