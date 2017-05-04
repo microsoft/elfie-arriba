@@ -108,6 +108,9 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
                     _columnHeadingsList.Add(columnName);
                     _columnHeadings[columnName] = i;
                 }
+
+                // Header row doesn't count toward row count read
+                _rowCountRead = 0;
             }
         }
 
