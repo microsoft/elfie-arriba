@@ -127,14 +127,11 @@ export default React.createClass({
                     </div>
 
                     <div className="buttons">
-                        <a className="theme-background-dark" href={"mailto:?subject=" + encodeURIComponent(configuration.toolName) + ": " + encodeURIComponent(this.props.query) + "&body=" + encodeURIComponent(window.location.href)}>
-                            <i className="icon-mail" title="Mail"></i>
+                        <a href={"mailto:" + encodeURIComponent(configuration.feedbackEmailAddresses) + "?subject=" + encodeURIComponent(configuration.toolName) + " Feedback"}>
+                            <img src="/icons/feedback.svg" alt="feedback" title="Feedback"/>
                         </a>
-                        <a className="theme-background-dark" href={"mailto:" + encodeURIComponent(configuration.feedbackEmailAddresses) + "?subject=" + encodeURIComponent(configuration.toolName) + " Feedback"}>
-                            <i className="icon-emoji2" title="Feedback"></i>
-                        </a>
-                        <a className="theme-background-dark" href="/?help=true">
-                            <i className="icon-help" title="Help"></i>
+                        <a href="/Search.html?help=true">
+                            <img src="/icons/help.svg" alt="help" title="Help"/>
                         </a>
                     </div>
                 </div>
