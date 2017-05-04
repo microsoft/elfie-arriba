@@ -47,6 +47,7 @@ html, body, .viewport {
 .searchBarAndButtons {
     flex: 1;
     display: flex;
+    align-items: center;
     padding: 8px;
 }
 
@@ -331,24 +332,16 @@ a:visited:hover {
     }
 }
 
-/* Make the buttons (top right) large, white on dark green */
+.buttons {
+    margin: 0 5px;
+    display: flex;
+}
+
 .buttons a {
-    font-size: 20px;
-    display: inline-block;
-    color: white;
-    height: 48px;
-    width: 48px;
+    padding: 5px 5px;
     margin-left: 8px;
-}
-
-.buttons a:hover {
-    color: #999;
-    text-decoration: none;
-}
-
-/* Center the icons within the buttons */
-.buttons a i {
-    margin: 12px;
+    font-size: 0; // Discard white space.
+    &:hover { opacity: 0.8; }
 }
 
 /* --- Query Stats Bar --- */
