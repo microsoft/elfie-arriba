@@ -25,7 +25,7 @@ export default React.createClass({
                 if (!tableResult.allowedToRead) {
                     parts.push(<span className="lock-icon icon" />);
                 } else if (!tableResult.succeeded) {
-                    parts.push(<span className="error-icon icon" />);
+                    parts.push(<span className="countValue">‒</span>);
                 } else {
                     parts.push(<span className="countValue">{tableResult.count.toLocaleString()}</span>);
                 }
