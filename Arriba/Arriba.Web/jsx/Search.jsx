@@ -381,7 +381,7 @@ var SearchMain = React.createClass({
 
                     <div className="center">
                         <QueryStats error={this.state.error}
-                                    allCountData={this.state.allCountData}
+                                    allCountData={this.state.allCountData.resultsPerTable}
                                     selectedData={this.state.listingData}
                                     rssUrl={rssUrl}
                                     csvUrl={csvUrl}
