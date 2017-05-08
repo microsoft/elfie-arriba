@@ -17,7 +17,6 @@ using Microsoft.CodeAnalysis.Elfie.Indexer.Crawlers;
 using Microsoft.CodeAnalysis.Elfie.Model;
 using Microsoft.CodeAnalysis.Elfie.Model.Structures;
 using Microsoft.CodeAnalysis.Elfie.PDB;
-using Microsoft.CodeAnalysis.Elfie.Search.Sarif;
 using Microsoft.CodeAnalysis.Elfie.Search.VisualStudio;
 
 namespace Microsoft.CodeAnalysis.Elfie.Search
@@ -253,14 +252,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Search
                     {
                         End.Restore();
 
-                        if ((ConsoleModifiers.Shift & ki.Modifiers) == ConsoleModifiers.Shift)
-                        {
-                            OpenAllMatches();
-                        }
-                        else
-                        {
-                            OpenFirstMatch();
-                        }
+                        OpenFirstMatch();
                         break;
                     }
 
@@ -331,25 +323,6 @@ namespace Microsoft.CodeAnalysis.Elfie.Search
                 Console.WriteLine("OPEN: {0}({1})", localPath, matchToOpen.Line);
                 VS.OpenFileToLine(localPath, matchToOpen.Line, Options.DatabasePath);
             }
-        }
-
-        private void OpenAllMatches()
-        {
-            string sarifFilePath = Path.GetTempFileName() + ".sarif";
-            this.TemporaryFiles.Add(sarifFilePath);
-
-            // Convert the Query Results to SARIF
-            SarifConverter.ConvertToSarif(_lastResult, ParsedQuery, sarifFilePath);
-
-            // Build a list of hint files to help select the best VS instance to open the match in
-            HashSet<string> hintFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            foreach (Symbol match in _lastResult)
-            {
-                if (match.HasLocation) hintFiles.Add(match.FilePath.ToString());
-            }
-
-            // Open in VS: This will populate the Error List with the matches
-            VS.OpenFileToLine(sarifFilePath, 0, hintFiles);
         }
 
         private void GoToDefinition()
