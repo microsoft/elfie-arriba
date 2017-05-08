@@ -10,7 +10,6 @@ using Arriba.Communication;
 using Arriba.Communication.Application;
 using Arriba.Model;
 using Arriba.Model.Column;
-using Arriba.Model.Correctors;
 using Arriba.Model.Expressions;
 using Arriba.Model.Query;
 using Arriba.Model.Security;
@@ -30,6 +29,8 @@ namespace Arriba.Server.Application
         {
             // GET - return tables in Database
             this.Get("", this.GetTables);
+
+            this.Get("/allBasics", this.GetAllBasics);
 
             // GET /table/foo - Get table information 
             this.Get("/table/:tableName", this.ValidateReadAccess, this.GetTableInformation);
@@ -77,21 +78,41 @@ namespace Arriba.Server.Application
             return ArribaResponse.Ok(this.Database.TableNames);
         }
 
+        private IResponse GetAllBasics(IRequestContext ctx, Route route)
+        {
+            Dictionary<string, TableInformation> allBasics = new Dictionary<string, TableInformation>();
+            foreach(string tableName in this.Database.TableNames)
+            {
+                if (HasTableAccess(tableName, ctx.Request.User, PermissionScope.Reader))
+                {
+                    allBasics[tableName] = GetTableBasics(tableName, ctx);
+                }
+            }
+
+            return ArribaResponse.Ok(allBasics);
+        }
+
         private IResponse GetTableInformation(IRequestContext ctx, Route route)
         {
             var tableName = GetAndValidateTableName(route);
-
             if (!this.Database.TableExists(tableName))
             {
                 return ArribaResponse.NotFound();
             }
 
+            TableInformation ti = GetTableBasics(tableName, ctx);
+            return ArribaResponse.Ok(ti);
+        }
+
+        private TableInformation GetTableBasics(string tableName, IRequestContext ctx)
+        {
             var table = this.Database[tableName];
 
             TableInformation ti = new TableInformation();
-            ti.Name = tableName;            
+            ti.Name = tableName;
             ti.PartitionCount = table.PartitionCount;
             ti.RowCount = table.Count;
+            ti.LastWriteTimeUtc = table.LastWriteTimeUtc;
 
             IList<string> restrictedColumns = this.Database.GetRestrictedColumns(tableName, (si) => this.IsInIdentity(ctx.Request.User, si));
             if (restrictedColumns == null)
@@ -101,14 +122,14 @@ namespace Arriba.Server.Application
             else
             {
                 List<ColumnDetails> allowedColumns = new List<ColumnDetails>();
-                foreach(ColumnDetails column in table.ColumnDetails)
+                foreach (ColumnDetails column in table.ColumnDetails)
                 {
                     if (!restrictedColumns.Contains(column.Name)) allowedColumns.Add(column);
                 }
                 ti.Columns = allowedColumns;
             }
 
-            return ArribaResponse.Ok(ti);
+            return ti;
         }
 
         private IResponse Drop(IRequestContext ctx, Route route)
