@@ -90,9 +90,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Search
                 if (_cachedVisualBasicCompilation == null)
                 {
                     // Ask for all members (not just publics) to be loaded
-                    VisualBasicCompilationOptions compilationOptions = new VisualBasicCompilationOptions(
-                        outputKind: OutputKind.ConsoleApplication,
-                        reportSuppressedDiagnostics: false);
+                    VisualBasicCompilationOptions compilationOptions = new VisualBasicCompilationOptions(OutputKind.ConsoleApplication);
 
                     compilationOptions.SetMetadataImportOptions(MetadataImportOptions.All);
 
