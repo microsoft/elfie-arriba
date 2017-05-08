@@ -14,8 +14,8 @@ export default React.createClass({
 
             // Write tiles with results per table
             var tiles = [];
-            for (var i = 0; i < allCountContent.length; ++i) {
-                var tableResult = allCountContent[i];
+            for (var i = 0; i < allCountContent.resultsPerTable.length; ++i) {
+                var tableResult = allCountContent.resultsPerTable[i];
 
                 var cssClasses = "";
                 var parts = [];
