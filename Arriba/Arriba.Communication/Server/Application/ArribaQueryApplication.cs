@@ -320,10 +320,11 @@ namespace Arriba.Server
 
         private IResponse AllCount(IRequestContext ctx, Route route)
         {
-            List<CountResult> results = new List<CountResult>();
+            string queryString = ctx.Request.ResourceParameters["q"] ?? "";
+            AllCountResult result = new AllCountResult(queryString);
 
             // Build a Count query
-            IQuery<AggregationResult> query = new AggregationQuery("count", null, ctx.Request.ResourceParameters["q"] ?? "");
+            IQuery<AggregationResult> query = new AggregationQuery("count", null, queryString);
 
             // Wrap in Joins, if found
             query = WrapInJoinQueryIfFound(query, this.Database, ctx);
@@ -351,30 +352,46 @@ namespace Arriba.Server
 
                         if (!tableCount.Details.Succeeded || tableCount.Values == null)
                         {
-                            results.Add(new CountResult(tableName, 0, true, false));
+                            result.ResultsPerTable.Add(new CountResult(tableName, 0, true, false));
                         }
                         else
                         {
-                            results.Add(new CountResult(tableName, (ulong)tableCount.Values[0, 0], true, tableCount.Details.Succeeded));
+                            result.ResultsPerTable.Add(new CountResult(tableName, (ulong)tableCount.Values[0, 0], true, tableCount.Details.Succeeded));
                         }
                     }
                     else
                     {
-                        results.Add(new CountResult(tableName, 0, false, false));
+                        result.ResultsPerTable.Add(new CountResult(tableName, 0, false, false));
                     }
                 }
             }
 
             // Sort results so that succeeding tables are first and are subsorted by count [descending]
-            results.Sort((left, right) =>
+            result.ResultsPerTable.Sort((left, right) =>
             {
-                int result = right.Succeeded.CompareTo(left.Succeeded);
-                if (result != 0) return result;
+                int order = right.Succeeded.CompareTo(left.Succeeded);
+                if (order != 0) return order;
 
                 return right.Count.CompareTo(left.Count);
             });
 
-            return ArribaResponse.Ok(results);
+            return ArribaResponse.Ok(result);
+        }
+
+        private class AllCountResult
+        {
+            public string Query { get; set; }
+            public string ParsedQuery { get; set; }
+
+            public List<CountResult> ResultsPerTable { get; set; }
+
+            public AllCountResult(string query)
+            {
+                this.Query = query;
+                this.ParsedQuery = QueryParser.Parse(query).ToString();
+
+                this.ResultsPerTable = new List<CountResult>();
+            }
         }
 
         private class CountResult
