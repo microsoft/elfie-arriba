@@ -65,7 +65,7 @@ namespace Arriba.Test.Model
 
             // Run the Query without security. Expect no restrictions and no security checks.
             result = db.Query(new SelectQuery(q), (si) => { Assert.Fail("No security checks for unsecured table"); return true; });
-            Assert.AreEqual("*:One", result.Query.Where.ToString());
+            Assert.AreEqual("[*]:One", result.Query.Where.ToString());
             Assert.IsFalse(HasRestrictedClauses(result.Query.Where));
             Assert.AreEqual("ID, Priority, SecretOwner, SecretPriority, Title", String.Join(", ", ((SelectQuery)result.Query).Columns));
 
@@ -75,13 +75,13 @@ namespace Arriba.Test.Model
             // Run the Query as a user in all column restriction groups
             // Verify the query is unrestricted - no WHERE clause and no filtered columns
             result = db.Query(new SelectQuery(q), (si) => si.Name == "g1" || si.Name == "g2");
-            Assert.AreEqual("*:One", result.Query.Where.ToString());
+            Assert.AreEqual("[*]:One", result.Query.Where.ToString());
             Assert.IsFalse(HasRestrictedClauses(result.Query.Where));
             Assert.AreEqual("ID, Priority, SecretOwner, SecretPriority, Title", String.Join(", ", ((SelectQuery)result.Query).Columns));
 
             // Run the query as a user in G1 only; verify G2 restricted columns excluded
             result = db.Query(new SelectQuery(q), (si) => si.Name == "g1");
-            Assert.AreEqual("*:One", result.Query.Where.ToString());
+            Assert.AreEqual("[*]:One", result.Query.Where.ToString());
             Assert.IsTrue(HasRestrictedClauses(result.Query.Where));
             Assert.AreEqual("ID, Priority, SecretOwner, Title", String.Join(", ", ((SelectQuery)result.Query).Columns));
 
@@ -89,7 +89,7 @@ namespace Arriba.Test.Model
             // Verify WHERE clause restriction, but no column restrictions
             // Security design is EITHER row or column security.
             result = db.Query(new SelectQuery(q), (si) => si.Name == "g3");
-            Assert.AreEqual("(SecretPriority > 1 AND *:One)", result.Query.Where.ToString());
+            Assert.AreEqual("[SecretPriority] > 1 AND [*]:One", result.Query.Where.ToString());
             Assert.IsFalse(HasRestrictedClauses(result.Query.Where));
             Assert.AreEqual("ID, Priority, SecretOwner, SecretPriority, Title", String.Join(", ", ((SelectQuery)result.Query).Columns));
 
@@ -97,21 +97,21 @@ namespace Arriba.Test.Model
             // Verify WHERE clause restriction, but no column restrictions
             // Security design is EITHER row or column security.
             result = db.Query(new SelectQuery(q), (si) => si.Name == "g4");
-            Assert.AreEqual("(SecretPriority > 2 AND *:One)", result.Query.Where.ToString());
+            Assert.AreEqual("[SecretPriority] > 2 AND [*]:One", result.Query.Where.ToString());
             Assert.IsFalse(HasRestrictedClauses(result.Query.Where));
             Assert.AreEqual("ID, Priority, SecretOwner, SecretPriority, Title", String.Join(", ", ((SelectQuery)result.Query).Columns));
 
             // Run the Query as a user in all groups
             // Verify WHERE clause restriction for *first* matching group, no column restrictions
             result = db.Query(new SelectQuery(q), (si) => true);
-            Assert.AreEqual("(SecretPriority > 1 AND *:One)", result.Query.Where.ToString());
+            Assert.AreEqual("[SecretPriority] > 1 AND [*]:One", result.Query.Where.ToString());
             Assert.IsFalse(HasRestrictedClauses(result.Query.Where));
             Assert.AreEqual("ID, Priority, SecretOwner, SecretPriority, Title", String.Join(", ", ((SelectQuery)result.Query).Columns));
 
             // Run the Query as a user in no groups.
             // Verify all column restrictions, no where clause filter
             result = db.Query(new SelectQuery(q), (si) => false);
-            Assert.AreEqual("*:One", result.Query.Where.ToString());
+            Assert.AreEqual("[*]:One", result.Query.Where.ToString());
             Assert.IsTrue(HasRestrictedClauses(result.Query.Where));
             Assert.AreEqual("ID, Priority, Title", String.Join(", ", ((SelectQuery)result.Query).Columns));
 
@@ -123,12 +123,12 @@ namespace Arriba.Test.Model
 
             // Add a query clause for a restricted column when in the required group. Verify success.
             result = db.Query(new SelectQuery(q) { Where = QueryParser.Parse("One AND SecretOwner=Bob") }, (si) => si.Name == "g1");
-            Assert.AreEqual("(*:One AND SecretOwner = Bob)", result.Query.Where.ToString());
+            Assert.AreEqual("[*]:One AND [SecretOwner] = Bob", result.Query.Where.ToString());
             Assert.IsTrue(HasRestrictedClauses(result.Query.Where));
 
             // Ask for restricted columns in result listing. Verify restricted columns allowed only for my group, warning for removed column.
             result = db.Query(new SelectQuery(q) { Columns = new string[] { "Title", "SecretOwner", "SecretPriority" } }, (si) => si.Name == "g1");
-            Assert.AreEqual("*:One", result.Query.Where.ToString());
+            Assert.AreEqual("[*]:One", result.Query.Where.ToString());
             Assert.IsTrue(HasRestrictedClauses(result.Query.Where));
             Assert.AreEqual("Title, SecretOwner", String.Join(", ", ((SelectQuery)result.Query).Columns));
             Assert.AreEqual("SecretPriority", String.Join(", ", result.Details.AccessDeniedColumns));
@@ -163,7 +163,7 @@ namespace Arriba.Test.Model
 
             // Run the Query without security. Expect no restrictions and no security checks.
             result = db.Query(new AggregationQuery(q), (si) => { Assert.Fail("No security checks for unsecured table"); return true; });
-            Assert.AreEqual("*:One", result.Query.Where.ToString());
+            Assert.AreEqual("[*]:One", result.Query.Where.ToString());
 
             // Restrict the secret columns to people in "G1", or users in "G2" can see everything but only for SecretPriority < 1 items.
             SecureSampleDB(db);
@@ -171,25 +171,25 @@ namespace Arriba.Test.Model
             // Run the Query as a user in all column restriction groups
             // Verify the query is unrestricted - no WHERE clause and no filtered columns
             result = db.Query(new AggregationQuery(q), (si) => si.Name == "g1" || si.Name == "g2");
-            Assert.AreEqual("*:One", result.Query.Where.ToString());
+            Assert.AreEqual("[*]:One", result.Query.Where.ToString());
             Assert.IsFalse(HasRestrictedClauses(result.Query.Where));
 
             // Run the Query as a user in G3.
             // Verify WHERE clause restriction.
             result = db.Query(new AggregationQuery(q), (si) => si.Name == "g3");
-            Assert.AreEqual("(SecretPriority > 1 AND *:One)", result.Query.Where.ToString());
+            Assert.AreEqual("[SecretPriority] > 1 AND [*]:One", result.Query.Where.ToString());
             Assert.IsFalse(HasRestrictedClauses(result.Query.Where));
 
             // Run the Query as a user in all groups
             // Verify WHERE clause restriction for *first* matching group
             result = db.Query(new AggregationQuery(q), (si) => true);
-            Assert.AreEqual("(SecretPriority > 1 AND *:One)", result.Query.Where.ToString());
+            Assert.AreEqual("[SecretPriority] > 1 AND [*]:One", result.Query.Where.ToString());
             Assert.IsFalse(HasRestrictedClauses(result.Query.Where));
 
             // Run the Query as a user in no groups.
             // Verify all column restrictions, no where clause filter
             result = db.Query(new AggregationQuery(q), (si) => false);
-            Assert.AreEqual("*:One", result.Query.Where.ToString());
+            Assert.AreEqual("[*]:One", result.Query.Where.ToString());
             Assert.IsTrue(HasRestrictedClauses(result.Query.Where));
 
             // Add a query clause for a disallowed column when not in group. Verify error.
@@ -200,7 +200,7 @@ namespace Arriba.Test.Model
 
             // Add a query clause for a disallowed column when in group. Verify success.
             result = db.Query(new AggregationQuery(q) { Where = QueryParser.Parse("One AND SecretOwner=Bob") }, (si) => si.Name == "g1");
-            Assert.AreEqual("(*:One AND SecretOwner = Bob)", result.Query.Where.ToString());
+            Assert.AreEqual("[*]:One AND [SecretOwner] = Bob", result.Query.Where.ToString());
             Assert.IsTrue(HasRestrictedClauses(result.Query.Where));
 
             // Ask to aggregate on a restricted column. Verify error.
@@ -217,7 +217,6 @@ namespace Arriba.Test.Model
             Assert.AreEqual("", result.Query.Where.ToString());
             Assert.IsFalse(result.Details.Succeeded);
             Assert.AreEqual(String.Format(ExecutionDetails.DisallowedColumnQuery, "SecretPriority"), result.Details.Errors);
-
         }
 
         [TestMethod]
@@ -239,7 +238,7 @@ namespace Arriba.Test.Model
             q.Where = QueryParser.Parse("SecretPriority = 1 AND SecretOwner = #Q2[SecretOwner]");
             result = db.Query(q, (si) => si.Name == "g1" || si.Name == "g2");
             Assert.IsTrue(result.Details.Succeeded);
-            Assert.AreEqual("(SecretPriority = 1 AND SecretOwner = IN(Bob, Bob, Bob))", result.Query.Where.ToString());
+            Assert.AreEqual("[SecretPriority] = 1 AND [SecretOwner] = IN(Bob, Bob, Bob)", result.Query.Where.ToString());
 
             // Run a JOIN with a disallowed clause on the top query - verify error
             q.Where = QueryParser.Parse("SecretPriority = 1 AND SecretOwner = #Q1[SecretOwner]");
@@ -266,7 +265,7 @@ namespace Arriba.Test.Model
             q.Where = QueryParser.Parse("ID > 1 AND ID = #Q1[ID]");
             result = db.Query(q, (si) => false);
             Assert.IsTrue(result.Details.Succeeded);
-            Assert.AreEqual("(ID > 1 AND ID = IN(1))", result.Query.Where.ToString());
+            Assert.AreEqual("[ID] > 1 AND [ID] = IN(1)", result.Query.Where.ToString());
         }
 
         [TestMethod]
@@ -298,7 +297,7 @@ namespace Arriba.Test.Model
             // Run the Query when the user has a row restriction. Verify success with row restrictor.
             result = db.Query(c, (si) => si.Name == "g3");
             Assert.IsTrue(result.Details.Succeeded);
-            Assert.AreEqual("(SecretPriority > 1 AND *:One)", result.Query.Where.ToString());
+            Assert.AreEqual("[SecretPriority] > 1 AND [*]:One", result.Query.Where.ToString());
 
             // Run the Query when the user has a column restriction. Verify error.
             result = db.Query(c, (si) => false);

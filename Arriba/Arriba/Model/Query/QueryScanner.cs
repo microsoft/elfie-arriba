@@ -269,19 +269,6 @@ namespace Arriba.Model.Query
         /// <returns>Parsable version of column namwe</returns>
         public static string WrapColumnName(string columnName)
         {
-            bool shouldEscape = false;
-            for (int i = 0; i < columnName.Length; ++i)
-            {
-                char current = columnName[i];
-                if (Char.IsWhiteSpace(current) || current == ']')
-                {
-                    shouldEscape = true;
-                    break;
-                }
-            }
-
-            if (!shouldEscape) return columnName;
-
             return StringExtensions.Format("[{0}]", columnName.Replace("]", "]]"));
         }
 
