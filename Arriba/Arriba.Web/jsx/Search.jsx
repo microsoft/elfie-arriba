@@ -175,7 +175,7 @@ var SearchMain = React.createClass({
         this.jsonQueryWithError(
             configuration.url + "/allCount",
             data => {
-                var currentTable = this.state.userSelectedTable || data.resultsPerTable[0].tableName;
+                var currentTable = this.state.userSelectedTable || data.content.resultsPerTable[0].tableName;
                 if (this.state.currentTable !== currentTable) {
                     this.setState({
                         userTableSettings: {},
