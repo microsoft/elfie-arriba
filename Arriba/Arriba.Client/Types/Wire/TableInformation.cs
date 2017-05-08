@@ -1,11 +1,12 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System.Collections;
+using System;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 
 using Arriba.Model.Column;
+
 
 namespace Arriba.Types
 {
@@ -14,6 +15,9 @@ namespace Arriba.Types
     {
         [DataMember]
         public string Name { get; set; }
+
+        [DataMember]
+        public DateTime LastWriteTimeUtc { get; set; }
 
         [DataMember]
         public int PartitionCount { get; set; }

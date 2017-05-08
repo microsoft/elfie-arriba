@@ -785,6 +785,26 @@ namespace Arriba.Model
             }
         }
 
+        public DateTime LastWriteTimeUtc
+        {
+            get
+            {
+                DateTime lastWriteTimeUtc = DateTime.MinValue;
+
+                var tablePath = BinarySerializable.FullPath(Path.Combine("Tables", this.Name));
+                if (Directory.Exists(tablePath))
+                {
+                    foreach (string filePath in Directory.GetFiles(tablePath))
+                    {
+                        lastWriteTimeUtc = File.GetLastWriteTimeUtc(filePath);
+                        break;
+                    }
+                }
+
+                return lastWriteTimeUtc;
+            }
+        }
+
         public void Save()
         {
             _locker.EnterReadLock();
