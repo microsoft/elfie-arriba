@@ -34,8 +34,9 @@ namespace Arriba.TfsWorkItemCrawler
                         return -2;
                     }
 
-                    // Load the Configuration
+                    // Load the Configuration [up two or three folders, for Databases\<configurationName>\config.json
                     string configJsonPath = String.Format(@"..\..\Databases\{0}\config.json", configurationName);
+                    if (!File.Exists(configJsonPath)) configJsonPath = @"..\" + configJsonPath;
                     string configJson = File.ReadAllText(configJsonPath);
 
                     CrawlerConfiguration config = JsonConvert.DeserializeObject<CrawlerConfiguration>(configJson);
@@ -48,15 +49,7 @@ namespace Arriba.TfsWorkItemCrawler
                     }
 
                     // Build the item consumer
-                    IItemConsumer consumer;
-                    if (config.UseDirectConsumer)
-                    {
-                        consumer = new ArribaDirectIndexerItemConsumer(config);
-                    }
-                    else
-                    {
-                        consumer = new ArribaClientIndexerItemConsumer(config, config.ArribaServiceUrl ?? "http://localhost:42784");
-                    }
+                    IItemConsumer consumer = ItemConsumerUtilities.Build(config);
 
                     // Build the item provider
                     IItemProvider provider = ItemProviderUtilities.Build(config);
