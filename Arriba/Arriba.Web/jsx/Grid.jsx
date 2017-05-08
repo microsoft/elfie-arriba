@@ -434,7 +434,7 @@ var GridMain = React.createClass({
             this.props.url + "/allCount",
             function (data) {
                 var tableToShow = this.state.userSelectedTable;
-                if (!tableToShow) tableToShow = data.content[0].tableName;
+                if (!tableToShow) tableToShow = data.resultsPerTable[0].tableName;
 
                 this.setState({ allCountData: data, currentTable: tableToShow, error: null }, this.getTableBasics.bind(this, this.getGrid));
             }.bind(this),
