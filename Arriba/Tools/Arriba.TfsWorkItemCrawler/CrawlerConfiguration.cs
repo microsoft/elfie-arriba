@@ -59,6 +59,11 @@ namespace Arriba.TfsWorkItemCrawler
         public string ItemProvider { get; set; }
 
         /// <summary>
+        ///  Name of IItemConsumer to write to on crawl. [ArribaClient, ArribaDirect, CsvWriter]
+        /// </summary>
+        public string ItemConsumer { get; set; }
+
+        /// <summary>
         ///  Name/Url of source database. [https://projectName.visualstudio.com]
         /// </summary>
         public string ItemDatabaseName { get; set; }
@@ -81,12 +86,6 @@ namespace Arriba.TfsWorkItemCrawler
         /// </summary>
         public string UserName { get; set; }
         
-        /// <summary>
-        ///  True to build the Arriba database in process rather than writing new and changed
-        ///  items to the live service URL
-        /// </summary>
-        public bool UseDirectConsumer { get; set; }
-
         /// <summary>
         ///  List of columns to be renamed from the source, if any.
         /// </summary>
