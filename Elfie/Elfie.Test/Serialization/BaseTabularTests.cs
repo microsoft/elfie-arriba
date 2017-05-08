@@ -44,25 +44,22 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
             Assert.IsTrue(content.IndexOf("[ 7, false, \"\\\\\", \"2017-05-03\", \"\\\\Barry\\\\\", \"8true\\\"2017-05-01\\\\Barry\\\\\" ],") > 0);
         }
 
-        public void ReaderWriterAll(string sampleFilePath, Func<Stream, ITabularWriter> buildWriter, Func<string, bool, ITabularReader> buildReader)
+        public void ReaderWriterAll(string sampleFileName, Func<Stream, ITabularWriter> buildWriter, Func<string, bool, ITabularReader> buildReader)
         {
-            if (!File.Exists(sampleFilePath))
-            {
-                WriteSampleFileWithIssues(new FileStream(sampleFilePath, FileMode.Create, FileAccess.ReadWrite), buildWriter);
-            }
+            WriteSampleFileWithIssues(new FileStream(sampleFileName, FileMode.Create, FileAccess.ReadWrite), buildWriter);
 
-            Reader_Basics(sampleFilePath, buildReader);
+            Reader_Basics(sampleFileName, buildReader);
             Reader_NewlineVariations(buildWriter, buildReader);
             Reader_Roundtrip(buildReader, buildWriter);
             Reader_Roundtrip_NoHeader(buildReader, buildWriter);
 
-            Writer_WriteValidUsingAllOverloads(new FileStream(sampleFilePath, FileMode.Create, FileAccess.ReadWrite), buildWriter);
-            Writer_CheckValidation(buildWriter);
-
 #if PERFORMANCE
-            Reader_Performance(sampleFilePath, buildReader);
+            Reader_Performance(sampleFileName, buildReader);
             Writer_Performance(buildWriter);
 #endif
+
+            Writer_WriteValidUsingAllOverloads(new FileStream("AllOverloads_" + sampleFileName, FileMode.Create, FileAccess.ReadWrite), buildWriter);
+            Writer_CheckValidation(buildWriter);
         }
 
         public void WriterOnlyAll(string sampleFilePath, Func<Stream, ITabularWriter> buildWriter)
