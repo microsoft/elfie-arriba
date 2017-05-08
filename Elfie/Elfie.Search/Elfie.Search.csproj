@@ -93,10 +93,6 @@
       <HintPath>..\..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Sarif, Version=1.4.28.0, Culture=neutral, PublicKeyToken=ac41962ee2e3a7cd, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\Sarif.Sdk.1.4.28-beta\lib\net40\Sarif.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Collections.Immutable, Version=1.2.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -151,7 +147,6 @@
     <Compile Include="ResultIndenter.cs" />
     <Compile Include="RoslynDefinitionFinder.cs" />
     <Compile Include="RoslynReferencesWrapper.cs" />
-    <Compile Include="Sarif\SarifConverter.cs" />
     <Compile Include="VisualStudio\VS.cs" />
     <Compile Include="VisualStudio\MessageFilter.cs" />
   </ItemGroup>
