@@ -79,9 +79,8 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
-    <Reference Include="Microsoft.DiaSymReader">
-      <HintPath>..\..\packages\Microsoft.DiaSymReader.1.0.6\lib\net20\Microsoft.DiaSymReader.dll</HintPath>
-      <Private>True</Private>
+    <Reference Include="Microsoft.DiaSymReader, Version=1.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Microsoft.DiaSymReader.1.1.0\lib\net20\Microsoft.DiaSymReader.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Collections.Immutable, Version=1.2.1.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
