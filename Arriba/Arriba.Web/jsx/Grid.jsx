@@ -1,4 +1,5 @@
-﻿require("../Search.scss");
+﻿import "../Search.scss";
+import "!script-loader!../js/utilities.js";
 
 import ErrorPage from "./ErrorPage"
 import QueryStats from "./QueryStats"

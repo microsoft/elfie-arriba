@@ -2,6 +2,11 @@
 var highlightRangeRegex = new RegExp(highlightChar + '(.+?)' + highlightChar, 'g');
 var highlightCharOnlyRegex = new RegExp(highlightChar, 'g');
 
+function isIE () {
+    // Both Chrome and Edge report as "Chrome", only IE doesn't.
+    return navigator.userAgent.indexOf('Chrome') === -1;
+}
+
 // From: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign
 Object.assign = Object.assign || function(target, varArgs) { // .length of function is 2
     'use strict';
@@ -34,6 +39,10 @@ Object.clean = function(o) {
     return JSON.parse(JSON.stringify(o));
 };
 
+Object.map = function(o, f) {
+    return Object.keys(o).map(function(key) { return f(key, o[key]) });
+}
+
 Number.prototype.clamp = function(min, max) {
     return Math.min(Math.max(this, min), max);
 };
@@ -59,15 +68,30 @@ Array.prototype.find = Array.prototype.find || function(predicate) {
 
 Array.prototype.remove = function(item) {
     var i = this.indexOf(item);
-    if (i >= 0) return this.splice(i, 1)[0];
+    if (i >= 0) this.splice(i, 1);
+    return this;
 };
 
+// Additions are inserted at the front to cater to favorites which is the only current consumer of this method.
 Array.prototype.toggle = function(item) {
-    this.includes(item) ? this.remove(item) : this.push(item);
-};
+    this.includes(item) ? this.remove(item) : this.unshift(item);
+    return this;
+}
 
 Array.prototype.emptyToUndefined = function() {
     return this.length ? this : undefined;
+}
+
+// Takes two arrays: A (this), B (other)
+// Returns three arrays: Only-A, Both, Only-B
+// Order is preserved, A takes precedent.
+Array.prototype.venn = function(other) {
+    var self = this;
+    return [
+        this.filter(function(item) { return !other.includes(item) }),
+        this.filter(function(item) { return other.includes(item) }),
+        other.filter(function(item) { return !self.includes(item) }),
+    ];
 }
 
 Storage.prototype.getJson = function(keyName) {
@@ -76,12 +100,28 @@ Storage.prototype.getJson = function(keyName) {
 
 Storage.prototype.setJson = function(keyName, keyValue) {
     this.setItem(keyName, JSON.stringify(keyValue));
+    this.dispatch(keyName);
 };
 
+Storage.prototype.updateJson = function(keyName, f) {
+    if (typeof f !== "function") return;
+    var value = localStorage.getJson(keyName);
+    this.setJson(keyName, f(value));
+    this.dispatch(keyName);
+}
+
 // Shallow merge the keyObject into localStorage.
-Storage.prototype.updateJson = function(keyName, keyObject) {
+Storage.prototype.mergeJson = function(keyName, keyObject) {
     if (typeof keyObject !== "object") return;
     this.setJson(keyName, Object.merge(localStorage.getJson(keyName), keyObject));
+    this.dispatch(keyName);
+}
+
+// Chrome and Edge do not dispatch the storage event to the current tag (only other tabs).
+// IE dispatches to all tabs. In this case we desire the IE behavior and dispatch makes the other browsers simulate it.
+Storage.prototype.dispatch = function(keyName) {
+    if (isIE()) return; 
+    window.dispatchEvent(new StorageEvent("storage", { key: keyName }));
 }
 
 // Highlight values surrounded by Pi characters by wrapping them in <span class="h"></span>

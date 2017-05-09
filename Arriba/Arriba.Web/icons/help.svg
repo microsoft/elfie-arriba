@@ -1,0 +1,26 @@
+<svg width="20" height="20" viewBox="0 0 20 20" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:figma="http://www.figma.com/figma/ns">
+<title>Icon Question</title>
+<desc>Created using Figma</desc>
+<g id="Canvas" transform="translate(-1068 -201)" figma:type="canvas">
+<g id="Icon Question" figma:type="frame">
+<g id="Background" figma:type="ellipse">
+<use xlink:href="#path0_fill" transform="translate(1068 201)" fill="#F2F2F2"/>
+</g>
+<g id="Question Dot" figma:type="ellipse">
+<use xlink:href="#path1_fill" transform="translate(1077 215.25)" fill="#585858"/>
+</g>
+<g id="Question Square" figma:type="rounded-rectangle">
+<use xlink:href="#path2_fill" transform="translate(1077.35 215.5)" fill="#5A5A5A"/>
+</g>
+<g id="Question Mark" figma:type="vector">
+<use xlink:href="#path3_stroke" transform="translate(1075 206)" fill="#585858"/>
+</g>
+</g>
+</g>
+<defs>
+<path id="path0_fill" d="M 20 10C 20 15.5228 15.5228 20 10 20C 4.47715 20 0 15.5228 0 10C 0 4.47715 4.47715 0 10 0C 15.5228 0 20 4.47715 20 10Z"/>
+<path id="path1_fill" d="M 2 1C 2 1.55228 1.55228 2 1 2C 0.447715 2 0 1.55228 0 1C 0 0.447715 0.447715 0 1 0C 1.55228 0 2 0.447715 2 1Z"/>
+<path id="path2_fill" d="M 0 0L 1.3 0L 1.3 1.3L 0 1.3L 0 0Z"/>
+<path id="path3_stroke" d="M 6 3L 6.625 3L 6.625 3L 6 3ZM 0.625 3C 0.625 2.1696 0.930186 1.59273 1.35273 1.21713C 1.78677 0.831319 2.38317 0.625003 3 0.625L 3 -0.625C 2.11683 -0.624995 1.21323 -0.33131 0.522274 0.282872C -0.180186 0.907279 -0.625 1.8304 -0.625 3L 0.625 3ZM 3 0.625C 3.61683 0.624997 4.21323 0.83131 4.64727 1.21713C 5.06981 1.59272 5.375 2.1696 5.375 3L 6.625 3C 6.625 1.8304 6.18019 0.907276 5.47773 0.282867C 4.78677 -0.331318 3.88317 -0.625005 3 -0.625L 3 0.625ZM 5.375 3C 5.375 3.63493 5.22004 3.99828 5.03125 4.25C 4.82049 4.54597 4.52831 4.72997 4.15331 4.97997C 3.77831 5.22997 3.32049 5.54597 2.96875 6C 2.59504 6.49828 2.375 7.13493 2.375 8L 3.625 8C 3.625 7.36507 3.77996 7.00172 3.96875 6.75C 4.17951 6.45403 4.47169 6.27003 4.84669 6.02003C 5.22169 5.77003 5.67951 5.45403 6.03125 5C 6.40496 4.50172 6.625 3.86507 6.625 3L 5.375 3Z"/>
+</defs>
+</svg>

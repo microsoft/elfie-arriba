@@ -47,6 +47,7 @@ html, body, .viewport {
 .searchBarAndButtons {
     flex: 1;
     display: flex;
+    align-items: center;
     padding: 8px;
 }
 
@@ -97,8 +98,8 @@ html, body, .viewport {
 
 /* Make query stats fixed height */
 .queryStats {
-    min-height: 20px;
-    max-height: 20px;
+    min-height: 32px;
+    max-height: 32px;
 }
 
 /* Make the right bar fixed width */
@@ -331,33 +332,37 @@ a:visited:hover {
     }
 }
 
-/* Make the buttons (top right) large, white on dark green */
+.buttons {
+    margin: 0 5px;
+    display: flex;
+}
+
 .buttons a {
-    font-size: 20px;
-    display: inline-block;
-    color: white;
-    height: 48px;
-    width: 48px;
+    padding: 5px 5px;
     margin-left: 8px;
-}
-
-.buttons a:hover {
-    color: #999;
-    text-decoration: none;
-}
-
-/* Center the icons within the buttons */
-.buttons a i {
-    margin: 12px;
+    font-size: 0; // Discard white space.
+    &:hover { opacity: 0.8; }
 }
 
 /* --- Query Stats Bar --- */
 
 /* Make the QueryStats grey and hide overflowing content */
 .queryStats {
-    padding: 6px;
+    padding-left: 6px;
     background: #E3E3E3;
     @include ellipsis;
+    display: flex;
+    & > * { padding: 6px 0; }
+
+    .explanation {
+        border: 1px solid hsl(0, 0, 75%);
+        padding: 2px 4px;
+        margin-left: 3px;
+    }
+
+    .spacer {
+        flex-grow: 1;
+    }
 }
 
 /* Make the per-table buttons dark grey and spaced out */
@@ -365,7 +370,7 @@ a:visited:hover {
     margin-right: 8px;
 
     & > span {
-        border: 1px solid #999999;
+        border: 1px solid hsl(0, 0, 75%);
         padding: 2px 6px;
 
         &:not(:first-child) {
@@ -387,7 +392,10 @@ a:visited:hover {
 
 /* Space out the QueryStats buttons a bit */
 .queryStats a {
-    padding-left: 6px;
+    font-size: 0; // Discard white space.
+    padding: 11px 7px;
+    &:last-child { padding-right: 7px + 5px; }
+    &:hover { background-color: hsl(0, 0, 75%); }
 }
 
 
@@ -456,37 +464,6 @@ a:visited:hover {
     margin-top: 4px;
     font-size: 70%;
 }
-
-/* --- Help Content UX --- */
-
-/* Help Panel: Full size with 24px around, scrollable, grey border, padded */
-.helpContent {
-    flex: 1 100%;
-    overflow: auto;
-    margin: 24px 36px;
-    
-    border: 1px solid #999999;
-    background-color: white;
-
-    padding: 12px;
-}
-
-/* Make the first part bigger */
-.helpIntro {
-    font-size: 150%;
-}
-
-/* Make section headings nicely spaced */
-.helpContent h2 {
-    margin-top: 1em;
-    margin-bottom: 4px;
-    font-weight: 600;
-}
-
-.exampleBox {
-    margin-bottom: 1.5em;
-}
-
 
 /* --- Error / Access Denied UX --- */
 
