@@ -1,4 +1,6 @@
-﻿// SearchHeader contains the top bar - branching, the search box, and top-level buttons
+﻿import "./SearchHeader.scss";
+
+// SearchHeader contains the top bar - branching, the search box, and top-level buttons
 export default React.createClass({
     getInitialState: function () {
         return { suggestions: [], sel: 0, completed: "", completionCharacters: [] };   

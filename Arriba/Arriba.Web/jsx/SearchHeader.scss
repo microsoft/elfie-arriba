@@ -1,0 +1,113 @@
+.header {
+    height: 64px;
+    display: flex;
+    flex-flow: row;
+}
+
+/* Top Left Title - white, middle, bigger */
+.header .title {
+    cursor: default;
+    padding: 16px 8px;
+    vertical-align: middle;
+    font-size: 18pt;
+}
+
+/* The title is a link; fix it to look like plain text */
+.header .title a {
+    color: white;
+    font-weight: normal;
+}
+
+/* Make the search box large, fill the space, well padded, slightly grey */
+.header .searchBar input {
+    font-size: 16pt;
+    box-sizing: border-box;
+    border: none;
+    margin-right: 0px;
+    flex: 1;
+    padding: 8px;
+    color: #666666;
+    background: #F7F7F7;
+}
+
+/* Make the search icon (magnifying glass) the same as the search box and right next to it */
+.header .searchBar .searchIcon {
+    font-size: 16pt;
+    color: #666666;
+    background: #F7F7F7;
+    padding: 8px;
+    margin-left: 0px;
+
+    i { margin-left: 5px; }
+}
+
+/* The indefinite progress bar to when waiting for the server */
+.header .searchBar .loading {
+    display: none;
+    position: absolute;
+    bottom: 0;
+    height: 3px;
+    width: 100%;
+
+    &.loading-active {
+        display: block;
+        background: linear-gradient(90deg, transparent 70%, hsl(136, 100%, 23%) 85%, transparent);
+        background-size: 200%;
+        animation: wave 1.5s linear 500ms infinite;
+
+        @keyframes wave {
+            0%    { background-position: 200% 50% }
+            100%  { background-position: 0%   50% }
+        }
+    }
+}
+
+.buttons {
+    margin: 0 5px;
+    display: flex;
+}
+
+.buttons a {
+    padding: 5px 5px;
+    margin-left: 8px;
+    font-size: 0; // Discard white space.
+    &:hover { opacity: 0.8; }
+}
+
+.suggestions {
+    position: absolute;
+    top: 50px; /* Todo: Don't hard code the top. */
+    left: 0;
+    background-color: white;
+    box-shadow: 0 3px 8px 0 rgba(0,0,0,0.2), 0 0 0 1px rgba(0,0,0,0.08);
+    z-index: 1;
+    max-height: 70vh;
+    min-width: 150px;
+    overflow-y: scroll;
+}
+
+.suggestions .suggestion {
+    font-size: 12pt;
+    font-weight: 600;
+    padding: 8px;
+    cursor: pointer;
+    box-sizing: border-box;
+    white-space: nowrap;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.suggestions .suggestion:hover {
+     background-color: rgba(0, 0, 0, 0.02); 
+}
+
+.suggestions .suggestion-sel {
+    background-color: rgba(180, 210, 255, 0.5);
+}
+
+.suggestions .suggestion-hint {
+    color: hsl(220, 40%, 50%);
+    margin-left: 30px;
+    font-size: 9pt;
+}
