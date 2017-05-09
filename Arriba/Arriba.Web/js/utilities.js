@@ -39,6 +39,10 @@ Object.clean = function(o) {
     return JSON.parse(JSON.stringify(o));
 };
 
+Object.map = function(o, f) {
+    return Object.keys(o).map(function(key) { return f(key, o[key]) });
+}
+
 Number.prototype.clamp = function(min, max) {
     return Math.min(Math.max(this, min), max);
 };
@@ -68,13 +72,26 @@ Array.prototype.remove = function(item) {
     return this;
 };
 
+// Additions are inserted at the front to cater to favorites which is the only current consumer of this method.
 Array.prototype.toggle = function(item) {
-    this.includes(item) ? this.remove(item) : this.push(item);
+    this.includes(item) ? this.remove(item) : this.unshift(item);
     return this;
 }
 
 Array.prototype.emptyToUndefined = function() {
     return this.length ? this : undefined;
+}
+
+// Takes two arrays: A (this), B (other)
+// Returns three arrays: Only-A, Both, Only-B
+// Order is preserved, A takes precedent.
+Array.prototype.venn = function(other) {
+    var self = this;
+    return [
+        this.filter(function(item) { return !other.includes(item) }),
+        this.filter(function(item) { return other.includes(item) }),
+        other.filter(function(item) { return !self.includes(item) }),
+    ];
 }
 
 Storage.prototype.getJson = function(keyName) {
