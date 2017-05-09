@@ -1,13 +1,14 @@
 ﻿import "../Search.scss";
 import "!script-loader!../js/utilities.js";
 
+import Mru from "./Mru";
 import ErrorPage from "./ErrorPage";
 import QueryStats from "./QueryStats";
 import SearchHeader from "./SearchHeader";
 
 import InfiniteScroll from "./InfiniteScroll";
 import SplitPane from "./SplitPane";
-import SyntaxHelp from "./SyntaxHelp";
+import Start from "./Start";
 
 import ResultDetails from "./ResultDetails";
 import ResultListing from "./ResultListing";
@@ -61,9 +62,12 @@ var SearchMain = React.createClass({
         };
     },
     componentDidMount: function () {
+        window.addEventListener("beforeunload", this); // For Mru
+        this.mru = new Mru();
+
         // On Page load, find the list of known table names
-        jsonQuery(configuration.url,
-            data => this.setState({ tables: data.content }),
+        jsonQuery(configuration.url + "/allBasics",
+            data => this.setState({ allBasics: data.content }),
             (xhr, status, err) => {
                 this.setState({ blockingErrorStatus: status });
                 console.error(xhr.url, status, err.toString());
@@ -77,6 +81,13 @@ var SearchMain = React.createClass({
             // If there's an item to open, open it
             this.getTableBasics();
         }
+    },
+    componentWillUnmount: function () {
+        window.removeEventListener("beforeunload", this);
+    },
+    handleEvent: function (e) {
+        // Assumed to be type="beforeunload" as we only subscribed for that.
+        this.mru.push();
     },
     handleKeyDown: function (e) {
         // Backspace: Clear state *if query empty*
@@ -176,7 +187,7 @@ var SearchMain = React.createClass({
         this.jsonQueryWithError(
             configuration.url + "/allCount",
             data => {
-                var currentTable = this.state.userSelectedTable || data.content[0].tableName;
+                var currentTable = this.state.userSelectedTable || data.content.resultsPerTable[0].tableName;
                 if (this.state.currentTable !== currentTable) {
                     this.setState({
                         userTableSettings: {},
@@ -188,6 +199,9 @@ var SearchMain = React.createClass({
                     currentTable: currentTable,
                     loading: false
                 }, this.getTableBasics);
+
+                data.content.parsedQuery = data.content.parsedQuery.replace(/\[\*\]:/g, ""); // Other consumers want the [*] removed also.
+                this.mru.update(data.content.parsedQuery);
             },
             { q: this.state.query }
         );
@@ -357,7 +371,7 @@ var SearchMain = React.createClass({
                     })}
                 </div>
             </SplitPane>
-            : <SyntaxHelp showHelp={this.props.params.help} />
+            : <Start allBasics={this.state.allBasics} showHelp={this.props.params.help === "true"} onSearchChange={this.onSearchChange} />;
 
         var queryUrl = this.buildQueryUrl();
         var baseUrl = this.buildThisUrl(false);
@@ -370,7 +384,7 @@ var SearchMain = React.createClass({
         return (
             <div className={"viewport " + configuration.theme} onKeyDown={this.handleKeyDown}>
                 <SearchHeader query={this.state.query}
-                              tables={this.state.tables}
+                              parsedQuery={this.state.allCountData.content && this.state.allCountData.content.parsedQuery}
                               onSearchChange={this.onSearchChange}
                               loading={this.state.loading} />
 

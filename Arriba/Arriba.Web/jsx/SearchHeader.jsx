@@ -17,7 +17,8 @@ export default React.createClass({
         window.removeEventListener("storage", this);
     },
     handleEvent: function(e) {
-        if (e.type === "storage" && e.key == "favorites") setTimeout(() => this.forceUpdate());
+        // Assumed to be type="storage" as we only subscribed for that.
+        if (["favorites"].includes(e.key)) setTimeout(() => this.forceUpdate()); // Just to update the star.
     },
     handleFocusOrBlur: function () {
         if (isIE()) this.bypassInputOnce = true;
@@ -46,9 +47,11 @@ export default React.createClass({
             e.stopPropagation();
         }
         if (e.key === "Enter" || this.state.completionCharacters.includes(e.key)) {
-            var suffix = (e.key === "Enter" || e.key === "Tab" || e.key === " ") ? "" : e.key;
             var item = this.state.suggestions[this.state.sel];
-            var newQuery = item.replaceAs || (this.state.completed + item.completeAs + " " + suffix);
+
+            var separator = (item.category === "Value" && e.key !== " " ? "" : " ");
+            var suffix = (e.key === "Enter" || e.key === "Tab" || e.key === " ") ? "" : e.key;
+            var newQuery = item.replaceAs || (this.state.completed + item.completeAs + separator + suffix);
             this.setQuery(newQuery);
             e.preventDefault(); // Suppress focus tabbing.
         }
@@ -57,7 +60,8 @@ export default React.createClass({
         }
     },
     handleClickSuggestion: function (item) {
-        this.setQuery(item.replaceAs || this.state.completed + item.completeAs + " ");
+        var separator = (item.category === "Value" ? "" : " ");
+        this.setQuery(item.replaceAs || this.state.completed + item.completeAs + separator);
         searchBox.focus();
     },
     setQuery: function (query) {
@@ -66,34 +70,20 @@ export default React.createClass({
         if (this.lastRequest) this.lastRequest.abort();
         this.lastRequest = jsonQuery(
             configuration.url + "/suggest?q=" + encodeURIComponent(query),
-            data => {
-                var favs = (localStorage.getJson("favorites") || [])
-                    .filter(fav => 
-                        this.props.query.length < fav.length &&
-                        fav.toUpperCase().trimIf("[").startsWith(this.props.query.toUpperCase().trimIf("["))
-                    ).map(fav => ({
-                        display: fav,
-                        hint: "\u2605",
-                        replaceAs: fav
-                    }));
-
-                this.setState({
-                    suggestions: favs.concat(data.content.suggestions),
-                    sel: 0,
-                    completed: data.content.complete, 
-                    completionCharacters: data.content.completionCharacters.map(c => ({ "\t": "Tab" })[c] || c),
-                });
-            },
+            data => this.setState({
+                suggestions: data.content.suggestions,
+                sel: 0,
+                completed: data.content.complete, 
+                completionCharacters: data.content.completionCharacters.map(c => ({ "\t": "Tab" })[c] || c),
+            }),
             (xhr, status, err) => console.error(xhr.url, status, err.toString())
         );
     },
     toggleFavorite: function () {
-        if (!this.props.query) return;
-        localStorage.updateJson("favorites", favs => favs.toggle(this.props.query.trim()));
+        if (!this.props.parsedQuery) return;
+        localStorage.updateJson("favorites", favs => favs.toggle(this.props.parsedQuery));
     },
     render: function () {
-        var tables = this.props.tables || [];
-
         var suggestions = this.state.suggestions.length <= 0 ? null :
             <div className="suggestions" >
                 {this.state.suggestions.map((item, index) =>
@@ -115,12 +105,12 @@ export default React.createClass({
                     <div className="searchBar">
                         <div className={ "loading " + (this.props.loading ? "loading-active" : "") }></div>
                         <input id="searchBox" ref="searchBox" type="text" spellCheck="false"
-                            placeholder={"Search for " + tables.join(", ") + "..."} 
+                            placeholder="Search for..." 
                             tabIndex="1" onInput={this.onInput} value={this.props.query} 
                             onKeyDown={this.handleKeyDown} onClick={this.handleClick} 
                             onFocus={this.handleFocusOrBlur} onBlur={this.handleFocusOrBlur}/>
                         <div className="searchIcon">
-                            <i className={(localStorage.getJson("favorites") || []).includes(this.props.query.trim()) ? "icon-solid-star" : "icon-outlined-star"} onClick={this.toggleFavorite}></i>
+                            <i className={(localStorage.getJson("favorites") || []).includes(this.props.parsedQuery) ? "icon-solid-star" : "icon-outlined-star"} onClick={this.toggleFavorite}></i>
                             <i className="icon-find"></i>
                         </div>
                         {suggestions}
