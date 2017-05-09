@@ -30,7 +30,7 @@ $green: hsl(136, 100%, 23%); // Conflux title green
     flex-direction: column;
     margin-bottom: 50px;
 
-    * { box-sizing: content-box; } // Eventually global.
+    * { box-sizing: border-box; } // Eventually global.
 
     h1 {
         font-size: 26px;
