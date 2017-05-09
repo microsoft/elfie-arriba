@@ -45,7 +45,7 @@ namespace Arriba.Test.Model.Query
         public void QueryIntelliSense_CompleteQuery()
         {
             // Complete everything with Tab
-            Assert.AreEqual("[ID] < 15 AND [WhenFounded] > \"1900-01-01\" ([SchoolYearLength] = 18)", CompleteEachKeystroke("I\t<\t15 AN\t[Whe\t>\t\"1900-01-01\" (SchoolY\t=\t18)"));
+            Assert.AreEqual("[ID] < 15 AND [WhenFounded] > \"1900-01-01\" ([SchoolYearLength] = 18)", CompleteEachKeystroke("I\t<\t15 AN\t[Whe\t>\t\"1900-01-01\" (SchoolY\t= 18)"));
 
             // Complete with spaces where safe
             Assert.AreEqual("[SchoolHasMascot] = true AND [WhenFounded] > \"  \"", CompleteEachKeystroke("[SchoolH = tr AND [When > \"  \""));

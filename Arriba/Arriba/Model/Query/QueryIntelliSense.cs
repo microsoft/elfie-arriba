@@ -219,11 +219,12 @@ namespace Arriba.Model.Query
             // If there is no completion for this item (grammar suggestions), just append the character
             if (selectedItem == null || String.IsNullOrEmpty(selectedItem.CompleteAs)) return queryBeforeCursor + completionCharacter;
 
-            // Add the value to complete and a space to complete the value
-            string newQuery = result.Complete + selectedItem.CompleteAs + ' ';
+            // Add the value to complete. Add a space afterward for non-values (so we don't jump to the next term). Add a space if you completed with space.
+            string separator = (selectedItem.Category == QueryTokenCategory.Value && completionCharacter != ' ' ? "" : " ");
+            string newQuery = result.Complete + selectedItem.CompleteAs + separator;
 
             // If the completion character isn't '\t' or ' ', add the completion character as well
-            if (completionCharacter != '\t' && completionCharacter != ' ') newQuery += completionCharacter;
+            if (completionCharacter != '\n' && completionCharacter != '\t' && completionCharacter != ' ') newQuery += completionCharacter;
 
             return newQuery;
         }
@@ -323,6 +324,9 @@ namespace Arriba.Model.Query
             {
                 completionCharacters.AddRange(ColumnNameCompletionCharacters);
             }
+
+            // If there's only one suggestion and it's been fully typed, remove it
+            if (suggestions.Count == 1 && suggestions[0].Display == guidance.Value) suggestions.Clear();
 
             // Finish populating the result
             result.Suggestions = suggestions;
