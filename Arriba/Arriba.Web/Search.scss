@@ -41,22 +41,6 @@ html, body, .viewport {
     min-height: 64px;
 }
 
-.searchBarAndButtons {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    padding: 8px;
-}
-
-/* Make the search bar fill header width. Make contents also fill inner width */
-.searchBar {
-    flex: 1;
-
-    display: flex;
-
-    position: relative;
-}
-
 /* Make the middle area resize and full width.
     - Make contents of it flow across.
     - Ensure it's non-scrollable so the content will be scrollable
