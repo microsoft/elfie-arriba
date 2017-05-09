@@ -111,10 +111,8 @@ export default React.createClass({
                             tabIndex="1" onInput={this.onInput} value={this.props.query} 
                             onKeyDown={this.handleKeyDown} onClick={this.handleClick} 
                             onFocus={this.handleFocusOrBlur} onBlur={this.handleFocusOrBlur}/>
-                        <div className="searchIcon">
-                            <i className={(localStorage.getJson("favorites") || []).includes(this.props.parsedQuery) ? "icon-solid-star" : "icon-outlined-star"} onClick={this.toggleFavorite}></i>
-                            <i className="icon-find"></i>
-                        </div>
+                        <i className={"searchIcon " + ((localStorage.getJson("favorites") || []).includes(this.props.parsedQuery) ? "icon-solid-star" : "icon-outlined-star")} onClick={this.toggleFavorite}></i>
+                        <i className="searchIcon icon-find"></i>
                         {suggestions}
                     </div>
 

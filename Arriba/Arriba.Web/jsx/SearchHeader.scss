@@ -17,27 +17,38 @@
         font-weight: normal;
     }
 
+    .searchBarAndButtons {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        padding: 8px;
+    }
+
+    .searchBar {
+        background: hsl(0, 0, 97%);
+        flex: 1;
+        display: flex;
+        align-items: center;
+        position: relative;
+    }
+
     /* Make the search box large, fill the space, well padded, slightly grey */
     .searchBar input {
         font-size: 16pt;
         box-sizing: border-box;
         border: none;
-        margin-right: 0px;
         flex: 1;
         padding: 8px;
         color: #666666;
-        background: #F7F7F7;
+        background: transparent; // Override user agent.
     }
 
     /* Make the search icon (magnifying glass) the same as the search box and right next to it */
     .searchBar .searchIcon {
         font-size: 16pt;
         color: #666666;
-        background: #F7F7F7;
-        padding: 8px;
-        margin-left: 0px;
-
-        i { margin-left: 5px; }
+        padding: 4px;
+        &:last-child { margin-right: 4px; }
     }
 
     /* The indefinite progress bar to when waiting for the server */
