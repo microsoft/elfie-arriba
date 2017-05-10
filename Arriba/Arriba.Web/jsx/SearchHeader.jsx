@@ -83,7 +83,7 @@ export default React.createClass({
     },
     toggleFavorite: function () {
         if (!this.props.parsedQuery) return;
-        localStorage.updateJson("favorites", favs => favs.toggle(this.props.parsedQuery));
+        localStorage.updateJson("favorites", favs => ([] || favs).toggle(this.props.parsedQuery));
     },
     render: function () {
         return (
