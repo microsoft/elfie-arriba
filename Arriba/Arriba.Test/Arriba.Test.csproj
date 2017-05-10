@@ -102,6 +102,7 @@
     <Compile Include="Diagnostics\CommandLineTests.cs" />
     <Compile Include="Indexing\SetSplitterTests.cs" />
     <Compile Include="Model\DatabaseTests.cs" />
+    <Compile Include="Model\IpRangeColumnTests.cs" />
     <Compile Include="Model\Query\QueryIntelliSenseTests.cs" />
     <Compile Include="Model\SecureDatabaseTests.cs" />
     <Compile Include="Model\TableTestsLarge.cs" />
