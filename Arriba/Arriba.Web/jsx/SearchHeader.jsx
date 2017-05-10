@@ -86,17 +86,6 @@ export default React.createClass({
         localStorage.updateJson("favorites", favs => favs.toggle(this.props.parsedQuery));
     },
     render: function () {
-        var suggestions = this.state.suggestions.length <= 0 ? null :
-            <div className="suggestions" >
-                {this.state.suggestions.map((item, index) =>
-                    <div className={"suggestion " + (this.state.sel == index ? "suggestion-sel" : "" )}
-                        onClick={ this.handleClickSuggestion.bind(this, item) }>
-                        <span><span style={{opacity: 0.3}}>{item.replaceAs ? "" : this.state.completed}</span>{item.display}</span>
-                        <span className="suggestion-hint">{item.hint}</span>
-                    </div>
-                )}
-            </div>;
-
         return (
             <div className="header theme-background-medium">
                 <div className="title font-light theme-background-vdark">
@@ -111,19 +100,26 @@ export default React.createClass({
                             tabIndex="1" onInput={this.onInput} value={this.props.query} 
                             onKeyDown={this.handleKeyDown} onClick={this.handleClick} 
                             onFocus={this.handleFocusOrBlur} onBlur={this.handleFocusOrBlur}/>
+                        {this.state.suggestions.length > 0 &&
+                            <div className="suggestions" >
+                                {this.state.suggestions.map((item, index) =>
+                                    <div className={"suggestion " + (this.state.sel == index ? "suggestion-sel" : "" )}
+                                        onClick={ this.handleClickSuggestion.bind(this, item) }>
+                                        <span><span style={{opacity: 0.3}}>{item.replaceAs ? "" : this.state.completed}</span>{item.display}</span>
+                                        <span className="suggestion-hint">{item.hint}</span>
+                                    </div>
+                                )}
+                            </div>
+                        }
                         <i className={"searchIcon " + ((localStorage.getJson("favorites") || []).includes(this.props.parsedQuery) ? "icon-solid-star" : "icon-outlined-star")} onClick={this.toggleFavorite}></i>
                         <i className="searchIcon icon-find"></i>
-                        {suggestions}
                     </div>
-
-                    <div className="buttons">
-                        <a title="Feedback" href={"mailto:" + encodeURIComponent(configuration.feedbackEmailAddresses) + "?subject=" + encodeURIComponent(configuration.toolName) + " Feedback"}>
-                            <img src="/icons/feedback.svg" alt="feedback"/>
-                        </a>
-                        <a title="Help" href="/Search.html?help=true">
-                            <img src="/icons/help.svg" alt="help"/>
-                        </a>
-                    </div>
+                    <a title="Feedback" href={"mailto:" + encodeURIComponent(configuration.feedbackEmailAddresses) + "?subject=" + encodeURIComponent(configuration.toolName) + " Feedback"}>
+                        <img src="/icons/feedback.svg" alt="feedback"/>
+                    </a>
+                    <a title="Help" href="/Search.html?help=true">
+                        <img src="/icons/help.svg" alt="help"/>
+                    </a>
                 </div>
             </div>
         );

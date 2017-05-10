@@ -22,6 +22,13 @@
         display: flex;
         align-items: center;
         padding: 8px;
+        padding-right: 10px;
+
+        & > a { // <a> assumed to be buttons.
+            padding: 8px;
+            font-size: 0; // Discard white space.
+            &:hover { opacity: 0.8; }
+        }
     }
 
     .searchBar {
@@ -30,6 +37,8 @@
         display: flex;
         align-items: center;
         position: relative;
+        padding-right: 4px;
+        margin-right: 8px;
     }
 
     /* Make the search box large, fill the space, well padded, slightly grey */
@@ -48,7 +57,6 @@
         font-size: 16pt;
         color: #666666;
         padding: 4px;
-        &:last-child { margin-right: 4px; }
     }
 
     /* The indefinite progress bar to when waiting for the server */
@@ -71,18 +79,6 @@
             }
         }
     }
-}
-
-.buttons {
-    margin: 0 5px;
-    display: flex;
-}
-
-.buttons a {
-    padding: 5px 5px;
-    margin-left: 8px;
-    font-size: 0; // Discard white space.
-    &:hover { opacity: 0.8; }
 }
 
 .suggestions {
