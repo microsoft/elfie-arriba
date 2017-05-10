@@ -24,6 +24,11 @@ namespace Arriba.Test.Model
             Assert.AreEqual("192.168.254.6-192.168.254.64", ParseAndToString("192.168.254.6-192.168.254.64"));
             Assert.AreEqual("10.1.15.230", ParseAndToString("10.1.15.230-10.1.15.230"));
 
+            // CIDR Ranges
+            Assert.AreEqual("10.11.0.0-10.11.255.255", ParseAndToString("10.11.0.0/16"));
+            Assert.AreEqual("192.168.100.0-192.168.103.255", ParseAndToString("192.168.100.0/22"));
+            Assert.AreEqual("192.168.100.0-192.168.100.255", ParseAndToString("192.168.100.15/24"));
+
             // Null, Empty, text
             Assert.AreEqual("", ParseAndToString(null));
             Assert.AreEqual("", ParseAndToString(""));

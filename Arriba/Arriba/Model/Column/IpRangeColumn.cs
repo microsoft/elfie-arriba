@@ -5,7 +5,7 @@ namespace Arriba.Model.Column
 {
     public class IpRange
     {
-        private static Regex IpPartsExpression = new Regex(@"^(\d{1,3}|\.|-|\*)+$", RegexOptions.Compiled);
+        private static Regex IpPartsExpression = new Regex(@"^(\d{1,3}|\.|-|\*|/)+$", RegexOptions.Compiled);
         public uint StartInclusive { get; set; }
         public uint EndInclusive { get; set; }
 
@@ -74,6 +74,25 @@ namespace Arriba.Model.Column
                     return true;
                 }
 
+                // '/', prefix bit count
+                if(g.Captures[index].Value == "/")
+                {
+                    ++index;
+
+                    // Get the prefix bit count
+                    if (!int.TryParse(g.Captures[index].Value, out bitsFound)) return false;
+                    ++index;
+
+                    // Clear the suffix bits on the sample address
+                    startAddress = startAddress & (uint.MaxValue << (32 - bitsFound));
+
+                    // Compute the end address
+                    endAddress = startAddress + (uint)((1 << (32 - bitsFound)) - 1);
+
+                    result = new IpRange(startAddress, endAddress);
+                    return true;
+                }
+
                 // Otherwise, invalid
                 return false;
             }
@@ -124,7 +143,7 @@ namespace Arriba.Model.Column
                 {
                     ++index;
                     break;
-                }
+                }                
 
                 // The next part must be a number
                 uint part;
