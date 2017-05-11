@@ -1,12 +1,7 @@
-﻿function isIE () {
-    // Both Chrome and Edge report as "Chrome", only IE doesn't.
-    return navigator.userAgent.indexOf('Chrome') === -1;
-}
-
-// SearchHeader contains the top bar - branching, the search box, and top-level buttons
+﻿// SearchHeader contains the top bar - branching, the search box, and top-level buttons
 export default React.createClass({
     getInitialState: function () {
-        return { suggestions: [], sel: 0, completed: "", completionCharacters: [], favs: localStorage.getJson("favorites") || [] };   
+        return { suggestions: [], sel: 0, completed: "", completionCharacters: [] };   
     },
     componentDidMount: function () {
         searchBox.focus();
@@ -15,9 +10,15 @@ export default React.createClass({
             this.setState({ suggestions: [] });
         }
         document.addEventListener("click", this.handleClickDocument);
+        window.addEventListener("storage", this);
     },
     componentWillUnmount: function() {
         document.removeEventListener("click", this.handleClickDocument);
+        window.removeEventListener("storage", this);
+    },
+    handleEvent: function(e) {
+        // Assumed to be type="storage" as we only subscribed for that.
+        if (["favorites"].includes(e.key)) setTimeout(() => this.forceUpdate()); // Just to update the star.
     },
     handleFocusOrBlur: function () {
         if (isIE()) this.bypassInputOnce = true;
@@ -46,9 +47,11 @@ export default React.createClass({
             e.stopPropagation();
         }
         if (e.key === "Enter" || this.state.completionCharacters.includes(e.key)) {
-            var suffix = (e.key === "Enter" || e.key === "Tab" || e.key === " ") ? "" : e.key;
             var item = this.state.suggestions[this.state.sel];
-            var newQuery = item.replaceAs || (this.state.completed + item.completeAs + " " + suffix);
+
+            var separator = (item.category === "Value" && e.key !== " " ? "" : " ");
+            var suffix = (e.key === "Enter" || e.key === "Tab" || e.key === " ") ? "" : e.key;
+            var newQuery = item.replaceAs || (this.state.completed + item.completeAs + separator + suffix);
             this.setQuery(newQuery);
             e.preventDefault(); // Suppress focus tabbing.
         }
@@ -57,7 +60,8 @@ export default React.createClass({
         }
     },
     handleClickSuggestion: function (item) {
-        this.setQuery(item.replaceAs || this.state.completed + item.completeAs + " ");
+        var separator = (item.category === "Value" ? "" : " ");
+        this.setQuery(item.replaceAs || this.state.completed + item.completeAs + separator);
         searchBox.focus();
     },
     setQuery: function (query) {
@@ -66,36 +70,20 @@ export default React.createClass({
         if (this.lastRequest) this.lastRequest.abort();
         this.lastRequest = jsonQuery(
             configuration.url + "/suggest?q=" + encodeURIComponent(query),
-            data => {
-                var favs = this.state.favs
-                    .filter(fav => 
-                        this.props.query.length < fav.length &&
-                        fav.toUpperCase().trimIf("[").startsWith(this.props.query.toUpperCase().trimIf("["))
-                    ).map(fav => ({
-                        display: fav,
-                        hint: "\u2605",
-                        replaceAs: fav
-                    }));
-
-                this.setState({
-                    suggestions: favs.concat(data.content.suggestions),
-                    sel: 0,
-                    completed: data.content.complete, 
-                    completionCharacters: data.content.completionCharacters.map(c => ({ "\t": "Tab" })[c] || c),
-                });
-            },
+            data => this.setState({
+                suggestions: data.content.suggestions,
+                sel: 0,
+                completed: data.content.complete, 
+                completionCharacters: data.content.completionCharacters.map(c => ({ "\t": "Tab" })[c] || c),
+            }),
             (xhr, status, err) => console.error(xhr.url, status, err.toString())
         );
     },
     toggleFavorite: function () {
-        if (!this.props.query) return;
-
-        this.state.favs.toggle(this.props.query.trim());
-        localStorage.setJson("favorites", this.state.favs);
+        if (!this.props.parsedQuery) return;
+        localStorage.updateJson("favorites", favs => favs.toggle(this.props.parsedQuery));
     },
     render: function () {
-        var tables = this.props.tables || [];
-
         var suggestions = this.state.suggestions.length <= 0 ? null :
             <div className="suggestions" >
                 {this.state.suggestions.map((item, index) =>
@@ -116,27 +104,24 @@ export default React.createClass({
                 <div className="searchBarAndButtons">
                     <div className="searchBar">
                         <div className={ "loading " + (this.props.loading ? "loading-active" : "") }></div>
-                        <input id="searchBox" ref="searchBox" type="text" 
-                            placeholder={"Search for " + tables.join(", ") + "..."} 
+                        <input id="searchBox" ref="searchBox" type="text" spellCheck="false"
+                            placeholder="Search for..." 
                             tabIndex="1" onInput={this.onInput} value={this.props.query} 
                             onKeyDown={this.handleKeyDown} onClick={this.handleClick} 
                             onFocus={this.handleFocusOrBlur} onBlur={this.handleFocusOrBlur}/>
                         <div className="searchIcon">
-                            <i className={this.state.favs.includes(this.props.query.trim()) ? "icon-solid-star" : "icon-outlined-star"} onClick={this.toggleFavorite}></i>
+                            <i className={(localStorage.getJson("favorites") || []).includes(this.props.parsedQuery) ? "icon-solid-star" : "icon-outlined-star"} onClick={this.toggleFavorite}></i>
                             <i className="icon-find"></i>
                         </div>
                         {suggestions}
                     </div>
 
                     <div className="buttons">
-                        <a className="theme-background-dark" href={"mailto:?subject=" + encodeURIComponent(configuration.toolName) + ": " + encodeURIComponent(this.props.query) + "&body=" + encodeURIComponent(window.location.href)}>
-                            <i className="icon-mail" title="Mail"></i>
+                        <a title="Feedback" href={"mailto:" + encodeURIComponent(configuration.feedbackEmailAddresses) + "?subject=" + encodeURIComponent(configuration.toolName) + " Feedback"}>
+                            <img src="/icons/feedback.svg" alt="feedback"/>
                         </a>
-                        <a className="theme-background-dark" href={"mailto:" + encodeURIComponent(configuration.feedbackEmailAddresses) + "?subject=" + encodeURIComponent(configuration.toolName) + " Feedback"}>
-                            <i className="icon-emoji2" title="Feedback"></i>
-                        </a>
-                        <a className="theme-background-dark" href="/?help=true">
-                            <i className="icon-help" title="Help"></i>
+                        <a title="Help" href="/Search.html?help=true">
+                            <img src="/icons/help.svg" alt="help"/>
                         </a>
                     </div>
                 </div>
