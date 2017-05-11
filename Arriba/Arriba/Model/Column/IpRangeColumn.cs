@@ -1,201 +1,94 @@
-﻿using System.Text;
-using System.Text.RegularExpressions;
+﻿using Arriba.Structures;
+using System;
+using System.Collections.Generic;
+using Arriba.Model.Expressions;
+using Arriba.Serialization;
 
 namespace Arriba.Model.Column
 {
-    public class IpRange
+    public class IpRangeColumn : IColumn<ByteBlock>
     {
-        private static Regex IpPartsExpression = new Regex(@"^(\d{1,3}|\.|-|\*|/)+$", RegexOptions.Compiled);
-        public uint StartInclusive { get; set; }
-        public uint EndInclusive { get; set; }
+        private IColumn<uint> StartAddressColumn { get; set; }
+        private IColumn<uint> EndAddressColumn { get; set; }
 
-        public IpRange(uint start, uint end)
+        public IpRangeColumn()
         {
-            this.StartInclusive = start;
-            this.EndInclusive = end;
+            this.StartAddressColumn = new FastAddSortedColumn<uint>(new ValueTypeColumn<uint>(0));
+            this.EndAddressColumn = new FastAddSortedColumn<uint>(new ValueTypeColumn<uint>(0));
         }
 
-        /// <summary>
-        ///  Parse an IP address or IP address range.
-        ///   Accepts:
-        ///     IP address        - "10.1.15.250"
-        ///     IP prefix         - "10.1"
-        ///     IP prefix w/ .*   - "10.1.*"
-        ///     IP range          - "10.1.15.0-10.1.18.200"
-        /// </summary>
-        /// <param name="value">String to parse</param>
-        /// <param name="result">IpRange result, if valid</param>
-        /// <returns>True if valid, False otherwise</returns>
-        public static bool TryParse(string value, out IpRange result)
+        public ByteBlock this[ushort lid]
         {
-            result = null;
-            if (string.IsNullOrEmpty(value)) return false;
-
-            // If the text doesn't contain IP address parts (digits, '.', '-'), return
-            Match m = IpPartsExpression.Match(value);
-            if (!m.Success) return false;
-
-            // Get the first group (containing a capture for each 'token')
-            Group g = m.Groups[1];
-            int index = 0;
-
-            uint startAddress, endAddress;
-
-            // Try to parse one IP address
-            int bitsFound = ParseIP(g, ref index, out startAddress);
-            if (bitsFound == -1)
+            get { return (new IpRange(this.StartAddressColumn[lid], this.EndAddressColumn[lid]).ToString()); }
+            set
             {
-                // Invalid address, stop
-                return false;
-            }
-            else if(bitsFound == 32)
-            {
-                // Whole address and nothing left, return as a single IP
-                if (index >= g.Captures.Count)
-                {
-                    result = new IpRange(startAddress, startAddress);
-                    return true;
-                }
+                IpRange result;
+                IpRange.TryParse(value.ToString(), out result);
 
-                // '-', address range
-                if(g.Captures[index].Value == "-")
-                {
-                    ++index;
-                    bitsFound = ParseIP(g, ref index, out endAddress);
-
-                    // If the second address was incomplete, stop
-                    if (bitsFound < 32) return false;
-
-                    // If the second address is smaller, stop
-                    if (startAddress > endAddress) return false;
-
-                    // Otherwise, we found a valid range
-                    result = new IpRange(startAddress, endAddress);
-                    return true;
-                }
-
-                // '/', prefix bit count
-                if(g.Captures[index].Value == "/")
-                {
-                    ++index;
-
-                    // Get the prefix bit count
-                    if (!int.TryParse(g.Captures[index].Value, out bitsFound)) return false;
-                    ++index;
-
-                    // Clear the suffix bits on the sample address
-                    startAddress = startAddress & (uint.MaxValue << (32 - bitsFound));
-
-                    // Compute the end address
-                    endAddress = startAddress + (uint)((1 << (32 - bitsFound)) - 1);
-
-                    result = new IpRange(startAddress, endAddress);
-                    return true;
-                }
-
-                // Otherwise, invalid
-                return false;
-            }
-            else
-            {
-                // Partial IP address - make a range with the remaining unfound bits
-
-                // If this isn't everything, stop
-                if (index < g.Captures.Count) return false;
-
-                // Otherwise, end address is start plus the remaining octets
-                if (bitsFound == 0)
-                {
-                    endAddress = uint.MaxValue;
-                }
-                else
-                {
-                    endAddress = startAddress + (uint)((1 << (32 - bitsFound)) - 1);
-                }
-
-                result = new IpRange(startAddress, endAddress);
-                return true;
+                this.StartAddressColumn[lid] = result.StartInclusive;
+                this.EndAddressColumn[lid] = result.EndInclusive;
             }
         }
 
-        /// <summary>
-        ///  Parse a single IP address from regex match parts.
-        ///   This accepts:
-        ///     Complete IPs (four numbers with dot separators),
-        ///     IP prefixes (fewer than four parts),
-        ///     IP prefix with '.*' suffix/
-        /// </summary>
-        /// <param name="g">Group containing captures for each number, '.', '*'</param>
-        /// <param name="index">Next group index to check</param>
-        /// <param name="address">IP address uint found</param>
-        /// <returns>Number of bits defined in IP, -1 for invalid</returns>
-        private static int ParseIP(Group g, ref int index, out uint address)
+        public ByteBlock DefaultValue => ByteBlock.Zero;
+
+        public string Name
         {
-            int nextMaskBits = 24;
-            address = 0;
-
-            while(index < g.Captures.Count)
-            {
-                Capture c = g.Captures[index];
-
-                // If the next part is '*', stop successfully
-                if (c.Value == "*")
-                {
-                    ++index;
-                    break;
-                }                
-
-                // The next part must be a number
-                uint part;
-                if (!uint.TryParse(c.Value, out part)) return -1;
-                ++index;
-
-                // Verify the part is in range [0, 255]
-                if (part > 255) return -1;
-
-                // Add it to the current address
-                address += part << nextMaskBits;
-                nextMaskBits -= 8;
-
-                // If we've gotten four parts, stop
-                if (nextMaskBits < 0) break;
-
-                // The next part must be the end or a '.'
-                if (index < g.Captures.Count && g.Captures[index].Value != ".") return -1;
-                ++index;
-            }
-
-            return (24 - nextMaskBits);
+            get { return this.StartAddressColumn.Name; }
+            set { this.StartAddressColumn.Name = value; }
         }
 
-        private static void AddString(uint address, StringBuilder result)
+        public ushort Count
         {
-            result.Append((address >> 24) & 0XFF);
-            result.Append(".");
-            result.Append((address >> 16) & 0XFF);
-            result.Append(".");
-            result.Append((address >> 8) & 0XFF);
-            result.Append(".");
-            result.Append(address & 0XFF);
+            get { return this.StartAddressColumn.Count; }
         }
 
-        public override string ToString()
+        // ------ Not done
+        public IColumn InnerColumn => throw new NotImplementedException();
+
+        public Array GetValues(IList<ushort> lids)
         {
-            StringBuilder result = new StringBuilder();
-            AddString(this.StartInclusive, result);
-
-            if(this.EndInclusive != this.StartInclusive)
-            {
-                result.Append("-");
-                AddString(this.EndInclusive, result);
-            }
-
-            return result.ToString();
+            throw new NotImplementedException();
         }
-    }
 
-    public class IpRangeColumn //: IColumn<ByteBlock>
-    {
+        public void ReadBinary(ISerializationContext context)
+        {
+            throw new NotImplementedException();
+        }
 
+        public void SetSize(ushort size)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool TryEvaluate(ushort lid, Operator op, ByteBlock value, out bool result)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool TryGetIndexOf(ByteBlock value, out ushort index)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool TryGetSortedIndexes(out IList<ushort> sortedIndexes, out int sortedIndexesCount)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void TryWhere(Operator op, ByteBlock value, ShortSet result, ExecutionDetails details)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void VerifyConsistency(VerificationLevel level, ExecutionDetails details)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void WriteBinary(ISerializationContext context)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
