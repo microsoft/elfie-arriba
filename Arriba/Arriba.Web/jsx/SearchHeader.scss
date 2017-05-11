@@ -109,6 +109,15 @@
     max-height: 70vh;
     min-width: 150px;
     overflow-y: auto;
+
+    svg {
+        position: absolute;
+        right: 0;
+        width: 80px;
+        height: 100%;
+        z-index: -1;
+        fill: hsla(130, 100%, 30%, 0.15);
+    }
 }
 
 .suggestions .suggestion {
@@ -128,7 +137,7 @@
 }
 
 .suggestions .suggestion-sel {
-    background-color: rgba(180, 210, 255, 0.5);
+    background-color: hsla(216, 80%, 85%, 0.25)
 }
 
 .suggestions .suggestion-hint {
