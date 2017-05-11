@@ -87,7 +87,6 @@
     <Compile Include="Model\Column\BooleanColumn.cs" />
     <Compile Include="Model\Column\ColumnDetails.cs" />
     <Compile Include="Model\Column\FastAddSortedColumn.cs" />
-    <Compile Include="Model\Column\IpRangeColumn.cs" />
     <Compile Include="Structures\IpRange.cs" />
     <Compile Include="Model\Correctors\ColumnSecurityCorrector.cs" />
     <Compile Include="Model\Correctors\JoinCorrector.cs" />
