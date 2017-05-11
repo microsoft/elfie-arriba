@@ -1,7 +1,7 @@
 ﻿using System.Text;
 using System.Text.RegularExpressions;
 
-namespace Arriba.Model.Column
+namespace Arriba.Structures
 {
     /// <summary>
     ///  IpRange represents a single IPv4 address or an IPv4 address range.
