@@ -1,4 +1,4 @@
-﻿import "./SearchHeader.scss";
+import "./SearchHeader.scss";
 
 // SearchHeader contains the top bar - branching, the search box, and top-level buttons
 export default React.createClass({
@@ -100,17 +100,22 @@ export default React.createClass({
                             tabIndex="1" onInput={this.onInput} value={this.props.query} 
                             onKeyDown={this.handleKeyDown} onClick={this.handleClick} 
                             onFocus={this.handleFocusOrBlur} onBlur={this.handleFocusOrBlur}/>
+                        <div className="rail">
+                            {this.state.completed}
+                            <span>
                         {this.state.suggestions.length > 0 &&
                             <div className="suggestions" >
                                 {this.state.suggestions.map((item, index) =>
                                     <div className={"suggestion " + (this.state.sel == index ? "suggestion-sel" : "" )}
                                         onClick={ this.handleClickSuggestion.bind(this, item) }>
-                                        <span><span style={{opacity: 0.3}}>{item.replaceAs ? "" : this.state.completed}</span>{item.display}</span>
+                                                <span>{item.display}</span>
                                         <span className="suggestion-hint">{item.hint}</span>
                                     </div>
                                 )}
                             </div>
                         }
+                            </span>
+                        </div>
                         <i className={"searchIcon " + ((localStorage.getJson("favorites") || []).includes(this.props.parsedQuery) ? "icon-solid-star" : "icon-outlined-star")} onClick={this.toggleFavorite}></i>
                         <i className="searchIcon icon-find"></i>
                     </div>
