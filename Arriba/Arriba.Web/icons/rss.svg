@@ -1,0 +1,12 @@
+<svg width="13" height="10" viewBox="0 0 13 10" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:figma="http://www.figma.com/figma/ns">
+<title>rss</title>
+<desc>Created using Figma</desc>
+<g id="Canvas" transform="translate(-1197 -190)" figma:type="canvas">
+<g id="rss" figma:type="vector-operation">
+<use xlink:href="#path0_fill" transform="translate(1197 190)" fill="#595959"/>
+</g>
+</g>
+<defs>
+<path id="path0_fill" fill-rule="evenodd" d="M 11.7999 10C 11.9312 9.35378 12 8.68494 12 8C 12 4.72881 10.4293 1.82446 8.00098 0L 9.5498 0C 11.6742 2.00554 13 4.84795 13 8C 13 8.683 12.9377 9.35144 12.8186 10L 11.7999 10ZM 9.74792 10C 9.91248 9.36076 10 8.6906 10 8C 10 3.58173 6.41833 0 2 0C 1.30945 0 0.639282 0.0875092 0 0.252029L 0 1.28989C 0.633667 1.10129 1.30505 1 2 1C 5.86597 1 9 4.134 9 8C 9 8.69498 8.89868 9.36629 8.71008 10L 9.74792 10ZM 0 3.41603C 0.612427 3.14844 1.28894 3 2 3C 4.76147 3 7 5.23857 7 8C 7 8.71111 6.85156 9.38754 6.58398 10L 5.46484 10C 5.80518 9.41165 6 8.72858 6 8C 6 5.79086 4.20911 4 2 4C 1.27148 4 0.588379 4.19479 0 4.53514L 0 3.41603ZM 0 8C 0 6.89543 0.895386 6 2 6C 3.10461 6 4 6.89543 4 8C 4 9.10457 3.10461 10 2 10C 0.895386 10 0 9.10457 0 8Z"/>
+</defs>
+</svg>
