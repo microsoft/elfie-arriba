@@ -1,4 +1,4 @@
-import "./SearchHeader.scss";
+﻿import "./SearchHeader.scss";
 
 // SearchHeader contains the top bar - branching, the search box, and top-level buttons
 export default React.createClass({
@@ -86,6 +86,26 @@ export default React.createClass({
         localStorage.updateJson("favorites", favs => ([] || favs).toggle(this.props.parsedQuery));
     },
     render: function () {
+        var svg = this.state.suggestions.length && (() => {
+            var d = '';
+            const inst = (...params) => d += params.join(" ") + " ";
+            const values = this.state.suggestions.map(item => new Number(item.hint.replace('%', '')) + 0 || 0);
+            const w = 80; // Matches CSS declared width.
+            inst("M", w, 0);
+            inst("L", w - values[0] * 0.75, 0);
+            const max = Math.max(...values) || 1; // Prevent divide by zero.
+            var y = 0;
+            values.forEach(val => {
+                const x = w - (val/max) * w;
+                inst("S", x, y + 18 - 18, ",", x, y + 18);
+                y += 37;
+            });
+            inst("L", w - values[values.length - 1] * 0.75, y);
+            inst("L", w, y);
+            inst("Z");
+            return <svg><path id="p" d={d} /></svg>
+        })();
+
         return (
             <div className="header theme-background-medium">
                 <div className="title font-light theme-background-vdark">
@@ -103,17 +123,18 @@ export default React.createClass({
                         <div className="rail">
                             {this.state.completed}
                             <span style={{ position: "relative" }} >
-                        {this.state.suggestions.length > 0 &&
-                            <div className="suggestions" >
-                                {this.state.suggestions.map((item, index) =>
-                                    <div className={"suggestion " + (this.state.sel == index ? "suggestion-sel" : "" )}
-                                        onClick={ this.handleClickSuggestion.bind(this, item) }>
+                                {this.state.suggestions.length > 0 &&
+                                    <div className="suggestions" >
+                                        {svg}
+                                        {this.state.suggestions.map((item, index) =>
+                                            <div className={"suggestion " + (this.state.sel == index ? "suggestion-sel" : "" )}
+                                                onClick={ this.handleClickSuggestion.bind(this, item) }>
                                                 <span>{item.display}</span>
-                                        <span className="suggestion-hint">{item.hint}</span>
+                                                <span className="suggestion-hint">{item.hint}</span>
+                                            </div>
+                                        )}
                                     </div>
-                                )}
-                            </div>
-                        }
+                                }
                             </span>
                         </div>
                         <i className={"searchIcon " + ((localStorage.getJson("favorites") || []).includes(this.props.parsedQuery) ? "icon-solid-star" : "icon-outlined-star")} onClick={this.toggleFavorite}></i>
