@@ -1,3 +1,8 @@
+.input { // Corrdinate styles between input and rail.
+    font-size: 16pt;
+    padding: 8px;
+}
+
 .header {
     height: 64px;
     display: flex;
@@ -42,12 +47,10 @@
     }
 
     /* Make the search box large, fill the space, well padded, slightly grey */
-    .searchBar input {
-        font-size: 16pt;
+    .searchBar input { @extend .input;
         box-sizing: border-box;
         border: none;
         flex: 1;
-        padding: 8px;
         color: #666666;
         background: transparent; // Override user agent.
     }
@@ -81,10 +84,24 @@
     }
 }
 
+// Contains invisible mirrored text to align the completion list.
+.rail {
+    display: inline-flex;
+    position: absolute;
+    left: 0; bottom: 0; height: 0;
+    visibility: hidden;
+    & > * { visibility: visible; }
+
+    @extend .input;
+    // Mimic global input styles manually (unable to programmatically reference).
+    font-family: "Segoe UI", "Segoe WP", Tahoma, Arial, sans-serif;
+    font-weight: 600;
+    padding-top: 0; padding-bottom: 0; // Override any possible padding values;
+}
+
 .suggestions {
     position: absolute;
-    top: 50px; /* Todo: Don't hard code the top. */
-    left: 0;
+    top: 2px;
     background-color: white;
     box-shadow: 0 3px 8px 0 rgba(0,0,0,0.2), 0 0 0 1px rgba(0,0,0,0.08);
     z-index: 1;
