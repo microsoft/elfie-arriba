@@ -102,7 +102,7 @@ export default React.createClass({
                             onFocus={this.handleFocusOrBlur} onBlur={this.handleFocusOrBlur}/>
                         <div className="rail">
                             {this.state.completed}
-                            <span>
+                            <span style={{ position: "relative" }} >
                         {this.state.suggestions.length > 0 &&
                             <div className="suggestions" >
                                 {this.state.suggestions.map((item, index) =>

@@ -89,6 +89,7 @@
     display: inline-flex;
     position: absolute;
     left: 0; bottom: 0; height: 0;
+    white-space: pre;
     visibility: hidden;
     & > * { visibility: visible; }
 
@@ -101,7 +102,7 @@
 
 .suggestions {
     position: absolute;
-    top: 2px;
+    top: 2px; left: -8px; // Manually match input padding;
     background-color: white;
     box-shadow: 0 3px 8px 0 rgba(0,0,0,0.2), 0 0 0 1px rgba(0,0,0,0.08);
     z-index: 1;
