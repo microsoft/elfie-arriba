@@ -1,5 +1,4 @@
-﻿// DefaultConfiguration.jsx contains default configuration settings for this site instance.
-// Add a copy in configuration\configuration.jsx to override these settings.
+﻿    import RateDetails from "./RateDetails";
 
     export default {
         // Arriba Service URL to query
@@ -17,12 +16,12 @@
 
         // Listing: Default Columns and Sort Order to show per table
         listingDefaults: {
-            "Rates": { columns: ["zip", "utility_name", "res_rate"], sortColumn: "zip", sortOrder: "asc" }
+            "Rates": { columns: ["ZIP", "UtilityName", "ResidentialKwhRate"], sortColumn: "ZIP", sortOrder: "asc" }
         },
 
         // Listing: Default details rendering per table
         customDetailsProviders: {
-            /* "<TableName>": <ReactClassNameUnquoted> */
+            "Rates": RateDetails
         },
 
         // Grid: Pre-defined Grid queries
@@ -31,7 +30,7 @@
             "Clear": {},
             "Rate Comparison": {
                 query: "",
-                rows: ["ind_rate < 0.15", "ind_rate < 0.10", "ind_rate < 0.08", "ind_rate < 0.07", "ind_rate < 0.06", "ind_rate < 0.05"],
+                rows: ["ResidentialKwhRate < 0.16", "ResidentialKwhRate < 0.14", "ResidentialKwhRate < 0.12", "ResidentialKwhRate < 0.10", "ResidentialKwhRate < 0.09"],
                 showPortionOf: "col",
                 showPortionAs: "bar",
                 show: "both"
@@ -39,11 +38,18 @@
         },
 
         // Content to show before a query is typed
-        splashContent: (
-            <div>
-                Rates is an Arriba Walkthrough showing US Electric Utility Rate Data from <a href="https://catalog.data.gov/dataset/u-s-electric-utility-companies-and-rates-look-up-by-zipcode-feb-2011-57a7c">Data.gov</a>.
-            </div>
-        ),
+        startContent: {
+            overview:(
+                <span>
+                    <b><a target="_blank" href="https://catalog.data.gov/dataset/u-s-electric-utility-companies-and-rates-look-up-by-zipcode-feb-2011-57a7c">US Electricity Rates</a></b> and <b><a target="_blank" href="https://blog.splitwise.com/2013/09/18/the-2010-us-census-population-by-zip-code-totally-free/">Population</a></b> by ZIP indexed.
+                    Need more <a href="Search.html?help=true">help</a>?
+                </span>
+            ),
+            examples: {
+                "WA": <span>See rates by ZIP for Washington.</span>,
+                "ResidentialKwhRate < 0.10": <span>Find ZIPs with power &lt; 0.10/KWh.</span>,
+            }
+        },
 
         // Content to show if query fails due to access denied (401)
         accessDeniedContent: (

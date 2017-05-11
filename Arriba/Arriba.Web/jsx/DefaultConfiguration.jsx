@@ -43,11 +43,18 @@
         },
 
         // Content to show before a query is typed
-        splashContent: (
-            <div>
-                Arriba is a data exploration, free text search, and structured search engine.
-            </div>
-        ),
+        startContent: {
+            overview:(
+                <span>
+                    Arriba is a data exploration, free text search, and structured search engine.
+                    Need more <a href="Search.html?help=true">help</a>?
+                </span>
+            ),
+            /*examples: {
+                "<Query>": <span>[Explain Sample Query]</span>,
+                ...
+            }*/
+        },
 
         // Content to show if query fails due to access denied (401)
         accessDeniedContent: (

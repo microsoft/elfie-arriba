@@ -1,4 +1,4 @@
-﻿using Arriba.Model.Column;
+﻿using Arriba.Structures;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Arriba.Test.Model
