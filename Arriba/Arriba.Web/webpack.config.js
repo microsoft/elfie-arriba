@@ -24,9 +24,9 @@ module.exports = {
             }
         ]
     },
-	devServer : {
-		historyApiFallback: {
-			index: 'search.html'
-		}
-	}
+    devServer : {
+        historyApiFallback: {
+            index: 'search.html'
+        }
+    }
 }
