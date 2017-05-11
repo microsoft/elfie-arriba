@@ -2,7 +2,7 @@
 
 IF EXIST "%1" (
   ECHO - Synchronizing Configuration...
-  ROBOCOPY /E /XO /NJH /NJS "%~dp0Arriba.Web\configuration" "%1"
+  IF EXIST "%~dp0Arriba.Web\configuration" ROBOCOPY /E /XO /NJH /NJS "%~dp0Arriba.Web\configuration" "%1"
   ROBOCOPY /E /NJH /NJS /MIR "%1" "%~dp0Arriba.Web\configuration"
 ) ELSE (
   IF EXIST "%~dp0Arriba.Web\configuration" (
@@ -12,6 +12,6 @@ IF EXIST "%1" (
 )
 
 ECHO - Building Website...
-PUSHD "%~dp0Arriba.Web
-CALL webpack
+PUSHD "%~dp0Arriba.Web"
+CALL "node_modules\.bin\webpack.cmd"
 POPD
