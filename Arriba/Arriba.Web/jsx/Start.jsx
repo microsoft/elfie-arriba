@@ -37,7 +37,7 @@ export default class Start extends React.Component {
         var tables = Object.map(this.props.allBasics || {}, (name, data) => data);
         var itemCount = tables.reduce((sum, table) => sum + table.rowCount, 0).toLocaleString();
         var lastUpdateDate = Math.min(...tables.map(table => new Date(table.lastWriteTimeUtc))); // Will be a Date() if found, 0 if empty array.
-        var lastUpdated = lastUpdateDate ? moment(lastUpdateDate).fromNow().replace(/minutes?/, "min") : "...";
+        var lastUpdated = lastUpdateDate ? moment(lastUpdateDate).fromNow().replace(/minutes?/, "min").replace("a few seconds ago", "just now") : "...";
 
         var hideIntro = localStorage.getJson("hideIntro");
 
@@ -51,7 +51,7 @@ export default class Start extends React.Component {
                 {configuration.startContent && [
                     <div className="intro" style={{ display: hideIntro ? "none" : "" }}>
                         <div className="welcome">{configuration.startContent.overview}</div>
-                        {Object.map(configuration.startContent.examples, (query, remark) => 
+                        {configuration.startContent.examples && Object.map(configuration.startContent.examples, (query, remark) => 
                             <div className="example">
                                 <div className="query clickable" onClick={() => this.props.onSearchChange(query)}>{query}</div>{remark}
                             </div>
