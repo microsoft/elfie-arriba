@@ -23,5 +23,10 @@ module.exports = {
                 use: ["style-loader", "css-loader", "sass-loader"]
             }
         ]
+    },
+    devServer : {
+        historyApiFallback: {
+            index: 'search.html'
+        }
     }
 }

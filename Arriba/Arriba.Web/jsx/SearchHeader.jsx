@@ -1,4 +1,6 @@
-﻿// SearchHeader contains the top bar - branching, the search box, and top-level buttons
+﻿import "./SearchHeader.scss";
+
+// SearchHeader contains the top bar - branching, the search box, and top-level buttons
 export default React.createClass({
     getInitialState: function () {
         return { suggestions: [], sel: 0, completed: "", completionCharacters: [] };   
@@ -81,19 +83,28 @@ export default React.createClass({
     },
     toggleFavorite: function () {
         if (!this.props.parsedQuery) return;
-        localStorage.updateJson("favorites", favs => favs.toggle(this.props.parsedQuery));
+        localStorage.updateJson("favorites", favs => ([] || favs).toggle(this.props.parsedQuery));
     },
     render: function () {
-        var suggestions = this.state.suggestions.length <= 0 ? null :
-            <div className="suggestions" >
-                {this.state.suggestions.map((item, index) =>
-                    <div className={"suggestion " + (this.state.sel == index ? "suggestion-sel" : "" )}
-                        onClick={ this.handleClickSuggestion.bind(this, item) }>
-                        <span><span style={{opacity: 0.3}}>{item.replaceAs ? "" : this.state.completed}</span>{item.display}</span>
-                        <span className="suggestion-hint">{item.hint}</span>
-                    </div>
-                )}
-            </div>;
+        var svg = this.state.suggestions.length && (() => {
+            var d = '';
+            const inst = (...params) => d += params.join(" ") + " ";
+            const values = this.state.suggestions.map(item => new Number(item.hint.replace('%', '')) + 0 || 0);
+            const w = 80; // Matches CSS declared width.
+            inst("M", w, 0);
+            inst("L", w - values[0] * 0.75, 0);
+            const max = Math.max(...values) || 1; // Prevent divide by zero.
+            var y = 0;
+            values.forEach(val => {
+                const x = w - (val/max) * w;
+                inst("S", x, y + 18 - 18, ",", x, y + 18);
+                y += 37;
+            });
+            inst("L", w - values[values.length - 1] * 0.75, y);
+            inst("L", w, y);
+            inst("Z");
+            return <svg><path id="p" d={d} /></svg>
+        })();
 
         return (
             <div className="header theme-background-medium">
@@ -109,21 +120,32 @@ export default React.createClass({
                             tabIndex="1" onInput={this.onInput} value={this.props.query} 
                             onKeyDown={this.handleKeyDown} onClick={this.handleClick} 
                             onFocus={this.handleFocusOrBlur} onBlur={this.handleFocusOrBlur}/>
-                        <div className="searchIcon">
-                            <i className={(localStorage.getJson("favorites") || []).includes(this.props.parsedQuery) ? "icon-solid-star" : "icon-outlined-star"} onClick={this.toggleFavorite}></i>
-                            <i className="icon-find"></i>
+                        <div className="rail">
+                            {this.state.completed}
+                            <span style={{ position: "relative" }} >
+                                {this.state.suggestions.length > 0 &&
+                                    <div className="suggestions" >
+                                        {svg}
+                                        {this.state.suggestions.map((item, index) =>
+                                            <div className={"suggestion " + (this.state.sel == index ? "suggestion-sel" : "" )}
+                                                onClick={ this.handleClickSuggestion.bind(this, item) }>
+                                                <span>{item.display}</span>
+                                                <span className="suggestion-hint">{item.hint}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                }
+                            </span>
                         </div>
-                        {suggestions}
+                        <i className={"searchIcon " + ((localStorage.getJson("favorites") || []).includes(this.props.parsedQuery) ? "icon-solid-star" : "icon-outlined-star")} onClick={this.toggleFavorite}></i>
+                        <i className="searchIcon icon-find"></i>
                     </div>
-
-                    <div className="buttons">
-                        <a title="Feedback" href={"mailto:" + encodeURIComponent(configuration.feedbackEmailAddresses) + "?subject=" + encodeURIComponent(configuration.toolName) + " Feedback"}>
-                            <img src="/icons/feedback.svg" alt="feedback"/>
-                        </a>
-                        <a title="Help" href="/Search.html?help=true">
-                            <img src="/icons/help.svg" alt="help"/>
-                        </a>
-                    </div>
+                    <a title="Feedback" href={"mailto:" + encodeURIComponent(configuration.feedbackEmailAddresses) + "?subject=" + encodeURIComponent(configuration.toolName) + " Feedback"}>
+                        <img src="/icons/feedback.svg" alt="feedback"/>
+                    </a>
+                    <a title="Help" href="/Search.html?help=true">
+                        <img src="/icons/help.svg" alt="help"/>
+                    </a>
                 </div>
             </div>
         );
