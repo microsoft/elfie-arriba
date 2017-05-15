@@ -32,7 +32,7 @@ namespace Arriba.Structures
         public static bool TryParse(string value, out IpRange result)
         {
             result = new IpRange(0, 0);
-            if (string.IsNullOrEmpty(value)) return false;
+            if (string.IsNullOrEmpty(value)) return true;
 
             // If the text doesn't contain IP address parts (digits, '.', '-'), return
             Match m = IpPartsExpression.Match(value);
@@ -195,10 +195,5 @@ namespace Arriba.Structures
 
             return result.ToString();
         }
-    }
-
-    public class IpRangeColumn //: IColumn<ByteBlock>
-    {
-
     }
 }
