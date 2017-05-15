@@ -7,10 +7,17 @@ export default React.createClass({
     },
     render: function () {
         var details = [];
+        var emptyColumns = [];
 
         for (var name in this.props.data) {
             var commands = [];
             var rawValue = stripHighlight(this.props.data[name]);
+
+            // Skip empty columns
+            if(!rawValue || rawValue == 0 || rawValue.indexOf("0001-01-01T") === 0) {
+                emptyColumns.push(name);
+                continue;
+            }
 
             // Add 'Pivot to Grid' URL
             var gridUrl = "Grid.html" + buildUrlParameters({ q: this.props.query, t: this.props.table, R1: name + ">" });

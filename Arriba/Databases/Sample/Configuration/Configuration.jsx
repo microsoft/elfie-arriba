@@ -16,7 +16,7 @@
 
         // Listing: Default Columns and Sort Order to show per table
         listingDefaults: {
-             "Louvau": { columns: ["ID", "Title"], sortColumn: "ID", sortOrder: "desc" }
+             "Louvau": { columns: ["ID", "Title", "Assigned To"], sortColumn: "ID", sortOrder: "desc" }
         },
 
         // Listing: Default details rendering per table
@@ -24,12 +24,17 @@
             "Louvau": WorkItemDetails
         },
 
+        databaseName : "Louvau",
+        directLinkUrl : "https://louvau.visualstudio.com/Louvau/_workitems/edit/",
+
         // Grid: Pre-defined Grid queries
         /* gridDefault: "<NameOfDefaultPredefinedQuery>", */
         gridDefaultQueries: {
             "Clear": {},
             "Arriba Tasks By Owner": {
                 query: "Arriba AND [Remaining Work] > 0",
+                aggregationFunction: "SUM",
+                aggregateColumn: "Remaining Work",
                 currentTable: "Louvau",
                 rows: ["Assigned To>"],
                 showPortionOf: "row"
