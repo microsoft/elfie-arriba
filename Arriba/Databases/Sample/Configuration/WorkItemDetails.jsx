@@ -1,5 +1,5 @@
-﻿import LinkSet from "LinkSet";
-import WorkItemHistory from "WorkItemHistory";
+﻿import LinkSet from "./LinkSet";
+import WorkItemHistory from "./WorkItemHistory";
 
 import RelativeDateTime from "../jsx/RelativeDateTime";
 import DetailsField from "../jsx/DetailsField";
