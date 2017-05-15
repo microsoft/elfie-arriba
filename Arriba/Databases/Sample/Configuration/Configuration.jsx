@@ -16,7 +16,7 @@
 
         // Listing: Default Columns and Sort Order to show per table
         listingDefaults: {
-             "WDGIS": { columns: ["ID", "Title"], sortColumn: "ID", sortOrder: "desc" }
+             "WDGIS": { columns: ["ID", "Title", "Assigned To"], sortColumn: "ID", sortOrder: "desc" }
         },
 
         // Listing: Default details rendering per table
@@ -24,12 +24,17 @@
             "WDGIS": WorkItemDetails
         },
 
+        databaseName : "WDGIS",
+        directLinkUrl : "https://wdginformationsecurity.visualstudio.com/WDIGS/_workitems/edit/",
+
         // Grid: Pre-defined Grid queries
         /* gridDefault: "<NameOfDefaultPredefinedQuery>", */
         gridDefaultQueries: {
             "Clear": {},
             "Conflux Tasks By Owner": {
                 query: "Conflux AND [Remaining Work] > 0",
+                aggregationFunction: "SUM",
+                aggregateColumn: "Remaining Work",
                 currentTable: "WDGIS",
                 rows: ["Assigned To>"],
                 showPortionOf: "row"
