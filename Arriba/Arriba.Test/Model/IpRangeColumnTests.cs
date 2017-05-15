@@ -61,6 +61,7 @@ namespace Arriba.Test.Model
         [TestMethod]
         public void IpRangeColumn_Basic()
         {
+            // Test the IP Range column with two distinct, valid sample values
             ColumnTests.ColumnTest_Basics(() => new IpRangeColumn(), "10.11.0.0", "192.168.100.0-192.168.103.255");
         }
 
