@@ -5,17 +5,17 @@
 	"arribaServiceUrl": "http://localhost:42784",
 
 	/* The name of the Arriba table to create for these items. */
-	"arribaTable": "Sample",
+	"arribaTable": "Louvau",
 
 	/* The maximum number of items the table will contain. Determines how many partitions must be created. */
 	"itemCountLimit": 100000,
 
 	/* Identities which can read/write/delete/change permissions on the table.
 	   Syntax: 'u:Domain\UserName' or 'g:Domain\GroupName' */
-	"owners": [ "u:Domain\\CrawlerUser" ],
+	"owners": [ "u:Domain\\CrawlAccount" ],
 
 	/* Identities which can read the table. */
-	"readers": [ "g:Domain\\SecurityGroupAlias", "g:Domain\\SecurityGroupAlias2" ],
+	"readers": [ "g:Domain\\YourTeamAlias", "g:Domain\\YourTeamAlias" ],
 
 	/* Which IItemProvider to use to populate the table */
 	"itemProvider": "TfsItemProvider",
@@ -25,14 +25,14 @@
 
 	/* The Name or URL of the database to crawl. Use the VSO URL for TFS.
 	   ex: https://<myProject>.visualstudio.com */
-	"itemDatabaseName": "https://myProject.visualstudio.com",
+	"itemDatabaseName": "https://louvau.visualstudio.com",
 
 	/* Authentication Mode to use with provider (provider specific).
        For TfsItemProvider: integrated (default), aad, alternate */
-	"authenticationMode":  "aad",
+	"authenticationMode":  "aad"
 
     /* For TFS alternate authentication mode, include the user name. 
 	   Run Arriba.TfsWorkItemCrawler.exe <config> -Password to provide the password. 
 	   The password is encrypted with DPAPI for the current Windows user only. */
-	"userName": "user@domain.com"
+	/* "userName": "user@domain.com" */
 }
