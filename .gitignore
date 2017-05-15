@@ -230,6 +230,6 @@ Arriba/Arriba.Web/bundle.js.map
 DiskCache/
 
 # Exclude Arriba Database Configurations
-Arriba/Databases
+Arriba/Databases/*
 !Arriba/Databases/Sample/
 !Arriba/Databases/Walkthrough/
