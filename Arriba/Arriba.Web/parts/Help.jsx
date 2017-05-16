@@ -1,18 +1,15 @@
-require("./Help.scss");
+import "./Help.scss";
 
 export default class Help extends React.Component {
     render() {
         return <div className="helpContent">
-            <div className="helpIntro">
-                {configuration.splashContent}
-            </div>
             <div className="features">
                 <h2>Features</h2>
                 <div> - Click items to see details.</div>
                 <div> - Click column headings to sort.</div>
                 <div> - Click <span className="icon-add" /> to add columns to listing, <span className="icon-cancel" /> to remove them.</div>
-                <div> - Click <span className="icon-download" /> to download listing (same columns, query, and order) as CSV.</div>
-                <div> - Click <img src="icons/feed-icon-14x14.png" alt="RSS" /> for URL to subscribe to query.</div>
+                <div> - Click <img src="/icons/download.svg" alt="Download" /> to download CSV of listing (same columns, query, and order), up to 50k rows.</div>
+                <div> - Click <img src="/icons/rss.svg" alt="RSS" /> for URL to subscribe to query RSS.</div>
             </div>
             <div className="syntaxIntro">
                 <h2>Syntax</h2>
