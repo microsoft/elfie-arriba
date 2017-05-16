@@ -1,4 +1,4 @@
-﻿import "../Search.scss";
+import "../Search.scss";
 import "!script-loader!../js/utilities.js";
 
 import Mru from "./Mru";
@@ -382,14 +382,14 @@ var SearchMain = React.createClass({
         if (!this.state.query) gridUrl = "/Grid.html?p=default";
 
         return (
-            <div className={"viewport " + configuration.theme} onKeyDown={this.handleKeyDown}>
+            <div className="viewport" onKeyDown={this.handleKeyDown}>
                 <SearchHeader query={this.state.query}
                               parsedQuery={this.state.allCountData.content && this.state.allCountData.content.parsedQuery}
                               onSearchChange={this.onSearchChange}
                               loading={this.state.loading} />
 
                 <div className="middle">
-                    <nav className="mode theme-background-dark">
+                    <nav className="mode">
                         <a className="selected"><i className="icon-details"></i><span>Listing</span></a>
                         <a href={gridUrl}><i className="icon-view-all-albums"></i><span>Grid</span></a>
                     </nav>
