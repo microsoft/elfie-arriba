@@ -231,6 +231,6 @@ DiskCache/
 
 # Exclude Arriba Database Configurations
 Arriba/Databases/*
-!Arriba/Databases/Bung/
+!Arriba/Databases/WorkItemDetails/
 !Arriba/Databases/WDGIS/
 !Arriba/Databases/Walkthrough/
