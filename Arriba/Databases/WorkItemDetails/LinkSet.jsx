@@ -12,11 +12,11 @@ export default React.createClass({
 
             if(link.uri) {
                 // Attachment
-                collection.push(<a target="_blank" href={link.uri}>{link.name}</a>);
+                collection.push(<a target="_blank" href={link.uri} dangerouslySetInnerHTML={highlight(link.name)}></a>);
             } else {
                 // Related Links
                 var encodedId =  encodeURIComponent(link.id);
-                collection.push(<a href={"?t=" + this.props.table + "&q=ID%3D" + encodedId + "&open=" + encodedId}>{link.id}</a>);
+                collection.push(<a href={"?t=" + this.props.table + "&q=ID%3D" + encodedId + "&open=" + encodedId} dangerouslySetInnerHTML={highlight(link.id)}></a>);
             }
         }
 
