@@ -1,5 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="..\Arriba.build.props" />
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -86,6 +87,8 @@
     <Compile Include="Model\Column\BooleanColumn.cs" />
     <Compile Include="Model\Column\ColumnDetails.cs" />
     <Compile Include="Model\Column\FastAddSortedColumn.cs" />
+    <Compile Include="Model\Column\IpRangeColumn.cs" />
+    <Compile Include="Structures\IpRange.cs" />
     <Compile Include="Model\Correctors\ColumnSecurityCorrector.cs" />
     <Compile Include="Model\Correctors\JoinCorrector.cs" />
     <Compile Include="Model\Correctors\ColumnAliasCorrector.cs" />
@@ -107,10 +110,12 @@
     <Compile Include="Model\ObjectCache.cs" />
     <Compile Include="Model\Query\DataBlockResult.cs" />
     <Compile Include="Model\Query\DeleteResult.cs" />
+    <Compile Include="Model\Query\DistinctQueryTop.cs" />
     <Compile Include="Model\Query\DistinctQuery.cs" />
     <Compile Include="Model\Query\DistinctResult.cs" />
     <Compile Include="Model\Query\IQuery.cs" />
     <Compile Include="Model\Query\JoinQuery.cs" />
+    <Compile Include="Model\Query\QueryIntelliSense.cs" />
     <Compile Include="Model\Query\SelectResult.cs" />
     <Compile Include="Serialization\BinarySerializable.cs" />
     <Compile Include="Serialization\CollectionFactory.cs" />

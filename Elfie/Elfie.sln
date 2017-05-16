@@ -28,6 +28,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Elfie.NonCore.Test", "Elfie
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Xsv", "Xsv\Xsv.csproj", "{7E26458E-6A42-4053-BB89-62D3C7530815}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Xsv.Test", "Xsv.Test\Xsv.Test.csproj", "{8A711BBB-5B69-4BAF-86A2-FB25397794B9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -158,6 +160,18 @@ Global
 		{7E26458E-6A42-4053-BB89-62D3C7530815}.Release|x64.Build.0 = Release|Any CPU
 		{7E26458E-6A42-4053-BB89-62D3C7530815}.Release|x86.ActiveCfg = Release|Any CPU
 		{7E26458E-6A42-4053-BB89-62D3C7530815}.Release|x86.Build.0 = Release|Any CPU
+		{8A711BBB-5B69-4BAF-86A2-FB25397794B9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8A711BBB-5B69-4BAF-86A2-FB25397794B9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8A711BBB-5B69-4BAF-86A2-FB25397794B9}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{8A711BBB-5B69-4BAF-86A2-FB25397794B9}.Debug|x64.Build.0 = Debug|Any CPU
+		{8A711BBB-5B69-4BAF-86A2-FB25397794B9}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{8A711BBB-5B69-4BAF-86A2-FB25397794B9}.Debug|x86.Build.0 = Debug|Any CPU
+		{8A711BBB-5B69-4BAF-86A2-FB25397794B9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8A711BBB-5B69-4BAF-86A2-FB25397794B9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8A711BBB-5B69-4BAF-86A2-FB25397794B9}.Release|x64.ActiveCfg = Release|Any CPU
+		{8A711BBB-5B69-4BAF-86A2-FB25397794B9}.Release|x64.Build.0 = Release|Any CPU
+		{8A711BBB-5B69-4BAF-86A2-FB25397794B9}.Release|x86.ActiveCfg = Release|Any CPU
+		{8A711BBB-5B69-4BAF-86A2-FB25397794B9}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

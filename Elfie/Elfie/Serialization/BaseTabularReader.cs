@@ -25,7 +25,9 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
     ///  
     ///  Look up the indices of columns you want to read outside any loops.
     ///  
-    ///  Usage:
+    ///  USAGE
+    ///  =====
+    ///  String8Block block = new String8Block();
     ///  using (BaseTabularReader r = new XReader(loadFromPath, true))
     ///  {
     ///     // Look up column indices outside the loop
@@ -36,12 +38,19 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
     ///     // Use NextRow() and Current[index] to read values
     ///     while (r.NextRow())
     ///     {
-    ///         String8 title = r.Current[titleIndex];
-    ///         String8 description = r.Current[descriptionIndex];
-    ///         int itemType = r.Current[itemTypeIndex].ToInteger();
+    ///         // Copy values to be kept across rows
+    ///         String8 title = block.GetCopy(r.Current[titleIndex]);
     ///         
-    ///         // COPY String8s to be kept
+    ///         // Use values directly if used only before NextRow
+    ///         String8 description = r.Current[descriptionIndex].ToString8();
+    ///         
+    ///         // Use TryTo calls to convert values without allocation or boxing.
+    ///         int itemType;
+    ///         r.Current[itemTypeIndex].TryToInteger(out itemType);
     ///     }
+    ///     
+    ///     // Release String8Block memory used for copies when you're done with them
+    ///     block.Clear();
     /// }
     /// </summary>
     public abstract class BaseTabularReader : ITabularReader
@@ -58,6 +67,8 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         private String8Set _currentRow;
         private PartialArray<int> _rowPositionArray;
         private PartialArray<int> _cellPositionArray;
+
+        private String8TabularValue[] _valueBoxes;
 
         /// <summary>
         ///  Construct a BaseTabularReader to read the given file.
@@ -93,10 +104,13 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
 
                 for (int i = 0; i < _currentRow.Count; ++i)
                 {
-                    string columnName = this.Current[i].ToString();
+                    string columnName = this.Current(i).ToString();
                     _columnHeadingsList.Add(columnName);
                     _columnHeadings[columnName] = i;
                 }
+
+                // Header row doesn't count toward row count read
+                _rowCountRead = 0;
             }
         }
 
@@ -135,12 +149,13 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
 
         /// <summary>
         ///  Return the cells for the current row.
-        ///  Get a single cell with reader.Current[columnIndex]
+        ///  Get a single cell with reader.Current[columnIndex].
         /// </summary>
         /// <returns>String8Set with the cells for the current row.</returns>
-        public String8Set Current
+        public ITabularValue Current(int index)
         {
-            get { return _currentRow; }
+            _valueBoxes[index].SetValue(_currentRow[index]);
+            return _valueBoxes[index];
         }
 
         /// <summary>
@@ -150,6 +165,14 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         public int RowCountRead
         {
             get { return _rowCountRead; }
+        }
+
+        /// <summary>
+        ///  Return how many bytes were read so far.
+        /// </summary>
+        public long BytesRead
+        {
+            get { return _reader.Position; }
         }
 
         /// <summary>
@@ -194,6 +217,17 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
 
             _rowCountRead++;
             _nextRowIndexInBlock++;
+            
+            // Allocate a set of reusable String8TabularValues to avoid per-cell-value allocation or boxing.
+            if(_valueBoxes == null || _valueBoxes.Length < _currentRow.Count)
+            {
+                _valueBoxes = new String8TabularValue[_currentRow.Count];
+
+                for(int i = 0; i < _valueBoxes.Length; ++i)
+                {
+                    _valueBoxes[i] = new String8TabularValue();
+                }
+            }
 
             return true;
         }

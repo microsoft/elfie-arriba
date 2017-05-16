@@ -170,6 +170,28 @@ namespace Arriba.Model
             }
         }
 
+        public Type GetColumnType(string columnName)
+        {
+            _locker.EnterReadLock();
+            
+            try
+            {
+                IUntypedColumn column;
+                if(_partitions[0].Columns.TryGetValue(columnName, out column))
+                {
+                    return column.ColumnType;
+                }
+                else
+                {
+                    return null;
+                }
+            }
+            finally
+            {
+                _locker.ExitReadLock();
+            }
+        }
+
         /// <summary>
         ///  Add a new column with the given type descriptor and default.
         ///  Columns must be added before values can be set on them.
@@ -760,6 +782,26 @@ namespace Arriba.Model
             finally
             {
                 _locker.ExitWriteLock();
+            }
+        }
+
+        public DateTime LastWriteTimeUtc
+        {
+            get
+            {
+                DateTime lastWriteTimeUtc = DateTime.MinValue;
+
+                var tablePath = BinarySerializable.FullPath(Path.Combine("Tables", this.Name));
+                if (Directory.Exists(tablePath))
+                {
+                    foreach (string filePath in Directory.GetFiles(tablePath))
+                    {
+                        lastWriteTimeUtc = File.GetLastWriteTimeUtc(filePath);
+                        break;
+                    }
+                }
+
+                return lastWriteTimeUtc;
             }
         }
 

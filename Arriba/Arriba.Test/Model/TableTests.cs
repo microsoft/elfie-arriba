@@ -48,11 +48,11 @@ namespace Arriba.Test.Model
             // Verify all columns came back
             Assert.AreEqual(String.Join(", ", p.ColumnNames), String.Join(", ", p2.ColumnNames));
 
-            // Select top 3 bugs with Priority = 3 and ID <= 12000, order by ID
+            // Select top 3 bugs with Priority = 3 and [ID] <= 12000, order by [ID]
             SelectQuery query = new SelectQuery();
             query.Columns = new string[] { "ID", "Priority" };
             query.Count = 3;
-            query.Where = SelectQuery.ParseWhere("Priority = 3 AND ID <= 12000");
+            query.Where = SelectQuery.ParseWhere("Priority = 3 AND [ID] <= 12000");
             SelectResult result = p2.Query(query);
             Assert.AreEqual(2, (int)result.Total);
             Assert.AreEqual("11999", result.Values[0, 0].ToString());
@@ -132,9 +132,9 @@ namespace Arriba.Test.Model
                 (tbl) =>
                 {
                     tbl.AddColumn(new ColumnDetails("Color", "color", null));
-                    IUntypedColumn bugIdColumn = (tbl as Partition).Columns["Priority"];
+                    IUntypedColumn bugIDColumn = (tbl as Partition).Columns["Priority"];
                     IUntypedColumn colorColumn = (tbl as Partition).Columns["Color"];
-                    (colorColumn.InnerColumn as ColorColumn).LookupColumn = (IColumn<short>)bugIdColumn.InnerColumn;
+                    (colorColumn.InnerColumn as ColorColumn).LookupColumn = (IColumn<short>)bugIDColumn.InnerColumn;
                 });
         }
 
@@ -197,7 +197,7 @@ namespace Arriba.Test.Model
             t.AddOrUpdate(newData, new AddOrUpdateOptions() { Mode = AddOrUpdateMode.UpdateAndIgnoreAdds });
             Assert.AreEqual(5, (int)t.Count);
 
-            SelectQuery q = new SelectQuery() { Columns = new string[] { "Title" }, Count = 10, Where = SelectQuery.ParseWhere("ID = 11512") };
+            SelectQuery q = new SelectQuery() { Columns = new string[] { "Title" }, Count = 10, Where = SelectQuery.ParseWhere("[ID] = 11512") };
             SelectResult result = t.Query(q);
             Assert.AreEqual("Existing Item", result.Values[0, 0].ToString());
 
@@ -368,6 +368,7 @@ namespace Arriba.Test.Model
             ITable_TypesCheck(factoryMethod);
             ITable_ComplexAndOr(factoryMethod);
             ITable_Distinct(factoryMethod);
+            ITable_DistinctTop(factoryMethod);
             ITable_Aggregate_Count(factoryMethod);
             ITable_Aggregate_Sum(factoryMethod);
             ITable_Aggregate_Min(factoryMethod);
@@ -385,7 +386,7 @@ namespace Arriba.Test.Model
             SelectQuery selectQuery = new SelectQuery();
             selectQuery.Columns = new string[] { "ID", "Priority" };
             selectQuery.Count = 3;
-            selectQuery.Where = SelectQuery.ParseWhere("ID > -1");
+            selectQuery.Where = SelectQuery.ParseWhere("[ID] > -1");
             SelectResult selectResult = table.Query(selectQuery);
             Assert.AreEqual(0, (int)selectResult.Total);
 
@@ -426,15 +427,22 @@ namespace Arriba.Test.Model
             table.VerifyConsistency(VerificationLevel.Full, details);
             Assert.IsTrue(details.Succeeded);
 
-            // Select top 3 bugs with Priority = 3 and ID <= 12000, order by ID
             SelectQuery query = new SelectQuery();
+            SelectResult result;
+
+            // Select top 3 bugs with Priority = 3 and ID <= 12000, order by ID
             query.Columns = new string[] { "ID", "Priority" };
             query.Count = 3;
-            query.Where = SelectQuery.ParseWhere("Priority = 3 AND ID <= 12000");
-            SelectResult result = table.Query(query);
+            query.Where = SelectQuery.ParseWhere("Priority = 3 AND [ID] <= 12000");
+            result = table.Query(query);
             Assert.AreEqual(2, (int)result.Total);
             Assert.AreEqual("11999", result.Values[0, 0].ToString());
             Assert.AreEqual("11643", result.Values[1, 0].ToString());
+
+            // Select top 3 bugs with Priority = 3 and ID <= 12000, order by IsDuplicate (a bool without Sort information)
+            query.OrderByColumn = "IsDuplicate";
+            result = table.Query(query);
+            Assert.AreEqual(2, (int)result.Total);
 
             // Ask for only one item; verify one returned, total still correct
             query.Count = 1;
@@ -561,7 +569,7 @@ namespace Arriba.Test.Model
 
             // Verify the result converts to a dimension properly
             AggregationDimension dimension = result.ToAggregationDimension();
-            Assert.AreEqual("Query [Priority = 0,Priority = 1,Priority = 3]", dimension.ToString());
+            Assert.AreEqual("Query [[Priority] = 0,[Priority] = 1,[Priority] = 3]", dimension.ToString());
 
             // Verify distinct priority where priority is not 1 has only two values
             query.Where = QueryParser.Parse("Priority != 1");
@@ -586,6 +594,44 @@ namespace Arriba.Test.Model
             Assert.IsFalse(result.AllValuesReturned);
         }
 
+        public void ITable_DistinctTop(Func<ITable> factoryMethod)
+        {
+            // Define columns and add sample data
+            ITable table = factoryMethod();
+            AddSampleData(table);
+
+            // Get Distinct Priority for all bugs, verify three (3, 0, 1)
+            DistinctQueryTop query = new DistinctQueryTop("Priority", "", 5);
+            DistinctResult result = table.Query(query);
+
+            // Verify "3" is first, it's in 3 items, all values are returned, three distinct were returned
+            Assert.AreEqual("3", result.Values[0, 0].ToString());
+            Assert.AreEqual("3", result.Values[0, 1].ToString());
+            Assert.AreEqual(3, result.Values.RowCount);
+            Assert.AreEqual(5, result.Total);
+            Assert.IsTrue(result.AllValuesReturned);
+
+            // Verify distinct priority where priority is not 1 has only two values
+            query.Where = QueryParser.Parse("Priority != 1");
+            result = table.Query(query);
+
+            Assert.AreEqual("3, 0", result.Values.GetColumn(0).Join(", "));
+            Assert.AreEqual(2, result.Values.RowCount);
+            Assert.AreEqual(4, result.Total);
+            Assert.IsTrue(result.AllValuesReturned);
+
+            // Verify the result converts to a dimension properly
+            AggregationDimension dimension = result.ToAggregationDimension();
+            Assert.AreEqual("Query [[Priority] = 3,[Priority] = 0]", dimension.ToString());
+
+            // Verify if we only ask for one value, query reports more values left
+            query.Count = 1;
+            result = table.Query(query);
+            Assert.AreEqual("3", result.Values[0, 0].ToString());
+            Assert.AreEqual(1, result.Values.RowCount);
+            Assert.IsFalse(result.AllValuesReturned);
+        }
+
         public void ITable_Aggregate_Count(Func<ITable> factoryMethod)
         {
             // Define columns and add sample data
@@ -607,8 +653,8 @@ namespace Arriba.Test.Model
             query.Dimensions.Add(new AggregationDimension("Priority", "Priority < 2", "Priority >= 2"));
             result = table.Query(query);
             AssertBlockEquals(result.Values, @"
-Priority < 2, 2
-Priority >= 2, 2
+[Priority] < 2, 2
+[Priority] >= 2, 2
 , 4");
             Assert.AreEqual((ulong)2, result.Values[0, 1]);
             Assert.AreEqual((ulong)2, result.Values[1, 1]);
@@ -618,45 +664,45 @@ Priority >= 2, 2
             query.Dimensions.Add(new AggregationDimension("Title", "Title:One | Title:Two", "-(Title:One | Title:Two)"));
             result = table.Query(query);
             AssertBlockEquals(result.Values, @"
-Priority < 2, (Title:One OR Title:Two), 1
-Priority < 2, NOT((Title:One OR Title:Two)), 1
-Priority < 2, , 2
-Priority >= 2, (Title:One OR Title:Two), 1
-Priority >= 2, NOT((Title:One OR Title:Two)), 1
-Priority >= 2, , 2
-, (Title:One OR Title:Two), 2
-, NOT((Title:One OR Title:Two)), 2
+[Priority] < 2, [Title]:One OR [Title]:Two, 1
+[Priority] < 2, NOT([Title]:One OR [Title]:Two), 1
+[Priority] < 2, , 2
+[Priority] >= 2, [Title]:One OR [Title]:Two, 1
+[Priority] >= 2, NOT([Title]:One OR [Title]:Two), 1
+[Priority] >= 2, , 2
+, [Title]:One OR [Title]:Two, 2
+, NOT([Title]:One OR [Title]:Two), 2
 , , 4
 ");
 
             // Sparse dimensions - verify skipping is correct
             query.Dimensions.Clear();
-            query.Dimensions.Add(new AggregationDimension("Priority", "Priority = 0", "Priority = 1", "Priority = 2", "Priority = 3"));
-            query.Dimensions.Add(new AggregationDimension("ID", "ID < 11900", "ID >= 11900"));
+            query.Dimensions.Add(new AggregationDimension("[Priority]", "[Priority] = 0", "[Priority] = 1", "[Priority] = 2", "[Priority] = 3"));
+            query.Dimensions.Add(new AggregationDimension("ID", "[ID] < 11900", "[ID] >= 11900"));
             result = table.Query(query);
             AssertBlockEquals(result.Values, @"
-Priority = 0, ID < 11900, 1
-Priority = 0, ID >= 11900, null
-Priority = 0, , 1
-Priority = 1, ID < 11900, null
-Priority = 1, ID >= 11900, 1
-Priority = 1, , 1
-Priority = 2, ID < 11900, null
-Priority = 2, ID >= 11900, null
-Priority = 2, , null
-Priority = 3, ID < 11900, 1
-Priority = 3, ID >= 11900, 1
-Priority = 3, , 2
-, ID < 11900, 2
-, ID >= 11900, 2
+[Priority] = 0, [ID] < 11900, 1
+[Priority] = 0, [ID] >= 11900, null
+[Priority] = 0, , 1
+[Priority] = 1, [ID] < 11900, null
+[Priority] = 1, [ID] >= 11900, 1
+[Priority] = 1, , 1
+[Priority] = 2, [ID] < 11900, null
+[Priority] = 2, [ID] >= 11900, null
+[Priority] = 2, , null
+[Priority] = 3, [ID] < 11900, 1
+[Priority] = 3, [ID] >= 11900, 1
+[Priority] = 3, , 2
+, [ID] < 11900, 2
+, [ID] >= 11900, 2
 , , 4
 ");
             // Add an empty cell and re-check
             query.Dimensions.Clear();
-            query.Dimensions.Add(new AggregationDimension("Title", "Title:unused"));
+            query.Dimensions.Add(new AggregationDimension("[Title]", "[Title]:unused"));
             result = table.Query(query);
             AssertBlockEquals(result.Values, @"
-Title:unused, null
+[Title]:unused, null
 , 4
 ");
         }
@@ -682,26 +728,26 @@ Title:unused, null
             Assert.AreEqual((long)47097, result.Values[0, 0]);
 
             // One dimension - verify values split out and are correct; dimension queries echoed
-            query.Dimensions.Add(new AggregationDimension("Priority", "Priority < 2", "Priority >= 2"));
+            query.Dimensions.Add(new AggregationDimension("[Priority]", "[Priority] < 2", "[Priority] >= 2"));
             result = table.Query(query);
             AssertBlockEquals(result.Values, @"
-Priority < 2, 23455
-Priority >= 2, 23642
+[Priority] < 2, 23455
+[Priority] >= 2, 23642
 , 47097
 ");
 
             // Two dimensions - verify values split on both; values are correct
-            query.Dimensions.Add(new AggregationDimension("Title", "Title:One | Title:Two", "-(Title:One | Title:Two)"));
+            query.Dimensions.Add(new AggregationDimension("[Title]", "[Title]:One | [Title]:Two", "-([Title]:One | [Title]:Two)"));
             result = table.Query(query);
             AssertBlockEquals(result.Values, @"
-Priority < 2, (Title:One OR Title:Two), 11512
-Priority < 2, NOT((Title:One OR Title:Two)), 11943
-Priority < 2, , 23455
-Priority >= 2, (Title:One OR Title:Two), 11643
-Priority >= 2, NOT((Title:One OR Title:Two)), 11999
-Priority >= 2, , 23642
-, (Title:One OR Title:Two), 23155
-, NOT((Title:One OR Title:Two)), 23942
+[Priority] < 2, [Title]:One OR [Title]:Two, 11512
+[Priority] < 2, NOT([Title]:One OR [Title]:Two), 11943
+[Priority] < 2, , 23455
+[Priority] >= 2, [Title]:One OR [Title]:Two, 11643
+[Priority] >= 2, NOT([Title]:One OR [Title]:Two), 11999
+[Priority] >= 2, , 23642
+, [Title]:One OR [Title]:Two, 23155
+, NOT([Title]:One OR [Title]:Two), 23942
 , , 47097
 ");
 
@@ -710,7 +756,7 @@ Priority >= 2, , 23642
             query.Dimensions.Add(new AggregationDimension("Title", "Title:unused"));
             result = table.Query(query);
             AssertBlockEquals(result.Values, @"
-Title:unused, null
+[Title]:unused, null
 , 47097
 ");
         }
@@ -733,26 +779,26 @@ Title:unused, null
             Assert.AreEqual(11512, result.Values[0, 0]);
 
             // One dimension - verify values split out and are correct; dimension queries echoed
-            query.Dimensions.Add(new AggregationDimension("Priority", "Priority < 2", "Priority >= 2"));
+            query.Dimensions.Add(new AggregationDimension("[Priority]", "[Priority] < 2", "[Priority] >= 2"));
             result = table.Query(query);
             AssertBlockEquals(result.Values, @"
-Priority < 2, 11512
-Priority >= 2, 11643
+[Priority] < 2, 11512
+[Priority] >= 2, 11643
 , 11512
 ");
 
             // Two dimensions - verify values split on both; values are correct
-            query.Dimensions.Add(new AggregationDimension("Title", "Title:One | Title:Two", "-(Title:One | Title:Two)"));
+            query.Dimensions.Add(new AggregationDimension("[Title]", "[Title]:One | [Title]:Two", "-([Title]:One | [Title]:Two)"));
             result = table.Query(query);
             AssertBlockEquals(result.Values, @"
-Priority < 2, (Title:One OR Title:Two), 11512
-Priority < 2, NOT((Title:One OR Title:Two)), 11943
-Priority < 2, , 11512
-Priority >= 2, (Title:One OR Title:Two), 11643
-Priority >= 2, NOT((Title:One OR Title:Two)), 11999
-Priority >= 2, , 11643
-, (Title:One OR Title:Two), 11512
-, NOT((Title:One OR Title:Two)), 11943
+[Priority] < 2, [Title]:One OR [Title]:Two, 11512
+[Priority] < 2, NOT([Title]:One OR [Title]:Two), 11943
+[Priority] < 2, , 11512
+[Priority] >= 2, [Title]:One OR [Title]:Two, 11643
+[Priority] >= 2, NOT([Title]:One OR [Title]:Two), 11999
+[Priority] >= 2, , 11643
+, [Title]:One OR [Title]:Two, 11512
+, NOT([Title]:One OR [Title]:Two), 11943
 , , 11512
 ");
 
@@ -761,7 +807,7 @@ Priority >= 2, , 11643
             query.Dimensions.Add(new AggregationDimension("Title", "Title:unused"));
             result = table.Query(query);
             AssertBlockEquals(result.Values, @"
-Title:unused, null
+[Title]:unused, null
 , 11512");
         }
 
@@ -783,26 +829,26 @@ Title:unused, null
             Assert.AreEqual(11999, result.Values[0, 0]);
 
             // One dimension - verify values split out and are correct; dimension queries echoed
-            query.Dimensions.Add(new AggregationDimension("Priority", "Priority < 2", "Priority >= 2"));
+            query.Dimensions.Add(new AggregationDimension("[Priority]", "[Priority] < 2", "[Priority] >= 2"));
             result = table.Query(query);
             AssertBlockEquals(result.Values, @"
-Priority < 2, 11943
-Priority >= 2, 11999
+[Priority] < 2, 11943
+[Priority] >= 2, 11999
 , 11999
 ");
 
             // Two dimensions - verify values split on both; values are correct
-            query.Dimensions.Add(new AggregationDimension("Title", "Title:One | Title:Two", "-(Title:One | Title:Two)"));
+            query.Dimensions.Add(new AggregationDimension("[Title]", "[Title]:One | [Title]:Two", "-([Title]:One | [Title]:Two)"));
             result = table.Query(query);
             AssertBlockEquals(result.Values, @"
-Priority < 2, (Title:One OR Title:Two), 11512
-Priority < 2, NOT((Title:One OR Title:Two)), 11943
-Priority < 2, , 11943
-Priority >= 2, (Title:One OR Title:Two), 11643
-Priority >= 2, NOT((Title:One OR Title:Two)), 11999
-Priority >= 2, , 11999
-, (Title:One OR Title:Two), 11643
-, NOT((Title:One OR Title:Two)), 11999
+[Priority] < 2, [Title]:One OR [Title]:Two, 11512
+[Priority] < 2, NOT([Title]:One OR [Title]:Two), 11943
+[Priority] < 2, , 11943
+[Priority] >= 2, [Title]:One OR [Title]:Two, 11643
+[Priority] >= 2, NOT([Title]:One OR [Title]:Two), 11999
+[Priority] >= 2, , 11999
+, [Title]:One OR [Title]:Two, 11643
+, NOT([Title]:One OR [Title]:Two), 11999
 , , 11999
 ");
 
@@ -811,7 +857,7 @@ Priority >= 2, , 11999
             query.Dimensions.Add(new AggregationDimension("Title", "Title:unused"));
             result = table.Query(query);
             AssertBlockEquals(result.Values, @"
-Title:unused, null
+[Title]:unused, null
 , 11999");
         }
 
@@ -944,7 +990,7 @@ Title:unused, null
             table.AddColumn(new ColumnDetails("Title", "string", null, "t", false));
             table.AddColumn(new ColumnDetails("Priority", "short", -1, "p", false));
             table.AddColumn(new ColumnDetails("Created Date", "DateTime", DateTime.MinValue.ToUniversalTime(), "cd", false));
-            table.AddColumn(new ColumnDetails("Primary Bug ID", "int", -1, "pid", false));
+            table.AddColumn(new ColumnDetails("Primary Bug ID", "int", -1, "pID", false));
 
             table.AddColumn(new ColumnDetails("IsDuplicate", "bool", true, "", false));
             table.AddColumn(new ColumnDetails("ActiveTime", "TimeSpan", null, "at", false));

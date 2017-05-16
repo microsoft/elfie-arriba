@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
 
 using Arriba.Server;
@@ -17,7 +16,10 @@ namespace Arriba.Client
 {
     internal static class HttpExtensions
     {
-        private static JsonSerializerSettings s_jsonSettings = new JsonSerializerSettings() { ContractResolver = new CamelCasePropertyNamesContractResolver() };
+        private static JsonSerializerSettings s_jsonSettings = new JsonSerializerSettings()
+        {
+            ContractResolver = new CamelCasePropertyNamesContractResolver() { NamingStrategy = new CamelCaseNamingStrategy() { ProcessDictionaryKeys = false } }
+        };
 
         public static async Task EnsureArribaSuccess(this HttpResponseMessage message)
         {

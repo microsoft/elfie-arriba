@@ -1,11 +1,12 @@
-﻿// ResultListing shows a table of items matching a query, with sortable columns
-var ResultListing = React.createClass({
+﻿import AddColumnList from "./AddColumnList";
+
+// ResultListing shows a table of items matching a query, with sortable columns
+export default React.createClass({
     getInitialState: function () {
         return { selectedIndex: -1, addColumnsShowing: false };
     },
-    handleResort: function (e) {
+    handleResort: function (columnNameClicked, e) {
         // If a column heading was clicked, re-sort the table
-        var columnNameClicked = e.target.getAttribute("data-name");
         var sortOrder = "asc";
 
         // If this column is already the sort column, toggle ascending/descending
@@ -46,12 +47,6 @@ var ResultListing = React.createClass({
 
         e.stopPropagation();
     },
-    handlePivot: function (e) {
-        var element = e.target;
-
-        this.props.onPivot(element.getAttribute("data-table"), element.getAttribute("data-query"));
-        e.stopPropagation();
-    },
     selectByRelativeIndex: function (i) {
         // Figure out the current row count
         var count = 0;
@@ -88,12 +83,12 @@ var ResultListing = React.createClass({
 
             // Non-ID column commands
             if (column.name !== idColumn) {
-                // Remove button
-                commands.push(<div key={"remove_" + column.name} data-column={column.name} className="icon-cancel icon-column-heading" title="Remove Column" onClick={this.handleRemoveColumn} />);
-
                 // Add 'Pivot to Grid' URL
                 var gridUrl = "Grid.html" + buildUrlParameters({ q: content.query.where, t: content.query.tableName, R1: column.name + ">" });
                 commands.push(<a href={gridUrl} className="icon-view-all-albums icon-column-heading" title={"Grid By " + column.name } />);
+
+                // Remove button
+                commands.push(<div key={"remove_" + column.name} data-column={column.name} className="icon-cancel icon-column-heading" title="Remove Column" onClick={this.handleRemoveColumn} />);
             }
 
             // Last column
@@ -109,7 +104,17 @@ var ResultListing = React.createClass({
                 );
             }
 
-            columnCells.push(<td key={"heading_" + column.name} data-name={column.name} onClick={this.handleResort}><div className="commands">{commands}</div>{column.name}</td>);
+            var sort = this.props.sortColumn === column.name
+                ? this.props.sortOrder === "asc" ? " ↑" : " ↓"
+                : "";
+
+            // Extra element div.th-inner because display:flex cannot be applied to td as td is already display:table.
+            columnCells.push(<td key={"heading_" + column.name} onClick={this.handleResort.bind(this, column.name)}>
+                <div className="th-inner">
+                    <span className="th-title">{column.name}{sort}</span>
+                    {commands}
+                </div>
+            </td>);
         }
 
         // Write a row for each item

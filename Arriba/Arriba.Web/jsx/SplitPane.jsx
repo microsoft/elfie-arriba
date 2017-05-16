@@ -1,5 +1,5 @@
 ﻿// Inspired by https://github.com/tomkp/react-split-pane [MIT License]
-var SplitPane = React.createClass({
+export default React.createClass({
     defaultProps: { isFirstVisible: true, isSecondVisible: true },
     onMouseUp: function () {
         document.removeEventListener('mouseup', this.onMouseUp);

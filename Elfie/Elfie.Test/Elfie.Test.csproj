@@ -1,5 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="..\Elfie.build.props" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
@@ -70,6 +71,7 @@
     <Compile Include="Extensions\SampleSerializable.cs" />
     <Compile Include="Extensions\StringExtensionsTests.cs" />
     <Compile Include="Model\AddReferenceDatabaseTests.cs" />
+    <Compile Include="Model\Column\IColumnTests.cs" />
     <Compile Include="Model\Index\MemberIndexTests.cs" />
     <Compile Include="Model\Map\ItemMapTests.cs" />
     <Compile Include="Model\MergedMembersDatabaseTests.cs" />
@@ -86,6 +88,8 @@
     <Compile Include="SampleElfieStructure.V1.cs" />
     <Compile Include="SampleElfieStructure.cs" />
     <Compile Include="Serialization\BaseTabularTests.cs" />
+    <Compile Include="Serialization\ITabularValueTests.cs" />
+    <Compile Include="Serialization\JsonTabularWriterTests.cs" />
     <Compile Include="Serialization\TsvWriterTests.cs" />
     <Compile Include="Verify.cs" />
   </ItemGroup>

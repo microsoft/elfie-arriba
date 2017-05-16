@@ -24,6 +24,7 @@ bld/
 
 # Visual Studio 2015 cache/options directory
 .vs/
+.vscode/
 .elfie/
 
 # MSTest test Results
@@ -218,9 +219,17 @@ Microsoft.CodeAnalysis.Elfie.dll.*
 
 # Exclude Arriba.Web configuration, which is per-site but must be copied in to build.
 Arriba/Arriba.Web/configuration/
+Arriba/Arriba.Web/configuration.BAK/
 
-# Exclude Arriba.Web build outputs
-Arriba/Arriba.Web/lib/
+# Exclude Arriba.Web build outputs [old and current]
+Arriba/Arriba.Web/lib
+Arriba/Arriba.Web/bundle.js
+Arriba/Arriba.Web/bundle.js.map
 
 # Exclude Arriba DiskCache, built when saving Arriba tables in a dev enlistment.
 DiskCache/
+
+# Exclude Arriba Database Configurations
+Arriba/Databases
+!Arriba/Databases/Sample/
+!Arriba/Databases/Walkthrough/

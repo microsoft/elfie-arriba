@@ -20,6 +20,7 @@ namespace Arriba.Model
     /// </summary>
     public class SecureDatabase : Database
     {
+        private readonly object _tableLock = new object();
         private Dictionary<string, SecurityPermissions> _securityByTable;
 
         public SecureDatabase() : base()
@@ -49,7 +50,10 @@ namespace Arriba.Model
                 }
 
                 // Cache the created|loaded security
-                _securityByTable[tableName] = security;
+                lock (_tableLock)
+                {
+                    _securityByTable[tableName] = security;
+                }
 
                 return security;
             }
@@ -74,6 +78,22 @@ namespace Arriba.Model
             return result;
         }
 
+        public IList<string> GetRestrictedColumns(string tableName, Func<SecurityIdentity, bool> isCurrentUserIn)
+        {
+            List<string> restrictedColumns = null;
+            SecurityPermissions security = this.Security(tableName);
+            
+            foreach (var columnRestriction in security.RestrictedColumns)
+            {
+                if (!isCurrentUserIn(columnRestriction.Key))
+                {
+                    if (restrictedColumns == null) restrictedColumns = new List<string>();
+                    restrictedColumns.AddRange(columnRestriction.Value);
+                }
+            }
+            return restrictedColumns;
+        }
+
         protected void ApplyTableSecurity<T>(IQuery<T> query, Func<SecurityIdentity, bool> isCurrentUserIn, ExecutionDetails details)
         {
             SecurityPermissions security = this.Security(query.TableName);
@@ -90,15 +110,7 @@ namespace Arriba.Model
             }
 
             // If table has column restrictions, build a list of excluded columns
-            List<string> restrictedColumns = null;
-            foreach (var columnRestriction in security.RestrictedColumns)
-            {
-                if (!isCurrentUserIn(columnRestriction.Key))
-                {
-                    if (restrictedColumns == null) restrictedColumns = new List<string>();
-                    restrictedColumns.AddRange(columnRestriction.Value);
-                }
-            }
+            IList<string> restrictedColumns = GetRestrictedColumns(query.TableName, isCurrentUserIn);
 
             // If no columns were restricted, return query as-is
             if (restrictedColumns == null) return;
@@ -194,7 +206,10 @@ namespace Arriba.Model
 
         public void SetSecurity(string tableName, SecurityPermissions security)
         {
-            _securityByTable[tableName] = security;
+            lock (_tableLock)
+            {
+                _securityByTable[tableName] = security;
+            }
         }
 
         public void SaveSecurity(string tableName)

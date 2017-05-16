@@ -99,14 +99,17 @@ namespace Arriba.Test.Model
 
         public static string GetSortedValues<T>(IColumn<T> column)
         {
+            StringBuilder result = new StringBuilder();
+
             IList<ushort> sortedIndexes;
             int sortedIndexesCount;
-            column.TryGetSortedIndexes(out sortedIndexes, out sortedIndexesCount);
 
-            StringBuilder result = new StringBuilder();
-            for (int i = 0; i < column.Count; ++i)
+            if (column.TryGetSortedIndexes(out sortedIndexes, out sortedIndexesCount))
             {
-                result.AppendLine(String.Format("{0}: {1}", sortedIndexes[i], column[sortedIndexes[i]]));
+                for (int i = 0; i < column.Count; ++i)
+                {
+                    result.AppendLine(String.Format("{0}: {1}", sortedIndexes[i], column[sortedIndexes[i]]));
+                }
             }
 
             return result.ToString();
@@ -114,15 +117,17 @@ namespace Arriba.Test.Model
 
         public static string GetSortedIndexes<T>(IColumn<T> column)
         {
+            StringBuilder result = new StringBuilder();
+
             IList<ushort> sortedIndexes;
             int sortedIndexesCount;
-            column.TryGetSortedIndexes(out sortedIndexes, out sortedIndexesCount);
-
-            StringBuilder result = new StringBuilder();
-            for (int i = 0; i < column.Count; ++i)
+            if (column.TryGetSortedIndexes(out sortedIndexes, out sortedIndexesCount))
             {
-                if (result.Length > 0) result.Append(", ");
-                result.Append(sortedIndexes[i]);
+                for (int i = 0; i < column.Count; ++i)
+                {
+                    if (result.Length > 0) result.Append(", ");
+                    result.Append(sortedIndexes[i]);
+                }
             }
 
             return result.ToString();
