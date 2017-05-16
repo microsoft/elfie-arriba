@@ -2,9 +2,9 @@
 import WorkItemHistory from "./WorkItemHistory";
 import MailToLink from "./MailToLink";
 
-import RelativeDateTime from "../../jsx/RelativeDateTime";
-import DetailsField from "../../jsx/DetailsField";
-import DetailsTable from "../../jsx/DetailsTable";
+import RelativeDateTime from "../../parts/RelativeDateTime";
+import DetailsField from "../../parts/DetailsField";
+import DetailsTable from "../../parts/DetailsTable";
 
 // WorkItemDetails shows details for a TFS Work Item
 export default React.createClass({

@@ -1,4 +1,4 @@
-import DetailsField from "../../jsx/DetailsField";
+import DetailsField from "../../parts/DetailsField";
 
 // Render a mail to link with a URL back to the item
 export default React.createClass({
