@@ -19,17 +19,22 @@ export default React.createClass({
                 continue;
             }
 
+            // Skip excluded columns
+            if(this.props.excludeColumns && this.props.excludeColumns.includes(name)) continue;
+
             // Add 'Pivot to Grid' URL
-            var gridUrl = "Grid.html" + buildUrlParameters({ q: this.props.query, t: this.props.table, R1: name + ">" });
-            commands.push(<a href={gridUrl} className="icon-view-all-albums icon-column-heading" title={"Grid By " + name} />);
-
-            var showAddClause = (this.props.onAddClause);
-            if (showAddClause && rawValue.length < 100) commands.push(<span className="icon-zoom icon-column-heading" onClick={this.onAddClause} title="Add Clause to Query" data={name} />);
-
             var commandCell = null;
-            if (commands) {
-                var width =  (22 * commands.length) + "px";
-                commandCell = <td style={{ minWidth: width, width: width }}>{commands}</td>;
+            if(this.props.showCommands !== "false") {
+                var gridUrl = "Grid.html" + buildUrlParameters({ q: this.props.query, t: this.props.table, R1: name + ">" });
+                commands.push(<a href={gridUrl} className="icon-view-all-albums icon-column-heading" title={"Grid By " + name} />);
+
+                var showAddClause = (this.props.onAddClause);
+                if (showAddClause && rawValue.length < 100) commands.push(<span className="icon-zoom icon-column-heading" onClick={this.onAddClause} title="Add Clause to Query" data={name} />);
+            
+                if (commands) {
+                    var width =  (22 * commands.length) + "px";
+                    commandCell = <td style={{ minWidth: width, width: width }}>{commands}</td>;
+                }
             }
 
             details.push(
