@@ -1,6 +1,8 @@
 ﻿// DefaultConfiguration.jsx contains default configuration settings for this site instance.
 // Add a copy in configuration\configuration.jsx to override these settings.
 
+    //import <CustomDetailsView> from "./<FileNameWithoutExtension>";
+
     export default {
         // Arriba Service URL to query
         // Hardcode to the name of your service. Use port 42784 for HTTP, 42785 for HTTPS.
@@ -17,7 +19,7 @@
 
         // Listing: Default Columns and Sort Order to show per table
         listingDefaults: {
-            /* "<TableName">: { columns: ["<Col1>", "Col2", "..."], sortColumn: "<SortColumnName>", sortOrder: "asc" } */
+            /* "<TableName>": { columns: ["<Col1>", "Col2", "..."], sortColumn: "<SortColumnName>", sortOrder: "asc" } */
         },
 
         // Listing: Default details rendering per table
@@ -32,6 +34,8 @@
             /*"<PredefinedQueryName>": {
                 query: "<OverallBaseQuery>",
                 currentTable: "<TableToQuery>",
+                aggregationFunction: "COUNT", // [*COUNT*|SUM|MIN|MAX],
+                aggregateColumn: "<ColumnToAggregateOn>",
                 rows: ["<FirstRowQuery>", "<SecondRowQuery>", "..."],
                 rowLabels: ["<FirstRowLabel>", "<SecondRowLabel>", "..."],
                 cols: ["<FirstColumnQuery>", "<SecondColumnQuery>", "..."],

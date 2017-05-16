@@ -1,4 +1,4 @@
-﻿using Arriba.Extensions;
+using Arriba.Extensions;
 using Arriba.Model.Column;
 using Arriba.Structures;
 using Microsoft.TeamFoundation.Client;
@@ -140,16 +140,24 @@ namespace Arriba.TfsWorkItemCrawler.ItemProviders
         public IList<ColumnDetails> GetColumns()
         {
             List<ColumnDetails> columns = new List<ColumnDetails>();
+			
+			// Add columns from schema
             foreach(FieldDefinition column in this.Store.FieldDefinitions)
             {
                 columns.Add(new ColumnDetails(column.Name, MapType(column), null, null, column.Name == "ID"));
             }
+			
+			// Add specially handled columns [see below]
+			columns.Add(new ColumnDetails("FullHistory", "html", null));
+			columns.Add(new ColumnDetails("Attachments", "json", null));
+			columns.Add(new ColumnDetails("Links", "json", null));
+			
             return columns;
         }
 
         private static string MapType(FieldDefinition column)
         {
-            if (column.Name == "Attachements" || column.Name == "Links") return "json";
+            if (column.Name == "Attachments" || column.Name == "Links") return "json";
 
             switch(column.FieldType)
             {

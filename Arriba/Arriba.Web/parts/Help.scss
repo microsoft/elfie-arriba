@@ -1,0 +1,26 @@
+/* Help Panel: Full size with 24px around, scrollable, grey border, padded */
+.helpContent {
+    flex: 1 100%;
+    overflow: auto;
+
+    margin: 24px 36px;
+    padding: 12px;
+    
+    border: 1px solid #999999;
+    background-color: white;
+
+    h2 {
+        margin-top: 1em;
+        
+        margin-bottom: 4px;
+        font-weight: 600;
+    }
+
+    .features h2 {
+        margin-top: 0;
+    }
+
+    .exampleBox {
+        margin-bottom: 1.5em;
+    }
+}
