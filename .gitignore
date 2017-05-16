@@ -231,5 +231,6 @@ DiskCache/
 
 # Exclude Arriba Database Configurations
 Arriba/Databases/*
-!Arriba/Databases/Sample/
+!Arriba/Databases/Bung/
+!Arriba/Databases/Louvau/
 !Arriba/Databases/Walkthrough/
