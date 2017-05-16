@@ -1,28 +1,31 @@
+import "./LinkSet.scss";
+
 // Render a collection of links indented under a heading. Nothing is rendered if the collection is empty
 export default React.createClass({
     render: function () {
         if(!this.props.data || this.props.data.length === 0) return null;
         
+        var set = JSON.parse(this.props.data);
         var collection = [];
-        for(var i = 0; i < this.props.data.length; ++i) {
-            var link = this.props.data[i];
+        for(var i = 0; i < set.length; ++i) {
+            var link = set[i];
 
             if(link.uri) {
                 // Attachment
                 collection.push(<a target="_blank" href={link.uri}>{link.name}</a>);
             } else {
                 // Related Links
-                collection.push(<a href={"?q=ID=" + link.id + "&open=" + link.id}>{link.id}</a>);
+                var encodedId =  encodeURIComponent(link.id);
+                collection.push(<a href={"?t=" + this.props.table + "&q=ID%3D" + encodedId + "&open=" + encodedId}>{link.id}</a>);
             }
         }
 
         return (
-            <div>
-                <b>{this.props.label}</b>
-                <div class="indent">
+            <div className="linkset">
+                <div className="title">{this.props.label}</div>
+                <div className="indent">
                     {collection}
                 </div>
-                <br />
             </div>
         );        
     }

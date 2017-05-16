@@ -30,6 +30,8 @@ export default React.createClass({
                                 table={this.props.table}
                                 query={this.props.query}
                                 onAddClause={this.props.onAddClause}
+                                showCommands="false"
+                                excludeColumns={["Attachments", "Description", "FullHistory", "History", "Links", "Title"]}
             />);
         }
 
@@ -65,12 +67,14 @@ export default React.createClass({
                         </div>
 
                         <div className="box">
-                            <div><b>Direct Link</b></div>
-                            <div className="indent">
-                                <a href={configuration.directLinkUrl + this.props.itemId} target="_blank">{configuration.databaseName + "." + this.props.itemId}</a>
+                            <div className="linkset">
+                                <div className="title">Direct Link</div>
+                                <div className="indent">
+                                    <a href={configuration.directLinkUrl + this.props.itemId} target="_blank">{configuration.databaseName + "." + this.props.itemId}</a>
+                                </div>
                             </div>
 
-                            <LinkSet label="Links" data={this.props.data["Links"]} />
+                            <LinkSet label="Links" data={this.props.data["Links"]} table={this.props.table} />
                             
                             <LinkSet label="Attachments" data={this.props.data["Attachments"]} />
                         </div>
