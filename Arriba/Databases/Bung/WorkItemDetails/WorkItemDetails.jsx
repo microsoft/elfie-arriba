@@ -1,9 +1,9 @@
 ﻿import LinkSet from "./LinkSet";
 import WorkItemHistory from "./WorkItemHistory";
 
-import RelativeDateTime from "../jsx/RelativeDateTime";
-import DetailsField from "../jsx/DetailsField";
-import DetailsTable from "../jsx/DetailsTable";
+import RelativeDateTime from "../../jsx/RelativeDateTime";
+import DetailsField from "../../jsx/DetailsField";
+import DetailsTable from "../../jsx/DetailsTable";
 
 // WorkItemDetails shows details for a TFS Work Item
 export default React.createClass({
