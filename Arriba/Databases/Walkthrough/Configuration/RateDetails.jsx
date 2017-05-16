@@ -1,5 +1,5 @@
-﻿import DetailsField from "../jsx/DetailsField";
-import DetailsTable from "../jsx/DetailsTable";
+﻿import DetailsField from "../parts/DetailsField";
+import DetailsTable from "../parts/DetailsTable";
 
 // ResultDetails shows (default formatted) details for an item when it was clicked.
 export default React.createClass({

@@ -1,7 +1,7 @@
 var path = require("path");
 
 module.exports = {
-    entry: ["./jsx/Grid.jsx", "./jsx/Search.jsx"],
+    entry: ["./parts/Grid.jsx", "./parts/Search.jsx"],
     output: {
         path: __dirname,
         filename: "bundle.js"

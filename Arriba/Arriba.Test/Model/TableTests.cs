@@ -402,10 +402,10 @@ namespace Arriba.Test.Model
             AggregationResult aggregateResult = table.Query(aggregateQuery);
             Assert.AreEqual((ulong)0, aggregateResult.Values[0, 0]);
 
-            // Verify sum returns 0
+            // Verify sum returns null [can't merge correctly if there are no values]
             aggregateQuery.Aggregator = new SumAggregator();
             aggregateResult = table.Query(aggregateQuery);
-            Assert.AreEqual((long)0, aggregateResult.Values[0, 0]);
+            Assert.AreEqual(null, aggregateResult.Values[0, 0]);
 
             // Verify Min/Max return null
             aggregateQuery.Aggregator = new MinAggregator();
