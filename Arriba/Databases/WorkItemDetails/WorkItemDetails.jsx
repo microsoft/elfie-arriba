@@ -1,5 +1,6 @@
 ﻿import LinkSet from "./LinkSet";
 import WorkItemHistory from "./WorkItemHistory";
+import MailToLink from "./MailToLink";
 
 import RelativeDateTime from "../../jsx/RelativeDateTime";
 import DetailsField from "../../jsx/DetailsField";
@@ -53,7 +54,7 @@ export default React.createClass({
                         <div className="box">
                             <DetailsField value={this.props.data["State"]} columnName="State" label="Currently" bold="true" />
                             <div className="indent">
-                                <DetailsField value={this.props.data["Assigned To"]} columnName="Assigned To" label="Assigned to" bold="true" url="mailto:{Value}" />
+                                <MailToLink value={this.props.data["Assigned To"]} columnName="Assigned To" table={this.props.table} itemId={this.props.itemId} />
                                 <DetailsField value={this.props.data["Area Path"]} columnName="Area Path" label="Area " bold="true" />
                                 <DetailsField value={this.props.data["Iteration Path"]} columnName="Iteration Path" label="Iteration " bold="true" />
                             </div>
@@ -61,7 +62,7 @@ export default React.createClass({
                             <br />                            
                             <RelativeDateTime value={this.props.data["Created Date"]} columnName="Created Date" bold="true" />
                             <div className="indent">
-                                <DetailsField value={this.props.data["Created By"]} columnName="Created By" label="Created by" bold="true" url="mailto:{Value}" />
+                                <MailToLink value={this.props.data["Created By"]} columnName="Created By" table={this.props.table} itemId={this.props.itemId} />
                                 <div>as a <b>{"P" + this.props.data["Priority"]} <DetailsField value={this.props.data["Work Item Type"]} columnName="Work Item Type" inline="true" /></b></div>
                             </div>
                         </div>
