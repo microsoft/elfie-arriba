@@ -96,7 +96,18 @@ namespace Arriba.Csv
             }
             catch(Exception ex) when (!Debugger.IsAttached)
             {
-                Console.WriteLine(ex.Message);
+                if (ex is AggregateException)
+                {
+                    foreach (Exception inner in ((AggregateException)ex).InnerExceptions)
+                    {
+                        Console.WriteLine(inner.Message);
+                    }
+                }
+                else
+                {
+                    Console.WriteLine(ex.Message);
+                }
+
                 return -2;
             }
         }

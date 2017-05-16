@@ -149,7 +149,41 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
         }
 
         [TestMethod]
-        public void String8_ToInteger()
+        public void String8_TryToBoolean()
+        {
+            Assert.AreEqual(null, TryToBoolean(null));
+            Assert.AreEqual(null, TryToBoolean("-1"));
+            Assert.AreEqual(null, TryToBoolean("2"));
+            Assert.AreEqual(null, TryToBoolean("tru"));
+            Assert.AreEqual(null, TryToBoolean("falsey"));
+
+            Assert.AreEqual(false, TryToBoolean("0"));
+            Assert.AreEqual(false, TryToBoolean("false"));
+            Assert.AreEqual(false, TryToBoolean("False"));
+            Assert.AreEqual(false, TryToBoolean("FALSE"));
+
+            Assert.AreEqual(true, TryToBoolean("1"));
+            Assert.AreEqual(true, TryToBoolean("true"));
+            Assert.AreEqual(true, TryToBoolean("True"));
+            Assert.AreEqual(true, TryToBoolean("TRUE"));
+        }
+
+        private bool? TryToBoolean(string value)
+        {
+            String8 value8 = String8.Convert(value, new byte[String8.GetLength(value) + 1], 1);
+
+            bool? result = null;
+            bool parsed = false;
+            if (value8.TryToBoolean(out parsed))
+            {
+                result = parsed;
+            }
+
+            return result;
+        }
+
+        [TestMethod]
+        public void String8_TryToInteger()
         {
             Assert.AreEqual(null, TryToInteger(null));
             Assert.AreEqual(null, TryToInteger(String.Empty));
@@ -209,7 +243,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
         }
 
         [TestMethod]
-        public void String8_ToDateTime()
+        public void String8_TryToDateTime()
         {
             // Null/Empty
             Assert.AreEqual(null, TryToDateTime(null));
@@ -220,6 +254,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
             Assert.AreEqual(new DateTime(2017, 02, 15, 11, 33, 54, DateTimeKind.Utc), TryToDateTime("2017-02-15T11:33:54Z"));
             Assert.AreEqual(new DateTime(2017, 02, 15, 11, 33, 54, DateTimeKind.Utc), TryToDateTime("2017-02-15 11:33:54Z"));
             Assert.AreEqual(new DateTime(1, 2, 3, 4, 5, 6, DateTimeKind.Utc), TryToDateTime("0001-02-03T04:05:06Z"));
+            Assert.AreEqual(new DateTime(1, 2, 3, 4, 5, 6, DateTimeKind.Utc), TryToDateTime("0001-02-03T04:05:06"));
 
             // Min/Max
             Assert.AreEqual(DateTime.MinValue, TryToDateTime("0001-01-01T00:00:00Z"));

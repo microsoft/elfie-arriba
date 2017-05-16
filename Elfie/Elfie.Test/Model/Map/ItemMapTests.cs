@@ -27,7 +27,9 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Map
             Verify.Exception<InvalidOperationException>(() => map.LinksFrom(0));
 
             // Verify Save and Reload has no errors
-            map = Verify.RoundTrip(map);
+            ItemMap<SampleItem> readMap = new ItemMap<SampleItem>(new SampleSet());
+            Verify.RoundTrip(map, readMap);
+            map = readMap;
 
             // Verify search returns a valid but empty set from an empty map
             Assert.AreEqual(0, map.LinksFrom(0).Count);
@@ -47,7 +49,9 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Map
             map.AddLink(1, 2);
 
             // Save, then add links after conversion (verify error)
-            map = Verify.RoundTrip(map);
+            readMap = new ItemMap<SampleItem>(new SampleSet());
+            Verify.RoundTrip(map, readMap);
+            map = readMap;
 
             // Ask for links (valid item with no links)
             Assert.AreEqual(0, map.LinksFrom(3).Count);
@@ -104,7 +108,9 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Map
             map.AddLink(6, 4);
 
             // Verify Save and Reload has no errors
-            map = Verify.RoundTrip(map);
+            ItemMap<SampleItem> readMap = new ItemMap<SampleItem>(new SampleSet());
+            Verify.RoundTrip(map, readMap);
+            map = readMap;
 
             // Validate links
             Assert.AreEqual("2", StringExtensions.Join(", ", map.LinksFrom(1)));
@@ -119,7 +125,9 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Map
             map.AddLink(4, 5);
 
             // Verify Save and Reload has no errors (merging happens)
-            map = Verify.RoundTrip(map);
+            readMap = new ItemMap<SampleItem>(new SampleSet());
+            Verify.RoundTrip(map, readMap);
+            map = readMap;
 
             // Validate all links were in the merged set
             Assert.AreEqual("1", StringExtensions.Join(", ", map.LinksFrom(0)));

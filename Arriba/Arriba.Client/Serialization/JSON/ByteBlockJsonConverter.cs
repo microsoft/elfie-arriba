@@ -7,7 +7,7 @@ using Arriba.Structures;
 
 using Newtonsoft.Json;
 
-namespace Arriba.Serialization.JSON
+namespace Arriba.Serialization.Json
 {
     /// <summary>
     /// JSON Serializer for Arriba ByteBlocks

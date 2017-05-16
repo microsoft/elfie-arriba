@@ -1,0 +1,27 @@
+/* Help Panel: Full size with 24px around, scrollable, grey border, padded */
+.helpContent {
+    flex: 1 100%;
+    overflow: auto;
+    margin: 24px 36px;
+    
+    border: 1px solid #999999;
+    background-color: white;
+
+    padding: 12px;
+}
+
+/* Make the first part bigger */
+.helpIntro {
+    font-size: 150%;
+}
+
+/* Make section headings nicely spaced */
+.helpContent h2 {
+    margin-top: 1em;
+    margin-bottom: 4px;
+    font-weight: 600;
+}
+
+.exampleBox {
+    margin-bottom: 1.5em;
+}

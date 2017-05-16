@@ -10,6 +10,8 @@ using Microsoft.CodeAnalysis.Elfie.Extensions;
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.CodeAnalysis.Elfie.Serialization;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
 {
@@ -28,19 +30,45 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
             ReaderWriterAll("Sample.tsv", (stream) => new TsvWriter(stream), (filePath, hasHeaderRow) => new TsvReader(filePath, hasHeaderRow));
         }
 
-        public void ReaderWriterAll(string sampleFilePath, Func<Stream, ITabularWriter> buildWriter, Func<string, bool, ITabularReader> buildReader)
+        [TestMethod]
+        public void JsonTabularWriter_BaseTests()
         {
-            if (!File.Exists(sampleFilePath))
-            {
-                WriteSampleFileWithIssues(new FileStream(sampleFilePath, FileMode.Create, FileAccess.ReadWrite), buildWriter);
-            }
+            WriterOnlyAll("Sample.json", (stream) => new JsonTabularWriter(stream));
 
-            Reader_Basics(sampleFilePath, buildReader);
+            string content = File.ReadAllText("Sample.json");
+
+            // Validate rows:
+            //   - Don't quote numbers and booleans, do escape byte and string
+            //   - Wrap values in an array with spacing, separators, array closing, comma for next row
+            //   - Concatenate values within a single set of quotes
+            Assert.IsTrue(content.IndexOf("[ 7, false, \"\\\\\", \"2017-05-03\", \"\\\\Barry\\\\\", \"8true\\\"2017-05-01\\\\Barry\\\\\" ],") > 0);
+        }
+
+        public void ReaderWriterAll(string sampleFileName, Func<Stream, ITabularWriter> buildWriter, Func<string, bool, ITabularReader> buildReader)
+        {
+            WriteSampleFileWithIssues(new FileStream(sampleFileName, FileMode.Create, FileAccess.ReadWrite), buildWriter);
+
+            Reader_Basics(sampleFileName, buildReader);
             Reader_NewlineVariations(buildWriter, buildReader);
             Reader_Roundtrip(buildReader, buildWriter);
+            Reader_Roundtrip_NoHeader(buildReader, buildWriter);
 
 #if PERFORMANCE
-            Reader_Performance(sampleFilePath, buildReader);
+            Reader_Performance(sampleFileName, buildReader);
+            Writer_Performance(buildWriter);
+#endif
+
+            Writer_WriteValidUsingAllOverloads(new FileStream("AllOverloads_" + sampleFileName, FileMode.Create, FileAccess.ReadWrite), buildWriter);
+            Writer_CheckValidation(buildWriter);
+        }
+
+        public void WriterOnlyAll(string sampleFilePath, Func<Stream, ITabularWriter> buildWriter)
+        {
+            WriteValidSample(new FileStream(sampleFilePath, FileMode.Create, FileAccess.ReadWrite), buildWriter);
+            Writer_WriteValidUsingAllOverloads(new FileStream(sampleFilePath, FileMode.Create, FileAccess.ReadWrite), buildWriter);
+            Writer_CheckValidation(buildWriter);
+
+#if PERFORMANCE
             Writer_Performance(buildWriter);
 #endif
         }
@@ -118,6 +146,83 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
             }
         }
 
+        public void Writer_WriteValidUsingAllOverloads(Stream stream, Func<Stream, ITabularWriter> buildWriter)
+        {
+            String8Set names = String8Set.Split(String8.Convert("Jeff,Bill,Todd,\\Barry\\", new byte[30]), UTF8.Comma, new int[5]);
+
+            using (ITabularWriter w = buildWriter(stream))
+            {
+                Assert.AreEqual(0, w.RowCountWritten);
+                w.SetColumns(new string[] { "ID", "IsEven", "Backslash", "Today", "Name", "Description" });
+                Assert.AreEqual(0, w.RowCountWritten);
+
+                for (int i = 0; i < 10; ++i)
+                {
+                    w.Write(i);
+                    w.Write(i % 2 == 0);
+                    w.Write(UTF8.Backslash);
+                    w.Write(new DateTime(2017, 05, 03, 0, 0, 0, DateTimeKind.Utc));
+                    w.Write(names[i % names.Count]);
+
+                    w.WriteValueStart();
+                    w.WriteValuePart(i + 1);
+                    w.WriteValuePart(i % 2 == 1);
+                    w.WriteValuePart(UTF8.Quote);
+                    w.WriteValuePart(new DateTime(2017, 05, 01, 0, 0, 0, DateTimeKind.Utc));
+                    w.WriteValuePart(names[i % names.Count]);
+                    w.WriteValueEnd();
+
+                    Assert.AreEqual(i, w.RowCountWritten);
+                    w.NextRow();
+                    Assert.AreEqual(i + 1, w.RowCountWritten);
+
+                    Assert.AreEqual(stream.Position, w.BytesWritten);
+                }
+            }
+        }
+
+        public void Writer_CheckValidation(Func<Stream, ITabularWriter> buildWriter)
+        {
+            using (MemoryStream s = new MemoryStream())
+            {
+                using (ITabularWriter w = buildWriter(s))
+                {
+                    // Write before SetColumns
+                    Verify.Exception<InvalidOperationException>(() => w.Write(0));
+
+                    w.SetColumns(new string[] { "ID", "IsEven" });
+
+                    // SetColumns already called
+                    Verify.Exception<InvalidOperationException>(() => w.SetColumns(new string[] { "Three", "Four" }));
+
+                    w.Write(0);
+
+                    // Not enough columns
+                    Verify.Exception<InvalidOperationException>(() => w.NextRow());
+
+                    w.Write(true);
+
+                    // Too many columns
+                    Verify.Exception<InvalidOperationException>(() => w.Write(String8.FromBoolean(false)));
+
+                    w.NextRow();
+
+                    // WriteValuePart without WriteValueStart
+                    Verify.Exception<InvalidOperationException>(() => w.WriteValuePart(true));
+
+                    // WriteValueEnd not in partial value
+                    Verify.Exception<InvalidOperationException>(() => w.WriteValueEnd());
+
+                    w.WriteValueStart();
+
+                    // Write in partial value
+                    Verify.Exception<InvalidOperationException>(() => w.Write(true));
+
+                    w.WriteValueEnd();
+                }
+            }
+        }
+
         public void Reader_Basics(string sampleFilePath, Func<string, bool, ITabularReader> buildReader)
         {
             // File Not Found
@@ -139,7 +244,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
             using (ITabularReader r = buildReader(sampleFilePath, false))
             {
                 Assert.IsTrue(r.NextRow());
-                Assert.AreEqual("LineNumber", r.Current[0].ToString());
+                Assert.AreEqual("LineNumber", r.Current(0).ToString());
 
                 // Get column name (no header row read)
                 Verify.Exception<ColumnNotFoundException>(() => r.ColumnIndex("Missing"));
@@ -167,19 +272,18 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
                     {
                         // Verify empty rows return no columns, have empty row text, throw on value access
                         Assert.AreEqual(0, r.CurrentRowColumns, "Expected column count 0 in empty rows");
-                        Assert.IsTrue(r.Current.Value.IsEmpty());
-                        Verify.Exception<ArgumentOutOfRangeException>(() => { var v = r.Current[lineNumberColumnIndex]; });
+                        Verify.Exception<ArgumentOutOfRangeException>(() => { var v = r.Current(lineNumberColumnIndex); });
                     }
                     else if (rowIndex == 5000)
                     {
                         // Read row over 64k [block resizing logic, row values look right]
-                        String8 longDescription = r.Current[descriptionColumnIndex];
+                        String8 longDescription = r.Current(descriptionColumnIndex).ToString8();
                         Assert.AreEqual(100000, longDescription.Length);
                     }
                     else
                     {
                         // Get value (valid)
-                        String8 lineNumber8 = r.Current[lineNumberColumnIndex];
+                        String8 lineNumber8 = r.Current(lineNumberColumnIndex).ToString8();
                         int lineNumber = 0;
                         if (lineNumber8.TryToInteger(out lineNumber))
                         {
@@ -192,9 +296,6 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
 
                         // Get line number
                         Assert.AreEqual(rowIndex, r.RowCountRead, "Expected lines read to equal row number");
-
-                        // Get row text (valid)
-                        String8 fullRow = r.Current.Value;
                     }
                 }
             }
@@ -218,7 +319,47 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
                     {
                         for (int i = 0; i < reader.CurrentRowColumns; ++i)
                         {
-                            writer.Write(reader.Current[i]);
+                            writer.Write(reader.Current(i).ToString8());
+                        }
+
+                        writer.NextRow();
+                    }
+                }
+            }
+
+            // Verify files are identical
+            string fileBefore = File.ReadAllText(filePath);
+            string fileAfter = File.ReadAllText(filePath + ".new");
+            Assert.AreEqual(fileBefore, fileAfter);
+        }
+
+        public void Reader_Roundtrip_NoHeader(Func<string, bool, ITabularReader> buildReader, Func<Stream, ITabularWriter> buildWriter)
+        {
+            string filePath = "ValidSample.xsv";
+
+            // Write a valid file with some values which require CSV escaping
+            WriteValidSample(new FileStream(filePath, FileMode.Create, FileAccess.ReadWrite), buildWriter);
+
+            // Direct Copy the file from the reader to the writer - every value unescaped and then escaped
+            using (ITabularReader reader = buildReader(filePath, false))
+            {
+                using (ITabularWriter writer = buildWriter(new FileStream(filePath + ".new", FileMode.Create, FileAccess.ReadWrite)))
+                {
+                    // Get first row and output as header
+                    reader.NextRow();
+                    List<string> firstRowValues = new List<string>();
+                    for(int i = 0; i < reader.CurrentRowColumns; ++i)
+                    {
+                        firstRowValues.Add(reader.Current(i).ToString());
+                    }
+                    writer.SetColumns(firstRowValues);
+
+                    // Copy remaining rows
+                    while (reader.NextRow())
+                    {
+                        for (int i = 0; i < reader.CurrentRowColumns; ++i)
+                        {
+                            writer.Write(reader.Current(i).ToString8());
                         }
 
                         writer.NextRow();
@@ -255,50 +396,19 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
 
                             if (r.CurrentRowColumns < 2) continue;
 
-                            String8 lineNumber8 = r.Current[lineNumberIndex];
                             int lineNumber;
-                            lineNumber8.TryToInteger(out lineNumber);
+                            r.Current(lineNumberIndex).TryToInteger(out lineNumber);
 
-                            // TODO: Get ToInteger fast enough to read overall at goal
-                            String8 count8 = r.Current[countIndex];
-                            //int count = count8.ToInteger();
+                            int count;
+                            r.Current(countIndex).TryToInteger(out count);
 
-                            String8 description = r.Current[descriptionIndex];
+                            String8 description = r.Current(descriptionIndex).ToString8();
                         }
                     }
                 }
 
                 return iterations * xsvLengthBytes;
             });
-        }
-
-        public void Writer_RowValidation(Func<string, ITabularWriter> buildWriter)
-        {
-            using (MemoryStream stream = new MemoryStream())
-            {
-                using (ITabularWriter writer = buildWriter("Writer_RowValidation.xsv"))
-                {
-                    writer.SetColumns(new string[] { "LineNumber", "Count", "Description", "Source" });
-
-                    writer.Write(1);
-                    writer.Write(2);
-
-                    // Verify exception if too few columns are written
-                    Verify.Exception<InvalidOperationException>(writer.NextRow);
-
-                    writer.Write(3);
-                    writer.Write(4);
-
-                    // Verify exception if too many columns written
-                    Verify.Exception<InvalidOperationException>(() => writer.Write(5));
-
-                    // No trailing NextRow()
-                }
-            }
-
-            // Verify last row terminated (despite no trailing NextRow)
-            string content = File.ReadAllText("Writer_RowValidation.xsv");
-            Assert.IsTrue(content.EndsWith("\r\n"));
         }
 
         public void Writer_Performance(Func<Stream, ITabularWriter> buildWriter)
@@ -398,19 +508,19 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
                 Assert.AreEqual(3, r.CurrentRowColumns);
 
                 // Verify last column doesn't have extra '\r' when terminated with '\r\n'
-                Assert.AreEqual("3", r.Current[2].ToString());
+                Assert.AreEqual("3", r.Current(2).ToString());
 
                 Assert.IsTrue(r.NextRow());
                 Assert.AreEqual(3, r.CurrentRowColumns);
 
                 // Verify last column not clipped when terminated with '\n'
-                Assert.AreEqual("6", r.Current[2].ToString());
+                Assert.AreEqual("6", r.Current(2).ToString());
 
                 Assert.IsTrue(r.NextRow());
                 Assert.AreEqual(3, r.CurrentRowColumns);
 
                 // Verify last column not clipped when unterminated [EOF]
-                Assert.AreEqual("9", r.Current[2].ToString());
+                Assert.AreEqual("9", r.Current(2).ToString());
 
                 Assert.IsFalse(r.NextRow(), "Reader didn't stop after last line without newline");
             }

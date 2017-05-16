@@ -1,9 +1,43 @@
-﻿using Microsoft.CodeAnalysis.Elfie.Model.Strings;
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace Microsoft.CodeAnalysis.Elfie.Serialization
 {
+    /// <summary>
+    ///  ITabularReader implements reading tabular data from arbitrary sources.
+    ///  TabularReader returns values as ITabularValue, which can be converted to multiple types without allocation, conversion, or boxing.
+    ///  Elfie readers natively return string values as String8s, which don't require per value allocation.
+    ///  
+    ///  NOTE: Values read from ITabularReader must be copied before NextRow is called.
+    /// 
+    ///  USAGE
+    ///  =====
+    ///  String8Block block = new String8Block();
+    ///  using (BaseTabularReader r = new XReader(loadFromPath, true))
+    ///  {
+    ///     // Look up column indices outside the loop
+    ///     int titleIndex = r.ColumnIndex("Title");
+    ///     int descriptionIndex = r.ColumnIndex("Description");
+    ///     int itemTypeIndex = r.ColumnIndex("ItemType");
+    ///
+    ///     // Use NextRow() and Current[index] to read values
+    ///     while (r.NextRow())
+    ///     {
+    ///         // Copy values to be kept across rows
+    ///         String8 title = block.GetCopy(r.Current[titleIndex]);
+    ///         
+    ///         // Use values directly if used only before NextRow
+    ///         String8 description = r.Current[descriptionIndex].ToString8();
+    ///         
+    ///         // Use TryTo calls to convert values without allocation or boxing.
+    ///         int itemType;
+    ///         r.Current[itemTypeIndex].TryToInteger(out itemType);
+    ///     }
+    ///     
+    ///     // Release String8Block memory used for copies when you're done with them
+    ///     block.Clear();
+    /// }
+    /// </summary>
     public interface ITabularReader : IDisposable
     {
         /// <summary>
@@ -21,18 +55,23 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         int ColumnIndex(string columnNameOrIndex);
 
         /// <summary>
-        ///  Return the cells for the current row.
-        ///  Get a single cell with reader.Current[columnIndex]
-        ///  Converts values to 
+        ///  Return a cell for the current row.
+        ///  IConvertible has methods to convert values to String8, string, int, bool, DateTime, etc.
         /// </summary>
-        /// <returns>String8Set with the cells for the current row.</returns>
-        String8Set Current { get; }
+        /// <param name="index">Zero-based column index</param>
+        /// <returns>ITabularValue for the desired column in the current row</returns>
+        ITabularValue Current(int index);
 
         /// <summary>
         ///  Returns the number of rows read so far.
         ///  If no newlines in rows, the RowCountRead is the line number of the current row.
         /// </summary>
         int RowCountRead { get; }
+
+        /// <summary>
+        ///  Return how many bytes were read so far, if the implementation knows.
+        /// </summary>
+        long BytesRead { get; }
 
         /// <summary>
         ///  Returns the number of columns in the current row. Used to handle
@@ -46,5 +85,21 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         /// </summary>
         /// <returns>True if another row exists, False if the source is out of content</returns>
         bool NextRow();
+    }
+
+    public static class ITabularReaderExtensions
+    {
+        /// <summary>
+        ///  Return a cell for the current row or String.Empty if the row doesn't have
+        ///  enough columns.
+        /// </summary>
+        /// <param name="reader">ITabularReader</param>
+        /// <param name="index">Zero-based column index</param>
+        /// <returns>ITabularValue for column</returns>
+        public static ITabularValue CurrentOrEmpty(this ITabularReader reader, int index)
+        {
+            if (reader.CurrentRowColumns > index) return reader.Current(index);
+            return String8TabularValue.Empty;
+        }
     }
 }

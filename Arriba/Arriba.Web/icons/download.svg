@@ -1,0 +1,12 @@
+<svg width="14" height="10" viewBox="0 0 14 10" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:figma="http://www.figma.com/figma/ns">
+<title>download</title>
+<desc>Created using Figma</desc>
+<g id="Canvas" transform="translate(-1216 -190)" figma:type="canvas">
+<g id="download" figma:type="vector">
+<use xlink:href="#path0_stroke" transform="translate(1216 190)" fill="#595959"/>
+</g>
+</g>
+<defs>
+<path id="path0_stroke" d="M 7 8L 6.72265 8.41603L 7 8.60093L 7.27735 8.41603L 7 8ZM 6.5 0L 6.5 8L 7.5 8L 7.5 0L 6.5 0ZM 7.27735 8.41603L 10.2774 6.41603L 9.72265 5.58397L 6.72265 7.58397L 7.27735 8.41603ZM 7.27735 7.58397L 4.27735 5.58397L 3.72265 6.41603L 6.72265 8.41603L 7.27735 7.58397ZM 0 10L 14 10L 14 9L 0 9L 0 10Z"/>
+</defs>
+</svg>

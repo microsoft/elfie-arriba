@@ -83,6 +83,24 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Structures
         }
 
         /// <summary>
+        ///  Set the count to a specific value, copying existing items if any
+        ///  and defaulting new values.
+        /// </summary>
+        /// <param name="count">Count to set</param>
+        public void SetCount(int count)
+        {
+            T[] newArray = new T[(int)(count)];
+
+            if (this.Count > 0)
+            {
+                Array.Copy(_array, newArray, Math.Min(count, this.Count));
+            }
+
+            _array = newArray;
+            this.Count = count;
+        }
+
+        /// <summary>
         ///  Add an item to the array. Resize the array if full.
         /// </summary>
         /// <param name="item">Value to add to array</param>

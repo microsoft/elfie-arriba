@@ -18,8 +18,9 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Extensions
         {
             // In-memory round trip
             SampleSerializable ss = new SampleSerializable(5);
-            ss = Verify.RoundTrip(ss);
-            Assert.AreEqual(5, ss.Value);
+            SampleSerializable ss2 = new SampleSerializable(10);
+            Verify.RoundTrip(ss, ss2);
+            Assert.AreEqual(5, ss2.Value);
 
             // Write to file (verify exists, size, save, load)
             string serializationPath = "SampleSerializable.bin";

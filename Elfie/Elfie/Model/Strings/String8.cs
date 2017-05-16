@@ -33,6 +33,8 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         }
 
         public static String8 Empty = new String8(null, 0, 0);
+        private static String8 True8 = String8.Convert("true", new byte[4]);
+        private static String8 False8 = String8.Convert("false", new byte[5]);
 
         #region Conversion
         /// <summary>
@@ -228,14 +230,14 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         /// <returns>String8 with the value of this string starting at index</returns>
         public String8 Substring(int index)
         {
-            // Length Default: Return rest of string
-            int length = _length - index;
+            // Verify index non-negative
+            if (index < 0 || index > _length) throw new ArgumentOutOfRangeException("index");
 
-            // Verify in bounds
-            if (length < 0) throw new ArgumentOutOfRangeException("length");
+            // If index is zero, return the same instance
+            if (index == 0) return this;
 
             // Build a substring tied to the same buffer
-            return new String8(_buffer, _index + index, length);
+            return new String8(_buffer, _index + index, _length - index);
         }
 
         /// <summary>
@@ -248,7 +250,8 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         public String8 Substring(int index, int length)
         {
             // Verify in bounds
-            if (index + length > _length) throw new ArgumentOutOfRangeException("length");
+            if (index < 0) throw new ArgumentOutOfRangeException("index");
+            if (length < 0 || index + length > _length) throw new ArgumentOutOfRangeException("length");
 
             // Build a substring tied to the same buffer
             return new String8(_buffer, _index + index, length);
@@ -332,6 +335,35 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         #endregion
 
         #region Type Conversions
+        public bool TryToBoolean(out bool result)
+        {
+            result = false;
+            if (IsEmpty()) return false;
+
+            if (this.CompareTo("true", true) == 0)
+            {
+                result = true;
+                return true;
+            }
+            else if (this.CompareTo("false", true) == 0)
+            {
+                result = false;
+                return true;
+            }
+            else if (this.CompareTo("1", false) == 0)
+            {
+                result = true;
+                return true;
+            }
+            else if (this.CompareTo("0", false) == 0)
+            {
+                result = false;
+                return true;
+            }
+
+            return false;
+        }
+
         /// <summary>
         ///  Convert a String8 with an integer to the numeric value.
         /// </summary>
@@ -369,6 +401,16 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
 
             result = (int)value;
             return true;
+        }
+
+        /// <summary>
+        ///  Convert a boolean to a String8 value.
+        /// </summary>
+        /// <param name="value">Boolean to convert</param>
+        /// <returns>String8 for boolean: "True" or "False"</returns>
+        public static String8 FromBoolean(bool value)
+        {
+            return (value ? True8 : False8);
         }
 
         /// <summary>
@@ -418,7 +460,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             if (buffer.Length + index < requiredLength) throw new ArgumentException("String8.FromInteger requires an 11 byte buffer for integer conversion.");
 
             // Write minus sign if negative
-            if(isNegative) buffer[index++] = (byte)'-';
+            if (isNegative) buffer[index++] = (byte)'-';
 
             // Write digits right to left
             for (int j = index + digits - 1; j >= index; --j)
@@ -453,7 +495,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             FromInteger(value.Day, buffer, index + 8, 2);
 
             // Thh:mm:ssZ
-            if(value.TimeOfDay > TimeSpan.Zero)
+            if (value.TimeOfDay > TimeSpan.Zero)
             {
                 length = 20;
 
@@ -471,7 +513,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
 
         /// <summary>
         ///  Convert a String8 with an ISO-8601 UTC DateTime into the DateTime value.
-        ///  [yyyy-MM-ddThh:mm:ssZ]
+        ///  [yyyy-MM-dd] or [yyyy-MM-ddThh:mm:ssZ]
         /// </summary>
         /// <param name="result">UTC DateTime corresponding to string, if it was a valid DateTime</param>
         /// <returns>True if an integer was found, False otherwise.</returns>
@@ -480,9 +522,9 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             result = DateTime.MinValue;
             if (this.IsEmpty()) return false;
 
-            // Formats are [yyyy-MM-dd] (length 10) or [yyyy-MM-ddThh:mm:ssZ] (length 20)
+            // Formats are [yyyy-MM-dd] (length 10) or [yyyy-MM-ddThh:mm:ssZ] (length 19/20)
             //              0123456789                  01234567890123456789
-            bool hasTimePart = (_length == 20);
+            bool hasTimePart = (_length == 19 || _length == 20);
             if (_length != 10 && !hasTimePart) return false;
 
             // Validate date part separators
@@ -495,7 +537,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
                 if (_buffer[_index + 10] != UTF8.T && _buffer[_index + 10] != UTF8.Space) return false;
                 if (_buffer[_index + 13] != UTF8.Colon) return false;
                 if (_buffer[_index + 16] != UTF8.Colon) return false;
-                if (_buffer[_index + 19] != UTF8.Z) return false;
+                if (_length == 20 && _buffer[_index + 19] != UTF8.Z) return false;
             }
 
             int year, month, day, hour = 0, minute = 0, second = 0;
@@ -525,8 +567,8 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
 
             // Construct DateTime to avoid failures due to days being out of range (leap year and month length)
             result = new DateTime(year, month, 1, hour, minute, second, DateTimeKind.Utc);
-            if(day > 1) result = result.AddDays(day - 1);
-            
+            if (day > 1) result = result.AddDays(day - 1);
+
             // Return false for invalid leap days
             if (result.Month != month) return false;
 

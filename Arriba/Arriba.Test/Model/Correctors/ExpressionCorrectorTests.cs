@@ -31,34 +31,34 @@ namespace Arriba.Test.Model.Correctors
             ComposedCorrector correctors = new ComposedCorrector(new MeCorrector("scott"), new ComposedCorrector(new TodayCorrector()));
 
             // Verify no correction when existing correctors don't have anything to fix
-            Assert.AreEqual("t:one", Correct("t:one", correctors));
+            Assert.AreEqual("[t]:one", Correct("t:one", correctors));
 
             // Add column alias corrector and verify it's included
             correctors.Add(new ColumnAliasCorrector(t));
-            Assert.AreEqual("Title:one", Correct("t:one", correctors));
+            Assert.AreEqual("[Title]:one", Correct("t:one", correctors));
 
             // Correct 'me'
-            Assert.AreEqual("(a = me OR a = scott)", Correct("a=me", correctors));
+            Assert.AreEqual("[a] = me OR [a] = scott", Correct("a=me", correctors));
 
             // Ensure 'me' is willing to correct for all column queries
-            Assert.AreEqual("(*:me OR *:scott)", Correct("me", correctors));
+            Assert.AreEqual("[*]:me OR [*]:scott", Correct("me", correctors));
 
             // Ensure 'me' correction does not happen to not equal and range operators (which would cause wrong results)
-            Assert.AreEqual("a <> me", Correct("a <> me", correctors));
-            Assert.AreEqual("a > me", Correct("a>me", correctors));
+            Assert.AreEqual("[a] <> me", Correct("a <> me", correctors));
+            Assert.AreEqual("[a] > me", Correct("a>me", correctors));
 
             // Correct 'today' and 'today - n'
             Assert.AreEqual(String.Format("[Created Date] > \"{0}\"", DateTime.Today.ToUniversalTime()), Correct("cd > today", correctors));
             Assert.AreEqual(String.Format("[Created Date] < \"{0}\"", DateTime.Today.AddDays(-2).ToUniversalTime()), Correct("cd < today-2", correctors));
 
             // Ensure 'today' is not corrected for any column
-            Assert.AreEqual("*:today", Correct("today", correctors));
+            Assert.AreEqual("[*]:today", Correct("today", correctors));
 
             // Verify several corrections together
-            Assert.AreEqual(String.Format("(Title:one AND [Created Date] < \"{0}\")", DateTime.Today.AddDays(-5).ToUniversalTime()), Correct("t:one cd<today-5", correctors));
+            Assert.AreEqual(String.Format("[Title]:one AND [Created Date] < \"{0}\"", DateTime.Today.AddDays(-5).ToUniversalTime()), Correct("t:one cd<today-5", correctors));
 
             // Correct within NotExpression
-            Assert.AreEqual("(Title:one AND Title:two AND NOT(Title:three))", Correct("t:one t:two -t:three", correctors));
+            Assert.AreEqual("[Title]:one AND [Title]:two AND NOT([Title]:three)", Correct("t:one t:two -t:three", correctors));
 
             // Verify ComposedCorrector ensures callers don't call CorrectTerm on it.
             Verify.Exception<InvalidOperationException>(() => correctors.CorrectTerm(new TermExpression("*", Operator.Matches, "today")));
@@ -82,16 +82,16 @@ namespace Arriba.Test.Model.Correctors
             UserAliasCorrector corrector = new UserAliasCorrector(people);
 
             // People are corrected
-            Assert.AreEqual("(a:scott OR a:\"Scott Louvau\")", Correct("a:scott", corrector));
+            Assert.AreEqual("[a]:scott OR [a]:\"Scott Louvau\"", Correct("a:scott", corrector));
 
             // People are not corrected for all columns
-            Assert.AreEqual("*:scott", Correct("scott", corrector));
+            Assert.AreEqual("[*]:scott", Correct("scott", corrector));
 
             // No correction for unknown alias (and no errors)
-            Assert.AreEqual("a:bob", Correct("a:bob", corrector));
+            Assert.AreEqual("[a]:bob", Correct("a:bob", corrector));
 
             // No correction and no exception if no table was available
-            Assert.AreEqual("a:scott", Correct("a:scott", new UserAliasCorrector(null)));
+            Assert.AreEqual("[a]:scott", Correct("a:scott", new UserAliasCorrector(null)));
         }
 
         private static string Correct(string query, ICorrector correctors)

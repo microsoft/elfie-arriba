@@ -1,5 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="..\Elfie.build.props" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
@@ -71,6 +72,7 @@
     <Compile Include="Diagnostics\Logger.cs" />
     <Compile Include="Diagnostics\Position.cs" />
     <Compile Include="Diagnostics\ProgressWriter.cs" />
+    <Compile Include="Diagnostics\SearchResult.cs" />
     <Compile Include="Extensions\DateTimeExtensions.cs" />
     <Compile Include="Extensions\IntExtensions.cs" />
     <Compile Include="Extensions\IReadOnlyListExtensions.cs" />
@@ -80,6 +82,7 @@
     <Compile Include="Model\ArdbVersion.cs" />
     <Compile Include="Model\BaseItemSet.cs" />
     <Compile Include="Model\DatabaseAddResult.cs" />
+    <Compile Include="Model\Columns\DateTimeColumn.cs" />
     <Compile Include="Model\EmptyArray.cs" />
     <Compile Include="Model\IMemberDatabase.cs" />
     <Compile Include="Model\Map\ImmutableItemMap.cs" />
@@ -90,7 +93,7 @@
     <Compile Include="Model\MergedMembersDatabase.cs" />
     <Compile Include="Model\NugetVersionUtilities.cs" />
     <Compile Include="Model\Strings\AlphanumericSplitter.cs" />
-    <Compile Include="Model\Strings\String8Column.cs" />
+    <Compile Include="Model\Columns\String8Column.cs" />
     <Compile Include="Model\Strings\UTF8.cs" />
     <Compile Include="Model\Structures\PackageIdentity.cs" />
     <Compile Include="Model\Strings\IWriteableString.cs" />
@@ -133,15 +136,19 @@
     </Compile>
     <Compile Include="Serialization\BaseTabularWriter.cs" />
     <Compile Include="Serialization\ConsoleTabularWriter.cs" />
+    <Compile Include="Serialization\DataReaderTabularReader.cs" />
     <Compile Include="Serialization\FileIO.cs" />
     <Compile Include="Serialization\IBinarySerializable.cs" />
-    <Compile Include="Model\IColumn.cs" />
+    <Compile Include="Model\Columns\IColumn.cs" />
+    <Compile Include="Serialization\ITabularValue.cs" />
     <Compile Include="Serialization\ITabularReader.cs" />
     <Compile Include="Serialization\ITabularWriter.cs" />
+    <Compile Include="Serialization\JsonTabularWriter.cs" />
     <Compile Include="Serialization\Read.cs" />
     <Compile Include="Model\Strings\String8Block.cs" />
     <Compile Include="Serialization\BaseTabularReader.cs" />
     <Compile Include="Serialization\CsvReader.cs" />
+    <Compile Include="Serialization\TabularFactory.cs" />
     <Compile Include="Serialization\TsvReader.cs" />
     <Compile Include="Serialization\CsvWriter.cs" />
     <Compile Include="Serialization\TsvWriter.cs" />

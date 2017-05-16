@@ -390,6 +390,7 @@ namespace Arriba.Model.Query
                 // Walk in ascending or descending order and return the matches
                 int count = 0;
                 ushort[] lidsToReturn = new ushort[countToReturn];
+                if (countToReturn == 0) return lidsToReturn;
 
                 int index, end, step;
                 if (context.OrderByDescending)
@@ -416,14 +417,16 @@ namespace Arriba.Model.Query
 
             private static ushort[] GetLIDsToReturnDense(Partition p, SelectContext context, SelectResult result, ShortSet whereSet)
             {
-                int countToReturn = Math.Min(context.Count, (int)(result.Total));
-                ushort[] lidsToReturn = new ushort[countToReturn];
-
-                // Enumerate in order by the OrderByColumn
-                IColumn<object> orderByColumn = p.Columns[context.OrderByColumn];
+                // Get the sorted IDs, *if available*
                 IList<ushort> sortedLIDs;
                 int sortedLIDsCount;
-                orderByColumn.TryGetSortedIndexes(out sortedLIDs, out sortedLIDsCount);
+                IColumn<object> orderByColumn = p.Columns[context.OrderByColumn];
+                if (!orderByColumn.TryGetSortedIndexes(out sortedLIDs, out sortedLIDsCount)) return GetLIDsToReturnSparse(p, context, result, whereSet);
+
+                // Determine how many to return. Stop if none.
+                int countToReturn = Math.Min(context.Count, (int)(result.Total));
+                ushort[] lidsToReturn = new ushort[countToReturn];
+                if (countToReturn == 0) return lidsToReturn;           
 
                 // Enumerate matches in OrderBy order and return the requested columns for them
                 ushort countAdded = 0;

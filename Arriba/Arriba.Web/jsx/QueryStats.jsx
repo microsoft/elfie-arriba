@@ -1,5 +1,5 @@
 ﻿// QueryStats is a bar just under the SearchHeader. It shows errors, if any, or the current query, returned count, and runtime.
-var QueryStats = React.createClass({
+export default React.createClass({
     onTableTileClick: function (name, e) {
         this.props.onSelectedTableChange(name);
     },
@@ -14,8 +14,8 @@ var QueryStats = React.createClass({
 
             // Write tiles with results per table
             var tiles = [];
-            for (var i = 0; i < allCountContent.length; ++i) {
-                var tableResult = allCountContent[i];
+            for (var i = 0; i < allCountContent.resultsPerTable.length; ++i) {
+                var tableResult = allCountContent.resultsPerTable[i];
 
                 var cssClasses = "";
                 var parts = [];
@@ -25,13 +25,13 @@ var QueryStats = React.createClass({
                 if (!tableResult.allowedToRead) {
                     parts.push(<span className="lock-icon icon" />);
                 } else if (!tableResult.succeeded) {
-                    parts.push(<span className="error-icon icon" />);
+                    parts.push(<span className="countValue">‒</span>);
                 } else {
                     parts.push(<span className="countValue">{tableResult.count.toLocaleString()}</span>);
                 }
 
                 tiles.push(
-                    <span key={"tableTile_" + tableResult.tableName} className={cssClasses + " statsForTable clickable"} onClick={this.onTableTileClick.bind(this, tableResult.tableName)}>
+                    <span key={"tableTile_" + tableResult.tableName} className={cssClasses + " clickable"} onClick={this.onTableTileClick.bind(this, tableResult.tableName)}>
                         {parts}
                         <span>{tableResult.tableName}</span>
                     </span>
@@ -44,7 +44,7 @@ var QueryStats = React.createClass({
                 var selectedContent = this.props.selectedData.content;
 
                 if(selectedContent.query.where) {
-                    selectedDetails.push(<span>for <span className="h">{selectedContent.query.where}</span></span>);
+                    selectedDetails.push(<span>for <span className="explanation">{selectedContent.query.where}</span></span>);
                 }
 
                 if (selectedContent.details.errors) {
@@ -65,18 +65,28 @@ var QueryStats = React.createClass({
                     selectedDetails.push(<span>&nbsp;<span className="icon-lock icon" title={deniedColumnList} /></span>);
                 }
 
-                if (this.props.rssUrl && selectedContent.details.succeeded) {
-                    selectedDetails.push(
-                        <a title="RSS Link" target="_blank" href={this.props.rssUrl}>
-                            <img className="rss" src="icons/feed-icon-14x14.png" style={{ position: "relative", top: "1px" }} alt="RSS" />
-                        </a>
-                    );
-                }
+                selectedDetails.push(<span className="spacer"></span>)
 
-                if (this.props.csvUrl && selectedContent.details.succeeded) {
+                if (selectedContent.details.succeeded) {
+                    if (this.props.rssUrl) {
+                        selectedDetails.push(
+                            <a title="RSS Link" target="_blank" href={this.props.rssUrl}>
+                                <img src="/icons/rss.svg" alt="rss"/>
+                            </a>
+                        );
+                    }
+
+                    if (this.props.csvUrl) {
+                        selectedDetails.push(
+                            <a title="Download CSV" target="_blank" href={this.props.csvUrl}>
+                                <img src="/icons/download.svg" alt="download"/>
+                            </a>
+                        );
+                    }
+
                     selectedDetails.push(
-                        <a title="Download CSV" target="_blank" href={this.props.csvUrl}>
-                            <span className="icon-download" />
+                        <a title="Mail" href={"mailto:?subject=" + encodeURIComponent(configuration.toolName) + ": " + encodeURIComponent(this.props.query) + "&body=" + encodeURIComponent(window.location.href)}>
+                            <img src="/icons/mail.svg" alt="mail"/>
                         </a>
                     );
                 }
@@ -85,7 +95,7 @@ var QueryStats = React.createClass({
 
         return (
             <div className="queryStats">
-                {tiles}
+                <span className="statsForTable">{tiles}</span>
                 {selectedDetails}
             </div>
         );

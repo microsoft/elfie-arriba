@@ -26,6 +26,11 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Map
             // Nothing to add per item
         }
 
+        public void SetCount(int count)
+        {
+            // Nothing to set automatically.
+        }
+
         /// <summary>
         ///  Add a link from one item to another. Links must be added to items in
         ///  order of insertion.

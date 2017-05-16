@@ -44,7 +44,7 @@ namespace Arriba.Client
 
             _serializerSettings = new JsonSerializerSettings()
             {
-                ContractResolver = new CamelCasePropertyNamesContractResolver(),
+                ContractResolver = new CamelCasePropertyNamesContractResolver() { NamingStrategy = new CamelCaseNamingStrategy() { ProcessDictionaryKeys = false } },
                 Formatting = Debugger.IsAttached ? Formatting.Indented : Formatting.None
             };
 
