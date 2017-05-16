@@ -1,4 +1,4 @@
-﻿    import WorkItemDetails from "./WorkItemDetails/WorkItemDetails";
+﻿    import WorkItemDetails from "../parts.optional/WorkItemDetails/WorkItemDetails";
 
     export default {
         // Arriba Service URL to query
