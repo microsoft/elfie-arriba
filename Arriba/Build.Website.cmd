@@ -21,6 +21,11 @@ IF NOT "%2"=="" GOTO :NextConfiguration
 
 IF EXIST "%MainConfiguration%" (
   ECHO - Synchronizing Configuration...
+  IF NOT EXIST "%MainConfiguration%\Configuration.jsx" (
+    ECHO ERROR. '%MainConfiguration%' didn't contain a Configuration.jsx. Is your path right? 
+    GOTO :EOF
+  )
+
   IF EXIST "%here%Arriba.Web\configuration" ROBOCOPY /XO /NJH /NJS "%here%Arriba.Web\configuration" "%MainConfiguration%"
   ROBOCOPY /E /NJH /NJS "%MainConfiguration%" "%here%Arriba.Web\configuration"
 ) ELSE (
