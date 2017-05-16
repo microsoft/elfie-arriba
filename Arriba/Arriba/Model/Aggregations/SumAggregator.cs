@@ -22,7 +22,7 @@ namespace Arriba.Model.Aggregations
         {
             get
             {
-                return (long)0;
+                return null;
             }
         }
 
