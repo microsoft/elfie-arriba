@@ -86,19 +86,28 @@ export default React.createClass({
         localStorage.updateJson("favorites", favs => ([] || favs).toggle(this.props.parsedQuery));
     },
     render: function () {
+
+        // Generates a SVG histogram to be displayed behind the completion list.
+        // The path goes counter-clockwise starting from the top-right.
         var svg = this.state.suggestions.length && (() => {
             var d = '';
+
+            // The inst() currently concats SVG commands to the list 'd'.
+            // However when debugging, it is useful to redirect the ...params to the console.
             const inst = (...params) => d += params.join(" ") + " ";
+
+            // Scrape ___% from the item.hint. If not found, default to 0.
             const values = this.state.suggestions.map(item => new Number(item.hint.replace('%', '')) + 0 || 0);
+
             const w = 80; // Matches CSS declared width.
             inst("M", w, 0);
             inst("L", w - values[0] * 0.75, 0);
             const max = Math.max(...values) || 1; // Prevent divide by zero.
-            var y = 0;
+            var y = 0; // Running total fo the height.
             values.forEach(val => {
                 const x = w - (val/max) * w;
                 inst("S", x, y + 18 - 18, ",", x, y + 18);
-                y += 37;
+                y += 37; // Matches the CSS declared height of each row.
             });
             inst("L", w - values[values.length - 1] * 0.75, y);
             inst("L", w, y);
