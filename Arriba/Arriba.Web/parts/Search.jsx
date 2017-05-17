@@ -1,4 +1,4 @@
-import "../Search.scss";
+﻿import "../Search.scss";
 import "!script-loader!../js/utilities.js";
 
 import Mru from "./Mru";
@@ -13,13 +13,7 @@ import Start from "./Start";
 import ResultDetails from "./ResultDetails";
 import ResultListing from "./ResultListing";
 
-// NOTE: Depends on configuration from zConfiguration.jsx.
-import defaultConfiguration from "./DefaultConfiguration";
-window.configuration = defaultConfiguration;
-var optionalContext = require.context("..", true, /\.\/configuration\/Configuration\.jsx/);
-if (optionalContext.keys().includes("./configuration/Configuration.jsx")) {
-    window.configuration = optionalContext("./configuration/Configuration.jsx").default
-}
+window.configuration = require("../configuration/Configuration.jsx").default;
 
 // SearchMain wraps the overall search UI
 var SearchMain = React.createClass({

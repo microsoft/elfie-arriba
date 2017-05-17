@@ -1,17 +1,11 @@
-import "../Search.scss";
+﻿import "../Search.scss";
 import "!script-loader!../js/utilities.js";
 
 import ErrorPage from "./ErrorPage"
 import QueryStats from "./QueryStats"
 import SearchHeader from "./SearchHeader"
 
-// NOTE: Depends on configuration from zConfiguration.jsx.
-import defaultConfiguration from "./DefaultConfiguration";
-window.configuration = defaultConfiguration;
-var optionalContext = require.context("..", true, /\.\/configuration\/Configuration\.jsx/);
-if (optionalContext.keys().includes("./configuration/Configuration.jsx")) {
-    window.configuration = optionalContext("./configuration/Configuration.jsx").default
-}
+window.configuration = require("../configuration/Configuration.jsx").default;
 
 // The GridFunctionCell is the corner cell which shows the aggregation function and column [COUNT(*)].
 var GridFunctionCell = React.createClass({
