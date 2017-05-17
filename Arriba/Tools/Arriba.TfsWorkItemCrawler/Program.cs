@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 
 namespace Arriba.TfsWorkItemCrawler
 {
@@ -35,8 +36,9 @@ namespace Arriba.TfsWorkItemCrawler
                     }
 
                     // Load the Configuration [up two or three folders, for Databases\<configurationName>\config.json
-                    string configJsonPath = String.Format(@"..\..\Databases\{0}\config.json", configurationName);
-                    if (!File.Exists(configJsonPath)) configJsonPath = @"..\" + configJsonPath;
+                    string thisExePath = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+                    string configJsonPath = Path.Combine(thisExePath, @"..\..\Databases", configurationName, "config.json");
+                    if (!File.Exists(configJsonPath)) configJsonPath = Path.Combine(thisExePath, @"..\..\..\Databases", configurationName, "config.json");
                     string configJson = File.ReadAllText(configJsonPath);
 
                     CrawlerConfiguration config = JsonConvert.DeserializeObject<CrawlerConfiguration>(configJson);
