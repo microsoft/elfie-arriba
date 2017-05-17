@@ -5,13 +5,7 @@ import ErrorPage from "./ErrorPage"
 import QueryStats from "./QueryStats"
 import SearchHeader from "./SearchHeader"
 
-// NOTE: Depends on configuration from zConfiguration.jsx.
-import defaultConfiguration from "./DefaultConfiguration";
-window.configuration = defaultConfiguration;
-var optionalContext = require.context("..", true, /\.\/configuration\/Configuration\.jsx/);
-if (optionalContext.keys().includes("./configuration/Configuration.jsx")) {
-    window.configuration = optionalContext("./configuration/Configuration.jsx").default
-}
+window.configuration = require("../configuration/Configuration.jsx").default;
 
 // The GridFunctionCell is the corner cell which shows the aggregation function and column [COUNT(*)].
 var GridFunctionCell = React.createClass({
@@ -645,7 +639,7 @@ var GridMain = React.createClass({
         var listingUrl = "/Search.html" + buildUrlParameters({ t: this.state.currentTable, q: this.state.query });
 
         return (
-            <div className={"viewport " + configuration.theme} onKeyDown={this.handleKeyDown}>
+            <div className="viewport" onKeyDown={this.handleKeyDown}>
                 <SearchHeader name={configuration.toolName}
                               feedbackEmailAddresses={configuration.feedbackEmailAddresses}
                               query={this.state.query}
@@ -653,7 +647,7 @@ var GridMain = React.createClass({
                               onSearchChange={this.onSearchChange} />
 
                 <div className="middle">
-                    <div className="mode theme-background-dark">
+                    <div className="mode">
                         <a href={listingUrl}><i className="icon-details" title="Listing"></i></a>
                         <a className="selected"><i className="icon-view-all-albums" title="Grid"></i></a>
                     </div>
