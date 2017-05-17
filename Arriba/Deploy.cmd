@@ -9,7 +9,6 @@ SET TargetLocation=\\%1\Production
 PUSHD "%~dp0"
 
 IF /I "%2"=="bung" (
-  ROBOCOPY /E /NJH /NJS "Tools\bin\Release" "bin\Release"
   ROBOCOPY /E /NJH /NJS /MIR "Databases" "%TargetLocation%\Databases"
 )
 
