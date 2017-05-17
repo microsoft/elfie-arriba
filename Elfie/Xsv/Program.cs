@@ -103,6 +103,10 @@ namespace XsvConcat
                             Trace.WriteLine(String.Format("Sanitizing \"{0}\" from column \"{1}\" using \"{2}\"...", args[1], args[2], args[3]));
                             Trace.WriteLine(new Xsv.Sanitize.Sanitizer(args[3], args[4]).Translate(args[1], args[2]));
                             break;
+                        case "where":
+                            if (args.Length < 3) throw new UsageException("row requires input and rowIndex");
+                            Where(args[1], args[2], (args.Length > 3 ? args[3] : null));
+                            break;
                         default:
                             throw new NotSupportedException(String.Format("XSV mode \"{0}\" is unknown. Run without arguments to see valid modes.", mode));
                     }
@@ -369,6 +373,47 @@ namespace XsvConcat
                     WriteSizeSummary(reader, writer);
                 }
             }
+        }
+
+        private static void Where(string inputFilePath, string columnIndentifier, string value)
+        {
+            int matchCount = 0;
+            int rowCount = 0;
+
+            using (ITabularReader reader = TabularFactory.BuildReader(inputFilePath))
+            {
+                int rowIndex = (value != null ? -1 : int.Parse(columnIndentifier));
+                int colIndex = (value != null ? reader.ColumnIndex(columnIndentifier) : -1);
+
+                while (reader.NextRow())
+                {
+                    // Match the row index if no value was passed
+                    if (rowIndex != -1 && reader.RowCountRead != rowIndex) continue;
+
+                    // Match the column value if passed
+                    if (colIndex != -1)
+                    {
+                        if (reader.CurrentRowColumns <= colIndex) continue;
+                        if (reader.Current(colIndex).ToString8().CompareTo(value, true) != 0) continue;
+                    }
+
+                    matchCount++;
+
+                    // If this is the matching row, write it
+                    Console.WriteLine($"Row {reader.RowCountRead:n0}; {reader.CurrentRowColumns:n0} columns:");
+                    for (int i = 0; i < reader.CurrentRowColumns; ++i)
+                    {
+                        Console.WriteLine($"{reader.Current(i)}");
+                    }
+
+                    // If we matched row index, we're done
+                    if (rowIndex != -1) break;
+                }
+
+                rowCount = reader.RowCountRead;
+            }
+
+            Console.WriteLine($"Done. {matchCount:n0} out of {rowCount:n0} rows matched.");
         }
 
         private static void WriteSizeSummary(ITabularReader reader, ITabularWriter writer)
