@@ -21,7 +21,7 @@
     "itemProvider": "TfsItemProvider",
 
     /* Which IItemConsumer to write items to [ArribaClient, ArribaDirect, CsvWriter] */
-    "itemConsumer": "ArribaDirect",
+    "itemConsumer": "ArribaClient",
 
     /* The Name or URL of the database to crawl. Use the VSO URL for TFS.
 	   ex: https://<myProject>.visualstudio.com */
