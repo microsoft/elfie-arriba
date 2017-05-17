@@ -507,6 +507,7 @@ namespace Arriba.Model.Query
 
             // Recommend the top ten values in the column with the prefix typed so far
             DistinctResult topValues = singleTable.Query(new DistinctQueryTop(singleColumn.Name, completeQuery, 10));
+            int total = (int)topValues.Total;
             if (topValues.Total == 0) return;
 
             // Walk values in order for ==, :, ::, backwards with inverse percentages for !=
@@ -522,7 +523,7 @@ namespace Arriba.Model.Query
                 if (isNotEquals) countForValue = (int)topValues.Total - countForValue;
                 double frequency = (double)countForValue / (double)(topValues.Total);
 
-                if (countForValue > 1 && value.StartsWith(guidance.Value, StringComparison.OrdinalIgnoreCase))
+                if ((countForValue > 1 || total <= 10) && value.StartsWith(guidance.Value, StringComparison.OrdinalIgnoreCase))
                 {
                     string hint = (countForValue == topValues.Total ? "all" : frequency.ToString("P0"));
                     suggestions.Add(new IntelliSenseItem(QueryTokenCategory.Value, QueryScanner.WrapValue(value), hint));
