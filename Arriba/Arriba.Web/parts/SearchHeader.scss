@@ -1,3 +1,5 @@
+@import '../configuration/theme';
+
 .input { // Corrdinate styles between input and rail.
     font-size: 16pt;
     padding: 8px;
@@ -7,6 +9,7 @@
     height: 64px;
     display: flex;
     flex-flow: row;
+    background-color: $medium;
 
     /* Top Left Title - white, middle, bigger */
     .title {
@@ -14,6 +17,7 @@
         padding: 16px 8px;
         vertical-align: middle;
         font-size: 18pt;
+        background-color: $vdark;
     }
 
     /* The title is a link; fix it to look like plain text */
@@ -116,7 +120,8 @@
         width: 80px;
         height: 100%;
         z-index: -1;
-        fill: hsla(130, 100%, 30%, 0.15);
+        fill: $vlight;
+        opacity: 0.4; // lighten() doesn't work for all color inputs.
     }
 }
 
