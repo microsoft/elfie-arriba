@@ -7,7 +7,12 @@ CALL "%~dp0..\FindMSBuild.cmd"
 
 CALL :Build Arriba.All.sln
 
+IF /I "%1"=="bung" (
+  ROBOCOPY /E /NJH /NJS "%~dp0Tools\bin\Release" "%~dp0bin\Release"
+)
+
 ENDLOCAL
+EXIT /B 0
 GOTO :EOF
 
 :: Build(Solution)

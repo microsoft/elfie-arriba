@@ -158,7 +158,7 @@ var ResultListingItem = React.createClass({
         }
 
         return (
-            <tr onClick={this.handleClick} className={(this.props.selected ? "selected theme-background-light" : "theme-hover-light")}>
+            <tr onClick={this.handleClick} className={(this.props.selected ? "selected" : "")}>
                 {cells}
             </tr>
         );
