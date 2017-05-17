@@ -13,13 +13,7 @@ import Start from "./Start";
 import ResultDetails from "./ResultDetails";
 import ResultListing from "./ResultListing";
 
-// NOTE: Depends on configuration from zConfiguration.jsx.
-import defaultConfiguration from "./DefaultConfiguration";
-window.configuration = defaultConfiguration;
-var optionalContext = require.context("..", true, /\.\/configuration\/Configuration\.jsx/);
-if (optionalContext.keys().includes("./configuration/Configuration.jsx")) {
-    window.configuration = optionalContext("./configuration/Configuration.jsx").default
-}
+window.configuration = require("../configuration/Configuration.jsx").default;
 
 // SearchMain wraps the overall search UI
 var SearchMain = React.createClass({
@@ -382,14 +376,14 @@ var SearchMain = React.createClass({
         if (!this.state.query) gridUrl = "/Grid.html?p=default";
 
         return (
-            <div className={"viewport " + configuration.theme} onKeyDown={this.handleKeyDown}>
+            <div className="viewport" onKeyDown={this.handleKeyDown}>
                 <SearchHeader query={this.state.query}
                               parsedQuery={this.state.allCountData.content && this.state.allCountData.content.parsedQuery}
                               onSearchChange={this.onSearchChange}
                               loading={this.state.loading} />
 
                 <div className="middle">
-                    <nav className="mode theme-background-dark">
+                    <nav className="mode">
                         <a className="selected"><i className="icon-details"></i><span>Listing</span></a>
                         <a href={gridUrl}><i className="icon-view-all-albums"></i><span>Grid</span></a>
                     </nav>
