@@ -16,9 +16,12 @@ export default React.createClass({
             // Compute the relative time of the comment
             var dateTime = moment(entry.when);
 
+            var linkToItem = document.location.protocol + "//" + document.location.host + document.location.pathname + "?t=" + encodeURIComponent(this.props.table) + "&q=ID%3D" + encodeURIComponent(this.props.itemId) + "&open=" + encodeURIComponent(this.props.itemId);
+            var mailTo = "mailto:" + encodeURIComponent(stripHighlight(entry.who)) + "?subject=" + encodeURIComponent(this.props.table + "." + this.props.itemId) + "&body=" + encodeURIComponent(linkToItem);
+        
             collection.push(
                 <div className="history">
-                    <div><span className="who">{entry.who}</span> <span className="when">{dateTime.fromNow()}</span></div>
+                    <div><a className="who" href={mailTo} dangerouslySetInnerHTML={highlight(entry.who)} /> <span className="when">{dateTime.fromNow()}</span></div>
                     <div className="comment" dangerouslySetInnerHTML={highlight(entry.comment)}></div>
                 </div>
             );

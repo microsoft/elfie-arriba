@@ -9,8 +9,13 @@ div.history {
 
     // Make the name bold and smaller
     .who {
+        color: black;
         font-weight: bold;
         font-size: 85%;
+
+        &:hover {
+            color: #3393f3;
+        }
     }
 
     // Make the time small

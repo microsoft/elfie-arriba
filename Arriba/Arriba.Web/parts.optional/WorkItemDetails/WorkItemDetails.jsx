@@ -82,7 +82,7 @@ export default React.createClass({
                     </div>
                     {description}
                     {reproSteps}
-                    <WorkItemHistory data={this.props.data["FullHistory"]} />
+                    <WorkItemHistory data={this.props.data["FullHistory"]} table={this.props.table} itemId={this.props.itemId} />
                     <div className="box">
                         {allTableToggle}
                         {detailsTable}
