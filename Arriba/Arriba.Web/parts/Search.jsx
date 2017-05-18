@@ -16,7 +16,7 @@ import ResultListing from "./ResultListing";
 window.configuration = require("../configuration/Configuration.jsx").default;
 
 // SearchMain wraps the overall search UI
-var SearchMain = React.createClass({
+export default  React.createClass({
     getInitialState: function () {
         // For schema detection and possible migration.
         localStorage.setItem("version", 1);
@@ -404,12 +404,3 @@ var SearchMain = React.createClass({
         );
     }
 });
-
-if (document.getElementById("searchContainer")) {
-    ReactDOM.render(
-        <SearchMain params={getQueryStringParameters()} />,
-        document.getElementById("searchContainer")
-    );
-
-    document.title = configuration.toolName;
-}

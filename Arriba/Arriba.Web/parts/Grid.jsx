@@ -287,7 +287,7 @@ var GridValueCell = React.createClass({
 });
 
 // GridMain wraps the overall grid UI
-var GridMain = React.createClass({
+export default React.createClass({
     getInitialState: function () {
         return {
             blockingErrorStatus: null,
@@ -669,15 +669,3 @@ var GridMain = React.createClass({
     }
 });
 
-if (document.getElementById("gridContainer")) {
-    var params = getQueryStringParameters();
-    ReactDOM.render(
-        <GridMain 
-            url={configuration.url} 
-            gridDefaultQueries={configuration.gridDefaultQueries} 
-            params={params}  />,
-        document.getElementById("gridContainer")
-    );
-
-    document.title = configuration.toolName;
-}

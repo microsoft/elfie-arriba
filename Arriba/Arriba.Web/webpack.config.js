@@ -1,7 +1,7 @@
 var path = require("path");
 
 module.exports = {
-    entry: ["./parts/Grid.jsx", "./parts/Search.jsx"],
+    entry: "./parts/Index.jsx",
     output: {
         path: __dirname,
         filename: "bundle.js"
@@ -26,7 +26,9 @@ module.exports = {
     },
     devServer : {
         historyApiFallback: {
-            index: 'search.html'
+            rewrites: [
+                { from: /./, to: 'index.html' },
+            ]
         }
     }
 }
