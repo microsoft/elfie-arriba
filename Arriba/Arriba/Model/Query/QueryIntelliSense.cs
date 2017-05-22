@@ -548,23 +548,43 @@ namespace Arriba.Model.Query
             DataBlockResult distribution = singleTable.Query(new DistributionQuery(singleColumn.Name, completeQuery, inclusive));
             if (distribution.Total == 0 || distribution.Details.Succeeded == false) return;
 
-            int start = (reverse ? distribution.Values.RowCount - 1 : 0);
-            int end = (reverse ? -1 : distribution.Values.RowCount);
-            int step = (reverse ? -1 : 1);
-
-            ulong countSoFar = 0;
-            for (int i = start; i != end; i += step)
+            ulong countSoFar;
+            if (reverse)
             {
-                string value = distribution.Values[i, 0].ToString();
-                ulong countForRange = (ulong)distribution.Values[i, 1];
+                countSoFar = (ulong)distribution.Values[distribution.Values.RowCount - 1, 1];
 
-                countSoFar += countForRange;
-                double frequency = (double)countSoFar / (double)(distribution.Total);
-
-                if (value.StartsWith(guidance.Value, StringComparison.OrdinalIgnoreCase))
+                for (int i = distribution.Values.RowCount - 2; i >= 0; --i)
                 {
-                    string hint = (countSoFar == (ulong)distribution.Total ? "all" : frequency.ToString("P0"));
-                    suggestions.Add(new IntelliSenseItem(QueryTokenCategory.Value, QueryScanner.WrapValue(value), hint));
+                    string value = distribution.Values[i, 0].ToString();
+                    double frequency = (double)countSoFar / (double)(distribution.Total);
+
+                    if (value.StartsWith(guidance.Value, StringComparison.OrdinalIgnoreCase))
+                    {
+                        string hint = (countSoFar == (ulong)distribution.Total ? "all" : frequency.ToString("P0"));
+                        suggestions.Add(new IntelliSenseItem(QueryTokenCategory.Value, QueryScanner.WrapValue(value), hint));
+                    }
+
+                    ulong countForRange = (ulong)distribution.Values[i, 1];
+                    countSoFar += countForRange;
+                }
+            }
+            else
+            {
+                countSoFar = 0;
+
+                for (int i = 0; i < distribution.Values.RowCount - 1; ++i)
+                {
+                    string value = distribution.Values[i, 0].ToString();
+                    ulong countForRange = (ulong)distribution.Values[i, 1];
+                    countSoFar += countForRange;
+
+                    double frequency = (double)countSoFar / (double)(distribution.Total);
+
+                    if (value.StartsWith(guidance.Value, StringComparison.OrdinalIgnoreCase))
+                    {
+                        string hint = (countSoFar == (ulong)distribution.Total ? "all" : frequency.ToString("P0"));
+                        suggestions.Add(new IntelliSenseItem(QueryTokenCategory.Value, QueryScanner.WrapValue(value), hint));
+                    }
                 }
             }
         }
