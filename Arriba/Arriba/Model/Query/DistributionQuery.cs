@@ -42,6 +42,7 @@ namespace Arriba.Model.Query
             DataBlockResult result = table.Query(pq);
             if (result.Values != null)
             {
+                // Try to choose buckets if the 10th and 90th percentile values were returned [returns null for unsupported types]
                 Bucketer bucketer = NativeContainer.CreateTypedInstance<Bucketer>(typeof(Bucketer<>), ((Table)table).GetColumnType(this.Column));
                 this.Buckets = bucketer.GetBuckets(result.Values);
             }
@@ -124,13 +125,13 @@ namespace Arriba.Model.Query
             return mergedResult;
         }
 
-        private abstract class Bucketer
+        internal abstract class Bucketer
         {
             public abstract Array GetBuckets(DataBlock percentileResults);
             public abstract DataBlock Bucket(IColumn column, ShortSet whereSet, Array buckets, bool inclusive);
         }
 
-        private class Bucketer<T> : Bucketer where T : IComparable<T>
+        internal class Bucketer<T> : Bucketer where T : IComparable<T>
         {
             public override DataBlock Bucket(IColumn c, ShortSet whereSet, Array b, bool inclusive)
             {
@@ -254,7 +255,9 @@ namespace Arriba.Model.Query
                 }
                 else
                 {
-                    throw new NotImplementedException(StringExtensions.Format("{0} is unable to aggregate type {1}.", this.GetType().Name, buckets.GetValue(0).GetType().Name));
+                    // For unsupported types, return null.
+                    // Compute will write an "unsupported operation" error on ExecutionDetails in this case
+                    return null;
                 }
 
                 return buckets;
@@ -264,7 +267,7 @@ namespace Arriba.Model.Query
             {
                 // Find the range and interval between buckets
                 TimeSpan range = buckets[buckets.Length - 1] - buckets[0];
-                TimeSpan interval = TimeSpan.FromTicks(range.Ticks / buckets.Length);
+                TimeSpan interval = TimeSpan.FromTicks(range.Ticks / (buckets.Length - 1));
 
                 // Round the buckets
                 buckets[0] = Round(buckets[0], interval);
@@ -284,7 +287,7 @@ namespace Arriba.Model.Query
             {
                 // Find the range and interval between buckets
                 TimeSpan range = buckets[buckets.Length - 1] - buckets[0];
-                TimeSpan interval = TimeSpan.FromTicks(range.Ticks / buckets.Length);
+                TimeSpan interval = TimeSpan.FromTicks(range.Ticks / (buckets.Length - 1));
 
                 // Round the buckets
                 buckets[0] = Round(buckets[0], interval);
@@ -304,7 +307,7 @@ namespace Arriba.Model.Query
             {
                 // Find the range and interval between buckets
                 byte range = (byte)(buckets[buckets.Length - 1] - buckets[0]);
-                byte interval = (byte)(range / (byte)buckets.Length);
+                byte interval = (byte)(range / (byte)(buckets.Length - 1));
 
                 // Round the buckets
                 buckets[0] = (byte)Round(buckets[0]);
@@ -324,7 +327,7 @@ namespace Arriba.Model.Query
             {
                 // Find the range and interval between buckets
                 short range = (short)(buckets[buckets.Length - 1] - buckets[0]);
-                short interval = (short)(range / (short)buckets.Length);
+                short interval = (short)(range / (short)(buckets.Length - 1));
 
                 // Round the buckets
                 buckets[0] = (short)Round(buckets[0]);
@@ -344,7 +347,7 @@ namespace Arriba.Model.Query
             {
                 // Find the range and interval between buckets
                 ushort range = (ushort)(buckets[buckets.Length - 1] - buckets[0]);
-                ushort interval = (ushort)(range / (ushort)buckets.Length);
+                ushort interval = (ushort)(range / (ushort)(buckets.Length - 1));
 
                 // Round the buckets
                 buckets[0] = (ushort)Round(buckets[0]);
@@ -364,7 +367,7 @@ namespace Arriba.Model.Query
             {
                 // Find the range and interval between buckets
                 int range = buckets[buckets.Length - 1] - buckets[0];
-                int interval = range / buckets.Length;
+                int interval = range / (buckets.Length - 1);
 
                 // Round the buckets
                 buckets[0] = (int)Round(buckets[0]);
@@ -384,7 +387,7 @@ namespace Arriba.Model.Query
             {
                 // Find the range and interval between buckets
                 uint range = buckets[buckets.Length - 1] - buckets[0];
-                uint interval = range / (uint)buckets.Length;
+                uint interval = range / (uint)(buckets.Length - 1);
 
                 // Round the buckets
                 buckets[0] = (uint)Round(buckets[0]);
@@ -404,7 +407,7 @@ namespace Arriba.Model.Query
             {
                 // Find the range and interval between buckets
                 long range = buckets[buckets.Length - 1] - buckets[0];
-                long interval = range / (long)buckets.Length;
+                long interval = range / (long)(buckets.Length - 1);
 
                 // Round the buckets
                 buckets[0] = Round(buckets[0]);
@@ -424,7 +427,7 @@ namespace Arriba.Model.Query
             {
                 // Find the range and interval between buckets
                 ulong range = buckets[buckets.Length - 1] - buckets[0];
-                ulong interval = range / (ulong)buckets.Length;
+                ulong interval = range / (ulong)(buckets.Length - 1);
 
                 // Round the buckets
                 buckets[0] = (ulong)Round(buckets[0]);
@@ -444,7 +447,7 @@ namespace Arriba.Model.Query
             {
                 // Find the range and interval between buckets
                 float range = buckets[buckets.Length - 1] - buckets[0];
-                float interval = range / (float)buckets.Length;
+                float interval = range / (float)(buckets.Length - 1);
 
                 // Round the buckets
                 buckets[0] = (float)Round(buckets[0]);
@@ -464,7 +467,7 @@ namespace Arriba.Model.Query
             {
                 // Find the range and interval between buckets
                 double range = buckets[buckets.Length - 1] - buckets[0];
-                double interval = range / (double)buckets.Length;
+                double interval = range / (double)(buckets.Length - 1);
 
                 // Round the buckets
                 buckets[0] = (double)Round(buckets[0]);
@@ -481,7 +484,7 @@ namespace Arriba.Model.Query
             }
 
             #region Round
-            private static DateTime Round(DateTime value, TimeSpan interval)
+            internal static DateTime Round(DateTime value, TimeSpan interval)
             {
                 if(interval.TotalDays >= 1)
                 {
@@ -499,7 +502,7 @@ namespace Arriba.Model.Query
                 return value;
             }
 
-            private static TimeSpan Round(TimeSpan value, TimeSpan interval)
+            internal static TimeSpan Round(TimeSpan value, TimeSpan interval)
             {
                 if (interval.TotalDays >= 1)
                 {
@@ -517,10 +520,10 @@ namespace Arriba.Model.Query
                 return value;
             }
 
-            private static long Round(long value)
+            internal static long Round(long value)
             {
                 long scale = 1;
-                while (value > scale * 100)
+                while (value > scale * 1000)
                 {
                     scale *= 10;
                 }
@@ -533,10 +536,10 @@ namespace Arriba.Model.Query
                 return value;
             }
 
-            private static ulong Round(ulong value)
+            internal static ulong Round(ulong value)
             {
                 ulong scale = 1;
-                while (value > scale * 100)
+                while (value > scale * 1000)
                 {
                     scale *= 10;
                 }
@@ -549,10 +552,10 @@ namespace Arriba.Model.Query
                 return value;
             }
 
-            private static double Round(double value)
+            internal static double Round(double value)
             {
                 double scale = 1;
-                while (value > scale * 100)
+                while (value > scale * 1000)
                 {
                     scale *= 10;
                 }
@@ -560,6 +563,10 @@ namespace Arriba.Model.Query
                 if (scale > 1)
                 {
                     value -= value % scale;
+                }
+                else if (value > 100)
+                {
+                    value = Math.Round(value, 0);
                 }
                 else if(value > 10)
                 {

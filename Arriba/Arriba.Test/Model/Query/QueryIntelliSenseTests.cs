@@ -280,19 +280,35 @@ namespace Arriba.Test.Model.Query
             // Distributions are returned for range operators
             // Only non-empty buckets are returned.
             result = qi.GetIntelliSenseItems("[Student Count] < ", Tables);
-            Assert.AreEqual("15000 30 %", ItemsAndCounts(result));
+            Assert.AreEqual("17500 30 %", ItemsAndCounts(result));
 
             result = qi.GetIntelliSenseItems("[Student Count] <= ", Tables);
-            Assert.AreEqual("1000 10 %, 15000 30 %, 100000 all", ItemsAndCounts(result));
+            Assert.AreEqual("1000 10 %, 17500 30 %, 100000 all", ItemsAndCounts(result));
 
             result = qi.GetIntelliSenseItems("[Student Count] > ", Tables);
-            Assert.AreEqual("71000 70 %, 1000 90 %", ItemsAndCounts(result));
+            Assert.AreEqual("83500 70 %, 1000 90 %", ItemsAndCounts(result));
 
             result = qi.GetIntelliSenseItems("[Student Count] >= ", Tables);
             Assert.AreEqual("100000 70 %, 1000 all", ItemsAndCounts(result));
 
+            // Only show one value when there's only one value available
+            result = qi.GetIntelliSenseItems("[ID] > 50 AND [Student Count] >= ", Tables);
+            Assert.AreEqual("100000 all", ItemsAndCounts(result));
+
             // Only provide type hint when no rows match the query
             result = qi.GetIntelliSenseItems("[ID] < 0 AND [Student Count] >= ", Tables);
+            Assert.AreEqual(0, result.Suggestions.Count);
+
+            // Works for TimeSpan
+            result = qi.GetIntelliSenseItems("[SchoolYearLength] >= ", Tables);
+            Assert.AreEqual("211.00:00:00 12 %, 207.00:00:00 24 %, 203.00:00:00 36 %, 199.00:00:00 48 %, 195.00:00:00 60 %, 191.00:00:00 76 %, 187.00:00:00 92 %", ItemsAndCounts(result));
+
+            // Works for DateTime
+            result = qi.GetIntelliSenseItems("[WhenFounded] >= ", Tables);
+            Assert.AreEqual(7, result.Suggestions.Count);
+
+            // Only provide type hint (and no error) for unsupported type
+            result = qi.GetIntelliSenseItems("[ID] < 0 AND [Name] >= ", Tables);
             Assert.AreEqual(0, result.Suggestions.Count);
         }
 
@@ -305,6 +321,34 @@ namespace Arriba.Test.Model.Query
                 output.Append($"{item.Display} {item.Hint}");
             }
             return output.ToString();
+        }
+
+        [TestMethod]
+        public void DistributionQuery_Rounding()
+        {
+            Assert.AreEqual(12, DistributionQuery.Bucketer<bool>.Round(12));
+            Assert.AreEqual(123, DistributionQuery.Bucketer<bool>.Round(123));
+            Assert.AreEqual(1230, DistributionQuery.Bucketer<bool>.Round(1234));
+
+            Assert.AreEqual((ulong)12, DistributionQuery.Bucketer<bool>.Round((ulong)12));
+            Assert.AreEqual((ulong)123, DistributionQuery.Bucketer<bool>.Round((ulong)123));
+            Assert.AreEqual((ulong)1230, DistributionQuery.Bucketer<bool>.Round((ulong)1234));
+
+            Assert.AreEqual(0.123, DistributionQuery.Bucketer<bool>.Round(0.1234));
+            Assert.AreEqual(1.23, DistributionQuery.Bucketer<bool>.Round(1.234));
+            Assert.AreEqual(12.3, DistributionQuery.Bucketer<bool>.Round(12.34));
+            Assert.AreEqual(123.0, DistributionQuery.Bucketer<bool>.Round(123.4));
+            Assert.AreEqual(1230, DistributionQuery.Bucketer<bool>.Round(1234.5));
+
+            Assert.AreEqual("5/22/2017 12:00:00 AM", DistributionQuery.Bucketer<bool>.Round(DateTime.Parse("2017-05-22 3:33:35 PM"), TimeSpan.FromDays(1)).ToString());
+            Assert.AreEqual("5/22/2017 4:00:00 PM", DistributionQuery.Bucketer<bool>.Round(DateTime.Parse("2017-05-22 3:33:35 PM"), TimeSpan.FromHours(1)).ToString());
+            Assert.AreEqual("5/22/2017 3:34:00 PM", DistributionQuery.Bucketer<bool>.Round(DateTime.Parse("2017-05-22 3:33:35 PM"), TimeSpan.FromMinutes(1)).ToString());
+            Assert.AreEqual("5/22/2017 3:33:35 PM", DistributionQuery.Bucketer<bool>.Round(DateTime.Parse("2017-05-22 3:33:35 PM"), TimeSpan.FromSeconds(1)).ToString());
+
+            Assert.AreEqual("123.00:00:00", DistributionQuery.Bucketer<bool>.Round(TimeSpan.Parse("123.10:41:51.6789"), TimeSpan.FromDays(1)).ToString());
+            Assert.AreEqual("123.11:00:00", DistributionQuery.Bucketer<bool>.Round(TimeSpan.Parse("123.10:41:51.6789"), TimeSpan.FromHours(1)).ToString());
+            Assert.AreEqual("123.10:42:00", DistributionQuery.Bucketer<bool>.Round(TimeSpan.Parse("123.10:41:51.6789"), TimeSpan.FromMinutes(1)).ToString());
+            Assert.AreEqual("123.10:41:51.6789000", DistributionQuery.Bucketer<bool>.Round(TimeSpan.Parse("123.10:41:51.6789"), TimeSpan.FromSeconds(1)).ToString());
         }
 
         [TestMethod]
