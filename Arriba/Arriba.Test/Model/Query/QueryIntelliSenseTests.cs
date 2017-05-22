@@ -278,17 +278,18 @@ namespace Arriba.Test.Model.Query
             Assert.AreEqual("1000 67 %, 10000 33 %", ItemsAndCounts(result));
 
             // Distributions are returned for range operators
+            // Only non-empty buckets are returned.
             result = qi.GetIntelliSenseItems("[Student Count] < ", Tables);
-            Assert.AreEqual("1000 0 %, 15000 30 %, 29000 30 %, 43000 30 %, 57000 30 %, 71000 30 %, 100000 30 %", ItemsAndCounts(result));
+            Assert.AreEqual("15000 30 %", ItemsAndCounts(result));
 
             result = qi.GetIntelliSenseItems("[Student Count] <= ", Tables);
-            Assert.AreEqual("1000 10 %, 15000 30 %, 29000 30 %, 43000 30 %, 57000 30 %, 71000 30 %, 100000 all", ItemsAndCounts(result));
+            Assert.AreEqual("1000 10 %, 15000 30 %, 100000 all", ItemsAndCounts(result));
 
             result = qi.GetIntelliSenseItems("[Student Count] > ", Tables);
-            Assert.AreEqual("100000 0 %, 71000 70 %, 57000 70 %, 43000 70 %, 29000 70 %, 15000 70 %, 1000 90 %", ItemsAndCounts(result));
+            Assert.AreEqual("71000 70 %, 1000 90 %", ItemsAndCounts(result));
 
             result = qi.GetIntelliSenseItems("[Student Count] >= ", Tables);
-            Assert.AreEqual("100000 70 %, 71000 70 %, 57000 70 %, 43000 70 %, 29000 70 %, 15000 70 %, 1000 all", ItemsAndCounts(result));
+            Assert.AreEqual("100000 70 %, 1000 all", ItemsAndCounts(result));
 
             // Only provide type hint when no rows match the query
             result = qi.GetIntelliSenseItems("[ID] < 0 AND [Student Count] >= ", Tables);
