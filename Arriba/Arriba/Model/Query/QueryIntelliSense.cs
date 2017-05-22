@@ -453,7 +453,6 @@ namespace Arriba.Model.Query
         {
             Table singleTable;
             ColumnDetails singleColumn;
-            TryFindSingleMatchingColumn(targetTables, lastTerm, out singleTable, out singleColumn);
 
             if (!TryFindSingleMatchingColumn(targetTables, lastTerm, out singleTable, out singleColumn))
             {
