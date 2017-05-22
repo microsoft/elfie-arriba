@@ -27,6 +27,7 @@ namespace Arriba.Test.Model
         public void TestCleanup()
         {
             ColumnFactory.ResetColumnCreators();
+            Table.Drop("Sample");
         }
 
         [TestMethod]
