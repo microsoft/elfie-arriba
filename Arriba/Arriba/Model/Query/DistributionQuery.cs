@@ -115,7 +115,7 @@ namespace Arriba.Model.Query
 
                 for (int i = 0; i < mergedResult.Values.RowCount; ++i)
                 {
-                    mergedResult.Values[i, 1] = (ulong)mergedResult.Values[i, 1] + (ulong)result.Values[i, 1];
+                    mergedResult.Values[i, 1] = (int)mergedResult.Values[i, 1] + (int)result.Values[i, 1];
                 }
 
                 mergedResult.Details.Merge(result.Details);
@@ -140,7 +140,7 @@ namespace Arriba.Model.Query
 
                 DataBlock result = new DataBlock(new string[] { "Bucket", "RowCount" }, buckets.Length + 1);
 
-                ulong[] counts = new ulong[buckets.Length + 1];
+                int[] counts = new int[buckets.Length + 1];
 
                 if (inclusive)
                 {

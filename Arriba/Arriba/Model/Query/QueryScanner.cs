@@ -5,8 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 
-using Arriba.Extensions;
-
 namespace Arriba.Model.Query
 {
     /// <summary>
@@ -260,41 +258,6 @@ namespace Arriba.Model.Query
         public void Warn(string caller, string warning)
         {
             Console.WriteLine("Parse Warning (Index {0}, Parsing {1}): {2}", CurrentIndex, caller, warning);
-        }
-
-        /// <summary>
-        ///  Convert a literal column name back to a safe-to-parse identifier.
-        /// </summary>
-        /// <param name="columnName">Column Name to wrap</param>
-        /// <returns>Parsable version of column namwe</returns>
-        public static string WrapColumnName(string columnName)
-        {
-            return StringExtensions.Format("[{0}]", columnName.Replace("]", "]]"));
-        }
-
-        /// <summary>
-        ///  Convert a literal value back to a safe-to-parse identifier.
-        /// </summary>
-        /// <param name="value">Value to wrap</param>
-        /// <returns>Identifier version of value</returns>
-        public static string WrapValue(string value)
-        {
-            if (String.IsNullOrEmpty(value)) return "\"\"";
-
-            bool shouldEscape = false;
-            for (int i = 0; i < value.Length; ++i)
-            {
-                char current = value[i];
-                if (Char.IsWhiteSpace(current) || current == '"')
-                {
-                    shouldEscape = true;
-                    break;
-                }
-            }
-
-            if (!shouldEscape) return value;
-
-            return StringExtensions.Format("\"{0}\"", value.Replace("\"", "\"\""));
         }
 
         /// <summary>
