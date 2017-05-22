@@ -9,6 +9,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace Arriba.Test.Model.Query
 {
@@ -270,15 +271,39 @@ namespace Arriba.Test.Model.Query
 
             // Values are suggested in order by frequency
             result = qi.GetIntelliSenseItems("[Student Count] = ", Tables);
-            Assert.AreEqual("100000, 10000, 1000", string.Join(", ", result.Suggestions.Select(ii => ii.Display)));
+            Assert.AreEqual("100000 70 %, 10000 20 %, 1000 10 %", ItemsAndCounts(result));
 
             // Values are filtered according to the query
             result = qi.GetIntelliSenseItems("[ID] < 15 AND [Student Count] = ", Tables);
-            Assert.AreEqual("1000, 10000", string.Join(", ", result.Suggestions.Select(ii => ii.Display)));
+            Assert.AreEqual("1000 67 %, 10000 33 %", ItemsAndCounts(result));
 
             // Distributions are returned for range operators
+            result = qi.GetIntelliSenseItems("[Student Count] < ", Tables);
+            Assert.AreEqual("1000 0 %, 15000 30 %, 29000 30 %, 43000 30 %, 57000 30 %, 71000 30 %, 100000 30 %", ItemsAndCounts(result));
+
             result = qi.GetIntelliSenseItems("[Student Count] <= ", Tables);
-            Assert.AreEqual("", string.Join(", ", result.Suggestions.Select(ii => ii.Display)));
+            Assert.AreEqual("1000 10 %, 15000 30 %, 29000 30 %, 43000 30 %, 57000 30 %, 71000 30 %, 100000 all", ItemsAndCounts(result));
+
+            result = qi.GetIntelliSenseItems("[Student Count] > ", Tables);
+            Assert.AreEqual("100000 0 %, 71000 70 %, 57000 70 %, 43000 70 %, 29000 70 %, 15000 70 %, 1000 90 %", ItemsAndCounts(result));
+
+            result = qi.GetIntelliSenseItems("[Student Count] >= ", Tables);
+            Assert.AreEqual("100000 70 %, 71000 70 %, 57000 70 %, 43000 70 %, 29000 70 %, 15000 70 %, 1000 all", ItemsAndCounts(result));
+
+            // Only provide type hint when no rows match the query
+            result = qi.GetIntelliSenseItems("[ID] < 0 AND [Student Count] >= ", Tables);
+            Assert.AreEqual(0, result.Suggestions.Count);
+        }
+
+        private static string ItemsAndCounts(IntelliSenseResult result)
+        {
+            StringBuilder output = new StringBuilder();
+            foreach(IntelliSenseItem item in result.Suggestions)
+            {
+                if (output.Length > 0) output.Append(", ");
+                output.Append($"{item.Display} {item.Hint}");
+            }
+            return output.ToString();
         }
 
         [TestMethod]

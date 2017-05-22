@@ -40,7 +40,7 @@ namespace Arriba.Model.Query
             pq.Percentiles = new double[] { 0.10, 0.90 };
 
             DataBlockResult result = table.Query(pq);
-            if (result.Details.Succeeded)
+            if (result.Values != null)
             {
                 Bucketer bucketer = NativeContainer.CreateTypedInstance<Bucketer>(typeof(Bucketer<>), ((Table)table).GetColumnType(this.Column));
                 this.Buckets = bucketer.GetBuckets(result.Values);
@@ -216,34 +216,34 @@ namespace Arriba.Model.Query
                 {
                     GetBucketsInt((int[])(Array)buckets);
                 }
-                //else if (typeof(T).Equals(typeof(short)))
-                //{
-                //    GetBucketsShort((short[])(Array)buckets);
-                //}
-                //else if (typeof(T).Equals(typeof(byte)))
-                //{
-                //    GetBucketsByte((byte[])(Array)buckets);
-                //}
-                //else if (typeof(T).Equals(typeof(ulong)))
-                //{
-                //    GetBucketsULong((ulong[])(Array)buckets);
-                //}
+                else if (typeof(T).Equals(typeof(short)))
+                {
+                    GetBucketsShort((short[])(Array)buckets);
+                }
+                else if (typeof(T).Equals(typeof(byte)))
+                {
+                    GetBucketsByte((byte[])(Array)buckets);
+                }
+                else if (typeof(T).Equals(typeof(ulong)))
+                {
+                    GetBucketsULong((ulong[])(Array)buckets);
+                }
                 else if (typeof(T).Equals(typeof(uint)))
                 {
                     GetBucketsUint((uint[])(Array)buckets);
                 }
-                //else if (typeof(T).Equals(typeof(ushort)))
-                //{
-                //    GetBucketsUShort((ushort[])(Array)buckets);
-                //}
-                //else if (typeof(T).Equals(typeof(double)))
-                //{
-                //    GetBucketsDouble((double[])(Array)buckets);
-                //}
-                //else if (typeof(T).Equals(typeof(float)))
-                //{
-                //    GetBucketsFloat((float[])(Array)buckets);
-                //}
+                else if (typeof(T).Equals(typeof(ushort)))
+                {
+                    GetBucketsUShort((ushort[])(Array)buckets);
+                }
+                else if (typeof(T).Equals(typeof(double)))
+                {
+                    GetBucketsDouble((double[])(Array)buckets);
+                }
+                else if (typeof(T).Equals(typeof(float)))
+                {
+                    GetBucketsFloat((float[])(Array)buckets);
+                }
                 else if (typeof(T).Equals(typeof(DateTime)))
                 {
                     GetBucketsDateTime((DateTime[])(Array)buckets);
@@ -267,27 +267,12 @@ namespace Arriba.Model.Query
                 TimeSpan interval = TimeSpan.FromTicks(range.Ticks / buckets.Length);
 
                 // Round the buckets
-                if(interval.TotalDays >= buckets.Length)
-                {
-                    buckets[0] = TimeSpan.FromDays(Math.Round(buckets[0].TotalDays));
-                    buckets[buckets.Length - 1] = TimeSpan.FromDays(Math.Round(buckets[buckets.Length - 1].TotalDays));
-                    interval = TimeSpan.FromDays(Math.Round(interval.TotalDays));
-                }
-                else if(interval.TotalHours >= buckets.Length)
-                {
-                    buckets[0] = TimeSpan.FromHours(Math.Round(buckets[0].TotalHours));
-                    buckets[buckets.Length - 1] = TimeSpan.FromHours(Math.Round(buckets[buckets.Length - 1].TotalHours));
-                    interval = TimeSpan.FromHours(Math.Round(interval.TotalHours));
-                }
-                else
-                {
-                    buckets[0] = TimeSpan.FromMinutes(Math.Round(buckets[0].TotalMinutes));
-                    buckets[buckets.Length - 1] = TimeSpan.FromMinutes(Math.Round(buckets[buckets.Length - 1].TotalMinutes));
-                    interval = TimeSpan.FromMinutes(Math.Round(interval.TotalMinutes));
-                }
+                buckets[0] = Round(buckets[0], interval);
+                buckets[buckets.Length - 1] = Round(buckets[buckets.Length - 1], interval);
+                interval = Round(interval, interval);
 
                 // Set the buckets
-                for(int i = 1; i < buckets.Length - 1; ++i)
+                for (int i = 1; i < buckets.Length - 1; ++i)
                 {
                     buckets[i] = buckets[i - 1] + interval;
                 }
@@ -302,30 +287,74 @@ namespace Arriba.Model.Query
                 TimeSpan interval = TimeSpan.FromTicks(range.Ticks / buckets.Length);
 
                 // Round the buckets
-                if (interval.TotalDays >= buckets.Length)
-                {
-                    buckets[0] = buckets[0].Date;
-                    buckets[buckets.Length - 1] = buckets[buckets.Length - 1].Date;
-                    interval = TimeSpan.FromDays(Math.Round(interval.TotalDays));
-                }
-                else if (interval.TotalHours >= buckets.Length)
-                {
-                    buckets[0] = buckets[0].Date.AddHours(Math.Round(buckets[0].TimeOfDay.TotalHours));
-                    buckets[buckets.Length - 1] = buckets[buckets.Length - 1].Date.AddHours(Math.Round(buckets[buckets.Length - 1].TimeOfDay.TotalHours));
-                    interval = TimeSpan.FromDays(Math.Round(interval.TotalDays));
-                }
-                else
-                {
-                    buckets[0] = buckets[0].Date.AddMinutes(Math.Round(buckets[0].TimeOfDay.TotalMinutes));
-                    buckets[buckets.Length - 1] = buckets[buckets.Length - 1].Date.AddMinutes(Math.Round(buckets[buckets.Length - 1].TimeOfDay.TotalMinutes));
-                    interval = TimeSpan.FromHours(Math.Round(interval.TotalHours));
-                    interval = TimeSpan.FromMinutes(Math.Round(interval.TotalMinutes));
-                }
-
+                buckets[0] = Round(buckets[0], interval);
+                buckets[buckets.Length - 1] = Round(buckets[buckets.Length - 1], interval);
+                interval = Round(interval, interval);
+                
                 // Set the buckets
                 for (int i = 1; i < buckets.Length - 1; ++i)
                 {
                     buckets[i] = buckets[i - 1] + interval;
+                }
+
+                return buckets;
+            }
+
+            private static byte[] GetBucketsByte(byte[] buckets)
+            {
+                // Find the range and interval between buckets
+                byte range = (byte)(buckets[buckets.Length - 1] - buckets[0]);
+                byte interval = (byte)(range / (byte)buckets.Length);
+
+                // Round the buckets
+                buckets[0] = (byte)Round(buckets[0]);
+                buckets[buckets.Length - 1] = (byte)Round(buckets[buckets.Length - 1]);
+                interval = (byte)Round(interval);
+
+                // Set the buckets
+                for (int i = 1; i < buckets.Length - 1; ++i)
+                {
+                    buckets[i] = (byte)(buckets[i - 1] + interval);
+                }
+
+                return buckets;
+            }
+
+            private static short[] GetBucketsShort(short[] buckets)
+            {
+                // Find the range and interval between buckets
+                short range = (short)(buckets[buckets.Length - 1] - buckets[0]);
+                short interval = (short)(range / (short)buckets.Length);
+
+                // Round the buckets
+                buckets[0] = (short)Round(buckets[0]);
+                buckets[buckets.Length - 1] = (short)Round(buckets[buckets.Length - 1]);
+                interval = (short)Round(interval);
+
+                // Set the buckets
+                for (int i = 1; i < buckets.Length - 1; ++i)
+                {
+                    buckets[i] = (short)(buckets[i - 1] + interval);
+                }
+
+                return buckets;
+            }
+
+            private static ushort[] GetBucketsUShort(ushort[] buckets)
+            {
+                // Find the range and interval between buckets
+                ushort range = (ushort)(buckets[buckets.Length - 1] - buckets[0]);
+                ushort interval = (ushort)(range / (ushort)buckets.Length);
+
+                // Round the buckets
+                buckets[0] = (ushort)Round(buckets[0]);
+                buckets[buckets.Length - 1] = (ushort)Round(buckets[buckets.Length - 1]);
+                interval = (ushort)Round(interval);
+
+                // Set the buckets
+                for (int i = 1; i < buckets.Length - 1; ++i)
+                {
+                    buckets[i] = (ushort)(buckets[i - 1] + interval);
                 }
 
                 return buckets;
@@ -338,18 +367,9 @@ namespace Arriba.Model.Query
                 int interval = range / buckets.Length;
 
                 // Round the buckets
-                int scale = 10;
-                while(interval > scale * 10)
-                {
-                    scale *= 10;
-                }
-
-                if(scale > 10)
-                {
-                    buckets[0] -= buckets[0] % scale;
-                    buckets[buckets.Length - 1] -= buckets[buckets.Length - 1] % scale;
-                    interval -= interval % scale;
-                }
+                buckets[0] = (int)Round(buckets[0]);
+                buckets[buckets.Length - 1] = (int)Round(buckets[buckets.Length - 1]);
+                interval = (int)Round(interval);
 
                 // Set the buckets
                 for (int i = 1; i < buckets.Length - 1; ++i)
@@ -362,23 +382,14 @@ namespace Arriba.Model.Query
 
             private static uint[] GetBucketsUint(uint[] buckets)
             {
-                // Find the range and uinterval between buckets
+                // Find the range and interval between buckets
                 uint range = buckets[buckets.Length - 1] - buckets[0];
                 uint interval = range / (uint)buckets.Length;
 
                 // Round the buckets
-                uint scale = 10;
-                while (interval > scale * 10)
-                {
-                    scale *= 10;
-                }
-
-                if (scale > 10)
-                {
-                    buckets[0] -= buckets[0] % scale;
-                    buckets[buckets.Length - 1] -= buckets[buckets.Length - 1] % scale;
-                    interval -= interval % scale;
-                }
+                buckets[0] = (uint)Round(buckets[0]);
+                buckets[buckets.Length - 1] = (uint)Round(buckets[buckets.Length - 1]);
+                interval = (uint)Round(interval);
 
                 // Set the buckets
                 for (int i = 1; i < buckets.Length - 1; ++i)
@@ -391,23 +402,14 @@ namespace Arriba.Model.Query
 
             private static long[] GetBucketsLong(long[] buckets)
             {
-                // Find the range and longerval between buckets
+                // Find the range and interval between buckets
                 long range = buckets[buckets.Length - 1] - buckets[0];
                 long interval = range / (long)buckets.Length;
 
                 // Round the buckets
-                long scale = 10;
-                while (interval > scale * 10)
-                {
-                    scale *= 10;
-                }
-
-                if (scale > 10)
-                {
-                    buckets[0] -= buckets[0] % scale;
-                    buckets[buckets.Length - 1] -= buckets[buckets.Length - 1] % scale;
-                    interval -= interval % scale;
-                }
+                buckets[0] = Round(buckets[0]);
+                buckets[buckets.Length - 1] = Round(buckets[buckets.Length - 1]);
+                interval = Round(interval);
 
                 // Set the buckets
                 for (int i = 1; i < buckets.Length - 1; ++i)
@@ -417,6 +419,164 @@ namespace Arriba.Model.Query
 
                 return buckets;
             }
+
+            private static ulong[] GetBucketsULong(ulong[] buckets)
+            {
+                // Find the range and interval between buckets
+                ulong range = buckets[buckets.Length - 1] - buckets[0];
+                ulong interval = range / (ulong)buckets.Length;
+
+                // Round the buckets
+                buckets[0] = (ulong)Round(buckets[0]);
+                buckets[buckets.Length - 1] = (ulong)Round(buckets[buckets.Length - 1]);
+                interval = (ulong)Round(interval);
+
+                // Set the buckets
+                for (int i = 1; i < buckets.Length - 1; ++i)
+                {
+                    buckets[i] = buckets[i - 1] + interval;
+                }
+
+                return buckets;
+            }
+
+            private static float[] GetBucketsFloat(float[] buckets)
+            {
+                // Find the range and interval between buckets
+                float range = buckets[buckets.Length - 1] - buckets[0];
+                float interval = range / (float)buckets.Length;
+
+                // Round the buckets
+                buckets[0] = (float)Round(buckets[0]);
+                buckets[buckets.Length - 1] = (float)Round(buckets[buckets.Length - 1]);
+                interval = (float)Round(interval);
+
+                // Set the buckets
+                for (int i = 1; i < buckets.Length - 1; ++i)
+                {
+                    buckets[i] = buckets[i - 1] + interval;
+                }
+
+                return buckets;
+            }
+
+            private static double[] GetBucketsDouble(double[] buckets)
+            {
+                // Find the range and interval between buckets
+                double range = buckets[buckets.Length - 1] - buckets[0];
+                double interval = range / (double)buckets.Length;
+
+                // Round the buckets
+                buckets[0] = (double)Round(buckets[0]);
+                buckets[buckets.Length - 1] = (double)Round(buckets[buckets.Length - 1]);
+                interval = (double)Round(interval);
+
+                // Set the buckets
+                for (int i = 1; i < buckets.Length - 1; ++i)
+                {
+                    buckets[i] = buckets[i - 1] + interval;
+                }
+
+                return buckets;
+            }
+
+            #region Round
+            private static DateTime Round(DateTime value, TimeSpan interval)
+            {
+                if(interval.TotalDays >= 1)
+                {
+                    value = value.Date;
+                }
+                else if(interval.TotalHours >= 1)
+                {
+                    value = value.Date.AddHours(Math.Round(value.TimeOfDay.TotalHours));
+                }
+                else if(interval.TotalMinutes >= 1)
+                {
+                    value = value.Date.AddMinutes(Math.Round(value.TimeOfDay.TotalMinutes));
+                }
+
+                return value;
+            }
+
+            private static TimeSpan Round(TimeSpan value, TimeSpan interval)
+            {
+                if (interval.TotalDays >= 1)
+                {
+                    value = TimeSpan.FromDays(Math.Round(value.TotalDays));
+                }
+                else if (interval.TotalHours >= 1)
+                {
+                    value = TimeSpan.FromHours(Math.Round(value.TotalHours));
+                }
+                else if (interval.TotalMinutes >= 1)
+                {
+                    value = TimeSpan.FromMinutes(Math.Round(value.TotalMinutes));
+                }
+
+                return value;
+            }
+
+            private static long Round(long value)
+            {
+                long scale = 1;
+                while (value > scale * 100)
+                {
+                    scale *= 10;
+                }
+
+                if (scale > 1)
+                {
+                    value -= value % scale;
+                }
+
+                return value;
+            }
+
+            private static ulong Round(ulong value)
+            {
+                ulong scale = 1;
+                while (value > scale * 100)
+                {
+                    scale *= 10;
+                }
+
+                if (scale > 1)
+                {
+                    value -= value % scale;
+                }
+
+                return value;
+            }
+
+            private static double Round(double value)
+            {
+                double scale = 1;
+                while (value > scale * 100)
+                {
+                    scale *= 10;
+                }
+
+                if (scale > 1)
+                {
+                    value -= value % scale;
+                }
+                else if(value > 10)
+                {
+                    value = Math.Round(value, 1);
+                }
+                else if(value > 1)
+                {
+                    value = Math.Round(value, 2);
+                }
+                else
+                {
+                    value = Math.Round(value, 3);
+                }
+
+                return value;
+            }
+            #endregion
         }
     }
 }
