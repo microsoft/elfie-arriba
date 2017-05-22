@@ -4,10 +4,12 @@
 using Arriba.Model;
 using Arriba.Model.Column;
 using Arriba.Model.Query;
-
+using Arriba.Structures;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace Arriba.Test.Model.Query
 {
@@ -22,12 +24,48 @@ namespace Arriba.Test.Model.Query
         {
             College = new Table();
             College.Name = "College";
-            College.AddColumn(new ColumnDetails("ID", "int", -1));
+            College.AddColumn(new ColumnDetails("ID", "int", -1) { IsPrimaryKey = true });
             College.AddColumn(new ColumnDetails("Name", "string", null));
             College.AddColumn(new ColumnDetails("WhenFounded", "DateTime", null));
             College.AddColumn(new ColumnDetails("SchoolYearLength", "TimeSpan", null));
             College.AddColumn(new ColumnDetails("SchoolHasMascot", "bool", null));
             College.AddColumn(new ColumnDetails("Student Count", "long", -1));
+
+            DataBlock items = new DataBlock(new string[] { "ID", "Name", "WhenFounded", "SchoolYearLength", "SchoolHasMascot", "Student Count" }, 100);
+
+            for(int i = 0; i < 100; ++i)
+            {
+                items[i, 0] = i;
+                items[i, 1] = i.ToString();
+                
+                // School Age is 1/1/2017 minus up to 100k days
+                items[i, 2] = new DateTime(2017, 01, 01).AddDays(-1000 * i);
+
+                // SchoolYearLength is 200 +/- 15
+                items[i, 3] = TimeSpan.FromDays(200 + i % 30 - 15);
+
+                // SchoolHasMascot is true ~70% of the time
+                items[i, 4] = (i % 10 > 3);
+
+                // Student Count evenly 1k, 10k, or 100k with larger counts more likely
+                long studentCount;
+                if(i < 10)
+                {
+                    studentCount = 1000;
+                }
+                else if(i < 30)
+                {
+                    studentCount = 10000;
+                }
+                else
+                {
+                    studentCount = 100000;
+                }
+
+                items[i, 5] = studentCount;
+            }
+
+            College.AddOrUpdate(items);
 
             Student = new Table();
             Student.Name = "Student";
@@ -48,7 +86,7 @@ namespace Arriba.Test.Model.Query
             Assert.AreEqual("[ID] < 15 AND [WhenFounded] > \"1900-01-01\" ([SchoolYearLength] = 18)", CompleteEachKeystroke("I\t<\t15 AN\t[Whe\t>\t\"1900-01-01\" (SchoolY\t= 18)"));
 
             // Complete with spaces where safe
-            Assert.AreEqual("[SchoolHasMascot] = true AND [WhenFounded] > \"  \"", CompleteEachKeystroke("[SchoolH = tr AND [When > \"  \""));
+            Assert.AreEqual("[SchoolHasMascot] = True AND [WhenFounded] > \"  \"", CompleteEachKeystroke("[SchoolH = tr AND [When > \"  \""));
 
             // No space completion when unsafe - column name has a space next, bare values, values without all values in IntelliSense
             Assert.AreEqual("[Student ", CompleteEachKeystroke("[Student "));
@@ -191,8 +229,9 @@ namespace Arriba.Test.Model.Query
             Assert.AreEqual(string.Join(", ", QueryIntelliSense.CompareOperatorsForBoolean.Select(ii => ii.Display)), string.Join(", ", result.Suggestions.Select(ii => ii.Display)));
 
             // "SchoolHasMascot = " suggests booleans
+            // It suggests 'True' first because more rows contain true
             result = qi.GetIntelliSenseItems("SchoolHasMascot = ", Tables);
-            Assert.AreEqual(string.Join(", ", QueryIntelliSense.BooleanValues.Select(ii => ii.Display)), string.Join(", ", result.Suggestions.Select(ii => ii.Display)));
+            Assert.AreEqual("True, False", string.Join(", ", result.Suggestions.Select(ii => ii.Display)));
 
             // "City : " suggests string
             result = qi.GetIntelliSenseItems("City : ", Tables);
@@ -214,6 +253,102 @@ namespace Arriba.Test.Model.Query
             // "[Name] : Hey A" shows both "AND", "Age" (either valid at this point)
             result = qi.GetIntelliSenseItems("[Name] : Hey A", Tables);
             Assert.AreEqual("AND, [Age]", string.Join(", ", result.Suggestions.Select(ii => ii.Display)));
+        }
+
+        [TestMethod]
+        public void QueryIntelliSense_InlineInsights()
+        {
+            QueryIntelliSense qi = new QueryIntelliSense();
+            IntelliSenseResult result;
+
+            // Tables without data don't suggest values
+            result = qi.GetIntelliSenseItems("[City] = ", Tables);
+            Assert.AreEqual(0, result.Suggestions.Count);
+
+            // Unique values aren't suggested
+            result = qi.GetIntelliSenseItems("[ID] = ", Tables);
+            Assert.AreEqual(0, result.Suggestions.Count);
+
+            // Values are suggested in order by frequency
+            result = qi.GetIntelliSenseItems("[Student Count] = ", Tables);
+            Assert.AreEqual("100000 70 %, 10000 20 %, 1000 10 %", ItemsAndCounts(result));
+
+            // Values are filtered according to the query
+            result = qi.GetIntelliSenseItems("[ID] < 15 AND [Student Count] = ", Tables);
+            Assert.AreEqual("1000 67 %, 10000 33 %", ItemsAndCounts(result));
+
+            // Distributions are returned for range operators
+            // Only non-empty buckets are returned.
+            result = qi.GetIntelliSenseItems("[Student Count] < ", Tables);
+            Assert.AreEqual("17500 30 %", ItemsAndCounts(result));
+
+            result = qi.GetIntelliSenseItems("[Student Count] <= ", Tables);
+            Assert.AreEqual("1000 10 %, 17500 30 %, 100000 all", ItemsAndCounts(result));
+
+            result = qi.GetIntelliSenseItems("[Student Count] > ", Tables);
+            Assert.AreEqual("83500 70 %, 1000 90 %", ItemsAndCounts(result));
+
+            result = qi.GetIntelliSenseItems("[Student Count] >= ", Tables);
+            Assert.AreEqual("100000 70 %, 1000 all", ItemsAndCounts(result));
+
+            // Only show one value when there's only one value available
+            result = qi.GetIntelliSenseItems("[ID] > 50 AND [Student Count] >= ", Tables);
+            Assert.AreEqual("100000 all", ItemsAndCounts(result));
+
+            // Only provide type hint when no rows match the query
+            result = qi.GetIntelliSenseItems("[ID] < 0 AND [Student Count] >= ", Tables);
+            Assert.AreEqual(0, result.Suggestions.Count);
+
+            // Works for TimeSpan
+            result = qi.GetIntelliSenseItems("[SchoolYearLength] >= ", Tables);
+            Assert.AreEqual("211.00:00:00 12 %, 207.00:00:00 24 %, 203.00:00:00 36 %, 199.00:00:00 48 %, 195.00:00:00 60 %, 191.00:00:00 76 %, 187.00:00:00 92 %", ItemsAndCounts(result));
+
+            // Works for DateTime
+            result = qi.GetIntelliSenseItems("[WhenFounded] >= ", Tables);
+            Assert.AreEqual(7, result.Suggestions.Count);
+
+            // Only provide type hint (and no error) for unsupported type
+            result = qi.GetIntelliSenseItems("[ID] < 0 AND [Name] >= ", Tables);
+            Assert.AreEqual(0, result.Suggestions.Count);
+        }
+
+        private static string ItemsAndCounts(IntelliSenseResult result)
+        {
+            StringBuilder output = new StringBuilder();
+            foreach(IntelliSenseItem item in result.Suggestions)
+            {
+                if (output.Length > 0) output.Append(", ");
+                output.Append($"{item.Display} {item.Hint}");
+            }
+            return output.ToString();
+        }
+
+        [TestMethod]
+        public void DistributionQuery_Rounding()
+        {
+            Assert.AreEqual(12, DistributionQuery.Bucketer<bool>.Round(12));
+            Assert.AreEqual(123, DistributionQuery.Bucketer<bool>.Round(123));
+            Assert.AreEqual(1230, DistributionQuery.Bucketer<bool>.Round(1234));
+
+            Assert.AreEqual((ulong)12, DistributionQuery.Bucketer<bool>.Round((ulong)12));
+            Assert.AreEqual((ulong)123, DistributionQuery.Bucketer<bool>.Round((ulong)123));
+            Assert.AreEqual((ulong)1230, DistributionQuery.Bucketer<bool>.Round((ulong)1234));
+
+            Assert.AreEqual(0.123, DistributionQuery.Bucketer<bool>.Round(0.1234));
+            Assert.AreEqual(1.23, DistributionQuery.Bucketer<bool>.Round(1.234));
+            Assert.AreEqual(12.3, DistributionQuery.Bucketer<bool>.Round(12.34));
+            Assert.AreEqual(123.0, DistributionQuery.Bucketer<bool>.Round(123.4));
+            Assert.AreEqual(1230, DistributionQuery.Bucketer<bool>.Round(1234.5));
+
+            Assert.AreEqual("5/22/2017 12:00:00 AM", DistributionQuery.Bucketer<bool>.Round(DateTime.Parse("2017-05-22 3:33:35 PM"), TimeSpan.FromDays(1)).ToString());
+            Assert.AreEqual("5/22/2017 4:00:00 PM", DistributionQuery.Bucketer<bool>.Round(DateTime.Parse("2017-05-22 3:33:35 PM"), TimeSpan.FromHours(1)).ToString());
+            Assert.AreEqual("5/22/2017 3:34:00 PM", DistributionQuery.Bucketer<bool>.Round(DateTime.Parse("2017-05-22 3:33:35 PM"), TimeSpan.FromMinutes(1)).ToString());
+            Assert.AreEqual("5/22/2017 3:33:35 PM", DistributionQuery.Bucketer<bool>.Round(DateTime.Parse("2017-05-22 3:33:35 PM"), TimeSpan.FromSeconds(1)).ToString());
+
+            Assert.AreEqual("123.00:00:00", DistributionQuery.Bucketer<bool>.Round(TimeSpan.Parse("123.10:41:51.6789"), TimeSpan.FromDays(1)).ToString());
+            Assert.AreEqual("123.11:00:00", DistributionQuery.Bucketer<bool>.Round(TimeSpan.Parse("123.10:41:51.6789"), TimeSpan.FromHours(1)).ToString());
+            Assert.AreEqual("123.10:42:00", DistributionQuery.Bucketer<bool>.Round(TimeSpan.Parse("123.10:41:51.6789"), TimeSpan.FromMinutes(1)).ToString());
+            Assert.AreEqual("123.10:41:51.6789000", DistributionQuery.Bucketer<bool>.Round(TimeSpan.Parse("123.10:41:51.6789"), TimeSpan.FromSeconds(1)).ToString());
         }
 
         [TestMethod]
@@ -340,6 +475,16 @@ namespace Arriba.Test.Model.Query
 
             // Invalid Queries
             Assert.AreEqual("[] [None]", p.GetCurrentTokenOptions("\"Analysis\"=\"Interesting\"").ToString());
+        }
+
+        [TestMethod]
+        public void PercentilesAndDistributions()
+        {
+            DataBlockResult pr = Tables[0].Query(new PercentilesQuery("SchoolYearLength", "", new double[] { 0.1, 0.5, 0.9 }));
+            Assert.AreEqual("187.00:00:00, 198.00:00:00, 211.00:00:00", string.Join(", ", (object[])pr.Values.GetColumn(1)));
+
+            DataBlockResult dr = Tables[0].Query(new DistributionQuery("SchoolYearLength", "", true));
+
         }
     }
 }

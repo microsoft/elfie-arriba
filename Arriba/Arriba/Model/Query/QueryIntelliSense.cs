@@ -192,10 +192,8 @@ namespace Arriba.Model.Query
 
         internal static List<IntelliSenseItem> BooleanValues = new List<IntelliSenseItem>()
         {
-            new IntelliSenseItem(QueryTokenCategory.Value, "0", "false"),
-            new IntelliSenseItem(QueryTokenCategory.Value, "1", "true"),
-            new IntelliSenseItem(QueryTokenCategory.Value, "false", String.Empty),
-            new IntelliSenseItem(QueryTokenCategory.Value, "true", String.Empty)
+            new IntelliSenseItem(QueryTokenCategory.Value, "False", String.Empty),
+            new IntelliSenseItem(QueryTokenCategory.Value, "True", String.Empty)
         };
 
         internal static IntelliSenseItem AllColumnNames = new IntelliSenseItem(QueryTokenCategory.ColumnName, "[*]", "all columns");
@@ -455,7 +453,6 @@ namespace Arriba.Model.Query
         {
             Table singleTable;
             ColumnDetails singleColumn;
-            TryFindSingleMatchingColumn(targetTables, lastTerm, out singleTable, out singleColumn);
 
             if (!TryFindSingleMatchingColumn(targetTables, lastTerm, out singleTable, out singleColumn))
             {
@@ -464,7 +461,14 @@ namespace Arriba.Model.Query
             }
             else
             {
-                AddTopColumnValues(result, lastTerm, guidance, suggestions, singleTable, singleColumn);
+                if (lastTerm.Operator == Operator.Equals || lastTerm.Operator == Operator.NotEquals || lastTerm.Operator == Operator.Matches || lastTerm.Operator == Operator.MatchesExact)
+                {
+                    AddTopColumnValues(result, lastTerm, guidance, suggestions, singleTable, singleColumn);
+                }
+                else if(lastTerm.Operator == Operator.LessThan || lastTerm.Operator == Operator.LessThanOrEqual || lastTerm.Operator == Operator.GreaterThan || lastTerm.Operator == Operator.GreaterThanOrEqual)
+                {
+                    AddValueDistribution(result, lastTerm, guidance, suggestions, singleTable, singleColumn);
+                }
 
                 Type columnType = singleTable.GetColumnType(singleColumn.Name);
 
@@ -527,6 +531,59 @@ namespace Arriba.Model.Query
                 {
                     string hint = (countForValue == topValues.Total ? "all" : frequency.ToString("P0"));
                     suggestions.Add(new IntelliSenseItem(QueryTokenCategory.Value, QueryScanner.WrapValue(value), hint));
+                }
+            }
+        }
+
+        private static void AddValueDistribution(IntelliSenseResult result, TermExpression lastTerm, IntelliSenseGuidance guidance, List<IntelliSenseItem> suggestions, Table singleTable, ColumnDetails singleColumn)
+        {
+            // Lame, to turn single terms into AllQuery [normally they return nothing]
+            string completeQuery = QueryParser.Parse(result.Complete).ToString();
+
+            bool inclusive = (lastTerm.Operator == Operator.LessThanOrEqual || lastTerm.Operator == Operator.GreaterThan);
+            bool reverse = (lastTerm.Operator == Operator.GreaterThan || lastTerm.Operator == Operator.GreaterThanOrEqual);
+
+            // Recommend the top ten values in the column with the prefix typed so far
+            DataBlockResult distribution = singleTable.Query(new DistributionQuery(singleColumn.Name, completeQuery, inclusive));
+            if (distribution.Total == 0 || distribution.Details.Succeeded == false) return;
+
+            ulong countSoFar;
+            if (reverse)
+            {
+                countSoFar = (ulong)distribution.Values[distribution.Values.RowCount - 1, 1];
+
+                for (int i = distribution.Values.RowCount - 2; i >= 0; --i)
+                {
+                    string value = QueryScanner.WrapValue(distribution.Values[i, 0].ToString());
+                    double frequency = (double)countSoFar / (double)(distribution.Total);
+                    ulong countForRange = (ulong)distribution.Values[i, 1];
+
+                    if ((ulong)distribution.Values[i+1, 1] > 0 && value.StartsWith(guidance.Value, StringComparison.OrdinalIgnoreCase))
+                    {
+                        string hint = (countSoFar == (ulong)distribution.Total ? "all" : frequency.ToString("P0"));
+                        suggestions.Add(new IntelliSenseItem(QueryTokenCategory.Value, value, hint));
+                    }
+                    
+                    countSoFar += countForRange;
+                }
+            }
+            else
+            {
+                countSoFar = 0;
+
+                for (int i = 0; i < distribution.Values.RowCount - 1; ++i)
+                {
+                    string value = QueryScanner.WrapValue(distribution.Values[i, 0].ToString());
+                    ulong countForRange = (ulong)distribution.Values[i, 1];
+                    countSoFar += countForRange;
+
+                    double frequency = (double)countSoFar / (double)(distribution.Total);
+
+                    if (countForRange > 0 && value.StartsWith(guidance.Value, StringComparison.OrdinalIgnoreCase))
+                    {
+                        string hint = (countSoFar == (ulong)distribution.Total ? "all" : frequency.ToString("P0"));
+                        suggestions.Add(new IntelliSenseItem(QueryTokenCategory.Value, value, hint));
+                    }
                 }
             }
         }
