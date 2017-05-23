@@ -135,6 +135,17 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
             Assert.AreEqual(binaryName.IndexOf('.', 18), binaryName8.IndexOf((byte)'.', 18));
             Assert.AreEqual(binaryName.LastIndexOf('.'), binaryName8.LastIndexOf((byte)'.'));
             Assert.AreEqual(binaryName.LastIndexOf('.', 18), binaryName8.LastIndexOf((byte)'.', 18));
+
+            string collections = "Collections";
+            String8 collections8 = String8.Convert(collections, new byte[String8.GetLength(collections)]);
+            Assert.AreEqual(binaryName.IndexOf(collections), binaryName8.IndexOf(collections8));
+            Assert.AreEqual(binaryName.IndexOf(collections, 7), binaryName8.IndexOf(collections8, 7));
+            Assert.AreEqual(binaryName.IndexOf(collections, 8), binaryName8.IndexOf(collections8, 8));
+
+            string lists = "Lists";
+            String8 lists8 = String8.Convert(lists, new byte[String8.GetLength(lists)]);
+            Assert.AreEqual(binaryName.IndexOf(lists), binaryName8.IndexOf(lists8));
+            Assert.AreEqual(binaryName.IndexOf(lists, 28), binaryName8.IndexOf(lists8, 28));
         }
 
         [TestMethod]

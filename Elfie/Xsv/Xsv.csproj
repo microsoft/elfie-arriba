@@ -60,6 +60,8 @@
     <Compile Include="Sanitize\Sanitizer.cs" />
     <Compile Include="Sanitize\SanitizerProvider.cs" />
     <Compile Include="Sanitize\Hashing.cs" />
+    <Compile Include="Where\Operator.cs" />
+    <Compile Include="Where\WhereMatcher.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

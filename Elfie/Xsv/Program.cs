@@ -10,6 +10,7 @@ using Microsoft.CodeAnalysis.Elfie.Extensions;
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.CodeAnalysis.Elfie.Serialization;
 using System.Runtime.Serialization;
+using Xsv.Where;
 
 namespace XsvConcat
 {
@@ -42,7 +43,7 @@ namespace XsvConcat
      Translate a single value from a given column. Used to map values to allow
      investigations on sanitized data.
 
-    Xsv where <input> <columnIdentifier> <equalsValue> <output|cout|"""">
+    Xsv where <input> <columnIdentifier> <operator> <value> <output|cout|"""">
      Write the row index and rows where row[columnIdentifier] = <equalsValue>.
      Omit the output to count results only.
 ";
@@ -107,8 +108,8 @@ namespace XsvConcat
                             Trace.WriteLine(new Xsv.Sanitize.Sanitizer(args[3], args[4]).Translate(args[1], args[2]));
                             break;
                         case "where":
-                            if (args.Length < 3) throw new UsageException("row requires input and rowIndex");
-                            Where(args[1], args[2], (args.Length > 3 ? args[3] : null), (args.Length > 4 ? TabularFactory.BuildWriter(args[4]) : null));
+                            if (args.Length < 3) throw new UsageException("where requires input, column, operator, value");
+                            Where(args[1], args[2], args[3], args[4], (args.Length > 5 ? args[5] : null));
                             break;
                         default:
                             throw new NotSupportedException(String.Format("XSV mode \"{0}\" is unknown. Run without arguments to see valid modes.", mode));
@@ -378,57 +379,28 @@ namespace XsvConcat
             }
         }
 
-        private static void Where(string inputFilePath, string columnIndentifier, string value, ITabularWriter writer)
+        private static void Where(string inputFilePath, string columnIdentifier, string op, string value, string outputFilePath)
         {
-            int matchCount = 0;
-            int rowCount = 0;
+            WhereResult result;
 
             using (ITabularReader reader = TabularFactory.BuildReader(inputFilePath))
             {
-                int rowIndex = (value != null ? -1 : int.Parse(columnIndentifier));
-                int colIndex = (value != null ? reader.ColumnIndex(columnIndentifier) : -1);
-
-                while (reader.NextRow())
+                using (ITabularWriter writer = (String.IsNullOrEmpty(outputFilePath) ? null : TabularFactory.BuildWriter(outputFilePath)))
                 {
-                    // Match the row index if no value was passed
-                    if (rowIndex != -1 && reader.RowCountRead != rowIndex) continue;
-
-                    // Match the column value if passed
-                    if (colIndex != -1)
+                    if (writer == null)
                     {
-                        if (reader.CurrentRowColumns <= colIndex) continue;
-                        if (reader.Current(colIndex).ToString8().CompareTo(value, true) != 0) continue;
+                        Console.WriteLine($"Counting from '{inputFilePath}' where {columnIdentifier} {op} {value}...");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Writing from '{inputFilePath}' where {columnIdentifier} {op} {value} into '{outputFilePath ?? ""}'...");
                     }
 
-                    matchCount++;
-
-                    // If this is the matching row, write it
-                    if (writer != null)
-                    {
-                        if(writer.RowCountWritten == 0)
-                        {
-                            List<string> columns = new List<string>();
-                            columns.Add("RowIndex");
-                            columns.AddRange(reader.Columns);
-                            writer.SetColumns(columns);
-                        }
-
-                        writer.Write(reader.RowCountRead);
-                        for (int i = 0; i < reader.CurrentRowColumns; ++i)
-                        {
-                            writer.Write(reader.Current(i).ToString8());
-                        }
-                        writer.NextRow();
-                    }
-
-                    // If we matched row index, we're done
-                    if (rowIndex != -1) break;
+                    result = WhereMatcher.Where(reader, columnIdentifier, op, value, writer);
                 }
-
-                rowCount = reader.RowCountRead;
             }
 
-            Console.WriteLine($"Done. {matchCount:n0} out of {rowCount:n0} rows matched.");
+            Console.WriteLine($"Done. {result.MatchCount:n0} out of {result.RowCount:n0} rows matched.");
         }
 
         private static void WriteSizeSummary(ITabularReader reader, ITabularWriter writer)
