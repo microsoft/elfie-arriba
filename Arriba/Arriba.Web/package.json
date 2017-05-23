@@ -2,7 +2,7 @@
   "name": "arriba.web",
   "version": "1.0.0",
   "description": "Arriba Search Web Experience based on React.",
-  "main": "Search.html",
+  "main": "index.html",
   "directories": {
     "test": "test"
   },

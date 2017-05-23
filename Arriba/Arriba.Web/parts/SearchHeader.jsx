@@ -5,7 +5,7 @@ export default React.createClass({
     render: function () {
         return <div className="header">
                 <div className="title font-light">
-                    <a href="/Search.html">{configuration.toolName}</a>
+                    <a href="/">{configuration.toolName}</a>
                 </div>
 
                 <div className="searchBarAndButtons">
@@ -13,7 +13,7 @@ export default React.createClass({
                     <a title="Feedback" href={"mailto:" + encodeURIComponent(configuration.feedbackEmailAddresses) + "?subject=" + encodeURIComponent(configuration.toolName) + " Feedback"}>
                         <img src="/icons/feedback.svg" alt="feedback"/>
                     </a>
-                    <a title="Help" href="/Search.html?help=true">
+                    <a title="Help" href="/?help=true">
                         <img src="/icons/help.svg" alt="help"/>
                     </a>
                 </div>
