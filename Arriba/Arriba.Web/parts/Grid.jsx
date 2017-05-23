@@ -4,6 +4,7 @@ import "!script-loader!../js/utilities.js";
 import ErrorPage from "./ErrorPage"
 import QueryStats from "./QueryStats"
 import SearchHeader from "./SearchHeader"
+import SearchBox from "./SearchBox";
 
 window.configuration = require("../configuration/Configuration.jsx").default;
 
@@ -640,11 +641,12 @@ export default React.createClass({
 
         return (
             <div className="viewport" onKeyDown={this.handleKeyDown}>
-                <SearchHeader name={configuration.toolName}
-                              feedbackEmailAddresses={configuration.feedbackEmailAddresses}
-                              query={this.state.query}
-                              allColumns={this.state.currentTableAllColumns}
-                              onSearchChange={this.onSearchChange} />
+                <SearchHeader>
+                    <SearchBox name={configuration.toolName}
+                        query={this.state.query}
+                        allColumns={this.state.currentTableAllColumns}
+                        onSearchChange={this.onSearchChange} />
+                </SearchHeader>
 
                 <div className="middle">
                     <div className="mode">

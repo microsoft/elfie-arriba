@@ -5,6 +5,7 @@ import Mru from "./Mru";
 import ErrorPage from "./ErrorPage";
 import QueryStats from "./QueryStats";
 import SearchHeader from "./SearchHeader";
+import SearchBox from "./SearchBox";
 
 import InfiniteScroll from "./InfiniteScroll";
 import SplitPane from "./SplitPane";
@@ -377,10 +378,12 @@ export default  React.createClass({
 
         return (
             <div className="viewport" onKeyDown={this.handleKeyDown}>
-                <SearchHeader query={this.state.query}
-                              parsedQuery={this.state.allCountData.content && this.state.allCountData.content.parsedQuery}
-                              onSearchChange={this.onSearchChange}
-                              loading={this.state.loading} />
+                <SearchHeader>
+                    <SearchBox query={this.state.query}
+                        parsedQuery={this.state.allCountData.content && this.state.allCountData.content.parsedQuery}
+                        onSearchChange={this.onSearchChange}
+                        loading={this.state.loading} />
+                </SearchHeader>
 
                 <div className="middle">
                     <nav className="mode">
