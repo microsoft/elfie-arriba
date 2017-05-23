@@ -2,7 +2,7 @@ import Search from "./Search";
 import Grid from "./Grid";
 window.configuration = require("../configuration/Configuration.jsx").default;
 
-class IsoMain extends React.Component {
+class Index extends React.Component {
     render() {
         return window.location.pathname.startsWith("/Grid.html")
             ? <Grid params={getQueryStringParameters()}
@@ -12,5 +12,5 @@ class IsoMain extends React.Component {
     }
 }
 
-ReactDOM.render(<IsoMain />, document.getElementById("app"));
+ReactDOM.render(<Index />, document.getElementById("app"));
 document.title = configuration.toolName;
