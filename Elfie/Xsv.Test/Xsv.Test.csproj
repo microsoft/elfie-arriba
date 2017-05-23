@@ -53,8 +53,13 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Sanitize\SampleMappers.cs" />
     <Compile Include="Sanitize\SanitizerTests.cs" />
+    <Compile Include="Where\WhereMatcherTests.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Elfie.Test\Elfie.Test.csproj">
+      <Project>{fbb1ced3-8c9d-4cb8-a322-04ec783e11b8}</Project>
+      <Name>Elfie.Test</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Elfie\Elfie.csproj">
       <Project>{d45f339f-847a-4f3a-88a0-afb883e9920e}</Project>
       <Name>Elfie</Name>
