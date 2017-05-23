@@ -637,7 +637,7 @@ export default React.createClass({
             );
         }
 
-        var listingUrl = "/Search.html" + buildUrlParameters({ t: this.state.currentTable, q: this.state.query });
+        var listingUrl = "/" + buildUrlParameters({ t: this.state.currentTable, q: this.state.query });
 
         return (
             <div className="viewport" onKeyDown={this.handleKeyDown}>
