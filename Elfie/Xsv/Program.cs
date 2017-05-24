@@ -29,6 +29,9 @@ namespace XsvConcat
     Xsv first <input> <output> <rowCount>
      Copy the first <rowCount> rows from input to output.
 
+    Xsv rowId <input> <output> <firstId?>
+     Add an incrementing integer ID column as the first column, starting with the provided value or 1.
+
     Xsv concat <input> <output>:
      Concatenate values by the first column value, excluding duplicates.
      Input must be sorted by the first column to concatenate.
@@ -83,6 +86,10 @@ namespace XsvConcat
                         case "first":
                             if (args.Length < 4) throw new UsageException("first requires an input, output, and row count.");
                             Copy(args[1], args[2], int.Parse(args[3]));
+                            break;
+                        case "rowid":
+                            if (args.Length < 3) throw new UsageException("rowid requires an input and output");
+                            RowId(args[1], args[2], (args.Length > 3 ? int.Parse(args[3]) : 1));
                             break;
                         case "concat":
                             Trace.WriteLine(String.Format("Concatenating \"{0}\" values on first column into \"{1}\"...", args[1], args[2]));
@@ -187,6 +194,38 @@ namespace XsvConcat
                         for (int i = 0; i < columnIndices.Length; ++i)
                         {
                             writer.Write(reader.Current(columnIndices[i]).ToString8());
+                        }
+
+                        writer.NextRow();
+                    }
+
+                    WriteSizeSummary(reader, writer);
+                }
+            }
+        }
+
+        private static void RowId(string inputFilePath, string outputFilePath, int firstId = 1)
+        {
+            int currentId = firstId;
+
+            using (ITabularReader reader = TabularFactory.BuildReader(inputFilePath))
+            {
+                using (ITabularWriter writer = TabularFactory.BuildWriter(outputFilePath))
+                {
+                    List<string> columns = new List<string>();
+                    columns.Add("ID");
+                    columns.AddRange(reader.Columns);
+
+                    writer.SetColumns(columns);
+
+                    while (reader.NextRow())
+                    {
+                        writer.Write(currentId);
+                        currentId++;
+
+                        for (int i = 0; i < reader.CurrentRowColumns; ++i)
+                        {
+                            writer.Write(reader.Current(i).ToString8());
                         }
 
                         writer.NextRow();
