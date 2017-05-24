@@ -7,6 +7,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
     {
         public const byte Null = (byte)'\0';
         public const byte Quote = (byte)'"';
+        public const byte Pound = (byte)'#';
         public const byte Comma = (byte)',';
         public const byte Dash = (byte)'-';
         public const byte Period = (byte)'.';
