@@ -22,6 +22,13 @@ namespace XsvConcat
      Copy the input to the output (to convert format).
      Pass comma delimited column names to copy only specific columns.
 
+    Xsv where <input> <columnIdentifier> <operator> <value> <output|cout|"""">
+     Write the row to the output where the column matches the value.
+     Omit the output to count results only.
+
+    Xsv first <input> <output> <rowCount>
+     Copy the first <rowCount> rows from input to output.
+
     Xsv concat <input> <output>:
      Concatenate values by the first column value, excluding duplicates.
      Input must be sorted by the first column to concatenate.
@@ -42,10 +49,6 @@ namespace XsvConcat
     Xsv sanitizeValue <value> <columnName> <specFile> <hashKey>
      Translate a single value from a given column. Used to map values to allow
      investigations on sanitized data.
-
-    Xsv where <input> <columnIdentifier> <operator> <value> <output|cout|"""">
-     Write the row index and rows where row[columnIdentifier] = <equalsValue>.
-     Omit the output to count results only.
 ";
 
         public static int Main(string[] args)
@@ -76,6 +79,10 @@ namespace XsvConcat
                             {
                                 Copy(args[1], args[2], args[3]);
                             }
+                            break;
+                        case "first":
+                            if (args.Length < 4) throw new UsageException("first requires an input, output, and row count.");
+                            Copy(args[1], args[2], int.Parse(args[3]));
                             break;
                         case "concat":
                             Trace.WriteLine(String.Format("Concatenating \"{0}\" values on first column into \"{1}\"...", args[1], args[2]));
@@ -131,7 +138,7 @@ namespace XsvConcat
             }
         }
 
-        private static void Copy(string inputFilePath, string outputFilePath)
+        private static void Copy(string inputFilePath, string outputFilePath, int rowLimit = -1)
         {
             using (ITabularReader reader = TabularFactory.BuildReader(inputFilePath))
             {
@@ -147,6 +154,7 @@ namespace XsvConcat
                         }
 
                         writer.NextRow();
+                        if (writer.RowCountWritten == rowLimit) break;
                     }
 
                     WriteSizeSummary(reader, writer);
