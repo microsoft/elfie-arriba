@@ -77,6 +77,22 @@ namespace Xsv.Test.Where
             // Unknown operator
             Verify.Exception<UsageException>(() => WhereMatchCount(SampleFilePath, "Name", "->", "Jeff"));
 
+            // Try with output enabled
+            using (ITabularReader reader = TabularFactory.BuildReader(SampleFilePath))
+            {
+                using (ITabularWriter writer = TabularFactory.BuildWriter("Sample.Under2.csv"))
+                {
+                    WhereMatcher.Where(reader, "ID", "<", "2", writer);
+                    Assert.AreEqual(2, writer.RowCountWritten);
+                }
+
+                string content = File.ReadAllText("Sample.Under2.csv");
+                Assert.IsTrue(content.Contains("\"0\""));
+                Assert.IsTrue(content.Contains("\"1\""));
+                Assert.IsFalse(content.Contains("\"2\""));
+
+
+            }
         }
 
         private static int WhereMatchCount(string inputPath, string columnIdentifier, string op, string value)

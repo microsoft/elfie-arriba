@@ -146,6 +146,12 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
             String8 lists8 = String8.Convert(lists, new byte[String8.GetLength(lists)]);
             Assert.AreEqual(binaryName.IndexOf(lists), binaryName8.IndexOf(lists8));
             Assert.AreEqual(binaryName.IndexOf(lists, 28), binaryName8.IndexOf(lists8, 28));
+
+            string list = "List";
+            String8 list8 = String8.Convert(list, new byte[String8.GetLength(list)]);
+            Assert.AreEqual(binaryName.IndexOf(list), binaryName8.IndexOf(list8));
+            Assert.AreEqual(binaryName.IndexOf(list, 20), binaryName8.IndexOf(list8, 20));
+            Assert.AreEqual(binaryName.IndexOf(list, 28), binaryName8.IndexOf(list8, 28));
         }
 
         [TestMethod]
