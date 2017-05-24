@@ -2,6 +2,8 @@
 var highlightRangeRegex = new RegExp(highlightChar + '(.+?)' + highlightChar, 'g');
 var highlightCharOnlyRegex = new RegExp(highlightChar, 'g');
 
+function log() { console.log(...arguments) }
+
 function isIE () {
     // Both Chrome and Edge report as "Chrome", only IE doesn't.
     return navigator.userAgent.indexOf('Chrome') === -1;
