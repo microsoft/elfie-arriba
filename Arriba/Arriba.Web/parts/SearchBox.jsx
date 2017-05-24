@@ -93,8 +93,7 @@ export default React.createClass({
                     completed: data.content.complete, 
                     completionCharacters: data.content.completionCharacters.map(c => ({ "\t": "Tab" })[c] || c),
                 });
-            },
-            (xhr, status, err) => console.error(xhr.url, status, err.toString())
+            }
         );
     },
     toggleFavorite: function () {

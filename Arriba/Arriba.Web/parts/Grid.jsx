@@ -437,7 +437,6 @@ export default React.createClass({
             (xhr, status, err) => {
                 this.setState({ allCountData: [], error: "Error: Server didn't respond to [" + xhr.url + "]. " + err });
                 this.setState({ blockingErrorStatus: status });
-                console.error(xhr.url, status, err.toString());
             },
             { q: this.state.query }
         );
@@ -454,7 +453,6 @@ export default React.createClass({
             }.bind(this),
             function (xhr, status, err) {
                 this.setState({ gridData: [], error: "Error: Server didn't respond to [" + xhr.url + "]. " + err });
-                console.error(xhr.url, status, err.toString());
             }.bind(this)
         );
     },
@@ -493,7 +491,6 @@ export default React.createClass({
             }.bind(this),
             function (xhr, status, err) {
                 this.setState({ gridData: [], error: "Error: Server didn't respond to [" + xhr.url + "]. " + err });
-                console.error(xhr.url, status, err.toString());
             }.bind(this)
         );
     },

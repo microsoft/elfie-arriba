@@ -65,7 +65,6 @@ export default  React.createClass({
             data => this.setState({ allBasics: data.content }),
             (xhr, status, err) => {
                 this.setState({ blockingErrorStatus: status });
-                console.error(xhr.url, status, err.toString());
             }
         );
 
@@ -293,7 +292,6 @@ export default  React.createClass({
             },
             function (xhr, status, err) {
                 this.setState({ allCountData: [], listingData: [], selectedItemData: null, loading: false, error: "Error: Server didn't respond to [" + xhr.url + "]. " + err });
-                console.error(xhr.url, status, err.toString());
             }.bind(this),
             parameters
         );
