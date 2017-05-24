@@ -1,5 +1,11 @@
 @import '../configuration/theme';
 
+.clickable {
+    cursor: pointer;
+    user-select: none;
+    &:hover { color: inherit; };
+}
+
 .header {
     height: 64px;
     display: flex;
