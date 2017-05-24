@@ -4,6 +4,7 @@ import "!script-loader!../js/utilities.js";
 import ErrorPage from "./ErrorPage"
 import QueryStats from "./QueryStats"
 import SearchHeader from "./SearchHeader"
+import SearchBox from "./SearchBox";
 
 window.configuration = require("../configuration/Configuration.jsx").default;
 
@@ -287,7 +288,7 @@ var GridValueCell = React.createClass({
 });
 
 // GridMain wraps the overall grid UI
-var GridMain = React.createClass({
+export default React.createClass({
     getInitialState: function () {
         return {
             blockingErrorStatus: null,
@@ -636,15 +637,16 @@ var GridMain = React.createClass({
             );
         }
 
-        var listingUrl = "/Search.html" + buildUrlParameters({ t: this.state.currentTable, q: this.state.query });
+        var listingUrl = "/" + buildUrlParameters({ t: this.state.currentTable, q: this.state.query });
 
         return (
             <div className="viewport" onKeyDown={this.handleKeyDown}>
-                <SearchHeader name={configuration.toolName}
-                              feedbackEmailAddresses={configuration.feedbackEmailAddresses}
-                              query={this.state.query}
-                              allColumns={this.state.currentTableAllColumns}
-                              onSearchChange={this.onSearchChange} />
+                <SearchHeader>
+                    <SearchBox name={configuration.toolName}
+                        query={this.state.query}
+                        allColumns={this.state.currentTableAllColumns}
+                        onSearchChange={this.onSearchChange} />
+                </SearchHeader>
 
                 <div className="middle">
                     <div className="mode">
@@ -669,15 +671,3 @@ var GridMain = React.createClass({
     }
 });
 
-if (document.getElementById("gridContainer")) {
-    var params = getQueryStringParameters();
-    ReactDOM.render(
-        <GridMain 
-            url={configuration.url} 
-            gridDefaultQueries={configuration.gridDefaultQueries} 
-            params={params}  />,
-        document.getElementById("gridContainer")
-    );
-
-    document.title = configuration.toolName;
-}

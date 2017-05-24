@@ -47,6 +47,11 @@ Number.prototype.clamp = function(min, max) {
     return Math.min(Math.max(this, min), max);
 };
 
+String.prototype.startsWith = String.prototype.startsWith || function(searchString, position) {
+    position = position || 0;
+    return this.indexOf(searchString, position) === position;
+};
+
 String.prototype.trimIf = function(prefix) {
     return this.startsWith(prefix)
         ? this.substring(prefix.length)
