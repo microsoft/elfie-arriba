@@ -19,7 +19,10 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             Writers = new Dictionary<string, Func<string, ITabularWriter>>(StringComparer.OrdinalIgnoreCase);
 
             Readers["csv"] = (path) => new CsvReader(path);
+            Readers["csvNH"] = (path) => new CsvReader(MapExtension(path, ".csv"), false);
             Readers["tsv"] = (path) => new TsvReader(path);
+            Readers["tsvNH"] = (path) => new TsvReader(MapExtension(path, ".tsv"), false);
+            Readers["iislog"] = (path) => new IISTabularReader(MapExtension(path, ".log"));
 
             Writers["cout"] = (path) => new ConsoleTabularWriter();
             Writers["csv"] = (path) => new CsvWriter(path, true);
@@ -52,6 +55,15 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
                     }
                 }
             }
+        }
+
+        private static string MapExtension(string filePath, string toExtension)
+        {
+            // If the file exists with that extension, leave it alone
+            if (File.Exists(filePath)) return filePath;
+
+            // Otherwise, change the extension
+            return Path.ChangeExtension(filePath, toExtension);
         }
 
         private static Func<string, T> GetStringConstructorFunc<T>(string keyName, string assemblyName, string typeName)

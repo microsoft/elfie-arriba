@@ -88,6 +88,7 @@
     <Compile Include="SampleElfieStructure.V1.cs" />
     <Compile Include="SampleElfieStructure.cs" />
     <Compile Include="Serialization\BaseTabularTests.cs" />
+    <Compile Include="Serialization\IISLogReaderTests.cs" />
     <Compile Include="Serialization\ITabularValueTests.cs" />
     <Compile Include="Serialization\JsonTabularWriterTests.cs" />
     <Compile Include="Serialization\TsvWriterTests.cs" />
