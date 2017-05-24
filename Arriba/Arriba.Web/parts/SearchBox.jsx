@@ -89,7 +89,7 @@ export default React.createClass({
                     sel: 0,
                     completed: data.content.complete, 
                     completionCharacters: data.content.completionCharacters.map(c => ({ "\t": "Tab" })[c] || c),
-                })
+                });
             },
             (xhr, status, err) => console.error(xhr.url, status, err.toString())
         );
@@ -137,18 +137,20 @@ export default React.createClass({
             <div className="rail">
                 {this.state.completed}
                 <span style={{ position: "relative" }} >
-                    {this.state.suggestions.length > 0 &&
-                        <div className="suggestions" >
-                            {svg}
-                            {this.state.suggestions.map((item, index) =>
-                                <div className={"suggestion " + (this.state.sel == index ? "suggestion-sel" : "" )}
-                                    onClick={ this.handleClickSuggestion.bind(this, item) }>
-                                    <span>{item.display}</span>
-                                    <span className="suggestion-hint">{item.hint}</span>
-                                </div>
-                            )}
-                        </div>
-                    }
+                    <div className="railContents">
+                        {this.state.suggestions.length > 0 &&
+                            <div className="suggestions" >
+                                {svg}
+                                {this.state.suggestions.map((item, index) =>
+                                    <div className={"suggestion " + (this.state.sel == index ? "suggestion-sel" : "" )}
+                                        onClick={ this.handleClickSuggestion.bind(this, item) }>
+                                        <span>{item.display}</span>
+                                        <span className="suggestion-hint">{item.hint}</span>
+                                    </div>
+                                )}
+                            </div>
+                        }
+                    </div>
                 </span>
             </div>
             <i className={"searchIcon " + ((localStorage.getJson("favorites") || []).includes(this.props.parsedQuery) ? "icon-solid-star" : "icon-outlined-star")} onClick={this.toggleFavorite}></i>
