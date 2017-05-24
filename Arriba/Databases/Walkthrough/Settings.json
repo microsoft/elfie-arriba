@@ -1,0 +1,9 @@
+{
+    // Indicate the maximum number of rows you'll add to the table, so it can be partitioned.
+    "itemCountLimit": 100000,
+
+    // Define column names and types. Columns not defined here but in the first set of added data will be added dynamically with inferred types.
+    "schema": [
+        { "name": "zip", "type": "int", "default": -1, "alias": "z", "isPrimaryKey": true }
+    ]
+}
