@@ -13,41 +13,38 @@
     position: relative;
     padding-right: 4px;
     margin-right: 8px;
-}
 
-/* Make the search box large, fill the space, well padded, slightly grey */
-.searchBox input { @extend .input;
-    box-sizing: border-box;
-    border: none;
-    flex: 1;
-    color: #666666;
-    background: transparent; // Override user agent.
-}
+    input { @extend .input;
+        box-sizing: border-box;
+        border: none;
+        flex: 1;
+        color: #666666;
+        background: transparent; // Override user agent.
+    }
 
-/* Make the search icon (magnifying glass) the same as the search box and right next to it */
-.searchBox .searchIcon {
-    font-size: 16pt;
-    color: #666666;
-    padding: 4px;
-}
+    .searchIcon {
+        font-size: 16pt;
+        color: #666666;
+        padding: 4px;
+    }
 
-/* The indefinite progress bar to when waiting for the server */
-.searchBox .loading {
-    display: none;
-    position: absolute;
-    bottom: 0;
-    height: 3px;
-    width: 100%;
+    .loading {
+        display: none;
+        position: absolute;
+        bottom: 0;
+        height: 3px;
+        width: 100%;
 
-    &.loading-active {
-        display: block;
-        background: linear-gradient(90deg, transparent 70%, hsl(136, 100%, 23%) 85%, transparent);
-        background-size: 200%;
-        animation: wave 1.5s linear 500ms infinite;
+        &.loading-active {
+            display: block;
+            background: linear-gradient(90deg, transparent 70%, hsl(136, 100%, 23%) 85%, transparent);
+            background-size: 200%;
+            animation: wave 1.5s linear 500ms infinite;
 
-        @keyframes wave {
-            0%    { background-position: 200% 50% }
-            100%  { background-position: 0%   50% }
+            @keyframes wave {
+                0%    { background-position: 200% 50% }
+                100%  { background-position: 0%   50% }
+            }
         }
     }
 }
