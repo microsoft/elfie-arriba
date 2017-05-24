@@ -258,6 +258,31 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         }
 
         /// <summary>
+        ///  Return the first index at which the passed string appears in this string.
+        /// </summary>
+        /// <param name="value">Value to find</param>
+        /// <param name="startIndex">First index at which to check</param>
+        /// <returns>Index of first occurrence of value or -1 if not found</returns>
+        public int IndexOf(String8 value, int startIndex = 0)
+        {
+            int length = value._length;
+
+            int end = _index + _length - value._length + 1;
+            for (int start = _index + startIndex; start < end; ++start)
+            {
+                int i = 0;
+                for (; i < length; ++i)
+                {
+                    if (_buffer[start + i] != value._buffer[value._index + i]) break;
+                }
+
+                if(i == length) return start - _index;
+            }
+
+            return -1;
+        }
+
+        /// <summary>
         ///  Return the first index at which the passed character appears in this string.
         /// </summary>
         /// <param name="c">Character to find</param>
@@ -265,9 +290,10 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         /// <returns>Index of first occurrence of character or -1 if not found</returns>
         public int IndexOf(byte c, int startIndex = 0)
         {
-            for (int i = startIndex; i < _length; ++i)
+            int end = _index + _length;
+            for (int i = _index + startIndex; i < end; ++i)
             {
-                if (_buffer[_index + i] == c) return i;
+                if (_buffer[i] == c) return i - _index;
             }
 
             return -1;
