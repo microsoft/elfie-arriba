@@ -5,6 +5,7 @@ import Mru from "./Mru";
 import ErrorPage from "./ErrorPage";
 import QueryStats from "./QueryStats";
 import SearchHeader from "./SearchHeader";
+import SearchBox from "./SearchBox";
 
 import InfiniteScroll from "./InfiniteScroll";
 import SplitPane from "./SplitPane";
@@ -16,7 +17,7 @@ import ResultListing from "./ResultListing";
 window.configuration = require("../configuration/Configuration.jsx").default;
 
 // SearchMain wraps the overall search UI
-var SearchMain = React.createClass({
+export default  React.createClass({
     getInitialState: function () {
         // For schema detection and possible migration.
         localStorage.setItem("version", 1);
@@ -377,10 +378,12 @@ var SearchMain = React.createClass({
 
         return (
             <div className="viewport" onKeyDown={this.handleKeyDown}>
-                <SearchHeader query={this.state.query}
-                              parsedQuery={this.state.allCountData.content && this.state.allCountData.content.parsedQuery}
-                              onSearchChange={this.onSearchChange}
-                              loading={this.state.loading} />
+                <SearchHeader>
+                    <SearchBox query={this.state.query}
+                        parsedQuery={this.state.allCountData.content && this.state.allCountData.content.parsedQuery}
+                        onSearchChange={this.onSearchChange}
+                        loading={this.state.loading} />
+                </SearchHeader>
 
                 <div className="middle">
                     <nav className="mode">
@@ -404,12 +407,3 @@ var SearchMain = React.createClass({
         );
     }
 });
-
-if (document.getElementById("searchContainer")) {
-    ReactDOM.render(
-        <SearchMain params={getQueryStringParameters()} />,
-        document.getElementById("searchContainer")
-    );
-
-    document.title = configuration.toolName;
-}

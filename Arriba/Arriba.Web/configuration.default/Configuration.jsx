@@ -48,7 +48,7 @@
             overview:(
                 <span>
                     Arriba is a data exploration, free text search, and structured search engine.
-                    Need more <a href="Search.html?help=true">help</a>?
+                    Need more <a href="/?help=true">help</a>?
                 </span>
             ),
             /*examples: {
