@@ -153,7 +153,7 @@ export default React.createClass({
                     </div>
                 </span>
             </div>
-            <i className={"searchIcon " + ((localStorage.getJson("favorites") || []).includes(this.props.parsedQuery) ? "icon-solid-star" : "icon-outlined-star")} onClick={this.toggleFavorite}></i>
+            <i className={"searchIcon clickable " + ((localStorage.getJson("favorites") || []).includes(this.props.parsedQuery) ? "icon-solid-star" : "icon-outlined-star")} onClick={this.toggleFavorite}></i>
             <i className="searchIcon icon-find"></i>
         </div>;
     }
