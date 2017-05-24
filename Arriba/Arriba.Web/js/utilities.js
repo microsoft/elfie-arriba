@@ -120,7 +120,7 @@ Storage.prototype.mergeJson = function(keyName, keyObject) {
 // Chrome and Edge do not dispatch the storage event to the current tag (only other tabs).
 // IE dispatches to all tabs. In this case we desire the IE behavior and dispatch makes the other browsers simulate it.
 Storage.prototype.dispatch = function(keyName) {
-    if (isIE()) return; 
+    if (isIE()) return;
     var e = navigator.userAgent.indexOf('Edge') === -1 ? StorageEvent : Event;
     window.dispatchEvent(new e("storage", { key: keyName }));
 }
