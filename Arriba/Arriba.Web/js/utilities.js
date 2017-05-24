@@ -2,7 +2,7 @@
 var highlightRangeRegex = new RegExp(highlightChar + '(.+?)' + highlightChar, 'g');
 var highlightCharOnlyRegex = new RegExp(highlightChar, 'g');
 
-function log() { console.log(...arguments) }
+function log() { console.log.apply(console, arguments) }
 
 function isIE () {
     // Both Chrome and Edge report as "Chrome", only IE doesn't.
