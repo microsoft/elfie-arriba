@@ -68,15 +68,29 @@ export default React.createClass({
     setQuery: function (query) {
         this.props.onSearchChange(query);
 
+        if (this.suggestions && query.startsWith(this.state.completed)) {
+            const startsWithCI = (a, b) => a.toUpperCase().startsWith(b.toUpperCase());
+            const incomplete = query.slice(this.state.completed.length);
+            const matching = this.suggestions.filter(s => startsWithCI(s.completeAs.trimIf("["), incomplete));
+            if (matching.length) {
+                this.setState({ suggestions: matching, sel: 0 });
+                return;
+            }
+        }
+
+
         if (this.lastRequest) this.lastRequest.abort();
         this.lastRequest = jsonQuery(
             configuration.url + "/suggest?q=" + encodeURIComponent(query),
-            data => this.setState({
-                suggestions: data.content.suggestions,
-                sel: 0,
-                completed: data.content.complete, 
-                completionCharacters: data.content.completionCharacters.map(c => ({ "\t": "Tab" })[c] || c),
-            }),
+            data => {
+                this.suggestions = data.content.suggestions; // A cache which is later filtered and assigned to state.suggestions.
+                this.setState({
+                    suggestions: data.content.suggestions,
+                    sel: 0,
+                    completed: data.content.complete, 
+                    completionCharacters: data.content.completionCharacters.map(c => ({ "\t": "Tab" })[c] || c),
+                })
+            },
             (xhr, status, err) => console.error(xhr.url, status, err.toString())
         );
     },
