@@ -127,7 +127,7 @@ export default React.createClass({
             return <svg><path id="p" d={d} /></svg>
         })();
 
-        return <div className="searchBar">
+        return <div className="searchBox">
             <div className={ "loading " + (this.props.loading ? "loading-active" : "") }></div>
             <input ref="searchBox" type="text" spellCheck="false"
                 placeholder="Search for..." 

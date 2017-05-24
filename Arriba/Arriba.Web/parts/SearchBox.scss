@@ -5,7 +5,7 @@
     padding: 8px;
 }
 
-.searchBar {
+.searchBox {
     background: hsl(0, 0, 97%);
     flex: 1;
     display: flex;
@@ -16,7 +16,7 @@
 }
 
 /* Make the search box large, fill the space, well padded, slightly grey */
-.searchBar input { @extend .input;
+.searchBox input { @extend .input;
     box-sizing: border-box;
     border: none;
     flex: 1;
@@ -25,14 +25,14 @@
 }
 
 /* Make the search icon (magnifying glass) the same as the search box and right next to it */
-.searchBar .searchIcon {
+.searchBox .searchIcon {
     font-size: 16pt;
     color: #666666;
     padding: 4px;
 }
 
 /* The indefinite progress bar to when waiting for the server */
-.searchBar .loading {
+.searchBox .loading {
     display: none;
     position: absolute;
     bottom: 0;
