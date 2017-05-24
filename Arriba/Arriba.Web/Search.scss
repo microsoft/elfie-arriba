@@ -251,7 +251,7 @@ a:visited:hover {
 
 /* Make the QueryStats grey and hide overflowing content */
 .queryStats {
-    padding-left: 6px;
+    padding-left: 4px;
     background: #E3E3E3;
     @include ellipsis;
     display: flex;
@@ -259,7 +259,7 @@ a:visited:hover {
 
     .explanation {
         border: 1px solid hsl(0, 0, 75%);
-        padding: 2px 4px;
+        padding: 1px 6px 2px;
         margin-left: 3px;
     }
 
@@ -274,7 +274,7 @@ a:visited:hover {
 
     & > span {
         border: 1px solid hsl(0, 0, 75%);
-        padding: 2px 6px;
+        padding: 1px 8px 2px 6px;
 
         &:not(:first-child) {
             border-left: 0;
