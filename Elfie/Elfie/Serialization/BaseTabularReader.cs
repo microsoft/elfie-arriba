@@ -142,7 +142,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             if (_columnHeadings.TryGetValue(columnNameOrIndex, out columnIndex)) return columnIndex;
 
             // See if the column is a parsable integer index
-            if (int.TryParse(columnNameOrIndex, out columnIndex) && _columnHeadings.Count > columnIndex) return columnIndex;
+            if (int.TryParse(columnNameOrIndex, out columnIndex) && columnIndex >= 0 && _columnHeadings.Count > columnIndex) return columnIndex;
 
             throw new ColumnNotFoundException(String.Format("Column Name \"{0}\" not found in file.\nKnown Columns: \"{1}\"", columnNameOrIndex, String.Join(", ", _columnHeadings.Keys)));
         }
