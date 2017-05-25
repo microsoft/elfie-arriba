@@ -125,12 +125,29 @@ Storage.prototype.dispatch = function(keyName) {
     window.dispatchEvent(new e("storage", { key: keyName }));
 }
 
+
 // Highlight values surrounded by Pi characters by wrapping them in <span class="h"></span>
 function highlight(value) {
     var replacement = '<span class="h">$1</span>';
 
     if (value !== undefined) {
-        return { __html: unescape(value.toString()).replace(highlightRangeRegex, replacement) };
+        // Escape the content to ensure it's not html
+        var escaper = document.createElement("div");
+        escaper.innerText = value;
+        var escaped = escaper.innerHTML;
+
+        return { __html: escaped.replace(highlightRangeRegex, replacement) };
+    }
+
+    return { __html: "" };
+};
+
+// Highlight surrounded by Pi characters by wrapping them in <span class="h"></span>
+function highlightHtml(value) {
+    var replacement = '<span class="h">$1</span>';
+
+    if (value !== undefined) {
+        return { __html: value.toString().replace(highlightRangeRegex, replacement) };
     }
 
     return { __html: "" };
