@@ -62,7 +62,10 @@ export default  React.createClass({
 
         // On Page load, find the list of known table names
         jsonQuery(configuration.url + "/allBasics",
-            data => this.setState({ allBasics: data.content }),
+            data => {
+                Object.values(data.content).forEach(table => table.idColumn = table.columns.find(col => col.isPrimaryKey).name || "");
+                this.setState({ allBasics: data.content });
+            },
             (xhr, status, err) => {
                 this.setState({ blockingErrorStatus: status });
             }
@@ -202,32 +205,28 @@ export default  React.createClass({
     },
     getTableBasics: function () {
         // Once a table is selected, find out the columns and primary key column for the table
-        this.jsonQueryWithError(configuration.url + "/table/" + this.state.currentTable, data => {
-            // Choose columns, sort column, sort order
+        var table = this.state.allBasics[this.state.currentTable];
 
-            var idColumn = data.content.columns.find(col => col.isPrimaryKey).name || "";
+        // If user did not specify default columns, fetch from local storage.
+        // Must write to userTableSettings (and not directly to currentTableSettings) so the URL can refect this.
+        // If a table was switched getAllCounts would have wiped userTableSettings and localStorage would show through.
+        var userTableSettings = Object.merge(
+            localStorage.getJson("table-" + this.state.currentTable),
+            this.state.userTableSettings);
 
-            // If user did not specify default columns, fetch from local storage.
-            // Must write to userTableSettings (and not directly to currentTableSettings) so the URL can refect this.
-            // If a table was switched getAllCounts would have wiped userTableSettings and localStorage would show through.
-            var userTableSettings = Object.merge(
-                localStorage.getJson("table-" + this.state.currentTable),
-                this.state.userTableSettings);
-
-            // Set the ID column, all columns, and listing columns
-            this.setState({
-                userTableSettings: userTableSettings,
-                currentTableIdColumn: idColumn,
-                currentTableAllColumns: data.content.columns,
-                currentTableSettings: Object.merge(
-                    { columns: [idColumn], sortColumn: idColumn, sortOrder: "asc" },
-                    configuration.listingDefaults && configuration.listingDefaults[this.state.currentTable],
-                    userTableSettings)
-            }, () => {
-                this.setHistory(); // Due to userTableSettings being set.
-                if (this.state.query) this.getResultsPage();
-                if (this.state.userSelectedId) this.getDetails();
-            });
+        // Set the ID column, all columns, and listing columns
+        this.setState({
+            userTableSettings: userTableSettings,
+            currentTableIdColumn: table.idColumn,
+            currentTableAllColumns: table.columns,
+            currentTableSettings: Object.merge(
+                { columns: [table.idColumn], sortColumn: table.idColumn, sortOrder: "asc" },
+                configuration.listingDefaults && configuration.listingDefaults[this.state.currentTable],
+                userTableSettings)
+        }, () => {
+            this.setHistory(); // Due to userTableSettings being set.
+            if (this.state.query) this.getResultsPage();
+            if (this.state.userSelectedId) this.getDetails();
         });
     },
     getResultsPage: function (i) {
