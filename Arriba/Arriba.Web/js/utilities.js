@@ -9,6 +9,10 @@ function isIE () {
     return navigator.userAgent.indexOf('Chrome') === -1;
 }
 
+function isEdge() {
+    return navigator.userAgent.indexOf('Edge') !== -1
+}
+
 // From: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign
 Object.assign = Object.assign || function(target, varArgs) { // .length of function is 2
     'use strict';
@@ -138,8 +142,13 @@ Storage.prototype.mergeJson = function(keyName, keyObject) {
 // IE dispatches to all tabs. In this case we desire the IE behavior and dispatch makes the other browsers simulate it.
 Storage.prototype.dispatch = function(keyName) {
     if (isIE()) return;
-    var e = navigator.userAgent.indexOf('Edge') === -1 ? StorageEvent : Event;
-    window.dispatchEvent(new e("storage", { key: keyName }));
+    if (isEdge()) {
+        var e = new Event("storage");
+        e.key = keyName;
+        dispatchEvent(e);        
+    } else {
+        dispatchEvent(new StorageEvent("storage", { key: keyName }));                
+    }
 }
 
 // Highlight values surrounded by Pi characters by wrapping them in <span class="h"></span>
