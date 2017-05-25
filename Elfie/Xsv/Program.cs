@@ -29,12 +29,18 @@ namespace XsvConcat
     Xsv first <input> <output> <rowCount>
      Copy the first <rowCount> rows from input to output.
 
+    Xsv append <input> <outputToAppendTo>
+     Append the input rows to an existing output file.
+
     Xsv rowId <input> <output> <firstId?>
      Add an incrementing integer ID column as the first column, starting with the provided value or 1.
 
     Xsv concat <input> <output>:
      Concatenate values by the first column value, excluding duplicates.
      Input must be sorted by the first column to concatenate.
+
+    Xsv concatCol <input> <output> <col1> <separator> <col2> <outColName>
+     Concatenate column values together: out['outColName'] = row['col1'] + separator + row['col2'].
 
     Xsv notStartsWith <input> <output> <valueColumnIndexOrName> <nameColumnIndexOrName>:
      Copy the input, excluding rows where row[valueIndex].StartsWith(row[nameIndex]).
@@ -85,15 +91,27 @@ namespace XsvConcat
                             break;
                         case "first":
                             if (args.Length < 4) throw new UsageException("first requires an input, output, and row count.");
+                            Trace.WriteLine(String.Format("Getting first {2} rows from \"{0}\" into \"{1}\"...", args[1], args[2], args[3]));
                             Copy(args[1], args[2], int.Parse(args[3]));
+                            break;
+                        case "append":
+                            if (args.Length < 3) throw new UsageException("append requires an input and output");
+                            Trace.WriteLine(String.Format("Appending from \"{0}\" to \"{1}\"...", args[1], args[2]));
+                            Append(args[1], args[2]);
                             break;
                         case "rowid":
                             if (args.Length < 3) throw new UsageException("rowid requires an input and output");
+                            Trace.WriteLine(String.Format("Adding autoincrementing ID column from \"{0}\" to \"{1}\"...", args[1], args[2]));
                             RowId(args[1], args[2], (args.Length > 3 ? int.Parse(args[3]) : 1));
                             break;
                         case "concat":
                             Trace.WriteLine(String.Format("Concatenating \"{0}\" values on first column into \"{1}\"...", args[1], args[2]));
                             Concatenate(args[1], args[2], String8.Convert("; ", new byte[2]));
+                            break;
+                        case "concatcol":
+                            if (args.Length < 7) throw new UsageException("concatCol requires input, output, col1, separator, col2, outColName");
+                            Trace.WriteLine(String.Format("Concatenating \"[{2}] + \"{3}\" + [{4}]\" from \"{0}\" into column \"{5}\" in \"{1}\"...", args[0], args[1], args[2], args[3], args[4], args[5], args[6]));
+                            ConcatenateColumn(args[1], args[2], args[3], args[4], args[5], args[6]);
                             break;
                         case "notstartswith":
                             if (args.Length < 5) throw new UsageException("notStartsWith requires a value and name column to be passed.");
@@ -194,6 +212,27 @@ namespace XsvConcat
                         for (int i = 0; i < columnIndices.Length; ++i)
                         {
                             writer.Write(reader.Current(columnIndices[i]).ToString8());
+                        }
+
+                        writer.NextRow();
+                    }
+
+                    WriteSizeSummary(reader, writer);
+                }
+            }
+        }
+
+        private static void Append(string inputFilePath, string outputFilePath)
+        {
+            using (ITabularReader reader = TabularFactory.BuildReader(inputFilePath))
+            {
+                using (ITabularWriter writer = TabularFactory.AppendWriter(outputFilePath, reader.Columns))
+                {
+                    while (reader.NextRow())
+                    {
+                        for (int i = 0; i < reader.CurrentRowColumns; ++i)
+                        {
+                            writer.Write(reader.Current(i).ToString8());
                         }
 
                         writer.NextRow();
@@ -421,6 +460,80 @@ namespace XsvConcat
 
                     // After last row, write out values so far
                     WriteCombinedRow(writer, combinedValues);
+                    WriteSizeSummary(reader, writer);
+                }
+            }
+        }
+
+        private static void ConcatenateColumn(string inputFilePath, string outputFilePath, string columnName1, string separator, string columnName2, string outputColumnName)
+        {
+            String8 separator8 = String8.Convert(separator, new byte[String8.GetLength(separator)]);
+
+            using (ITabularReader reader = TabularFactory.BuildReader(inputFilePath))
+            {
+                // Find the columns to concatenate
+                int columnIndex1 = reader.ColumnIndex(columnName1);
+                int columnIndex2 = reader.ColumnIndex(columnName2);
+
+                // Build an output column list and mapping from output order to input index, with '-1' for the concatenated value
+                List<string> outputColumns = new List<string>();
+                int[] indexMapping = new int[reader.Columns.Count - 1];
+                bool hasConcatenatedColumn = false;
+
+                for(int i = 0; i < reader.Columns.Count; ++i)
+                {
+                    string columnName = reader.Columns[i];
+
+                    // If this is a column to concatenate...
+                    if(columnName.Equals(reader.Columns[columnIndex1], StringComparison.OrdinalIgnoreCase) 
+                        || columnName.Equals(reader.Columns[columnIndex2], StringComparison.OrdinalIgnoreCase))
+                    {
+                        // .. if it's the first one, the output column will appear at this position
+                        if(!hasConcatenatedColumn)
+                        {
+                            hasConcatenatedColumn = true;
+
+                            indexMapping[outputColumns.Count] = -1;
+                            outputColumns.Add(outputColumnName);
+                        }
+                    }
+                    else
+                    {
+                        // Otherwise, copy this column through
+                        indexMapping[outputColumns.Count] = i;
+                        outputColumns.Add(columnName);
+                    }
+                }
+
+                using (ITabularWriter writer = TabularFactory.BuildWriter(outputFilePath))
+                {
+                    writer.SetColumns(outputColumns);
+
+                    while (reader.NextRow())
+                    {
+                        // Write columns in mapped order
+                        for (int i = 0; i < indexMapping.Length; ++i)
+                        {
+                            int sourceColumnIndex = indexMapping[i];
+
+                            if (sourceColumnIndex == -1)
+                            {
+                                // Write concatenated column
+                                writer.WriteValueStart();
+                                writer.WriteValuePart(reader.Current(columnIndex1).ToString8());
+                                writer.WriteValuePart(separator8);
+                                writer.WriteValuePart(reader.Current(columnIndex2).ToString8());
+                                writer.WriteValueEnd();
+                            }
+                            else
+                            {
+                                writer.Write(reader.Current(sourceColumnIndex).ToString8());
+                            }
+                        }
+
+                        writer.NextRow();
+                    }
+
                     WriteSizeSummary(reader, writer);
                 }
             }
