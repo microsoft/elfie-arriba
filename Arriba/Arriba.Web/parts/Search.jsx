@@ -17,7 +17,7 @@ import ResultListing from "./ResultListing";
 window.configuration = require("../configuration/Configuration.jsx").default;
 
 // SearchMain wraps the overall search UI
-export default  React.createClass({
+export default React.createClass({
     getInitialState: function () {
         // For schema detection and possible migration.
         localStorage.setItem("version", 1);
@@ -119,7 +119,6 @@ export default  React.createClass({
             userSelectedTable: this.state.currentTable,
             userTableSettings: {}
         }, this.runSearch);
-
     },
     onAddClause: function (name, value) {
         this.setState({ query: this.state.query + " AND [" + name + "]=\"" + value + "\"" }, this.runSearch);
