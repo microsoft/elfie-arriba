@@ -47,8 +47,6 @@ export default  React.createClass({
             query: this.props.params.q || "",
 
             currentTable: table,
-            currentTableIdColumn: "",
-            currentTableAllColumns: [],
             currentTableSettings: {}, // {} denote no state, do not set to null.
 
             userSelectedTable: table,
@@ -64,20 +62,20 @@ export default  React.createClass({
         jsonQuery(configuration.url + "/allBasics",
             data => {
                 Object.values(data.content).forEach(table => table.idColumn = table.columns.find(col => col.isPrimaryKey).name || "");
-                this.setState({ allBasics: data.content });
+                this.setState({ allBasics: data.content }, () => {
+                    if (this.state.query) {
+                        // If there's a query, run it
+                        this.runSearch();
+                    } else if (this.state.userSelectedId) {
+                        // If there's an item to open, open it
+                        this.getTableBasics();
+                    }
+                });
             },
             (xhr, status, err) => {
                 this.setState({ blockingErrorStatus: status });
             }
         );
-
-        if (this.state.query) {
-            // If there's a query, run it
-            this.runSearch();
-        } else if (this.state.userSelectedId) {
-            // If there's an item to open, open it
-            this.getTableBasics();
-        }
     },
     componentWillUnmount: function () {
         window.removeEventListener("beforeunload", this);
@@ -217,8 +215,6 @@ export default  React.createClass({
         // Set the ID column, all columns, and listing columns
         this.setState({
             userTableSettings: userTableSettings,
-            currentTableIdColumn: table.idColumn,
-            currentTableAllColumns: table.columns,
             currentTableSettings: Object.merge(
                 { columns: [table.idColumn], sortColumn: table.idColumn, sortOrder: "asc" },
                 configuration.listingDefaults && configuration.listingDefaults[this.state.currentTable],
@@ -232,8 +228,8 @@ export default  React.createClass({
     getResultsPage: function (i) {
         // Once the counts query runs and table basics are loaded, get a page of results
 
-        // If there's no table, id column, or query, don't do anything yet
-        if (!this.state.query || !this.state.currentTable || !this.state.currentTableIdColumn) return;
+        // If there's no query, or current table, don't do anything yet
+        if (!this.state.query || !this.state.currentTable) return;
 
         // Get enough items to fill the requested page number (rather than trying to append one page)
         if (!i) i = 0;
@@ -250,10 +246,12 @@ export default  React.createClass({
     getDetails: function () {
         // When an item is selected, get details for it
 
-        // If there's no table or id column don't do anything yet
-        if (!this.state.currentTable || !this.state.currentTableIdColumn) return;
+        // If there's no table don't do anything yet.
+        // Unlikely to reach this function before currentTable and allBasics are set.
+        // delayedRunSearch() would have to return before the other two.
+        if (!this.state.currentTable) return;
 
-        var detailsQuery = this.state.currentTableIdColumn + '="' + this.state.userSelectedId + '"';
+        var detailsQuery = this.state.allBasics[this.state.currentTable].idColumn + '="' + this.state.userSelectedId + '"';
         if (this.state.query) detailsQuery = detailsQuery + " AND " + this.state.query;
 
         // Select all columns for the selected item, with highlighting
@@ -336,15 +334,16 @@ export default  React.createClass({
     render: function () {
         if (this.state.blockingErrorStatus != null) return <ErrorPage status={this.state.blockingErrorStatus} />;
 
+        var table = this.state.allBasics && this.state.currentTable && this.state.allBasics[this.state.currentTable] || undefined;
         var customDetailsView = (configuration.customDetailsProviders && configuration.customDetailsProviders[this.state.currentTable]) || ResultDetails;
 
-        var mainContent = this.state.query
+        var mainContent = this.state.allBasics && this.state.currentTable
             ? <SplitPane split="horizontal" minSize="300" isFirstVisible={this.state.listingData.content} isSecondVisible={this.state.userSelectedId}>
                 <InfiniteScroll page={this.state.page} hasMoreData={this.state.hasMoreData} loadMore={this.getResultsPage }>
                     <ResultListing ref={"list"}
                         data={this.state.listingData}
-                        idColumn={this.state.currentTableIdColumn}
-                        allColumns={this.state.currentTableAllColumns}
+                        idColumn={table && table.idColumn || ""}
+                        allColumns={table && table.columns || []}
                         sortColumn={this.state.currentTableSettings.sortColumn}
                         sortOrder={this.state.currentTableSettings.sortOrder}
                         selectedId={this.state.userSelectedId}
