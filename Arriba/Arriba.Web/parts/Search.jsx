@@ -62,15 +62,7 @@ export default  React.createClass({
         jsonQuery(configuration.url + "/allBasics",
             data => {
                 Object.values(data.content).forEach(table => table.idColumn = table.columns.find(col => col.isPrimaryKey).name || "");
-                this.setState({ allBasics: data.content }, () => {
-                    if (this.state.query) {
-                        // If there's a query, run it
-                        this.runSearch();
-                    } else if (this.state.userSelectedId) {
-                        // If there's an item to open, open it
-                        this.getTableBasics();
-                    }
-                });
+                this.setState({ allBasics: data.content }, this.runSearch);
             },
             (xhr, status, err) => {
                 this.setState({ blockingErrorStatus: status });
