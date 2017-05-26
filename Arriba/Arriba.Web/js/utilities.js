@@ -36,18 +36,22 @@ Object.assign = Object.assign || function(target, varArgs) { // .length of funct
 
 // Like Object.assign, but undefined properties do not overwrite the base.
 Object.merge = function() {
-    var args = [].slice.call(arguments).map(function(arg) { return Object.clean(arg || {}) });
+    var args = [].slice.call(arguments).map(function(arg) { return (arg || {}).cleaned });
     return Object.assign.apply(this, args);
 }
 
-// Strips undefined properties.
-Object.clean = function(o) {
-    return JSON.parse(JSON.stringify(o));
-};
+Object.defineProperties(Object.prototype, {
+    // Strips undefined properties.
+    'cleaned': {
+        get: function() { return JSON.parse(JSON.stringify(this)) }
+    }
+});
 
 Object.map = function(o, f) {
     return Object.keys(o).map(function(key) { return f(key, o[key]) });
 }
+
+
 
 Number.prototype.clamp = function(min, max) {
     return Math.min(Math.max(this, min), max);

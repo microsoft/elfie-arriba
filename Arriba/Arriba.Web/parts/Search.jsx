@@ -26,11 +26,11 @@ export default React.createClass({
         var columns = getParameterArrayForPrefix(this.props.params, "c");
 
         if (table) {
-            localStorage.mergeJson("table-" + table, Object.clean({
+            localStorage.mergeJson("table-" + table, ({
                 columns: columns.emptyToUndefined(),
                 sortColumn: this.props.params.ob || undefined, // Filter out empty strings.
                 sortOrder: this.props.params.so || undefined
-            }));
+            }).cleaned);
         }
 
         return {
@@ -306,12 +306,12 @@ export default React.createClass({
     },
     buildThisUrl: function (includeOpen) {
         var userTableSettings = this.state.userTableSettings;
-        var relevantParams = Object.clean({
+        var relevantParams = ({
             t: this.state.userSelectedTable,
             q: this.state.query || undefined,
             ob: userTableSettings.sortColumn,
             so: userTableSettings.sortOrder
-        });
+        }).cleaned;
 
         addArrayParameters(relevantParams, "c", userTableSettings.columns);
         if (Object.keys(userTableSettings).length) relevantParams.t = this.state.currentTable;
