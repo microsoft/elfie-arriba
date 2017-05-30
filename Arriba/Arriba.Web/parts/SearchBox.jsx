@@ -12,14 +12,17 @@ export default React.createClass({
         }
         document.addEventListener("click", this.handleClickDocument);
         window.addEventListener("storage", this);
+        window.addEventListener("mousewheel", this);
     },
     componentWillUnmount: function() {
         document.removeEventListener("click", this.handleClickDocument);
         window.removeEventListener("storage", this);
+        window.removeEventListener("mousewheel", this);
     },
     handleEvent: function(e) {
-        // Assumed to be type="storage" as we only subscribed for that.
-        if (["favorites"].includes(e.key)) setTimeout(() => this.forceUpdate()); // Just to update the star.
+        // Prefer "mousewheel" over "scroll" as the latter gets (noisily) triggered by results loading.
+        if (e.type === "mousewheel" && this.refs.suggestions && !this.refs.suggestions.contains(e.target)) this.setState({ suggestions: [] });
+        if (e.type === "storage" && ["favorites"].includes(e.key)) setTimeout(() => this.forceUpdate()); // Just to update the star.
     },
     handleFocusOrBlur: function () {
         if (isIE()) this.bypassInputOnce = true;
@@ -29,12 +32,12 @@ export default React.createClass({
             this.bypassInputOnce = false;
             return;
         }
-        this.setQuery(e.target.value);
+        this.setQuery(this.refs.searchBox.value);
     },
     handleClick: function (e) {
         // Re-show the suggestion list even if the textbox already has focus.
         // Limiting to "", to avoid spurious re-shows if clicking around existing text.
-        if (e.target.value === "") this.setQuery("");
+        this.setQuery(this.refs.searchBox.value);
     },
     handleKeyDown: function (e) {
         if (!this.state.suggestions.length) return;
@@ -90,8 +93,7 @@ export default React.createClass({
                     completed: data.content.complete, 
                     completionCharacters: data.content.completionCharacters.map(c => ({ "\t": "Tab" })[c] || c),
                 });
-            },
-            (xhr, status, err) => console.error(xhr.url, status, err.toString())
+            }
         );
     },
     toggleFavorite: function () {
@@ -127,7 +129,7 @@ export default React.createClass({
             return <svg><path id="p" d={d} /></svg>
         })();
 
-        return <div className="searchBar">
+        return <div className="searchBox">
             <div className={ "loading " + (this.props.loading ? "loading-active" : "") }></div>
             <input ref="searchBox" type="text" spellCheck="false"
                 placeholder="Search for..." 
@@ -139,7 +141,7 @@ export default React.createClass({
                 <span style={{ position: "relative" }} >
                     <div className="railContents">
                         {this.state.suggestions.length > 0 &&
-                            <div className="suggestions" >
+                            <div ref="suggestions" className="suggestions" >
                                 {svg}
                                 {this.state.suggestions.map((item, index) =>
                                     <div className={"suggestion " + (this.state.sel == index ? "suggestion-sel" : "" )}

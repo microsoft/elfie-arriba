@@ -344,7 +344,7 @@ export default React.createClass({
         this.selectDefaultQuery(name);
     },
     selectDefaultQuery: function(name) {
-        this.setState(Object.assign(this.getClearedUserSelections(), this.props.gridDefaultQueries[name]), this.runSearch);
+        this.setState(Object.assign(this.getClearedUserSelections(), configuration.gridDefaultQueries[name]), this.runSearch);
     },
     handleChangeAggregation: function(aggregationFunction, aggregateColumn) {
         this.setState({ aggregationFunction: aggregationFunction, aggregateColumn: aggregateColumn, userSelectedTable: this.state.currentTable }, this.runSearch);
@@ -427,7 +427,7 @@ export default React.createClass({
         // On query, ask for the count from every table.
         // Get the count of matches from each accessible table
         jsonQuery(
-            this.props.url + "/allCount",
+            configuration.url + "/allCount",
             function (data) {
                 var tableToShow = this.state.userSelectedTable;
                 if (!tableToShow) tableToShow = data.content.resultsPerTable[0].tableName;
@@ -437,14 +437,13 @@ export default React.createClass({
             (xhr, status, err) => {
                 this.setState({ allCountData: [], error: "Error: Server didn't respond to [" + xhr.url + "]. " + err });
                 this.setState({ blockingErrorStatus: status });
-                console.error(xhr.url, status, err.toString());
             },
             { q: this.state.query }
         );
     },
     getTableBasics: function (next) {
         // Once a table is selected, find out the columns
-        jsonQuery(this.props.url + "/table/" + this.state.currentTable,
+        jsonQuery(configuration.url + "/table/" + this.state.currentTable,
             function (data) {
                 this.setState(
                     {
@@ -454,7 +453,6 @@ export default React.createClass({
             }.bind(this),
             function (xhr, status, err) {
                 this.setState({ gridData: [], error: "Error: Server didn't respond to [" + xhr.url + "]. " + err });
-                console.error(xhr.url, status, err.toString());
             }.bind(this)
         );
     },
@@ -493,7 +491,6 @@ export default React.createClass({
             }.bind(this),
             function (xhr, status, err) {
                 this.setState({ gridData: [], error: "Error: Server didn't respond to [" + xhr.url + "]. " + err });
-                console.error(xhr.url, status, err.toString());
             }.bind(this)
         );
     },
@@ -524,7 +521,7 @@ export default React.createClass({
         }
 
         var queryString = buildUrlParameters(parameters);
-        return this.props.url + "/table/" + this.state.currentTable + queryString;
+        return configuration.url + "/table/" + this.state.currentTable + queryString;
     },
     buildThisUrl: function (includeOpen) {
         var relevantParams = {};
@@ -593,7 +590,7 @@ export default React.createClass({
             var defaultQueries = [];
             defaultQueries.push(<option key={"SQNone"} value=""></option>);
 
-            for (var name in this.props.gridDefaultQueries) {
+            for (var name in configuration.gridDefaultQueries) {
                 defaultQueries.push(<option key={"SQ" + name} value={name }>{name}</option>);
             }
 

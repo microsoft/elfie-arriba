@@ -5,9 +5,7 @@ window.configuration = require("../configuration/Configuration.jsx").default;
 class Index extends React.Component {
     render() {
         return window.location.pathname.startsWith("/Grid.html")
-            ? <Grid params={getQueryStringParameters()}
-                url={configuration.url} 
-                gridDefaultQueries={configuration.gridDefaultQueries} />
+            ? <Grid params={getQueryStringParameters()} />
             : <Search params={getQueryStringParameters()} />
     }
 }
