@@ -5,7 +5,7 @@
     padding: 8px;
 }
 
-.searchBar {
+.searchBox {
     background: hsl(0, 0, 97%);
     flex: 1;
     display: flex;
@@ -13,41 +13,42 @@
     position: relative;
     padding-right: 4px;
     margin-right: 8px;
-}
 
-/* Make the search box large, fill the space, well padded, slightly grey */
-.searchBar input { @extend .input;
-    box-sizing: border-box;
-    border: none;
-    flex: 1;
-    color: #666666;
-    background: transparent; // Override user agent.
-}
+    // Needed to keep the rail above resultsListing floating headers in Edge.
+    // Apparently the first non absolute element about rail needs to be z-indexed to make it work.
+    z-index: 1;
 
-/* Make the search icon (magnifying glass) the same as the search box and right next to it */
-.searchBar .searchIcon {
-    font-size: 16pt;
-    color: #666666;
-    padding: 4px;
-}
+    input { @extend .input;
+        box-sizing: border-box;
+        border: none;
+        flex: 1;
+        color: #666666;
+        background: transparent; // Override user agent.
+    }
 
-/* The indefinite progress bar to when waiting for the server */
-.searchBar .loading {
-    display: none;
-    position: absolute;
-    bottom: 0;
-    height: 3px;
-    width: 100%;
+    .searchIcon {
+        font-size: 16pt;
+        color: #666666;
+        padding: 4px;
+    }
 
-    &.loading-active {
-        display: block;
-        background: linear-gradient(90deg, transparent 70%, hsl(136, 100%, 23%) 85%, transparent);
-        background-size: 200%;
-        animation: wave 1.5s linear 500ms infinite;
+    .loading {
+        display: none;
+        position: absolute;
+        bottom: 0;
+        height: 3px;
+        width: 100%;
 
-        @keyframes wave {
-            0%    { background-position: 200% 50% }
-            100%  { background-position: 0%   50% }
+        &.loading-active {
+            display: block;
+            background: linear-gradient(90deg, transparent 70%, hsl(136, 100%, 23%) 85%, transparent);
+            background-size: 200%;
+            animation: wave 1.5s linear 500ms infinite;
+
+            @keyframes wave {
+                0%    { background-position: 200% 50% }
+                100%  { background-position: 0%   50% }
+            }
         }
     }
 }

@@ -6,12 +6,6 @@
     font-style: normal;
 }
 
-/* IE Webfont for Segoe UI Symbol, IE 10 and lower */
-@font-face {
-    font-family: 'segoe-ui-symbol-ie';
-    src: url(fonts/SEGUISYM.eot);
-}
-
 [class^="icon-"],
 [class*=" icon-"] {
   font-family: 'Segoe UI Symbol', segoe-ui-symbol, segoe-ui-symbol-ie !important; /* Otherwise would be superceeded by rules such as: .grid * { font-family: "Segoe UI Semibold" } */

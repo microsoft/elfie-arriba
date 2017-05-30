@@ -17,7 +17,7 @@ import ResultListing from "./ResultListing";
 window.configuration = require("../configuration/Configuration.jsx").default;
 
 // SearchMain wraps the overall search UI
-export default  React.createClass({
+export default React.createClass({
     getInitialState: function () {
         // For schema detection and possible migration.
         localStorage.setItem("version", 1);
@@ -26,11 +26,11 @@ export default  React.createClass({
         var columns = getParameterArrayForPrefix(this.props.params, "c");
 
         if (table) {
-            localStorage.mergeJson("table-" + table, Object.clean({
+            localStorage.mergeJson("table-" + table, ({
                 columns: columns.emptyToUndefined(),
                 sortColumn: this.props.params.ob || undefined, // Filter out empty strings.
                 sortOrder: this.props.params.so || undefined
-            }));
+            }).cleaned);
         }
 
         return {
@@ -47,8 +47,6 @@ export default  React.createClass({
             query: this.props.params.q || "",
 
             currentTable: table,
-            currentTableIdColumn: "",
-            currentTableAllColumns: [],
             currentTableSettings: {}, // {} denote no state, do not set to null.
 
             userSelectedTable: table,
@@ -62,20 +60,14 @@ export default  React.createClass({
 
         // On Page load, find the list of known table names
         jsonQuery(configuration.url + "/allBasics",
-            data => this.setState({ allBasics: data.content }),
+            data => {
+                Object.values(data.content).forEach(table => table.idColumn = table.columns.find(col => col.isPrimaryKey).name || "");
+                this.setState({ allBasics: data.content }, this.runSearch);
+            },
             (xhr, status, err) => {
                 this.setState({ blockingErrorStatus: status });
-                console.error(xhr.url, status, err.toString());
             }
         );
-
-        if (this.state.query) {
-            // If there's a query, run it
-            this.runSearch();
-        } else if (this.state.userSelectedId) {
-            // If there's an item to open, open it
-            this.getTableBasics();
-        }
     },
     componentWillUnmount: function () {
         window.removeEventListener("beforeunload", this);
@@ -127,7 +119,6 @@ export default  React.createClass({
             userSelectedTable: this.state.currentTable,
             userTableSettings: {}
         }, this.runSearch);
-
     },
     onAddClause: function (name, value) {
         this.setState({ query: this.state.query + " AND [" + name + "]=\"" + value + "\"" }, this.runSearch);
@@ -203,39 +194,33 @@ export default  React.createClass({
     },
     getTableBasics: function () {
         // Once a table is selected, find out the columns and primary key column for the table
-        this.jsonQueryWithError(configuration.url + "/table/" + this.state.currentTable, data => {
-            // Choose columns, sort column, sort order
+        var table = this.state.allBasics[this.state.currentTable];
 
-            var idColumn = data.content.columns.find(col => col.isPrimaryKey).name || "";
+        // If user did not specify default columns, fetch from local storage.
+        // Must write to userTableSettings (and not directly to currentTableSettings) so the URL can refect this.
+        // If a table was switched getAllCounts would have wiped userTableSettings and localStorage would show through.
+        var userTableSettings = Object.merge(
+            localStorage.getJson("table-" + this.state.currentTable),
+            this.state.userTableSettings);
 
-            // If user did not specify default columns, fetch from local storage.
-            // Must write to userTableSettings (and not directly to currentTableSettings) so the URL can refect this.
-            // If a table was switched getAllCounts would have wiped userTableSettings and localStorage would show through.
-            var userTableSettings = Object.merge(
-                localStorage.getJson("table-" + this.state.currentTable),
-                this.state.userTableSettings);
-
-            // Set the ID column, all columns, and listing columns
-            this.setState({
-                userTableSettings: userTableSettings,
-                currentTableIdColumn: idColumn,
-                currentTableAllColumns: data.content.columns,
-                currentTableSettings: Object.merge(
-                    { columns: [idColumn], sortColumn: idColumn, sortOrder: "asc" },
-                    configuration.listingDefaults && configuration.listingDefaults[this.state.currentTable],
-                    userTableSettings)
-            }, () => {
-                this.setHistory(); // Due to userTableSettings being set.
-                if (this.state.query) this.getResultsPage();
-                if (this.state.userSelectedId) this.getDetails();
-            });
+        // Set the ID column, all columns, and listing columns
+        this.setState({
+            userTableSettings: userTableSettings,
+            currentTableSettings: Object.merge(
+                { columns: [table.idColumn], sortColumn: table.idColumn, sortOrder: "asc" },
+                configuration.listingDefaults && configuration.listingDefaults[this.state.currentTable],
+                userTableSettings)
+        }, () => {
+            this.setHistory(); // Due to userTableSettings being set.
+            if (this.state.query) this.getResultsPage();
+            if (this.state.userSelectedId) this.getDetails();
         });
     },
     getResultsPage: function (i) {
         // Once the counts query runs and table basics are loaded, get a page of results
 
-        // If there's no table, id column, or query, don't do anything yet
-        if (!this.state.query || !this.state.currentTable || !this.state.currentTableIdColumn) return;
+        // If there's no query, or current table, don't do anything yet
+        if (!this.state.query || !this.state.currentTable) return;
 
         // Get enough items to fill the requested page number (rather than trying to append one page)
         if (!i) i = 0;
@@ -252,10 +237,12 @@ export default  React.createClass({
     getDetails: function () {
         // When an item is selected, get details for it
 
-        // If there's no table or id column don't do anything yet
-        if (!this.state.currentTable || !this.state.currentTableIdColumn) return;
+        // If there's no table don't do anything yet.
+        // Unlikely to reach this function before currentTable and allBasics are set.
+        // delayedRunSearch() would have to return before the other two.
+        if (!this.state.currentTable) return;
 
-        var detailsQuery = this.state.currentTableIdColumn + '="' + this.state.userSelectedId + '"';
+        var detailsQuery = this.state.allBasics[this.state.currentTable].idColumn + '="' + this.state.userSelectedId + '"';
         if (this.state.query) detailsQuery = detailsQuery + " AND " + this.state.query;
 
         // Select all columns for the selected item, with highlighting
@@ -293,7 +280,6 @@ export default  React.createClass({
             },
             function (xhr, status, err) {
                 this.setState({ allCountData: [], listingData: [], selectedItemData: null, loading: false, error: "Error: Server didn't respond to [" + xhr.url + "]. " + err });
-                console.error(xhr.url, status, err.toString());
             }.bind(this),
             parameters
         );
@@ -320,12 +306,12 @@ export default  React.createClass({
     },
     buildThisUrl: function (includeOpen) {
         var userTableSettings = this.state.userTableSettings;
-        var relevantParams = Object.clean({
+        var relevantParams = ({
             t: this.state.userSelectedTable,
             q: this.state.query || undefined,
             ob: userTableSettings.sortColumn,
             so: userTableSettings.sortOrder
-        });
+        }).cleaned;
 
         addArrayParameters(relevantParams, "c", userTableSettings.columns);
         if (Object.keys(userTableSettings).length) relevantParams.t = this.state.currentTable;
@@ -339,15 +325,16 @@ export default  React.createClass({
     render: function () {
         if (this.state.blockingErrorStatus != null) return <ErrorPage status={this.state.blockingErrorStatus} />;
 
+        var table = this.state.allBasics && this.state.currentTable && this.state.allBasics[this.state.currentTable] || undefined;
         var customDetailsView = (configuration.customDetailsProviders && configuration.customDetailsProviders[this.state.currentTable]) || ResultDetails;
 
-        var mainContent = this.state.query
+        var mainContent = this.state.allBasics && this.state.currentTable
             ? <SplitPane split="horizontal" minSize="300" isFirstVisible={this.state.listingData.content} isSecondVisible={this.state.userSelectedId}>
                 <InfiniteScroll page={this.state.page} hasMoreData={this.state.hasMoreData} loadMore={this.getResultsPage }>
                     <ResultListing ref={"list"}
                         data={this.state.listingData}
-                        idColumn={this.state.currentTableIdColumn}
-                        allColumns={this.state.currentTableAllColumns}
+                        idColumn={table && table.idColumn || ""}
+                        allColumns={table && table.columns || []}
                         sortColumn={this.state.currentTableSettings.sortColumn}
                         sortOrder={this.state.currentTableSettings.sortOrder}
                         selectedId={this.state.userSelectedId}

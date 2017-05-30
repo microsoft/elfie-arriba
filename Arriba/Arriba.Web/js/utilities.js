@@ -2,9 +2,15 @@
 var highlightRangeRegex = new RegExp(highlightChar + '(.+?)' + highlightChar, 'g');
 var highlightCharOnlyRegex = new RegExp(highlightChar, 'g');
 
+function log() { console.log.apply(console, arguments) }
+
 function isIE () {
     // Both Chrome and Edge report as "Chrome", only IE doesn't.
     return navigator.userAgent.indexOf('Chrome') === -1;
+}
+
+function isEdge() {
+    return navigator.userAgent.indexOf('Edge') !== -1
 }
 
 // From: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign
@@ -30,18 +36,22 @@ Object.assign = Object.assign || function(target, varArgs) { // .length of funct
 
 // Like Object.assign, but undefined properties do not overwrite the base.
 Object.merge = function() {
-    var args = [].slice.call(arguments).map(function(arg) { return Object.clean(arg || {}) });
+    var args = [].slice.call(arguments).map(function(arg) { return (arg || {}).cleaned });
     return Object.assign.apply(this, args);
 }
 
-// Strips undefined properties.
-Object.clean = function(o) {
-    return JSON.parse(JSON.stringify(o));
-};
+Object.defineProperties(Object.prototype, {
+    // Strips undefined properties.
+    'cleaned': {
+        get: function() { return JSON.parse(JSON.stringify(this)) }
+    }
+});
 
 Object.map = function(o, f) {
     return Object.keys(o).map(function(key) { return f(key, o[key]) });
 }
+
+
 
 Number.prototype.clamp = function(min, max) {
     return Math.min(Math.max(this, min), max);
@@ -50,6 +60,16 @@ Number.prototype.clamp = function(min, max) {
 String.prototype.startsWith = String.prototype.startsWith || function(searchString, position) {
     position = position || 0;
     return this.indexOf(searchString, position) === position;
+};
+
+String.prototype.endsWith = String.prototype.endsWith || function(searchString, position) {
+    var subjectString = this.toString();
+    if (typeof position !== 'number' || !isFinite(position) || Math.floor(position) !== position || position > subjectString.length) {
+        position = subjectString.length;
+    }
+    position -= searchString.length;
+    var lastIndex = subjectString.lastIndexOf(searchString, position);
+    return lastIndex !== -1 && lastIndex === position;
 };
 
 String.prototype.trimIf = function(prefix) {
@@ -126,8 +146,13 @@ Storage.prototype.mergeJson = function(keyName, keyObject) {
 // IE dispatches to all tabs. In this case we desire the IE behavior and dispatch makes the other browsers simulate it.
 Storage.prototype.dispatch = function(keyName) {
     if (isIE()) return;
-    var e = navigator.userAgent.indexOf('Edge') === -1 ? StorageEvent : Event;
-    window.dispatchEvent(new e("storage", { key: keyName }));
+    if (isEdge()) {
+        var e = new Event("storage");
+        e.key = keyName;
+        dispatchEvent(e);        
+    } else {
+        dispatchEvent(new StorageEvent("storage", { key: keyName }));                
+    }
 }
 
 
