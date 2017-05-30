@@ -80,13 +80,24 @@ namespace Arriba.Server.Application
 
         private IResponse GetAllBasics(IRequestContext ctx, Route route)
         {
+            bool hasTables = false;
+
             Dictionary<string, TableInformation> allBasics = new Dictionary<string, TableInformation>();
             foreach(string tableName in this.Database.TableNames)
             {
+                hasTables = true;
+
                 if (HasTableAccess(tableName, ctx.Request.User, PermissionScope.Reader))
                 {
                     allBasics[tableName] = GetTableBasics(tableName, ctx);
                 }
+            }
+
+            // If you didn't have access to any tables, return a distinct result to show Access Denied in the browser
+            // but not a 401, because that is eaten by CORS.
+            if(allBasics.Count == 0 && hasTables)
+            {
+                return ArribaResponse.Forbidden(null);
             }
 
             return ArribaResponse.Ok(allBasics);
