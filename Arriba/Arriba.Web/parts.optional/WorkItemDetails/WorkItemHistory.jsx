@@ -22,7 +22,7 @@ export default React.createClass({
             collection.push(
                 <div className="history">
                     <div><a className="who" href={mailTo} dangerouslySetInnerHTML={highlight(entry.who)} /> <span className="when">{dateTime.fromNow()}</span></div>
-                    <div className="comment" dangerouslySetInnerHTML={highlight(entry.comment)}></div>
+                    <div className="comment" dangerouslySetInnerHTML={highlightHtml(entry.comment)}></div>
                 </div>
             );
         }

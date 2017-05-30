@@ -37,10 +37,10 @@ export default React.createClass({
         }
 
         var description = null;
-        if(this.props.data["Description"]) description = <div className="box" dangerouslySetInnerHTML={highlight(this.props.data["Description"])}></div>;
+        if(this.props.data["Description"]) description = <div className="box" dangerouslySetInnerHTML={highlightHtml(this.props.data["Description"])}></div>;
 
         var reproSteps = null;
-        if(this.props.data["Repro Steps"]) reproSteps = <div className="box" dangerouslySetInnerHTML={highlight(this.props.data["Repro Steps"])}></div>;
+        if(this.props.data["Repro Steps"]) reproSteps = <div className="box" dangerouslySetInnerHTML={highlightHtml(this.props.data["Repro Steps"])}></div>;
 
         return (
             <div className="details">

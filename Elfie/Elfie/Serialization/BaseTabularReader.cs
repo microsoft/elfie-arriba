@@ -57,11 +57,10 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
     {
         private Stream _reader;
 
-        private List<string> _columnHeadingsList;
-        private Dictionary<string, int> _columnHeadings;
+        protected List<string> _columnHeadingsList;
+        protected Dictionary<string, int> _columnHeadings;
 
         private byte[] _buffer;
-        private int _rowCountRead;
         private int _nextRowIndexInBlock;
         private String8Set _currentBlock;
         private String8Set _currentRow;
@@ -92,7 +91,6 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             _columnHeadings = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
             _buffer = new byte[64 * 1024];
-            _rowCountRead = 0;
             _nextRowIndexInBlock = 0;
             _rowPositionArray = new PartialArray<int>(64, false);
             _cellPositionArray = new PartialArray<int>(1024, false);
@@ -110,7 +108,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
                 }
 
                 // Header row doesn't count toward row count read
-                _rowCountRead = 0;
+                RowCountRead = 0;
             }
         }
 
@@ -162,10 +160,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         ///  Returns the number of rows read so far.
         ///  If no newlines in rows, the RowCountRead is the line number of the current row.
         /// </summary>
-        public int RowCountRead
-        {
-            get { return _rowCountRead; }
-        }
+        public int RowCountRead { get; protected set; }
 
         /// <summary>
         ///  Return how many bytes were read so far.
@@ -189,7 +184,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         ///  reading the first row.
         /// </summary>
         /// <returns>True if another row exists, False if the TSV is out of content</returns>
-        public bool NextRow()
+        public virtual bool NextRow()
         {
             // If we're on the last row, ask for more (we don't read the last row in case it was only partially read into the buffer)
             if (_nextRowIndexInBlock >= _currentBlock.Count - 1)
@@ -204,7 +199,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             String8 currentLine = _currentBlock[_nextRowIndexInBlock];
 
             // Strip leading UTF8 BOM, if found, on first row
-            if (_rowCountRead == 0)
+            if (this.RowCountRead == 0)
             {
                 if (currentLine.Length >= 3 && currentLine[0] == 0xEF && currentLine[1] == 0xBB && currentLine[2] == 0xBF)
                 {
@@ -215,7 +210,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             // Split the line into cells
             _currentRow = SplitCells(currentLine, _cellPositionArray);
 
-            _rowCountRead++;
+            this.RowCountRead++;
             _nextRowIndexInBlock++;
             
             // Allocate a set of reusable String8TabularValues to avoid per-cell-value allocation or boxing.

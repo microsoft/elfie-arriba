@@ -45,9 +45,10 @@ namespace Arriba.Model.Query
         ///  Convert a literal column name back to a safe-to-parse identifier.
         /// </summary>
         /// <param name="columnName">Column Name to wrap</param>
-        /// <returns>Parsable version of column namwe</returns>
+        /// <returns>Parsable version of column name</returns>
         public static string WrapColumnName(string columnName)
         {
+            if (String.IsNullOrEmpty(columnName)) return "";
             return StringExtensions.Format("[{0}]", columnName.Replace("]", "]]"));
         }
 
@@ -74,6 +75,61 @@ namespace Arriba.Model.Query
             if (!shouldEscape) return value;
 
             return StringExtensions.Format("\"{0}\"", value.Replace("\"", "\"\""));
+        }
+
+        /// <summary>
+        ///  Convert a column name to the literal column name (unescape it).
+        /// </summary>
+        /// <param name="columnName">Column Name to unwrap</param>
+        /// <returns>Literal, unescaped column name</returns>
+        public static string UnwrapColumnName(string columnName)
+        {
+            if (String.IsNullOrEmpty(columnName)) return "";
+            if (!columnName.StartsWith("[") || !columnName.EndsWith("]")) return columnName;
+            return Unescape(columnName, ']');
+        }
+
+        /// <summary>
+        ///  Convert a value to the value (unescape it).
+        /// </summary>
+        /// <param name="value">Value to unwrap</param>
+        /// <returns>Literal, unescaped value</returns>
+        public static string UnwrapValue(string value)
+        {
+            if (String.IsNullOrEmpty(value)) return "";
+            if (!value.StartsWith("\"") || !value.EndsWith("\"")) return value;
+            return Unescape(value, '"');
+        }
+
+        private static string Unescape(string value, char escape)
+        {
+            StringBuilder result = new StringBuilder();
+            int lastIndex = 1;
+            int length = value.Length - 1;
+
+            while (lastIndex < length)
+            {
+                // Find the next escape char
+                int nextIndex = value.IndexOf(escape, lastIndex);
+
+                // If there are two together here, append one of them as a literal
+                if (nextIndex < length && value[nextIndex + 1] == escape)
+                {
+                    nextIndex++;
+                }
+
+                // Append everything before the escape
+                int appendLength = nextIndex - lastIndex;
+                if (appendLength > 0)
+                {
+                    result.Append(value.Substring(lastIndex, appendLength));
+                }
+
+                // Look after the escape for the next content
+                lastIndex = nextIndex + 1;
+            }
+
+            return result.ToString();
         }
 
         public static IExpression Parse(string whereClause, bool includeHintTerms = false)
