@@ -61,8 +61,12 @@ export default React.createClass({
         // On Page load, find the list of known table names
         jsonQuery(configuration.url + "/allBasics",
             data => {
-                Object.values(data.content).forEach(table => table.idColumn = table.columns.find(col => col.isPrimaryKey).name || "");
-                this.setState({ allBasics: data.content }, this.runSearch);
+                if (!data.content) {
+                    this.setState({ blockingErrorStatus: 401 });
+                } else {
+                    Object.values(data.content).forEach(table => table.idColumn = table.columns.find(col => col.isPrimaryKey).name || "");
+                    this.setState({ allBasics: data.content }, this.runSearch);
+                }
             },
             (xhr, status, err) => {
                 this.setState({ blockingErrorStatus: status });
