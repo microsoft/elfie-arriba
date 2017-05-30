@@ -97,7 +97,7 @@ namespace Arriba.Server.Application
             // but not a 401, because that is eaten by CORS.
             if(allBasics.Count == 0 && hasTables)
             {
-                return ArribaResponse.Forbidden(null);
+                return ArribaResponse.Ok(null);
             }
 
             return ArribaResponse.Ok(allBasics);
