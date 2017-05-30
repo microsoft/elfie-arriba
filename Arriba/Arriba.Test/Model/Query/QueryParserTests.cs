@@ -243,11 +243,40 @@ namespace Arriba.Test.Model.Query
         }
 
         [TestMethod]
-        public void ValuesContainingKeywords()
+        public void QueryParser_ValuesContainingKeywords()
         {
             // Try terms which start with, contain, or end with keywords (NOT, AND, OR)
             Assert.AreEqual("[*]:noted AND [*]:corn AND [*]:sandwiches", QueryParser.Parse("noted corn sandwiches").ToString());
             Assert.AreEqual("[*]:org AND [*]:constructor", QueryParser.Parse("org constructor").ToString());
+        }
+
+        [TestMethod]
+        public void QueryParser_EscapeAndUnescape()
+        {
+            Assert.AreEqual("", QueryParser.WrapColumnName(null));
+            Assert.AreEqual("", QueryParser.WrapColumnName(""));
+            Assert.AreEqual("[One]", QueryParser.WrapColumnName("One"));
+            Assert.AreEqual("[Owner [Ops]]]", QueryParser.WrapColumnName("Owner [Ops]"));
+
+            Assert.AreEqual("\"\"", QueryParser.WrapValue(null));
+            Assert.AreEqual("\"\"", QueryParser.WrapValue(""));
+            Assert.AreEqual("Simple", QueryParser.WrapValue("Simple"));
+            Assert.AreEqual("\"Bilbo \"\"Ringbearer\"\" Baggins\"", QueryParser.WrapValue("Bilbo \"Ringbearer\" Baggins"));
+
+            Assert.AreEqual("", QueryParser.UnwrapColumnName(null));
+            Assert.AreEqual("", QueryParser.UnwrapColumnName(""));
+            Assert.AreEqual("One", QueryParser.UnwrapColumnName("One"));
+            Assert.AreEqual("One", QueryParser.UnwrapColumnName("[One]"));
+            Assert.AreEqual("Owner [Ops]", QueryParser.UnwrapColumnName("[Owner [Ops]]]"));
+            Assert.AreEqual("Owner [[Ops]]", QueryParser.UnwrapColumnName("[Owner [[Ops]]]]]"));
+
+            Assert.AreEqual("", QueryParser.UnwrapValue(null));
+            Assert.AreEqual("", QueryParser.UnwrapValue(""));
+            Assert.AreEqual("", QueryParser.UnwrapValue("\"\""));
+            Assert.AreEqual("Simple", QueryParser.UnwrapValue("Simple"));
+            Assert.AreEqual("Simple", QueryParser.UnwrapValue("\"Simple\""));
+            Assert.AreEqual("Bilbo \"Ringbearer\" Baggins", QueryParser.UnwrapValue("\"Bilbo \"\"Ringbearer\"\" Baggins\""));
+            Assert.AreEqual("\"\"\"", QueryParser.UnwrapValue("\"\"\"\"\"\"\""));
         }
     }
 }
