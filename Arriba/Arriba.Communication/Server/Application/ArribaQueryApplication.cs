@@ -500,7 +500,7 @@ namespace Arriba.Server
 
                 if (dimensionParts.Count == 1 && dimensionParts[0].EndsWith(">"))
                 {
-                    query.Dimensions.Add(new DistinctValueDimension(dimensionParts[0].TrimEnd('>')));
+                    query.Dimensions.Add(new DistinctValueDimension(QueryParser.UnwrapColumnName(dimensionParts[0].TrimEnd('>'))));
                 }
                 else
                 {

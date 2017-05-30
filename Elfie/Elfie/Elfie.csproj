@@ -140,6 +140,7 @@
     <Compile Include="Serialization\FileIO.cs" />
     <Compile Include="Serialization\IBinarySerializable.cs" />
     <Compile Include="Model\Columns\IColumn.cs" />
+    <Compile Include="Serialization\IISTabularReader.cs" />
     <Compile Include="Serialization\ITabularValue.cs" />
     <Compile Include="Serialization\ITabularReader.cs" />
     <Compile Include="Serialization\ITabularWriter.cs" />
