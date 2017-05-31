@@ -178,19 +178,19 @@ namespace Arriba.Model.Query
         {
             public override Array GetUniqueValuesFromColumn(IColumn column, ShortSet whereSet, int count, out bool allValuesReturned)
             {
-                if(count <= 0)
+                if (count <= 0)
                 {
                     allValuesReturned = false;
                     return new T[0];
                 }
-                
+
                 IColumn<T> typedColumn = (IColumn<T>)column;
 
                 // Boolean columns aren't sorted - just check true and false
-                if(typedColumn is BooleanColumn)
+                if (typedColumn is BooleanColumn)
                 {
                     int countBefore = whereSet.Count();
-                    if(countBefore == 0)
+                    if (countBefore == 0)
                     {
                         allValuesReturned = true;
                         return new bool[0];
@@ -211,12 +211,12 @@ namespace Arriba.Model.Query
                     if (countWhichAreTrue > 0 && countWhichAreFalse > 0)
                     {
                         // If both existed and only one value was requested, return the value which more items had
-                        if(count == 1)
+                        if (count == 1)
                         {
                             allValuesReturned = false;
                             return new bool[] { (countWhichAreTrue > countWhichAreFalse) };
                         }
-                        
+
                         return new bool[] { true, false };
                     }
                     else if (countWhichAreTrue > 0)

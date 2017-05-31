@@ -167,7 +167,7 @@ namespace Arriba.Model.Query
                 if (_scanner.Current.Type == TokenType.End && String.IsNullOrEmpty(_scanner.Current.Prefix) && operatorText == "|")
                 {
                     // If '|' was typed and there's no follow space, keep suggesting '||'
-                    if(includeHintTerms) terms.Add(new TermExpression("") { Guidance = new IntelliSenseGuidance(operatorText, QueryTokenCategory.BooleanOperator) });
+                    if (includeHintTerms) terms.Add(new TermExpression("") { Guidance = new IntelliSenseGuidance(operatorText, QueryTokenCategory.BooleanOperator) });
                 }
                 else
                 {
@@ -178,7 +178,7 @@ namespace Arriba.Model.Query
             }
 
             // If there was something invalid at the end of the query, return a null result
-            if(_scanner.Current.Type != TokenType.End && _scanner.Current.Type != TokenType.RightParen)
+            if (_scanner.Current.Type != TokenType.End && _scanner.Current.Type != TokenType.RightParen)
             {
                 return null;
             }
@@ -220,7 +220,7 @@ namespace Arriba.Model.Query
                     hadExplicitBooleanOperator = true;
 
                     // If there's nothing after the And, add an empty term to hint intellisense
-                    if(_scanner.Current.Type == TokenType.End)
+                    if (_scanner.Current.Type == TokenType.End)
                     {
                         if (String.IsNullOrEmpty(_scanner.Current.Prefix))
                         {
@@ -229,7 +229,7 @@ namespace Arriba.Model.Query
                                 // If '&' was typed and there's no following space, keep suggesting '&&'
                                 if (includeHintTerms) terms.Add(new TermExpression("") { Guidance = new IntelliSenseGuidance(operatorText, QueryTokenCategory.BooleanOperator) });
                             }
-                            else if(operatorText == "&&")
+                            else if (operatorText == "&&")
                             {
                                 // If '&&', suggest next term (complete, unambiguous operator)
                                 if (includeHintTerms) terms.Add(new TermExpression("") { Guidance = new IntelliSenseGuidance("", QueryTokenCategory.Term) });
@@ -281,9 +281,9 @@ namespace Arriba.Model.Query
                 _scanner.Next();
 
                 // If the query ends with a !, create a term to hint
-                if(_scanner.Current.Type == TokenType.End)
+                if (_scanner.Current.Type == TokenType.End)
                 {
-                    if(includeHintTerms) return new TermExpression("") { Guidance = new IntelliSenseGuidance("", QueryTokenCategory.Term) };
+                    if (includeHintTerms) return new TermExpression("") { Guidance = new IntelliSenseGuidance("", QueryTokenCategory.Term) };
                 }
             }
 
@@ -395,15 +395,15 @@ namespace Arriba.Model.Query
             {
                 // If this is the end of the query and the start of an operator, assume the user wants to finish typing it
                 string possibleOperatorPrefix = String.Empty;
-                if(_scanner.IsLastToken())
+                if (_scanner.IsLastToken())
                 {
-                    if(_scanner.Current.Content == "|" || _scanner.Current.Content == "!")
+                    if (_scanner.Current.Content == "|" || _scanner.Current.Content == "!")
                     {
                         possibleOperatorPrefix = _scanner.Current.Content;
                         _scanner.Next();
                     }
                 }
-                
+
                 if (wasExplicitColumnName)
                 {
                     // "[ColumnName]" -> make it a not equals empty term, indicate operator needs completion
@@ -419,7 +419,7 @@ namespace Arriba.Model.Query
                 else
                 {
                     if (possibleOperatorPrefix == String.Empty)
-                    { 
+                    {
                         // "BareTerm" -> next thing could be a compare operator or another term
                         return new TermExpression(columnName) { Guidance = new IntelliSenseGuidance(String.Empty, QueryTokenCategory.CompareOperator | QueryTokenCategory.BooleanOperator | QueryTokenCategory.Term) };
                     }
@@ -473,8 +473,8 @@ namespace Arriba.Model.Query
                     // "[ColumnName] = \"Value" -> indicate value incomplete
                     return new TermExpression(columnName, op, value) { Guidance = new IntelliSenseGuidance(value, QueryTokenCategory.Value) };
                 }
-                else if(_scanner.Current.Type == TokenType.End && String.IsNullOrEmpty(_scanner.Current.Prefix))
-                { 
+                else if (_scanner.Current.Type == TokenType.End && String.IsNullOrEmpty(_scanner.Current.Prefix))
+                {
                     // "[ColumnName] = \"Value\"" [no trailing space] -> don't suggest anything yet
                     return new TermExpression(columnName, op, value) { Guidance = new IntelliSenseGuidance(String.Empty, QueryTokenCategory.None) };
                 }
@@ -600,9 +600,9 @@ namespace Arriba.Model.Query
 
                 _scanner.Next();
             }
-            
+
             // If the end token wasn't seen and there's trailing whitespace, it should be part of the value
-            if(!hadExplicitCompletion && _scanner.Current.Type == TokenType.End && _scanner.Current.Prefix.Length > 0)
+            if (!hadExplicitCompletion && _scanner.Current.Type == TokenType.End && _scanner.Current.Prefix.Length > 0)
             {
                 value.Append(_scanner.Current.Prefix);
             }

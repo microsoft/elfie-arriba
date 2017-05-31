@@ -1,6 +1,11 @@
-﻿using Microsoft.TeamFoundation.WorkItemTracking.Client;
-using Newtonsoft.Json;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
+
+using Microsoft.TeamFoundation.WorkItemTracking.Client;
+
+using Newtonsoft.Json;
 
 namespace Arriba.TfsWorkItemCrawler
 {
@@ -35,7 +40,7 @@ namespace Arriba.TfsWorkItemCrawler
                 writer.WritePropertyName("comment");
                 writer.WriteValue(l.Comment);
 
-                switch(l.BaseType)
+                switch (l.BaseType)
                 {
                     case BaseLinkType.WorkItemLink:
                         writer.WritePropertyName("id");

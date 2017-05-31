@@ -1,18 +1,23 @@
-using Microsoft.TeamFoundation.WorkItemTracking.Client;
-using Newtonsoft.Json;
+// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Xml.Serialization;
-using System.Collections.Generic;
-using System.IO;
-using System.Diagnostics;
+
 using Arriba.TfsWorkItemCrawler.ItemProviders;
 
+using Microsoft.TeamFoundation.WorkItemTracking.Client;
+
+using Newtonsoft.Json;
+
 namespace Arriba.TfsWorkItemCrawler
-{   
+{
     internal class ProductStudioHistoryJsonConverter : JsonConverter
     {
-
         public override bool CanConvert(Type objectType)
         {
             return typeof(ProductStudioFullHistory).IsAssignableFrom(objectType);
@@ -30,8 +35,8 @@ namespace Arriba.TfsWorkItemCrawler
             writer.WriteStartArray();
 
             IEnumerable<ProductStudioChangeHistory> changes = from change in fullHistory.ProductStudioChangeHistoryRecords
-                          orderby change.AddedDate descending
-                          select change;
+                                                              orderby change.AddedDate descending
+                                                              select change;
 
             foreach (ProductStudioChangeHistory change in changes)
             {
@@ -49,7 +54,6 @@ namespace Arriba.TfsWorkItemCrawler
                     writer.WriteValue(change.Value);
 
                     writer.WriteEndObject();
-
                 }
             }
 
@@ -59,7 +63,7 @@ namespace Arriba.TfsWorkItemCrawler
 
     public class ProductStudioFullHistory
     {
-        private static XmlSerializer xmlSerializer;
+        private static XmlSerializer s_xmlSerializer;
 
         [XmlArrayItem(ElementName = "ChangeHistory")]
         public List<ProductStudioChangeHistory> ProductStudioChangeHistoryRecords { get; set; }
@@ -71,14 +75,14 @@ namespace Arriba.TfsWorkItemCrawler
 
         static ProductStudioFullHistory()
         {
-            xmlSerializer = new XmlSerializer(typeof(ProductStudioFullHistory));
+            s_xmlSerializer = new XmlSerializer(typeof(ProductStudioFullHistory));
         }
 
         public static ProductStudioFullHistory LoadFullHistory(string rawHistory)
         {
             if (String.IsNullOrWhiteSpace(rawHistory)) { return new ProductStudioFullHistory(); }
 
-            Debug.Assert(xmlSerializer != null, "xmlSerializer must be initialized in the static constructor.");
+            Debug.Assert(s_xmlSerializer != null, "xmlSerializer must be initialized in the static constructor.");
 
             //Comes from database as ChangeHistroy entries with no root node. Need to wrap in root node to deserialize with XmlSerializer.
             string rawHistoryXml = String.Format("<ProductStudioFullHistory><ProductStudioChangeHistoryRecords>{0}</ProductStudioChangeHistoryRecords></ProductStudioFullHistory>", rawHistory);
@@ -87,7 +91,7 @@ namespace Arriba.TfsWorkItemCrawler
             {
                 try
                 {
-                    ProductStudioFullHistory hist = (ProductStudioFullHistory)xmlSerializer.Deserialize(reader);
+                    ProductStudioFullHistory hist = (ProductStudioFullHistory)s_xmlSerializer.Deserialize(reader);
 
                     foreach (ProductStudioChangeHistory change in hist.ProductStudioChangeHistoryRecords)
                     {

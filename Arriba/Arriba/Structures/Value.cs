@@ -267,11 +267,11 @@ namespace Arriba.Structures
             string asString;
 
             // Try to get string representation of value
-            if(_value is string)
+            if (_value is string)
             {
                 asString = (string)_value;
             }
-            else if(_value is ValueTypeReference<string>)
+            else if (_value is ValueTypeReference<string>)
             {
                 asString = (_value as ValueTypeReference<string>).Value;
             }
@@ -512,7 +512,7 @@ namespace Arriba.Structures
             }
 
             // If boolean and another type requested, offer as a number
-            if(idealTypeValue is bool)
+            if (idealTypeValue is bool)
             {
                 idealTypeValue = ((bool)idealTypeValue) ? 1 : 0;
             }
@@ -615,14 +615,14 @@ namespace Arriba.Structures
                     result = (double)asLong;
                     return true;
                 }
-                else if(t == typeof(bool))
+                else if (t == typeof(bool))
                 {
-                    if(asLong == 0)
+                    if (asLong == 0)
                     {
                         result = false;
                         return true;
                     }
-                    else if(asLong == 1)
+                    else if (asLong == 1)
                     {
                         result = true;
                         return true;

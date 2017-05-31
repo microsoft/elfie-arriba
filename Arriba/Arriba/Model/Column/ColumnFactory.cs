@@ -2,21 +2,20 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Collections.Generic;
+using COLUMN_CREATOR = System.Func<Arriba.Model.Column.ColumnDetails, string[], ushort, Arriba.Model.IUntypedColumn>;
 
 using Arriba.Extensions;
 using Arriba.Indexing;
 using Arriba.Model;
 using Arriba.Model.Column;
 using Arriba.Structures;
-using System.Collections.Generic;
-
-using COLUMN_CREATOR = System.Func<Arriba.Model.Column.ColumnDetails, string[], ushort, Arriba.Model.IUntypedColumn>;
 
 namespace Arriba
 {
     public static class ColumnFactory
     {
-        private static Dictionary<string, COLUMN_CREATOR> ColumnCreators;
+        private static Dictionary<string, COLUMN_CREATOR> s_columnCreators;
         static ColumnFactory()
         {
             ResetColumnCreators();
@@ -24,9 +23,9 @@ namespace Arriba
 
         internal static void ResetColumnCreators()
         {
-            ColumnCreators = new Dictionary<string, COLUMN_CREATOR>();
+            s_columnCreators = new Dictionary<string, COLUMN_CREATOR>();
 
-            ColumnCreators["bool"] = (details, columnComponents, initialCapacity) =>
+            s_columnCreators["bool"] = (details, columnComponents, initialCapacity) =>
             {
                 AdjustColumnComponents(ref columnComponents);
 
@@ -39,53 +38,53 @@ namespace Arriba
                 return utc;
             };
 
-            ColumnCreators["boolean"] = ColumnCreators["bool"];
+            s_columnCreators["boolean"] = s_columnCreators["bool"];
 
-            ColumnCreators["byte"] = (details, columnComponents, initialCapacity) => { AdjustColumnComponents(ref columnComponents); return Build<byte>(details, columnComponents, initialCapacity); };
+            s_columnCreators["byte"] = (details, columnComponents, initialCapacity) => { AdjustColumnComponents(ref columnComponents); return Build<byte>(details, columnComponents, initialCapacity); };
 
-            ColumnCreators["short"] = (details, columnComponents, initialCapacity) => { AdjustColumnComponents(ref columnComponents); return Build<short>(details, columnComponents, initialCapacity); };
-            ColumnCreators["int16"] = ColumnCreators["short"];
+            s_columnCreators["short"] = (details, columnComponents, initialCapacity) => { AdjustColumnComponents(ref columnComponents); return Build<short>(details, columnComponents, initialCapacity); };
+            s_columnCreators["int16"] = s_columnCreators["short"];
 
-            ColumnCreators["int"] = (details, columnComponents, initialCapacity) => { AdjustColumnComponents(ref columnComponents); return Build<int>(details, columnComponents, initialCapacity); };
-            ColumnCreators["int32"] = ColumnCreators["int"];
+            s_columnCreators["int"] = (details, columnComponents, initialCapacity) => { AdjustColumnComponents(ref columnComponents); return Build<int>(details, columnComponents, initialCapacity); };
+            s_columnCreators["int32"] = s_columnCreators["int"];
 
-            ColumnCreators["long"] = (details, columnComponents, initialCapacity) => { AdjustColumnComponents(ref columnComponents); return Build<long>(details, columnComponents, initialCapacity); };
-            ColumnCreators["int64"] = ColumnCreators["long"];
+            s_columnCreators["long"] = (details, columnComponents, initialCapacity) => { AdjustColumnComponents(ref columnComponents); return Build<long>(details, columnComponents, initialCapacity); };
+            s_columnCreators["int64"] = s_columnCreators["long"];
 
-            ColumnCreators["float"] = (details, columnComponents, initialCapacity) => { AdjustColumnComponents(ref columnComponents); return Build<float>(details, columnComponents, initialCapacity); };
-            ColumnCreators["single"] = ColumnCreators["float"];
+            s_columnCreators["float"] = (details, columnComponents, initialCapacity) => { AdjustColumnComponents(ref columnComponents); return Build<float>(details, columnComponents, initialCapacity); };
+            s_columnCreators["single"] = s_columnCreators["float"];
 
-            ColumnCreators["double"] = (details, columnComponents, initialCapacity) => { AdjustColumnComponents(ref columnComponents); return Build<double>(details, columnComponents, initialCapacity); };
+            s_columnCreators["double"] = (details, columnComponents, initialCapacity) => { AdjustColumnComponents(ref columnComponents); return Build<double>(details, columnComponents, initialCapacity); };
 
-            ColumnCreators["ushort"] = (details, columnComponents, initialCapacity) => { AdjustColumnComponents(ref columnComponents); return Build<ushort>(details, columnComponents, initialCapacity); };
-            ColumnCreators["uint16"] = ColumnCreators["ushort"];
+            s_columnCreators["ushort"] = (details, columnComponents, initialCapacity) => { AdjustColumnComponents(ref columnComponents); return Build<ushort>(details, columnComponents, initialCapacity); };
+            s_columnCreators["uint16"] = s_columnCreators["ushort"];
 
-            ColumnCreators["uint"] = (details, columnComponents, initialCapacity) => { AdjustColumnComponents(ref columnComponents); return Build<uint>(details, columnComponents, initialCapacity); };
-            ColumnCreators["uint32"] = ColumnCreators["uint"];
+            s_columnCreators["uint"] = (details, columnComponents, initialCapacity) => { AdjustColumnComponents(ref columnComponents); return Build<uint>(details, columnComponents, initialCapacity); };
+            s_columnCreators["uint32"] = s_columnCreators["uint"];
 
-            ColumnCreators["ulong"] = (details, columnComponents, initialCapacity) => { AdjustColumnComponents(ref columnComponents); return Build<ulong>(details, columnComponents, initialCapacity); };
-            ColumnCreators["uint64"] = ColumnCreators["ulong"];
+            s_columnCreators["ulong"] = (details, columnComponents, initialCapacity) => { AdjustColumnComponents(ref columnComponents); return Build<ulong>(details, columnComponents, initialCapacity); };
+            s_columnCreators["uint64"] = s_columnCreators["ulong"];
 
-            ColumnCreators["datetime"] = (details, columnComponents, initialCapacity) => { AdjustColumnComponents(ref columnComponents); return Build<DateTime>(details, columnComponents, initialCapacity); };
+            s_columnCreators["datetime"] = (details, columnComponents, initialCapacity) => { AdjustColumnComponents(ref columnComponents); return Build<DateTime>(details, columnComponents, initialCapacity); };
 
-            ColumnCreators["guid"] = (details, columnComponents, initialCapacity) => { AdjustColumnComponents(ref columnComponents); return Build<Guid>(details, columnComponents, initialCapacity); };
+            s_columnCreators["guid"] = (details, columnComponents, initialCapacity) => { AdjustColumnComponents(ref columnComponents); return Build<Guid>(details, columnComponents, initialCapacity); };
 
-            ColumnCreators["timespan"] = (details, columnComponents, initialCapacity) => { AdjustColumnComponents(ref columnComponents); return Build<TimeSpan>(details, columnComponents, initialCapacity); };
+            s_columnCreators["timespan"] = (details, columnComponents, initialCapacity) => { AdjustColumnComponents(ref columnComponents); return Build<TimeSpan>(details, columnComponents, initialCapacity); };
 
-            ColumnCreators["string"] = (details, columnComponents, initialCapacity) => { AdjustColumnComponents(ref columnComponents); return BuildByteBlock(details, columnComponents); };
-            ColumnCreators["json"] = ColumnCreators["string"];
-            ColumnCreators["html"] = ColumnCreators["string"];
-            ColumnCreators["stringset"] = ColumnCreators["string"];
+            s_columnCreators["string"] = (details, columnComponents, initialCapacity) => { AdjustColumnComponents(ref columnComponents); return BuildByteBlock(details, columnComponents); };
+            s_columnCreators["json"] = s_columnCreators["string"];
+            s_columnCreators["html"] = s_columnCreators["string"];
+            s_columnCreators["stringset"] = s_columnCreators["string"];
         }
 
         public static void AddColumnCreator(string coreType, COLUMN_CREATOR creationFunc)
         {
-            if (ColumnCreators.ContainsKey(coreType))
+            if (s_columnCreators.ContainsKey(coreType))
             {
                 throw new ArribaException(StringExtensions.Format("Creation method for Column Type '{0}' is already registered", coreType));
             }
 
-            ColumnCreators[coreType] = creationFunc;
+            s_columnCreators[coreType] = creationFunc;
         }
 
         public static SortedColumn<T> CreateSortedColumn<T>(IColumn<T> column, ushort initialCapacity) where T : IComparable<T>
@@ -115,7 +114,7 @@ namespace Arriba
 
             COLUMN_CREATOR creatorFunc = null;
 
-            if (ColumnCreators.TryGetValue(coreType, out creatorFunc) == false)
+            if (s_columnCreators.TryGetValue(coreType, out creatorFunc) == false)
             {
                 throw new ArribaException(StringExtensions.Format("Column Type '{0}' is not currently supported.", coreType));
             }
@@ -218,7 +217,7 @@ namespace Arriba
                     columnComponents = new string[] { "indexed[html]", "sorted", "string" };
                     coreType = "string";
                 }
-                else if(coreType.Equals("stringset"))
+                else if (coreType.Equals("stringset"))
                 {
                     columnComponents = new string[] { "indexed[set]", "sorted", "string" };
                     coreType = "string";

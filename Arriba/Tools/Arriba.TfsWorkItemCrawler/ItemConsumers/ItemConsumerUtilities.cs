@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 
 namespace Arriba.TfsWorkItemCrawler.ItemConsumers
 {
@@ -8,7 +11,7 @@ namespace Arriba.TfsWorkItemCrawler.ItemConsumers
         {
             if (config == null) throw new ArgumentNullException("config", "config is null.");
 
-            switch(config.ItemConsumer.ToLowerInvariant())
+            switch (config.ItemConsumer.ToLowerInvariant())
             {
                 case "":
                 case "arribaclient":

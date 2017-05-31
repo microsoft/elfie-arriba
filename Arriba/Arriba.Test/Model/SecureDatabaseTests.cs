@@ -1,12 +1,17 @@
-﻿using Arriba.Model;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
+using System.Collections.Generic;
+
+using Arriba.Model;
 using Arriba.Model.Column;
 using Arriba.Model.Expressions;
 using Arriba.Model.Query;
 using Arriba.Model.Security;
 using Arriba.Structures;
+
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
-using System.Collections.Generic;
 
 namespace Arriba.Test.Model
 {
@@ -143,7 +148,7 @@ namespace Arriba.Test.Model
         {
             if (expression is AllExceptColumnsTermExpression) return true;
 
-            foreach(IExpression child in expression.Children())
+            foreach (IExpression child in expression.Children())
             {
                 if (HasRestrictedClauses(child)) return true;
             }

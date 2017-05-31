@@ -1,14 +1,18 @@
-﻿using Arriba.Diagnostics;
-using Arriba.Model;
-using Arriba.Model.Column;
-using Arriba.Serialization;
-using Arriba.Structures;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+
+using Arriba.Diagnostics;
+using Arriba.Model;
+using Arriba.Model.Column;
 using Arriba.Model.Security;
-using System.Collections.Generic;
+using Arriba.Serialization;
+using Arriba.Structures;
 
 namespace Arriba.TfsWorkItemCrawler.ItemConsumers
 {
@@ -44,7 +48,6 @@ namespace Arriba.TfsWorkItemCrawler.ItemConsumers
             {
                 Trace.WriteLine(string.Format("Loading Arriba Table '{0}'...", this.Configuration.ArribaTable));
                 this.Table.Load(this.Configuration.ArribaTable);
-
             }
 
             // Verify all columns match requested types [will throw if column exists but as different type]
@@ -118,7 +121,6 @@ namespace Arriba.TfsWorkItemCrawler.ItemConsumers
                     Debugger.Break();
                     Trace.TraceError(String.Format("Consistency Errors Detected: {0}", String.Join("\r\n", d.Errors)));
                 }
-
             }
 
             this.Table.Save();

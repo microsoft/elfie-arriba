@@ -212,13 +212,13 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
 
             this.RowCountRead++;
             _nextRowIndexInBlock++;
-            
+
             // Allocate a set of reusable String8TabularValues to avoid per-cell-value allocation or boxing.
-            if(_valueBoxes == null || _valueBoxes.Length < _currentRow.Count)
+            if (_valueBoxes == null || _valueBoxes.Length < _currentRow.Count)
             {
                 _valueBoxes = new String8TabularValue[_currentRow.Count];
 
-                for(int i = 0; i < _valueBoxes.Length; ++i)
+                for (int i = 0; i < _valueBoxes.Length; ++i)
                 {
                     _valueBoxes[i] = new String8TabularValue();
                 }

@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Collections.Generic;
 
 using Arriba.Model.Expressions;
@@ -160,12 +163,12 @@ namespace Arriba.Model.Column
                 // Find rows start after the end of the search range
                 this.StartAddressColumn.TryWhere(Operator.GreaterThan, valueRange.EndInclusive, result, details);
             }
-            else if(op == Operator.LessThanOrEqual)
+            else if (op == Operator.LessThanOrEqual)
             {
                 // Find rows which end before the end of the search range
                 this.EndAddressColumn.TryWhere(Operator.LessThanOrEqual, valueRange.EndInclusive, result, details);
             }
-            else if(op == Operator.GreaterThanOrEqual)
+            else if (op == Operator.GreaterThanOrEqual)
             {
                 // Find rows which start after the start of the search range
                 this.StartAddressColumn.TryWhere(Operator.GreaterThanOrEqual, valueRange.StartInclusive, result, details);

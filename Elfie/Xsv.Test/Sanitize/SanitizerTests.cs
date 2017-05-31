@@ -1,13 +1,19 @@
-﻿using Microsoft.CodeAnalysis.Elfie.Model.Strings;
-using Microsoft.CodeAnalysis.Elfie.Serialization;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+
+using Microsoft.CodeAnalysis.Elfie.Model.Strings;
+using Microsoft.CodeAnalysis.Elfie.Serialization;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+
 using Xsv.Sanitize;
+
 using XsvConcat;
 
 namespace Xsv.Test
@@ -60,7 +66,7 @@ namespace Xsv.Test
             SanitizerProvider p = new SanitizerProvider();
 
             // Verify each known mapper behaves as expected
-            foreach(string mapperName in p.MapperTypes())
+            foreach (string mapperName in p.MapperTypes())
             {
                 Trace.WriteLine(mapperName);
                 Mapper_Basics(p.Mapper(mapperName));
@@ -77,7 +83,7 @@ namespace Xsv.Test
                 p.Mapper("MapperTypeWhichIsn'tDefined");
                 Assert.Fail("SanitizerProvider.Mapper() should throw when asked for an unknown mapper.");
             }
-            catch(UsageException)
+            catch (UsageException)
             {
                 // Pass
             }
@@ -92,7 +98,7 @@ namespace Xsv.Test
             Random r = new Random(0);
             HashSet<uint> hashes = new HashSet<uint>();
             HashSet<string> results = new HashSet<string>();
-            while(hashes.Count < 10000)
+            while (hashes.Count < 10000)
             {
                 // If the hash isn't a duplicate, verify the result isn't either
                 uint hash = (uint)r.Next();
@@ -129,18 +135,18 @@ namespace Xsv.Test
                 int pathColumnIndex = r.ColumnIndex("Path");
                 int isEmptyPathColumnIndex = r.ColumnIndex("IsEmptyPath");
 
-                while(r.NextRow())
+                while (r.NextRow())
                 {
                     int id = r.Current(idColumnIndex).ToInteger();
                     string path = r.Current(pathColumnIndex).ToString();
 
                     Assert.AreEqual(r.Current(isEmptyPathColumnIndex).ToBoolean(), String.IsNullOrEmpty(path), "IsEmptyPath condition matches whether mapped path is empty");
 
-                    if(id == 5)
+                    if (id == 5)
                     {
                         Assert.AreEqual("Elfie", path, "'Elfie' is echoed (Echo in spec)");
                     }
-                    else if(!String.IsNullOrEmpty(path))
+                    else if (!String.IsNullOrEmpty(path))
                     {
                         Assert.IsTrue(path.StartsWith("WarmBeggedTruth\\"), "Verify path is mapped in parts, and 'Elfie' is consistently mapped.");
                     }

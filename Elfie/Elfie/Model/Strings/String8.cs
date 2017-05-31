@@ -33,8 +33,8 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         }
 
         public static String8 Empty = new String8(null, 0, 0);
-        private static String8 True8 = String8.Convert("true", new byte[4]);
-        private static String8 False8 = String8.Convert("false", new byte[5]);
+        private static String8 s_true8 = String8.Convert("true", new byte[4]);
+        private static String8 s_false8 = String8.Convert("false", new byte[5]);
 
         #region Conversion
         /// <summary>
@@ -276,7 +276,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
                     if (_buffer[start + i] != value._buffer[value._index + i]) break;
                 }
 
-                if(i == length) return start - _index;
+                if (i == length) return start - _index;
             }
 
             return -1;
@@ -436,7 +436,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         /// <returns>String8 for boolean: "True" or "False"</returns>
         public static String8 FromBoolean(bool value)
         {
-            return (value ? True8 : False8);
+            return (value ? s_true8 : s_false8);
         }
 
         /// <summary>

@@ -1,9 +1,14 @@
-﻿using Elfie.Test;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
+using System.Globalization;
+
+using Elfie.Test;
+
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.CodeAnalysis.Elfie.Serialization;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
-using System.Globalization;
 
 namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
 {
@@ -36,13 +41,12 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
             ITabularValue_Basics((uint)121);
             ITabularValue_Basics((long)121);
             ITabularValue_Basics((ulong)121);
-
         }
 
         private static void ITabularValue_Basics(object value)
         {
             string valueString = null;
-            if(value != null)
+            if (value != null)
             {
                 if (value is DateTime)
                 {
@@ -101,6 +105,5 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
                 Verify.Exception<FormatException>(() => { var result = itv.ToDateTime(); });
             }
         }
-
     }
 }

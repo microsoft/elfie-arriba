@@ -1,8 +1,13 @@
-﻿using Elfie.Test;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
+
+using Elfie.Test;
+
 using Microsoft.CodeAnalysis.Elfie.Model;
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
 
 namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Column
 {
@@ -41,7 +46,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Column
             Verify.RoundTrip<DateTimeColumn>(column, readColumn);
             Assert.AreEqual(column.Count, readColumn.Count);
 
-            for(int i = 0; i < column.Count; ++i)
+            for (int i = 0; i < column.Count; ++i)
             {
                 Assert.AreEqual(column[i], readColumn[i]);
             }
