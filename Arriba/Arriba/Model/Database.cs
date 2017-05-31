@@ -151,7 +151,7 @@ namespace Arriba.Model
             return tableLazy.Value;
         }
 
-        public void ReloadTable(string tableName)
+        public virtual void ReloadTable(string tableName)
         {
             lock (_tableLock)
             {

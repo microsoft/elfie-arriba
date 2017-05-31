@@ -44,7 +44,7 @@ namespace Arriba.TfsWorkItemCrawler.ItemConsumers
                 CreateTableRequest ctr = new CreateTableRequest();
                 ctr.TableName = this.Configuration.ArribaTable;
                 ctr.ItemCountLimit = this.Configuration.ItemCountLimit;
-                ctr.Permissions = this.Configuration.LoadPermissions();
+                ctr.Permissions = permissions;
 
                 this.Client.CreateTableAsync(ctr).Wait();
             }
