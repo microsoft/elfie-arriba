@@ -1,7 +1,12 @@
-﻿using Microsoft.CodeAnalysis.Elfie.Model.Strings;
-using Microsoft.CodeAnalysis.Elfie.Serialization;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Collections.Generic;
+
+using Microsoft.CodeAnalysis.Elfie.Model.Strings;
+using Microsoft.CodeAnalysis.Elfie.Serialization;
+
 using XsvConcat;
 
 namespace Xsv.Sanitize
@@ -95,7 +100,7 @@ namespace Xsv.Sanitize
                 string columnName = columnNames[i];
 
                 IColumnHandler handler;
-                if(this.DropColumns.Contains(columnName))
+                if (this.DropColumns.Contains(columnName))
                 {
                     handler = null;
                 }
@@ -136,10 +141,10 @@ namespace Xsv.Sanitize
                 {
                     writer.SetColumns(columnsToOutput);
 
-                    while(reader.NextRow())
+                    while (reader.NextRow())
                     {
                         // If there's a sample column, decide whether to include this row
-                        if(sampleColumnIndex > -1)
+                        if (sampleColumnIndex > -1)
                         {
                             // Sample *without* the hashkey, so the same rows are consistently included or excluded.
                             uint sampleValueHash = Hashing.Hash(reader.Current(sampleColumnIndex).ToString8(), 0);
@@ -147,7 +152,7 @@ namespace Xsv.Sanitize
                         }
 
                         // Run the handler for every input column, writing the output if there is one
-                        for(int i = 0; i < reader.CurrentRowColumns; ++i)
+                        for (int i = 0; i < reader.CurrentRowColumns; ++i)
                         {
                             IColumnHandler handler = handlers[i];
                             if (handler != null)

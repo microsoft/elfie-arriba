@@ -1,7 +1,6 @@
-﻿using Arriba.Model.Column;
-using Arriba.TfsWorkItemCrawler.ItemConsumers;
-using Arriba.TfsWorkItemCrawler.ItemProviders;
-using Newtonsoft.Json;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -9,11 +8,17 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 
+using Arriba.Model.Column;
+using Arriba.TfsWorkItemCrawler.ItemConsumers;
+using Arriba.TfsWorkItemCrawler.ItemProviders;
+
+using Newtonsoft.Json;
+
 namespace Arriba.TfsWorkItemCrawler
 {
-    class Program
+    internal class Program
     {
-        static int Main(string[] args)
+        private static int Main(string[] args)
         {
             if (args.Length < 2)
             {
@@ -70,7 +75,7 @@ namespace Arriba.TfsWorkItemCrawler
                 }
                 catch (AggregateException ex)
                 {
-                    foreach(Exception inner in ex.InnerExceptions)
+                    foreach (Exception inner in ex.InnerExceptions)
                     {
                         Trace.TraceError(String.Format("ERROR: {0}\r\n{1}", Environment.CommandLine, inner));
                     }
@@ -85,7 +90,7 @@ namespace Arriba.TfsWorkItemCrawler
             }
         }
 
-        static void Usage()
+        private static void Usage()
         {
             Console.WriteLine(
 @" Usage: Arriba.TfsWorkItemCrawler <configName> <mode> [<modeArguments>]
@@ -94,6 +99,5 @@ namespace Arriba.TfsWorkItemCrawler
      'Arriba.TfsWorkItemCrawler MyDatabase -password -> Local User Encrypt a TFS online password for config.
 ");
         }
-
     }
 }

@@ -307,8 +307,6 @@ namespace Microsoft.CodeAnalysis.Elfie.Indexer.Crawlers
             builder.Append(')');
             return builder.ToString();
         }
-
-        
     }
 
     public static class MissingExtensions

@@ -1,11 +1,6 @@
-using Arriba.Extensions;
-using Arriba.Model.Column;
-using Arriba.Structures;
-using Microsoft.TeamFoundation.Client;
-using Microsoft.TeamFoundation.WorkItemTracking.Client;
-using Microsoft.VisualStudio.Services.Client;
-using Microsoft.VisualStudio.Services.Common;
-using Newtonsoft.Json;
+// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -15,6 +10,17 @@ using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
+
+using Arriba.Extensions;
+using Arriba.Model.Column;
+using Arriba.Structures;
+
+using Microsoft.TeamFoundation.Client;
+using Microsoft.TeamFoundation.WorkItemTracking.Client;
+using Microsoft.VisualStudio.Services.Client;
+using Microsoft.VisualStudio.Services.Common;
+
+using Newtonsoft.Json;
 
 namespace Arriba.TfsWorkItemCrawler.ItemProviders
 {
@@ -140,18 +146,18 @@ namespace Arriba.TfsWorkItemCrawler.ItemProviders
         public IList<ColumnDetails> GetColumns()
         {
             List<ColumnDetails> columns = new List<ColumnDetails>();
-			
-			// Add columns from schema
-            foreach(FieldDefinition column in this.Store.FieldDefinitions)
+
+            // Add columns from schema
+            foreach (FieldDefinition column in this.Store.FieldDefinitions)
             {
                 columns.Add(new ColumnDetails(column.Name, MapType(column), null, null, column.Name == "ID"));
             }
-			
-			// Add specially handled columns [see below]
-			columns.Add(new ColumnDetails("FullHistory", "html", null));
-			columns.Add(new ColumnDetails("Attachments", "json", null));
-			columns.Add(new ColumnDetails("Links", "json", null));
-			
+
+            // Add specially handled columns [see below]
+            columns.Add(new ColumnDetails("FullHistory", "html", null));
+            columns.Add(new ColumnDetails("Attachments", "json", null));
+            columns.Add(new ColumnDetails("Links", "json", null));
+
             return columns;
         }
 
@@ -159,7 +165,7 @@ namespace Arriba.TfsWorkItemCrawler.ItemProviders
         {
             if (column.Name == "Attachments" || column.Name == "Links") return "json";
 
-            switch(column.FieldType)
+            switch (column.FieldType)
             {
                 case FieldType.Boolean:
                     return "bool";
@@ -238,7 +244,7 @@ namespace Arriba.TfsWorkItemCrawler.ItemProviders
 
                 // Record the IDs to load
                 int count = items.Count;
-          
+
                 for (int i = 0; i < count; ++i)
                 {
                     WorkItem item = items[i];
@@ -293,8 +299,8 @@ namespace Arriba.TfsWorkItemCrawler.ItemProviders
                 WorkItem item = itemCollection[itemIndex];
 
                 int fieldIndex = 0;
-                foreach(string columnName in columnNames)
-                { 
+                foreach (string columnName in columnNames)
+                {
                     try
                     {
                         result[itemIndex, fieldIndex] = ItemProviderUtilities.Canonicalize(GetFieldValue(item, columnName));

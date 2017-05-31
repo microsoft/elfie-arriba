@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Text;
 
 namespace Xsv.Sanitize
@@ -17,7 +20,7 @@ namespace Xsv.Sanitize
             StringBuilder result = new StringBuilder();
             uint hashRemaining = hash;
 
-            while(hashRemaining > 0)
+            while (hashRemaining > 0)
             {
                 result.Append((char)('A' + Hashing.Extract(ref hashRemaining, 26)));
             }

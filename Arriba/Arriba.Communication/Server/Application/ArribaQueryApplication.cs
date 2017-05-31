@@ -11,6 +11,8 @@ using System.Threading.Tasks;
 using Arriba.Communication;
 using Arriba.Communication.Application;
 using Arriba.Model;
+using Arriba.Model.Column;
+using Arriba.Model.Correctors;
 using Arriba.Model.Expressions;
 using Arriba.Model.Query;
 using Arriba.Model.Security;
@@ -20,8 +22,6 @@ using Arriba.Serialization.Csv;
 using Arriba.Server.Authentication;
 using Arriba.Server.Hosting;
 using Arriba.Structures;
-using Arriba.Model.Correctors;
-using Arriba.Model.Column;
 
 namespace Arriba.Server
 {
@@ -70,7 +70,7 @@ namespace Arriba.Server
             SelectResult result = null;
 
             // If no columns were requested or this is RSS, get only the ID column
-            if(query.Columns == null || query.Columns.Count == 0 || String.Equals(outputFormat, "rss", StringComparison.OrdinalIgnoreCase))
+            if (query.Columns == null || query.Columns.Count == 0 || String.Equals(outputFormat, "rss", StringComparison.OrdinalIgnoreCase))
             {
                 query.Columns = new string[] { table.IDColumn.Name };
             }
@@ -130,7 +130,7 @@ namespace Arriba.Server
             if (!String.IsNullOrEmpty(take)) query.Count = UInt16.Parse(take);
 
             string sortOrder = ctx.Request.ResourceParameters["so"] ?? "";
-            switch(sortOrder.ToLowerInvariant())
+            switch (sortOrder.ToLowerInvariant())
             {
                 case "":
                 case "asc":
@@ -164,7 +164,7 @@ namespace Arriba.Server
             List<string> result = new List<string>();
 
             int i = 1;
-            while(true)
+            while (true)
             {
                 string value = request.ResourceParameters[baseName + i.ToString()];
                 if (String.IsNullOrEmpty(value)) break;
@@ -191,7 +191,7 @@ namespace Arriba.Server
             if (result.Count == 0)
             {
                 string delimitedValue = request.ResourceParameters[nameIfDelimited];
-                if(!String.IsNullOrEmpty(delimitedValue))
+                if (!String.IsNullOrEmpty(delimitedValue))
                 {
                     result = new List<string>(delimitedValue.Split(','));
                 }
@@ -207,12 +207,12 @@ namespace Arriba.Server
             List<string> joinQueries = ReadParameterSet(ctx.Request, "q");
             List<string> joinTables = ReadParameterSet(ctx.Request, "t");
 
-            for(int queryIndex = 0; queryIndex < Math.Min(joinQueries.Count, joinTables.Count); ++queryIndex)
+            for (int queryIndex = 0; queryIndex < Math.Min(joinQueries.Count, joinTables.Count); ++queryIndex)
             {
                 joins.Add(new SelectQuery() { Where = SelectQuery.ParseWhere(joinQueries[queryIndex]), TableName = joinTables[queryIndex] });
             }
 
-            if(joins.Count == 0)
+            if (joins.Count == 0)
             {
                 return primaryQuery;
             }
@@ -241,9 +241,9 @@ namespace Arriba.Server
                 // As a mitigation for round-tripping, the CsvReader will trim column names. Sigh. 
                 List<string> columns = new List<string>();
 
-                foreach(ColumnDetails column in items.Columns)
+                foreach (ColumnDetails column in items.Columns)
                 {
-                    if(columns.Count == 0 && column.Name.Equals("ID", StringComparison.OrdinalIgnoreCase))
+                    if (columns.Count == 0 && column.Name.Equals("ID", StringComparison.OrdinalIgnoreCase))
                     {
                         columns.Add(" ID");
                     }
@@ -431,7 +431,7 @@ namespace Arriba.Server
                 {
                     if (this.HasTableAccess(tableName, user, PermissionScope.Reader))
                     {
-                        if(String.IsNullOrEmpty(selectedTable) || selectedTable.Equals(tableName, StringComparison.OrdinalIgnoreCase))
+                        if (String.IsNullOrEmpty(selectedTable) || selectedTable.Equals(tableName, StringComparison.OrdinalIgnoreCase))
                         {
                             tables.Add(this.Database[tableName]);
                         }
@@ -499,7 +499,7 @@ namespace Arriba.Server
                 query.Where = String.IsNullOrEmpty(queryString) ? new AllExpression() : SelectQuery.ParseWhere(queryString);
             }
 
-            for(char dimensionPrefix = 'd'; ctx.Request.ResourceParameters.Contains(dimensionPrefix.ToString() + "1"); ++dimensionPrefix)
+            for (char dimensionPrefix = 'd'; ctx.Request.ResourceParameters.Contains(dimensionPrefix.ToString() + "1"); ++dimensionPrefix)
             {
                 List<string> dimensionParts = ReadParameterSet(ctx.Request, dimensionPrefix.ToString());
 

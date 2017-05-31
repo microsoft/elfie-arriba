@@ -63,7 +63,7 @@ namespace Arriba.Test.Serialization
                 writer = new CsvWriter(context, new string[] { "ID", "Changed Date", "Title" });
                 writer.AppendRow(new object[] { 1521, new DateTime(2013, 12, 31, 0, 0, 0, DateTimeKind.Utc), "Value, escaping required." });
 
-                string expected = 
+                string expected =
 @"ID,Changed Date,Title" + Environment.NewLine +
 @"1520,2013-12-30 00:00:00Z,Value with no escaping." + Environment.NewLine +
 @"1521,2013-12-31 00:00:00Z,""Value, escaping required.""" + Environment.NewLine;
@@ -88,7 +88,7 @@ namespace Arriba.Test.Serialization
                     writer.AppendRow(new object[] { new byte[] { 49, 50, 51 } });
                     writer.AppendRow(new object[] { Guid.Empty });
 
-                    string expected = 
+                    string expected =
 @"Value" + Environment.NewLine +
 @"" + Environment.NewLine +
 @"True" + Environment.NewLine +

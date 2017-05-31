@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -11,7 +12,6 @@ using Arriba.Model.Expressions;
 using Arriba.Model.Query;
 using Arriba.Serialization;
 using Arriba.Structures;
-using System.Collections.Concurrent;
 
 namespace Arriba.Model
 {
@@ -305,7 +305,7 @@ namespace Arriba.Model
                     typedIdColumn = (IColumn<T>)idColumn.InnerColumn;
                 }
 
-                for( int index = 0; index < values.RowCount; ++index)
+                for (int index = 0; index < values.RowCount; ++index)
                 {
                     // Look for the LIDs a
                     T externalID = values.GetValueT<T>(index, idColumnIndex);
@@ -352,9 +352,9 @@ namespace Arriba.Model
                             if (newlyAssignedLIDs.TryGetValue(externalID, out lid) == false)
                             {
                                 // If in "UpdateOnly" mode, throw
-                                if(mode == AddOrUpdateMode.UpdateOnly)
+                                if (mode == AddOrUpdateMode.UpdateOnly)
                                 {
-                                    throw new ArribaWriteException(externalID, p.IDColumn.Name, externalID, 
+                                    throw new ArribaWriteException(externalID, p.IDColumn.Name, externalID,
                                         new ArribaException("AddOrUpdate was in UpdateOnly mode but contained a new ID, which is an error."));
                                 }
 
@@ -363,7 +363,7 @@ namespace Arriba.Model
 
                                 if (lid == ushort.MaxValue)
                                 {
-                                    throw new ArribaWriteException(externalID, p.IDColumn.Name, externalID, 
+                                    throw new ArribaWriteException(externalID, p.IDColumn.Name, externalID,
                                         new ArribaException("Column full in Partition. Unable to add items."));
                                 }
 
@@ -406,7 +406,7 @@ namespace Arriba.Model
                     typedColumn = (IColumn<T>)untypedColumn.InnerColumn;
                 }
 
-                for( int rowIndex = 0; rowIndex < values.RowCount; ++rowIndex)
+                for (int rowIndex = 0; rowIndex < values.RowCount; ++rowIndex)
                 {
                     T value = values.GetValueT<T>(rowIndex, columnIndex);
                     // If the item is new and no LID was assigned, we don't set values
@@ -426,7 +426,6 @@ namespace Arriba.Model
                     {
                         throw new ArribaWriteException(values[rowIndex, 0], columnName, value, ex);
                     }
-
                 }
             }
         }

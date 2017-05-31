@@ -25,7 +25,7 @@ namespace Arriba.Indexing
             {
                 byte c = text[i];
 
-                if(c == UTF8.Semicolon)
+                if (c == UTF8.Semicolon)
                 {
                     result.Add(lastGroup, i - lastGroup);
                     lastGroup = i + 1;

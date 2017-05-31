@@ -1,7 +1,11 @@
-﻿using System;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Collections.Generic;
-using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using System.IO;
+
+using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 
 namespace Microsoft.CodeAnalysis.Elfie.Serialization
 {
@@ -24,10 +28,10 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
     /// </summary>
     public class JsonTabularWriter : ITabularWriter
     {
-        private static String8 BeforeColumnNames = String8.Convert("{\n\"colIndex\": { ", new byte[16]);
-        private static String8 AfterColumnNames = String8.Convert(" },\n\"rows\": [\n", new byte[14]);
-        private static String8 EscapedCharPrefix = String8.Convert("\\u00", new byte[4]);
-        private static String8 ValueDelimiter = String8.Convert(", ", new byte[2]);
+        private static String8 s_beforeColumnNames = String8.Convert("{\n\"colIndex\": { ", new byte[16]);
+        private static String8 s_afterColumnNames = String8.Convert(" },\n\"rows\": [\n", new byte[14]);
+        private static String8 s_escapedCharPrefix = String8.Convert("\\u00", new byte[4]);
+        private static String8 s_valueDelimiter = String8.Convert(", ", new byte[2]);
 
         private Stream _stream;
         private byte[] _typeConversionBuffer;
@@ -37,7 +41,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         private int _rowCountWritten;
         private int _currentRowColumnCount;
         private bool _inPartialColumn;
-        
+
         /// <summary>
         ///  Construct a new writer to write to the given file path.
         ///  The file is overwritten if it exists.
@@ -60,7 +64,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
 
             _rowCountWritten = 0;
             _currentRowColumnCount = 0;
-            _inPartialColumn = false;            
+            _inPartialColumn = false;
         }
 
         #region Escaping
@@ -77,7 +81,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         {
             if (c < 32)
             {
-                EscapedCharPrefix.WriteTo(_stream);
+                s_escapedCharPrefix.WriteTo(_stream);
                 _stream.WriteByte(ToHexDigit(c / 16));
                 _stream.WriteByte(ToHexDigit(c & 0xF));
             }
@@ -117,7 +121,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
                     // Write the escaped character
                     if (isControl)
                     {
-                        EscapedCharPrefix.WriteTo(_stream);
+                        s_escapedCharPrefix.WriteTo(_stream);
                         _stream.WriteByte(ToHexDigit(c / 16));
                         _stream.WriteByte(ToHexDigit(c & 0xF));
                     }
@@ -143,7 +147,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
 
             //  {
             //     "colIndex": { 
-            BeforeColumnNames.WriteTo(_stream);
+            s_beforeColumnNames.WriteTo(_stream);
 
             int columnIndex = 0;
 
@@ -153,7 +157,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
                 if (_typeConversionBuffer == null || _typeConversionBuffer.Length < length) _typeConversionBuffer = new byte[length];
 
                 // , 
-                if (columnIndex > 0) ValueDelimiter.WriteTo(_stream);
+                if (columnIndex > 0) s_valueDelimiter.WriteTo(_stream);
 
                 // "ColumnName"
                 _stream.WriteByte(UTF8.Quote);
@@ -169,7 +173,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
 
             // },
             // "rows": { 
-            AfterColumnNames.WriteTo(_stream);
+            s_afterColumnNames.WriteTo(_stream);
 
             _columnCount = columnIndex;
         }
@@ -197,7 +201,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             if (_currentRowColumnCount == 0)
             {
                 // Write comma and newline after previous row
-                if(_rowCountWritten > 0)
+                if (_rowCountWritten > 0)
                 {
                     _stream.WriteByte(UTF8.Comma);
                     _stream.WriteByte(UTF8.Newline);
@@ -210,7 +214,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             else
             {
                 // ", "
-                ValueDelimiter.WriteTo(_stream);
+                s_valueDelimiter.WriteTo(_stream);
             }
 
             _currentRowColumnCount++;
@@ -305,7 +309,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             if (!_inPartialColumn) throw new InvalidOperationException("WriteValueStart must be called before WriteValuePart.");
             WriteEscaped(value);
         }
-#endregion
+        #endregion
 
         public long BytesWritten
         {
@@ -324,14 +328,14 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
                 // <closing 'rows'>
                 //    ]
                 // }
-                if(_rowCountWritten > 0)
+                if (_rowCountWritten > 0)
                 {
                     _stream.WriteByte(UTF8.Newline);
                     _stream.WriteByte(UTF8.RightBracket);
                     _stream.WriteByte(UTF8.Newline);
                     _stream.WriteByte(UTF8.RightBrace);
                 }
-                
+
                 _stream.Dispose();
                 _stream = null;
             }

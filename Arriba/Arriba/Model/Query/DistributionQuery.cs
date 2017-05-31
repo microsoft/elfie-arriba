@@ -3,10 +3,10 @@
 
 using System;
 
+using Arriba.Extensions;
 using Arriba.Model.Correctors;
 using Arriba.Model.Expressions;
 using Arriba.Structures;
-using Arriba.Extensions;
 
 namespace Arriba.Model.Query
 {
@@ -67,7 +67,7 @@ namespace Arriba.Model.Query
             }
 
             // Verify we were able to get percentile values
-            if(this.Buckets == null)
+            if (this.Buckets == null)
             {
                 result.Details.AddError(ExecutionDetails.ColumnDoesNotSupportOperator, "percentile", this.Column);
                 return result;
@@ -293,7 +293,7 @@ namespace Arriba.Model.Query
                 buckets[0] = Round(buckets[0], interval);
                 buckets[buckets.Length - 1] = Round(buckets[buckets.Length - 1], interval);
                 interval = Round(interval, interval);
-                
+
                 // Set the buckets
                 for (int i = 1; i < buckets.Length - 1; ++i)
                 {
@@ -486,15 +486,15 @@ namespace Arriba.Model.Query
             #region Round
             internal static DateTime Round(DateTime value, TimeSpan interval)
             {
-                if(interval.TotalDays >= 1)
+                if (interval.TotalDays >= 1)
                 {
                     value = value.Date;
                 }
-                else if(interval.TotalHours >= 1)
+                else if (interval.TotalHours >= 1)
                 {
                     value = value.Date.AddHours(Math.Round(value.TimeOfDay.TotalHours));
                 }
-                else if(interval.TotalMinutes >= 1)
+                else if (interval.TotalMinutes >= 1)
                 {
                     value = value.Date.AddMinutes(Math.Round(value.TimeOfDay.TotalMinutes));
                 }
@@ -568,11 +568,11 @@ namespace Arriba.Model.Query
                 {
                     value = Math.Round(value, 0);
                 }
-                else if(value > 10)
+                else if (value > 10)
                 {
                     value = Math.Round(value, 1);
                 }
-                else if(value > 1)
+                else if (value > 1)
                 {
                     value = Math.Round(value, 2);
                 }

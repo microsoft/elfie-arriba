@@ -1,7 +1,11 @@
-﻿using Microsoft.CodeAnalysis.Elfie.Model.Strings;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Collections.Generic;
 using System.Data;
+
+using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 
 namespace Microsoft.CodeAnalysis.Elfie.Serialization
 {
@@ -23,7 +27,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
 
         public DataReaderTabularReader(IDataReader reader)
         {
-            this._reader = reader;
+            _reader = reader;
 
             _columnNames = new List<string>();
             foreach (DataRow row in _reader.GetSchemaTable().Rows)

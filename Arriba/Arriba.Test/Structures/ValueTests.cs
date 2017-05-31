@@ -39,7 +39,7 @@ namespace Arriba.Test.Structures
             Assert.AreEqual("string:True, ByteBlock:True, bool:True", TryAllConversions_ValueTypeReference(true));
             Assert.AreEqual("string:False, ByteBlock:False, bool:False", TryAllConversions(false));
             Assert.AreEqual("string:False, ByteBlock:False, bool:False", TryAllConversions_ValueTypeReference(false));
-            
+
             // Number / String, Boolean
             Assert.AreEqual("string:50, ByteBlock:50, TimeSpan:50.00:00:00, double:50, float:50, ulong:50, long:50, uint:50, int:50, ushort:50, short:50, byte:50", TryAllConversions("50"));
             Assert.AreEqual("string:50, ByteBlock:50, double:50, float:50, ulong:50, long:50, uint:50, int:50, ushort:50, short:50, byte:50", TryAllConversions(50));
@@ -399,9 +399,9 @@ namespace Arriba.Test.Structures
 
             Assert.AreEqual(values[0].GetHashCode(), values[3].GetHashCode());
 
-            for(int i = 0; i < values.Length; ++i)
+            for (int i = 0; i < values.Length; ++i)
             {
-                for(int j = 0; j < values.Length; ++j)
+                for (int j = 0; j < values.Length; ++j)
                 {
                     Assert.AreEqual(values[i], values[j], "The same value wrapped differently wasn't equal. Indexes: {0}, {1}", i, j);
                     Assert.AreEqual(values[i].GetHashCode(), values[j].GetHashCode(), "The same value wrapped differently had different GetHashCodes. Indexes: {0}, {1}", i, j);

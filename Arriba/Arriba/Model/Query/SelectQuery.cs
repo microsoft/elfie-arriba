@@ -71,7 +71,7 @@ namespace Arriba.Model.Query
         /// </summary>
         public Highlighter Highlighter { get; set; }
 
-        private SelectContext Context;
+        private SelectContext _context;
 
         public SelectQuery()
         {
@@ -149,7 +149,7 @@ namespace Arriba.Model.Query
                 this.OrderByDescending = true;
             }
 
-            this.Context = new SelectContext(this);
+            _context = new SelectContext(this);
         }
 
         private void ChooseItems(ITable table)
@@ -172,12 +172,12 @@ namespace Arriba.Model.Query
 
             chooseItemsResult.Query = this;
             chooseItemsResult.Runtime = w.Elapsed;
-            this.Context.Pass1Results = chooseItemsResult;
-            this.Context.Count = chooseItemsResult.CountReturned;
+            _context.Pass1Results = chooseItemsResult;
+            _context.Count = chooseItemsResult.CountReturned;
 
             if (chooseItemsResult.Details.Succeeded && chooseItemsResult.CountReturned > 0)
             {
-                this.Context.Where = new AndExpression(new TermInExpression(idColumnName, chooseItemsResult.Values.GetColumn(0)), this.Where);
+                _context.Where = new AndExpression(new TermInExpression(idColumnName, chooseItemsResult.Values.GetColumn(0)), this.Where);
             }
         }
 
@@ -204,7 +204,7 @@ namespace Arriba.Model.Query
 
         private SelectContext SafeGetContext(Partition p)
         {
-            SelectContext ctx = this.Context;
+            SelectContext ctx = _context;
 
             if (ctx == null)
             {
@@ -426,7 +426,7 @@ namespace Arriba.Model.Query
                 // Determine how many to return. Stop if none.
                 int countToReturn = Math.Min(context.Count, (int)(result.Total));
                 ushort[] lidsToReturn = new ushort[countToReturn];
-                if (countToReturn == 0) return lidsToReturn;           
+                if (countToReturn == 0) return lidsToReturn;
 
                 // Enumerate matches in OrderBy order and return the requested columns for them
                 ushort countAdded = 0;

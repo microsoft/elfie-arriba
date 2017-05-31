@@ -1,5 +1,9 @@
-﻿using System;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Collections.Generic;
+
 using Arriba.Model.Security;
 
 namespace Arriba.TfsWorkItemCrawler
@@ -85,7 +89,7 @@ namespace Arriba.TfsWorkItemCrawler
         ///  The User Name to use for provider authentication (if the mode requires one)
         /// </summary>
         public string UserName { get; set; }
-        
+
         /// <summary>
         ///  List of columns to be renamed from the source, if any.
         /// </summary>

@@ -296,7 +296,7 @@ namespace Arriba.Structures
         {
             return b.AsReadOnly();
         }
-        
+
         public struct ReadOnlyDataBlock
         {
             public ReadOnlyDataBlock(DataBlock block) : this(block, null, -1, -1)

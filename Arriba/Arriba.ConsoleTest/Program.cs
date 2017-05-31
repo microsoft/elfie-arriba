@@ -4,17 +4,17 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Text;
 
 using Arriba.Diagnostics;
 using Arriba.Extensions;
 using Arriba.Model;
 using Arriba.Model.Aggregations;
+using Arriba.Model.Column;
 using Arriba.Model.Query;
 using Arriba.Serialization;
 using Arriba.Structures;
-using Arriba.Model.Column;
-using System.Linq;
 
 namespace Arriba.ConsoleTest
 {

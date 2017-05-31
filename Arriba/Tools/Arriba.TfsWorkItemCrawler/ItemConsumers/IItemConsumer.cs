@@ -1,8 +1,12 @@
-﻿using Arriba.Model.Column;
-using Arriba.Model.Security;
-using Arriba.Structures;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Collections.Generic;
+
+using Arriba.Model.Column;
+using Arriba.Model.Security;
+using Arriba.Structures;
 
 namespace Arriba.TfsWorkItemCrawler.ItemConsumers
 {
@@ -14,7 +18,7 @@ namespace Arriba.TfsWorkItemCrawler.ItemConsumers
         /// <param name="columns">Columns to add</param>
         /// <param name="permissions">Permissions to set</param>
         void CreateTable(IList<ColumnDetails> columns, SecurityPermissions permissions);
-        
+
         /// <summary>
         ///  Write the next block of new or changed items to this consumer.
         /// </summary>
