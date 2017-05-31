@@ -10,10 +10,8 @@ using Arriba.Structures;
 namespace Arriba.Model.Query
 {
     /// <summary>
-    ///  DistinctQuery enables getting the set of unique values for a given
-    ///  column within a specific filter up to a configured limit. It is
-    ///  roughly equivalent to SELECT DISTINCT [column] in SQL, but only for
-    ///  a single column.
+    ///  DistinctQueryTop returns the most common unique values for a given column
+    ///  in a given query. It is used to provide Inline Insight results for "[Column] = ".
     /// </summary>
     public class DistinctQueryTop : DistinctQuery
     {

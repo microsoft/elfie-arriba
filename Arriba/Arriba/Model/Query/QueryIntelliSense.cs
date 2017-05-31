@@ -303,6 +303,8 @@ namespace Arriba.Model.Query
             if (guidance.Options.HasFlag(QueryTokenCategory.Value))
             {
                 spaceIsSafeCompletionCharacter = false;
+
+                AddSuggestionsForTerm(targetTables, result, lastTerm, guidance, suggestions);
             }
 
             // If *only* a value is valid here, provide a syntax hint for the value type (and reconsider if space is safe to complete)
@@ -510,8 +512,7 @@ namespace Arriba.Model.Query
 
         private static void AddTopColumnValues(IntelliSenseResult result, TermExpression lastTerm, IntelliSenseGuidance guidance, List<IntelliSenseItem> suggestions, Table singleTable, ColumnDetails singleColumn)
         {
-            // Lame, to turn single terms into AllQuery [normally they return nothing]
-            string completeQuery = QueryParser.Parse(result.Complete).ToString();
+            string completeQuery = GetCompleteQueryPrefix(result);
 
             // Recommend the top ten values in the column with the prefix typed so far
             DistinctResult topValues = singleTable.Query(new DistinctQueryTop(singleColumn.Name, completeQuery, 10));
@@ -541,8 +542,7 @@ namespace Arriba.Model.Query
 
         private static void AddValueDistribution(IntelliSenseResult result, TermExpression lastTerm, IntelliSenseGuidance guidance, List<IntelliSenseItem> suggestions, Table singleTable, ColumnDetails singleColumn)
         {
-            // Lame, to turn single terms into AllQuery [normally they return nothing]
-            string completeQuery = QueryParser.Parse(result.Complete).ToString();
+            string completeQuery = GetCompleteQueryPrefix(result);
 
             bool inclusive = (lastTerm.Operator == Operator.LessThanOrEqual || lastTerm.Operator == Operator.GreaterThan);
             bool reverse = (lastTerm.Operator == Operator.GreaterThan || lastTerm.Operator == Operator.GreaterThanOrEqual);
@@ -592,6 +592,37 @@ namespace Arriba.Model.Query
             }
         }
 
+        private static void AddSuggestionsForTerm(IReadOnlyCollection<Table> targetTables, IntelliSenseResult result, TermExpression lastTerm, IntelliSenseGuidance guidance, List<IntelliSenseItem> suggestions)
+        {
+            if (lastTerm != null && lastTerm.ColumnName == "*")
+            {
+                string termValue = lastTerm.Value.ToString();
+                List<Tuple<string, double>> columnsForTerm = new List<Tuple<string, double>>();
+
+                foreach (Table table in targetTables)
+                {
+                    DataBlockResult columns = table.Query(new TermInColumnsQuery(termValue, result.Query));
+                    for (int i = 0; i < columns.Values.RowCount; ++i)
+                    {
+                        double frequency = (double)(int)columns.Values[i, 1] / (double)columns.Total;
+                        columnsForTerm.Add(new Tuple<string, double>((string)columns.Values[i, 0], frequency));
+                    }
+                }
+
+                // Sort overall set by frequency descending
+                columnsForTerm.Sort((left, right) => right.Item2.CompareTo(left.Item2));
+
+                // Add top 10 suggestions
+                int countToReturn = Math.Min(10, columnsForTerm.Count);
+                for (int i = 0; i < countToReturn; ++i)
+                {
+                    double frequency = columnsForTerm[i].Item2;
+                    string hint = (frequency >= 1.0 ? "all" : frequency.ToString("P0"));
+                    suggestions.Add(new IntelliSenseItem(QueryTokenCategory.ColumnName, QueryParser.WrapColumnName(columnsForTerm[i].Item1) + " : " + QueryParser.WrapValue(termValue), hint));
+                }
+            }
+        }
+
         /// <summary>
         ///  Get the grammatical categories and value being completed at the given query position.
         ///  This is the pure grammar part of IntelliSense determination.
@@ -631,6 +662,12 @@ namespace Arriba.Model.Query
             TermExpression unusedTerm;
             IExpression unusedQuery;
             return GetCurrentTokenOptions(queryBeforeCursor, out unusedTerm, out unusedQuery);
+        }
+
+        private static string GetCompleteQueryPrefix(IntelliSenseResult result)
+        {
+            // Lame, to turn single terms into AllQuery [normally they return nothing]
+            return QueryParser.Parse(result.Complete).ToString();
         }
 
         private static bool TryFindSingleMatchingColumn(IReadOnlyCollection<Table> targetTables, TermExpression lastTerm, out Table matchTable, out ColumnDetails matchColumn)

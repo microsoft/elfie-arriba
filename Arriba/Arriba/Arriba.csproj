@@ -90,6 +90,7 @@
     <Compile Include="Model\Column\IpRangeColumn.cs" />
     <Compile Include="Model\Query\DistributionQuery.cs" />
     <Compile Include="Model\Query\PercentilesQuery.cs" />
+    <Compile Include="Model\Query\TermInColumnsQuery.cs" />
     <Compile Include="Structures\IpRange.cs" />
     <Compile Include="Model\Correctors\ColumnSecurityCorrector.cs" />
     <Compile Include="Model\Correctors\JoinCorrector.cs" />
