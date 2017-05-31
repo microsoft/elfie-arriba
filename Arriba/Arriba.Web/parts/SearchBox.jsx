@@ -13,6 +13,9 @@ export default React.createClass({
         document.addEventListener("click", this.handleClickDocument);
         window.addEventListener("storage", this);
         window.addEventListener("mousewheel", this);
+
+        // Useful for debugging. Auto shows the suggestion list.
+        // this.setQuery(this.refs.searchBox.value);
     },
     componentWillUnmount: function() {
         document.removeEventListener("click", this.handleClickDocument);
@@ -120,10 +123,11 @@ export default React.createClass({
             var y = 0; // Running total fo the height.
             values.forEach(val => {
                 const x = w - (val/max) * w;
-                inst("S", x, y + 18 - 18, ",", x, y + 18);
+                inst("S", x, y, ",", x, y + 18);
                 y += 37; // Matches the CSS declared height of each row.
             });
-            inst("L", w - values[values.length - 1] * 0.75, y);
+            const x = w - values[values.length - 1] * 0.75;
+            inst("S", x, y, x, y + 18);
             inst("L", w, y);
             inst("Z");
             return <svg><path id="p" d={d} /></svg>
