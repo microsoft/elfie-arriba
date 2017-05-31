@@ -3,13 +3,19 @@
 
 using System;
 
-using Arriba.Extensions;
 using Arriba.Model.Correctors;
 using Arriba.Model.Expressions;
 using Arriba.Structures;
 
 namespace Arriba.Model.Query
 {
+    /// <summary>
+    ///  DistributionQuery returns a distribution of values for a given column sampled from a given query.
+    ///  It creates equal-sized buckets between the 10th and 90th percentile values and returns
+    ///  the bucket boundary values and the count of items within each.
+    ///  
+    ///  It is used to provide Inline Insights for "[Column] > " for appropriate-typed columns.
+    /// </summary>
     public class DistributionQuery : IQuery<DataBlockResult>
     {
         private Array Buckets { get; set; }

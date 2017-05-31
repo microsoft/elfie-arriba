@@ -24,6 +24,9 @@ namespace Arriba.Test.Model.Query
 
         public QueryIntelliSenseProviderTests()
         {
+            string[] names = new string[] { "University of North", "Northeasterly", "Southern University", "Southwestern", "Western State" };
+            string[] mascots = new string[] { "Unicorn", "Frog", "Marmot", "Elephant" };
+
             College = new Table();
             College.Name = "College";
             College.AddColumn(new ColumnDetails("ID", "int", -1) { IsPrimaryKey = true });
@@ -32,13 +35,14 @@ namespace Arriba.Test.Model.Query
             College.AddColumn(new ColumnDetails("SchoolYearLength", "TimeSpan", null));
             College.AddColumn(new ColumnDetails("SchoolHasMascot", "bool", null));
             College.AddColumn(new ColumnDetails("Student Count", "long", -1));
+            College.AddColumn(new ColumnDetails("Mascot", "string", null));
 
-            DataBlock items = new DataBlock(new string[] { "ID", "Name", "WhenFounded", "SchoolYearLength", "SchoolHasMascot", "Student Count" }, 100);
+            DataBlock items = new DataBlock(new string[] { "ID", "Name", "WhenFounded", "SchoolYearLength", "SchoolHasMascot", "Student Count", "Mascot" }, 100);
 
             for (int i = 0; i < 100; ++i)
             {
                 items[i, 0] = i;
-                items[i, 1] = i.ToString();
+                items[i, 1] = names[i % names.Length];
 
                 // School Age is 1/1/2017 minus up to 100k days
                 items[i, 2] = new DateTime(2017, 01, 01).AddDays(-1000 * i);
@@ -65,6 +69,8 @@ namespace Arriba.Test.Model.Query
                 }
 
                 items[i, 5] = studentCount;
+
+                items[i, 6] = mascots[i % mascots.Length];
             }
 
             College.AddOrUpdate(items);
@@ -134,7 +140,7 @@ namespace Arriba.Test.Model.Query
             Assert.AreEqual(0, result.Suggestions.Count);
 
             // No Query: ColumnNames, alphabetical, with no duplicates, then bare value, then TermPrefixes
-            string allColumnNamesOrTerm = "[Age], [City], [ID], [Name], [SchoolHasMascot], [SchoolYearLength], [Student Count], [WhenFounded], [*], !, (";
+            string allColumnNamesOrTerm = "[Age], [City], [ID], [Mascot], [Name], [SchoolHasMascot], [SchoolYearLength], [Student Count], [WhenFounded], [*], !, (";
             result = qi.GetIntelliSenseItems("", Tables);
             Assert.AreEqual(allColumnNamesOrTerm, string.Join(", ", result.Suggestions.Select(ii => ii.Display)));
             Assert.AreEqual("", result.SyntaxHint);
@@ -248,7 +254,7 @@ namespace Arriba.Test.Model.Query
             Assert.AreEqual(string.Join(", ", QueryIntelliSense.BooleanOperators.Select(ii => ii.Display)), string.Join(", ", result.Suggestions.Where(ii => ii.Category == QueryTokenCategory.BooleanOperator).Select(ii => ii.Display)));
 
             // "[Student Count] < 7000 &&" suggests column, value, term prefix
-            string collegeNamesOrTerm = "[ID], [Name], [SchoolHasMascot], [SchoolYearLength], [Student Count], [WhenFounded], [*], !, (";
+            string collegeNamesOrTerm = "[ID], [Mascot], [Name], [SchoolHasMascot], [SchoolYearLength], [Student Count], [WhenFounded], [*], !, (";
             result = qi.GetIntelliSenseItems("[Student Count] < 7000 &&", Tables);
             Assert.AreEqual(collegeNamesOrTerm, string.Join(", ", result.Suggestions.Select(ii => ii.Display)));
 
@@ -312,6 +318,26 @@ namespace Arriba.Test.Model.Query
             // Only provide type hint (and no error) for unsupported type
             result = qi.GetIntelliSenseItems("[ID] < 0 AND [Name] >= ", Tables);
             Assert.AreEqual(0, result.Suggestions.Count);
+
+            // Term column suggestions are offered
+            result = qi.GetIntelliSenseItems("Uni", Tables);
+            Assert.AreEqual("[Name] : Uni 73 %, [Mascot] : Uni 45 %", ItemsAndCounts(result));
+
+            // Term column suggestions are based on the remaining query rows
+            result = qi.GetIntelliSenseItems("[Mascot] : Uni AND Uni", Tables);
+            Assert.AreEqual("[Mascot] : Uni all, [Name] : Uni 40 %", ItemsAndCounts(result));
+
+            // Term suggestions only show for columns which have any matches
+            result = qi.GetIntelliSenseItems("Ele", Tables);
+            Assert.AreEqual("[Mascot] : Ele all", ItemsAndCounts(result));
+
+            // Term suggestions only show if the term has matches
+            result = qi.GetIntelliSenseItems("Elelion", Tables);
+            Assert.AreEqual("", ItemsAndCounts(result));
+
+            // Term suggestions only show if remaining terms have matches
+            result = qi.GetIntelliSenseItems("[ID] < 0 AND Uni", Tables);
+            Assert.AreEqual("", ItemsAndCounts(result));
         }
 
         private static string ItemsAndCounts(IntelliSenseResult result)
