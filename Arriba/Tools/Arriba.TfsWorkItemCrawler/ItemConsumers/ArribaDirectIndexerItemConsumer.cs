@@ -54,7 +54,9 @@ namespace Arriba.TfsWorkItemCrawler.ItemConsumers
             }
 
             // Set the table security
-            new SecureDatabase().SetSecurity(this.Configuration.ArribaTable, permissions);
+            SecureDatabase sdb = new SecureDatabase();
+            sdb.SetSecurity(this.Configuration.ArribaTable, permissions);
+            sdb.SaveSecurity(this.Configuration.ArribaTable);
 
             // Debug Only: Verify consistency just after load
             if (this.DiagnosticsEnabled)
