@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Composition;
 using System.Linq;
 using System.Security.Principal;
@@ -92,8 +91,14 @@ namespace Arriba.Server
                 result = this.Database.Query(wrappedQuery, (si) => this.IsInIdentity(ctx.Request.User, si));
             }
 
+            // Canonicalize column names (if query successful)
+            if (result.Details.Succeeded)
+            {
+                query.Columns = result.Values.Columns.Select((cd) => cd.Name).ToArray();
+            }
+
             // Format the result in the return format
-            switch((outputFormat ?? "").ToLowerInvariant())
+            switch ((outputFormat ?? "").ToLowerInvariant())
             {
                 case "":
                 case "json":
