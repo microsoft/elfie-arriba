@@ -4,6 +4,6 @@
 
     // Define column names and types. Columns not defined here but in the first set of added data will be added dynamically with inferred types.
     "schema": [
-        { "name": "zip", "type": "int", "default": -1, "alias": "z", "isPrimaryKey": true }
+        { "name": "ZIP", "type": "int", "default": -1, "alias": "z", "isPrimaryKey": true }
     ]
 }

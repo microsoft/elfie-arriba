@@ -70,7 +70,7 @@ namespace Arriba.Model
             ApplyTableSecurity(query, isCurrentUserIn, preExecuteDetails);
 
             T result = base.Query<T>(query);
-            if(result is IBaseResult)
+            if (result is IBaseResult)
             {
                 ((IBaseResult)result).Details.Merge(preExecuteDetails);
             }
@@ -82,7 +82,7 @@ namespace Arriba.Model
         {
             List<string> restrictedColumns = null;
             SecurityPermissions security = this.Security(tableName);
-            
+
             foreach (var columnRestriction in security.RestrictedColumns)
             {
                 if (!isCurrentUserIn(columnRestriction.Key))
@@ -222,6 +222,19 @@ namespace Arriba.Model
         {
             string tablePath = Table.TableCachePath(tableName);
             return Path.Combine(tablePath, "Metadata", "security.bin");
+        }
+
+        public override void ReloadTable(string tableName)
+        {
+            // Reload the table
+            base.ReloadTable(tableName);
+
+            // Reload the security
+            lock (_tableLock)
+            {
+                _securityByTable.Remove(tableName);
+                Security(tableName);
+            }
         }
     }
 }
