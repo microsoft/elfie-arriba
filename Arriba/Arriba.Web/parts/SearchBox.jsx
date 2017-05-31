@@ -75,11 +75,10 @@ export default React.createClass({
         this.props.onSearchChange(query);
 
         if (this.suggestions && query.startsWith(this.state.completed)) {
-            const startsWithCI = (a, b) => a.toUpperCase().startsWith(b.toUpperCase());
-            const incomplete = query.slice(this.state.completed.length);
-            const matching = this.suggestions.filter(s => startsWithCI(s.completeAs.trimIf("["), incomplete));
+            const incomplete = query.slice(this.state.completed.length).toUpperCase();
+            const matching = this.suggestions.filter(s => s.matchAs.startsWith(incomplete));
             if (matching.length) {
-                if (matching.length === 1 && matching[0].completeAs.trimIf("[").toUpperCase() === incomplete.toUpperCase()) {
+                if (matching.length === 1 && matching[0].matchAs === incomplete) {
                     this.setState({ suggestions: [], sel: 0 });
                 } else {
                     this.setState({ suggestions: matching, sel: 0 });
@@ -93,7 +92,11 @@ export default React.createClass({
         this.lastRequest = jsonQuery(
             configuration.url + "/suggest?q=" + encodeURIComponent(query),
             data => {
-                this.suggestions = data.content.suggestions; // A cache which is later filtered and assigned to state.suggestions.
+                // A cache which is later filtered and assigned to state.suggestions.
+                this.suggestions = data.content.suggestions.map(item => {
+                    item.matchAs = item.completeAs.trimIf("[").toUpperCase();
+                    return item;
+                });
                 this.setState({
                     suggestions: data.content.suggestions,
                     sel: 0,
