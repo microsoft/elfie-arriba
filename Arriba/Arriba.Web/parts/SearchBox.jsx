@@ -79,7 +79,11 @@ export default React.createClass({
             const incomplete = query.slice(this.state.completed.length);
             const matching = this.suggestions.filter(s => startsWithCI(s.completeAs.trimIf("["), incomplete));
             if (matching.length) {
-                this.setState({ suggestions: matching, sel: 0 });
+                if (matching.length === 1 && matching[0].completeAs.trimIf("[").toUpperCase() === incomplete.toUpperCase()) {
+                    this.setState({ suggestions: [], sel: 0 });
+                } else {
+                    this.setState({ suggestions: matching, sel: 0 });
+                }
                 return;
             }
         }
