@@ -1,5 +1,9 @@
-﻿using Microsoft.CodeAnalysis.Elfie.Model.Strings;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
+
+using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 
 namespace Microsoft.CodeAnalysis.Elfie.Serialization
 {
@@ -18,7 +22,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         bool IsNullOrEmpty();
 
         string ToString();
-        
+
         bool TryToBoolean(out bool result);
         bool TryToInteger(out int result);
         bool TryToDateTime(out DateTime result);
@@ -142,7 +146,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             result = false;
             if (_value == null) return false;
 
-            if(_value is bool)
+            if (_value is bool)
             {
                 result = (bool)_value;
                 return true;
@@ -156,7 +160,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             result = DateTime.MinValue;
             if (_value == null) return false;
 
-            if(_value is DateTime)
+            if (_value is DateTime)
             {
                 result = (DateTime)_value;
                 return true;
@@ -173,15 +177,15 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
                 return false;
             }
 
-            if(_value is int)
+            if (_value is int)
             {
                 result = (int)_value;
                 return true;
             }
-            else if(_value is uint)
+            else if (_value is uint)
             {
                 uint asUint = (uint)_value;
-                if(asUint <= int.MaxValue)
+                if (asUint <= int.MaxValue)
                 {
                     result = (int)asUint;
                     return true;
@@ -214,7 +218,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
                 result = 0;
                 return false;
             }
-            else if(_value is short)
+            else if (_value is short)
             {
                 result = (int)(short)_value;
                 return true;

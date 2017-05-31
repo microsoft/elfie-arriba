@@ -1,7 +1,11 @@
-﻿using Microsoft.CodeAnalysis.Elfie.Model.Strings;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Collections.Generic;
 using System.IO;
+
+using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 
 namespace Microsoft.CodeAnalysis.Elfie.Serialization
 {
@@ -31,7 +35,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
 
         public int RowCountWritten
         {
-            get { return _rowCountWritten;  }
+            get { return _rowCountWritten; }
         }
 
         public void SetColumns(IEnumerable<string> columnNames)
@@ -114,7 +118,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
 
         public void NextRow()
         {
-            this._consoleOutStream.WriteLine();
+            _consoleOutStream.WriteLine();
 
             _rowCountWritten++;
             _currentRowColumnCount = 0;
@@ -122,10 +126,10 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
 
         public void Dispose()
         {
-            if(this._consoleOutStream != null)
+            if (_consoleOutStream != null)
             {
-                this._consoleOutStream.Dispose();
-                this._consoleOutStream = null;
+                _consoleOutStream.Dispose();
+                _consoleOutStream = null;
             }
         }
     }

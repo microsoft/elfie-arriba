@@ -1,12 +1,16 @@
-﻿using Arriba.Structures;
-using Arriba.TfsWorkItemCrawler.ItemConsumers;
-using Arriba.TfsWorkItemCrawler.ItemProviders;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Diagnostics;
 
+using Arriba.Structures;
+using Arriba.TfsWorkItemCrawler.ItemConsumers;
+using Arriba.TfsWorkItemCrawler.ItemProviders;
+
 namespace Arriba.TfsWorkItemCrawler
 {
-    class CsvImporter
+    internal class CsvImporter
     {
         private const int BatchSize = 100;
         private const int WriteAfterMinutes = 20;

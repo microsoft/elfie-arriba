@@ -4,12 +4,13 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.Serialization;
 
 using Microsoft.CodeAnalysis.Elfie.Diagnostics;
 using Microsoft.CodeAnalysis.Elfie.Extensions;
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.CodeAnalysis.Elfie.Serialization;
-using System.Runtime.Serialization;
+
 using Xsv.Where;
 
 namespace XsvConcat
@@ -198,7 +199,7 @@ namespace XsvConcat
             using (ITabularReader reader = TabularFactory.BuildReader(inputFilePath))
             {
                 int[] columnIndices = new int[columns.Count];
-                for(int i = 0; i < columnIndices.Length; ++i)
+                for (int i = 0; i < columnIndices.Length; ++i)
                 {
                     columnIndices[i] = reader.ColumnIndex(columns[i]);
                 }
@@ -317,14 +318,14 @@ namespace XsvConcat
             {
                 writer.SetColumns(new string[] { "In", columnIdentifier });
 
-                foreach(String8 value in oldOnly)
+                foreach (String8 value in oldOnly)
                 {
                     writer.Write(leftMarker);
                     writer.Write(value);
                     writer.NextRow();
                 }
 
-                foreach(String8 value in newOnly)
+                foreach (String8 value in newOnly)
                 {
                     writer.Write(rightMarker);
                     writer.Write(value);
@@ -480,16 +481,16 @@ namespace XsvConcat
                 int[] indexMapping = new int[reader.Columns.Count - 1];
                 bool hasConcatenatedColumn = false;
 
-                for(int i = 0; i < reader.Columns.Count; ++i)
+                for (int i = 0; i < reader.Columns.Count; ++i)
                 {
                     string columnName = reader.Columns[i];
 
                     // If this is a column to concatenate...
-                    if(columnName.Equals(reader.Columns[columnIndex1], StringComparison.OrdinalIgnoreCase) 
+                    if (columnName.Equals(reader.Columns[columnIndex1], StringComparison.OrdinalIgnoreCase)
                         || columnName.Equals(reader.Columns[columnIndex2], StringComparison.OrdinalIgnoreCase))
                     {
                         // .. if it's the first one, the output column will appear at this position
-                        if(!hasConcatenatedColumn)
+                        if (!hasConcatenatedColumn)
                         {
                             hasConcatenatedColumn = true;
 

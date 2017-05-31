@@ -1,4 +1,7 @@
-﻿using Arriba.Structures;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using Arriba.Structures;
 
 namespace Arriba.Model.Query
 {
@@ -12,7 +15,7 @@ namespace Arriba.Model.Query
         public IQuery Query { get; set; }
         public long Total { get; set; }
         public DataBlock Values { get; set; }
-        
+
         public DataBlockResult(IQuery query)
         {
             this.Query = query;

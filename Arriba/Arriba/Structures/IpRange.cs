@@ -1,4 +1,7 @@
-﻿using System.Text;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Arriba.Structures
@@ -8,7 +11,7 @@ namespace Arriba.Structures
     /// </summary>
     public class IpRange
     {
-        private static Regex IpPartsExpression = new Regex(@"^(\d{1,3}|\.|-|\*|/)+$", RegexOptions.Compiled);
+        private static Regex s_ipPartsExpression = new Regex(@"^(\d{1,3}|\.|-|\*|/)+$", RegexOptions.Compiled);
         public uint StartInclusive { get; set; }
         public uint EndInclusive { get; set; }
 
@@ -35,7 +38,7 @@ namespace Arriba.Structures
             if (string.IsNullOrEmpty(value)) return true;
 
             // If the text doesn't contain IP address parts (digits, '.', '-'), return
-            Match m = IpPartsExpression.Match(value);
+            Match m = s_ipPartsExpression.Match(value);
             if (!m.Success) return false;
 
             // Get the first group (containing a capture for each 'token')
@@ -51,7 +54,7 @@ namespace Arriba.Structures
                 // Invalid address, stop
                 return false;
             }
-            else if(bitsFound == 32)
+            else if (bitsFound == 32)
             {
                 // Whole address and nothing left, return as a single IP
                 if (index >= g.Captures.Count)
@@ -61,7 +64,7 @@ namespace Arriba.Structures
                 }
 
                 // '-', address range
-                if(g.Captures[index].Value == "-")
+                if (g.Captures[index].Value == "-")
                 {
                     ++index;
                     bitsFound = ParseIP(g, ref index, out endAddress);
@@ -78,7 +81,7 @@ namespace Arriba.Structures
                 }
 
                 // '/', prefix bit count
-                if(g.Captures[index].Value == "/")
+                if (g.Captures[index].Value == "/")
                 {
                     ++index;
 
@@ -137,7 +140,7 @@ namespace Arriba.Structures
             int nextMaskBits = 24;
             address = 0;
 
-            while(index < g.Captures.Count)
+            while (index < g.Captures.Count)
             {
                 Capture c = g.Captures[index];
 
@@ -146,7 +149,7 @@ namespace Arriba.Structures
                 {
                     ++index;
                     break;
-                }                
+                }
 
                 // The next part must be a number
                 uint part;
@@ -187,7 +190,7 @@ namespace Arriba.Structures
             StringBuilder result = new StringBuilder();
             AddString(this.StartInclusive, result);
 
-            if(this.EndInclusive != this.StartInclusive)
+            if (this.EndInclusive != this.StartInclusive)
             {
                 result.Append("-");
                 AddString(this.EndInclusive, result);

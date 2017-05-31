@@ -1,8 +1,12 @@
-﻿using Arriba.Model.Column;
-using Arriba.Model.Expressions;
-using Arriba.Structures;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Collections.Generic;
+
+using Arriba.Model.Column;
+using Arriba.Model.Expressions;
+using Arriba.Structures;
 
 namespace Arriba.Model.Query
 {
@@ -261,7 +265,7 @@ namespace Arriba.Model.Query
             bool spaceIsSafeCompletionCharacter = !String.IsNullOrEmpty(guidance.Value);
 
             // If there are no tokens suggested here, return empty completion
-            if(guidance.Options == QueryTokenCategory.None)
+            if (guidance.Options == QueryTokenCategory.None)
             {
                 return result;
             }
@@ -431,7 +435,7 @@ namespace Arriba.Model.Query
             // Remove entries where the same column name was suggested by multiple tables (set the hint to '<Multiple Tables>')
             for (int i = 1; i < selectedColumns.Count; ++i)
             {
-                if(selectedColumns[i - 1].Display == selectedColumns[i].Display)
+                if (selectedColumns[i - 1].Display == selectedColumns[i].Display)
                 {
                     selectedColumns[i - 1].Hint = MultipleTables;
                     selectedColumns.RemoveAt(i);
@@ -465,7 +469,7 @@ namespace Arriba.Model.Query
                 {
                     AddTopColumnValues(result, lastTerm, guidance, suggestions, singleTable, singleColumn);
                 }
-                else if(lastTerm.Operator == Operator.LessThan || lastTerm.Operator == Operator.LessThanOrEqual || lastTerm.Operator == Operator.GreaterThan || lastTerm.Operator == Operator.GreaterThanOrEqual)
+                else if (lastTerm.Operator == Operator.LessThan || lastTerm.Operator == Operator.LessThanOrEqual || lastTerm.Operator == Operator.GreaterThan || lastTerm.Operator == Operator.GreaterThanOrEqual)
                 {
                     AddValueDistribution(result, lastTerm, guidance, suggestions, singleTable, singleColumn);
                 }
@@ -558,12 +562,12 @@ namespace Arriba.Model.Query
                     double frequency = (double)countSoFar / (double)(distribution.Total);
                     int countForRange = (int)distribution.Values[i, 1];
 
-                    if ((int)distribution.Values[i+1, 1] > 0 && value.StartsWith(guidance.Value, StringComparison.OrdinalIgnoreCase))
+                    if ((int)distribution.Values[i + 1, 1] > 0 && value.StartsWith(guidance.Value, StringComparison.OrdinalIgnoreCase))
                     {
                         string hint = (countSoFar == (int)distribution.Total ? "all" : frequency.ToString("P0"));
                         suggestions.Add(new IntelliSenseItem(QueryTokenCategory.Value, value, hint));
                     }
-                    
+
                     countSoFar += countForRange;
                 }
             }

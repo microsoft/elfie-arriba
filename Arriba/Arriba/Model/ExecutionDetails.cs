@@ -90,7 +90,7 @@ namespace Arriba.Model
 
         public void AddDeniedColumn(string columnName)
         {
-            lock(this)
+            lock (this)
             {
                 if (_accessDeniedColumns == null) _accessDeniedColumns = new HashSet<string>();
                 _accessDeniedColumns.Add(columnName);
@@ -122,20 +122,20 @@ namespace Arriba.Model
 
                 if (other._errors != null)
                 {
-                    if (this._errors == null) this._errors = new HashSet<string>();
-                    this._errors.UnionWith(other._errors);
+                    if (_errors == null) _errors = new HashSet<string>();
+                    _errors.UnionWith(other._errors);
                 }
 
                 if (other._warnings != null)
                 {
-                    if (this._warnings == null) this._warnings = new HashSet<string>();
-                    this._warnings.UnionWith(other._warnings);
+                    if (_warnings == null) _warnings = new HashSet<string>();
+                    _warnings.UnionWith(other._warnings);
                 }
 
                 if (other._accessDeniedColumns != null)
                 {
-                    if (this._accessDeniedColumns == null) this._accessDeniedColumns = new HashSet<string>();
-                    this._accessDeniedColumns.UnionWith(other._accessDeniedColumns);
+                    if (_accessDeniedColumns == null) _accessDeniedColumns = new HashSet<string>();
+                    _accessDeniedColumns.UnionWith(other._accessDeniedColumns);
                 }
             }
         }

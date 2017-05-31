@@ -25,7 +25,7 @@ namespace Arriba.Test
 
                 Assert.AreEqual(typeof(T), e.GetType(), "An exception was thrown but it was not of the expected type.");
 
-                if(!String.IsNullOrEmpty(expectedMessage))
+                if (!String.IsNullOrEmpty(expectedMessage))
                 {
                     Assert.AreEqual(expectedMessage, e.Message, "Exception didn't have expected mesage.");
                 }

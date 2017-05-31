@@ -1,7 +1,11 @@
-﻿using Arriba.Model;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using Arriba.Model;
 using Arriba.Model.Column;
 using Arriba.Model.Expressions;
 using Arriba.Structures;
+
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Arriba.Test.Model
@@ -50,7 +54,7 @@ namespace Arriba.Test.Model
         private string ParseAndToString(string ipRange)
         {
             IpRange result;
-            if(IpRange.TryParse(ipRange, out result))
+            if (IpRange.TryParse(ipRange, out result))
             {
                 return result.ToString();
             }

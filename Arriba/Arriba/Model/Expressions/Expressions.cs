@@ -7,9 +7,9 @@ using System.Linq;
 using System.Text;
 
 using Arriba.Extensions;
+using Arriba.Indexing;
 using Arriba.Model.Query;
 using Arriba.Structures;
-using Arriba.Indexing;
 
 namespace Arriba.Model.Expressions
 {
@@ -100,11 +100,11 @@ namespace Arriba.Model.Expressions
         public override string ToString()
         {
             StringBuilder result = new StringBuilder();
-            foreach(IExpression part in _set)
+            foreach (IExpression part in _set)
             {
                 if (result.Length > 0) result.Append(" AND ");
 
-                if(part is OrExpression)
+                if (part is OrExpression)
                 {
                     // Explicit parenthesis are only required on an OR expression inside and AND expression.
                     // AND takes precedence over OR, so A OR B AND C OR D => (A OR (B AND C) OR D)
@@ -341,10 +341,10 @@ namespace Arriba.Model.Expressions
             this.ColumnName = columnName;
             this.Operator = op;
             this.Values = values;
-            
+
             // If this is a "Matches" JOIN, split the values coming in into terms
             // which will each be matched.
-            if(op == Operator.Matches || op == Operator.MatchesExact)
+            if (op == Operator.Matches || op == Operator.MatchesExact)
             {
                 this.Values = GetUniqueTerms(values);
             }
@@ -353,7 +353,7 @@ namespace Arriba.Model.Expressions
         private Array GetUniqueTerms(Array values)
         {
             HashSet<ByteBlock> uniqueValues = new HashSet<ByteBlock>();
-           
+
             // Get every unique word split from every value in the array
             SetSplitter s = new SetSplitter();
             for (int i = 0; i < values.Length; ++i)

@@ -4,10 +4,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 using Arriba.Model.Column;
 using Arriba.Model.Expressions;
-using System.Text.RegularExpressions;
 using Arriba.Model.Query;
 
 namespace Arriba.Model.Correctors
@@ -35,11 +35,11 @@ namespace Arriba.Model.Correctors
 
             // Look for a join term in the query
             string value = te.Value.ToString();
-            if(value.StartsWith("#Q"))
+            if (value.StartsWith("#Q"))
             {
                 Regex referenceExpression = new Regex(@"#Q(?<number>\d+)\[(?<columnName>[^\]]+)\]");
                 Match m = referenceExpression.Match(value);
-                if(m.Success)
+                if (m.Success)
                 {
                     int referencedQuery = int.Parse(m.Groups["number"].Value);
                     string referencedColumn = m.Groups["columnName"].Value;
@@ -57,7 +57,7 @@ namespace Arriba.Model.Correctors
                     Table t = this.DB[joinQuery.TableName];
                     SelectResult result = t.Query(joinQuery);
 
-                    if(result.Total == 0)
+                    if (result.Total == 0)
                     {
                         return new TermExpression(te.ColumnName, te.Operator, String.Empty);
                     }

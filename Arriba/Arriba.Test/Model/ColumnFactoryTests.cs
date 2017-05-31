@@ -6,6 +6,7 @@ using System.Text;
 
 using Arriba.Model;
 using Arriba.Model.Column;
+
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Arriba.Test.Model
@@ -110,6 +111,5 @@ namespace Arriba.Test.Model
                 result.Append(">");
             }
         }
-
     }
 }

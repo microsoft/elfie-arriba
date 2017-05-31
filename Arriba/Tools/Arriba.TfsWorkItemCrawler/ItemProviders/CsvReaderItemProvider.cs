@@ -1,15 +1,19 @@
-﻿using Arriba.Diagnostics;
-using Arriba.Serialization;
-using Arriba.Serialization.Csv;
-using Arriba.Structures;
-using Arriba.TfsWorkItemCrawler.ItemConsumers;
-using Arriba.TfsWorkItemCrawler.ItemProviders;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+
+using Arriba.Diagnostics;
+using Arriba.Serialization;
+using Arriba.Serialization.Csv;
+using Arriba.Structures;
+using Arriba.TfsWorkItemCrawler.ItemConsumers;
+using Arriba.TfsWorkItemCrawler.ItemProviders;
 
 namespace Arriba.TfsWorkItemCrawler
 {
@@ -158,7 +162,7 @@ namespace Arriba.TfsWorkItemCrawler
             // Open the next CSV and get the first row
             string nextCsvPath = this.RemainingCsvs.Dequeue();
             Trace.WriteLine("Loading CSV data from '{0}'", nextCsvPath);
-            this.CurrentCsvReader = new CsvReader(new FileStream(nextCsvPath, FileMode.Open), new CsvReaderSettings() { MaximumSingleCellLines = -1 } );
+            this.CurrentCsvReader = new CsvReader(new FileStream(nextCsvPath, FileMode.Open), new CsvReaderSettings() { MaximumSingleCellLines = -1 });
             this.CurrentRowEnumerator = this.CurrentCsvReader.Rows.GetEnumerator();
 
             return true;

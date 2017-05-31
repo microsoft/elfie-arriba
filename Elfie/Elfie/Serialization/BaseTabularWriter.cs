@@ -97,7 +97,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             _columnCount = columnNames.Count();
 
             // Write header row
-            if (this._writeHeaderRow)
+            if (_writeHeaderRow)
             {
                 String8Block buffer = new String8Block();
                 foreach (string columnName in columnNames)

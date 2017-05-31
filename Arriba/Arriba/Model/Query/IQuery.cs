@@ -38,7 +38,7 @@ namespace Arriba.Model.Query
     }
 
     public interface IQuery<T> : IQuery
-    { 
+    {
         /// <summary>
         ///  Compute a per-Partition result for the query
         /// </summary>

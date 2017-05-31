@@ -47,10 +47,10 @@ namespace Arriba.Model.Query
                 IUntypedColumn column = p.Columns[this.Column];
                 int rowCount = 0;
 
-                for(int i = 0; i < column.Count; ++i)
+                for (int i = 0; i < column.Count; ++i)
                 {
                     ushort lid = (ushort)i;
-                    if(whereSet.Contains(lid))
+                    if (whereSet.Contains(lid))
                     {
                         object value = column[lid];
 
@@ -112,7 +112,7 @@ namespace Arriba.Model.Query
                 DataBlock block = result.Values;
 
                 // Add count per value together from each partition
-                for(int rowIndex = 0; rowIndex < block.RowCount; ++rowIndex)
+                for (int rowIndex = 0; rowIndex < block.RowCount; ++rowIndex)
                 {
                     object value = block[rowIndex, 0];
                     int countFromPartition = (int)block[rowIndex, 1];

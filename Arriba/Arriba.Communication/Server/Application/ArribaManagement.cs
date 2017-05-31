@@ -83,7 +83,7 @@ namespace Arriba.Server.Application
             bool hasTables = false;
 
             Dictionary<string, TableInformation> allBasics = new Dictionary<string, TableInformation>();
-            foreach(string tableName in this.Database.TableNames)
+            foreach (string tableName in this.Database.TableNames)
             {
                 hasTables = true;
 
@@ -95,7 +95,7 @@ namespace Arriba.Server.Application
 
             // If you didn't have access to any tables, return a distinct result to show Access Denied in the browser
             // but not a 401, because that is eaten by CORS.
-            if(allBasics.Count == 0 && hasTables)
+            if (allBasics.Count == 0 && hasTables)
             {
                 return ArribaResponse.Ok(null);
             }

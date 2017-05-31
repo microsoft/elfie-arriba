@@ -15,23 +15,23 @@ namespace Arriba.Model.Correctors
     /// </summary>
     public class ColumnSecurityCorrector : TermCorrector
     {
-        private HashSet<string> RestrictedColumns;
+        private HashSet<string> _restrictedColumns;
 
         public ColumnSecurityCorrector(IEnumerable<string> restrictedColumns)
         {
-            this.RestrictedColumns = new HashSet<string>(restrictedColumns, StringComparer.OrdinalIgnoreCase);
+            _restrictedColumns = new HashSet<string>(restrictedColumns, StringComparer.OrdinalIgnoreCase);
         }
 
         public override IExpression CorrectTerm(TermExpression te)
         {
             if (te == null) throw new ArgumentNullException("te");
 
-            if(te.ColumnName.Equals("*"))
+            if (te.ColumnName.Equals("*"))
             {
-                return new AllExceptColumnsTermExpression(this.RestrictedColumns, te);
+                return new AllExceptColumnsTermExpression(_restrictedColumns, te);
             }
 
-            if(RestrictedColumns.Contains(te.ColumnName))
+            if (_restrictedColumns.Contains(te.ColumnName))
             {
                 throw new ArribaColumnAccessDeniedException(te.ColumnName);
             }
