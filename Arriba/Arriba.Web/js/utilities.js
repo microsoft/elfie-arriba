@@ -13,6 +13,14 @@ function isEdge() {
     return navigator.userAgent.indexOf('Edge') !== -1
 }
 
+Object.values = Object.values || function(o) {
+    var vals = [];
+    for(var key in o) {
+        if(o.hasOwnProperty(key)) vals.push(o[key]);
+    }
+    return vals;    
+}
+
 // From: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign
 Object.assign = Object.assign || function(target, varArgs) { // .length of function is 2
     'use strict';
@@ -50,8 +58,6 @@ Object.defineProperties(Object.prototype, {
 Object.map = function(o, f) {
     return Object.keys(o).map(function(key) { return f(key, o[key]) });
 }
-
-
 
 Number.prototype.clamp = function(min, max) {
     return Math.min(Math.max(this, min), max);
