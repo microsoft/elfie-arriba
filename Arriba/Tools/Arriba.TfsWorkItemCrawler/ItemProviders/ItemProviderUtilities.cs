@@ -1,4 +1,8 @@
+// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System.Text;
+
 namespace Arriba.TfsWorkItemCrawler.ItemProviders
 {
     using Arriba.Extensions;
@@ -68,7 +72,7 @@ namespace Arriba.TfsWorkItemCrawler.ItemProviders
             if (value is string)
             {
                 string valueString = (string)value;
-                if(valueString.Length > FieldLengthLimitBytes)
+                if (valueString.Length > FieldLengthLimitBytes)
                 {
                     valueString = valueString.Substring(0, FieldLengthLimitBytes);
                 }

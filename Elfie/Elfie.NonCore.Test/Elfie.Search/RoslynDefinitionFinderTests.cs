@@ -3,14 +3,14 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.Reflection;
 using System.Text;
 
 using Microsoft.CodeAnalysis.Elfie.Model;
 using Microsoft.CodeAnalysis.Elfie.Search;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Reflection;
-using System.Diagnostics;
 
 namespace Microsoft.CodeAnalysis.Elfie.Test.Elfie.Search
 {
@@ -31,7 +31,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Elfie.Search
             if (!File.Exists(s_sampleDefinitionPath))
             {
                 Assembly thisAssembly = Assembly.GetExecutingAssembly();
-                foreach(string name in thisAssembly.GetManifestResourceNames())
+                foreach (string name in thisAssembly.GetManifestResourceNames())
                 {
                     Trace.WriteLine(name);
                 }

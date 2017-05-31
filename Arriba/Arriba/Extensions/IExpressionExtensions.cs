@@ -26,7 +26,7 @@ namespace Arriba.Extensions
 
         private static void GetAllTerms(IExpression expression, string columnName, List<TermExpression> result)
         {
-            if(expression is AllExceptColumnsTermExpression)
+            if (expression is AllExceptColumnsTermExpression)
             {
                 AllExceptColumnsTermExpression te = (AllExceptColumnsTermExpression)expression;
                 if (!te.RestrictedColumns.Contains(columnName)) result.Add(te);

@@ -1,6 +1,11 @@
-﻿using Microsoft.TeamFoundation.WorkItemTracking.Client;
-using Newtonsoft.Json;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
+
+using Microsoft.TeamFoundation.WorkItemTracking.Client;
+
+using Newtonsoft.Json;
 
 namespace Arriba.TfsWorkItemCrawler
 {
@@ -26,7 +31,7 @@ namespace Arriba.TfsWorkItemCrawler
             writer.WriteStartArray();
 
             // Walk in reverse order to make latest first by default
-            for(int i = revisions.Count - 1; i >= 0; --i)
+            for (int i = revisions.Count - 1; i >= 0; --i)
             {
                 Revision revision = revisions[i];
                 string history = (string)revision.Fields["History"].Value;

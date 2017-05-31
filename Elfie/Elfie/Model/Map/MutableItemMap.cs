@@ -36,7 +36,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Map
         {
             // If no links were added, return the previous map 
             if (_groupIndices.Count == 0) return previousLinks;
-            
+
             // Sort the new links by the group index
             PartialArray<int>.SortKeysAndItems(_groupIndices, _memberIndices);
 
@@ -78,7 +78,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Map
             while (nextIndex < _groupIndices.Count)
             {
                 // If we're adding links for a different group, reset the 'already added' set
-                if(_groupIndices[nextIndex] != currentGroup)
+                if (_groupIndices[nextIndex] != currentGroup)
                 {
                     currentGroup = _groupIndices[nextIndex];
                     linksAlreadyAddedForGroup = new HashSet<int>();
@@ -96,7 +96,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Map
         /// </summary>
         public int Count
         {
-            get { return this._memberIndices.Count; }
+            get { return _memberIndices.Count; }
         }
     }
 }

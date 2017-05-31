@@ -1,7 +1,11 @@
-﻿using Arriba.Model.Column;
-using Arriba.Structures;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Collections.Generic;
+
+using Arriba.Model.Column;
+using Arriba.Structures;
 
 namespace Arriba.TfsWorkItemCrawler.ItemProviders
 {

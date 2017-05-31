@@ -1,9 +1,10 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System;
+
 using Arriba.Extensions;
 using Arriba.Model.Expressions;
-using System;
 
 namespace Arriba.Model.Query
 {
@@ -30,10 +31,10 @@ namespace Arriba.Model.Query
                 if (result.Values != null)
                 {
                     // If there are more than 20 values, try getting distributions and use them if available
-                    if(result.Values.RowCount > 20)
+                    if (result.Values.RowCount > 20)
                     {
                         var dr = table.Query(new DistributionQuery(this.Column, "", true) { Where = where });
-                        if(dr.Details.Succeeded && dr.Values != null)
+                        if (dr.Details.Succeeded && dr.Values != null)
                         {
                             this.AddCondition(StringExtensions.Format("{0} <= {1}", QueryParser.WrapColumnName(this.Column), QueryParser.WrapValue(dr.Values[0, 0].ToString())));
 

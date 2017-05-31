@@ -1,4 +1,7 @@
-﻿using System.Collections.Generic;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 
@@ -36,7 +39,7 @@ namespace Xsv
         /// <param name="asm">Assembly to read from, defaults to Xsv</param>
         public static void SaveStreamTo(string streamName, string filePath, Assembly asm = null)
         {
-            if(asm == null) asm = Assembly.GetExecutingAssembly();
+            if (asm == null) asm = Assembly.GetExecutingAssembly();
 
             using (FileStream output = new FileStream(filePath, FileMode.Create))
             {

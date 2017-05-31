@@ -1,9 +1,13 @@
-﻿using System;
-using Arriba.Model;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Collections.Generic;
+
+using Arriba.Model;
 using Arriba.Model.Expressions;
-using Arriba.Structures;
 using Arriba.Serialization;
+using Arriba.Structures;
 
 namespace Arriba.Test
 {
@@ -36,7 +40,7 @@ namespace Arriba.Test
                 IUntypedColumn srcColumn = p.Columns[sourceColumn];
                 IUntypedColumn colorColumn = p.Columns[targetColorColumn];
                 (colorColumn.InnerColumn as ColorColumn).LookupColumn = (IColumn<short>)srcColumn.InnerColumn;
-            }            
+            }
         }
     }
 
@@ -167,12 +171,12 @@ namespace Arriba.Test
                 return false;
             }
 
-            public static bool operator==(ComparableColor left, ComparableColor right)
+            public static bool operator ==(ComparableColor left, ComparableColor right)
             {
                 return left.ColorValue == right.ColorValue;
             }
 
-            public static bool operator!=(ComparableColor left, ComparableColor right)
+            public static bool operator !=(ComparableColor left, ComparableColor right)
             {
                 return left.ColorValue != right.ColorValue;
             }
@@ -188,5 +192,4 @@ namespace Arriba.Test
             }
         }
     }
-
 }

@@ -1,7 +1,11 @@
-﻿using Microsoft.CodeAnalysis.Elfie.Model.Strings;
-using Microsoft.CodeAnalysis.Elfie.Serialization;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Globalization;
+
+using Microsoft.CodeAnalysis.Elfie.Model.Strings;
+using Microsoft.CodeAnalysis.Elfie.Serialization;
 
 namespace Xsv.Where
 {
@@ -24,23 +28,23 @@ namespace Xsv.Where
             WhereResult result = new WhereResult() { ColumnIndex = colIndex, ColumnName = reader.Columns[colIndex], Op = OperatorExtensions.Parse(operatorString), Value = ConvertToBestType(valueString) };
 
             Type t = result.Value.GetType();
-            if(t == typeof(bool))
+            if (t == typeof(bool))
             {
                 MatchBoolCompare(reader, writer, result);
             }
-            else if(t == typeof(int))
+            else if (t == typeof(int))
             {
                 MatchIntCompare(reader, writer, result);
             }
-            else if(t == typeof(DateTime))
+            else if (t == typeof(DateTime))
             {
                 MatchDateTimeCompare(reader, writer, result);
             }
-            else if(result.Op == Operator.Contains)
+            else if (result.Op == Operator.Contains)
             {
                 MatchContains(reader, writer, result);
             }
-            else if(result.Op == Operator.StartsWith)
+            else if (result.Op == Operator.StartsWith)
             {
                 MatchStartsWith(reader, writer, result);
             }
@@ -134,7 +138,7 @@ namespace Xsv.Where
 
                 // Match the value
                 int compareResult = reader.Current(result.ColumnIndex).ToString8().CompareTo(value);
-                if(!result.Op.Matches(compareResult)) continue;
+                if (!result.Op.Matches(compareResult)) continue;
 
                 result.MatchCount++;
 

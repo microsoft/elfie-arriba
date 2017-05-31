@@ -1,8 +1,12 @@
-﻿using Microsoft.CodeAnalysis.Elfie.Model.Strings;
-using Microsoft.CodeAnalysis.Elfie.Serialization;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
+
+using Microsoft.CodeAnalysis.Elfie.Model.Strings;
+using Microsoft.CodeAnalysis.Elfie.Serialization;
 
 namespace Xsv.Sanitize
 {
@@ -118,7 +122,7 @@ namespace Xsv.Sanitize
             }
 
             // Write anything after the last match
-            if(nextIndexToWrite < value.Length)
+            if (nextIndexToWrite < value.Length)
             {
                 result.Append(value.Substring(nextIndexToWrite));
             }

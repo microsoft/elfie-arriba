@@ -2,6 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 
 using Elfie.Test;
@@ -10,8 +12,6 @@ using Microsoft.CodeAnalysis.Elfie.Extensions;
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.CodeAnalysis.Elfie.Serialization;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Collections.Generic;
-using System.Diagnostics;
 
 namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
 {
@@ -348,7 +348,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
                     // Get first row and output as header
                     reader.NextRow();
                     List<string> firstRowValues = new List<string>();
-                    for(int i = 0; i < reader.CurrentRowColumns; ++i)
+                    for (int i = 0; i < reader.CurrentRowColumns; ++i)
                     {
                         firstRowValues.Add(reader.Current(i).ToString());
                     }

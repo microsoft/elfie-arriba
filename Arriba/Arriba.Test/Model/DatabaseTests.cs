@@ -1,14 +1,19 @@
-﻿using Arriba.Model;
-using Arriba.Model.Correctors;
-using Arriba.Model.Query;
-using Arriba.Structures;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+
+using Arriba.Model;
+using Arriba.Model.Correctors;
+using Arriba.Model.Query;
+using Arriba.Structures;
+
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Arriba.Test.Model
 {
@@ -61,7 +66,6 @@ namespace Arriba.Test.Model
             q.Correct(null);
             result = db.Query(q);
             Assert.AreEqual("rtaket, mikefan", JoinResultColumn(result));
-
 
             // TODO:
             //  Unknown column in Join query

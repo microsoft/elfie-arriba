@@ -173,11 +173,11 @@ namespace Arriba.Model
         public Type GetColumnType(string columnName)
         {
             _locker.EnterReadLock();
-            
+
             try
             {
                 IUntypedColumn column;
-                if(_partitions[0].Columns.TryGetValue(columnName, out column))
+                if (_partitions[0].Columns.TryGetValue(columnName, out column))
                 {
                     return column.ColumnType;
                 }
@@ -465,7 +465,7 @@ namespace Arriba.Model
             }
         }
 
-        struct TargetPartitionInfo
+        private struct TargetPartitionInfo
         {
             public int StartIndex;
             public int Count;
@@ -664,9 +664,9 @@ namespace Arriba.Model
                 partitionInfo = localPartitionInfo;
             }
         }
-#endregion
+        #endregion
 
-#region Management
+        #region Management
         public void VerifyConsistency(VerificationLevel level, ExecutionDetails details)
         {
             _locker.EnterReadLock();
@@ -697,9 +697,9 @@ namespace Arriba.Model
                 _locker.ExitReadLock();
             }
         }
-#endregion
+        #endregion
 
-#region Serialization
+        #region Serialization
         /// <summary>
         ///  Returns the path where a Table with the given name will be serialized.
         ///  Used so that additional metadata (ex: security) can be written within it.
@@ -824,9 +824,9 @@ namespace Arriba.Model
                 _locker.ExitReadLock();
             }
         }
-#endregion
+        #endregion
 
-#region Drop
+        #region Drop
         public void Drop()
         {
             _locker.EnterReadLock();
@@ -853,9 +853,9 @@ namespace Arriba.Model
             // Delete everything in the table folder (including any additional data, like security)
             Directory.Delete(tablePath, true);
         }
-#endregion
+        #endregion
 
-#region IDisposable
+        #region IDisposable
         public void Dispose()
         {
             Dispose(true);
@@ -871,6 +871,6 @@ namespace Arriba.Model
                 _locker = null;
             }
         }
-#endregion
+        #endregion
     }
 }

@@ -5,12 +5,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 
+using Arriba.Model.Column;
 using Arriba.Model.Correctors;
 using Arriba.Model.Expressions;
 using Arriba.Model.Query;
 using Arriba.Model.Security;
 using Arriba.Serialization;
-using Arriba.Model.Column;
 
 namespace Arriba.Model
 {

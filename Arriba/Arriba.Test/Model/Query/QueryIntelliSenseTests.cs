@@ -1,15 +1,17 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using Arriba.Model;
-using Arriba.Model.Column;
-using Arriba.Model.Query;
-using Arriba.Structures;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+
+using Arriba.Model;
+using Arriba.Model.Column;
+using Arriba.Model.Query;
+using Arriba.Structures;
+
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Arriba.Test.Model.Query
 {
@@ -33,11 +35,11 @@ namespace Arriba.Test.Model.Query
 
             DataBlock items = new DataBlock(new string[] { "ID", "Name", "WhenFounded", "SchoolYearLength", "SchoolHasMascot", "Student Count" }, 100);
 
-            for(int i = 0; i < 100; ++i)
+            for (int i = 0; i < 100; ++i)
             {
                 items[i, 0] = i;
                 items[i, 1] = i.ToString();
-                
+
                 // School Age is 1/1/2017 minus up to 100k days
                 items[i, 2] = new DateTime(2017, 01, 01).AddDays(-1000 * i);
 
@@ -49,11 +51,11 @@ namespace Arriba.Test.Model.Query
 
                 // Student Count evenly 1k, 10k, or 100k with larger counts more likely
                 long studentCount;
-                if(i < 10)
+                if (i < 10)
                 {
                     studentCount = 1000;
                 }
-                else if(i < 30)
+                else if (i < 30)
                 {
                     studentCount = 10000;
                 }
@@ -182,7 +184,7 @@ namespace Arriba.Test.Model.Query
             Assert.AreEqual("[Name]", string.Join(", ", result.Suggestions.Select(ii => ii.Display)));
             Assert.AreEqual("[Name] | <Multiple Tables> | ColumnName | [Name]", string.Join(", ", result.Suggestions));
             Assert.AreEqual("Na", result.Incomplete);
-            Assert.AreEqual("", result.Complete); 
+            Assert.AreEqual("", result.Complete);
             Assert.AreEqual("[Na", result.Query);
 
             // "[SchoolSumm" should suggest nothing (no remaining column names)
@@ -204,7 +206,7 @@ namespace Arriba.Test.Model.Query
             result = qi.GetIntelliSenseItems("[Student ", Tables);
             Assert.AreEqual("[Student Count]", string.Join(", ", result.Suggestions.Select(ii => ii.Display)));
             Assert.AreEqual("Student ", result.Incomplete);
-            
+
             // "[Student  " should not match 'Student Count' (second space means non-match)
             result = qi.GetIntelliSenseItems("[Student  ", Tables);
             Assert.AreEqual("", string.Join(", ", result.Suggestions.Select(ii => ii.Display)));
@@ -315,7 +317,7 @@ namespace Arriba.Test.Model.Query
         private static string ItemsAndCounts(IntelliSenseResult result)
         {
             StringBuilder output = new StringBuilder();
-            foreach(IntelliSenseItem item in result.Suggestions)
+            foreach (IntelliSenseItem item in result.Suggestions)
             {
                 if (output.Length > 0) output.Append(", ");
                 output.Append($"{item.Display} {item.Hint}");
@@ -484,7 +486,6 @@ namespace Arriba.Test.Model.Query
             Assert.AreEqual("187.00:00:00, 198.00:00:00, 211.00:00:00", string.Join(", ", (object[])pr.Values.GetColumn(1)));
 
             DataBlockResult dr = Tables[0].Query(new DistributionQuery("SchoolYearLength", "", true));
-
         }
     }
 }

@@ -8,8 +8,8 @@ using System.Linq;
 using System.Threading;
 
 using Arriba.Extensions;
-using Arriba.Serialization;
 using Arriba.Model.Query;
+using Arriba.Serialization;
 
 namespace Arriba.Model
 {

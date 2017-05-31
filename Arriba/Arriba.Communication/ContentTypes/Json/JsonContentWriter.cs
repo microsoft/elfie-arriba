@@ -25,9 +25,9 @@ namespace Arriba.Communication.ContentTypes
                 ContractResolver = new CamelCasePropertyNamesContractResolver() { NamingStrategy = new CamelCaseNamingStrategy() { ProcessDictionaryKeys = false } }
             };
 
-            #if DEBUG
+#if DEBUG
             _settings.Formatting = Newtonsoft.Json.Formatting.Indented;
-            #endif
+#endif
 
             foreach (var converter in converters)
             {

@@ -7,6 +7,7 @@ using System.Linq;
 using System.Runtime.Serialization;
 
 using Arriba.Serialization;
+
 using Newtonsoft.Json;
 
 namespace Arriba.Model.Security
@@ -242,7 +243,7 @@ namespace Arriba.Model.Security
             // Read column security rules
             RestrictedColumns = new SecuredSet<List<string>>();
             int columnRuleCount = context.Reader.ReadInt32();
-            for(int i = 0; i < columnRuleCount; ++i)
+            for (int i = 0; i < columnRuleCount; ++i)
             {
                 SecurityIdentity identity = new SecurityIdentity();
                 identity.ReadBinary(context);
@@ -250,7 +251,7 @@ namespace Arriba.Model.Security
                 List<string> columnsSecured = new List<string>();
 
                 int columnsForGroupCount = context.Reader.ReadInt32();
-                for(int j = 0; j < columnsForGroupCount; ++j)
+                for (int j = 0; j < columnsForGroupCount; ++j)
                 {
                     columnsSecured.Add(context.Reader.ReadString());
                 }
@@ -279,7 +280,7 @@ namespace Arriba.Model.Security
 
             // Write column security rules
             context.Writer.Write(RestrictedColumns.Count);
-            foreach(var item in RestrictedColumns)
+            foreach (var item in RestrictedColumns)
             {
                 item.Key.WriteBinary(context);
                 context.Writer.Write(item.Value.Count);
@@ -291,7 +292,7 @@ namespace Arriba.Model.Security
 
             // Write row security rules
             context.Writer.Write(RowRestrictedUsers.Count);
-            foreach(var item in RowRestrictedUsers)
+            foreach (var item in RowRestrictedUsers)
             {
                 item.Key.WriteBinary(context);
                 context.Writer.Write(item.Value);

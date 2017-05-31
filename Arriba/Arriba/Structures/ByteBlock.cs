@@ -3,10 +3,10 @@
 
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Text;
 
 using Arriba.Serialization;
-using System.IO;
 
 namespace Arriba.Structures
 {
@@ -225,7 +225,7 @@ namespace Arriba.Structures
 
         public void WriteTo(Stream stream)
         {
-            if(this.Length > 0)
+            if (this.Length > 0)
             {
                 stream.Write(this.Array, this.Index, this.Length);
             }

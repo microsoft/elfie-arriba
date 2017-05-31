@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,12 +17,12 @@ namespace Microsoft.CodeAnalysis.Elfie.Diagnostics
     {
         public int Count { get; set; }
         public IEnumerator<T> Matches { get; set; }
-        private static IEnumerator<T> Empty = Enumerable.Empty<T>().GetEnumerator();
+        private static IEnumerator<T> s_empty = Enumerable.Empty<T>().GetEnumerator();
 
         public SearchResult()
         {
             this.Count = 0;
-            this.Matches = Empty;
+            this.Matches = s_empty;
         }
 
         public SearchResult(int count, IEnumerator<T> matches)

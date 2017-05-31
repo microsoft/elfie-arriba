@@ -1,13 +1,17 @@
-﻿using Arriba.Diagnostics;
-using Arriba.Extensions;
-using Arriba.Structures;
-using Arriba.TfsWorkItemCrawler.ItemConsumers;
-using Arriba.TfsWorkItemCrawler.ItemProviders;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+
+using Arriba.Diagnostics;
+using Arriba.Extensions;
+using Arriba.Structures;
+using Arriba.TfsWorkItemCrawler.ItemConsumers;
+using Arriba.TfsWorkItemCrawler.ItemProviders;
 
 namespace Arriba.TfsWorkItemCrawler
 {
@@ -57,7 +61,7 @@ namespace Arriba.TfsWorkItemCrawler
                 lastChangedItemAppended = previousLastChangedItem;
 
                 Trace.WriteLine(string.Format("Last Updated item was updated at '{0}'...", previousLastChangedItem));
-                
+
                 // For clean crawl, get more than a day at a time until first items found
                 int intervalDays = ((now - previousLastChangedItem).TotalDays > 365 ? 365 : 1);
 
@@ -72,7 +76,7 @@ namespace Arriba.TfsWorkItemCrawler
                     itemsToGet = provider.GetItemsChangedBetween(start, end);
 
                     // If few or no items are returned, crawl by week. If many, by day
-                    if(itemsToGet != null && itemsToGet.Count > 1000)
+                    if (itemsToGet != null && itemsToGet.Count > 1000)
                     {
                         intervalDays = 1;
                     }
@@ -109,12 +113,11 @@ namespace Arriba.TfsWorkItemCrawler
                                     Console.Write("[");
                                     blocks[relativeIndex] = provider.GetItemBlock(pages[nextPageIndex + relativeIndex], this.ColumnNames);
                                 }
-                                catch(Exception e)
+                                catch (Exception e)
                                 {
                                     exceptionCount++;
                                     Trace.WriteLine(string.Format("Exception when fetching {0} items. Error: {1}\r\nItem IDs: {2}", ConfigurationName, e.ToString(), String.Join(", ", pages[nextPageIndex + relativeIndex].Select(r => r.ID))));
                                     if (exceptionCount > 10) throw;
-
                                 }
                             });
                             readWatch.Stop();
@@ -162,7 +165,7 @@ namespace Arriba.TfsWorkItemCrawler
                                 {
                                     exceptionCount++;
                                     Trace.WriteLine(string.Format("Exception saving {0} batch. Error: {1}", ConfigurationName, e.ToString()));
-                                    
+
                                     if (exceptionCount > 10) throw;
                                 }
                             }
