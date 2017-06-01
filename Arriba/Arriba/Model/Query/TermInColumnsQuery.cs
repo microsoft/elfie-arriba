@@ -57,10 +57,17 @@ namespace Arriba.Model.Query
                 TermExpression bareTerm = new TermExpression(this.Term);
                 ShortSet termMatchesForColumn = new ShortSet(p.Count);
 
+                bool succeeded = false;
+                ExecutionDetails perColumnDetails = new ExecutionDetails();
+
                 foreach (IColumn<object> column in p.Columns.Values)
                 {
                     termMatchesForColumn.Clear();
-                    column.TryWhere(Operator.Matches, this.Term, termMatchesForColumn, result.Details);
+
+                    perColumnDetails.Succeeded = true;
+                    column.TryWhere(Operator.Matches, this.Term, termMatchesForColumn, perColumnDetails);
+                    succeeded |= perColumnDetails.Succeeded;
+
                     termMatchesForColumn.And(baseQueryMatches);
 
                     ushort matchCount = termMatchesForColumn.Count();

@@ -27,7 +27,8 @@ namespace Arriba.Test.Model.Query
             string[] names = new string[] { "University of North", "Northeasterly", "Southern University", "Southwestern", "Western State" };
             string[] mascots = new string[] { "Unicorn", "Frog", "Marmot", "Elephant" };
 
-            College = new Table();
+            // Build a sample table with more than one partition (to verify merging)
+            College = new Table("College", 100000);
             College.Name = "College";
             College.AddColumn(new ColumnDetails("ID", "int", -1) { IsPrimaryKey = true });
             College.AddColumn(new ColumnDetails("Name", "string", null));
@@ -309,7 +310,7 @@ namespace Arriba.Test.Model.Query
 
             // Works for TimeSpan
             result = qi.GetIntelliSenseItems("[SchoolYearLength] >= ", Tables);
-            Assert.AreEqual("211.00:00:00 12 %, 207.00:00:00 24 %, 203.00:00:00 36 %, 199.00:00:00 48 %, 195.00:00:00 60 %, 191.00:00:00 76 %, 187.00:00:00 92 %", ItemsAndCounts(result));
+            Assert.AreEqual("211.00:00:00 12 %, 208.00:00:00 21 %, 204.00:00:00 33 %, 200.00:00:00 45 %, 196.00:00:00 57 %, 192.00:00:00 72 %, 188.00:00:00 88 %", ItemsAndCounts(result));
 
             // Works for DateTime
             result = qi.GetIntelliSenseItems("[WhenFounded] >= ", Tables);
@@ -509,7 +510,7 @@ namespace Arriba.Test.Model.Query
         public void PercentilesAndDistributions()
         {
             DataBlockResult pr = Tables[0].Query(new PercentilesQuery("SchoolYearLength", "", new double[] { 0.1, 0.5, 0.9 }));
-            Assert.AreEqual("187.00:00:00, 198.00:00:00, 211.00:00:00", string.Join(", ", (object[])pr.Values.GetColumn(1)));
+            Assert.AreEqual("188.00:00:00, 199.00:00:00, 211.00:00:00", string.Join(", ", (object[])pr.Values.GetColumn(1)));
 
             DataBlockResult dr = Tables[0].Query(new DistributionQuery("SchoolYearLength", "", true));
         }

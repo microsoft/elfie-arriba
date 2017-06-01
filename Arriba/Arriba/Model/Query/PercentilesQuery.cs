@@ -127,22 +127,6 @@ namespace Arriba.Model.Query
             if (!partitionResults[0].Details.Succeeded) return partitionResults[0];
 
             DataBlockResult mergedResult = new DataBlockResult(this);
-            mergedResult.Values = new DataBlock(new string[] { "Percentiles", "Values" }, this.Percentiles.Length);
-
-            // Find the median for each percentile across partitions
-            object[] valuesPerPartition = new object[partitionResults.Length];
-            for (int i = 0; i < this.Percentiles.Length; ++i)
-            {
-                for (int partitionIndex = 0; partitionIndex < partitionResults.Length; ++partitionIndex)
-                {
-                    valuesPerPartition[partitionIndex] = partitionResults[partitionIndex].Values[i, 1];
-                }
-
-                Array.Sort(valuesPerPartition);
-
-                mergedResult.Values[i, 0] = this.Percentiles[i];
-                mergedResult.Values[i, 1] = valuesPerPartition[valuesPerPartition.Length / 2];
-            }
 
             // Merge totals and details
             for (int partitionIndex = 0; partitionIndex < partitionResults.Length; ++partitionIndex)
@@ -150,6 +134,29 @@ namespace Arriba.Model.Query
                 DataBlockResult result = partitionResults[partitionIndex];
                 mergedResult.Details.Merge(result.Details);
                 mergedResult.Total += result.Total;
+            }
+
+            if (mergedResult.Details.Succeeded && mergedResult.Total > 0)
+            {
+                mergedResult.Values = new DataBlock(new string[] { "Percentiles", "Values" }, this.Percentiles.Length);
+
+                // Find the median for each percentile across partitions
+                object[] valuesPerPartition = new object[partitionResults.Length];
+                for (int i = 0; i < this.Percentiles.Length; ++i)
+                {
+                    for (int partitionIndex = 0; partitionIndex < partitionResults.Length; ++partitionIndex)
+                    {
+                        if (partitionResults[partitionIndex].Values != null)
+                        {
+                            valuesPerPartition[partitionIndex] = partitionResults[partitionIndex].Values[i, 1];
+                        }
+                    }
+
+                    Array.Sort(valuesPerPartition);
+
+                    mergedResult.Values[i, 0] = this.Percentiles[i];
+                    mergedResult.Values[i, 1] = valuesPerPartition[valuesPerPartition.Length / 2];
+                }
             }
 
             return mergedResult;
