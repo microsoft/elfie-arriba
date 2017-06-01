@@ -76,8 +76,24 @@ namespace Arriba.Model.Query
         /// </summary>
         public string CompleteAs { get; set; }
 
+        /// <summary>
+        ///  Count of items with value (when relevant)
+        /// </summary>
+        public long Count { get; set; }
+
+        /// <summary>
+        ///  Overall set of items (with or without value; when relevant)
+        /// </summary>
+        public long Denominator { get; set; }
+
         public IntelliSenseItem(QueryTokenCategory category, string value, string hint) : this(category, value, hint, value)
         { }
+
+        public IntelliSenseItem(QueryTokenCategory category, string value, long count, long denominator) : this(category, value, PercentageString(count, denominator), value)
+        {
+            this.Count = count;
+            this.Denominator = denominator;
+        }
 
         public IntelliSenseItem(QueryTokenCategory category, string display, string hint, string completeAs)
         {
@@ -85,6 +101,16 @@ namespace Arriba.Model.Query
             this.Display = display;
             this.Hint = hint;
             this.CompleteAs = completeAs;
+        }
+
+        public static string PercentageString(long count, long total)
+        {
+            if (count == total || total == 0) return "all";
+
+            double percentage = (double)count / (double)total;
+            if (percentage < 0.01) return percentage.ToString("P2");
+            if (percentage < 0.10) return percentage.ToString("P1");
+            return percentage.ToString("P0");
         }
 
         public override string ToString()
@@ -533,8 +559,7 @@ namespace Arriba.Model.Query
 
                  if ((countForValue > 1 || total <= 10) && value.StartsWith(guidance.Value, StringComparison.OrdinalIgnoreCase))
                 {
-                    string hint = GetPercentageString(countForValue, topValues.Total);
-                    suggestions.Add(new IntelliSenseItem(QueryTokenCategory.Value, QueryParser.WrapValue(topValues.Values[i, 0]), hint));
+                    suggestions.Add(new IntelliSenseItem(QueryTokenCategory.Value, QueryParser.WrapValue(topValues.Values[i, 0]), countForValue, topValues.Total));
                 }
             }
         }
@@ -563,8 +588,7 @@ namespace Arriba.Model.Query
 
                     if ((distribution.Values.RowCount == 2 || (int)distribution.Values[i + 1, 1] > 0) && value.StartsWith(guidance.Value, StringComparison.OrdinalIgnoreCase))
                     {
-                        string hint = GetPercentageString(countSoFar, distribution.Total);
-                        suggestions.Add(new IntelliSenseItem(QueryTokenCategory.Value, QueryParser.WrapValue(distribution.Values[i, 0]), hint));
+                        suggestions.Add(new IntelliSenseItem(QueryTokenCategory.Value, QueryParser.WrapValue(distribution.Values[i, 0]), countSoFar, distribution.Total));
                     }
 
                     countSoFar += countForRange;
@@ -584,8 +608,7 @@ namespace Arriba.Model.Query
 
                     if ((distribution.Values.RowCount == 2 || countForRange > 0) && value.StartsWith(guidance.Value, StringComparison.OrdinalIgnoreCase))
                     {
-                        string hint = GetPercentageString(countSoFar, distribution.Total);
-                        suggestions.Add(new IntelliSenseItem(QueryTokenCategory.Value, QueryParser.WrapValue(distribution.Values[i, 0]), hint));
+                        suggestions.Add(new IntelliSenseItem(QueryTokenCategory.Value, QueryParser.WrapValue(distribution.Values[i, 0]), countSoFar, distribution.Total));
                     }
                 }
             }
@@ -614,8 +637,7 @@ namespace Arriba.Model.Query
                 int countToReturn = Math.Min(10, columnsForTerm.Count);
                 for (int i = 0; i < countToReturn; ++i)
                 {
-                    string hint = GetPercentageString(columnsForTerm[i].Item2, columnsForTerm[i].Item3);
-                    suggestions.Add(new IntelliSenseItem(QueryTokenCategory.ColumnName, QueryParser.WrapColumnName(columnsForTerm[i].Item1) + " : " + QueryParser.WrapValue(termValue), hint));
+                    suggestions.Add(new IntelliSenseItem(QueryTokenCategory.ColumnName, QueryParser.WrapColumnName(columnsForTerm[i].Item1) + " : " + QueryParser.WrapValue(termValue), columnsForTerm[i].Item2, columnsForTerm[i].Item3));
                 }
             }
         }
@@ -665,15 +687,6 @@ namespace Arriba.Model.Query
         {
             // Lame, to turn single terms into AllQuery [normally they return nothing]
             return QueryParser.Parse(result.Complete).ToString();
-        }
-
-        private static string GetPercentageString(int count, long total)
-        {
-            if (count == total || total == 0) return "all";
-
-            double percentage = (double)count / (double)total;
-            if (percentage < 0.01) return percentage.ToString("P1");
-            return percentage.ToString("P0");
         }
 
         private static bool TryFindSingleMatchingColumn(IReadOnlyCollection<Table> targetTables, TermExpression lastTerm, out Table matchTable, out ColumnDetails matchColumn)
