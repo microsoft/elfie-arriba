@@ -35,7 +35,7 @@ export default class Start extends React.Component {
         </div>;
 
         var tables = Object.map(this.props.allBasics || {}, (name, data) => data);
-        var itemCount = tables.reduce((sum, table) => sum + table.rowCount, 0).toLocaleString();
+        var itemCount = tables.reduce((sum, table) => sum + table.rowCount, 0);
         var lastUpdateDate = Math.min(...tables.map(table => new Date(table.lastWriteTimeUtc))); // Will be a Date() if found, 0 if empty array.
         var lastUpdated = lastUpdateDate ? moment(lastUpdateDate).fromNow().replace(/minutes?/, "min").replace("a few seconds ago", "just now") : "...";
 
@@ -47,7 +47,9 @@ export default class Start extends React.Component {
 
         return <div className="center-center">
             <div className="start" ref="start">
-                <h1>Instantly search <b>{itemCount}</b> items as of <b>{lastUpdated}</b></h1>
+                {itemCount
+                    ? <h1>Instantly search <b>{itemCount.toLocaleString()}</b> items as of <b>{lastUpdated}</b></h1>
+                    : <h1>Loading...</h1>}
                 {configuration.startContent && [
                     <div className="intro" style={{ display: hideIntro ? "none" : "" }}>
                         <div className="welcome">{configuration.startContent.overview}</div>

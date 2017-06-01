@@ -58,7 +58,7 @@ export default React.createClass({
         window.addEventListener("beforeunload", this); // For Mru
         this.mru = new Mru();
 
-        // On Page load, find the list of known table names
+        // On Page load, find the list of known table namesz
         jsonQuery(configuration.url + "/allBasics",
             data => {
                 if (!data.content) {
@@ -337,8 +337,7 @@ export default React.createClass({
                 <InfiniteScroll page={this.state.page} hasMoreData={this.state.hasMoreData} loadMore={this.getResultsPage }>
                     <ResultListing ref={"list"}
                         data={this.state.listingData}
-                        idColumn={table && table.idColumn || ""}
-                        allColumns={table && table.columns || []}
+                        allBasics={this.state.allBasics}
                         sortColumn={this.state.currentTableSettings.sortColumn}
                         sortOrder={this.state.currentTableSettings.sortOrder}
                         selectedId={this.state.userSelectedId}
