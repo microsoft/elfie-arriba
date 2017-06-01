@@ -279,7 +279,7 @@ namespace Arriba.Model.Expressions
 
         public override string ToString()
         {
-            return StringExtensions.Format("{0}{1}{2}", QueryParser.WrapColumnName(this.ColumnName), this.Operator.ToSyntaxString(), QueryParser.WrapValue(this.Value.ToString()));
+            return StringExtensions.Format("{0}{1}{2}", QueryParser.WrapColumnName(this.ColumnName), this.Operator.ToSyntaxString(), QueryParser.WrapValue(this.Value));
         }
     }
 
@@ -423,7 +423,7 @@ namespace Arriba.Model.Expressions
                     break;
                 }
 
-                result.Append(QueryParser.WrapValue(this.Values.GetValue(i).ToString()));
+                result.Append(QueryParser.WrapValue(this.Values.GetValue(i)));
             }
 
             result.Append(")");
