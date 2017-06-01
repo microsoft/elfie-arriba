@@ -672,7 +672,7 @@ namespace Arriba.Model.Query
             if (count == total || total == 0) return "all";
 
             double percentage = (double)count / (double)total;
-            if (percentage < 0.1) return percentage.ToString("P1");
+            if (percentage < 0.01) return percentage.ToString("P1");
             return percentage.ToString("P0");
         }
 
