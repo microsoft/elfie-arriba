@@ -608,7 +608,7 @@ namespace Arriba.Model.Query
                 }
 
                 // Sort overall set by frequency descending
-                columnsForTerm.Sort((left, right) => right.Item2.CompareTo(left.Item2));
+                columnsForTerm.Sort((left, right) => ((double)right.Item2 / (double)right.Item3).CompareTo((double)left.Item2 / (double)left.Item3));
 
                 // Add top 10 suggestions
                 int countToReturn = Math.Min(10, columnsForTerm.Count);
