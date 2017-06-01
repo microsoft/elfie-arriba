@@ -87,7 +87,7 @@ export default React.createClass({
     },
     toggleFavorite: function () {
         if (!this.props.parsedQuery) return;
-        localStorage.updateJson("favorites", favs => ([] || favs).toggle(this.props.parsedQuery));
+        localStorage.updateJson("favorites", favs => (favs || []).toggle(this.props.parsedQuery));
     },
     render: function () {
         // Generates a SVG histogram to be displayed behind the completion list.
