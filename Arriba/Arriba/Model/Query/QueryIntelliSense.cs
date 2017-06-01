@@ -303,6 +303,8 @@ namespace Arriba.Model.Query
             if (guidance.Options.HasFlag(QueryTokenCategory.Value))
             {
                 spaceIsSafeCompletionCharacter = false;
+
+                AddSuggestionsForTerm(targetTables, result, lastTerm, guidance, suggestions);
             }
 
             // If *only* a value is valid here, provide a syntax hint for the value type (and reconsider if space is safe to complete)
@@ -510,11 +512,10 @@ namespace Arriba.Model.Query
 
         private static void AddTopColumnValues(IntelliSenseResult result, TermExpression lastTerm, IntelliSenseGuidance guidance, List<IntelliSenseItem> suggestions, Table singleTable, ColumnDetails singleColumn)
         {
-            // Lame, to turn single terms into AllQuery [normally they return nothing]
-            string completeQuery = QueryParser.Parse(result.Complete).ToString();
+            string completeQuery = GetCompleteQueryPrefix(result);
 
             // Recommend the top ten values in the column with the prefix typed so far
-            DistinctResult topValues = singleTable.Query(new DistinctQueryTop(singleColumn.Name, completeQuery, 10));
+            DistinctResult topValues = singleTable.Query(new DistinctQueryTop(singleColumn.Name, lastTerm.Value.ToString(), completeQuery, 10));
             int total = (int)topValues.Total;
             if (topValues.Total == 0) return;
 
@@ -529,20 +530,18 @@ namespace Arriba.Model.Query
                 string value = topValues.Values[i, 0].ToString();
                 int countForValue = (int)topValues.Values[i, 1];
                 if (isNotEquals) countForValue = (int)topValues.Total - countForValue;
-                double frequency = (double)countForValue / (double)(topValues.Total);
 
-                if ((countForValue > 1 || total <= 10) && value.StartsWith(guidance.Value, StringComparison.OrdinalIgnoreCase))
+                 if ((countForValue > 1 || total <= 10) && value.StartsWith(guidance.Value, StringComparison.OrdinalIgnoreCase))
                 {
-                    string hint = (countForValue == topValues.Total ? "all" : frequency.ToString("P0"));
-                    suggestions.Add(new IntelliSenseItem(QueryTokenCategory.Value, QueryParser.WrapValue(value), hint));
+                    string hint = GetPercentageString(countForValue, topValues.Total);
+                    suggestions.Add(new IntelliSenseItem(QueryTokenCategory.Value, QueryParser.WrapValue(topValues.Values[i, 0]), hint));
                 }
             }
         }
 
         private static void AddValueDistribution(IntelliSenseResult result, TermExpression lastTerm, IntelliSenseGuidance guidance, List<IntelliSenseItem> suggestions, Table singleTable, ColumnDetails singleColumn)
         {
-            // Lame, to turn single terms into AllQuery [normally they return nothing]
-            string completeQuery = QueryParser.Parse(result.Complete).ToString();
+            string completeQuery = GetCompleteQueryPrefix(result);
 
             bool inclusive = (lastTerm.Operator == Operator.LessThanOrEqual || lastTerm.Operator == Operator.GreaterThan);
             bool reverse = (lastTerm.Operator == Operator.GreaterThan || lastTerm.Operator == Operator.GreaterThanOrEqual);
@@ -558,14 +557,14 @@ namespace Arriba.Model.Query
 
                 for (int i = distribution.Values.RowCount - 2; i >= 0; --i)
                 {
-                    string value = QueryParser.WrapValue(distribution.Values[i, 0].ToString());
+                    string value = distribution.Values[i, 0].ToString();
                     double frequency = (double)countSoFar / (double)(distribution.Total);
                     int countForRange = (int)distribution.Values[i, 1];
 
-                    if ((int)distribution.Values[i + 1, 1] > 0 && value.StartsWith(guidance.Value, StringComparison.OrdinalIgnoreCase))
+                    if ((distribution.Values.RowCount == 2 || (int)distribution.Values[i + 1, 1] > 0) && value.StartsWith(guidance.Value, StringComparison.OrdinalIgnoreCase))
                     {
-                        string hint = (countSoFar == (int)distribution.Total ? "all" : frequency.ToString("P0"));
-                        suggestions.Add(new IntelliSenseItem(QueryTokenCategory.Value, value, hint));
+                        string hint = GetPercentageString(countSoFar, distribution.Total);
+                        suggestions.Add(new IntelliSenseItem(QueryTokenCategory.Value, QueryParser.WrapValue(distribution.Values[i, 0]), hint));
                     }
 
                     countSoFar += countForRange;
@@ -577,17 +576,46 @@ namespace Arriba.Model.Query
 
                 for (int i = 0; i < distribution.Values.RowCount - 1; ++i)
                 {
-                    string value = QueryParser.WrapValue(distribution.Values[i, 0].ToString());
+                    string value = distribution.Values[i, 0].ToString();
                     int countForRange = (int)distribution.Values[i, 1];
                     countSoFar += countForRange;
 
                     double frequency = (double)countSoFar / (double)(distribution.Total);
 
-                    if (countForRange > 0 && value.StartsWith(guidance.Value, StringComparison.OrdinalIgnoreCase))
+                    if ((distribution.Values.RowCount == 2 || countForRange > 0) && value.StartsWith(guidance.Value, StringComparison.OrdinalIgnoreCase))
                     {
-                        string hint = (countSoFar == (int)distribution.Total ? "all" : frequency.ToString("P0"));
-                        suggestions.Add(new IntelliSenseItem(QueryTokenCategory.Value, value, hint));
+                        string hint = GetPercentageString(countSoFar, distribution.Total);
+                        suggestions.Add(new IntelliSenseItem(QueryTokenCategory.Value, QueryParser.WrapValue(distribution.Values[i, 0]), hint));
                     }
+                }
+            }
+        }
+
+        private static void AddSuggestionsForTerm(IReadOnlyCollection<Table> targetTables, IntelliSenseResult result, TermExpression lastTerm, IntelliSenseGuidance guidance, List<IntelliSenseItem> suggestions)
+        {
+            if (lastTerm != null && lastTerm.ColumnName == "*")
+            {
+                object termValue = lastTerm.Value;
+                List<Tuple<string, int, int>> columnsForTerm = new List<Tuple<string, int, int>>();
+
+                foreach (Table table in targetTables)
+                {
+                    DataBlockResult columns = table.Query(new TermInColumnsQuery(termValue.ToString(), result.Query));
+                    for (int i = 0; i < columns.Values.RowCount; ++i)
+                    {
+                        columnsForTerm.Add(new Tuple<string, int, int>((string)columns.Values[i, 0], (int)columns.Values[i, 1], (int)columns.Total));
+                    }
+                }
+
+                // Sort overall set by frequency descending
+                columnsForTerm.Sort((left, right) => ((double)right.Item2 / (double)right.Item3).CompareTo((double)left.Item2 / (double)left.Item3));
+
+                // Add top 10 suggestions
+                int countToReturn = Math.Min(10, columnsForTerm.Count);
+                for (int i = 0; i < countToReturn; ++i)
+                {
+                    string hint = GetPercentageString(columnsForTerm[i].Item2, columnsForTerm[i].Item3);
+                    suggestions.Add(new IntelliSenseItem(QueryTokenCategory.ColumnName, QueryParser.WrapColumnName(columnsForTerm[i].Item1) + " : " + QueryParser.WrapValue(termValue), hint));
                 }
             }
         }
@@ -631,6 +659,21 @@ namespace Arriba.Model.Query
             TermExpression unusedTerm;
             IExpression unusedQuery;
             return GetCurrentTokenOptions(queryBeforeCursor, out unusedTerm, out unusedQuery);
+        }
+
+        private static string GetCompleteQueryPrefix(IntelliSenseResult result)
+        {
+            // Lame, to turn single terms into AllQuery [normally they return nothing]
+            return QueryParser.Parse(result.Complete).ToString();
+        }
+
+        private static string GetPercentageString(int count, long total)
+        {
+            if (count == total || total == 0) return "all";
+
+            double percentage = (double)count / (double)total;
+            if (percentage < 0.01) return percentage.ToString("P1");
+            return percentage.ToString("P0");
         }
 
         private static bool TryFindSingleMatchingColumn(IReadOnlyCollection<Table> targetTables, TermExpression lastTerm, out Table matchTable, out ColumnDetails matchColumn)

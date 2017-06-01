@@ -6,23 +6,30 @@ using System.Collections.Generic;
 using System.Linq;
 
 using Arriba.Structures;
+using Arriba.Model.Expressions;
 
 namespace Arriba.Model.Query
 {
     /// <summary>
-    ///  DistinctQuery enables getting the set of unique values for a given
-    ///  column within a specific filter up to a configured limit. It is
-    ///  roughly equivalent to SELECT DISTINCT [column] in SQL, but only for
-    ///  a single column.
+    ///  DistinctQueryTop returns the most common unique values for a given column
+    ///  in a given query. It is used to provide Inline Insight results for "[Column] = ".
     /// </summary>
     public class DistinctQueryTop : DistinctQuery
     {
+        public string ValuePrefix { get; set; }
+
         public DistinctQueryTop() : base()
         { }
 
         public DistinctQueryTop(string column, string where, ushort count)
             : base(column, where, count)
         { }
+
+        public DistinctQueryTop(string column, string valuePrefix, string where, ushort count)
+            : base(column, where, count)
+        {
+            this.ValuePrefix = valuePrefix;
+        }
 
         public override DistinctResult Compute(Partition p)
         {
@@ -36,16 +43,27 @@ namespace Arriba.Model.Query
                 return result;
             }
 
-            // Find the set of items matching the where clause
+            // Find the set of items matching the base where clause
             ShortSet whereSet = new ShortSet(p.Count);
             this.Where.TryEvaluate(p, whereSet, result.Details);
+
+            // Capture the total of the base query
+            result.Total = whereSet.Count();
+
+            // Add a prefix filter for the prefix so far, if any and the column can prefix match
+            if (!String.IsNullOrEmpty(this.ValuePrefix))
+            {
+                ExecutionDetails prefixDetails = new ExecutionDetails();
+                ShortSet prefixSet = new ShortSet(p.Count);
+                new TermExpression(this.Column, Operator.StartsWith, this.ValuePrefix).TryEvaluate(p, prefixSet, prefixDetails);
+                if (prefixDetails.Succeeded) whereSet.And(prefixSet);
+            }
 
             if (result.Details.Succeeded)
             {
                 // Count the occurences of each value
                 Dictionary<object, int> countByValue = new Dictionary<object, int>();
                 IUntypedColumn column = p.Columns[this.Column];
-                int rowCount = 0;
 
                 for (int i = 0; i < column.Count; ++i)
                 {
@@ -57,8 +75,6 @@ namespace Arriba.Model.Query
                         int count;
                         countByValue.TryGetValue(value, out count);
                         countByValue[value] = count + 1;
-
-                        rowCount++;
                     }
                 }
 
@@ -66,7 +82,7 @@ namespace Arriba.Model.Query
                 result.Values = ToDataBlock(countByValue, this.Column, (int)this.Count);
 
                 result.AllValuesReturned = result.Values.RowCount == countByValue.Count;
-                result.Total = rowCount;
+                
             }
 
             return result;
