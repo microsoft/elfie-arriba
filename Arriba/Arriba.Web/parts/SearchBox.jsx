@@ -74,36 +74,15 @@ export default React.createClass({
     setQuery: function (query) {
         this.props.onSearchChange(query);
 
-        if (this.suggestions && query.startsWith(this.state.completed)) {
-            const incomplete = query.slice(this.state.completed.length).toUpperCase();
-            const matching = this.suggestions.filter(s => s.matchAs.startsWith(incomplete));
-            if (matching.length) {
-                if (matching.length === 1 && matching[0].matchAs === incomplete) {
-                    this.setState({ suggestions: [], sel: 0 });
-                } else {
-                    this.setState({ suggestions: matching, sel: 0 });
-                }
-                return;
-            }
-        }
-
-
         if (this.lastRequest) this.lastRequest.abort();
         this.lastRequest = jsonQuery(
             configuration.url + "/suggest?q=" + encodeURIComponent(query),
-            data => {
-                // A cache which is later filtered and assigned to state.suggestions.
-                this.suggestions = data.content.suggestions.map(item => {
-                    item.matchAs = item.completeAs.trimIf("[").toUpperCase();
-                    return item;
-                });
-                this.setState({
-                    suggestions: data.content.suggestions,
-                    sel: 0,
-                    completed: data.content.complete, 
-                    completionCharacters: data.content.completionCharacters.map(c => ({ "\t": "Tab" })[c] || c),
-                });
-            }
+            data => this.setState({
+                suggestions: data.content.suggestions,
+                sel: 0,
+                completed: data.content.complete, 
+                completionCharacters: data.content.completionCharacters.map(c => ({ "\t": "Tab" })[c] || c),
+            })
         );
     },
     toggleFavorite: function () {
