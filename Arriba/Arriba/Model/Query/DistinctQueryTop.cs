@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 using Arriba.Structures;
+using Arriba.Model.Expressions;
 
 namespace Arriba.Model.Query
 {
@@ -15,12 +16,20 @@ namespace Arriba.Model.Query
     /// </summary>
     public class DistinctQueryTop : DistinctQuery
     {
+        public string ValuePrefix { get; set; }
+
         public DistinctQueryTop() : base()
         { }
 
         public DistinctQueryTop(string column, string where, ushort count)
             : base(column, where, count)
         { }
+
+        public DistinctQueryTop(string column, string valuePrefix, string where, ushort count)
+            : base(column, where, count)
+        {
+            this.ValuePrefix = valuePrefix;
+        }
 
         public override DistinctResult Compute(Partition p)
         {
@@ -34,16 +43,27 @@ namespace Arriba.Model.Query
                 return result;
             }
 
-            // Find the set of items matching the where clause
+            // Find the set of items matching the base where clause
             ShortSet whereSet = new ShortSet(p.Count);
             this.Where.TryEvaluate(p, whereSet, result.Details);
+
+            // Capture the total of the base query
+            result.Total = whereSet.Count();
+
+            // Add a prefix filter for the prefix so far, if any
+            if(!String.IsNullOrEmpty(this.ValuePrefix))
+            {
+                ShortSet prefixSet = new ShortSet(p.Count);
+                new TermExpression(this.Column, Operator.StartsWith, this.ValuePrefix).TryEvaluate(p, prefixSet, result.Details);
+
+                whereSet.And(prefixSet);
+            }
 
             if (result.Details.Succeeded)
             {
                 // Count the occurences of each value
                 Dictionary<object, int> countByValue = new Dictionary<object, int>();
                 IUntypedColumn column = p.Columns[this.Column];
-                int rowCount = 0;
 
                 for (int i = 0; i < column.Count; ++i)
                 {
@@ -55,8 +75,6 @@ namespace Arriba.Model.Query
                         int count;
                         countByValue.TryGetValue(value, out count);
                         countByValue[value] = count + 1;
-
-                        rowCount++;
                     }
                 }
 
@@ -64,7 +82,7 @@ namespace Arriba.Model.Query
                 result.Values = ToDataBlock(countByValue, this.Column, (int)this.Count);
 
                 result.AllValuesReturned = result.Values.RowCount == countByValue.Count;
-                result.Total = rowCount;
+                
             }
 
             return result;
