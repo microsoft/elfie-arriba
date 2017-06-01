@@ -50,13 +50,13 @@ namespace Arriba.Model.Query
             // Capture the total of the base query
             result.Total = whereSet.Count();
 
-            // Add a prefix filter for the prefix so far, if any
-            if(!String.IsNullOrEmpty(this.ValuePrefix))
+            // Add a prefix filter for the prefix so far, if any and the column can prefix match
+            if (!String.IsNullOrEmpty(this.ValuePrefix))
             {
+                ExecutionDetails prefixDetails = new ExecutionDetails();
                 ShortSet prefixSet = new ShortSet(p.Count);
-                new TermExpression(this.Column, Operator.StartsWith, this.ValuePrefix).TryEvaluate(p, prefixSet, result.Details);
-
-                whereSet.And(prefixSet);
+                new TermExpression(this.Column, Operator.StartsWith, this.ValuePrefix).TryEvaluate(p, prefixSet, prefixDetails);
+                if (prefixDetails.Succeeded) whereSet.And(prefixSet);
             }
 
             if (result.Details.Succeeded)
