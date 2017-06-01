@@ -62,17 +62,20 @@ export default React.createClass({
         if (newSelectedIndex < 0 || newSelectedIndex >= count) return;
 
         // Otherwise, trigger a selection change
-        var idColumnIndex = this.props.data.content.query.columns.indexOf(this.props.idColumn);
+        var idColumn = this.props.allBasics && this.props.allBasics[this.props.data.content.query.tableName].idColumn;
+        var idColumnIndex = this.props.data.content.query.columns.indexOf(idColumn);
         var row = this.props.data.content.values.rows[newSelectedIndex];
         this.setState({ selectedIndex: newSelectedIndex });
         this.props.onSelectionChanged(stripHighlight(row[idColumnIndex]));
     },
     render: function () {
         var content = this.props.data.content;
-        if (!content || !content.details.succeeded || !this.props.idColumn) return null;
 
-        var idColumn = this.props.idColumn;
-        var idColumnIndex = content.query.columns.indexOf(this.props.idColumn);
+        if (!this.props.allBasics || !content || !content.details.succeeded) return null;
+
+        const table = this.props.allBasics[this.props.data.content.query.tableName];
+        var idColumn = table.idColumn;
+        var idColumnIndex = content.query.columns.indexOf(idColumn);
 
         // Write a column heading row - click to sort, remove/add columns
         var columnCells = [];
@@ -98,7 +101,7 @@ export default React.createClass({
                     <div ref={"addButton"} className="add-column-button icon-add icon-column-heading" title="Add Column" onClick={this.handleAdd}>
                         <AddColumnList showing={this.state.addColumnsShowing}
                                        onAddColumn={this.onAddColumn}
-                                       allColumns={this.props.allColumns}
+                                       allColumns={table.columns}
                                        currentColumns={content.query.columns} />
                     </div>
                 );
