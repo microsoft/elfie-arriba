@@ -332,7 +332,8 @@ export default React.createClass({
         var table = this.state.allBasics && this.state.currentTable && this.state.allBasics[this.state.currentTable] || undefined;
         var customDetailsView = (configuration.customDetailsProviders && configuration.customDetailsProviders[this.state.currentTable]) || ResultDetails;
 
-        var mainContent = this.state.allBasics && this.state.currentTable
+        // Consider clearing the currentTable when the query is empty.
+        var mainContent = this.state.query && this.state.allBasics && this.state.currentTable
             ? <SplitPane split="horizontal" minSize="300" isFirstVisible={this.state.listingData.content} isSecondVisible={this.state.userSelectedId}>
                 <InfiniteScroll page={this.state.page} hasMoreData={this.state.hasMoreData} loadMore={this.getResultsPage }>
                     <ResultListing ref={"list"}
