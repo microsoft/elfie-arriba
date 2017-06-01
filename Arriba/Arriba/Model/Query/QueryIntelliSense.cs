@@ -527,15 +527,15 @@ namespace Arriba.Model.Query
 
             for (int i = start; i != end; i += step)
             {
-                string value = topValues.Values[i, 0].ToString();
+                string value = QueryParser.WrapValue(topValues.Values[i, 0]);
                 int countForValue = (int)topValues.Values[i, 1];
                 if (isNotEquals) countForValue = (int)topValues.Total - countForValue;
                 double frequency = (double)countForValue / (double)(topValues.Total);
 
-                if ((countForValue > 1 || total <= 10) && value.StartsWith(guidance.Value, StringComparison.OrdinalIgnoreCase))
+                 if ((countForValue > 1 || total <= 10) && value.StartsWith(guidance.Value, StringComparison.OrdinalIgnoreCase))
                 {
                     string hint = (countForValue == topValues.Total ? "all" : frequency.ToString("P0"));
-                    suggestions.Add(new IntelliSenseItem(QueryTokenCategory.Value, QueryParser.WrapValue(value), hint));
+                    suggestions.Add(new IntelliSenseItem(QueryTokenCategory.Value, value, hint));
                 }
             }
         }
@@ -558,11 +558,11 @@ namespace Arriba.Model.Query
 
                 for (int i = distribution.Values.RowCount - 2; i >= 0; --i)
                 {
-                    string value = QueryParser.WrapValue(distribution.Values[i, 0].ToString());
+                    string value = QueryParser.WrapValue(distribution.Values[i, 0]);
                     double frequency = (double)countSoFar / (double)(distribution.Total);
                     int countForRange = (int)distribution.Values[i, 1];
 
-                    if ((int)distribution.Values[i + 1, 1] > 0 && value.StartsWith(guidance.Value, StringComparison.OrdinalIgnoreCase))
+                    if ((distribution.Values.RowCount == 2 || (int)distribution.Values[i + 1, 1] > 0) && value.StartsWith(guidance.Value, StringComparison.OrdinalIgnoreCase))
                     {
                         string hint = (countSoFar == (int)distribution.Total ? "all" : frequency.ToString("P0"));
                         suggestions.Add(new IntelliSenseItem(QueryTokenCategory.Value, value, hint));
@@ -577,13 +577,13 @@ namespace Arriba.Model.Query
 
                 for (int i = 0; i < distribution.Values.RowCount - 1; ++i)
                 {
-                    string value = QueryParser.WrapValue(distribution.Values[i, 0].ToString());
+                    string value = QueryParser.WrapValue(distribution.Values[i, 0]);
                     int countForRange = (int)distribution.Values[i, 1];
                     countSoFar += countForRange;
 
                     double frequency = (double)countSoFar / (double)(distribution.Total);
 
-                    if (countForRange > 0 && value.StartsWith(guidance.Value, StringComparison.OrdinalIgnoreCase))
+                    if ((distribution.Values.RowCount == 2 || countForRange > 0) && value.StartsWith(guidance.Value, StringComparison.OrdinalIgnoreCase))
                     {
                         string hint = (countSoFar == (int)distribution.Total ? "all" : frequency.ToString("P0"));
                         suggestions.Add(new IntelliSenseItem(QueryTokenCategory.Value, value, hint));
@@ -596,12 +596,12 @@ namespace Arriba.Model.Query
         {
             if (lastTerm != null && lastTerm.ColumnName == "*")
             {
-                string termValue = lastTerm.Value.ToString();
+                object termValue = lastTerm.Value;
                 List<Tuple<string, double>> columnsForTerm = new List<Tuple<string, double>>();
 
                 foreach (Table table in targetTables)
                 {
-                    DataBlockResult columns = table.Query(new TermInColumnsQuery(termValue, result.Query));
+                    DataBlockResult columns = table.Query(new TermInColumnsQuery(termValue.ToString(), result.Query));
                     for (int i = 0; i < columns.Values.RowCount; ++i)
                     {
                         double frequency = (double)(int)columns.Values[i, 1] / (double)columns.Total;

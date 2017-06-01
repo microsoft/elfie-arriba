@@ -20,6 +20,7 @@ namespace Arriba.Model.Query
     {
         private Array Buckets { get; set; }
 
+        public int BucketCount { get; set; }
         public bool Inclusive { get; set; }
         public string Column { get; set; }
         public string TableName { get; set; }
@@ -27,13 +28,17 @@ namespace Arriba.Model.Query
         public bool RequireMerge => false;
 
         public DistributionQuery() : base()
-        { }
+        {
+            this.BucketCount = 7;
+        }
 
         public DistributionQuery(string columnName, string where, bool inclusive)
         {
             this.Column = columnName;
             this.Where = QueryParser.Parse(where);
             this.Inclusive = inclusive;
+
+            this.BucketCount = 7;
         }
 
         public void OnBeforeQuery(ITable table)
@@ -50,7 +55,7 @@ namespace Arriba.Model.Query
             {
                 // Try to choose buckets if the 10th and 90th percentile values were returned [returns null for unsupported types]
                 Bucketer bucketer = NativeContainer.CreateTypedInstance<Bucketer>(typeof(Bucketer<>), ((Table)table).GetColumnType(this.Column));
-                this.Buckets = bucketer.GetBuckets(result.Values);
+                this.Buckets = bucketer.GetBuckets(result.Values, this.Inclusive, this.BucketCount);
             }
         }
 
@@ -133,7 +138,7 @@ namespace Arriba.Model.Query
 
         internal abstract class Bucketer
         {
-            public abstract Array GetBuckets(DataBlock percentileResults);
+            public abstract Array GetBuckets(DataBlock percentileResults, bool inclusive, int bucketCount);
             public abstract DataBlock Bucket(IColumn column, ShortSet whereSet, Array buckets, bool inclusive);
         }
 
@@ -207,12 +212,14 @@ namespace Arriba.Model.Query
                 return result;
             }
 
-            public override Array GetBuckets(DataBlock percentileResults)
+            public override Array GetBuckets(DataBlock percentileResults, bool inclusive, int bucketCount)
             {
-                T[] buckets = new T[7];
+                T[] buckets = new T[bucketCount];
 
                 buckets[0] = (T)percentileResults[0, 1];
-                buckets[6] = (T)percentileResults[1, 1];
+                buckets[bucketCount - 1] = (T)percentileResults[percentileResults.RowCount - 1, 1];
+
+                if (buckets[0].Equals(buckets[bucketCount - 1])) return new T[1] { buckets[0] };
 
                 // Cast to a specific type at the array level to avoid per item casting
                 if (typeof(T).Equals(typeof(long)))

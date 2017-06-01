@@ -57,14 +57,31 @@ namespace Arriba.Model.Query
         /// </summary>
         /// <param name="value">Value to wrap</param>
         /// <returns>Identifier version of value</returns>
-        public static string WrapValue(string value)
+        public static string WrapValue(object value)
         {
-            if (String.IsNullOrEmpty(value)) return "\"\"";
+            if (value == null) return "\"\"";
+
+            // Nicer DateTime formatting
+            if(value is DateTime)
+            {
+                DateTime dtv = (DateTime)value;
+                if(dtv.TimeOfDay.TotalSeconds == 0)
+                {
+                    value = dtv.ToString("yyyy-MM-dd");
+                }
+                else
+                {
+                    value = dtv.ToString("u");
+                }
+            }
+
+            string valueString = value.ToString();
+            if (valueString.Length == 0) return "\"\"";
 
             bool shouldEscape = false;
-            for (int i = 0; i < value.Length; ++i)
+            for (int i = 0; i < valueString.Length; ++i)
             {
-                char current = value[i];
+                char current = valueString[i];
                 if (Char.IsWhiteSpace(current) || current == '"')
                 {
                     shouldEscape = true;
@@ -72,9 +89,9 @@ namespace Arriba.Model.Query
                 }
             }
 
-            if (!shouldEscape) return value;
+            if (!shouldEscape) return valueString;
 
-            return StringExtensions.Format("\"{0}\"", value.Replace("\"", "\"\""));
+            return StringExtensions.Format("\"{0}\"", valueString.Replace("\"", "\"\""));
         }
 
         /// <summary>
