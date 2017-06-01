@@ -36,14 +36,14 @@ namespace Arriba.Model.Query
                         var dr = table.Query(new DistributionQuery(this.Column, "", true) { Where = where });
                         if (dr.Details.Succeeded && dr.Values != null)
                         {
-                            this.AddCondition(StringExtensions.Format("{0} <= {1}", QueryParser.WrapColumnName(this.Column), QueryParser.WrapValue(dr.Values[0, 0].ToString())));
+                            this.AddCondition(StringExtensions.Format("{0} <= {1}", QueryParser.WrapColumnName(this.Column), QueryParser.WrapValue(dr.Values[0, 0])));
 
                             for (var i = 1; i < dr.Values.RowCount - 1; i++)
                             {
-                                this.AddCondition(StringExtensions.Format("{0} <= {1} AND {0} > {2}", QueryParser.WrapColumnName(this.Column), QueryParser.WrapValue(dr.Values[i, 0].ToString()), QueryParser.WrapValue(dr.Values[i - 1, 0].ToString())));
+                                this.AddCondition(StringExtensions.Format("{0} <= {1} AND {0} > {2}", QueryParser.WrapColumnName(this.Column), QueryParser.WrapValue(dr.Values[i, 0]), QueryParser.WrapValue(dr.Values[i - 1, 0])));
                             }
 
-                            this.AddCondition(StringExtensions.Format("{0} > {1}", QueryParser.WrapColumnName(this.Column), QueryParser.WrapValue(dr.Values[dr.Values.RowCount - 2, 0].ToString())));
+                            this.AddCondition(StringExtensions.Format("{0} > {1}", QueryParser.WrapColumnName(this.Column), QueryParser.WrapValue(dr.Values[dr.Values.RowCount - 2, 0])));
 
                             return;
                         }
@@ -52,7 +52,7 @@ namespace Arriba.Model.Query
                     // Otherwise, use the Distinct values
                     for (var i = 0; i < result.Values.RowCount; i++)
                     {
-                        this.AddCondition(StringExtensions.Format("{0} = {1}", QueryParser.WrapColumnName(this.Column), QueryParser.WrapValue(result.Values[i, 0].ToString())));
+                        this.AddCondition(StringExtensions.Format("{0} = {1}", QueryParser.WrapColumnName(this.Column), QueryParser.WrapValue(result.Values[i, 0])));
                     }
                 }
             }
