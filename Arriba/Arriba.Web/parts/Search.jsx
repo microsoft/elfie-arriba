@@ -58,7 +58,7 @@ export default React.createClass({
         window.addEventListener("beforeunload", this); // For Mru
         this.mru = new Mru();
 
-        // On Page load, find the list of known table names
+        // On Page load, find the list of known table namesz
         jsonQuery(configuration.url + "/allBasics",
             data => {
                 if (!data.content) {
