@@ -322,7 +322,7 @@ namespace Arriba.Test.Model.Query
 
             // Term column suggestions are offered
             result = qi.GetIntelliSenseItems("Uni", Tables);
-            Assert.AreEqual("[Name] : Uni 73 %, [Mascot] : Uni 45 %", ItemsAndCounts(result));
+            Assert.AreEqual("[Name] : Uni 40 %, [Mascot] : Uni 25 %", ItemsAndCounts(result));
 
             // Term column suggestions are based on the remaining query rows
             result = qi.GetIntelliSenseItems("[Mascot] : Uni AND Uni", Tables);
@@ -330,7 +330,7 @@ namespace Arriba.Test.Model.Query
 
             // Term suggestions only show for columns which have any matches
             result = qi.GetIntelliSenseItems("Ele", Tables);
-            Assert.AreEqual("[Mascot] : Ele all", ItemsAndCounts(result));
+            Assert.AreEqual("[Mascot] : Ele 25 %", ItemsAndCounts(result));
 
             // Term suggestions only show if the term has matches
             result = qi.GetIntelliSenseItems("Elelion", Tables);

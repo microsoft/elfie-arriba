@@ -600,7 +600,7 @@ namespace Arriba.Model.Query
 
                 foreach (Table table in targetTables)
                 {
-                    DataBlockResult columns = table.Query(new TermInColumnsQuery(termValue.ToString(), result.Query));
+                    DataBlockResult columns = table.Query(new TermInColumnsQuery(termValue.ToString(), GetCompleteQueryPrefix(result)));
                     for (int i = 0; i < columns.Values.RowCount; ++i)
                     {
                         columnsForTerm.Add(new Tuple<string, int, int>((string)columns.Values[i, 0], (int)columns.Values[i, 1], (int)columns.Total));
