@@ -1,6 +1,5 @@
 $line-color: hsl(0, 0%, 80%);
 $line: 1px solid $line-color;
-$green: hsl(136, 100%, 23%); // Arriba title green
 
 .center-center {
     width: 100%;
@@ -85,7 +84,7 @@ $green: hsl(136, 100%, 23%); // Arriba title green
         &:hover { overflow-y: auto; }
 
         .h1 {
-            color: $green;
+            color: $vdark;
             @extend .small-caps;
             margin-bottom: 5px;
         }
