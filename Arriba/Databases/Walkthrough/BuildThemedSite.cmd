@@ -1,3 +1,3 @@
-PUSHD "%~dp0..\.."
-CALL Build.WebSite.cmd "%~dp0Configuration"
+PUSHD "%~dp0..\..\Arriba.Web"
+node build.js "%~dp0Configuration"
 POPD
