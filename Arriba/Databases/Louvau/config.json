@@ -5,7 +5,7 @@
     "arribaServiceUrl": "http://localhost:42784",
 
     /* The name of the Arriba table to create for these items. */
-    "arribaTable": "WDGIS",
+    "arribaTable": "Louvau",
 
     /* The maximum number of items the table will contain. Determines how many partitions must be created. */
     "itemCountLimit": 100000,
@@ -25,7 +25,7 @@
 
     /* The Name or URL of the database to crawl. Use the VSO URL for TFS.
 	   ex: https://<myProject>.visualstudio.com */
-    "itemDatabaseName": "https://wdginformationsecurity.visualstudio.com",
+    "itemDatabaseName": "https://scottlo.visualstudio.com",
 
     /* Authentication Mode to use with provider (provider specific).
        For TfsItemProvider: integrated (default), aad, alternate */

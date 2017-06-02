@@ -12,31 +12,31 @@
         theme: "theme-teal",
 
         // E-Mail addresses to whom feedback should go
-        feedbackEmailAddresses: "scottl@designlaboratory.onmicrosoft.com",
+        feedbackEmailAddresses: "slouvau@hotmail.com",
 
         // Listing: Default Columns and Sort Order to show per table
         listingDefaults: {
-             "WDGIS": { columns: ["ID", "Title", "Assigned To"], sortColumn: "ID", sortOrder: "desc" }
+             "Louvau": { columns: ["ID", "Title", "Assigned To"], sortColumn: "ID", sortOrder: "desc" }
         },
 
         // Listing: Default details rendering per table
         customDetailsProviders: {
-            "WDGIS": WorkItemDetails
+            "Louvau": WorkItemDetails
         },
 
-        databaseName : "WDGIS",
-        directLinkUrl : "https://wdginformationsecurity.visualstudio.com/WDIGS/_workitems/edit/",
+        databaseName : "Louvau",
+        directLinkUrl : "https://scottlo.visualstudio.com/Louvau/_workitems/edit/",
 
         // Grid: Pre-defined Grid queries
         /* gridDefault: "<NameOfDefaultPredefinedQuery>", */
         gridDefaultQueries: {
             "Clear": {},
-            "Conflux Tasks By Owner": {
-                query: "Conflux AND [Remaining Work] > 0",
+            "Arriba Tasks By Owner": {
+                query: "Arriba AND [Remaining Work] > 0",
                 aggregationFunction: "SUM",
                 aggregateColumn: "Remaining Work",
-                currentTable: "WDGIS",
-                rows: ["Assigned To>"],
+                currentTable: "Louvau",
+                rows: ["[Assigned To]>"],
                 showPortionOf: "row"
             },
         },
@@ -45,27 +45,27 @@
         startContent: {
             overview:(
                 <span>
-                    All WDGIS work items indexed.
+                    All Louvau work items indexed.
                     Need more <a href="Search.html?help=true">help</a>?
                 </span>
             ),
             examples: {
-                "[Assigned To] = @Me": <span>My Items</span>,
-                "Conflux AND [Remaining Work] > 0": <span>Conflux Remaining Tasks</span>
+                "[Area Path] : Arriba AND [Priority] <= 1 AND [State] != Closed": <span>Arriba Active</span>,
+                "Arriba AND [Remaining Work] > 0": <span>Arriba Remaining Tasks</span>
             }
         },
 
         // Content to show if query fails due to access denied (401)
         accessDeniedContent: (
             <span>
-                Access to WGIS Bung denied. Join <a target="_blank" href="https://idweb/IdentityManagement/aspx/common/GlobalSearchResult.aspx?searchtype=e0c132db-08d8-4258-8bce-561687a8a51e&content=ConfluxDev">ConfluxDev</a>.
+                Access to Bung denied.
             </span>
         ),
 
         // Content to show if query fails because service is unavailable (404, 500)
         serviceUnavailableContent: (
             <span>
-                WDGIS Bung is currently unavailable.
+                Bung is currently unavailable.
             </span>
         )
     };
