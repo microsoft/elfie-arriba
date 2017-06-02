@@ -1569,7 +1569,7 @@ var DOMPropertyInjection = {
   HAS_BOOLEAN_VALUE: 0x4,
   HAS_NUMERIC_VALUE: 0x8,
   HAS_POSITIVE_NUMERIC_VALUE: 0x10 | 0x8,
-  HAS_OVERLOArribaD_BOOLEAN_VALUE: 0x20,
+  HAS_OVERLOADED_BOOLEAN_VALUE: 0x20,
 
   /**
    * Inject some specialized knowledge about the DOM. This takes a config object
@@ -1627,7 +1627,7 @@ var DOMPropertyInjection = {
         hasBooleanValue: checkMask(propConfig, Injection.HAS_BOOLEAN_VALUE),
         hasNumericValue: checkMask(propConfig, Injection.HAS_NUMERIC_VALUE),
         hasPositiveNumericValue: checkMask(propConfig, Injection.HAS_POSITIVE_NUMERIC_VALUE),
-        hasOverloadedBooleanValue: checkMask(propConfig, Injection.HAS_OVERLOArribaD_BOOLEAN_VALUE)
+        hasOverloadedBooleanValue: checkMask(propConfig, Injection.HAS_OVERLOADED_BOOLEAN_VALUE)
       };
       !(propertyInfo.hasBooleanValue + propertyInfo.hasNumericValue + propertyInfo.hasOverloadedBooleanValue <= 1) ? "development" !== 'production' ? invariant(false, 'DOMProperty: Value can be one of boolean, overloaded boolean, or numeric value, but not a combination: %s', propName) : _prodInvariant('50', propName) : void 0;
 
@@ -3288,7 +3288,7 @@ var MUST_USE_PROPERTY = DOMProperty.injection.MUST_USE_PROPERTY;
 var HAS_BOOLEAN_VALUE = DOMProperty.injection.HAS_BOOLEAN_VALUE;
 var HAS_NUMERIC_VALUE = DOMProperty.injection.HAS_NUMERIC_VALUE;
 var HAS_POSITIVE_NUMERIC_VALUE = DOMProperty.injection.HAS_POSITIVE_NUMERIC_VALUE;
-var HAS_OVERLOArribaD_BOOLEAN_VALUE = DOMProperty.injection.HAS_OVERLOArribaD_BOOLEAN_VALUE;
+var HAS_OVERLOADED_BOOLEAN_VALUE = DOMProperty.injection.HAS_OVERLOADED_BOOLEAN_VALUE;
 
 var HTMLDOMPropertyConfig = {
   isCustomAttribute: RegExp.prototype.test.bind(new RegExp('^(data|aria)-[' + DOMProperty.ATTRIBUTE_NAME_CHAR + ']*$')),
@@ -3331,7 +3331,7 @@ var HTMLDOMPropertyConfig = {
     defer: HAS_BOOLEAN_VALUE,
     dir: 0,
     disabled: HAS_BOOLEAN_VALUE,
-    download: HAS_OVERLOArribaD_BOOLEAN_VALUE,
+    download: HAS_OVERLOADED_BOOLEAN_VALUE,
     draggable: 0,
     encType: 0,
     form: 0,
