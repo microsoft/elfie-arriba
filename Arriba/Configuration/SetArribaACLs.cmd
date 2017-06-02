@@ -2,7 +2,7 @@
 PUSHD %~dp0..
 
 :: The Arriba service runs as an App Pool account, which has read/execute access to the Arriba site, DiskCache, and read-write access to the Arriba Logs.
-:: Users browsing access the site as themselves (Windows Auth). Everyone needs read/execute access to the ArribaSearch site and redirect site only.
+:: Users browsing access the site as themselves (Windows Auth). Everyone needs read/execute access to the Arriba.Web and redirect site only.
 
 ECHO - DiskCache [Arriba Data]
 IF NOT EXIST DiskCache (MD DiskCache)
