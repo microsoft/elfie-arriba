@@ -12,4 +12,8 @@
     <OutputPath>..\bin\Release\</OutputPath>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\V5.Native\V5.Native.vcxproj" />
+  </ItemGroup>
+
 </Project>
