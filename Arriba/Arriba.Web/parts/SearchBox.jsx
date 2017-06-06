@@ -26,7 +26,7 @@ export default class SearchBox extends EventedComponent {
     }
     onInput(query) {
         // IE focus/blur spurriously triggers onInput(), this works around that.
-        if (this.props.query !== query) this.setQuery(query);
+        if (this.props.query !== query) this.props.queryChanged(query);
     }
     onKeyDown(e) {
         if (!this.state.suggestions.length) return;
@@ -45,7 +45,7 @@ export default class SearchBox extends EventedComponent {
             var separator = (item.category === "Value" && e.key !== " " ? "" : " ");
             var suffix = (e.key === "Enter" || e.key === "Tab" || e.key === " ") ? "" : e.key;
             var newQuery = item.replaceAs || (this.state.completed + item.completeAs + separator + suffix);
-            this.setQuery(newQuery);
+            this.props.queryChanged(newQuery);
             e.preventDefault(); // Suppress focus tabbing.
         }
         if (e.key === "Escape") {
@@ -54,21 +54,21 @@ export default class SearchBox extends EventedComponent {
     }
     onClickSuggestion(item) {
         var separator = (item.category === "Value" ? "" : " ");
-        this.setQuery(item.replaceAs || this.state.completed + item.completeAs + separator);
+        this.props.queryChanged(item.replaceAs || this.state.completed + item.completeAs + separator);
         this.refs.input.focus();
     }
-    setQuery(query) {
-        this.props.queryChanged(query);
-
+    fetch() {
         if (this.lastRequest) this.lastRequest.abort();
         this.lastRequest = jsonQuery(
-            configuration.url + "/suggest?q=" + encodeURIComponent(query),
-            data => this.setState({
-                suggestions: data.content.suggestions,
-                sel: 0,
-                completed: data.content.complete, 
-                completionCharacters: data.content.completionCharacters.map(c => ({ "\t": "Tab" })[c] || c),
-            })
+            configuration.url + "/suggest?q=" + encodeURIComponent(this.props.query),
+            data => {
+                this.setState({
+                    suggestions: data.content.suggestions,
+                    sel: 0,
+                    completed: data.content.complete, 
+                    completionCharacters: data.content.completionCharacters.map(c => ({ "\t": "Tab" })[c] || c),
+                });
+            }
         );
     }
     toggleFavorite() {
@@ -114,7 +114,7 @@ export default class SearchBox extends EventedComponent {
                 value={this.props.query}
                 onInput={e => this.onInput(e.target.value)}
                 onKeyDown={e => this.onKeyDown(e)}
-                onClick={e => this.setQuery(this.refs.input.value)} />
+                onClick={e => this.fetch()} />
             <div className="rail">
                 {this.state.completed}
                 <span style={{ position: "relative" }} >
