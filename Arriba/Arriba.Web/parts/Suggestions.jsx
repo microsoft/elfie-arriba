@@ -101,7 +101,8 @@ export default class Suggestions extends EventedComponent {
                 {this.svg}
                 {this.state.suggestions.map((item, index) =>
                     <div className={"suggestion " + (this.state.sel == index ? "suggestion-sel" : "" )}
-                        onClick={e => this.onClick(item) }>
+                        onClick={e => this.onClick(item)} 
+                        onMouseEnter={e => this.setState({ sel: index })}>
                         <span>{item.display}</span>
                         <span className="suggestion-hint">{item.hint}</span>
                     </div>
