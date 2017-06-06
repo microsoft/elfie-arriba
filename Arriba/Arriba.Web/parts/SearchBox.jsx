@@ -121,11 +121,16 @@ export default React.createClass({
 
         return <div className="searchBox">
             <div className={ "loading " + (this.props.loading ? "loading-active" : "") }></div>
-            <input ref="searchBox" type="text" spellCheck="false"
+            <input ref="searchBox" type="text"
+                spellCheck="false"
                 placeholder="Search for..." 
-                tabIndex="1" onInput={this.onInput} value={this.props.query} 
-                onKeyDown={this.handleKeyDown} onClick={this.handleClick} 
-                onFocus={this.handleFocusOrBlur} onBlur={this.handleFocusOrBlur}/>
+                tabIndex="1" 
+                value={this.props.query}
+                onInput={this.onInput}
+                onKeyDown={this.handleKeyDown}
+                onClick={this.handleClick}
+                onFocus={this.handleFocusOrBlur}
+                onBlur={this.handleFocusOrBlur} />
             <div className="rail">
                 {this.state.completed}
                 <span style={{ position: "relative" }} >
