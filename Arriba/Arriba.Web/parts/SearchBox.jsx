@@ -141,7 +141,7 @@ export default class SearchBox extends React.Component {
                                 {svg}
                                 {this.state.suggestions.map((item, index) =>
                                     <div className={"suggestion " + (this.state.sel == index ? "suggestion-sel" : "" )}
-                                        onClick={ this.handleClickSuggestion.bind(this, item) }>
+                                        onClick={e => this.handleClickSuggestion(item) }>
                                         <span>{item.display}</span>
                                         <span className="suggestion-hint">{item.hint}</span>
                                     </div>
@@ -151,7 +151,7 @@ export default class SearchBox extends React.Component {
                     </div>
                 </span>
             </div>
-            <i className={"searchIcon clickable " + ((localStorage.getJson("favorites") || []).includes(this.props.parsedQuery) ? "icon-solid-star" : "icon-outlined-star")} onClick={this.toggleFavorite}></i>
+            <i className={"searchIcon clickable " + ((localStorage.getJson("favorites") || []).includes(this.props.parsedQuery) ? "icon-solid-star" : "icon-outlined-star")} onClick={e => this.toggleFavorite()}></i>
             <i className="searchIcon icon-find"></i>
         </div>
     }
