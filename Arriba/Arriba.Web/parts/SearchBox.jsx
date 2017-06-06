@@ -29,11 +29,6 @@ export default class SearchBox extends EventedComponent {
         // IE focus/blur spurriously triggers onInput(), this works around that.
         if (this.props.query !== query) this.setQuery(query);
     }
-    onClick(e) {
-        // Re-show the suggestion list even if the textbox already has focus.
-        // Limiting to "", to avoid spurious re-shows if clicking around existing text.
-        this.setQuery(this.refs.input.value);
-    }
     onKeyDown(e) {
         if (!this.state.suggestions.length) return;
         if (e.key === "ArrowUp") {
@@ -120,7 +115,7 @@ export default class SearchBox extends EventedComponent {
                 value={this.props.query}
                 onInput={e => this.onInput(e.target.value)}
                 onKeyDown={e => this.onKeyDown(e)}
-                onClick={e => this.onClick(e)} />
+                onClick={e => this.setQuery(this.refs.input.value)} />
             <div className="rail">
                 {this.state.completed}
                 <span style={{ position: "relative" }} >
