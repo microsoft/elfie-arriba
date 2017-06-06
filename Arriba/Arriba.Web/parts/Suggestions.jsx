@@ -1,4 +1,4 @@
-import "./SearchBox.scss";
+import "./Suggestions.scss";
 import EventedComponent from "./EventedComponent";
 
 export default class Suggestions extends EventedComponent {
