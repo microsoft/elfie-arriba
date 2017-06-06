@@ -21,7 +21,10 @@
     <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\Louvau\Find.ManagedCpp\String8Native.h">
+    <ClInclude Include="String8Native.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ArraySearch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -32,7 +35,10 @@
     <ClCompile Include="Stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\Louvau\Find.ManagedCpp\String8Native.cpp">
+    <ClCompile Include="String8Native.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ArraySearch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
