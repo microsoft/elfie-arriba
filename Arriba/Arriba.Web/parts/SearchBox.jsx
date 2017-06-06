@@ -29,12 +29,12 @@ export default class SearchBox extends EventedComponent {
         // IE focus/blur spurriously triggers onInput(), this works around that.
         if (this.props.query !== query) this.setQuery(query);
     }
-    handleClick(e) {
+    onClick(e) {
         // Re-show the suggestion list even if the textbox already has focus.
         // Limiting to "", to avoid spurious re-shows if clicking around existing text.
         this.setQuery(this.refs.input.value);
     }
-    handleKeyDown(e) {
+    onKeyDown(e) {
         if (!this.state.suggestions.length) return;
         if (e.key === "ArrowUp") {
             this.setState({ sel: (this.state.sel - 1).clamp(0, this.state.suggestions.length - 1) });
@@ -58,7 +58,7 @@ export default class SearchBox extends EventedComponent {
             this.setState({ suggestions: [] });
         }
     }
-    handleClickSuggestion(item) {
+    onClickSuggestion(item) {
         var separator = (item.category === "Value" ? "" : " ");
         this.setQuery(item.replaceAs || this.state.completed + item.completeAs + separator);
         this.refs.input.focus();
@@ -119,8 +119,8 @@ export default class SearchBox extends EventedComponent {
                 tabIndex="1" 
                 value={this.props.query}
                 onInput={e => this.onInput(e.target.value)}
-                onKeyDown={e => this.handleKeyDown(e)}
-                onClick={e => this.handleClick(e)} />
+                onKeyDown={e => this.onKeyDown(e)}
+                onClick={e => this.onClick(e)} />
             <div className="rail">
                 {this.state.completed}
                 <span style={{ position: "relative" }} >
@@ -130,7 +130,7 @@ export default class SearchBox extends EventedComponent {
                                 {svg}
                                 {this.state.suggestions.map((item, index) =>
                                     <div className={"suggestion " + (this.state.sel == index ? "suggestion-sel" : "" )}
-                                        onClick={e => this.handleClickSuggestion(item) }>
+                                        onClick={e => this.onClickSuggestion(item) }>
                                         <span>{item.display}</span>
                                         <span className="suggestion-hint">{item.hint}</span>
                                     </div>
