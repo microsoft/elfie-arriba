@@ -12,11 +12,11 @@ export default class SearchBox extends EventedComponent {
             },
             "click": e => { // Ideally use input.blur, but that fires before suggestions.item.onClick.
                 if (e.target === this.refs.input) return;
-                this.setState({ suggestions: [] });
+                this.clear();
             },
             "mousewheel": e => { // Prefer "mousewheel" over "scroll" as the latter gets (noisily) triggered by results loading.
                 if (!this.refs.suggestions || this.refs.suggestions.contains(e.target)) return;
-                this.setState({ suggestions: [] });
+                this.clear();
             },
         }
     }
@@ -49,7 +49,7 @@ export default class SearchBox extends EventedComponent {
             e.preventDefault(); // Suppress focus tabbing.
         }
         if (e.key === "Escape") {
-            this.setState({ suggestions: [] });
+            this.clear();
         }
     }
     onClickSuggestion(item) {
@@ -70,6 +70,9 @@ export default class SearchBox extends EventedComponent {
                 });
             }
         );
+    }
+    clear() {
+        this.setState({ suggestions: [] });
     }
     toggleFavorite() {
         if (!this.props.parsedQuery) return;
