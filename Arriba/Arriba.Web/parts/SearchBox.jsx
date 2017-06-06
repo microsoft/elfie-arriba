@@ -1,32 +1,29 @@
 import "./SearchBox.scss";
 
-export default class SearchBox extends React.Component {
+import EventedComponent from "./EventedComponent";
+
+export default class SearchBox extends EventedComponent {
     constructor(props) {
         super(props);
         this.state = { suggestions: [], sel: 0, completed: "", completionCharacters: [] };
+        this.events = {
+            "storage": e => {
+                if (!["favorites"].includes(e.key)) return;
+                setTimeout(() => this.forceUpdate()); // Just to update the star.
+            },
+            "click": e => { // Ideally use input.blur, but that fires before suggestions.item.onClick.
+                if (e.target === this.refs.input) return;
+                this.setState({ suggestions: [] });
+            },
+            "mousewheel": e => { // Prefer "mousewheel" over "scroll" as the latter gets (noisily) triggered by results loading.
+                if (!this.refs.suggestions || this.refs.suggestions.contains(e.target)) return;
+                this.setState({ suggestions: [] });
+            },
+        }
     }
     componentDidMount() {
+        super.componentDidMount();
         this.refs.input.focus();
-        this.handleClickDocument = e => {
-            if (e.target === this.refs.input) return; // Don't hide when clicking on input[text]
-            this.setState({ suggestions: [] });
-        }
-        document.addEventListener("click", this.handleClickDocument);
-        window.addEventListener("storage", this);
-        window.addEventListener("mousewheel", this);
-
-        // Useful for debugging. Auto shows the suggestion list.
-        // this.setQuery(this.refs.input.value);
-    }
-    componentWillUnmount() {
-        document.removeEventListener("click", this.handleClickDocument);
-        window.removeEventListener("storage", this);
-        window.removeEventListener("mousewheel", this);
-    }
-    handleEvent(e) {
-        // Prefer "mousewheel" over "scroll" as the latter gets (noisily) triggered by results loading.
-        if (e.type === "mousewheel" && this.refs.suggestions && !this.refs.suggestions.contains(e.target)) this.setState({ suggestions: [] });
-        if (e.type === "storage" && ["favorites"].includes(e.key)) setTimeout(() => this.forceUpdate()); // Just to update the star.
     }
     handleFocusOrBlur() {
         if (isIE()) this.bypassInputOnce = true;
