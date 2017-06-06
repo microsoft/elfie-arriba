@@ -131,7 +131,7 @@ export default React.createClass({
                 <span style={{ position: "relative" }} >
                     <div className="railContents">
                         {this.state.suggestions.length > 0 &&
-                            <div ref="suggestions" className="suggestions" >
+                            <div ref="suggestions" className="suggestions" style={isIE() ? {minWidth: "300px"} : {}} >
                                 {svg}
                                 {this.state.suggestions.map((item, index) =>
                                     <div className={"suggestion " + (this.state.sel == index ? "suggestion-sel" : "" )}
