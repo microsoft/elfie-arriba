@@ -1,10 +1,11 @@
 import "./SearchBox.scss";
 
-export default React.createClass({
-    getInitialState: function () {
-        return { suggestions: [], sel: 0, completed: "", completionCharacters: [] };   
-    },
-    componentDidMount: function () {
+export default class SearchBox extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = { suggestions: [], sel: 0, completed: "", completionCharacters: [] };
+    }
+    componentDidMount() {
         this.refs.searchBox.focus();
         this.handleClickDocument = e => {
             if (e.target === this.refs.searchBox) return; // Don't hide when clicking on input[text]
@@ -16,33 +17,33 @@ export default React.createClass({
 
         // Useful for debugging. Auto shows the suggestion list.
         // this.setQuery(this.refs.searchBox.value);
-    },
-    componentWillUnmount: function() {
+    }
+    componentWillUnmount() {
         document.removeEventListener("click", this.handleClickDocument);
         window.removeEventListener("storage", this);
         window.removeEventListener("mousewheel", this);
-    },
-    handleEvent: function(e) {
+    }
+    handleEvent(e) {
         // Prefer "mousewheel" over "scroll" as the latter gets (noisily) triggered by results loading.
         if (e.type === "mousewheel" && this.refs.suggestions && !this.refs.suggestions.contains(e.target)) this.setState({ suggestions: [] });
         if (e.type === "storage" && ["favorites"].includes(e.key)) setTimeout(() => this.forceUpdate()); // Just to update the star.
-    },
-    handleFocusOrBlur: function () {
+    }
+    handleFocusOrBlur() {
         if (isIE()) this.bypassInputOnce = true;
-    },
-    onInput: function (e) {
+    }
+    onInput(e) {
         if (this.bypassInputOnce) {
             this.bypassInputOnce = false;
             return;
         }
         this.setQuery(this.refs.searchBox.value);
-    },
-    handleClick: function (e) {
+    }
+    handleClick(e) {
         // Re-show the suggestion list even if the textbox already has focus.
         // Limiting to "", to avoid spurious re-shows if clicking around existing text.
         this.setQuery(this.refs.searchBox.value);
-    },
-    handleKeyDown: function (e) {
+    }
+    handleKeyDown(e) {
         if (!this.state.suggestions.length) return;
         if (e.key === "ArrowUp") {
             this.setState({ sel: (this.state.sel - 1).clamp(0, this.state.suggestions.length - 1) });
@@ -65,13 +66,13 @@ export default React.createClass({
         if (e.key === "Escape") {
             this.setState({ suggestions: [] });
         }
-    },
-    handleClickSuggestion: function (item) {
+    }
+    handleClickSuggestion(item) {
         var separator = (item.category === "Value" ? "" : " ");
         this.setQuery(item.replaceAs || this.state.completed + item.completeAs + separator);
         this.refs.searchBox.focus();
-    },
-    setQuery: function (query) {
+    }
+    setQuery(query) {
         this.props.onSearchChange(query);
 
         if (this.lastRequest) this.lastRequest.abort();
@@ -84,12 +85,12 @@ export default React.createClass({
                 completionCharacters: data.content.completionCharacters.map(c => ({ "\t": "Tab" })[c] || c),
             })
         );
-    },
-    toggleFavorite: function () {
+    }
+    toggleFavorite() {
         if (!this.props.parsedQuery) return;
         localStorage.updateJson("favorites", favs => (favs || []).toggle(this.props.parsedQuery));
-    },
-    render: function () {
+    }
+    render() {
         // Generates a SVG histogram to be displayed behind the completion list.
         // The path goes counter-clockwise starting from the top-right.
         var svg = this.state.suggestions.length && (() => {
@@ -123,14 +124,14 @@ export default React.createClass({
             <div className={ "loading " + (this.props.loading ? "loading-active" : "") }></div>
             <input ref="searchBox" type="text"
                 spellCheck="false"
-                placeholder="Search for..." 
+                placeholder="Search for..."
                 tabIndex="1" 
                 value={this.props.query}
-                onInput={this.onInput}
-                onKeyDown={this.handleKeyDown}
-                onClick={this.handleClick}
-                onFocus={this.handleFocusOrBlur}
-                onBlur={this.handleFocusOrBlur} />
+                onInput={e => this.onInput(e)}
+                onKeyDown={e => this.handleKeyDown(e)}
+                onClick={e => this.handleClick(e)}
+                onFocus={e => this.handleFocusOrBlur(e)}
+                onBlur={e => this.handleFocusOrBlur(e)} />
             <div className="rail">
                 {this.state.completed}
                 <span style={{ position: "relative" }} >
@@ -152,6 +153,6 @@ export default React.createClass({
             </div>
             <i className={"searchIcon clickable " + ((localStorage.getJson("favorites") || []).includes(this.props.parsedQuery) ? "icon-solid-star" : "icon-outlined-star")} onClick={this.toggleFavorite}></i>
             <i className="searchIcon icon-find"></i>
-        </div>;
+        </div>
     }
-});
+}
