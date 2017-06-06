@@ -25,15 +25,9 @@ export default class SearchBox extends EventedComponent {
         super.componentDidMount();
         this.refs.input.focus();
     }
-    handleFocusOrBlur() {
-        if (isIE()) this.bypassInputOnce = true;
-    }
-    onInput(e) {
-        if (this.bypassInputOnce) {
-            this.bypassInputOnce = false;
-            return;
-        }
-        this.setQuery(this.refs.input.value);
+    onInput(query) {
+        // IE focus/blur spurriously triggers onInput(), this works around that.
+        if (this.props.query !== query) this.setQuery(query);
     }
     handleClick(e) {
         // Re-show the suggestion list even if the textbox already has focus.
@@ -124,11 +118,9 @@ export default class SearchBox extends EventedComponent {
                 placeholder="Search for..."
                 tabIndex="1" 
                 value={this.props.query}
-                onInput={e => this.onInput(e)}
+                onInput={e => this.onInput(e.target.value)}
                 onKeyDown={e => this.handleKeyDown(e)}
-                onClick={e => this.handleClick(e)}
-                onFocus={e => this.handleFocusOrBlur(e)}
-                onBlur={e => this.handleFocusOrBlur(e)} />
+                onClick={e => this.handleClick(e)} />
             <div className="rail">
                 {this.state.completed}
                 <span style={{ position: "relative" }} >
