@@ -6,9 +6,9 @@ export default class SearchBox extends React.Component {
         this.state = { suggestions: [], sel: 0, completed: "", completionCharacters: [] };
     }
     componentDidMount() {
-        this.refs.searchBox.focus();
+        this.refs.input.focus();
         this.handleClickDocument = e => {
-            if (e.target === this.refs.searchBox) return; // Don't hide when clicking on input[text]
+            if (e.target === this.refs.input) return; // Don't hide when clicking on input[text]
             this.setState({ suggestions: [] });
         }
         document.addEventListener("click", this.handleClickDocument);
@@ -16,7 +16,7 @@ export default class SearchBox extends React.Component {
         window.addEventListener("mousewheel", this);
 
         // Useful for debugging. Auto shows the suggestion list.
-        // this.setQuery(this.refs.searchBox.value);
+        // this.setQuery(this.refs.input.value);
     }
     componentWillUnmount() {
         document.removeEventListener("click", this.handleClickDocument);
@@ -36,12 +36,12 @@ export default class SearchBox extends React.Component {
             this.bypassInputOnce = false;
             return;
         }
-        this.setQuery(this.refs.searchBox.value);
+        this.setQuery(this.refs.input.value);
     }
     handleClick(e) {
         // Re-show the suggestion list even if the textbox already has focus.
         // Limiting to "", to avoid spurious re-shows if clicking around existing text.
-        this.setQuery(this.refs.searchBox.value);
+        this.setQuery(this.refs.input.value);
     }
     handleKeyDown(e) {
         if (!this.state.suggestions.length) return;
@@ -70,7 +70,7 @@ export default class SearchBox extends React.Component {
     handleClickSuggestion(item) {
         var separator = (item.category === "Value" ? "" : " ");
         this.setQuery(item.replaceAs || this.state.completed + item.completeAs + separator);
-        this.refs.searchBox.focus();
+        this.refs.input.focus();
     }
     setQuery(query) {
         this.props.onSearchChange(query);
@@ -122,7 +122,7 @@ export default class SearchBox extends React.Component {
 
         return <div className="searchBox">
             <div className={ "loading " + (this.props.loading ? "loading-active" : "") }></div>
-            <input ref="searchBox" type="text"
+            <input ref="input" type="text"
                 spellCheck="false"
                 placeholder="Search for..."
                 tabIndex="1" 
