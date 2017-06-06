@@ -141,7 +141,7 @@ export default React.createClass({
     onSelectedTableChange: function (name) {
         this.setState({ userSelectedTable: name }, this.runSearch);
     },
-    onSearchChange: function (value) {
+    queryChanged: function (value) {
         this.setState({ query: value, userSelectedId: undefined }, this.delayedRunSearch);
     },
     delayedRunSearch: function () {
@@ -357,7 +357,7 @@ export default React.createClass({
                     })}
                 </div>
             </SplitPane>
-            : <Start allBasics={this.state.allBasics} showHelp={this.props.params.help === "true"} onSearchChange={this.onSearchChange} />;
+            : <Start allBasics={this.state.allBasics} showHelp={this.props.params.help === "true"} queryChanged={this.queryChanged} />;
 
         var queryUrl = this.buildQueryUrl();
         var baseUrl = this.buildThisUrl(false);
@@ -372,7 +372,7 @@ export default React.createClass({
                 <SearchHeader>
                     <SearchBox query={this.state.query}
                         parsedQuery={this.state.allCountData.content && this.state.allCountData.content.parsedQuery}
-                        onSearchChange={this.onSearchChange}
+                        queryChanged={this.queryChanged}
                         loading={this.state.loading} />
                 </SearchHeader>
 

@@ -1,5 +1,4 @@
 import "./SearchBox.scss";
-
 import EventedComponent from "./EventedComponent";
 
 export default class SearchBox extends EventedComponent {
@@ -59,7 +58,7 @@ export default class SearchBox extends EventedComponent {
         this.refs.input.focus();
     }
     setQuery(query) {
-        this.props.onSearchChange(query);
+        this.props.queryChanged(query);
 
         if (this.lastRequest) this.lastRequest.abort();
         this.lastRequest = jsonQuery(
