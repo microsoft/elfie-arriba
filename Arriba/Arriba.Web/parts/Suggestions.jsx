@@ -4,7 +4,7 @@ import EventedComponent from "./EventedComponent";
 export default class Suggestions extends EventedComponent {
     constructor(props) {
         super(props);
-        this.state = { suggestions: [], sel: 0, completed: "", completionCharacters: [] };
+        this.state = { suggestions: [], sel: this.props.sel || 0, completed: "", completionCharacters: [] };
         this.events = {
             "mousewheel": e => { // Prefer "mousewheel" over "scroll" as the latter gets (noisily) triggered by results loading.
                 if (!this.refs.suggestions || this.refs.suggestions.contains(e.target)) return;
@@ -24,7 +24,7 @@ export default class Suggestions extends EventedComponent {
                 this.props.completedChanged(data.content.complete);
                 this.setState({
                     suggestions: data.content.suggestions,
-                    sel: 0,
+                    sel: this.props.sel || 0,
                     completed: data.content.complete, 
                     completionCharacters: data.content.completionCharacters.map(c => ({ "\t": "Tab" })[c] || c),
                 });
