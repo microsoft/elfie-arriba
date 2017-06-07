@@ -5,6 +5,18 @@ using System;
 
 namespace Xsv.Sanitize
 {
+    public class PersonName
+    {
+        public string FirstName { get; set; }
+        public string MiddleName { get; set; }
+        public string LastName { get; set; }
+
+        public override string ToString()
+        {
+            return $"{this.FirstName} {this.MiddleName} {this.LastName}";
+        }
+    }
+
     /// <summary>
     ///  PersonNameMapper maps hashes to plausible person names using US
     ///  common name data from:
@@ -27,14 +39,20 @@ namespace Xsv.Sanitize
 
         public string Generate(uint hash)
         {
+            return GenerateName(hash).ToString();
+        }
+
+        public PersonName GenerateName(uint hash)
+        {
             uint hashRemaining = hash;
 
-            string last = this.LastNames[Hashing.Extract(ref hashRemaining, this.LastNames.Length)];
-            string first = this.FirstAndMiddleNames[Hashing.Extract(ref hashRemaining, this.FirstAndMiddleNames.Length)];
-            string middle = this.FirstAndMiddleNames[Hashing.Extract(ref hashRemaining, this.FirstAndMiddleNames.Length)];
+            PersonName name = new PersonName();
 
-            string result = $"{first} {middle} {last}";
-            return result;
+            name.LastName = this.LastNames[Hashing.Extract(ref hashRemaining, this.LastNames.Length)];
+            name.FirstName = this.FirstAndMiddleNames[Hashing.Extract(ref hashRemaining, this.FirstAndMiddleNames.Length)];
+            name.MiddleName = this.FirstAndMiddleNames[Hashing.Extract(ref hashRemaining, this.FirstAndMiddleNames.Length)];
+
+            return name;
         }
     }
 }
