@@ -96,8 +96,14 @@ export default class Suggestions extends EventedComponent {
         return <svg><path id="p" d={d} /></svg>
     }
     render() {
+        var style = {};
+
+        // IE is failing to size the suggestions list to fit it's children.
+        // Thus upping the minWidth to compensate.
+        if (isIE()) style["minWidth"] = "300px";
+
         return this.state.suggestions.length > 0 &&
-            <div ref="suggestions" className="suggestions" style={isIE() ? {minWidth: "300px"} : {}} >
+            <div ref="suggestions" className="suggestions" style={style} >
                 {this.svg}
                 {this.state.suggestions.map((item, index) =>
                     <div className={"suggestion " + (this.state.sel == index ? "suggestion-sel" : "" )}
