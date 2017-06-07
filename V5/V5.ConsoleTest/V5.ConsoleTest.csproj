@@ -44,6 +44,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Benchmark.cs" />
+    <Compile Include="GeneratePeopleSample.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -58,6 +59,10 @@
     <ProjectReference Include="..\..\Elfie\Elfie\Elfie.csproj">
       <Project>{d45f339f-847a-4f3a-88a0-afb883e9920e}</Project>
       <Name>Elfie</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Elfie\Xsv\Xsv.csproj">
+      <Project>{7e26458e-6a42-4053-bb89-62d3c7530815}</Project>
+      <Name>Xsv</Name>
     </ProjectReference>
     <ProjectReference Include="..\V5.Native\V5.Native.vcxproj">
       <Project>{760fc534-0591-4209-a367-cda01aef52e0}</Project>

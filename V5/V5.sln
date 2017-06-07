@@ -15,6 +15,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Arriba", "..\Arriba\Arriba\
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "V5.Native", "V5.Native\V5.Native.vcxproj", "{760FC534-0591-4209-A367-CDA01AEF52E0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Xsv", "..\Elfie\Xsv\Xsv.csproj", "{7E26458E-6A42-4053-BB89-62D3C7530815}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -97,6 +99,18 @@ Global
 		{760FC534-0591-4209-A367-CDA01AEF52E0}.Release|x64.Build.0 = Release|x64
 		{760FC534-0591-4209-A367-CDA01AEF52E0}.Release|x86.ActiveCfg = Release|Win32
 		{760FC534-0591-4209-A367-CDA01AEF52E0}.Release|x86.Build.0 = Release|Win32
+		{7E26458E-6A42-4053-BB89-62D3C7530815}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7E26458E-6A42-4053-BB89-62D3C7530815}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7E26458E-6A42-4053-BB89-62D3C7530815}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{7E26458E-6A42-4053-BB89-62D3C7530815}.Debug|x64.Build.0 = Debug|Any CPU
+		{7E26458E-6A42-4053-BB89-62D3C7530815}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{7E26458E-6A42-4053-BB89-62D3C7530815}.Debug|x86.Build.0 = Debug|Any CPU
+		{7E26458E-6A42-4053-BB89-62D3C7530815}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7E26458E-6A42-4053-BB89-62D3C7530815}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7E26458E-6A42-4053-BB89-62D3C7530815}.Release|x64.ActiveCfg = Release|Any CPU
+		{7E26458E-6A42-4053-BB89-62D3C7530815}.Release|x64.Build.0 = Release|Any CPU
+		{7E26458E-6A42-4053-BB89-62D3C7530815}.Release|x86.ActiveCfg = Release|Any CPU
+		{7E26458E-6A42-4053-BB89-62D3C7530815}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

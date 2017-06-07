@@ -1,16 +1,76 @@
-﻿using System;
+﻿using Microsoft.CodeAnalysis.Elfie.Diagnostics;
+using Microsoft.CodeAnalysis.Elfie.Extensions;
+using System;
+using System.Diagnostics;
+using System.IO;
+using V5.Extensions;
 
 namespace V5.ConsoleTest
 {
+    public class PersonDatabase
+    {
+        public DateTime[] BirthDate;
+        public DateTime[] WhenAdded;
+        public int[] ZipCode;
+
+        public PersonDatabase(long capacity)
+        {
+            this.BirthDate = new DateTime[capacity];
+            this.WhenAdded = new DateTime[capacity];
+            this.ZipCode = new int[capacity];
+        }
+
+        public void Load(string filePath)
+        {
+            this.BirthDate = BinarySerializer.Read<long>(Path.Combine(filePath, "BirthDate", "V.d64.bin")).ToDateTimeArray();
+            this.WhenAdded = BinarySerializer.Read<long>(Path.Combine(filePath, "WhenAdded", "V.d64.bin")).ToDateTimeArray();
+            this.ZipCode = BinarySerializer.Read<int>(Path.Combine(filePath, "ZipCode", "V.i32.bin"));
+        }
+
+        public void Save(string filePath)
+        {
+            BinarySerializer.Write(Path.Combine(filePath, "BirthDate", "V.d64.bin"), BirthDate.ToPrimitiveArray());
+            BinarySerializer.Write(Path.Combine(filePath, "WhenAdded", "V.d64.bin"), WhenAdded.ToPrimitiveArray());
+            BinarySerializer.Write(Path.Combine(filePath, "ZipCode", "V.i32.bin"), this.ZipCode);
+        }
+    }
+
     class Program
     {
+        public const string PartitionPath = @"..\..\..\DiskCache\Tables\Person\0";
+
         static void Main(string[] args)
         {
-            int length = 0x1 << 23; // 8M
-            byte[] test = new byte[length];
+            long rowCount = 8 * 1000 * 1000; // 0x1 << 23
+            PersonDatabase db = new PersonDatabase(rowCount);
 
-            Random r = new Random(5);
-            r.NextBytes(test);
+            if (Directory.Exists(PartitionPath))
+            {
+                using (new TraceWatch("Loading Database..."))
+                {
+                    db.Load(PartitionPath);
+                    Trace.WriteLine($" -> {db.BirthDate.Length:n0} rows");
+                }
+            }
+            else
+            { 
+                using (new TraceWatch($"Generating {rowCount.CountString()} sample rows..."))
+                {
+                    Random r = new Random(5);
+                    for (long i = 0; i < rowCount; ++i)
+                    {
+                        Person p = new Person(r);
+                        db.BirthDate[i] = p.BirthDate;
+                        db.WhenAdded[i] = p.WhenAdded;
+                        db.ZipCode[i] = p.ZipCode;
+                    }
+                }
+
+                using (new TraceWatch("Saving Database..."))
+                {
+                    db.Save(PartitionPath);
+                }
+            }
 
             //byte rangeStart = 0;
             //byte rangeEnd = 4;
@@ -24,29 +84,29 @@ namespace V5.ConsoleTest
             //    () => String8Native.CountInRange(test, rangeStart, rangeEnd)
             //);
 
-            uint[] managedVector = new uint[length >> 5];
-            uint[] nativeVector = new uint[length >> 5];
-            sbyte edge = 125;
+            //uint[] managedVector = new uint[length >> 5];
+            //uint[] nativeVector = new uint[length >> 5];
+            //sbyte edge = 100;
 
-            Array.Clear(managedVector, 0, managedVector.Length);
-            WhereGreaterThan(test, edge, managedVector);
-            int managed = Count(managedVector);
+            //Array.Clear(managedVector, 0, managedVector.Length);
+            //WhereGreaterThan(test, edge, managedVector);
+            //int managed = Count(managedVector);
 
-            Array.Clear(nativeVector, 0, nativeVector.Length);
-            ArraySearch.WhereGreaterThan(test, edge, nativeVector);
-            int native = Count(nativeVector);
+            //Array.Clear(nativeVector, 0, nativeVector.Length);
+            //ArraySearch.WhereGreaterThan(test, edge, nativeVector);
+            //int native = Count(nativeVector);
 
-            if(!AreEqual(managedVector, nativeVector))
-            {
-                Console.WriteLine("ERROR");
-            }
+            //if(!AreEqual(managedVector, nativeVector))
+            //{
+            //    Console.WriteLine("ERROR");
+            //}
 
-            Console.WriteLine($"Managed: {managed}, Native: {native}");
+            //Console.WriteLine($"Managed: {managed}, Native: {native}");
 
-            Benchmark.Compare("Find Items in Range", 100, length, new string[] { "Managed", "Native" },
-                () => WhereGreaterThan(test, edge, managedVector),
-                () => ArraySearch.WhereGreaterThan(test, edge, nativeVector)
-            );
+            //Benchmark.Compare("Find Items in Range", 100, length, new string[] { "Managed", "Native" },
+            //    () => WhereGreaterThan(test, edge, managedVector),
+            //    () => ArraySearch.WhereGreaterThan(test, edge, nativeVector)
+            //);
         }
 
         private static int CountManaged(byte[] test, byte rangeStart, byte rangeEnd)

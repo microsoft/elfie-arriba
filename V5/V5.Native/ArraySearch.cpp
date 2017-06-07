@@ -3,6 +3,16 @@
 #include <nmmintrin.h>
 #include "ArraySearch.h"
 
+/*
+	Set operations using SSE vector instructions, using the XMM (16 byte) registers.
+
+	_mm_set1_epi8     - Load an XMM register with 16 copies of the passed byte.
+	_mm_loadu_si128   - Load an XMM register with 16 bytes from the unaligned source.
+
+	_mm_cmpgt_epi8    - Per-byte Greater Than: Set an XMM mask with all one bits where XMM1[i] > XMM2[i].
+	_mm_movemask_epi8 - Set lower 16 bits based on whether each byte in an XMM mask is all one.
+*/
+
 #pragma unmanaged
 
 extern "C" __declspec(dllexport) void WhereGreaterThanInternal(signed char* set, int length, signed char value, unsigned int* matchVector)
@@ -11,18 +21,19 @@ extern "C" __declspec(dllexport) void WhereGreaterThanInternal(signed char* set,
 
 	// Match in 32 byte blocks
 	__m128i blockOfValue = _mm_set1_epi8(value);
-	int blockLength = length >> 5;
-	for (; i < blockLength; ++i)
+	int blockLength = length - (length & 31);
+	for (; i < blockLength; i += 32)
 	{
-		__m128i block1 = _mm_loadu_si128((__m128i*)(&set[i << 5]));
+		__m128i block1 = _mm_loadu_si128((__m128i*)(&set[i]));
 		__m128i matchMask1 = _mm_cmpgt_epi8(block1, blockOfValue);
 		int matchBits1 = _mm_movemask_epi8(matchMask1);
 
-		__m128i block2 = _mm_loadu_si128((__m128i*)(&set[(i << 5) + 16]));
+		__m128i block2 = _mm_loadu_si128((__m128i*)(&set[i + 16]));
 		__m128i matchMask2 = _mm_cmpgt_epi8(block2, blockOfValue);
 		int matchBits2 = _mm_movemask_epi8(matchMask2);
 
-		matchVector[i] = matchBits2 << 16 | matchBits1;
+		// Danny: _mm_stream_pd? Non-temporal write hints?
+		matchVector[i >> 5] = matchBits2 << 16 | matchBits1;
 	}
 
 	// Match remaining values individually
