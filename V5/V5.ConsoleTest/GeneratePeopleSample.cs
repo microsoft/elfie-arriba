@@ -23,7 +23,7 @@ namespace V5.ConsoleTest
         public Person(Random r)
         {
             // Random name; 2K unique first names, 8k last names, 256 middle names
-            this.Name = mapper.GenerateName(unchecked((uint)r.Next()));
+            //this.Name = mapper.GenerateName(unchecked((uint)r.Next()));
 
             // 50% Male / Female
             this.Gender = (r.NextDouble() > 0.50 ? Female : Male);

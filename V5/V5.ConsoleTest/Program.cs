@@ -7,11 +7,99 @@ using V5.Extensions;
 
 namespace V5.ConsoleTest
 {
+    public class SortBucketColumn<T>
+    {
+        public T[] BucketMinimumValue;
+        public bool[] IsMultiValueBucket;
+        public int[] BucketRowCount;
+
+        public byte[] BucketIndexPerRow;
+
+        public void Build(T[] values, byte bucketCount, Random r)
+        {
+            // Sample 10x bucket count values
+            T[] sample = values.Sample(10 * bucketCount, r);
+            Array.Sort(sample);
+
+            // Try to get n+1 bucket boundary values
+            this.BucketMinimumValue = new T[bucketCount + 1];
+            this.BucketMinimumValue[0] = sample[0];
+            this.BucketMinimumValue[bucketCount] = sample[sample.Length - 1];
+
+            int bucketsFilled = 1;
+            int nextSample = 0;
+            while (true)
+            {
+                int incrementCount = ((sample.Length - nextSample) / (bucketCount - bucketsFilled)) + 1;
+                nextSample += incrementCount;
+
+                if (nextSample >= sample.Length) break;
+
+                T value = sample[nextSample];
+                if(!value.Equals(this.BucketMinimumValue[bucketsFilled - 1]))
+                {
+                    this.BucketMinimumValue[bucketsFilled] = value;
+                    bucketsFilled++;
+
+                    if (bucketsFilled == bucketCount) break;
+                }
+            }
+
+            // Capture the set actually filled
+            if(bucketsFilled < bucketCount)
+            {
+                T[] actualBuckets = new T[bucketsFilled];
+                Array.Copy(this.BucketMinimumValue, actualBuckets, bucketsFilled);
+                this.BucketMinimumValue = actualBuckets;
+            }
+
+            this.IsMultiValueBucket = new bool[this.BucketMinimumValue.Length];
+            this.BucketRowCount = new int[this.BucketMinimumValue.Length];
+
+            BucketRows(values);
+        }
+
+        public void BucketRows(T[] values)
+        {
+            this.BucketIndexPerRow = new byte[values.Length];
+
+            for(int i = 0; i < values.Length; ++i)
+            {
+                T value = values[i];
+                int bucketIndex = Array.BinarySearch(this.BucketMinimumValue, value);
+
+                if (bucketIndex < 0)
+                {
+                    bucketIndex = ~bucketIndex - 1;
+
+                    if(bucketIndex < 0)
+                    {
+                        this.BucketMinimumValue[0] = value;
+                        bucketIndex = 0;
+                    }
+                    else if(bucketIndex == this.BucketMinimumValue.Length - 1)
+                    {
+                        this.BucketMinimumValue[this.BucketMinimumValue.Length - 1] = value;
+                    }
+
+                    this.IsMultiValueBucket[bucketIndex] = true;
+                }
+
+                this.BucketIndexPerRow[i] = (byte)bucketIndex;
+                this.BucketRowCount[bucketIndex]++;
+            }
+        }
+    }
+
     public class PersonDatabase
     {
         public DateTime[] BirthDate;
         public DateTime[] WhenAdded;
         public int[] ZipCode;
+
+        public SortBucketColumn<DateTime> BirthDateBuckets;
+        public SortBucketColumn<DateTime> WhenAddedBuckets;
+        public SortBucketColumn<int> ZipCodeBuckets;
 
         public PersonDatabase(long capacity)
         {
@@ -20,11 +108,25 @@ namespace V5.ConsoleTest
             this.ZipCode = new int[capacity];
         }
 
+        public int Count => this.BirthDate.Length;
+
         public void Load(string filePath)
         {
             this.BirthDate = BinarySerializer.Read<long>(Path.Combine(filePath, "BirthDate", "V.d64.bin")).ToDateTimeArray();
             this.WhenAdded = BinarySerializer.Read<long>(Path.Combine(filePath, "WhenAdded", "V.d64.bin")).ToDateTimeArray();
             this.ZipCode = BinarySerializer.Read<int>(Path.Combine(filePath, "ZipCode", "V.i32.bin"));
+        }
+
+        public void Index(Random r)
+        {
+            this.BirthDateBuckets = new SortBucketColumn<DateTime>();
+            this.BirthDateBuckets.Build(this.BirthDate, 255, r);
+
+            this.WhenAddedBuckets = new SortBucketColumn<DateTime>();
+            this.WhenAddedBuckets.Build(this.WhenAdded, 255, r);
+
+            this.ZipCodeBuckets = new SortBucketColumn<int>();
+            this.ZipCodeBuckets.Build(this.ZipCode, 255, r);
         }
 
         public void Save(string filePath)
@@ -37,7 +139,7 @@ namespace V5.ConsoleTest
 
     class Program
     {
-        public const string PartitionPath = @"..\..\..\DiskCache\Tables\Person\0";
+        public const string PartitionPath = @"..\..\..\..\DiskCache\Tables\Person\0";
 
         static void Main(string[] args)
         {
@@ -49,7 +151,7 @@ namespace V5.ConsoleTest
                 using (new TraceWatch("Loading Database..."))
                 {
                     db.Load(PartitionPath);
-                    Trace.WriteLine($" -> {db.BirthDate.Length:n0} rows");
+                    Trace.WriteLine($" -> {db.Count:n0} rows");
                 }
             }
             else
@@ -71,6 +173,14 @@ namespace V5.ConsoleTest
                     db.Save(PartitionPath);
                 }
             }
+
+            using (new TraceWatch("Indexing Database..."))
+            {
+                db.Index(new Random(0));
+            }
+
+            Benchmark.Compare("BirthDate >= 1980-01-01 AND ZIP >= 90000", 100, db.Count, new string[] { "Managed Hand-Coded" },
+                () => CountCustom(db));
 
             //byte rangeStart = 0;
             //byte rangeEnd = 4;
@@ -108,6 +218,20 @@ namespace V5.ConsoleTest
             //    () => ArraySearch.WhereGreaterThan(test, edge, nativeVector)
             //);
         }
+
+        private static int CountCustom(PersonDatabase db)
+        {
+            DateTime birthdayMinimum = new DateTime(1980, 01, 01);
+            int zipMinimum = 90000;
+
+            int count = 0;
+            for(int i = 0; i < db.Count; ++i)
+            {
+                if (db.BirthDate[i] >= birthdayMinimum && db.ZipCode[i] >= zipMinimum) count++;
+            }
+            return count;
+        }
+
 
         private static int CountManaged(byte[] test, byte rangeStart, byte rangeEnd)
         {

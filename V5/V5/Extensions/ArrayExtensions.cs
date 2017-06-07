@@ -34,7 +34,7 @@ namespace V5.Extensions
         {
             DateTime[] result = new DateTime[utcTicksArray.Length];
 
-            for(int i = 0; i < utcTicksArray.Length; ++i)
+            for (int i = 0; i < utcTicksArray.Length; ++i)
             {
                 result[i] = new DateTime(utcTicksArray[i], DateTimeKind.Utc);
             }
@@ -52,6 +52,30 @@ namespace V5.Extensions
             }
 
             return result;
+        }
+
+        public static T[] Sample<T>(this T[] values, int countToSample, Random r)
+        {
+            int samplesLength = Math.Min(values.Length, countToSample);
+            T[] sample = new T[samplesLength];
+
+            int samplesAdded = 0;
+            for (int i = 0; i < values.Length && samplesAdded < samplesLength; ++i)
+            {
+                double excludeChance = r.NextDouble();
+
+                int itemsLeft = values.Length - i;
+                int samplesNeeded = samplesLength - samplesAdded;
+
+                // === if(excludeChance < samplesNeeded / itemsLeft)
+                if (excludeChance * itemsLeft < samplesLength)
+                {
+                    sample[samplesAdded] = values[i];
+                    samplesAdded++;
+                }
+            }
+
+            return sample;
         }
     }
 }
