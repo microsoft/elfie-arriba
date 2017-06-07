@@ -11,6 +11,8 @@
     overflow-x: hidden;
     overflow-y: auto;
 
+    &:not(:first-child) { margin-left: 2px; }
+
     svg {
         position: absolute;
         right: 0;

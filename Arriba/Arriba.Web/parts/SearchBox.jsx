@@ -5,7 +5,7 @@ import Suggestions from "./Suggestions";
 export default class SearchBox extends EventedComponent {
     constructor(props) {
         super(props);
-        this.state = {};
+        this.state = {};      
         this.events = {
             "storage": e => {
                 if (!["favorites"].includes(e.key)) return;
@@ -50,6 +50,17 @@ export default class SearchBox extends EventedComponent {
                             query={this.props.query}
                             queryChanged={q => this.props.queryChanged(q)}
                             completedChanged={c => this.setState({ completed: c })}
+                            selectedChanged={s => this.setState({ selected: s && s.category === "ColumnName" && s || undefined }) }
+                            refocus={() => this.refs.input.focus()} />
+
+                        <Suggestions
+                            ref="peek"
+                            marginTop={this.state.selected && this.state.selected.offsetTop || 0}
+                            cache={true}
+                            query={this.state.selected && this.state.completed + this.state.selected.completeAs + ' = ' || undefined}
+                            queryChanged={q => this.props.queryChanged(q)}
+                            sel={-1}
+                            completedChanged={c => {}}
                             refocus={() => this.refs.input.focus()} />
                     </div>
                 </span>

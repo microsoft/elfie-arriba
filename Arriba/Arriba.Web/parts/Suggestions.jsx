@@ -4,6 +4,7 @@ import EventedComponent from "./EventedComponent";
 export default class Suggestions extends EventedComponent {
     constructor(props) {
         super(props);
+        this.cache = {};
         this.state = { suggestions: [], sel: this.props.sel || 0, completed: "", completionCharacters: [] };
         this.events = {
             "mousewheel": e => { // Prefer "mousewheel" over "scroll" as the latter gets (noisily) triggered by results loading.
@@ -14,10 +15,34 @@ export default class Suggestions extends EventedComponent {
     }
     componentDidUpdate(prevProps, prevState) {
         if (prevProps.query !== this.props.query) this.fetch();
+
+        var suggestions = this.state.suggestions;
+        var sel = this.state.sel;
+        if (this.props.selectedChanged && (prevState.suggestions !== suggestions || prevState.sel !== sel)) {
+            this.props.selectedChanged(suggestions[sel]);
+        }
     }
 
     fetch() {
         if (this.lastRequest) this.lastRequest.abort();
+
+        if (this.props.query === undefined) {
+            this.clear();
+            return;
+        }
+
+        var cached = this.cache[this.props.query];
+        if (this.props.cache && cached) {
+            this.props.completedChanged(cached.complete);
+            this.setState({
+                suggestions: cached.suggestions,
+                sel: this.props.sel || 0,
+                completed: cached.complete, 
+                completionCharacters: cached.completionCharacters.map(c => ({ "\t": "Tab" })[c] || c),
+            });
+            return;
+        }
+
         this.lastRequest = jsonQuery(
             configuration.url + "/suggest?q=" + encodeURIComponent(this.props.query),
             data => {
@@ -28,6 +53,7 @@ export default class Suggestions extends EventedComponent {
                     completed: data.content.complete, 
                     completionCharacters: data.content.completionCharacters.map(c => ({ "\t": "Tab" })[c] || c),
                 });
+                if (this.props.cache) this.cache[this.props.query] = data.content; // Assume query hasn't changed since the call, since new requests abort old ones.
             }
         );
     }
@@ -102,12 +128,14 @@ export default class Suggestions extends EventedComponent {
         // Thus upping the minWidth to compensate.
         if (isIE()) style["minWidth"] = "300px";
 
+        if (this.props.marginTop) style["marginTop"] = this.props.marginTop;
         return this.state.suggestions.length > 0 &&
             <div ref="suggestions" className="suggestions" style={style} >
                 {this.svg}
                 {this.state.suggestions.map((item, index) =>
-                    <div className={"suggestion " + (this.state.sel == index ? "suggestion-sel" : "" )}
-                        onClick={e => this.onClick(item)} 
+                    <div ref={r => item.offsetTop = r && this.refs.suggestions && r.offsetTop - this.refs.suggestions.scrollTop || undefined}
+                        className={"suggestion " + (this.state.sel == index ? "suggestion-sel" : "" )}
+                        onClick={e => this.onClick(item)}
                         onMouseEnter={e => this.setState({ sel: index })}>
                         <span>{item.display}</span>
                         <span className="suggestion-hint">{item.hint}</span>
