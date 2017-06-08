@@ -59,6 +59,9 @@ export default class Suggestions extends EventedComponent {
     clear() {
         this.setState({ suggestions: [] });
     }
+    clearCache() {
+        this.cache = {};
+    }
 
     onClick(item) {
         var separator = (item.category === "Value" ? "" : " ");

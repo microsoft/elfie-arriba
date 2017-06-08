@@ -21,6 +21,9 @@ export default class SearchBox extends EventedComponent {
         super.componentDidMount();
         this.refs.input.focus();
     }
+    componentWillReceiveProps(nextProps) {
+        if (this.props.query != nextProps.query) this.refs.peek.clearCache();
+    }
     onInput(query) {
         // IE focus/blur spurriously triggers onInput(), this works around that.
         if (this.props.query !== query) this.props.queryChanged(query);
