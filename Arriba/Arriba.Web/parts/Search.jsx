@@ -1,4 +1,4 @@
-﻿import "../Search.scss";
+import "../Search.scss";
 import "!script-loader!../js/utilities.js";
 
 import Mru from "./Mru";
@@ -279,7 +279,7 @@ export default React.createClass({
         jsonQuery(
             url,
             data => {
-                this.setState({ error: null });
+                this.setState({ error: undefined });
                 onSuccess(data);
             },
             function (xhr, status, err) {
