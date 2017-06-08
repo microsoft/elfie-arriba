@@ -5,7 +5,8 @@ export default class Suggestions extends EventedComponent {
     constructor(props) {
         super(props);
         this.cache = {};
-        this.state = { suggestions: [], sel: this.props.sel || 0, completed: "", completionCharacters: [] };
+        this.state = { suggestions: [] };
+        this.suggestions = { suggestions: [], complete: "", completionCharacters: [] };
         this.events = {
             "mousewheel": e => { // Prefer "mousewheel" over "scroll" as the latter gets (noisily) triggered by results loading.
                 if (!this.refs.suggestions || this.refs.suggestions.contains(e.target)) return;
@@ -23,6 +24,14 @@ export default class Suggestions extends EventedComponent {
         }
     }
 
+    set suggestions(dataContent) {
+        this.setState({
+            suggestions: dataContent.suggestions,
+            sel: this.props.sel || 0,
+            completed: dataContent.complete, 
+            completionCharacters: dataContent.completionCharacters.map(c => ({ "\t": "Tab" })[c] || c),
+        });
+    }
     fetch() {
         if (this.lastRequest) this.lastRequest.abort();
 
@@ -34,12 +43,7 @@ export default class Suggestions extends EventedComponent {
         var cached = this.cache[this.props.query];
         if (this.props.cache && cached) {
             this.props.completedChanged(cached.complete);
-            this.setState({
-                suggestions: cached.suggestions,
-                sel: this.props.sel || 0,
-                completed: cached.complete, 
-                completionCharacters: cached.completionCharacters.map(c => ({ "\t": "Tab" })[c] || c),
-            });
+            this.suggestions = cached;
             return;
         }
 
@@ -47,12 +51,7 @@ export default class Suggestions extends EventedComponent {
             configuration.url + "/suggest?q=" + encodeURIComponent(this.props.query),
             data => {
                 this.props.completedChanged(data.content.complete);
-                this.setState({
-                    suggestions: data.content.suggestions,
-                    sel: this.props.sel || 0,
-                    completed: data.content.complete, 
-                    completionCharacters: data.content.completionCharacters.map(c => ({ "\t": "Tab" })[c] || c),
-                });
+                this.suggestions = data.content;
                 if (this.props.cache) this.cache[this.props.query] = data.content; // Assume query hasn't changed since the call, since new requests abort old ones.
             }
         );
