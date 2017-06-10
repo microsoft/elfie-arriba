@@ -19,48 +19,25 @@ extern "C" __declspec(dllexport) void AndWhereGreaterThanInternal(signed char* s
 {
 	int i = 0;
 
-	// Match in 32 byte blocks
-	__m128i signedToUnsigned = _mm_set1_epi8(-128);
-	__m128i blockOfValue = _mm_set1_epi8(value);
-	blockOfValue = _mm_sub_epi8(blockOfValue, signedToUnsigned);
+	__m256i signedToUnsigned = _mm256_set1_epi8(-128);
+	__m256i blockOfValue = _mm256_sub_epi8(_mm256_set1_epi8(value), signedToUnsigned);
 
 	int blockLength = length - (length & 63);
 	for (; i < blockLength; i += 64)
 	{
-		__m128i block1 = _mm_loadu_si128((__m128i*)(&set[i]));
-		block1 = _mm_sub_epi8(block1, signedToUnsigned);
+		__m256i block1 = _mm256_loadu_si256((__m256i*)(&set[i]));
+		block1 = _mm256_sub_epi8(block1, signedToUnsigned);
 
-		__m128i matchMask1 = _mm_cmpgt_epi8(block1, blockOfValue);
-		int matchBits1 = _mm_movemask_epi8(matchMask1);
+		__m256i matchMask1 = _mm256_cmpgt_epi8(block1, blockOfValue);
+		unsigned int matchBits1 = _mm256_movemask_epi8(matchMask1);
 
-		__m128i block2 = _mm_loadu_si128((__m128i*)(&set[i + 16]));
-		block2 = _mm_sub_epi8(block2, signedToUnsigned);
+		__m256i block2 = _mm256_loadu_si256((__m256i*)(&set[i + 32]));
+		block2 = _mm256_sub_epi8(block2, signedToUnsigned);
 
-		__m128i matchMask2 = _mm_cmpgt_epi8(block2, blockOfValue);
-		int matchBits2 = _mm_movemask_epi8(matchMask2);
+		__m256i matchMask2 = _mm256_cmpgt_epi8(block2, blockOfValue);
+		unsigned int matchBits2 = _mm256_movemask_epi8(matchMask2);
 
-		__m128i block3 = _mm_loadu_si128((__m128i*)(&set[i + 32]));
-		block3 = _mm_sub_epi8(block3, signedToUnsigned);
-
-		__m128i matchMask3 = _mm_cmpgt_epi8(block3, blockOfValue);
-		int matchBits3 = _mm_movemask_epi8(matchMask3);
-
-		__m128i block4 = _mm_loadu_si128((__m128i*)(&set[i + 48]));
-		block4 = _mm_sub_epi8(block4, signedToUnsigned);
-
-		__m128i matchMask4 = _mm_cmpgt_epi8(block4, blockOfValue);
-		int matchBits4 = _mm_movemask_epi8(matchMask4);
-
-		unsigned long long result;
-		result = matchBits4;
-		result = result << 16;
-		result |= matchBits3;
-		result = result << 16;
-		result |= matchBits2;
-		result = result << 16;
-		result |= matchBits1;
-
-		matchVector[i >> 6] &= result;
+		matchVector[i >> 6] &= (unsigned long long)(matchBits2 << 32) | matchBits1;
 	}
 
 	// Match remaining values individually
