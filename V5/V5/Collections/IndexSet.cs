@@ -8,13 +8,13 @@ namespace V5.Collections
         private int offset;
         private int length;
 
-        private uint[] bitVector;
+        private ulong[] bitVector;
 
         public IndexSet(int offset, int length)
         {
             this.offset = offset;
             this.length = length;
-            this.bitVector = new uint[(length + 31) >> 5];
+            this.bitVector = new ulong[(length + 63) >> 6];
         }
 
         public int Count
@@ -24,8 +24,18 @@ namespace V5.Collections
 
         public bool this[int index]
         {
-            get => (this.bitVector[index >> 5] & (0x1U << (index & 31))) != 0;
-            set => this.bitVector[index >> 5] |= (0x1U << (index & 31));
+            get => (this.bitVector[index >> 6] & (0x1U << (index & 63))) != 0;
+            set
+            {
+                if (value)
+                {
+                    this.bitVector[index >> 6] |= (0x1U << (index & 63));
+                }
+                else
+                {
+                    this.bitVector[index >> 6] &= ~(0x1U << (index & 63));
+                }
+            }
         }
 
         public bool Equals(IndexSet other)
@@ -52,11 +62,14 @@ namespace V5.Collections
             // Turn on all bits
             for (int i = 0; i < this.bitVector.Length; ++i)
             {
-                this.bitVector[i] = uint.MaxValue;
+                this.bitVector[i] = ulong.MaxValue;
             }
 
             // Turn off bits over 'length'
-            this.bitVector[this.bitVector.Length - 1] &= (uint.MaxValue << (length & 31));
+            if ((length & 63) > 0)
+            {
+                this.bitVector[this.bitVector.Length - 1] &= (ulong.MaxValue >> (64 - (length & 63)));
+            }
 
             return this;
         }
@@ -64,6 +77,45 @@ namespace V5.Collections
         public IndexSet And(Array values, Operator op, object value)
         {
             ArraySearch.AndWhereGreaterThan((byte[])values, (byte)value, this.bitVector);
+            return this;
+        }
+
+        public IndexSet And(IndexSet other)
+        {
+            if (this.offset != other.offset) throw new InvalidOperationException();
+            if (this.length != other.length) throw new InvalidOperationException();
+
+            for (int i = 0; i < this.bitVector.Length; ++i)
+            {
+                this.bitVector[i] &= other.bitVector[i];
+            }
+
+            return this;
+        }
+
+        public IndexSet Or(IndexSet other)
+        {
+            if (this.offset != other.offset) throw new InvalidOperationException();
+            if (this.length != other.length) throw new InvalidOperationException();
+
+            for (int i = 0; i < this.bitVector.Length; ++i)
+            {
+                this.bitVector[i] |= other.bitVector[i];
+            }
+
+            return this;
+        }
+
+        public IndexSet AndNot(IndexSet other)
+        {
+            if (this.offset != other.offset) throw new InvalidOperationException();
+            if (this.length != other.length) throw new InvalidOperationException();
+
+            for (int i = 0; i < this.bitVector.Length; ++i)
+            {
+                this.bitVector[i] = this.bitVector[i] & ~other.bitVector[i];
+            }
+
             return this;
         }
     }

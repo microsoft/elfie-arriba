@@ -49,11 +49,21 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="UnitTest1.cs" />
+    <Compile Include="Collections\IndexSetTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\V5.Native\V5.Native.vcxproj">
+      <Project>{760fc534-0591-4209-a367-cda01aef52e0}</Project>
+      <Name>V5.Native</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\V5\V5.csproj">
+      <Project>{1da51967-11ec-4e76-b96b-8a7283575f73}</Project>
+      <Name>V5</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets" Condition="Exists('$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets')" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

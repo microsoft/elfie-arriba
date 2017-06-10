@@ -94,11 +94,20 @@ namespace V5.ConsoleTest
 
             IndexSet managedSet = new IndexSet(0, db.Count);
             IndexSet nativeSet = new IndexSet(0, db.Count).All();
+            IndexSet scratchSet = new IndexSet(0, db.Count);
             int managedMatches = CountCustom(db);
 
-            Benchmark.Compare("BirthDate > 1980-01-01 AND ZIP > 90000", 100, db.Count, new string[] { "Managed Hand-Coded", "Native Hand-Coded" },
+            Benchmark.Compare("IndexSet Ops", 1000, (db.Count + 31) >> 5, new string[] { "All", "None", "Count" },
+                () => nativeSet.All(),
+                () => nativeSet.None(),
+                () => { int x = nativeSet.Count; }
+            );
+
+            Benchmark.Compare("BirthDate > 1980-01-01 AND ZIP > 90000", 100, db.Count, new string[] { "Managed Hand-Coded", "Native Hand-Coded", "Native separate and" },
                 () => CountCustom(db),
-                () => CountNative(db, nativeSet));
+                () => CountNative(db, nativeSet),
+                () => CountNativeSeparate(db, nativeSet, scratchSet)
+            );
 
             byte edge = 220;
 
@@ -112,7 +121,7 @@ namespace V5.ConsoleTest
                 Console.WriteLine("ERROR");
             }
 
-            uint[] directVector = new uint[db.Count + 31 >> 5];
+            ulong[] directVector = new ulong[db.Count + 63 >> 6];
 
             Benchmark.Compare("Find Items in Range", 100, rowCount, new string[] { "Managed", "Native", "NativeDirect" },
                 () => WhereGreaterThan(db.BirthDateBuckets.RowBucketIndex, edge, managedSet),
@@ -154,6 +163,27 @@ namespace V5.ConsoleTest
             return matches.Count;
         }
 
+        private static int CountNativeSeparate(PersonDatabase db, IndexSet matches1, IndexSet matches2)
+        {
+            DateTime birthdayMinimum = new DateTime(1960, 01, 01);
+            int zipMinimum = 60000;
+
+            bool isBirthdayExact;
+            int birthdayBucket = db.BirthDateBuckets.BucketForValue(birthdayMinimum, out isBirthdayExact);
+            if (birthdayBucket < 0 || birthdayBucket > db.BirthDateBuckets.Minimum.Length - 1) return 0;
+
+            bool isZipExact;
+            int zipBucket = db.ZipCodeBuckets.BucketForValue(zipMinimum, out isZipExact);
+            if (zipBucket < 0 || zipBucket > db.ZipCodeBuckets.Minimum.Length - 1) return 0;
+
+            matches1.All().And(db.BirthDateBuckets.RowBucketIndex, Query.Operator.GreaterThan, (byte)birthdayBucket);
+            matches2.All().And(db.ZipCodeBuckets.RowBucketIndex, Query.Operator.GreaterThan, (byte)zipBucket);
+
+            matches1.And(matches2);
+
+            return matches1.Count;
+        }
+
         private static int CountManaged(byte[] test, byte rangeStart, byte rangeEnd)
         {
             int count = 0;
@@ -173,35 +203,6 @@ namespace V5.ConsoleTest
             {
                 if (test[i] > value) result[i] = true;
             }
-        }
-
-        private static int Count(uint[] resultVector)
-        {
-            int count = 0;
-
-            for (int i = 0; i < resultVector.Length; ++i)
-            {
-                uint segment = resultVector[i];
-
-                for (int j = 0; j < 32; ++j)
-                {
-                    if ((segment & (0x1U << j)) != 0) count++;
-                }
-            }
-
-            return count;
-        }
-
-        private static bool AreEqual(uint[] left, uint[] right)
-        {
-            if (left.Length != right.Length) return false;
-
-            for (int i = 0; i < left.Length; ++i)
-            {
-                if (left[i] != right[i]) return false;
-            }
-
-            return true;
         }
     }
 }
