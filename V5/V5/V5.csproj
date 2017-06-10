@@ -76,6 +76,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Collections\IndexSet.cs" />
     <Compile Include="Collections\PartialArray.cs" />
     <Compile Include="Data\ColumnFactory.cs" />
     <Compile Include="Data\IColumn.cs" />
@@ -86,8 +87,15 @@
     <Compile Include="Extensions\BinaryReaderWriterExtensions.cs" />
     <Compile Include="Extensions\BinarySerializer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Query\Operator.cs" />
     <Compile Include="Serialization\CachedLoader.cs" />
     <Compile Include="Serialization\IBinarySerializable.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\V5.Native\V5.Native.vcxproj">
+      <Project>{760fc534-0591-4209-a367-cda01aef52e0}</Project>
+      <Name>V5.Native</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

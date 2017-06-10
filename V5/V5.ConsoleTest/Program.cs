@@ -3,6 +3,7 @@ using Microsoft.CodeAnalysis.Elfie.Extensions;
 using System;
 using System.Diagnostics;
 using System.IO;
+using V5.Collections;
 using V5.Data;
 using V5.Extensions;
 
@@ -91,41 +92,32 @@ namespace V5.ConsoleTest
                 db.Index(new Random(0));
             }
 
+            IndexSet managedSet = new IndexSet(0, db.Count);
+            IndexSet nativeSet = new IndexSet(0, db.Count).All();
             int managedMatches = CountCustom(db);
-            int nativeMatches = CountNative(db, new uint[db.Count + 31 >> 5]);
 
             Benchmark.Compare("BirthDate > 1980-01-01 AND ZIP > 90000", 100, db.Count, new string[] { "Managed Hand-Coded", "Native Hand-Coded" },
                 () => CountCustom(db),
-                () => CountNative(db, new uint[db.Count + 31 >> 5]));
+                () => CountNative(db, nativeSet));
 
-
-
-            uint[] managedVector = new uint[rowCount + 31 >> 5];
-            uint[] nativeVector = new uint[rowCount + 31 >> 5];
             byte edge = 220;
 
-            Array.Clear(managedVector, 0, managedVector.Length);
-            WhereGreaterThan(db.BirthDateBuckets.RowBucketIndex, edge, managedVector);
-            int managed = Count(managedVector);
+            managedSet.None();
+            WhereGreaterThan(db.BirthDateBuckets.RowBucketIndex, edge, managedSet);
 
-            for (int i = 0; i < nativeVector.Length; ++i)
-            {
-                nativeVector[i] = uint.MaxValue;
-            }
+            nativeSet.All().And(db.BirthDateBuckets.RowBucketIndex, Query.Operator.GreaterThan, edge);
 
-            ArraySearch.AndWhereGreaterThan(db.BirthDateBuckets.RowBucketIndex, edge, nativeVector);
-            int native = Count(nativeVector);
-
-            if (!AreEqual(managedVector, nativeVector))
+            if (!managedSet.Equals(nativeSet) || managedSet.Count != nativeSet.Count)
             {
                 Console.WriteLine("ERROR");
             }
 
-            //Console.WriteLine($"Managed: {managed}, Native: {native}");
+            uint[] directVector = new uint[db.Count + 31 >> 5];
 
-            Benchmark.Compare("Find Items in Range", 100, rowCount, new string[] { "Managed", "Native" },
-                () => WhereGreaterThan(db.BirthDateBuckets.RowBucketIndex, edge, managedVector),
-                () => ArraySearch.AndWhereGreaterThan(db.BirthDateBuckets.RowBucketIndex, edge, nativeVector)
+            Benchmark.Compare("Find Items in Range", 100, rowCount, new string[] { "Managed", "Native", "NativeDirect" },
+                () => WhereGreaterThan(db.BirthDateBuckets.RowBucketIndex, edge, managedSet),
+                () => nativeSet.And(db.BirthDateBuckets.RowBucketIndex, Query.Operator.GreaterThan, edge),
+                () => ArraySearch.AndWhereGreaterThan(db.BirthDateBuckets.RowBucketIndex, edge, directVector)
             );
         }
 
@@ -135,21 +127,15 @@ namespace V5.ConsoleTest
             int zipMinimum = 60000;
 
             int count = 0;
-            for(int i = 0; i < db.Count; ++i)
+            for (int i = 0; i < db.Count; ++i)
             {
                 if (db.ZipCode[i] > zipMinimum && db.BirthDate[i] > birthdayMinimum) count++;
             }
             return count;
         }
 
-        private static int CountNative(PersonDatabase db, uint[] bitVector)
+        private static int CountNative(PersonDatabase db, IndexSet matches)
         {
-            // Set to all
-            for(int i = 0; i < bitVector.Length; ++i)
-            {
-                bitVector[i] = uint.MaxValue;
-            }
-
             DateTime birthdayMinimum = new DateTime(1960, 01, 01);
             int zipMinimum = 60000;
 
@@ -161,10 +147,11 @@ namespace V5.ConsoleTest
             int zipBucket = db.ZipCodeBuckets.BucketForValue(zipMinimum, out isZipExact);
             if (zipBucket < 0 || zipBucket > db.ZipCodeBuckets.Minimum.Length - 1) return 0;
 
-            ArraySearch.AndWhereGreaterThan(db.BirthDateBuckets.RowBucketIndex, (byte)birthdayBucket, bitVector);
-            ArraySearch.AndWhereGreaterThan(db.ZipCodeBuckets.RowBucketIndex, (byte)zipBucket, bitVector);
+            matches.All()
+                .And(db.BirthDateBuckets.RowBucketIndex, Query.Operator.GreaterThan, (byte)birthdayBucket)
+                .And(db.ZipCodeBuckets.RowBucketIndex, Query.Operator.GreaterThan, (byte)zipBucket);
 
-            return ArraySearch.Count(bitVector);
+            return matches.Count;
         }
 
         private static int CountManaged(byte[] test, byte rangeStart, byte rangeEnd)
@@ -180,14 +167,11 @@ namespace V5.ConsoleTest
             return count;
         }
 
-        private static void WhereGreaterThan(byte[] test, byte value, uint[] resultVector)
+        private static void WhereGreaterThan(byte[] test, byte value, IndexSet result)
         {
             for (int i = 0; i < test.Length; ++i)
             {
-                if (test[i] > value)
-                {
-                    resultVector[i >> 5] |= (0x1U << (i & 31));
-                }
+                if (test[i] > value) result[i] = true;
             }
         }
 
@@ -195,11 +179,11 @@ namespace V5.ConsoleTest
         {
             int count = 0;
 
-            for(int i = 0; i < resultVector.Length; ++i)
+            for (int i = 0; i < resultVector.Length; ++i)
             {
                 uint segment = resultVector[i];
 
-                for(int j = 0; j < 32; ++j)
+                for (int j = 0; j < 32; ++j)
                 {
                     if ((segment & (0x1U << j)) != 0) count++;
                 }
@@ -212,7 +196,7 @@ namespace V5.ConsoleTest
         {
             if (left.Length != right.Length) return false;
 
-            for(int i = 0; i < left.Length; ++i)
+            for (int i = 0; i < left.Length; ++i)
             {
                 if (left[i] != right[i]) return false;
             }

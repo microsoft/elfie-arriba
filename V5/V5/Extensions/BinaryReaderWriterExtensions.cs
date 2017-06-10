@@ -91,6 +91,9 @@ namespace V5
             // Read raw bytes
             byte[] buffer = reader.ReadBytes((int)lengthBytes);
 
+            // Return byte[] directly
+            if (typeof(T) == typeof(byte)) return (T[])(Array)buffer;
+
             // Copy to array of final type
             T[] values = new T[arrayLength];
             Buffer.BlockCopy(buffer, 0, values, 0, (int)lengthBytes);
