@@ -81,6 +81,7 @@
     <Compile Include="Data\IColumn.cs" />
     <Compile Include="Data\Partition.cs" />
     <Compile Include="Data\PrimitiveColumn.cs" />
+    <Compile Include="Data\SortBucketColumn.cs" />
     <Compile Include="Extensions\ArrayExtensions.cs" />
     <Compile Include="Extensions\BinaryReaderWriterExtensions.cs" />
     <Compile Include="Extensions\BinarySerializer.cs" />
