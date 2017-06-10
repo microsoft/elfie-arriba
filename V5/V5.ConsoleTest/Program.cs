@@ -36,14 +36,9 @@ namespace V5.ConsoleTest
 
         public void Index(Random r)
         {
-            this.BirthDateBuckets = new SortBucketColumn<DateTime>();
-            this.BirthDateBuckets.Build(this.BirthDate, 255, r);
-
-            this.WhenAddedBuckets = new SortBucketColumn<DateTime>();
-            this.WhenAddedBuckets.Build(this.WhenAdded, 255, r);
-
-            this.ZipCodeBuckets = new SortBucketColumn<int>();
-            this.ZipCodeBuckets.Build(this.ZipCode, 255, r);
+            this.BirthDateBuckets = SortBucketColumn<DateTime>.Build(this.BirthDate, 255, r);
+            this.WhenAddedBuckets = SortBucketColumn<DateTime>.Build(this.WhenAdded, 255, r);
+            this.ZipCodeBuckets = SortBucketColumn<int>.Build(this.ZipCode, 255, r);
         }
 
         public void Save(string filePath)
@@ -110,7 +105,7 @@ namespace V5.ConsoleTest
             byte edge = 220;
 
             Array.Clear(managedVector, 0, managedVector.Length);
-            WhereGreaterThan(db.BirthDateBuckets.BucketIndexPerRow, edge, managedVector);
+            WhereGreaterThan(db.BirthDateBuckets.RowBucketIndex, edge, managedVector);
             int managed = Count(managedVector);
 
             for (int i = 0; i < nativeVector.Length; ++i)
@@ -118,7 +113,7 @@ namespace V5.ConsoleTest
                 nativeVector[i] = uint.MaxValue;
             }
 
-            ArraySearch.AndWhereGreaterThan(db.BirthDateBuckets.BucketIndexPerRow, edge, nativeVector);
+            ArraySearch.AndWhereGreaterThan(db.BirthDateBuckets.RowBucketIndex, edge, nativeVector);
             int native = Count(nativeVector);
 
             if (!AreEqual(managedVector, nativeVector))
@@ -129,8 +124,8 @@ namespace V5.ConsoleTest
             //Console.WriteLine($"Managed: {managed}, Native: {native}");
 
             Benchmark.Compare("Find Items in Range", 100, rowCount, new string[] { "Managed", "Native" },
-                () => WhereGreaterThan(db.BirthDateBuckets.BucketIndexPerRow, edge, managedVector),
-                () => ArraySearch.AndWhereGreaterThan(db.BirthDateBuckets.BucketIndexPerRow, edge, nativeVector)
+                () => WhereGreaterThan(db.BirthDateBuckets.RowBucketIndex, edge, managedVector),
+                () => ArraySearch.AndWhereGreaterThan(db.BirthDateBuckets.RowBucketIndex, edge, nativeVector)
             );
         }
 
@@ -160,14 +155,14 @@ namespace V5.ConsoleTest
 
             bool isBirthdayExact;
             int birthdayBucket = db.BirthDateBuckets.BucketForValue(birthdayMinimum, out isBirthdayExact);
-            if (birthdayBucket < 0 || birthdayBucket > db.BirthDateBuckets.BucketMinimumValue.Length - 1) return 0;
+            if (birthdayBucket < 0 || birthdayBucket > db.BirthDateBuckets.Minimum.Length - 1) return 0;
 
             bool isZipExact;
             int zipBucket = db.ZipCodeBuckets.BucketForValue(zipMinimum, out isZipExact);
-            if (zipBucket < 0 || zipBucket > db.ZipCodeBuckets.BucketMinimumValue.Length - 1) return 0;
+            if (zipBucket < 0 || zipBucket > db.ZipCodeBuckets.Minimum.Length - 1) return 0;
 
-            ArraySearch.AndWhereGreaterThan(db.BirthDateBuckets.BucketIndexPerRow, (byte)birthdayBucket, bitVector);
-            ArraySearch.AndWhereGreaterThan(db.ZipCodeBuckets.BucketIndexPerRow, (byte)zipBucket, bitVector);
+            ArraySearch.AndWhereGreaterThan(db.BirthDateBuckets.RowBucketIndex, (byte)birthdayBucket, bitVector);
+            ArraySearch.AndWhereGreaterThan(db.ZipCodeBuckets.RowBucketIndex, (byte)zipBucket, bitVector);
 
             return ArraySearch.Count(bitVector);
         }

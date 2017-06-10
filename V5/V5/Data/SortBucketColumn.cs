@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using V5.Extensions;
 
@@ -6,22 +7,62 @@ namespace V5.Data
 {
     public class SortBucketColumn<T> where T : IComparable<T>
     {
-        public T[] BucketMinimumValue;
-        public bool[] IsMultiValueBucket;
-        public int[] BucketRowCount;
+        public T[] Minimum;
+        public bool[] IsMultiValue;
+        public int[] RowCount;
 
-        public byte[] BucketIndexPerRow;
+        public byte[] RowBucketIndex;
 
-        public void Build(T[] values, byte bucketCount, Random r)
+        internal SortBucketColumn(T[] minimums, byte[] rowBucketIndex)
         {
-            // Sample 10x bucket count values
+            this.Minimum = minimums;
+            this.RowBucketIndex = rowBucketIndex;
+
+            this.IsMultiValue = new bool[minimums.Length];
+            this.RowCount = new int[minimums.Length];
+        }
+
+        public T Min
+        {
+            get => this.Minimum[0];
+            set => this.Minimum[0] = value;
+        }
+
+        public T Max
+        {
+            get => this.Minimum[this.Minimum.Length - 1];
+            set => this.Minimum[this.Minimum.Length - 1] = value;
+        }
+
+        public int Total
+        {
+            get => this.RowCount.Sum();
+        }
+
+        internal void Merge(SortBucketColumn<T> other)
+        {
+            // Merge min and max
+            if (other.Min.CompareTo(this.Min) < 0) this.Min = other.Min;
+            if (other.Max.CompareTo(this.Max) > 0) this.Max = other.Max;
+
+            // Merge IsMultiValue, RowCount
+            for (int i = 0; i < this.Minimum.Length; ++i)
+            {
+                this.IsMultiValue[i] |= other.IsMultiValue[i];
+                this.RowCount[i] += other.RowCount[i];
+            }
+        }
+
+        public static T[] ChooseBuckets(T[] values, int bucketCount, Random r)
+        {
+            // Get 10 a sample ten times the desired bucket count, sorted
             T[] sample = values.Sample(10 * bucketCount, r);
             Array.Sort(sample);
 
             // Try to get n+1 bucket boundary values
-            this.BucketMinimumValue = new T[bucketCount + 1];
-            this.BucketMinimumValue[0] = sample[0];
-            this.BucketMinimumValue[bucketCount] = sample[sample.Length - 1];
+            T[] buckets = new T[bucketCount + 1];
+            buckets[0] = sample[0];
+            buckets[bucketCount] = sample[sample.Length - 1];
 
             int bucketsFilled = 1;
             int nextSample = 0;
@@ -33,9 +74,9 @@ namespace V5.Data
                 if (nextSample >= sample.Length) break;
 
                 T value = sample[nextSample];
-                if (!value.Equals(this.BucketMinimumValue[bucketsFilled - 1]))
+                if (!value.Equals(buckets[bucketsFilled - 1]))
                 {
-                    this.BucketMinimumValue[bucketsFilled] = value;
+                    buckets[bucketsFilled] = value;
                     bucketsFilled++;
 
                     if (bucketsFilled == bucketCount) break;
@@ -46,56 +87,60 @@ namespace V5.Data
             if (bucketsFilled < bucketCount)
             {
                 T[] actualBuckets = new T[bucketsFilled];
-                Array.Copy(this.BucketMinimumValue, actualBuckets, bucketsFilled);
-                this.BucketMinimumValue = actualBuckets;
+                Array.Copy(buckets, actualBuckets, bucketsFilled);
+                buckets = actualBuckets;
             }
 
-            this.IsMultiValueBucket = new bool[this.BucketMinimumValue.Length];
-            this.BucketRowCount = new int[this.BucketMinimumValue.Length];
-            this.BucketIndexPerRow = new byte[values.Length];
+            return buckets;
+        }
 
-            int parallelCount = 4;
-            int parallelPageSize = values.Length / parallelCount;
+        public static SortBucketColumn<T> Build(T[] values, byte bucketCount, Random r, int parallelCount = 4)
+        {
+            // Choose bucket ranges [serially]
+            T[] buckets = ChooseBuckets(values, bucketCount, r);
+
+            // Build a single array for the bucket per row
+            byte[] rowBuckets = new byte[values.Length];
+
+            SortBucketColumn<T> result = new SortBucketColumn<T>(buckets, rowBuckets);
 
             if (parallelCount <= 1)
             {
-                T min = this.BucketMinimumValue[0];
-                T max = this.BucketMinimumValue[this.BucketMinimumValue.Length - 1];
-
-                BucketRows(values, 0, values.Length, this.BucketRowCount, ref min, ref max);
-
-                this.BucketMinimumValue[0] = min;
-                this.BucketMinimumValue[this.BucketMinimumValue.Length - 1] = max;
+                // If non-parallel, bucket every row
+                result.BucketRows(values, 0, values.Length);
             }
             else
             {
+                int parallelPageSize = values.Length / parallelCount;
+
                 Parallel.For(0, parallelCount, (page) =>
                 {
+                    // Pick a distinct range of rows
                     int index = parallelPageSize * page;
                     int length = parallelPageSize;
                     if (page == parallelCount - 1 && (values.Length & 1) == 1) length++;
 
-                    T min = this.BucketMinimumValue[0];
-                    T max = this.BucketMinimumValue[this.BucketMinimumValue.Length - 1];
+                    // Copy the bucket minimums (to avoid collisions when writing Min and Max)
+                    T[] bucketCopy = new T[buckets.Length];
+                    Array.Copy(buckets, bucketCopy, buckets.Length);
 
-                    int[] bucketRowCount = new int[this.BucketMinimumValue.Length];
-                    BucketRows(values, index, length, bucketRowCount, ref min, ref max);
+                    // Build an inner SBC and bucket a slice of rows
+                    // NOTE: RowBuckets is shared because each thread writes a distinct range
+                    SortBucketColumn<T> slice = new SortBucketColumn<T>(bucketCopy, rowBuckets);
+                    slice.BucketRows(values, index, length);
 
-                    lock (this)
+                    // Merge the result into our main set
+                    lock (result)
                     {
-                        if (min.CompareTo(this.BucketMinimumValue[0]) < 0) this.BucketMinimumValue[0] = min;
-                        if (max.CompareTo(this.BucketMinimumValue[this.BucketMinimumValue.Length - 1]) > 0) this.BucketMinimumValue[this.BucketMinimumValue.Length - 1] = max;
-
-                        for (int i = 0; i < this.BucketMinimumValue.Length; ++i)
-                        {
-                            this.BucketRowCount[i] += bucketRowCount[i];
-                        }
+                        result.Merge(slice);
                     }
                 });
             }
+
+            return result;
         }
 
-        public void BucketRows(T[] values, int index, int length, int[] bucketRowCount, ref T min, ref T max)
+        private void BucketRows(T[] values, int index, int length)
         {
             int end = index + length;
             for (int i = index; i < end; ++i)
@@ -109,26 +154,26 @@ namespace V5.Data
                 {
                     if (bucketIndex < 0)
                     {
-                        if (min.CompareTo(value) < 0) min = value;
+                        if (this.Min.CompareTo(value) < 0) this.Min = value;
                         bucketIndex = 0;
                     }
-                    else if (bucketIndex >= this.BucketMinimumValue.Length - 1)
+                    else if (bucketIndex >= this.Minimum.Length - 1)
                     {
-                        if (max.CompareTo(value) > 0) max = value;
+                        if (this.Max.CompareTo(value) > 0) this.Max = value;
                         bucketIndex--;
                     }
 
-                    this.IsMultiValueBucket[bucketIndex] = true;
+                    this.IsMultiValue[bucketIndex] = true;
                 }
 
-                this.BucketIndexPerRow[i] = (byte)bucketIndex;
-                bucketRowCount[bucketIndex]++;
+                this.RowBucketIndex[i] = (byte)bucketIndex;
+                this.RowCount[bucketIndex]++;
             }
         }
 
         public int BucketForValue(T value, out bool isExact)
         {
-            int bucketIndex = Array.BinarySearch(this.BucketMinimumValue, value);
+            int bucketIndex = Array.BinarySearch(this.Minimum, value);
             isExact = bucketIndex >= 0;
 
             if (bucketIndex < 0) bucketIndex = ~bucketIndex - 1;
