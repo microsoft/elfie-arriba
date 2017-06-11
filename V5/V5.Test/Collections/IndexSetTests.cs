@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 using V5.Collections;
 
 namespace V5.Test.Collections
@@ -19,30 +20,32 @@ namespace V5.Test.Collections
             set.None();
             Assert.AreEqual(0, set.Count, "None should clear");
 
-            set[0] = true;
-            Assert.IsTrue(set[0]);
-            Assert.IsFalse(set[63]);
-
-            set[63] = true;
-            Assert.IsTrue(set[0]);
-            Assert.IsTrue(set[63]);
-
-            set[0] = false;
-            Assert.IsFalse(set[0]);
-            Assert.IsTrue(set[63]);
-
             byte[] values = new byte[999];
-            for(int i = 0; i < values.Length; ++i)
+
+            for (int i = 0; i < 999; ++i)
             {
-                values[i] = (byte)(i & 255);
+                set.None();
+                set[i] = true;
+                AssertOnly(set, 999, i);
+
+                set.None();
+
+                Array.Clear(values, 0, values.Length);
+                values[i] = 1;
+                set.All().And(values, Query.Operator.GreaterThan, (byte)0);
+                AssertOnly(set, 999, i);
             }
+        }
 
-            set.All().And(values, Query.Operator.GreaterThan, (byte)254);
-            Assert.AreEqual(3, set.Count);
+        private static void AssertOnly(IndexSet set, int limit, int expected)
+        {
+            Assert.IsTrue(set[expected]);
+            Assert.AreEqual(1, set.Count);
 
-            set.All().And(values, Query.Operator.GreaterThan, (byte)0);
-            Assert.AreEqual(995, set.Count);
-
+            for (int j = 0; j < limit; ++j)
+            {
+                Assert.AreEqual(j == expected, set[j]);
+            }
         }
     }
 }
