@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using V5.Data;
 
 namespace V5.Test
 {
@@ -8,7 +9,11 @@ namespace V5.Test
         [TestMethod]
         public void ArraySearch_BinarySearch()
         {
-            long[] buckets = new long[] { -1, 10, 20, 30, 50, 100, 1000 };
+            long[] buckets = new long[256];
+            for (int i = 0; i < buckets.Length; ++i) buckets[i] = i;
+            Assert.AreEqual(13, ArraySearch.BucketIndex(buckets, 13));
+
+            buckets = new long[] { -1, 10, 20, 30, 50, 100, 1000, 1200 };
             Assert.AreEqual(1, ArraySearch.BucketIndex(buckets, 11));
             Assert.AreEqual(1, ArraySearch.BucketIndex(buckets, 10));
             Assert.AreEqual(-1, ArraySearch.BucketIndex(buckets, -2));
@@ -17,6 +22,18 @@ namespace V5.Test
             Assert.AreEqual(5, ArraySearch.BucketIndex(buckets, 999));
             Assert.AreEqual(6, ArraySearch.BucketIndex(buckets, 1000));
             Assert.AreEqual(6, ArraySearch.BucketIndex(buckets, 1001));
+        }
+
+        [TestMethod]
+        public void Eytzinger()
+        {
+            long[] items = new long[16];
+            for(int i = 0; i < items.Length; ++i)
+            {
+                items[i] = i;
+            }
+
+            long[] result = SortBucketColumn<long>.EytzingerSort(items);
         }
     }
 }

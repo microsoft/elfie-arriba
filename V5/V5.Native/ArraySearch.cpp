@@ -130,6 +130,47 @@ extern "C" __declspec(dllexport) int BucketIndexInternal(long long* bucketMins, 
 	return index;
 }
 
+// Eytzinger, 16M longs -> ~350ms.
+extern "C" __declspec(dllexport) int BucketEytzingerInternal(long long* bucketMins, int bucketCount, long long value)
+{
+	int i = 0;
+	while (i < bucketCount)
+	{
+		//_m_prefetch(bucketMins + 4 * i);
+		i = (bucketMins[i] <= value ? (2 * i + 1) : (2 * i + 2));
+	}
+
+	return i;
+}
+
+extern "C" __declspec(dllexport) int BucketParallelInternal(long long* bucketMins, int bucketCount, long long value)
+{
+	// Not faster and not quite right yet either.
+
+	// Binary search for the last value less than the search value [the bucket the value should go into]
+	__m256i* base = (__m256i*)bucketMins;
+	__m256i bigValue = _mm256_set1_epi64x(value);
+	int matchBits;
+
+	int count = bucketCount >> 2;
+	while (count > 1)
+	{
+		int half = count >> 1;
+
+		// base = (base[half] <= value ? &base[half] : base);
+		__m256i block = _mm256_loadu_si256(&base[half]);
+		__m256i matchMask = _mm256_cmpgt_epi64(block, bigValue);
+		matchBits = _mm256_movemask_epi8(matchMask);
+		base = (matchBits == -1 ? base : &base[half]);
+		
+		count -= half;
+	}
+
+	int index = (int)(base - (__m256i*)bucketMins) << 2;
+	unsigned int countGreaterInBlock = __lzcnt(~matchBits) >> 3;
+	return index + 3 - countGreaterInBlock;
+}
+
 extern "C" __declspec(dllexport) void BucketInternal(long long* values, int index, int length, long long* bucketMins, int bucketCount, unsigned char* rowBucketIndex)
 {
 	int end = index + length;
