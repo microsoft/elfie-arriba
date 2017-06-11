@@ -135,12 +135,14 @@
   <ItemGroup>
     <ClInclude Include="ArraySearch.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="SortBucketColumnN.h" />
     <ClInclude Include="Stdafx.h" />
     <ClInclude Include="String8Native.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ArraySearch.cpp" />
     <ClCompile Include="AssemblyInfo.cpp" />
+    <ClCompile Include="SortBucketColumnN.cpp" />
     <ClCompile Include="Stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

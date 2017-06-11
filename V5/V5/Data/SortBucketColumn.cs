@@ -149,8 +149,8 @@ namespace V5.Data
 
             if (typeof(T) == typeof(long))
             {
-                // TODO: Need ArraySearch to set rowCounts and isMultiValue
-                ArraySearch.Bucket((long[])(Array)values, index, length, (long[])(Array)this.Minimum, this.RowBucketIndex, this.RowCount);
+                // TODO: Need to set rowCounts and isMultiValue
+                SortBucketColumnN.Bucket((long[])(Array)values, index, length, (long[])(Array)this.Minimum, this.RowBucketIndex, this.RowCount);
 
                 // Verify consistency
                 //int errorCount = 0;

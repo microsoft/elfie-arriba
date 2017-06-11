@@ -49,7 +49,7 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ArraySearchTests.cs" />
+    <Compile Include="Data\SortBucketColumnTests.cs" />
     <Compile Include="Collections\IndexSetTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
