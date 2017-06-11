@@ -71,7 +71,8 @@ extern "C" __declspec(dllexport) int CountInternal(unsigned long long* matchVect
 	return (int)count;
 }
 
-extern "C" __declspec(dllexport) int BucketIndexInternal(long long* bucketMins, int bucketCount, long long value)
+// 1.3s Managed [16M longs] -> 1.0s this.
+extern "C" __declspec(dllexport) int BucketBranchyInternal(long long* bucketMins, int bucketCount, long long value)
 {
 	// Binary search for the last value less than the search value [the bucket the value should go into]
 	int min = 0;
@@ -107,6 +108,26 @@ extern "C" __declspec(dllexport) int BucketIndexInternal(long long* bucketMins, 
 		// Otherwise, this bucket is fine
 		return max;
 	}
+}
+
+// 16M longs -> 270ms
+// Adding _m_prefetch(base + (half >> 1)); _m_prefetch(base + half + (half >> 1)); made this slower.
+extern "C" __declspec(dllexport) int BucketIndexInternal(long long* bucketMins, int bucketCount, long long value)
+{
+	// Binary search for the last value less than the search value [the bucket the value should go into]
+	long long* base = bucketMins;
+
+	int count = bucketCount;
+	while (count > 1)
+	{
+		int half = count >> 1;
+		base = (base[half] <= value ? &base[half] : base);
+		count -= half;
+	}
+
+	int index = (int)(base - bucketMins);
+	if (value < *base) return index - 1;
+	return index;
 }
 
 extern "C" __declspec(dllexport) void BucketInternal(long long* values, int index, int length, long long* bucketMins, int bucketCount, unsigned char* rowBucketIndex)

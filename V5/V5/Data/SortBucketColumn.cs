@@ -151,7 +151,7 @@ namespace V5.Data
 
                 // Verify consistency
                 //int errorCount = 0;
-                //for(int i = index; i < end; ++i)
+                //for (int i = index; i < end; ++i)
                 //{
                 //    int bucketChosen = this.RowBucketIndex[i];
 
@@ -159,7 +159,7 @@ namespace V5.Data
                 //    int bucketManaged = BucketForValue(values[i], out isExact);
                 //    if (bucketManaged < 0) bucketManaged = 0;
 
-                //    if(bucketChosen != bucketManaged)
+                //    if (bucketChosen != bucketManaged)
                 //    {
                 //        errorCount++;
                 //    }
