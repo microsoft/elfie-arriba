@@ -143,6 +143,31 @@ namespace V5.Data
         private void BucketRows(T[] values, int index, int length)
         {
             int end = index + length;
+
+
+            if (typeof(T) == typeof(long))
+            {
+                ArraySearch.Bucket((long[])(Array)values, index, length, (long[])(Array)this.Minimum, this.RowBucketIndex);
+
+                // Verify consistency
+                //int errorCount = 0;
+                //for(int i = index; i < end; ++i)
+                //{
+                //    int bucketChosen = this.RowBucketIndex[i];
+
+                //    bool isExact;
+                //    int bucketManaged = BucketForValue(values[i], out isExact);
+                //    if (bucketManaged < 0) bucketManaged = 0;
+
+                //    if(bucketChosen != bucketManaged)
+                //    {
+                //        errorCount++;
+                //    }
+                //}
+
+                return;
+            }
+
             for (int i = index; i < end; ++i)
             {
                 T value = values[i];

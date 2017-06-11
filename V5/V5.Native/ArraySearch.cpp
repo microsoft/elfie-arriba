@@ -71,6 +71,53 @@ extern "C" __declspec(dllexport) int CountInternal(unsigned long long* matchVect
 	return (int)count;
 }
 
+extern "C" __declspec(dllexport) int BucketIndexInternal(long long* bucketMins, int bucketCount, long long value)
+{
+	// Binary search for the last value less than the search value [the bucket the value should go into]
+	int min = 0;
+	int max = bucketCount - 1;
+	long long midValue;
+
+	while (min < max)
+	{
+		int mid = (min + max + 1) / 2;
+		midValue = bucketMins[mid];
+
+		if (value < midValue)
+		{
+			max = mid - 1;
+		}
+		else if (value > midValue)
+		{
+			min = mid;
+		}
+		else
+		{
+			return mid;
+		}
+	}
+
+	if (value < bucketMins[max] && max > 0)
+	{
+		// If the value is smaller than the last bucket, we would insert before it
+		return max - 1;
+	}
+	else
+	{
+		// Otherwise, this bucket is fine
+		return max;
+	}
+}
+
+extern "C" __declspec(dllexport) void BucketInternal(long long* values, int index, int length, long long* bucketMins, int bucketCount, unsigned char* rowBucketIndex)
+{
+	int end = index + length;
+	for (int i = index; i < end; ++i)
+	{
+		rowBucketIndex[i] = BucketIndexInternal(bucketMins, bucketCount, values[i]);
+	}
+}
+
 #pragma managed
 
 void ArraySearch::AndWhereGreaterThan(array<Byte>^ set, Byte value, array<UInt64>^ matchVector)
@@ -87,3 +134,21 @@ int ArraySearch::Count(array<UInt64>^ matchVector)
 	pin_ptr<UInt64> pVector = &matchVector[0];
 	return CountInternal(pVector, matchVector->Length);
 }
+
+void ArraySearch::Bucket(array<Int64>^ values, int index, int length, array<Int64>^ bucketMins, array<Byte>^ rowBucketIndex)
+{
+	if (values->Length < (index + length)) return;
+	if (rowBucketIndex->Length < values->Length) return;
+
+	pin_ptr<Int64> pValues = &values[0];
+	pin_ptr<Int64> pBucketMins = &bucketMins[0];
+	pin_ptr<Byte> pRowBucketIndex = &rowBucketIndex[0];
+	BucketInternal(pValues, index, length, pBucketMins, bucketMins->Length, pRowBucketIndex);
+}
+
+int ArraySearch::BucketIndex(array<Int64>^ bucketMins, Int64 value)
+{
+	pin_ptr<Int64> pBucketMins = &bucketMins[0];
+	return BucketIndexInternal(pBucketMins, bucketMins->Length, value);
+}
+

@@ -11,18 +11,20 @@ namespace V5.ConsoleTest
 {
     public class PersonDatabase
     {
-        public DateTime[] BirthDate;
-        public DateTime[] WhenAdded;
+        public const int ParallelCount = 1;
+
+        public long[] BirthDate;
+        public long[] WhenAdded;
         public int[] ZipCode;
 
-        public SortBucketColumn<DateTime> BirthDateBuckets;
-        public SortBucketColumn<DateTime> WhenAddedBuckets;
+        public SortBucketColumn<long> BirthDateBuckets;
+        public SortBucketColumn<long> WhenAddedBuckets;
         public SortBucketColumn<int> ZipCodeBuckets;
 
         public PersonDatabase(long capacity)
         {
-            this.BirthDate = new DateTime[capacity];
-            this.WhenAdded = new DateTime[capacity];
+            this.BirthDate = new long[capacity];
+            this.WhenAdded = new long[capacity];
             this.ZipCode = new int[capacity];
         }
 
@@ -30,22 +32,22 @@ namespace V5.ConsoleTest
 
         public void Load(string filePath)
         {
-            this.BirthDate = BinarySerializer.Read<long>(Path.Combine(filePath, "BirthDate", "V.d64.bin")).ToDateTimeArray();
-            this.WhenAdded = BinarySerializer.Read<long>(Path.Combine(filePath, "WhenAdded", "V.d64.bin")).ToDateTimeArray();
+            this.BirthDate = BinarySerializer.Read<long>(Path.Combine(filePath, "BirthDate", "V.d64.bin"));//.ToDateTimeArray();
+            this.WhenAdded = BinarySerializer.Read<long>(Path.Combine(filePath, "WhenAdded", "V.d64.bin"));//.ToDateTimeArray();
             this.ZipCode = BinarySerializer.Read<int>(Path.Combine(filePath, "ZipCode", "V.i32.bin"));
         }
 
         public void Index(Random r)
         {
-            this.BirthDateBuckets = SortBucketColumn<DateTime>.Build(this.BirthDate, 255, r);
-            this.WhenAddedBuckets = SortBucketColumn<DateTime>.Build(this.WhenAdded, 255, r);
-            this.ZipCodeBuckets = SortBucketColumn<int>.Build(this.ZipCode, 255, r);
+            this.BirthDateBuckets = SortBucketColumn<long>.Build(this.BirthDate, 255, r, ParallelCount);
+            this.WhenAddedBuckets = SortBucketColumn<long>.Build(this.WhenAdded, 255, r, ParallelCount);
+            //this.ZipCodeBuckets = SortBucketColumn<int>.Build(this.ZipCode, 255, r, ParallelCount);
         }
 
         public void Save(string filePath)
         {
-            BinarySerializer.Write(Path.Combine(filePath, "BirthDate", "V.d64.bin"), BirthDate.ToPrimitiveArray());
-            BinarySerializer.Write(Path.Combine(filePath, "WhenAdded", "V.d64.bin"), WhenAdded.ToPrimitiveArray());
+            BinarySerializer.Write(Path.Combine(filePath, "BirthDate", "V.d64.bin"), BirthDate);//.ToPrimitiveArray());
+            BinarySerializer.Write(Path.Combine(filePath, "WhenAdded", "V.d64.bin"), WhenAdded);//.ToPrimitiveArray());
             BinarySerializer.Write(Path.Combine(filePath, "ZipCode", "V.i32.bin"), this.ZipCode);
         }
     }
@@ -75,8 +77,8 @@ namespace V5.ConsoleTest
                     for (long i = 0; i < rowCount; ++i)
                     {
                         Person p = new Person(r);
-                        db.BirthDate[i] = p.BirthDate;
-                        db.WhenAdded[i] = p.WhenAdded;
+                        db.BirthDate[i] = p.BirthDate.ToUniversalTime().Ticks;
+                        db.WhenAdded[i] = p.WhenAdded.ToUniversalTime().Ticks;
                         db.ZipCode[i] = p.ZipCode;
                     }
                 }
@@ -132,7 +134,7 @@ namespace V5.ConsoleTest
 
         private static int CountCustom(PersonDatabase db)
         {
-            DateTime birthdayMinimum = new DateTime(1960, 01, 01);
+            long birthdayMinimum = new DateTime(1960, 01, 01).ToUniversalTime().Ticks;
             int zipMinimum = 60000;
 
             int count = 0;
@@ -145,7 +147,7 @@ namespace V5.ConsoleTest
 
         private static int CountNative(PersonDatabase db, IndexSet matches)
         {
-            DateTime birthdayMinimum = new DateTime(1960, 01, 01);
+            long birthdayMinimum = new DateTime(1960, 01, 01).ToUniversalTime().Ticks;
             int zipMinimum = 60000;
 
             bool isBirthdayExact;
@@ -165,7 +167,7 @@ namespace V5.ConsoleTest
 
         private static int CountNativeSeparate(PersonDatabase db, IndexSet matches1, IndexSet matches2)
         {
-            DateTime birthdayMinimum = new DateTime(1960, 01, 01);
+            long birthdayMinimum = new DateTime(1960, 01, 01).ToUniversalTime().Ticks;
             int zipMinimum = 60000;
 
             bool isBirthdayExact;

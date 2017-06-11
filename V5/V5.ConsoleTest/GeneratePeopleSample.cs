@@ -73,31 +73,31 @@ namespace V5.ConsoleTest
             }
         }
 
-        public static PersonDatabase Import(string inputPath, long count)
-        {
-            PersonDatabase db = new PersonDatabase(count);
+        //public static PersonDatabase Import(string inputPath, long count)
+        //{
+        //    PersonDatabase db = new PersonDatabase(count);
 
-            using (new TraceWatch($"Building Database of {inputPath}..."))
-            {
-                using (ITabularReader reader = TabularFactory.BuildReader(inputPath))
-                {
-                    int birthDateIndex = reader.ColumnIndex("BirthDate");
-                    int whenAddedIndex = reader.ColumnIndex("WhenAdded");
-                    int zipCodeIndex = reader.ColumnIndex("ZipCode");
+        //    using (new TraceWatch($"Building Database of {inputPath}..."))
+        //    {
+        //        using (ITabularReader reader = TabularFactory.BuildReader(inputPath))
+        //        {
+        //            int birthDateIndex = reader.ColumnIndex("BirthDate");
+        //            int whenAddedIndex = reader.ColumnIndex("WhenAdded");
+        //            int zipCodeIndex = reader.ColumnIndex("ZipCode");
 
-                    int i = 0;
-                    while (reader.NextRow())
-                    {
-                        db.BirthDate[i] = reader.Current(birthDateIndex).ToDateTime();
-                        db.WhenAdded[i] = reader.Current(whenAddedIndex).ToDateTime();
-                        db.ZipCode[i] = reader.Current(zipCodeIndex).ToInteger();
+        //            int i = 0;
+        //            while (reader.NextRow())
+        //            {
+        //                db.BirthDate[i] = reader.Current(birthDateIndex).ToDateTime();
+        //                db.WhenAdded[i] = reader.Current(whenAddedIndex).ToDateTime();
+        //                db.ZipCode[i] = reader.Current(zipCodeIndex).ToInteger();
 
-                        i++;
-                    }
-                }
-            }
+        //                i++;
+        //            }
+        //        }
+        //    }
 
-            return db;
-        }
+        //    return db;
+        //}
     }
 }

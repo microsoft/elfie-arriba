@@ -7,5 +7,9 @@ public:
 	static void AndWhereGreaterThan(array<Byte>^ set, Byte value, array<UInt64>^ matchVector);
 
 	static int Count(array<UInt64>^ matchVector);
+
+	static void Bucket(array<Int64>^ values, int index, int length, array<Int64>^ bucketMins, array<Byte>^ rowBucketIndex);
+
+	static int BucketIndex(array<Int64>^ bucketMins, Int64 value);
 };
 
