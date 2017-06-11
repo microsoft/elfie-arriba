@@ -149,7 +149,7 @@ namespace V5.Data
 
             if (typeof(T) == typeof(long))
             {
-                // TODO: Need to set rowCounts and isMultiValue
+                // TODO: Need to set isMultiValue
                 SortBucketColumnN.Bucket((long[])(Array)values, index, length, (long[])(Array)this.Minimum, this.RowBucketIndex, this.RowCount);
 
                 // Verify consistency

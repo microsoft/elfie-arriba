@@ -23,12 +23,26 @@ int BucketIndexInternal(T* bucketMins, int bucketCount, T value)
 }
 
 template <typename T, typename U>
-void BucketInternal(T* values, int index, int length, T* bucketMins, int bucketCount, U* rowBucketIndex)
+void BucketInternal(T* values, int index, int length, T* bucketMins, int bucketCount, U* rowBucketIndex, int* countPerBucket)
 {
 	int end = index + length;
 	for (int i = index; i < end; ++i)
 	{
-		rowBucketIndex[i] = BucketIndexInternal<T>(bucketMins, bucketCount, values[i]);
+		int index = BucketIndexInternal<T>(bucketMins, bucketCount, values[i]);
+
+		if (index < 0)
+		{
+			bucketMins[0] = values[i];
+			index = 0;
+		}
+		else if (index >= bucketCount)
+		{
+			bucketMins[bucketCount - 1] = values[i];
+			index = bucketCount - 1;
+		}
+
+		rowBucketIndex[i] = index;
+		countPerBucket[index]++;
 	}
 }
 
@@ -38,23 +52,13 @@ void SortBucketColumnN::Bucket(array<Int64>^ values, int index, int length, arra
 {
 	if (values->Length < (index + length)) return;
 	if (rowBucketIndex->Length < values->Length) return;
+	if (countPerBucket->Length != bucketMins->Length) return;
 
 	pin_ptr<Int64> pValues = &values[0];
 	pin_ptr<Int64> pBucketMins = &bucketMins[0];
 	pin_ptr<Byte> pRowBucketIndex = &rowBucketIndex[0];
-	BucketInternal<long long, unsigned char>(pValues, index, length, pBucketMins, bucketMins->Length, pRowBucketIndex);
-
-	/*int bucketCount = bucketMins->Length;
-	int end = index + length;
-	for (int i = index; i < end; ++i)
-	{
-	unsigned char bucketIndex = BucketIndexInternal(pBucketMins, bucketCount, values[i]);
-	if (bucketIndex < 0) bucketIndex = 0;
-	if (bucketIndex >= bucketCount) bucketIndex--;
-
-	pRowBucketIndex[i] = bucketIndex;
-	countPerBucket[bucketIndex]++;
-	}*/
+	pin_ptr<Int32> pCountPerBucket = &countPerBucket[0];
+	BucketInternal<long long, unsigned char>(pValues, index, length, pBucketMins, bucketMins->Length, pRowBucketIndex, pCountPerBucket);
 }
 
 int SortBucketColumnN::BucketIndex(array<Int64>^ bucketMins, Int64 value)
