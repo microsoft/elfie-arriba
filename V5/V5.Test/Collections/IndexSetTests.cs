@@ -40,6 +40,9 @@ namespace V5.Test.Collections
             set.All().And(values, Query.Operator.GreaterThan, (byte)254);
             Assert.AreEqual(3, set.Count);
 
+            set.All().And(values, Query.Operator.GreaterThan, (byte)0);
+            Assert.AreEqual(995, set.Count);
+
         }
     }
 }

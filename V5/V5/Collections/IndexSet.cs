@@ -24,16 +24,16 @@ namespace V5.Collections
 
         public bool this[int index]
         {
-            get => (this.bitVector[index >> 6] & (0x1U << (index & 63))) != 0;
+            get => (this.bitVector[index >> 6] & (0x1UL << (index & 63))) != 0;
             set
             {
                 if (value)
                 {
-                    this.bitVector[index >> 6] |= (0x1U << (index & 63));
+                    this.bitVector[index >> 6] |= (0x1UL << (index & 63));
                 }
                 else
                 {
-                    this.bitVector[index >> 6] &= ~(0x1U << (index & 63));
+                    this.bitVector[index >> 6] &= ~(0x1UL << (index & 63));
                 }
             }
         }
@@ -45,7 +45,10 @@ namespace V5.Collections
 
             for (int i = 0; i < this.bitVector.Length; ++i)
             {
-                if (this.bitVector[i] != other.bitVector[i]) return false;
+                if (this.bitVector[i] != other.bitVector[i])
+                {
+                    return false;
+                }
             }
 
             return true;

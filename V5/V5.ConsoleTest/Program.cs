@@ -201,7 +201,10 @@ namespace V5.ConsoleTest
         {
             for (int i = 0; i < test.Length; ++i)
             {
-                if (test[i] > value) result[i] = true;
+                if (test[i] > value)
+                {
+                    result[i] = true;
+                }
             }
         }
     }
