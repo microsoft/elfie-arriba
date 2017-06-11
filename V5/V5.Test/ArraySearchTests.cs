@@ -10,8 +10,14 @@ namespace V5.Test
         public void ArraySearch_BinarySearch()
         {
             long[] buckets = new long[256];
-            for (int i = 0; i < buckets.Length; ++i) buckets[i] = i;
-            Assert.AreEqual(13, ArraySearch.BucketIndex(buckets, 13));
+            for (int i = 0; i < buckets.Length; ++i) buckets[i] = 2  * i;
+
+            Assert.AreEqual(-1, ArraySearch.BucketIndex(buckets, -1));
+            for (int i = 0; i < 511; ++i)
+            {
+                Assert.AreEqual(i / 2, ArraySearch.BucketIndex(buckets, i));
+            }
+            Assert.AreEqual(255, ArraySearch.BucketIndex(buckets, 512));
 
             buckets = new long[] { -1, 10, 20, 30, 50, 100, 1000, 1200 };
             Assert.AreEqual(1, ArraySearch.BucketIndex(buckets, 11));

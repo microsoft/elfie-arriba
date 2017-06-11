@@ -110,40 +110,7 @@ extern "C" __declspec(dllexport) int BucketBranchyInternal(long long* bucketMins
 	}
 }
 
-// 16M longs -> 270ms
-// Adding _m_prefetch(base + (half >> 1)); _m_prefetch(base + half + (half >> 1)); made this slower.
-extern "C" __declspec(dllexport) int BucketIndexInternal(long long* bucketMins, int bucketCount, long long value)
-{
-	// Binary search for the last value less than the search value [the bucket the value should go into]
-	long long* base = bucketMins;
-
-	int count = bucketCount;
-	while (count > 1)
-	{
-		int half = count >> 1;
-		base = (base[half] <= value ? &base[half] : base);
-		count -= half;
-	}
-
-	int index = (int)(base - bucketMins);
-	if (value < *base) return index - 1;
-	return index;
-}
-
-// Eytzinger, 16M longs -> ~350ms.
-extern "C" __declspec(dllexport) int BucketEytzingerInternal(long long* bucketMins, int bucketCount, long long value)
-{
-	int i = 0;
-	while (i < bucketCount)
-	{
-		//_m_prefetch(bucketMins + 4 * i);
-		i = (bucketMins[i] <= value ? (2 * i + 1) : (2 * i + 2));
-	}
-
-	return i;
-}
-
-extern "C" __declspec(dllexport) int BucketParallelInternal(long long* bucketMins, int bucketCount, long long value)
+int BucketParallelInternal(long long* bucketMins, int bucketCount, long long value)
 {
 	// Not faster and not quite right yet either.
 
@@ -162,7 +129,7 @@ extern "C" __declspec(dllexport) int BucketParallelInternal(long long* bucketMin
 		__m256i matchMask = _mm256_cmpgt_epi64(block, bigValue);
 		matchBits = _mm256_movemask_epi8(matchMask);
 		base = (matchBits == -1 ? base : &base[half]);
-		
+
 		count -= half;
 	}
 
@@ -171,12 +138,47 @@ extern "C" __declspec(dllexport) int BucketParallelInternal(long long* bucketMin
 	return index + 3 - countGreaterInBlock;
 }
 
-extern "C" __declspec(dllexport) void BucketInternal(long long* values, int index, int length, long long* bucketMins, int bucketCount, unsigned char* rowBucketIndex)
+// Eytzinger, 16M longs -> ~350ms.
+int BucketEytzingerInternal(long long* bucketMins, int bucketCount, long long value)
+{
+	int i = 0;
+	while (i < bucketCount)
+	{
+		//_m_prefetch(bucketMins + 4 * i);
+		i = (bucketMins[i] <= value ? (2 * i + 1) : (2 * i + 2));
+	}
+
+	return i;
+}
+
+// 16M longs -> 270ms
+// Adding _m_prefetch(base + (half >> 1)); _m_prefetch(base + half + (half >> 1)); made this slower.
+template <typename T>
+int BucketIndexInternal(T* bucketMins, int bucketCount, T value)
+{
+	// Binary search for the last value less than the search value [the bucket the value should go into]
+	T* base = bucketMins;
+
+	int count = bucketCount;
+	while (count > 1)
+	{
+		int half = count >> 1;
+		base = (base[half] <= value ? &base[half] : base);
+		count -= half;
+	}
+
+	int index = (int)(base - bucketMins);
+	if (value < *base) return index - 1;
+	return index;
+}
+
+template <typename T, typename U>
+void BucketInternal(T* values, int index, int length, T* bucketMins, int bucketCount, U* rowBucketIndex)
 {
 	int end = index + length;
 	for (int i = index; i < end; ++i)
 	{
-		rowBucketIndex[i] = BucketIndexInternal(bucketMins, bucketCount, values[i]);
+		rowBucketIndex[i] = BucketIndexInternal<T>(bucketMins, bucketCount, values[i]);
 	}
 }
 
@@ -197,7 +199,7 @@ int ArraySearch::Count(array<UInt64>^ matchVector)
 	return CountInternal(pVector, matchVector->Length);
 }
 
-void ArraySearch::Bucket(array<Int64>^ values, int index, int length, array<Int64>^ bucketMins, array<Byte>^ rowBucketIndex)
+void ArraySearch::Bucket(array<Int64>^ values, int index, int length, array<Int64>^ bucketMins, array<Byte>^ rowBucketIndex, array<Int32>^ countPerBucket)
 {
 	if (values->Length < (index + length)) return;
 	if (rowBucketIndex->Length < values->Length) return;
@@ -205,12 +207,24 @@ void ArraySearch::Bucket(array<Int64>^ values, int index, int length, array<Int6
 	pin_ptr<Int64> pValues = &values[0];
 	pin_ptr<Int64> pBucketMins = &bucketMins[0];
 	pin_ptr<Byte> pRowBucketIndex = &rowBucketIndex[0];
-	BucketInternal(pValues, index, length, pBucketMins, bucketMins->Length, pRowBucketIndex);
+	BucketInternal<long long, unsigned char>(pValues, index, length, pBucketMins, bucketMins->Length, pRowBucketIndex);
+
+	/*int bucketCount = bucketMins->Length;
+	int end = index + length;
+	for (int i = index; i < end; ++i)
+	{
+		unsigned char bucketIndex = BucketIndexInternal(pBucketMins, bucketCount, values[i]);
+		if (bucketIndex < 0) bucketIndex = 0;
+		if (bucketIndex >= bucketCount) bucketIndex--;
+
+		pRowBucketIndex[i] = bucketIndex;
+		countPerBucket[bucketIndex]++;
+	}*/
 }
 
 int ArraySearch::BucketIndex(array<Int64>^ bucketMins, Int64 value)
 {
 	pin_ptr<Int64> pBucketMins = &bucketMins[0];
-	return BucketIndexInternal(pBucketMins, bucketMins->Length, value);
+	return BucketIndexInternal<long long>(pBucketMins, bucketMins->Length, value);
 }
 
