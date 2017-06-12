@@ -41,7 +41,7 @@ namespace V5.ConsoleTest
         {
             this.BirthDateBuckets = SortBucketColumn<long>.Build(this.BirthDate, 255, r, ParallelCount);
             this.WhenAddedBuckets = SortBucketColumn<long>.Build(this.WhenAdded, 255, r, ParallelCount);
-            //this.ZipCodeBuckets = SortBucketColumn<int>.Build(this.ZipCode, 255, r, ParallelCount);
+            this.ZipCodeBuckets = SortBucketColumn<int>.Build(this.ZipCode, 255, r, ParallelCount);
         }
 
         public void Save(string filePath)

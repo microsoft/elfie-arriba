@@ -48,22 +48,38 @@ void BucketInternal(T* values, int index, int length, T* bucketMins, int bucketC
 
 #pragma managed
 
-void SortBucketColumnN::Bucket(array<Int64>^ values, int index, int length, array<Int64>^ bucketMins, array<Byte>^ rowBucketIndex, array<Int32>^ countPerBucket)
+generic <typename T>
+void SortBucketColumnN::Bucket(array<T>^ values, int index, int length, array<T>^ bucketMins, array<Byte>^ rowBucketIndex, array<Int32>^ countPerBucket)
 {
 	if (values->Length < (index + length)) return;
 	if (rowBucketIndex->Length < values->Length) return;
 	if (countPerBucket->Length != bucketMins->Length) return;
 
-	pin_ptr<Int64> pValues = &values[0];
-	pin_ptr<Int64> pBucketMins = &bucketMins[0];
+	pin_ptr<T> pValues = &values[0];
+	pin_ptr<T> pBucketMins = &bucketMins[0];
 	pin_ptr<Byte> pRowBucketIndex = &rowBucketIndex[0];
 	pin_ptr<Int32> pCountPerBucket = &countPerBucket[0];
-	BucketInternal<long long, unsigned char>(pValues, index, length, pBucketMins, bucketMins->Length, pRowBucketIndex, pCountPerBucket);
+
+	if (T::typeid == System::Int64::typeid)
+	{
+		BucketInternal<long long, unsigned char>((long long*)pValues, index, length, (long long*)pBucketMins, bucketMins->Length, pRowBucketIndex, pCountPerBucket);
+	}
+	else if (T::typeid == System::Int32::typeid)
+	{
+		BucketInternal<int, unsigned char>((int*)pValues, index, length, (int*)pBucketMins, bucketMins->Length, pRowBucketIndex, pCountPerBucket);
+	}
 }
 
-int SortBucketColumnN::BucketIndex(array<Int64>^ bucketMins, Int64 value)
+generic <typename T>
+int SortBucketColumnN::BucketIndex(array<T>^ bucketMins, T value)
 {
-	pin_ptr<Int64> pBucketMins = &bucketMins[0];
-	return BucketIndexInternal<long long>(pBucketMins, bucketMins->Length, value);
+	pin_ptr<T> pBucketMins = &bucketMins[0];
+
+	if (T::typeid == System::Int64::typeid)
+	{
+		return BucketIndexInternal<long long>((long long*)pBucketMins, bucketMins->Length, (long)value);
+	}
+
+	return -2;
 }
 

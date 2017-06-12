@@ -144,33 +144,12 @@ namespace V5.Data
 
         private void BucketRows(T[] values, int index, int length)
         {
+            SortBucketColumnN.Bucket<T>(values, index, length, this.Minimum, this.RowBucketIndex, this.RowCount);
+        }
+
+        private void BucketManaged(T[] values, int index, int length)
+        {
             int end = index + length;
-
-
-            if (typeof(T) == typeof(long))
-            {
-                // TODO: Need to set isMultiValue
-                SortBucketColumnN.Bucket((long[])(Array)values, index, length, (long[])(Array)this.Minimum, this.RowBucketIndex, this.RowCount);
-
-                // Verify consistency
-                //int errorCount = 0;
-                //for (int i = index; i < end; ++i)
-                //{
-                //    int bucketChosen = this.RowBucketIndex[i];
-
-                //    bool isExact;
-                //    int bucketManaged = BucketForValue(values[i], out isExact);
-                //    if (bucketManaged < 0) bucketManaged = 0;
-
-                //    if (bucketChosen != bucketManaged)
-                //    {
-                //        errorCount++;
-                //    }
-                //}
-
-                return;
-            }
-
             for (int i = index; i < end; ++i)
             {
                 T value = values[i];
@@ -207,35 +186,6 @@ namespace V5.Data
             if (bucketIndex < 0) bucketIndex = ~bucketIndex - 1;
 
             return bucketIndex;
-        }
-
-
-        public static T[] EytzingerSort(T[] array)
-        {
-            int outCount = 0;
-            T[] output = new T[array.Length];
-
-            Queue<Tuple<int, int>> queue = new Queue<Tuple<int, int>>();
-            queue.Enqueue(Tuple.Create(0, array.Length - 1));
-
-            while(queue.Count > 0)
-            {
-                Tuple<int, int> value = queue.Dequeue();
-                int index = (value.Item1 + value.Item2) / 2;
-                output[outCount++] = array[index];
-
-                if (value.Item1 < index)
-                {
-                    queue.Enqueue(Tuple.Create(value.Item1, index - 1));
-                }
-
-                if(value.Item2 > index)
-                { 
-                    queue.Enqueue(Tuple.Create(index + 1, value.Item2));
-                }
-            }
-
-            return output;
         }
     }
 }

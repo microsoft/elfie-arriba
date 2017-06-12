@@ -29,17 +29,5 @@ namespace V5.Test
             Assert.AreEqual(6, SortBucketColumnN.BucketIndex(buckets, 1000));
             Assert.AreEqual(6, SortBucketColumnN.BucketIndex(buckets, 1001));
         }
-
-        [TestMethod]
-        public void Eytzinger()
-        {
-            long[] items = new long[16];
-            for(int i = 0; i < items.Length; ++i)
-            {
-                items[i] = i;
-            }
-
-            long[] result = SortBucketColumn<long>.EytzingerSort(items);
-        }
     }
 }
