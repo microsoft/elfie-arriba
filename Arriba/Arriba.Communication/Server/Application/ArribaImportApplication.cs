@@ -15,6 +15,7 @@ using Arriba.Serialization.Csv;
 using Arriba.Server.Authentication;
 using Arriba.Server.Hosting;
 using Arriba.Structures;
+using Arriba.Model;
 
 namespace Arriba.Server.Application
 {
@@ -35,6 +36,49 @@ namespace Arriba.Server.Application
 
             // POST /table/foo?type=json -- Post many objects
             this.PostAsync(new RouteSpecification("/table/:tableName", new UrlParameter("type", "json")), this.ValidateWriteAccessAsync, this.JSONArrayAppendAsync);
+
+            // POST /sample?type=csv -- Import CSV data 
+            this.Post(new RouteSpecification("/sample", new UrlParameter("type", "csv")), this.CsvSample);
+        }
+
+        private class SampleResult
+        {
+            public ICollection<ColumnDetails> Columns;
+            public int RowCount;
+        }
+
+        private IResponse CsvSample(IRequestContext ctx, Route route)
+        {
+            if (!ctx.Request.HasBody)
+            {
+                return ArribaResponse.BadRequest("Empty request body");
+            }
+
+            SampleResult result = new SampleResult();
+
+            var config = new CsvReaderSettings() { DisposeStream = true, HasHeaders = true };
+            using (CsvReader reader = new CsvReader(ctx.Request.InputStream, config))
+            {
+                // Read the CSV fragment into a DataBlock
+                DataBlock block = reader.ReadAsDataBlockBatch(10000).FirstOrDefault();
+
+                if (block == null) return ArribaResponse.BadRequest("No result content found.");
+
+                // Count the rows actually returned
+                result.RowCount = block.RowCount + 1;
+
+                // Insert only the first 100 rows and not the last (partial) row
+                block.SetRowCount(Math.Min(block.RowCount - 1, 100));
+
+                // Build a table with the sample
+                Table sample = new Table("Sample", 100);
+                sample.AddOrUpdate(block, new AddOrUpdateOptions() { AddMissingColumns = true });
+
+                result.Columns = sample.ColumnDetails;
+                
+                // Return the columns and row count from the sample
+                return ArribaResponse.Ok(result);
+            }
         }
 
         private IResponse CsvAppend(IRequestContext ctx, Route route)

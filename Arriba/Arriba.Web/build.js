@@ -36,6 +36,10 @@ if (fs.existsSync(configDestination)) {
 console.log(`Copying forward...\n  ${configSource}\n  ${configDestination}`)
 run(`ROBOCOPY /E /NJH /NJS "${configSource}" "${configDestination}"`)
 
-// // Run webpack.
+// Validate webpack available
+if (!fs.existsSync(`node_modules\\.bin\\webpack.cmd`))
+    return console.log(`ERROR. 'node_modules\\.bin\\webpack.cmd'not found. Did you run "npm install" from Arriba.Web?`)
+
+// Run webpack.
 console.log(`Building Website...`)
 run(`node_modules\\.bin\\webpack.cmd`)
