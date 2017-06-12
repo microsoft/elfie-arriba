@@ -24,10 +24,10 @@
     <ClInclude Include="String8Native.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ArraySearch.h">
+    <ClInclude Include="SortBucketColumnN.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SortBucketColumnN.h">
+    <ClInclude Include="IndexSetN.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -41,10 +41,10 @@
     <ClCompile Include="String8Native.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ArraySearch.cpp">
+    <ClCompile Include="SortBucketColumnN.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SortBucketColumnN.cpp">
+    <ClCompile Include="IndexSetN.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

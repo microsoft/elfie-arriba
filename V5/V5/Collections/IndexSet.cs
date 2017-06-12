@@ -19,7 +19,7 @@ namespace V5.Collections
 
         public int Count
         {
-            get => ArraySearch.Count(this.bitVector);
+            get => IndexSetN.Count(this.bitVector);
         }
 
         public bool this[int index]
@@ -79,7 +79,7 @@ namespace V5.Collections
 
         public IndexSet And(Array values, Operator op, object value)
         {
-            ArraySearch.AndWhereGreaterThan((byte[])values, (byte)value, this.bitVector);
+            IndexSetN.AndWhereGreaterThan((byte[])values, (byte)value, this.bitVector);
             return this;
         }
 

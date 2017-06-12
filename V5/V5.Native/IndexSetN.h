@@ -1,7 +1,7 @@
 #pragma once
 using namespace System;
 
-public ref class ArraySearch
+public ref class IndexSetN
 {
 public:	
 	static void AndWhereGreaterThan(array<Byte>^ set, Byte value, array<UInt64>^ matchVector);

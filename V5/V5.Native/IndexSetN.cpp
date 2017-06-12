@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include <intrin.h>
 #include <nmmintrin.h>
-#include "ArraySearch.h"
+#include "IndexSetN.h"
 
 /*
 	Set operations using SSE vector instructions, using the XMM (16 byte) registers.
@@ -15,7 +15,7 @@
 
 #pragma unmanaged
 
-extern "C" __declspec(dllexport) void AndWhereGreaterThanInternal(unsigned __int8* set, int length, unsigned __int8 value, unsigned __int64* matchVector)
+void AndWhereGreaterThanInternal(unsigned __int8* set, int length, unsigned __int8 value, unsigned __int64* matchVector)
 {
 	int i = 0;
 
@@ -59,7 +59,7 @@ extern "C" __declspec(dllexport) void AndWhereGreaterThanInternal(unsigned __int
 	}
 }
 
-extern "C" __declspec(dllexport) int CountInternal(unsigned __int64* matchVector, int length)
+int CountInternal(unsigned __int64* matchVector, int length)
 {
 	__int64 count = 0;
 
@@ -73,7 +73,7 @@ extern "C" __declspec(dllexport) int CountInternal(unsigned __int64* matchVector
 
 #pragma managed
 
-void ArraySearch::AndWhereGreaterThan(array<Byte>^ set, Byte value, array<UInt64>^ matchVector)
+void IndexSetN::AndWhereGreaterThan(array<Byte>^ set, Byte value, array<UInt64>^ matchVector)
 {
 	if (matchVector->Length * 64 < set->Length) return;
 
@@ -82,7 +82,7 @@ void ArraySearch::AndWhereGreaterThan(array<Byte>^ set, Byte value, array<UInt64
 	AndWhereGreaterThanInternal(pSet, set->Length, value, pVector);
 }
 
-int ArraySearch::Count(array<UInt64>^ matchVector)
+int IndexSetN::Count(array<UInt64>^ matchVector)
 {
 	pin_ptr<UInt64> pVector = &matchVector[0];
 	return CountInternal(pVector, matchVector->Length);

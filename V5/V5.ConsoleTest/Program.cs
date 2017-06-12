@@ -128,7 +128,7 @@ namespace V5.ConsoleTest
             Benchmark.Compare("Find Items in Range", 100, rowCount, new string[] { "Managed", "Native", "NativeDirect" },
                 () => WhereGreaterThan(db.BirthDateBuckets.RowBucketIndex, edge, managedSet),
                 () => nativeSet.And(db.BirthDateBuckets.RowBucketIndex, Query.Operator.GreaterThan, edge),
-                () => ArraySearch.AndWhereGreaterThan(db.BirthDateBuckets.RowBucketIndex, edge, directVector)
+                () => IndexSetN.AndWhereGreaterThan(db.BirthDateBuckets.RowBucketIndex, edge, directVector)
             );
         }
 
