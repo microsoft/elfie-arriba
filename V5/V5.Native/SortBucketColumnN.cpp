@@ -62,11 +62,11 @@ void SortBucketColumnN::Bucket(array<T>^ values, int index, int length, array<T>
 
 	if (T::typeid == System::Int64::typeid)
 	{
-		BucketInternal<long long, unsigned char>((long long*)pValues, index, length, (long long*)pBucketMins, bucketMins->Length, pRowBucketIndex, pCountPerBucket);
+		BucketInternal<__int64, unsigned __int8>((__int64*)pValues, index, length, (__int64*)pBucketMins, bucketMins->Length, pRowBucketIndex, pCountPerBucket);
 	}
 	else if (T::typeid == System::Int32::typeid)
 	{
-		BucketInternal<int, unsigned char>((int*)pValues, index, length, (int*)pBucketMins, bucketMins->Length, pRowBucketIndex, pCountPerBucket);
+		BucketInternal<__int32, unsigned __int8>((__int32*)pValues, index, length, (__int32*)pBucketMins, bucketMins->Length, pRowBucketIndex, pCountPerBucket);
 	}
 }
 
@@ -77,7 +77,7 @@ int SortBucketColumnN::BucketIndex(array<T>^ bucketMins, T value)
 
 	if (T::typeid == System::Int64::typeid)
 	{
-		return BucketIndexInternal<long long>((long long*)pBucketMins, bucketMins->Length, (long)value);
+		return BucketIndexInternal<__int64>((__int64*)pBucketMins, bucketMins->Length, (__int64)value);
 	}
 
 	return -2;

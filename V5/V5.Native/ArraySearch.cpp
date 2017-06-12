@@ -15,7 +15,7 @@
 
 #pragma unmanaged
 
-extern "C" __declspec(dllexport) void AndWhereGreaterThanInternal(unsigned char* set, int length, unsigned char value, unsigned long long* matchVector)
+extern "C" __declspec(dllexport) void AndWhereGreaterThanInternal(unsigned __int8* set, int length, unsigned __int8 value, unsigned __int64* matchVector)
 {
 	int i = 0;
 
@@ -37,7 +37,7 @@ extern "C" __declspec(dllexport) void AndWhereGreaterThanInternal(unsigned char*
 		__m256i matchMask2 = _mm256_cmpgt_epi8(block2, blockOfValue);
 		unsigned int matchBits2 = _mm256_movemask_epi8(matchMask2);
 
-		unsigned long long result = matchBits2;
+		unsigned __int64 result = matchBits2;
 		result = result << 32;
 		result |= matchBits1;
 
@@ -47,21 +47,21 @@ extern "C" __declspec(dllexport) void AndWhereGreaterThanInternal(unsigned char*
 	// Match remaining values individually
 	if ((length & 63) > 0)
 	{
-		unsigned long long last = 0;
+		unsigned __int64 last = 0;
 		for (; i < length; ++i)
 		{
 			if (set[i] > value)
 			{
-				last |= ((unsigned long long)(1) << (i & 63));
+				last |= ((unsigned __int64)(1) << (i & 63));
 			}
 		}
 		matchVector[length >> 6] &= last;
 	}
 }
 
-extern "C" __declspec(dllexport) int CountInternal(unsigned long long* matchVector, int length)
+extern "C" __declspec(dllexport) int CountInternal(unsigned __int64* matchVector, int length)
 {
-	long long count = 0;
+	__int64 count = 0;
 
 	for (int i = 0; i < length; ++i)
 	{
