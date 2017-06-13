@@ -1,5 +1,3 @@
-@import '../configuration/theme';
-
 .input { // Coordinate styles between input and rail.
     font-size: 16pt;
     padding: 8px;
@@ -76,48 +74,3 @@
     align-items: flex-start;
 }
 
-.suggestions {
-    position: relative; // Offset parent for svg.
-    background-color: white;
-    box-shadow: 0 3px 8px 0 rgba(0,0,0,0.2), 0 0 0 1px rgba(0,0,0,0.08);
-    z-index: 1;
-    max-height: 70vh;
-    min-width: 150px;
-    overflow-y: auto;
-
-    svg {
-        position: absolute;
-        right: 0;
-        width: 80px;
-        height: 100%;
-        z-index: -1;
-        fill: $vlight;
-        opacity: 0.4; // lighten() doesn't work for all color inputs.
-    }
-}
-
-.suggestions .suggestion {
-    font-size: 12pt;
-    font-weight: 600;
-    padding: 8px;
-    cursor: pointer;
-    box-sizing: border-box;
-    white-space: nowrap;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.suggestions .suggestion:hover {
-     background-color: rgba(0, 0, 0, 0.02); 
-}
-
-.suggestions .suggestion-sel {
-    background-color: hsla(216, 80%, 85%, 0.25)
-}
-
-.suggestions .suggestion-hint {
-    color: hsl(220, 40%, 50%);
-    margin-left: 30px;
-    font-size: 9pt;
-}

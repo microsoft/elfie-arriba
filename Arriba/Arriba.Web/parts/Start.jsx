@@ -26,7 +26,7 @@ export default class Start extends React.Component {
         var itemGroup = (title, key, items, icon) => <div className="item-group" style={{ display: items.length ? '' : 'none' }}>
             <div className="h1">{title}</div>
             {items.map(item => 
-                <div className="item" onClick={() => this.props.onSearchChange(item)}>
+                <div className="item" onClick={() => this.props.queryChanged(item)}>
                     <span>{icon}</span>
                     <span>{item}</span>
                     <span onClick={e => this.del(e, key, item)}>Delete</span>
@@ -55,7 +55,7 @@ export default class Start extends React.Component {
                         <div className="welcome">{configuration.startContent.overview}</div>
                         {configuration.startContent.examples && Object.map(configuration.startContent.examples, (query, remark) => 
                             <div className="example">
-                                <div className="query clickable" onClick={() => this.props.onSearchChange(query)}>{query}</div>{remark}
+                                <div className="query clickable" onClick={() => this.props.queryChanged(query)}>{query}</div>{remark}
                             </div>
                         )}
                     </div>,

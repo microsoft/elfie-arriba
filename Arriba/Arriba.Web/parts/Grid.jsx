@@ -409,7 +409,7 @@ export default React.createClass({
         }
 
     },
-    onSearchChange: function (value) {
+    queryChanged: function (value) {
         this.setState({ query: value }, this.delayedRunSearch);
     },
     delayedRunSearch: function () {
@@ -642,7 +642,7 @@ export default React.createClass({
                     <SearchBox name={configuration.toolName}
                         query={this.state.query}
                         allColumns={this.state.currentTableAllColumns}
-                        onSearchChange={this.onSearchChange} />
+                        queryChanged={this.queryChanged} />
                 </SearchHeader>
 
                 <div className="middle">
