@@ -35,8 +35,8 @@ namespace Arriba.Server.Application
             // GET /table/foo - Get table information 
             this.Get("/table/:tableName", this.ValidateReadAccess, this.GetTableInformation);
 
-            // POST /table with create table payload 
-            this.PostAsync("/table", this.ValidateBodyAsync, this.CreateNew); // TODO: What are the minimum permissions to create a table? 
+            // POST /table with create table payload (Must be Writer/Owner in security directly in DiskCache folder, or identity running service)
+            this.PostAsync("/table", this.ValidateCreateAccessAsync, this.ValidateBodyAsync, this.CreateNew);
 
             // POST /table/foo/addcolumns
             this.PostAsync("/table/:tableName/addcolumns", this.ValidateWriteAccessAsync, this.AddColumns);

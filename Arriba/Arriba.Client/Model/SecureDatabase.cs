@@ -28,6 +28,11 @@ namespace Arriba.Model
             _securityByTable = new Dictionary<string, SecurityPermissions>(StringComparer.OrdinalIgnoreCase);
         }
 
+        public SecurityPermissions DatabasePermissions()
+        {
+            return Security("");
+        }
+
         public SecurityPermissions Security(string tableName)
         {
             SecurityPermissions security;
@@ -220,6 +225,10 @@ namespace Arriba.Model
 
         private string SecurityCachePath(string tableName)
         {
+            // Database Level Security (for table creation)
+            if(tableName == "") return BinarySerializable.FullPath("security.bin");
+
+            // Table-specific security
             string tablePath = Table.TableCachePath(tableName);
             return Path.Combine(tablePath, "Metadata", "security.bin");
         }
