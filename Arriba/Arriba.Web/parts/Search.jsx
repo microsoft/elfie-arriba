@@ -1,4 +1,4 @@
-﻿import "../Search.scss";
+import "../Search.scss";
 import "!script-loader!../js/utilities.js";
 
 import Mru from "./Mru";
@@ -381,7 +381,8 @@ export default React.createClass({
                     </nav>
 
                     <div className="center">
-                        <QueryStats error={this.state.error}
+                        <QueryStats query={this.state.query}
+                                    error={this.state.error}
                                     allCountData={this.state.allCountData}
                                     selectedData={this.state.listingData}
                                     rssUrl={rssUrl}

@@ -85,7 +85,13 @@ export default React.createClass({
                     }
 
                     selectedDetails.push(
-                        <a title="Mail" href={"mailto:?subject=" + encodeURIComponent(configuration.toolName) + ": " + encodeURIComponent(this.props.query) + "&body=" + encodeURIComponent(window.location.href)}>
+                        <a title="Mail" href={
+                                "mailto:"
+                                + configuration.feedbackEmailAddresses
+                                + "?subject=" + encodeURIComponent(configuration.toolName)
+                                + ": " + encodeURIComponent(this.props.query)
+                                + "&body=" + encodeURIComponent(window.location.href)
+                            }>
                             <img src="/icons/mail.svg" alt="mail"/>
                         </a>
                     );
