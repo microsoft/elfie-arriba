@@ -1,4 +1,4 @@
-﻿import "../Search.scss";
+import "../Search.scss";
 import "!script-loader!../js/utilities.js";
 
 import Mru from "./Mru";
@@ -141,7 +141,7 @@ export default React.createClass({
     onSelectedTableChange: function (name) {
         this.setState({ userSelectedTable: name }, this.runSearch);
     },
-    onSearchChange: function (value) {
+    queryChanged: function (value) {
         this.setState({ query: value, userSelectedId: undefined }, this.delayedRunSearch);
     },
     delayedRunSearch: function () {
@@ -200,12 +200,10 @@ export default React.createClass({
         // Once a table is selected, find out the columns and primary key column for the table
         var table = this.state.allBasics[this.state.currentTable];
 
-        // If user did not specify default columns, fetch from local storage.
         // Must write to userTableSettings (and not directly to currentTableSettings) so the URL can refect this.
         // If a table was switched getAllCounts would have wiped userTableSettings and localStorage would show through.
-        var userTableSettings = Object.merge(
-            localStorage.getJson("table-" + this.state.currentTable),
-            this.state.userTableSettings);
+        // Sample schema: { columns: ["Name", "IP"], sortColumn: "IP", sortOrder: "desc" }
+        var userTableSettings = localStorage.getJson("table-" + this.state.currentTable, {});
 
         // Set the ID column, all columns, and listing columns
         this.setState({
@@ -279,7 +277,7 @@ export default React.createClass({
         jsonQuery(
             url,
             data => {
-                this.setState({ error: null });
+                this.setState({ error: undefined });
                 onSuccess(data);
             },
             function (xhr, status, err) {
@@ -357,7 +355,7 @@ export default React.createClass({
                     })}
                 </div>
             </SplitPane>
-            : <Start allBasics={this.state.allBasics} showHelp={this.props.params.help === "true"} onSearchChange={this.onSearchChange} />;
+            : <Start allBasics={this.state.allBasics} showHelp={this.props.params.help === "true"} queryChanged={this.queryChanged} />;
 
         var queryUrl = this.buildQueryUrl();
         var baseUrl = this.buildThisUrl(false);
@@ -372,7 +370,7 @@ export default React.createClass({
                 <SearchHeader>
                     <SearchBox query={this.state.query}
                         parsedQuery={this.state.allCountData.content && this.state.allCountData.content.parsedQuery}
-                        onSearchChange={this.onSearchChange}
+                        queryChanged={this.queryChanged}
                         loading={this.state.loading} />
                 </SearchHeader>
 
@@ -383,7 +381,8 @@ export default React.createClass({
                     </nav>
 
                     <div className="center">
-                        <QueryStats error={this.state.error}
+                        <QueryStats query={this.state.query}
+                                    error={this.state.error}
                                     allCountData={this.state.allCountData}
                                     selectedData={this.state.listingData}
                                     rssUrl={rssUrl}

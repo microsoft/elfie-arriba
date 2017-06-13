@@ -125,8 +125,8 @@ Array.prototype.venn = function(other) {
     ];
 }
 
-Storage.prototype.getJson = function(keyName) {
-    return JSON.parse(this.getItem(keyName));
+Storage.prototype.getJson = function(keyName, fallback) {
+    return JSON.parse(this.getItem(keyName)) || fallback;
 };
 
 Storage.prototype.setJson = function(keyName, keyValue) {
