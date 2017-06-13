@@ -203,7 +203,7 @@ export default React.createClass({
         // Must write to userTableSettings (and not directly to currentTableSettings) so the URL can refect this.
         // If a table was switched getAllCounts would have wiped userTableSettings and localStorage would show through.
         // Sample schema: { columns: ["Name", "IP"], sortColumn: "IP", sortOrder: "desc" }
-        var userTableSettings = localStorage.getJson("table-" + this.state.currentTable);
+        var userTableSettings = localStorage.getJson("table-" + this.state.currentTable, {});
 
         // Set the ID column, all columns, and listing columns
         this.setState({
