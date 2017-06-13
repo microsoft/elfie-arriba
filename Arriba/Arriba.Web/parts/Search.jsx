@@ -247,7 +247,7 @@ export default React.createClass({
         if (!this.state.currentTable) return;
 
         var detailsQuery = this.state.allBasics[this.state.currentTable].idColumn + '="' + this.state.userSelectedId + '"';
-        if (this.state.query) detailsQuery = detailsQuery + " AND " + this.state.query;
+        if (this.state.query) detailsQuery = detailsQuery + " AND (" + this.state.query + ")";
 
         // Select all columns for the selected item, with highlighting
         this.jsonQueryWithError(
