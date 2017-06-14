@@ -9,7 +9,9 @@ int BucketIndexInternal(T* bucketMins, int bucketCount, T value)
 	// Binary search for the last value less than the search value [the bucket the value should go into]
 	T* base = bucketMins;
 
-	int count = bucketCount;
+	// Search *except the last bucket*, which stores the maximum seen
+	int count = bucketCount - 1;
+
 	while (count > 1)
 	{
 		int half = count >> 1;
@@ -17,8 +19,11 @@ int BucketIndexInternal(T* bucketMins, int bucketCount, T value)
 		count -= half;
 	}
 
+	// Find the index matched
 	int index = (int)(base - bucketMins);
-	if (value != *base) return ~index;
+
+	// Return the complement of the index for non-exact matches
+	if (value != *base) index = ~index;
 
 	return index;
 }
@@ -29,21 +34,26 @@ void BucketInternal(T* values, int index, int length, T* bucketMins, int bucketC
 	int end = index + length;
 	for (int i = index; i < end; ++i)
 	{
+		// Find the last bucket with a boundary less than or equal to the value
 		int index = BucketIndexInternal<T>(bucketMins, bucketCount, values[i]);
 
+		// If this value didn't exactly match a bucket...
 		if (index < 0)
 		{
+			// Find the bucket into which it should be inserted
 			index = ~index;
-			isMultiValue[index] = true;
+			
+			// If this is the first bucket, capture a new minimum if seen
 			if (index == 0) bucketMins[0] = (values[i] < bucketMins[0] ? values[i] : bucketMins[0]);
+			
+			// If this is the last bucket, capture a new maximum if seen
+			if (index == bucketCount - 2) bucketMins[bucketCount - 1] = (values[i] > bucketMins[bucketCount - 1] ? values[i] : bucketMins[bucketCount - 1]);
+
+			// Set the target bucket to multi-value
+			isMultiValue[index] = true;
 		}
 		
-		if (index >= bucketCount - 1)
-		{
-			bucketMins[bucketCount - 1] = (values[i] > bucketMins[bucketCount - 1] ? values[i] : bucketMins[bucketCount - 1]);
-			index = bucketCount - 2;
-		}
-
+		// Put the item in the bucket and count the row
 		rowBucketIndex[i] = index;
 		countPerBucket[index]++;
 	}
@@ -64,6 +74,7 @@ void SortBucketColumnN::Bucket(array<T>^ values, int index, int length, array<T>
 	pin_ptr<Int32> pCountPerBucket = &countPerBucket[0];
 	pin_ptr<Boolean> pIsMultiValue = &isMultiValue[0];
 
+	// Bucket the items
 	if (T::typeid == System::Int64::typeid)
 	{
 		BucketInternal<__int64, unsigned __int8>((__int64*)pValues, index, length, (__int64*)pBucketMins, bucketMins->Length, pRowBucketIndex, pCountPerBucket, pIsMultiValue);
@@ -76,6 +87,15 @@ void SortBucketColumnN::Bucket(array<T>^ values, int index, int length, array<T>
 	{
 		BucketInternal<__int16, unsigned __int8>((__int16*)pValues, index, length, (__int16*)pBucketMins, bucketMins->Length, pRowBucketIndex, pCountPerBucket, pIsMultiValue);
 	}
+
+	// Write the row total as the last countPerBucket value
+	int bucketSum = 0;
+	for (int i = 0; i < countPerBucket->Length - 1; ++i)
+	{
+		bucketSum += countPerBucket[i];
+	}
+
+	countPerBucket[countPerBucket->Length - 1] = bucketSum;
 }
 
 generic <typename T>

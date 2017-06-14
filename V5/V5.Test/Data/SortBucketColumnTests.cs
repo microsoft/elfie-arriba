@@ -15,14 +15,15 @@ namespace V5.Test
             for (int i = 0; i < buckets.Length; ++i) buckets[i] = 2 * i;
 
             Assert.AreEqual(-1, SortBucketColumnN.BucketIndex(buckets, -1));
-            for (int i = 0; i < 511; ++i)
+            for (int i = 0; i < 510; ++i)
             {
                 int expected = i / 2;
                 if ((i & 1) != 0) expected = ~expected;
 
                 Assert.AreEqual(expected, SortBucketColumnN.BucketIndex(buckets, i));
             }
-            Assert.AreEqual(~255, SortBucketColumnN.BucketIndex(buckets, 512));
+            Assert.AreEqual(~254, SortBucketColumnN.BucketIndex(buckets, 510));
+            Assert.AreEqual(~254, SortBucketColumnN.BucketIndex(buckets, 512));
 
             buckets = new long[] { -1, 10, 20, 30, 50, 100, 1000, 1200 };
             Assert.AreEqual(~1, SortBucketColumnN.BucketIndex(buckets, 11));
@@ -33,6 +34,8 @@ namespace V5.Test
             Assert.AreEqual(~5, SortBucketColumnN.BucketIndex(buckets, 999));
             Assert.AreEqual(6, SortBucketColumnN.BucketIndex(buckets, 1000));
             Assert.AreEqual(~6, SortBucketColumnN.BucketIndex(buckets, 1001));
+            Assert.AreEqual(~6, SortBucketColumnN.BucketIndex(buckets, 1200));
+            Assert.AreEqual(~6, SortBucketColumnN.BucketIndex(buckets, 1201));
         }
 
         [TestMethod]
@@ -50,11 +53,17 @@ namespace V5.Test
                 fewDistinct[i] = i % 32;
             }
 
-            // TODO: In 'few unique values' case, every bucket should stay distinct and have separate rows
             sbc = SortBucketColumn<int>.Build(fewDistinct, 256, new Random(5));
             Validate(sbc, fewDistinct);
-            Assert.AreEqual(32, sbc.Minimum.Length);
-            Assert.IsFalse(sbc.IsMultiValue[0]);
+
+            // Should have 33 buckets (each distinct value and a copy of the max)
+            Assert.AreEqual(33, sbc.Minimum.Length);
+            
+            // Every bucket should be single value
+            for(int i = 0; i < sbc.Minimum.Length - 1; ++i)
+            {
+                Assert.IsFalse(sbc.IsMultiValue[i]);
+            }
         }
 
         private static void Validate<T>(SortBucketColumn<T> sbc, T[] values) where T : IComparable<T>
@@ -76,7 +85,7 @@ namespace V5.Test
 
                 // Verify the value is within boundaries
                 Assert.IsTrue(values[i].CompareTo(sbc.Minimum[bucketIndex]) >= 0);
-                Assert.IsTrue(values[i].CompareTo(sbc.Minimum[bucketIndex + 1]) <= 0);
+                Assert.IsTrue(values[i].CompareTo(sbc.Minimum[bucketIndex + 1]) < 0 || values[i].CompareTo(sbc.Max) == 0);
 
                 // Track row counts
                 countPerBucket[bucketIndex]++;
@@ -92,10 +101,16 @@ namespace V5.Test
                 Assert.AreEqual(isMultiValue[i], sbc.IsMultiValue[i]);
             }
 
+            // Verify the min and max were found
             Assert.AreEqual(min, sbc.Min);
             Assert.AreEqual(max, sbc.Max);
+
+            // Verify the total is correct
             Assert.AreEqual(values.Length, sbc.Total);
-            Assert.AreEqual(values.Length, sbc.RowCount.Sum());
+
+            // Verify the rowCounts add up to the total (and the last rowCount is the total)
+            Assert.AreEqual(values.Length, sbc.RowCount[sbc.RowCount.Length - 1]);
+            Assert.AreEqual(2 * values.Length, sbc.RowCount.Sum());
         }
     }
 }

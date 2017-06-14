@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using V5.Extensions;
@@ -9,6 +7,10 @@ namespace V5.Data
 {
     public class SortBucketColumn<T> where T : IComparable<T>
     {
+        // SortBucketColumn splits items into N buckets and each of these arrays has N+1 values.
+        //  - Minimum[Length - 1] is the maximum value seen in any row.
+        //  - IsMultiValue[Length - 1] is undefined.
+        //  - RowCount[Length - 1] is the total row count.
         public T[] Minimum;
         public bool[] IsMultiValue;
         public int[] RowCount;
@@ -38,7 +40,7 @@ namespace V5.Data
 
         public int Total
         {
-            get => this.RowCount.Sum();
+            get => this.RowCount[this.RowCount.Length - 1];
         }
 
         internal void Merge(SortBucketColumn<T> other)
@@ -61,11 +63,13 @@ namespace V5.Data
             T[] sample = values.Sample(10 * bucketCount, r);
             Array.Sort(sample);
 
-            // Try to get n+1 bucket boundary values
+            // Allocate bucketCount + 1 buckets
             T[] buckets = new T[bucketCount + 1];
-            buckets[0] = sample[0];
-            buckets[bucketCount] = sample[sample.Length - 1];
 
+            // Put the minimum value in the first bucket
+            buckets[0] = sample[0];
+
+            // Try to find bucketCount distinct values
             int bucketsFilled = 1;
             int nextSample = 0;
             while (true)
@@ -81,9 +85,13 @@ namespace V5.Data
                     buckets[bucketsFilled] = value;
                     bucketsFilled++;
 
-                    if (bucketsFilled == bucketCount) break;
+                    if (bucketsFilled > bucketCount) break;
                 }
             }
+
+            // Set bucketCount+1 to the maximum value seen
+            buckets[bucketsFilled] = sample[sample.Length - 1];
+            bucketsFilled++;
 
             // Capture the set actually filled
             if (bucketsFilled < bucketCount)
