@@ -238,18 +238,24 @@ namespace Arriba.Test.Model
             // Verify add didn't partially happen
             Assert.AreEqual(5, (int)t.Count);
 
-            // Build more data and a new column
-            DataBlock newData = new DataBlock(new string[] { "ID", "Resolution" }, 2,
+            // Add more data with existing and new columns
+            DataBlock newData = new DataBlock(new string[] { "ID", "Stack Rank", "Original Estimate", "Remaining Cost", "Actual Cost" }, 2,
                 new Array[]
                 {
-                    new int[] { 12345, 12346 },
-                    new string[] { "Fixed", "Won't Fix" }
+                    new int[] { 12345, 12346 },   // ID already exists
+                    new ushort[] { 1119, 1120 },  // Stack Rank type can be found from the typed array
+                    new object[] { 0, 0 },        // Original Estimate has no non-default values and shouldn't be added
+                    new object[] { 12, 0.5, 0 },  // Remaining Cost should be inferred to be float
+                    new float[] { 0, 0, 0 }       // Actual Cost is typed but with no non-default values and shouldn't be added
                 });
 
             // Verify AddOrUpdate with option set will add the new column
             t.AddOrUpdate(newData, new AddOrUpdateOptions() { AddMissingColumns = true });
 
-            Assert.AreEqual(7, (int)t.Count);
+            Assert.AreEqual("UInt16", t.GetDetails("Stack Rank").Type);
+            Assert.AreEqual("Single", t.GetDetails("Remaining Cost").Type);
+            Assert.IsNull(t.ColumnDetails.FirstOrDefault((cd) => cd.Name == "Original Estimate"));
+            Assert.IsNull(t.ColumnDetails.FirstOrDefault((cd) => cd.Name == "Actual Cost"));
         }
 
         [TestMethod]

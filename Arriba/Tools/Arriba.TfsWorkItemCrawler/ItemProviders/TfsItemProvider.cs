@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -18,7 +17,6 @@ using Arriba.Structures;
 using Microsoft.TeamFoundation.Client;
 using Microsoft.TeamFoundation.WorkItemTracking.Client;
 using Microsoft.VisualStudio.Services.Client;
-using Microsoft.VisualStudio.Services.Common;
 
 using Newtonsoft.Json;
 
@@ -32,6 +30,7 @@ namespace Arriba.TfsWorkItemCrawler.ItemProviders
         private string DatabaseUri { get; set; }
         private string Query { get; set; }
         private Dictionary<string, string> ColumnMappings { get; set; }
+        private Dictionary<string, ColumnDetails> Columns { get; set; }
 
         private JsonSerializerSettings SerializerSettings { get; set; }
         private WorkItemStore Store { get; set; }
@@ -157,6 +156,13 @@ namespace Arriba.TfsWorkItemCrawler.ItemProviders
             columns.Add(new ColumnDetails("FullHistory", "html", null));
             columns.Add(new ColumnDetails("Attachments", "json", null));
             columns.Add(new ColumnDetails("Links", "json", null));
+
+            // Copy to a dictionary
+            this.Columns = new Dictionary<string, ColumnDetails>();
+            foreach(ColumnDetails column in columns)
+            {
+                this.Columns[column.Name] = column;
+            }
 
             return columns;
         }
@@ -288,12 +294,19 @@ namespace Arriba.TfsWorkItemCrawler.ItemProviders
                 }
             }
 
+            // Build a list of typed column details for the columns being used
+            List<ColumnDetails> selectedDetails = new List<ColumnDetails>();
+            foreach(string columnName in columnNames)
+            {
+                selectedDetails.Add(this.Columns[columnName]);
+            }
+
             // Run the query
             ICancelableAsyncResult car = q.BeginQuery();
             WorkItemCollection itemCollection = q.EndQuery(car);
 
             // Copy the item field values into a DataBlock and track the last cutoff per group
-            DataBlock result = new DataBlock(columnNames, items.Count());
+            DataBlock result = new DataBlock(selectedDetails, items.Count());
             for (int itemIndex = 0; itemIndex < result.RowCount; ++itemIndex)
             {
                 WorkItem item = itemCollection[itemIndex];

@@ -301,11 +301,11 @@ namespace Arriba.Test.Structures
             Assert.AreEqual("Int64", Value.Create(long.MaxValue).BestType(typeof(int)).Name);
             Assert.AreEqual("Int64", Value.Create(new ValueTypeReference<long>(long.MaxValue)).BestType(typeof(int)).Name);
 
-            // Floating point and integer turn into string
-            Assert.AreEqual("String", Value.Create(float.MaxValue).BestType(typeof(int)).Name);
-            Assert.AreEqual("String", Value.Create(new ValueTypeReference<float>(float.MaxValue)).BestType(typeof(int)).Name);
-            Assert.AreEqual("String", Value.Create(double.MaxValue).BestType(typeof(long)).Name);
-            Assert.AreEqual("String", Value.Create(new ValueTypeReference<double>(double.MaxValue)).BestType(typeof(long)).Name);
+            // Floating point and integer turn into float
+            Assert.AreEqual("Single", Value.Create(float.MaxValue).BestType(typeof(int)).Name);
+            Assert.AreEqual("Single", Value.Create(new ValueTypeReference<float>(float.MaxValue)).BestType(typeof(int)).Name);
+            Assert.AreEqual("Double", Value.Create(double.MaxValue).BestType(typeof(long)).Name);
+            Assert.AreEqual("Double", Value.Create(new ValueTypeReference<double>(double.MaxValue)).BestType(typeof(long)).Name);
 
             // Other combinations turn into string
             Assert.AreEqual("String", Value.Create(Guid.NewGuid()).BestType(typeof(long)).Name);

@@ -50,11 +50,7 @@ namespace Arriba.TfsWorkItemCrawler.ItemConsumers
                 this.Table.Load(this.Configuration.ArribaTable);
             }
 
-            // Verify all columns match requested types [will throw if column exists but as different type]
-            foreach (ColumnDetails cd in columns)
-            {
-                this.Table.AddColumn(cd);
-            }
+            // Columns are added dynamically by Append
 
             // Set the table security
             SecureDatabase sdb = new SecureDatabase();
@@ -91,7 +87,7 @@ namespace Arriba.TfsWorkItemCrawler.ItemConsumers
             //    if (items[0, 0].ToString().Equals("721458")) Debugger.Break();
             //}
 
-            this.Table.AddOrUpdate(items);
+            this.Table.AddOrUpdate(items, new AddOrUpdateOptions() { AddMissingColumns = true });
 
             // REPRO: Identify the items causing consistency problems as we go. Too slow for full scale.
             //if (this.DiagnosticsEnabled && Debugger.IsAttached)
