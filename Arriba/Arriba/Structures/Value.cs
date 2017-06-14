@@ -421,7 +421,8 @@ namespace Arriba.Structures
                 if (thisBest.Equals(typeof(long))) return typeof(long);
                 if (thisBest.Equals(typeof(float))) return typeof(float);
                 if (thisBest.Equals(typeof(double))) return typeof(double);
-                if (thisBest.Equals(typeof(int))) return typeof(TimeSpan);
+
+                if (thisBest.Equals(typeof(TimeSpan))) return typeof(TimeSpan);
             }
             else if (bestSoFar.Equals(typeof(float)))
             {

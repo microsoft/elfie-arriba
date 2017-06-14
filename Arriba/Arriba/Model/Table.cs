@@ -333,13 +333,13 @@ namespace Arriba.Model
             ColumnDetails idColumn = _partitions[0].IDColumn;
 
             // Does the DataBlock specify the ID column?
-            if(idColumn == null) idColumn = values.Columns.FirstOrDefault((cd) => cd.IsPrimaryKey);
+            idColumn = idColumn ?? values.Columns.FirstOrDefault((cd) => cd.IsPrimaryKey);
 
             // If not, does one end with 'ID'?
-            if (idColumn == null) idColumn = values.Columns.FirstOrDefault((cd) => cd.Name.EndsWith("ID"));
+            idColumn = idColumn ?? values.Columns.FirstOrDefault((cd) => cd.Name.EndsWith("ID"));
 
             // If not, use the first column
-            if (idColumn == null) idColumn = values.Columns.FirstOrDefault();
+            idColumn = idColumn ?? values.Columns.FirstOrDefault();
 
             // Mark the ID column
             idColumn.IsPrimaryKey = true;
@@ -348,69 +348,58 @@ namespace Arriba.Model
             for (int columnIndex = 0; columnIndex < values.ColumnCount; ++columnIndex)
             {
                 ColumnDetails details = values.Columns[columnIndex];
-                bool hasValues = false;
-                bool inferType;
+                bool hasNonDefaultValues = false;
 
                 // If this column was already added, no need to scan these values
                 if (_partitions[0].ContainsColumn(details.Name)) continue;
 
-                // Figure out the column type
-                Type bestColumnType = null;
+                // Figure out the column type. Did the DataBlock provide one?
+                Type determinedType = ColumnFactory.GetTypeFromTypeString(details.Type);
 
-                // Does the DataBlock specify the type?
-                if(bestColumnType == null) bestColumnType = ColumnFactory.GetTypeFromTypeString(details.Type);
-
-                // Is the DataBlock column array typed?
-                if (bestColumnType == null)
-                {
-                    bestColumnType = values.GetTypeForColumn(columnIndex);
-                    if (bestColumnType == typeof(object)) bestColumnType = null;
-                }
-
-                // If there's no explicit type, we'll need to infer one
-                inferType = (bestColumnType == null);
+                // If not, is the DataBlock column array typed?
+                determinedType = determinedType ?? values.GetTypeForColumn(columnIndex);
+                if (determinedType == typeof(object)) determinedType = null;
 
                 // Get the column default, if provided, or the default for the type, if provided
                 object columnDefault = details.Default;
-                if (columnDefault == null && bestColumnType != null)
+                if (columnDefault == null && determinedType != null)
                 {
-                    columnDefault = ColumnFactory.GetDefaultValueFromTypeString(bestColumnType.Name);
+                    columnDefault = ColumnFactory.GetDefaultValueFromTypeString(determinedType.Name);
                 }
 
+                Type inferredType = null;
                 Value v = Value.Create(details.Default);
+
                 for (int rowIndex = 0; rowIndex < values.RowCount; ++rowIndex)
                 {
                     object value = values[rowIndex, columnIndex];
 
                     // Identify the best type for all block values, if no type was already determined
-                    if (inferType)
+                    if (determinedType == null)
                     {
                         v.Assign(value);
-                        Type newBestType = v.BestType(bestColumnType);
+                        Type newBestType = v.BestType(inferredType);
 
                         // If the type has changed, get an updated default value
-                        if (newBestType != bestColumnType)
+                        if (newBestType != determinedType)
                         {
                             columnDefault = ColumnFactory.GetDefaultValueFromTypeString(newBestType.Name);
-                            bestColumnType = newBestType;
+                            inferredType = newBestType;
                         }
                     }
 
                     // Track whether any non-default values were seen
-                    if (!hasValues)
+                    if (hasNonDefaultValues == false && value != null)
                     {
-                        if (value != null && (columnDefault == null || !columnDefault.Equals(value))) hasValues = true;
+                        if (columnDefault == null || columnDefault.Equals(value) == false) hasNonDefaultValues = true;
                     }
                 }
 
-                // If no values were set, default to string [can't tell actual best type]
-                if (bestColumnType == null) bestColumnType = typeof(String);
-
-                // Set the type discovered or inferred on the column
-                details.Type = bestColumnType.Name;
+                // Set the column type
+                details.Type = (determinedType ?? inferredType ?? typeof(string)).Name;
 
                 // Add the column if it had any non-default values (and didn't already exist)
-                if (hasValues) columnsToAdd.Add(details);
+                if (hasNonDefaultValues) columnsToAdd.Add(details);
             }
 
             // Add the discovered columns. If any names match existing columns they'll be merged properly in Partition.AddColumn.
