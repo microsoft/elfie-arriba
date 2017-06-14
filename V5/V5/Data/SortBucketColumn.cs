@@ -96,7 +96,7 @@ namespace V5.Data
             return buckets;
         }
 
-        public static SortBucketColumn<T> Build(T[] values, byte bucketCount, Random r, int parallelCount = 4)
+        public static SortBucketColumn<T> Build(T[] values, int bucketCount, Random r, int parallelCount = 4)
         {
             // Choose bucket ranges [serially]
             T[] buckets = ChooseBuckets(values, bucketCount, r);
@@ -167,7 +167,7 @@ namespace V5.Data
                     else if (bucketIndex >= this.Minimum.Length - 1)
                     {
                         if (this.Max.CompareTo(value) > 0) this.Max = value;
-                        bucketIndex--;
+                        bucketIndex = this.Minimum.Length - 2;
                     }
 
                     this.IsMultiValue[bucketIndex] = true;

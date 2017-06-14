@@ -35,10 +35,10 @@ void BucketInternal(T* values, int index, int length, T* bucketMins, int bucketC
 			bucketMins[0] = values[i];
 			index = 0;
 		}
-		else if (index >= bucketCount)
+		else if (index >= bucketCount - 1)
 		{
-			bucketMins[bucketCount - 1] = values[i];
-			index = bucketCount - 1;
+			bucketMins[bucketCount - 1] = (values[i] > bucketMins[bucketCount - 1] ? values[i] : bucketMins[bucketCount - 1]);
+			index = bucketCount - 2;
 		}
 
 		rowBucketIndex[i] = index;
