@@ -144,48 +144,16 @@ namespace V5.Data
 
         private void BucketRows(T[] values, int index, int length)
         {
-            SortBucketColumnN.Bucket<T>(values, index, length, this.Minimum, this.RowBucketIndex, this.RowCount);
-        }
-
-        private void BucketManaged(T[] values, int index, int length)
-        {
-            int end = index + length;
-            for (int i = index; i < end; ++i)
-            {
-                T value = values[i];
-
-                bool isExact;
-                int bucketIndex = BucketForValue(value, out isExact);
-
-                if (!isExact)
-                {
-                    if (bucketIndex < 0)
-                    {
-                        if (this.Min.CompareTo(value) < 0) this.Min = value;
-                        bucketIndex = 0;
-                    }
-                    else if (bucketIndex >= this.Minimum.Length - 1)
-                    {
-                        if (this.Max.CompareTo(value) > 0) this.Max = value;
-                        bucketIndex = this.Minimum.Length - 2;
-                    }
-
-                    this.IsMultiValue[bucketIndex] = true;
-                }
-
-                this.RowBucketIndex[i] = (byte)bucketIndex;
-                this.RowCount[bucketIndex]++;
-            }
+            SortBucketColumnN.Bucket<T>(values, index, length, this.Minimum, this.RowBucketIndex, this.RowCount, this.IsMultiValue);
         }
 
         public int BucketForValue(T value, out bool isExact)
         {
-            int bucketIndex = Array.BinarySearch(this.Minimum, value);
-            isExact = bucketIndex >= 0;
+            int index = SortBucketColumnN.BucketIndex<T>(this.Minimum, value);
 
-            if (bucketIndex < 0) bucketIndex = ~bucketIndex - 1;
-
-            return bucketIndex;
+            isExact = (index < 0);
+            if (isExact) index = ~index;
+            return index;
         }
     }
 }

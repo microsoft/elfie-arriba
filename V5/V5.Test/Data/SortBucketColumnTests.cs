@@ -1,6 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using V5.Data;
 
@@ -18,19 +17,22 @@ namespace V5.Test
             Assert.AreEqual(-1, SortBucketColumnN.BucketIndex(buckets, -1));
             for (int i = 0; i < 511; ++i)
             {
-                Assert.AreEqual(i / 2, SortBucketColumnN.BucketIndex(buckets, i));
+                int expected = i / 2;
+                if ((i & 1) != 0) expected = ~expected;
+
+                Assert.AreEqual(expected, SortBucketColumnN.BucketIndex(buckets, i));
             }
-            Assert.AreEqual(255, SortBucketColumnN.BucketIndex(buckets, 512));
+            Assert.AreEqual(~255, SortBucketColumnN.BucketIndex(buckets, 512));
 
             buckets = new long[] { -1, 10, 20, 30, 50, 100, 1000, 1200 };
-            Assert.AreEqual(1, SortBucketColumnN.BucketIndex(buckets, 11));
+            Assert.AreEqual(~1, SortBucketColumnN.BucketIndex(buckets, 11));
             Assert.AreEqual(1, SortBucketColumnN.BucketIndex(buckets, 10));
             Assert.AreEqual(-1, SortBucketColumnN.BucketIndex(buckets, -2));
             Assert.AreEqual(0, SortBucketColumnN.BucketIndex(buckets, -1));
             Assert.AreEqual(2, SortBucketColumnN.BucketIndex(buckets, 20));
-            Assert.AreEqual(5, SortBucketColumnN.BucketIndex(buckets, 999));
+            Assert.AreEqual(~5, SortBucketColumnN.BucketIndex(buckets, 999));
             Assert.AreEqual(6, SortBucketColumnN.BucketIndex(buckets, 1000));
-            Assert.AreEqual(6, SortBucketColumnN.BucketIndex(buckets, 1001));
+            Assert.AreEqual(~6, SortBucketColumnN.BucketIndex(buckets, 1001));
         }
 
         [TestMethod]
@@ -38,41 +40,48 @@ namespace V5.Test
         {
             int[] values = Enumerable.Range(0, 10000).ToArray();
             SortBucketColumn<int> sbc = SortBucketColumn<int>.Build(values, 256, new Random(5), 1);
+            Validate(sbc, values);
+        }
 
-            // Validate the min and max were properly found
-            Assert.AreEqual(0, sbc.Min);
-            Assert.AreEqual(9999, sbc.Max);
+        private static void Validate<T>(SortBucketColumn<T> sbc, T[] values) where T : IComparable<T>
+        {
+            T min = values[0];
+            T max = values[0];
 
-            // Validate the row counts add up
-            Assert.AreEqual(10000, sbc.Total);
+            bool[] isMultiValue = new bool[sbc.Minimum.Length];
+            int[] countPerBucket = new int[sbc.Minimum.Length];
 
-            // Validate that the items for each bucket are correctly in range
-            Dictionary<int, int> countPerBucket = new Dictionary<int, int>();
-
-            for (int i = 0; i < values.Length; ++i)
+            // Iterate over items and check bucket values
+            for(int i = 0; i < values.Length; ++i)
             {
+                // Track the minimum and maximum in the set
+                if (values[i].CompareTo(min) < 0) min = values[i];
+                if (values[i].CompareTo(max) > 0) max = values[i];
+
                 int bucketIndex = sbc.RowBucketIndex[i];
-                Assert.IsTrue(sbc.Minimum[bucketIndex] <= values[i]);
 
-                if (bucketIndex < sbc.Minimum.Length - 2)
-                {
-                    Assert.IsTrue(values[i] < sbc.Minimum[bucketIndex + 1]);
-                }
-                else
-                {
-                    Assert.IsTrue(values[i] <= sbc.Minimum[bucketIndex + 1]);
-                }
+                // Verify the value is within boundaries
+                Assert.IsTrue(values[i].CompareTo(sbc.Minimum[bucketIndex]) >= 0);
+                Assert.IsTrue(values[i].CompareTo(sbc.Minimum[bucketIndex + 1]) <= 0);
 
-                int countForBucket = 0;
-                countPerBucket.TryGetValue(bucketIndex, out countForBucket);
-                countPerBucket[bucketIndex] = countForBucket + 1;
+                // Track row counts
+                countPerBucket[bucketIndex]++;
+
+                // Track bucket multi-value-ness
+                if (values[i].CompareTo(sbc.Minimum[bucketIndex]) != 0) isMultiValue[bucketIndex] = true;
             }
 
-            // Verify the count per bucket is correct
-            for (int i = 0; i < sbc.Minimum.Length - 1; ++i)
+            // Validate bucket aggregates (except last sentinel bucket)
+            for(int i = 0; i < sbc.Minimum.Length - 1; ++i)
             {
                 Assert.AreEqual(countPerBucket[i], sbc.RowCount[i]);
+                Assert.AreEqual(isMultiValue[i], sbc.IsMultiValue[i]);
             }
+
+            Assert.AreEqual(min, sbc.Min);
+            Assert.AreEqual(max, sbc.Max);
+            Assert.AreEqual(values.Length, sbc.Total);
+            Assert.AreEqual(values.Length, sbc.RowCount.Sum());
         }
     }
 }

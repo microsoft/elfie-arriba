@@ -99,7 +99,7 @@ namespace V5.ConsoleTest
             IndexSet scratchSet = new IndexSet(0, db.Count);
             int managedMatches = CountCustom(db);
 
-            Benchmark.Compare("IndexSet Ops", 1000, (db.Count + 31) >> 5, new string[] { "All", "None", "Count" },
+            Benchmark.Compare("IndexSet Ops", 1000, db.Count, new string[] { "All", "None", "Count" },
                 () => nativeSet.All(),
                 () => nativeSet.None(),
                 () => { int x = nativeSet.Count; }
