@@ -96,7 +96,7 @@ namespace V5.Data
             return buckets;
         }
 
-        public static SortBucketColumn<T> Build(T[] values, int bucketCount, Random r, int parallelCount = 4)
+        public static SortBucketColumn<T> Build(T[] values, int bucketCount, Random r, int parallelCount = 1)
         {
             // Choose bucket ranges [serially]
             T[] buckets = ChooseBuckets(values, bucketCount, r);

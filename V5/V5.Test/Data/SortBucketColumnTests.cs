@@ -38,9 +38,23 @@ namespace V5.Test
         [TestMethod]
         public void SortBucketColumn_Basics()
         {
-            int[] values = Enumerable.Range(0, 10000).ToArray();
-            SortBucketColumn<int> sbc = SortBucketColumn<int>.Build(values, 256, new Random(5), 1);
-            Validate(sbc, values);
+            // Try buckets for all values from 0 - 9999 [should all be multi-value; min and max should've been found]
+            int[] allUnique = Enumerable.Range(0, 10000).ToArray();
+            SortBucketColumn<int> sbc = SortBucketColumn<int>.Build(allUnique, 256, new Random(5));
+            Validate(sbc, allUnique);
+
+            // Try buckets for only 32 unique values
+            int[] fewDistinct = new int[10000];
+            for(int i = 0; i < fewDistinct.Length; ++i)
+            {
+                fewDistinct[i] = i % 32;
+            }
+
+            // TODO: In 'few unique values' case, every bucket should stay distinct and have separate rows
+            sbc = SortBucketColumn<int>.Build(fewDistinct, 256, new Random(5));
+            Validate(sbc, fewDistinct);
+            Assert.AreEqual(32, sbc.Minimum.Length);
+            Assert.IsFalse(sbc.IsMultiValue[0]);
         }
 
         private static void Validate<T>(SortBucketColumn<T> sbc, T[] values) where T : IComparable<T>
