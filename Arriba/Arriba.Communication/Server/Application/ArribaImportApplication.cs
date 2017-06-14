@@ -39,13 +39,7 @@ namespace Arriba.Server.Application
 
         private IResponse CsvAppend(IRequestContext ctx, Route route)
         {
-            var content = ctx.Request.Headers["Content-Type"];
-
-            if (String.IsNullOrEmpty(content) || !String.Equals(content, "text/csv", StringComparison.OrdinalIgnoreCase))
-            {
-                return ArribaResponse.BadRequest("Content-Type of {0} was not expected", content);
-            }
-            else if (!ctx.Request.HasBody)
+            if (!ctx.Request.HasBody)
             {
                 return ArribaResponse.BadRequest("Empty request body");
             }
@@ -63,12 +57,7 @@ namespace Arriba.Server.Application
 
             var config = new CsvReaderSettings() { DisposeStream = true, HasHeaders = true };
 
-            var detail = new
-            {
-                RequestSize = ctx.Request.Headers["Content-Length"]
-            };
-
-            using (ctx.Monitor(MonitorEventLevel.Information, "Import.Csv", type: "Table", identity: tableName, detail: detail))
+            using (ctx.Monitor(MonitorEventLevel.Information, "Import.Csv", type: "Table", identity: tableName))
             {
                 using (CsvReader reader = new CsvReader(ctx.Request.InputStream, config))
                 {
@@ -82,7 +71,7 @@ namespace Arriba.Server.Application
                 }
             }
 
-            return ArribaResponse.Created(response);
+            return ArribaResponse.Ok(response);
         }
 
         private async Task<IResponse> DataBlockAppendAsync(IRequestContext ctx, Route route)
