@@ -330,20 +330,14 @@ namespace Arriba.Model
             List<ColumnDetails> columnsToAdd = new List<ColumnDetails>();
 
             // Find the ID column
-            ColumnDetails idColumn = _partitions[0].IDColumn;
-
-            // Does the DataBlock specify the ID column?
-            idColumn = idColumn ?? values.Columns.FirstOrDefault((cd) => cd.IsPrimaryKey);
-
-            // If not, does one end with 'ID'?
-            idColumn = idColumn ?? values.Columns.FirstOrDefault((cd) => cd.Name.EndsWith("ID"));
-
-            // If not, use the first column
-            idColumn = idColumn ?? values.Columns.FirstOrDefault();
+            //  [The existing one, or one marked as primary key on the block, or one ending with 'ID', or the first column]
+            ColumnDetails idColumn = _partitions[0].IDColumn
+                ?? values.Columns.FirstOrDefault((cd) => cd.IsPrimaryKey)
+                ?? values.Columns.FirstOrDefault((cd) => cd.Name.EndsWith("ID"))
+                ?? values.Columns.FirstOrDefault();
 
             // Mark the ID column
             idColumn.IsPrimaryKey = true;
-
 
             for (int columnIndex = 0; columnIndex < values.ColumnCount; ++columnIndex)
             {
