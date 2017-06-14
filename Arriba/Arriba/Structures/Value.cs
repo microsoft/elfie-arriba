@@ -391,6 +391,10 @@ namespace Arriba.Structures
         /// <returns>Best type fitting both bestSoFar and this value</returns>
         public Type BestType(Type bestSoFar)
         {
+            // If there's an existing best and this value converts to it, keep it
+            object unused;
+            if (bestSoFar != null && TryConvert(bestSoFar, out unused)) return bestSoFar;
+
             Type thisBest = this.BestType();
 
             // If this is object, stick with bestSoFar
@@ -405,17 +409,37 @@ namespace Arriba.Structures
             // If either is string, it must be string
             if (thisBest.Equals(typeof(string)) || bestSoFar.Equals(typeof(string))) return typeof(string);
 
-            // If one int and one long, return long
-            if (bestSoFar.Equals(typeof(long)) && thisBest.Equals(typeof(int))) return typeof(long);
-            if (bestSoFar.Equals(typeof(int)) && thisBest.Equals(typeof(long))) return typeof(long);
+            // Allow converting to 'broader' types (int -> long, float -> double, int -> float)
+            if(bestSoFar.Equals(typeof(long)))
+            {
+                if (thisBest.Equals(typeof(int))) return typeof(long);
+                if (thisBest.Equals(typeof(float))) return typeof(float);
+                if (thisBest.Equals(typeof(double))) return typeof(double);
+            }
+            else if(bestSoFar.Equals(typeof(int)))
+            {
+                if (thisBest.Equals(typeof(long))) return typeof(long);
+                if (thisBest.Equals(typeof(float))) return typeof(float);
+                if (thisBest.Equals(typeof(double))) return typeof(double);
 
-            // If one int and one double, return double
-            if (bestSoFar.Equals(typeof(double)) && thisBest.Equals(typeof(float))) return typeof(double);
-            if (bestSoFar.Equals(typeof(float)) && thisBest.Equals(typeof(double))) return typeof(double);
-
-            // If one int and one TimeSpan, settle on TimeSpan
-            if (bestSoFar.Equals(typeof(int)) && thisBest.Equals(typeof(TimeSpan))) return typeof(TimeSpan);
-            if (bestSoFar.Equals(typeof(TimeSpan)) && thisBest.Equals(typeof(int))) return typeof(TimeSpan);
+                if (thisBest.Equals(typeof(TimeSpan))) return typeof(TimeSpan);
+            }
+            else if (bestSoFar.Equals(typeof(float)))
+            {
+                if (thisBest.Equals(typeof(int))) return typeof(float);
+                if (thisBest.Equals(typeof(long))) return typeof(float);
+                if (thisBest.Equals(typeof(double))) return typeof(double);
+            }
+            else if(bestSoFar.Equals(typeof(double)))
+            {
+                if (thisBest.Equals(typeof(int))) return typeof(double);
+                if (thisBest.Equals(typeof(long))) return typeof(double);
+                if (thisBest.Equals(typeof(float))) return typeof(double);
+            }
+            else if(bestSoFar.Equals(typeof(TimeSpan)))
+            {
+                if (thisBest.Equals(typeof(int))) return typeof(TimeSpan);
+            }
 
             // Otherwise, must fall back to string
             return typeof(string);

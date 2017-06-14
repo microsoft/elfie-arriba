@@ -327,42 +327,77 @@ namespace Arriba.Model
         #region AddOrUpdate (insert, update)
         public void AddColumnsFromBlock(DataBlock.ReadOnlyDataBlock values)
         {
-            bool foundIdColumn = (_partitions[0].IDColumn != null);
-            List<ColumnDetails> discoveredNewColumns = new List<ColumnDetails>();
+            List<ColumnDetails> columnsToAdd = new List<ColumnDetails>();
+
+            // Find the ID column
+            //  [The existing one, or one marked as primary key on the block, or one ending with 'ID', or the first column]
+            ColumnDetails idColumn = _partitions[0].IDColumn
+                ?? values.Columns.FirstOrDefault((cd) => cd.IsPrimaryKey)
+                ?? values.Columns.FirstOrDefault((cd) => cd.Name.EndsWith("ID"))
+                ?? values.Columns.FirstOrDefault();
+
+            // Mark the ID column
+            idColumn.IsPrimaryKey = true;
 
             for (int columnIndex = 0; columnIndex < values.ColumnCount; ++columnIndex)
             {
-                // Get the column name from the block
-                string columnName = values.Columns[columnIndex].Name;
+                ColumnDetails details = values.Columns[columnIndex];
+                bool hasNonDefaultValues = false;
 
-                // Add or alter columns only which weren't manually added
-                if (_partitions[0].ContainsColumn(columnName)) continue;
+                // If this column was already added, no need to scan these values
+                if (_partitions[0].ContainsColumn(details.Name)) continue;
 
-                // Make the ID column the first one to end with 'ID' or the first column
-                bool isIdColumn = (foundIdColumn == false && columnName.EndsWith("ID"));
+                // Figure out the column type. Did the DataBlock provide one?
+                Type determinedType = ColumnFactory.GetTypeFromTypeString(details.Type);
 
-                // Walk all values in this block to infer the column type
-                Type bestColumnType = null;
-                for (int rowIndex = 0; rowIndex < values.RowCount; ++rowIndex)
+                // If not, is the DataBlock column array typed?
+                determinedType = determinedType ?? values.GetTypeForColumn(columnIndex);
+                if (determinedType == typeof(object)) determinedType = null;
+
+                // Get the column default, if provided, or the default for the type, if provided
+                object columnDefault = details.Default;
+                if (columnDefault == null && determinedType != null)
                 {
-                    bestColumnType = Value.Create(values[rowIndex, columnIndex]).BestType(bestColumnType);
+                    columnDefault = ColumnFactory.GetDefaultValueFromTypeString(determinedType.Name);
                 }
 
-                // If no values were set, default to string [can't tell actual best type]
-                if (bestColumnType == null) bestColumnType = typeof(String);
+                Type inferredType = null;
+                Value v = Value.Create(details.Default);
 
-                discoveredNewColumns.Add(new ColumnDetails(columnName, bestColumnType.Name, null) { IsPrimaryKey = isIdColumn });
-                foundIdColumn |= isIdColumn;
-            }
+                for (int rowIndex = 0; rowIndex < values.RowCount; ++rowIndex)
+                {
+                    object value = values[rowIndex, columnIndex];
 
-            // If no column name ended with 'ID', the first one is the ID column
-            if (!foundIdColumn && discoveredNewColumns.Count > 0)
-            {
-                discoveredNewColumns[0].IsPrimaryKey = true;
+                    // Identify the best type for all block values, if no type was already determined
+                    if (determinedType == null)
+                    {
+                        v.Assign(value);
+                        Type newBestType = v.BestType(inferredType);
+
+                        // If the type has changed, get an updated default value
+                        if (newBestType != determinedType)
+                        {
+                            columnDefault = ColumnFactory.GetDefaultValueFromTypeString(newBestType.Name);
+                            inferredType = newBestType;
+                        }
+                    }
+
+                    // Track whether any non-default values were seen
+                    if (hasNonDefaultValues == false && value != null)
+                    {
+                        if (columnDefault == null || columnDefault.Equals(value) == false) hasNonDefaultValues = true;
+                    }
+                }
+
+                // Set the column type
+                details.Type = (determinedType ?? inferredType ?? typeof(string)).Name;
+
+                // Add the column if it had any non-default values (and didn't already exist)
+                if (hasNonDefaultValues) columnsToAdd.Add(details);
             }
 
             // Add the discovered columns. If any names match existing columns they'll be merged properly in Partition.AddColumn.
-            AddColumns(discoveredNewColumns);
+            AddColumns(columnsToAdd);
         }
 
         /// <summary>
@@ -396,13 +431,16 @@ namespace Arriba.Model
                 int idColumnIndex = values.IndexOfColumn(idColumn.Name);
                 if (idColumnIndex == -1) throw new ArribaException(StringExtensions.Format("AddOrUpdates must be passed the ID column, '{0}', in order to tell which items to update.", idColumn.Name));
 
-                // Verify all passed columns exist
-                foreach (ColumnDetails column in values.Columns)
+                // Verify all passed columns exist (if not adding them)
+                if (options.AddMissingColumns == false)
                 {
-                    ColumnDetails foundColumn;
-                    if (!_partitions[0].DetailsByColumn.TryGetValue(column.Name, out foundColumn))
+                    foreach (ColumnDetails column in values.Columns)
                     {
-                        throw new ArribaException(StringExtensions.Format("AddOrUpdate failed because values were passed for column '{0}', which is not in the table. Use AddColumn to add all columns first or ensure the first block added to the Table has all desired columns.", column.Name));
+                        ColumnDetails foundColumn;
+                        if (!_partitions[0].DetailsByColumn.TryGetValue(column.Name, out foundColumn))
+                        {
+                            throw new ArribaException(StringExtensions.Format("AddOrUpdate failed because values were passed for column '{0}', which is not in the table. Use AddColumn to add all columns first or ensure the first block added to the Table has all desired columns.", column.Name));
+                        }
                     }
                 }
 

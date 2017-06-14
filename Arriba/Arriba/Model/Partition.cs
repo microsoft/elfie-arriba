@@ -235,10 +235,14 @@ namespace Arriba.Model
                 if (column.Count != newCount) column.SetSize(newCount);
             }
 
-            // Set values for each other provided column
+            // Set values for each other provided column which exists
+            //  Columns which don't exist at this point were omitted because they had no non-default values
             for (int columnIndex = 0; columnIndex < columnCount; ++columnIndex)
             {
-                FillPartitionColumn(values, columnIndex, itemLIDs);
+                if (this.ContainsColumn(values.Columns[columnIndex].Name))
+                {
+                    FillPartitionColumn(values, columnIndex, itemLIDs);
+                }
             }
 
             // Commit every column [ones with new values and ones resized with defaults]

@@ -92,6 +92,106 @@ namespace Arriba
             return new FastAddSortedColumn<T>(column, initialCapacity);
         }
 
+        public static Type GetTypeFromTypeString(string columnDetailsType)
+        {
+            if (String.IsNullOrEmpty(columnDetailsType)) return null;
+
+            switch(columnDetailsType.ToLowerInvariant())
+            {
+                case "bool":
+                case "boolean":
+                    return typeof(bool);
+                case "byte":
+                    return typeof(byte);
+                case "short":
+                case "int16":
+                    return typeof(short);
+                case "int":
+                case "int32":
+                    return typeof(int);
+                case "long":
+                case "int64":
+                    return typeof(long);
+                case "float":
+                case "single":
+                    return typeof(float);
+                case "double":
+                    return typeof(double);
+                case "ushort":
+                case "uint16":
+                    return typeof(ushort);
+                case "uint":
+                case "uint32":
+                    return typeof(uint);
+                case "ulong":
+                case "uint64":
+                    return typeof(ulong);
+                case "datetime":
+                    return typeof(DateTime);
+                case "guid":
+                    return typeof(Guid);
+                case "timespan":
+                    return typeof(TimeSpan);
+                case "string":
+                case "json":
+                case "html":
+                case "stringset":
+                    return typeof(string);
+                default:
+                    return null;
+            }
+        }
+
+        public static object GetDefaultValueFromTypeString(string columnDetailsType)
+        {
+            if (String.IsNullOrEmpty(columnDetailsType)) return null;
+
+            switch (columnDetailsType.ToLowerInvariant())
+            {
+                case "bool":
+                case "boolean":
+                    return default(bool);
+                case "byte":
+                    return default(byte);
+                case "short":
+                case "int16":
+                    return default(short);
+                case "int":
+                case "int32":
+                    return default(int);
+                case "long":
+                case "int64":
+                    return default(long);
+                case "float":
+                case "single":
+                    return default(float);
+                case "double":
+                    return default(double);
+                case "ushort":
+                case "uint16":
+                    return default(ushort);
+                case "uint":
+                case "uint32":
+                    return default(uint);
+                case "ulong":
+                case "uint64":
+                    return default(ulong);
+                case "datetime":
+                    return default(DateTime);
+                case "guid":
+                    return default(Guid);
+                case "timespan":
+                    return default(TimeSpan);
+                case "string":
+                case "json":
+                case "html":
+                case "stringset":
+                    return default(string);
+                default:
+                    return null;
+            }
+        }
+
         /// <summary>
         ///  Construct a column given a TypeDescriptor. The column contains the base type
         ///  and may be wrapped in other columns which add additional functionality
