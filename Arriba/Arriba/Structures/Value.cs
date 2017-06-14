@@ -280,6 +280,8 @@ namespace Arriba.Structures
                 return null;
             }
 
+            if (String.IsNullOrEmpty(asString)) return asString;
+
             // If gotten, try parsing conversions to other types
             DateTime asDateTime = default(DateTime);
             Guid asGuid = default(Guid);

@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -363,6 +362,7 @@ namespace Arriba.Model
 
                 Type inferredType = null;
                 Value v = Value.Create(details.Default);
+                DateTime defaultUtc = default(DateTime).ToUniversalTime();
 
                 for (int rowIndex = 0; rowIndex < values.RowCount; ++rowIndex)
                 {
@@ -383,9 +383,12 @@ namespace Arriba.Model
                     }
 
                     // Track whether any non-default values were seen
-                    if (hasNonDefaultValues == false && value != null)
+                    if (hasNonDefaultValues == false && value != null && !"".Equals(value) && !defaultUtc.Equals(value))
                     {
-                        if (columnDefault == null || columnDefault.Equals(value) == false) hasNonDefaultValues = true;
+                        if (columnDefault == null || columnDefault.Equals(value) == false)
+                        {
+                            hasNonDefaultValues = true;
+                        }
                     }
                 }
 
