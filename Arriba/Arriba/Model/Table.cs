@@ -351,7 +351,7 @@ namespace Arriba.Model
 
                 // If not, is the DataBlock column array typed?
                 determinedType = determinedType ?? values.GetTypeForColumn(columnIndex);
-                if (determinedType == typeof(object)) determinedType = null;
+                if (determinedType == typeof(object) || determinedType == typeof(Value)) determinedType = null;
 
                 // Get the column default, if provided, or the default for the type, if provided
                 object columnDefault = details.Default;

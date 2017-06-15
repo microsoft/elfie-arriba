@@ -239,16 +239,17 @@ namespace Arriba.Test.Model
             Assert.AreEqual(5, (int)t.Count);
 
             // Add more data with existing and new columns
-            DataBlock newData = new DataBlock(new string[] { "ID", "Stack Rank", "Original Estimate", "Remaining Cost", "Actual Cost", "Tertiary Owner", "When Imported" }, 2,
+            DataBlock newData = new DataBlock(new string[] { "ID", "Stack Rank", "Original Estimate", "Remaining Cost", "Wrapped Cost", "Actual Cost", "Tertiary Owner", "When Imported" }, 2,
                 new Array[]
                 {
-                    new int[] { 12345, 12346, 12347 },   // [ID] already exists
-                    new ushort[] { 1119, 1120, 1121 },   // [Stack Rank] type can be found from the typed array
-                    new object[] { 0, 0, 0 },            // [Original Estimate] has no non-default values and shouldn't be added
-                    new object[] { 12, 0.5, 0 },         // [Remaining Cost] should be inferred to be float
-                    new float[] { 0, 0, 0 },             // [Actual Cost] is typed but with no non-default values and shouldn't be added
-                    new object[] { "", "", null },       // [Tertiary Owner] has no non-default values (both null and "") and shouldn't be added
-                    new object[] { DateTime.MinValue, DateTime.MinValue.ToUniversalTime(), null} // [When Imported] has no non-default values (MinValue, MinValueUtc, null) and shouldn't be added
+                    new int[] { 12345, 12346, 12347 },                                              // [ID] already exists
+                    new ushort[] { 1119, 1120, 1121 },                                              // [Stack Rank] type can be found from the typed array
+                    new object[] { 0, 0, 0 },                                                       // [Original Estimate] has no non-default values and shouldn't be added
+                    new object[] { 12, 0.5, 0 },                                                    // [Remaining Cost] should be inferred to be float
+                    new Value[] { Value.Create(12), Value.Create(0.5), Value.Create(0) },           // [Wrapped Cost] should be unwrapped and inferred to be float
+                    new float[] { 0, 0, 0 },                                                        // [Actual Cost] is typed but with no non-default values and shouldn't be added
+                    new object[] { "", "", null },                                                  // [Tertiary Owner] has no non-default values (both null and "") and shouldn't be added
+                    new object[] { DateTime.MinValue, DateTime.MinValue.ToUniversalTime(), null}    // [When Imported] has no non-default values (MinValue, MinValueUtc, null) and shouldn't be added
 
                 });
 
@@ -257,6 +258,7 @@ namespace Arriba.Test.Model
 
             Assert.AreEqual("UInt16", t.GetDetails("Stack Rank").Type);
             Assert.AreEqual("Single", t.GetDetails("Remaining Cost").Type);
+            Assert.AreEqual("Single", t.GetDetails("Wrapped Cost").Type);
             Assert.IsNull(t.ColumnDetails.FirstOrDefault((cd) => cd.Name == "Original Estimate"));
             Assert.IsNull(t.ColumnDetails.FirstOrDefault((cd) => cd.Name == "Actual Cost"));
             Assert.IsNull(t.ColumnDetails.FirstOrDefault((cd) => cd.Name == "Tertiary Owner"));
