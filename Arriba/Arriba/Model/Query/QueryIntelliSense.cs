@@ -110,6 +110,10 @@ namespace Arriba.Model.Query
             double percentage = (double)count / (double)total;
             if (percentage < 0.01) return percentage.ToString("P2");
             if (percentage < 0.10) return percentage.ToString("P1");
+
+            // Round 99% down if it's not every item (and thus "all")
+            if (percentage > 0.99) percentage = 0.99;
+
             return percentage.ToString("P0");
         }
 
@@ -557,7 +561,7 @@ namespace Arriba.Model.Query
                 int countForValue = (int)topValues.Values[i, 1];
                 if (isNotEquals) countForValue = (int)topValues.Total - countForValue;
 
-                 if ((countForValue > 1 || total <= 10) && value.StartsWith(guidance.Value, StringComparison.OrdinalIgnoreCase))
+                 if ((countForValue > 1 || total <= 10) && value.StartsWith(guidance.Value, StringComparison.OrdinalIgnoreCase) && value.Length < 100)
                 {
                     suggestions.Add(new IntelliSenseItem(QueryTokenCategory.Value, QueryParser.WrapValue(topValues.Values[i, 0]), countForValue, topValues.Total));
                 }

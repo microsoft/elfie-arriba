@@ -74,7 +74,8 @@ namespace Arriba.Server.Application
                 Table sample = new Table("Sample", 100);
                 sample.AddOrUpdate(block, new AddOrUpdateOptions() { AddMissingColumns = true });
 
-                result.Columns = sample.ColumnDetails;
+                // Return the created columns in the order they appeared in the CSV
+                result.Columns = sample.ColumnDetails.OrderBy((cd) => block.IndexOfColumn(cd.Name)).ToList();
                 
                 // Return the columns and row count from the sample
                 return ArribaResponse.Ok(result);

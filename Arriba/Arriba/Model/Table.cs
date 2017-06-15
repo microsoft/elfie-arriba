@@ -399,7 +399,7 @@ namespace Arriba.Model
                 }
 
                 // Add the column if it had any non-default values (and didn't already exist)
-                if (hasNonDefaultValues) columnsToAdd.Add(details);
+                if (hasNonDefaultValues || details.IsPrimaryKey) columnsToAdd.Add(details);
             }
 
             // Add the discovered columns. If any names match existing columns they'll be merged properly in Partition.AddColumn.
