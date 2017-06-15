@@ -110,7 +110,7 @@ namespace Arriba.Server.Application
                     foreach (var blockBatch in reader.ReadAsDataBlockBatch(BatchSize))
                     {
                         response.RowCount += blockBatch.RowCount;
-                        table.AddOrUpdate(blockBatch);
+                        table.AddOrUpdate(blockBatch, new AddOrUpdateOptions() { AddMissingColumns = true });
                     }
                 }
             }
@@ -131,7 +131,7 @@ namespace Arriba.Server.Application
             using (ctx.Monitor(MonitorEventLevel.Information, "Import.DataBlock", type: "Table", identity: tableName))
             {
                 DataBlock block = await ctx.Request.ReadBodyAsync<DataBlock>();
-                table.AddOrUpdate(block);
+                table.AddOrUpdate(block, new AddOrUpdateOptions() { AddMissingColumns = true });
 
                 ImportResponse response = new ImportResponse();
                 response.TableName = tableName;
@@ -216,7 +216,7 @@ namespace Arriba.Server.Application
                         }
                     }
 
-                    table.AddOrUpdate(block);
+                    table.AddOrUpdate(block, new AddOrUpdateOptions() { AddMissingColumns = true });
                 }
 
                 using (ctx.Monitor(MonitorEventLevel.Verbose, "table.save"))

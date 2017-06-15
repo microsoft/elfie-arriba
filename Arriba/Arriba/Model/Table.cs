@@ -351,7 +351,7 @@ namespace Arriba.Model
 
                 // If not, is the DataBlock column array typed?
                 determinedType = determinedType ?? values.GetTypeForColumn(columnIndex);
-                if (determinedType == typeof(object)) determinedType = null;
+                if (determinedType == typeof(object) || determinedType == typeof(Value)) determinedType = null;
 
                 // Get the column default, if provided, or the default for the type, if provided
                 object columnDefault = details.Default;
@@ -382,10 +382,10 @@ namespace Arriba.Model
                         }
                     }
 
-                    // Track whether any non-default values were seen
-                    if (hasNonDefaultValues == false && value != null && !"".Equals(value) && !defaultUtc.Equals(value))
+                    // Track whether any non-default values were seen [could be raw types or Value wrapper]
+                    if (hasNonDefaultValues == false && value != null && !value.Equals("") && !value.Equals(defaultUtc))
                     {
-                        if (columnDefault == null || columnDefault.Equals(value) == false)
+                        if (columnDefault == null || value.Equals(columnDefault) == false)
                         {
                             hasNonDefaultValues = true;
                         }
@@ -393,7 +393,10 @@ namespace Arriba.Model
                 }
 
                 // Set the column type
-                details.Type = (determinedType ?? inferredType ?? typeof(string)).Name;
+                if (String.IsNullOrEmpty(details.Type) || details.Type.Equals("Unknown"))
+                {
+                    details.Type = (determinedType ?? inferredType ?? typeof(string)).Name;
+                }
 
                 // Add the column if it had any non-default values (and didn't already exist)
                 if (hasNonDefaultValues) columnsToAdd.Add(details);
