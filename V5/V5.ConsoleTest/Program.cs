@@ -42,9 +42,9 @@ namespace V5.ConsoleTest
             this.WhenAdded = BinarySerializer.Read<long>(Path.Combine(filePath, "WhenAdded", "V"));//.ToDateTimeArray();
             this.ZipCode = BinarySerializer.Read<int>(Path.Combine(filePath, "ZipCode", "V"));
 
-            this.BirthDateBuckets.Read(Path.Combine(filePath, "BirthDate"));
-            this.WhenAddedBuckets.Read(Path.Combine(filePath, "WhenAdded"));
-            this.ZipCodeBuckets.Read(Path.Combine(filePath, "ZipCode"));
+            //this.BirthDateBuckets.Read(Path.Combine(filePath, "BirthDate"));
+            //this.WhenAddedBuckets.Read(Path.Combine(filePath, "WhenAdded"));
+            //this.ZipCodeBuckets.Read(Path.Combine(filePath, "ZipCode"));
         }
 
         public void Save(string filePath)
@@ -53,9 +53,9 @@ namespace V5.ConsoleTest
             BinarySerializer.Write(Path.Combine(filePath, "WhenAdded", "V"), this.WhenAdded);//.ToPrimitiveArray());
             BinarySerializer.Write(Path.Combine(filePath, "ZipCode", "V"), this.ZipCode);
 
-            this.BirthDateBuckets.Write(Path.Combine(filePath, "BirthDate"));
-            this.WhenAddedBuckets.Write(Path.Combine(filePath, "WhenAdded"));
-            this.ZipCodeBuckets.Write(Path.Combine(filePath, "ZipCode"));
+            //this.BirthDateBuckets.Write(Path.Combine(filePath, "BirthDate"));
+            //this.WhenAddedBuckets.Write(Path.Combine(filePath, "WhenAdded"));
+            //this.ZipCodeBuckets.Write(Path.Combine(filePath, "ZipCode"));
         }
     }
 
@@ -92,15 +92,15 @@ namespace V5.ConsoleTest
                     }
                 }
 
-                using (new TraceWatch("Indexing Database..."))
-                {
-                    db.Index(new Random(0));
-                }
-
                 using (new TraceWatch("Saving Database..."))
                 {
                     db.Save(PartitionPath);
                 }
+            }
+
+            using (new TraceWatch("Indexing Database..."))
+            {
+                db.Index(new Random(0));
             }
 
             IndexSet managedSet = new IndexSet(0, db.Count);

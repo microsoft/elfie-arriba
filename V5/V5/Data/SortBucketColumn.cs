@@ -2,6 +2,7 @@
 using System.IO;
 using System.Threading.Tasks;
 using V5.Extensions;
+using V5.Serialization;
 
 namespace V5.Data
 {
@@ -22,7 +23,7 @@ namespace V5.Data
             this.Minimum = minimums;
             this.RowBucketIndex = rowBucketIndex;
 
-            this.IsMultiValue = new bool[minimums.Length];
+            this.IsMultiValue = new bool[minimums.Length - 1];
             this.RowCount = new int[minimums.Length];
         }
 
@@ -50,11 +51,13 @@ namespace V5.Data
             if (other.Max.CompareTo(this.Max) > 0) this.Max = other.Max;
 
             // Merge IsMultiValue, RowCount
-            for (int i = 0; i < this.Minimum.Length; ++i)
+            for (int i = 0; i < this.Minimum.Length - 1; ++i)
             {
                 this.IsMultiValue[i] |= other.IsMultiValue[i];
                 this.RowCount[i] += other.RowCount[i];
             }
+
+            this.RowCount[this.RowCount.Length - 1] += other.RowCount[other.RowCount.Length - 1];
         }
 
         public static T[] ChooseBuckets(T[] values, int bucketCount, Random r)
