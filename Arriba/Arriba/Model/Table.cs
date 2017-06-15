@@ -382,10 +382,10 @@ namespace Arriba.Model
                         }
                     }
 
-                    // Track whether any non-default values were seen
-                    if (hasNonDefaultValues == false && value != null && !"".Equals(value) && !defaultUtc.Equals(value))
+                    // Track whether any non-default values were seen [could be raw types or Value wrapper]
+                    if (hasNonDefaultValues == false && value != null && !value.Equals("") && !value.Equals(defaultUtc))
                     {
-                        if (columnDefault == null || columnDefault.Equals(value) == false)
+                        if (columnDefault == null || value.Equals(columnDefault) == false)
                         {
                             hasNonDefaultValues = true;
                         }
@@ -393,7 +393,7 @@ namespace Arriba.Model
                 }
 
                 // Set the column type
-                details.Type = (determinedType ?? inferredType ?? typeof(string)).Name;
+                details.Type = details.Type ?? (inferredType ?? typeof(string)).Name;
 
                 // Add the column if it had any non-default values (and didn't already exist)
                 if (hasNonDefaultValues) columnsToAdd.Add(details);
