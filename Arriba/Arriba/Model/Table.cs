@@ -393,7 +393,10 @@ namespace Arriba.Model
                 }
 
                 // Set the column type
-                details.Type = details.Type ?? (inferredType ?? typeof(string)).Name;
+                if (String.IsNullOrEmpty(details.Type) || details.Type.Equals("Unknown"))
+                {
+                    details.Type = (determinedType ?? inferredType ?? typeof(string)).Name;
+                }
 
                 // Add the column if it had any non-default values (and didn't already exist)
                 if (hasNonDefaultValues) columnsToAdd.Add(details);
