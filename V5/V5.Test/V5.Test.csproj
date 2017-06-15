@@ -88,6 +88,7 @@
     <Compile Include="Data\SortBucketColumnTests.cs" />
     <Compile Include="Collections\IndexSetTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Serialization\BinarySerializerTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

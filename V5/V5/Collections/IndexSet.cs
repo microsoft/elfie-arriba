@@ -155,8 +155,6 @@ namespace V5.Collections
             }
         }
 
-        public long LengthBytes => 8 * (1 + this.bitVector.Length);
-
         public void WriteBinary(BinaryWriter writer)
         {
             ulong offsetAndLength = (this.offset << 32) + this.length;

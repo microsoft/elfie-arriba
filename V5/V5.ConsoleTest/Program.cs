@@ -114,7 +114,7 @@ namespace V5.ConsoleTest
                 () => { int x = nativeSet.Count; }
             );
 
-            Benchmark.Compare("BirthDate > 1980-01-01 AND ZIP > 90000", 100, db.Count, new string[] { "Managed Hand-Coded", "Native Hand-Coded", "Native separate and" },
+            Benchmark.Compare("BirthDate > 1980-01-01 AND ZIP > 90000", 10, db.Count, new string[] { "Managed Hand-Coded", "Native Hand-Coded", "Native separate and" },
                 () => CountCustom(db),
                 () => CountNative(db, nativeSet),
                 () => CountNativeSeparate(db, nativeSet, scratchSet)

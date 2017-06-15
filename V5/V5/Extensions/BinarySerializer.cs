@@ -47,7 +47,7 @@ namespace V5
             return null;
         }
 
-        public static void Write<T>(string filePath, T[] array)
+        public static void Write<T>(string filePath, T[] array, int index = 0, int length = -1)
         {
             string fullPath = $"{filePath}.{TypeIdentifier<T>()}.bin";
             string temporaryPath = Path.ChangeExtension(fullPath, ".new");
@@ -61,7 +61,7 @@ namespace V5
             FileStream s = new FileStream(temporaryPath, FileMode.Create, FileAccess.Write, FileShare.Delete);
             using (BinaryWriter writer = new BinaryWriter(s))
             {
-                writer.Write(array);
+                writer.Write(array, index, length);
                 lengthWritten = s.Position;
             }
 
@@ -83,6 +83,8 @@ namespace V5
         {
             string fullPath = $"{filePath}.{TypeIdentifier<T>()}.bin";
 
+            if (!File.Exists(fullPath)) return Array.Empty<T>();
+
             FileStream s = new FileStream(fullPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             using (BinaryReader reader = new BinaryReader(s))
             {
@@ -93,6 +95,14 @@ namespace V5
 
     public static class BinaryReaderWriterExtensions
     {
+        private const int BufferLengthBytes = 32 * 1024;
+
+        private static int ElementSize<T>()
+        {
+            if (typeof(T) == typeof(bool)) return 1;
+            return Marshal.SizeOf<T>();
+        }
+
         /// <summary>
         ///  Write an array of a primitive type as a single write operation.
         /// </summary>
@@ -105,24 +115,35 @@ namespace V5
             // Default length if not provided
             if (length == -1) length = array.Length - index;
 
+            if (length == 0) return;
+
             // Validate arguments
             if (array == null) throw new ArgumentNullException("array");
             if (index < 0 || index > array.Length) throw new ArgumentOutOfRangeException("index");
             if (length < 0 || index + length > array.Length) throw new ArgumentOutOfRangeException("length");
 
-            // Copy array to byte[] for serialization
-            int elementSize = Marshal.SizeOf<T>();
-
-            byte[] buffer = new byte[64 * 1024];
-
-            int nextIndex = 0;
-            while (nextIndex < length)
+            // Write byte[] directly
+            if(typeof(T) == typeof(byte))
             {
-                int itemsToCopy = Math.Min(buffer.Length / elementSize, (length - nextIndex));
-                Buffer.BlockCopy(array, nextIndex, buffer, 0, itemsToCopy);
-                writer.Write(buffer, 0, itemsToCopy * elementSize);
+                writer.Write((byte[])(Array)array, index, length);
+                return;
+            }
 
-                nextIndex += itemsToCopy;
+            // Copy array to byte[] for serialization
+            int elementSize = ElementSize<T>();
+            int lengthBytes = (index + length) * elementSize;
+
+            byte[] buffer = new byte[BufferLengthBytes];
+
+            int nextByteIndex = index * elementSize;
+            while (nextByteIndex < lengthBytes)
+            {
+                int blockSizeBytes = Math.Min(buffer.Length, lengthBytes - nextByteIndex);
+
+                Buffer.BlockCopy(array, nextByteIndex, buffer, 0, blockSizeBytes);
+                writer.Write(buffer, 0, blockSizeBytes);
+
+                nextByteIndex += blockSizeBytes;
             }
         }
 
@@ -134,28 +155,34 @@ namespace V5
         /// <returns>T[] from the binary stream with the number of elements the stream says were written</returns>
         public static T[] ReadArray<T>(this BinaryReader reader, long lengthBytes)
         {
-            int elementSize = Marshal.SizeOf<T>();
+            if (lengthBytes == 0) return Array.Empty<T>();
+
+            int elementSize = ElementSize<T>();
             long arrayLength = lengthBytes / elementSize;
 
-            byte[] buffer = new byte[1024 * 64];
             T[] values = new T[arrayLength];
 
-            int nextIndex = 0;
-            while (nextIndex < arrayLength)
+            // Read byte[] directly
+            if (typeof(T) == typeof(byte))
+            {
+                reader.Read((byte[])(Array)values, 0, (int)lengthBytes);
+                return values;
+            }
+
+            // Otherwise, read through a byte buffer
+            byte[] buffer = new byte[BufferLengthBytes];
+
+            int nextByteIndex = 0;
+            while (nextByteIndex < lengthBytes)
             {
                 int bytesRead = reader.Read(buffer, 0, buffer.Length);
                 if (bytesRead <= 0) break;
 
-                Buffer.BlockCopy(buffer, 0, values, nextIndex, bytesRead);
-                nextIndex += bytesRead / elementSize;
+                Buffer.BlockCopy(buffer, 0, values, nextByteIndex, bytesRead);
+                nextByteIndex += bytesRead;
             }
 
             return values;
-        }
-
-        public static long LengthBytes<T>(this T[] array)
-        {
-            return array.Length * Marshal.SizeOf<T>();
         }
     }
 }

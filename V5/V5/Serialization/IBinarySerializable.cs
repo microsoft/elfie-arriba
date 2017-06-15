@@ -12,11 +12,6 @@ namespace V5.Serialization
         void ReadBinary(BinaryReader reader, long length);
 
         /// <summary>
-        ///  Get the length needed to write this object.
-        /// </summary>
-        long LengthBytes { get; }
-
-        /// <summary>
         ///  Write this object to the given writer at the current position.
         /// </summary>
         /// <param name="writer">BinaryWriter to write to</param>
