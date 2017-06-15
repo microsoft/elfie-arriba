@@ -361,7 +361,7 @@ namespace Arriba.Model
                 }
 
                 Type inferredType = null;
-                Value v = Value.Create(details.Default);
+                Value v = Value.Create(null);
                 DateTime defaultUtc = default(DateTime).ToUniversalTime();
 
                 for (int rowIndex = 0; rowIndex < values.RowCount; ++rowIndex)
@@ -393,7 +393,7 @@ namespace Arriba.Model
                 }
 
                 // Set the column type
-                if (String.IsNullOrEmpty(details.Type) || details.Type.Equals("Unknown"))
+                if (String.IsNullOrEmpty(details.Type) || details.Type.Equals(Arriba.Model.Column.ColumnDetails.UnknownType))
                 {
                     details.Type = (determinedType ?? inferredType ?? typeof(string)).Name;
                 }
