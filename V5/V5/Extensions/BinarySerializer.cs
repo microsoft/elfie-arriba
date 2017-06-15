@@ -74,6 +74,7 @@ namespace V5
             else
             {
                 // Otherwise, replace the previous official file with the new one
+                File.Delete(fullPath);
                 File.Move(temporaryPath, fullPath);
             }
         }
@@ -111,11 +112,18 @@ namespace V5
 
             // Copy array to byte[] for serialization
             int elementSize = Marshal.SizeOf<T>();
-            byte[] buffer = new byte[elementSize * length];
-            Buffer.BlockCopy(array, elementSize * index, buffer, 0, elementSize * length);
 
-            // Write the bytes
-            writer.Write(buffer);
+            byte[] buffer = new byte[64 * 1024];
+
+            int nextIndex = 0;
+            while (nextIndex < length)
+            {
+                int itemsToCopy = Math.Min(buffer.Length / elementSize, (length - nextIndex));
+                Buffer.BlockCopy(array, nextIndex, buffer, 0, itemsToCopy);
+                writer.Write(buffer, 0, itemsToCopy * elementSize);
+
+                nextIndex += itemsToCopy;
+            }
         }
 
         /// <summary>
