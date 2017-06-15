@@ -382,8 +382,8 @@ namespace Arriba.Model
                         }
                     }
 
-                    // Track whether any non-default values were seen
-                    if (hasNonDefaultValues == false && value != null && !"".Equals(value) && !defaultUtc.Equals(value))
+                    // Track whether any non-default values were seen [could be raw types or Value wrapper]
+                    if (hasNonDefaultValues == false && value != null && !value.Equals("") && !value.Equals(defaultUtc))
                     {
                         if (columnDefault == null || columnDefault.Equals(value) == false)
                         {

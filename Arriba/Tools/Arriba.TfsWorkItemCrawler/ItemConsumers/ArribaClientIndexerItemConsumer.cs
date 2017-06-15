@@ -58,8 +58,7 @@ namespace Arriba.TfsWorkItemCrawler.ItemConsumers
                 this.Table.SetPermissionsAsync(permissions).Wait();
             }
 
-            // Verify all columns match requested types [will throw if column exists but as different type]
-            this.Table.AddColumnsAsync(columns).Wait();
+            // Columns will be added dynamically
         }
 
         public void Append(DataBlock items)
