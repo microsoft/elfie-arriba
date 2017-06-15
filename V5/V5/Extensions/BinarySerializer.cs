@@ -129,15 +129,18 @@ namespace V5
             int elementSize = Marshal.SizeOf<T>();
             long arrayLength = lengthBytes / elementSize;
 
-            // Read raw bytes
-            byte[] buffer = reader.ReadBytes((int)lengthBytes);
-
-            // Return byte[] directly
-            if (typeof(T) == typeof(byte)) return (T[])(Array)buffer;
-
-            // Copy to array of final type
+            byte[] buffer = new byte[1024 * 64];
             T[] values = new T[arrayLength];
-            Buffer.BlockCopy(buffer, 0, values, 0, (int)lengthBytes);
+
+            int nextIndex = 0;
+            while (nextIndex < arrayLength)
+            {
+                int bytesRead = reader.Read(buffer, 0, buffer.Length);
+                if (bytesRead <= 0) break;
+
+                Buffer.BlockCopy(buffer, 0, values, nextIndex, bytesRead);
+                nextIndex += bytesRead / elementSize;
+            }
 
             return values;
         }
