@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Linq;
+using System.IO;
 using System.Threading.Tasks;
 using V5.Extensions;
 
@@ -162,6 +162,20 @@ namespace V5.Data
             isExact = (index < 0);
             if (isExact) index = ~index;
             return index;
+        }
+
+        public void Read(string filePath)
+        {
+            this.Minimum = BinarySerializer.Read<T>(Path.Combine(filePath, "SV"));
+            this.IsMultiValue = BinarySerializer.Read<bool>(Path.Combine(filePath, "SSV"));
+            this.RowCount = BinarySerializer.Read<int>(Path.Combine(filePath, "SSC"));
+        }
+
+        public void Write(string filePath)
+        {
+            BinarySerializer.Write(Path.Combine(filePath, "SV"), this.Minimum);
+            BinarySerializer.Write(Path.Combine(filePath, "SSV"), this.IsMultiValue);
+            BinarySerializer.Write(Path.Combine(filePath, "SC"), this.RowCount);
         }
     }
 }

@@ -12,10 +12,9 @@ namespace V5.Serialization
         void ReadBinary(BinaryReader reader, long length);
 
         /// <summary>
-        ///  Prepare this instance to be written (sorting, remapping, etc), and return whether
-        ///  it needs to be written (whether it's changed since it was loaded/created).
+        ///  Get the length needed to write this object.
         /// </summary>
-        bool PrepareToWrite();
+        long LengthBytes { get; }
 
         /// <summary>
         ///  Write this object to the given writer at the current position.

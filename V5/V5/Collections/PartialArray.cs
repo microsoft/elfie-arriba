@@ -107,6 +107,8 @@ namespace V5.Collections
             this._isDirty = false;
         }
 
+        public long LengthBytes => this._items.LengthBytes();
+
         public void WriteBinary(BinaryWriter writer)
         {
             writer.Write(this._items, 0, this._count);

@@ -1,26 +1,30 @@
 ﻿using System;
+using System.IO;
 using V5.Query;
+using V5.Serialization;
 
 namespace V5.Collections
 {
-    public class IndexSet
+    /// <summary>
+    ///  IndexSet is a bit vector which contains a set of indexes in the range [offset, offset + length).
+    ///  It stores them as single bits in an array to keep them extremely compact.
+    /// </summary>
+    public class IndexSet : IBinarySerializable, IEquatable<IndexSet>
     {
-        private int offset;
-        private int length;
+        private uint offset;
+        private uint length;
 
         private ulong[] bitVector;
 
-        public IndexSet(int offset, int length)
+        public IndexSet(uint offset, uint length)
         {
             this.offset = offset;
             this.length = length;
             this.bitVector = new ulong[(length + 63) >> 6];
         }
 
-        public int Count
-        {
-            get => IndexSetN.Count(this.bitVector);
-        }
+        public IndexSet(int offset, int length) : this((uint)offset, (uint)length)
+        { }
 
         public bool this[int index]
         {
@@ -36,6 +40,11 @@ namespace V5.Collections
                     this.bitVector[index >> 6] &= ~(0x1UL << (index & 63));
                 }
             }
+        }
+
+        public int Count
+        {
+            get => IndexSetN.Count(this.bitVector);
         }
 
         public bool Equals(IndexSet other)
@@ -71,11 +80,17 @@ namespace V5.Collections
             // Turn off bits over 'length'
             if ((length & 63) > 0)
             {
-                this.bitVector[this.bitVector.Length - 1] &= (ulong.MaxValue >> (64 - (length & 63)));
+                this.bitVector[this.bitVector.Length - 1] &= (ulong.MaxValue >> (64 - (int)(length & 63)));
             }
 
             return this;
         }
+
+        //public IndexSet And<T>(T[] values, Operator op, T value)
+        //{
+        //    IndexSetN.AndWhereGreaterThan<T>(values, value, this.bitVector);
+        //    return this;
+        //}
 
         public IndexSet And(Array values, Operator op, object value)
         {
@@ -120,6 +135,33 @@ namespace V5.Collections
             }
 
             return this;
+        }
+
+        public void ReadBinary(BinaryReader reader, long length)
+        {
+            if (length == 0)
+            {
+                this.offset = 0;
+                this.length = 0;
+                this.bitVector = Array.Empty<ulong>();
+            }
+            else
+            {
+                ulong offsetAndLength = reader.ReadUInt64();
+                this.offset = (uint)((offsetAndLength >> 32) & uint.MaxValue);
+                this.length = (uint)(offsetAndLength & uint.MaxValue);
+
+                this.bitVector = reader.ReadArray<ulong>(length - 8);
+            }
+        }
+
+        public long LengthBytes => 8 * (1 + this.bitVector.Length);
+
+        public void WriteBinary(BinaryWriter writer)
+        {
+            ulong offsetAndLength = (this.offset << 32) + this.length;
+            writer.Write(offsetAndLength);
+            writer.Write(this.bitVector);
         }
     }
 }

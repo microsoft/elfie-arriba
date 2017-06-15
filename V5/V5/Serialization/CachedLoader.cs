@@ -100,8 +100,6 @@ namespace V5.Serialization
 
         private void Save(CacheEntry entry)
         {
-            if (!entry.Item.PrepareToWrite()) return;
-
             string filePath = Path.Combine(this.BasePath, entry.Identifier);
             string temporaryPath = Path.ChangeExtension(filePath, ".new");
 
@@ -139,10 +137,7 @@ namespace V5.Serialization
 
             foreach(CacheEntry entry in this.CachedItems.Values.OrderBy((entry) => entry.UseCount / entry.SizeBytes))
             {
-                if (entry.Item.PrepareToWrite())
-                {
-                    Save(entry);
-                }
+                Save(entry);
 
                 removed.Add(entry);                
                 this.CurrentUseBytes -= entry.SizeBytes;

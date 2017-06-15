@@ -73,7 +73,7 @@ namespace V5.Extensions
             if (countToSample * 4 < values.Length)
             {
                 // If there are many more values than samples, choose indices randomly which aren't yet included
-                IndexSet set = new IndexSet(0, values.Length);
+                IndexSet set = new IndexSet(0, (uint)values.Length);
                 while (samplesAdded < countToSample)
                 {
                     int sourceIndex = r.Next(0, values.Length);

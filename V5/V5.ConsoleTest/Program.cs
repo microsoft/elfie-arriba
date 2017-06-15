@@ -5,13 +5,12 @@ using System.Diagnostics;
 using System.IO;
 using V5.Collections;
 using V5.Data;
-using V5.Extensions;
 
 namespace V5.ConsoleTest
 {
     public class PersonDatabase
     {
-        public const int ParallelCount = 1;
+        public const int ParallelCount = 2;
 
         public long[] BirthDate;
         public long[] WhenAdded;
@@ -30,13 +29,6 @@ namespace V5.ConsoleTest
 
         public int Count => this.BirthDate.Length;
 
-        public void Load(string filePath)
-        {
-            this.BirthDate = BinarySerializer.Read<long>(Path.Combine(filePath, "BirthDate", "V.d64.bin"));//.ToDateTimeArray();
-            this.WhenAdded = BinarySerializer.Read<long>(Path.Combine(filePath, "WhenAdded", "V.d64.bin"));//.ToDateTimeArray();
-            this.ZipCode = BinarySerializer.Read<int>(Path.Combine(filePath, "ZipCode", "V.i32.bin"));
-        }
-
         public void Index(Random r)
         {
             this.BirthDateBuckets = SortBucketColumn<long>.Build(this.BirthDate, 255, r, ParallelCount);
@@ -44,20 +36,37 @@ namespace V5.ConsoleTest
             this.ZipCodeBuckets = SortBucketColumn<int>.Build(this.ZipCode, 255, r, ParallelCount);
         }
 
+        public void Load(string filePath)
+        {
+            this.BirthDate = BinarySerializer.Read<long>(Path.Combine(filePath, "BirthDate", "V"));//.ToDateTimeArray();
+            this.WhenAdded = BinarySerializer.Read<long>(Path.Combine(filePath, "WhenAdded", "V"));//.ToDateTimeArray();
+            this.ZipCode = BinarySerializer.Read<int>(Path.Combine(filePath, "ZipCode", "V"));
+
+            this.BirthDateBuckets.Read(Path.Combine(filePath, "BirthDate"));
+            this.WhenAddedBuckets.Read(Path.Combine(filePath, "WhenAdded"));
+            this.ZipCodeBuckets.Read(Path.Combine(filePath, "ZipCode"));
+        }
+
         public void Save(string filePath)
         {
-            BinarySerializer.Write(Path.Combine(filePath, "BirthDate", "V.d64.bin"), BirthDate);//.ToPrimitiveArray());
-            BinarySerializer.Write(Path.Combine(filePath, "WhenAdded", "V.d64.bin"), WhenAdded);//.ToPrimitiveArray());
-            BinarySerializer.Write(Path.Combine(filePath, "ZipCode", "V.i32.bin"), this.ZipCode);
+            BinarySerializer.Write(Path.Combine(filePath, "BirthDate", "V"), this.BirthDate);//.ToPrimitiveArray());
+            BinarySerializer.Write(Path.Combine(filePath, "WhenAdded", "V"), this.WhenAdded);//.ToPrimitiveArray());
+            BinarySerializer.Write(Path.Combine(filePath, "ZipCode", "V"), this.ZipCode);
+
+            this.BirthDateBuckets.Write(Path.Combine(filePath, "BirthDate"));
+            this.WhenAddedBuckets.Write(Path.Combine(filePath, "WhenAdded"));
+            this.ZipCodeBuckets.Write(Path.Combine(filePath, "ZipCode"));
         }
     }
 
     class Program
     {
-        public const string PartitionPath = @"..\..\..\..\DiskCache\Tables\Person\0";
+        public const string PartitionPath = @"..\..\..\DiskCache\Tables\Person\0";
 
         static void Main(string[] args)
         {
+            bool isBoolPrimitive = typeof(bool).IsPrimitive;
+
             long rowCount = 8 * 1000 * 1000; // 0x1 << 23
             PersonDatabase db = new PersonDatabase(rowCount);
 
@@ -83,15 +92,15 @@ namespace V5.ConsoleTest
                     }
                 }
 
+                using (new TraceWatch("Indexing Database..."))
+                {
+                    db.Index(new Random(0));
+                }
+
                 using (new TraceWatch("Saving Database..."))
                 {
                     db.Save(PartitionPath);
                 }
-            }
-
-            using (new TraceWatch("Indexing Database..."))
-            {
-                db.Index(new Random(0));
             }
 
             IndexSet managedSet = new IndexSet(0, db.Count);
