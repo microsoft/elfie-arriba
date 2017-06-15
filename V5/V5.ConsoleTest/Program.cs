@@ -27,7 +27,7 @@ namespace V5.ConsoleTest
             this.ZipCode = new int[capacity];
         }
 
-        public int Count => this.BirthDate.Length;
+        public uint Count => (uint)this.BirthDate.Length;
 
         public void Index(Random r)
         {
@@ -134,10 +134,9 @@ namespace V5.ConsoleTest
 
             ulong[] directVector = new ulong[db.Count + 63 >> 6];
 
-            Benchmark.Compare("Find Items in Range", 100, rowCount, new string[] { "Managed", "Native", "NativeDirect" },
+            Benchmark.Compare("Find Items in Range", 100, rowCount, new string[] { "Managed", "Native" },
                 () => WhereGreaterThan(db.BirthDateBuckets.RowBucketIndex, edge, managedSet),
-                () => nativeSet.And(db.BirthDateBuckets.RowBucketIndex, Query.Operator.GreaterThan, edge),
-                () => IndexSetN.AndWhereGreaterThan(db.BirthDateBuckets.RowBucketIndex, edge, directVector)
+                () => nativeSet.And(db.BirthDateBuckets.RowBucketIndex, Query.Operator.GreaterThan, edge)
             );
         }
 

@@ -133,14 +133,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="IndexSetN.h" />
+    <ClInclude Include="IndexSet.h" />
+    <ClInclude Include="Operator.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="SortBucketColumnN.h" />
     <ClInclude Include="Stdafx.h" />
     <ClInclude Include="String8Native.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="IndexSetN.cpp" />
+    <ClCompile Include="IndexSet.cpp" />
     <ClCompile Include="AssemblyInfo.cpp" />
     <ClCompile Include="SortBucketColumnN.cpp" />
     <ClCompile Include="Stdafx.cpp">

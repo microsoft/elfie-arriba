@@ -76,17 +76,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Collections\IndexSet.cs" />
     <Compile Include="Collections\PartialArray.cs" />
-    <Compile Include="Data\ColumnFactory.cs" />
     <Compile Include="Data\IColumn.cs" />
-    <Compile Include="Data\Partition.cs" />
-    <Compile Include="Data\PrimitiveColumn.cs" />
     <Compile Include="Data\SortBucketColumn.cs" />
     <Compile Include="Extensions\ArrayExtensions.cs" />
     <Compile Include="Extensions\BinarySerializer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Query\Operator.cs" />
     <Compile Include="Serialization\CachedLoader.cs" />
     <Compile Include="Serialization\IBinarySerializable.cs" />
   </ItemGroup>

@@ -27,7 +27,10 @@
     <ClInclude Include="SortBucketColumnN.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="IndexSetN.h">
+    <ClInclude Include="IndexSet.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Operator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -44,7 +47,7 @@
     <ClCompile Include="SortBucketColumnN.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="IndexSetN.cpp">
+    <ClCompile Include="IndexSet.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
