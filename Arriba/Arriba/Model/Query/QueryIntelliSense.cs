@@ -112,7 +112,7 @@ namespace Arriba.Model.Query
             if (percentage < 0.10) return percentage.ToString("P1");
 
             // Round 99% down if it's not every item (and thus "all")
-            if (percentage > 0.995) percentage = 0.99;
+            if (percentage > 0.99) percentage = 0.99;
 
             return percentage.ToString("P0");
         }
