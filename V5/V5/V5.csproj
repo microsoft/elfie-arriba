@@ -76,7 +76,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Collections\PartialArray.cs" />
     <Compile Include="Data\IColumn.cs" />
     <Compile Include="Data\SortBucketColumn.cs" />
     <Compile Include="Extensions\ArrayExtensions.cs" />
@@ -90,6 +89,9 @@
       <Project>{760fc534-0591-4209-a367-cda01aef52e0}</Project>
       <Name>V5.Native</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Collections\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

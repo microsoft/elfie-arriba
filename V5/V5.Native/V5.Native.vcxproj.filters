@@ -13,6 +13,18 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Collections">
+      <UniqueIdentifier>{fced4096-7897-4265-80bc-6c243cb9a141}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Data">
+      <UniqueIdentifier>{f7d9f08b-9320-43a9-8c62-4a2c394bf164}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Query">
+      <UniqueIdentifier>{a62ba026-afd2-4b40-8319-84db228e8139}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Text">
+      <UniqueIdentifier>{52246bdd-ed63-464d-99a8-12df7bc87011}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Stdafx.h">
@@ -21,17 +33,17 @@
     <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="String8Native.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="IndexSet.h">
+      <Filter>Collections</Filter>
     </ClInclude>
     <ClInclude Include="SortBucketColumnN.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="IndexSet.h">
-      <Filter>Header Files</Filter>
+      <Filter>Data</Filter>
     </ClInclude>
     <ClInclude Include="Operator.h">
-      <Filter>Header Files</Filter>
+      <Filter>Query</Filter>
+    </ClInclude>
+    <ClInclude Include="String8Native.h">
+      <Filter>Text</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -41,14 +53,14 @@
     <ClCompile Include="Stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="String8Native.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="IndexSet.cpp">
+      <Filter>Collections</Filter>
     </ClCompile>
     <ClCompile Include="SortBucketColumnN.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Data</Filter>
     </ClCompile>
-    <ClCompile Include="IndexSet.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="String8Native.cpp">
+      <Filter>Text</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
