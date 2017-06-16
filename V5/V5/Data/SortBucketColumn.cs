@@ -18,11 +18,12 @@ namespace V5.Data
 
         public byte[] RowBucketIndex;
 
-        internal SortBucketColumn(T[] minimums, byte[] rowBucketIndex)
+        private SortBucketColumn()
+        { }
+
+        internal SortBucketColumn(T[] minimums)
         {
             this.Minimum = minimums;
-            this.RowBucketIndex = rowBucketIndex;
-
             this.IsMultiValue = new bool[minimums.Length - 1];
             this.RowCount = new int[minimums.Length];
         }
@@ -44,20 +45,51 @@ namespace V5.Data
             get => this.RowCount[this.RowCount.Length - 1];
         }
 
-        internal void Merge(SortBucketColumn<T> other)
+        public static SortBucketColumn<T> Build(T[] values, int bucketCount, Random r, int parallelCount = 1)
         {
-            // Merge min and max
-            if (other.Min.CompareTo(this.Min) < 0) this.Min = other.Min;
-            if (other.Max.CompareTo(this.Max) > 0) this.Max = other.Max;
+            // Choose bucket ranges [serially]
+            T[] buckets = ChooseBuckets(values, bucketCount, r);
 
-            // Merge IsMultiValue, RowCount
-            for (int i = 0; i < this.Minimum.Length - 1; ++i)
+            // Build a single array for the bucket per row
+            byte[] rowBuckets = new byte[values.Length];
+
+            SortBucketColumn<T> result = new SortBucketColumn<T>(buckets);
+            result.RowBucketIndex = rowBuckets;
+
+            if (parallelCount <= 1)
             {
-                this.IsMultiValue[i] |= other.IsMultiValue[i];
-                this.RowCount[i] += other.RowCount[i];
+                // If non-parallel, bucket every row
+                result.BucketRows(values, 0, values.Length, rowBuckets);
+            }
+            else
+            {
+                int parallelPageSize = values.Length / parallelCount;
+
+                Parallel.For(0, parallelCount, (page) =>
+                {
+                    // Pick a distinct range of rows
+                    int index = parallelPageSize * page;
+                    int length = parallelPageSize;
+                    if (page == parallelCount - 1 && (values.Length & 1) == 1) length++;
+
+                    // Copy the bucket minimums (to avoid collisions when writing Min and Max)
+                    T[] bucketCopy = new T[buckets.Length];
+                    Array.Copy(buckets, bucketCopy, buckets.Length);
+
+                    // Build an inner SBC and bucket a slice of rows
+                    // NOTE: RowBuckets is shared because each thread writes a distinct range
+                    SortBucketColumn<T> slice = new SortBucketColumn<T>(bucketCopy);
+                    slice.BucketRows(values, index, length, rowBuckets);
+
+                    // Merge the result into our main set
+                    lock (result)
+                    {
+                        result.Merge(slice);
+                    }
+                });
             }
 
-            this.RowCount[this.RowCount.Length - 1] += other.RowCount[other.RowCount.Length - 1];
+            return result;
         }
 
         public static T[] ChooseBuckets(T[] values, int bucketCount, Random r)
@@ -107,55 +139,26 @@ namespace V5.Data
             return buckets;
         }
 
-        public static SortBucketColumn<T> Build(T[] values, int bucketCount, Random r, int parallelCount = 1)
+        private void BucketRows(T[] values, int index, int length, byte[] rowBuckets)
         {
-            // Choose bucket ranges [serially]
-            T[] buckets = ChooseBuckets(values, bucketCount, r);
-
-            // Build a single array for the bucket per row
-            byte[] rowBuckets = new byte[values.Length];
-
-            SortBucketColumn<T> result = new SortBucketColumn<T>(buckets, rowBuckets);
-
-            if (parallelCount <= 1)
-            {
-                // If non-parallel, bucket every row
-                result.BucketRows(values, 0, values.Length);
-            }
-            else
-            {
-                int parallelPageSize = values.Length / parallelCount;
-
-                Parallel.For(0, parallelCount, (page) =>
-                {
-                    // Pick a distinct range of rows
-                    int index = parallelPageSize * page;
-                    int length = parallelPageSize;
-                    if (page == parallelCount - 1 && (values.Length & 1) == 1) length++;
-
-                    // Copy the bucket minimums (to avoid collisions when writing Min and Max)
-                    T[] bucketCopy = new T[buckets.Length];
-                    Array.Copy(buckets, bucketCopy, buckets.Length);
-
-                    // Build an inner SBC and bucket a slice of rows
-                    // NOTE: RowBuckets is shared because each thread writes a distinct range
-                    SortBucketColumn<T> slice = new SortBucketColumn<T>(bucketCopy, rowBuckets);
-                    slice.BucketRows(values, index, length);
-
-                    // Merge the result into our main set
-                    lock (result)
-                    {
-                        result.Merge(slice);
-                    }
-                });
-            }
-
-            return result;
+            this.RowBucketIndex = rowBuckets;
+            SortBucketColumnN.Bucket<T>(values, index, length, this.Minimum, this.RowBucketIndex, this.RowCount, this.IsMultiValue);
         }
 
-        private void BucketRows(T[] values, int index, int length)
+        private void Merge(SortBucketColumn<T> other)
         {
-            SortBucketColumnN.Bucket<T>(values, index, length, this.Minimum, this.RowBucketIndex, this.RowCount, this.IsMultiValue);
+            // Merge min and max
+            if (other.Min.CompareTo(this.Min) < 0) this.Min = other.Min;
+            if (other.Max.CompareTo(this.Max) > 0) this.Max = other.Max;
+
+            // Merge IsMultiValue, RowCount
+            for (int i = 0; i < this.Minimum.Length - 1; ++i)
+            {
+                this.IsMultiValue[i] |= other.IsMultiValue[i];
+                this.RowCount[i] += other.RowCount[i];
+            }
+
+            this.RowCount[this.RowCount.Length - 1] += other.RowCount[other.RowCount.Length - 1];
         }
 
         public int BucketForValue(T value, out bool isExact)
@@ -167,11 +170,17 @@ namespace V5.Data
             return index;
         }
 
-        public void Read(string filePath)
+        public static SortBucketColumn<T> Read(string filePath)
         {
-            this.Minimum = BinarySerializer.Read<T>(Path.Combine(filePath, "SV"));
-            this.IsMultiValue = BinarySerializer.Read<bool>(Path.Combine(filePath, "SSV"));
-            this.RowCount = BinarySerializer.Read<int>(Path.Combine(filePath, "SSC"));
+            SortBucketColumn<T> result = new SortBucketColumn<T>();
+
+            result.Minimum = BinarySerializer.Read<T>(Path.Combine(filePath, "SV"));
+            result.IsMultiValue = BinarySerializer.Read<bool>(Path.Combine(filePath, "SSV"));
+            result.RowCount = BinarySerializer.Read<int>(Path.Combine(filePath, "SSC"));
+
+            result.RowBucketIndex = BinarySerializer.Read<byte>(Path.Combine(filePath, "SSR"));
+
+            return result;
         }
 
         public void Write(string filePath)
@@ -179,6 +188,8 @@ namespace V5.Data
             BinarySerializer.Write(Path.Combine(filePath, "SV"), this.Minimum);
             BinarySerializer.Write(Path.Combine(filePath, "SSV"), this.IsMultiValue);
             BinarySerializer.Write(Path.Combine(filePath, "SC"), this.RowCount);
+
+            BinarySerializer.Write(Path.Combine(filePath, "SSR"), this.RowBucketIndex);
         }
     }
 }
