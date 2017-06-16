@@ -25,22 +25,15 @@ void AndWhereGreaterThanInternal(unsigned __int8* set, int length, unsigned __in
 	int blockLength = length - (length & 63);
 	for (; i < blockLength; i += 64)
 	{
-		__m256i block1 = _mm256_loadu_si256((__m256i*)(&set[i]));
-		block1 = _mm256_sub_epi8(block1, signedToUnsigned);
-
+		__m256i block1 = _mm256_sub_epi8(_mm256_loadu_si256((__m256i*)(&set[i])), signedToUnsigned);
 		__m256i matchMask1 = _mm256_cmpgt_epi8(block1, blockOfValue);
 		unsigned int matchBits1 = _mm256_movemask_epi8(matchMask1);
 
-		__m256i block2 = _mm256_loadu_si256((__m256i*)(&set[i + 32]));
-		block2 = _mm256_sub_epi8(block2, signedToUnsigned);
-
+		__m256i block2 = _mm256_sub_epi8(_mm256_loadu_si256((__m256i*)(&set[i + 32])), signedToUnsigned);
 		__m256i matchMask2 = _mm256_cmpgt_epi8(block2, blockOfValue);
 		unsigned int matchBits2 = _mm256_movemask_epi8(matchMask2);
 
-		unsigned __int64 result = matchBits2;
-		result = result << 32;
-		result |= matchBits1;
-
+		unsigned __int64 result = ((unsigned __int64)matchBits2) << 32 | matchBits1;
 		matchVector[i >> 6] &= result;
 	}
 

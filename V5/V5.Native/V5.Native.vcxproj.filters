@@ -1,18 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
-    </Filter>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
     <Filter Include="Collections">
       <UniqueIdentifier>{fced4096-7897-4265-80bc-6c243cb9a141}</UniqueIdentifier>
     </Filter>
@@ -22,16 +10,20 @@
     <Filter Include="Query">
       <UniqueIdentifier>{a62ba026-afd2-4b40-8319-84db228e8139}</UniqueIdentifier>
     </Filter>
+    <Filter Include="_Base">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
     <Filter Include="Text">
-      <UniqueIdentifier>{52246bdd-ed63-464d-99a8-12df7bc87011}</UniqueIdentifier>
+      <UniqueIdentifier>{d553130b-43d4-40f0-8f98-91688b68d9d5}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Stdafx.h">
-      <Filter>Header Files</Filter>
+      <Filter>_Base</Filter>
     </ClInclude>
     <ClInclude Include="resource.h">
-      <Filter>Header Files</Filter>
+      <Filter>_Base</Filter>
     </ClInclude>
     <ClInclude Include="IndexSet.h">
       <Filter>Collections</Filter>
@@ -47,30 +39,30 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="AssemblyInfo.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Stdafx.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="IndexSet.cpp">
       <Filter>Collections</Filter>
     </ClCompile>
     <ClCompile Include="SortBucketColumnN.cpp">
       <Filter>Data</Filter>
     </ClCompile>
+    <ClCompile Include="AssemblyInfo.cpp">
+      <Filter>_Base</Filter>
+    </ClCompile>
+    <ClCompile Include="Stdafx.cpp">
+      <Filter>_Base</Filter>
+    </ClCompile>
     <ClCompile Include="String8Native.cpp">
       <Filter>Text</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="app.rc">
-      <Filter>Resource Files</Filter>
-    </ResourceCompile>
+    <Image Include="app.ico">
+      <Filter>_Base</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="app.ico">
-      <Filter>Resource Files</Filter>
-    </Image>
+    <ResourceCompile Include="app.rc">
+      <Filter>_Base</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>
