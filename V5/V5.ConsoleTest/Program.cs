@@ -103,18 +103,18 @@ namespace V5.ConsoleTest
                 db.Index(new Random(0));
             }
 
-            IndexSet managedSet = new IndexSet(0, db.Count);
-            IndexSet nativeSet = new IndexSet(0, db.Count).All();
-            IndexSet scratchSet = new IndexSet(0, db.Count);
+            IndexSet managedSet = new IndexSet(db.Count);
+            IndexSet nativeSet = new IndexSet(db.Count).All(db.Count);
+            IndexSet scratchSet = new IndexSet(db.Count);
             int managedMatches = CountCustom(db);
 
             Benchmark.Compare("IndexSet Ops", 1000, db.Count, new string[] { "All", "None", "Count" },
-                () => nativeSet.All(),
+                () => nativeSet.All(db.Count),
                 () => nativeSet.None(),
                 () => { int x = nativeSet.Count; }
             );
 
-            Benchmark.Compare("BirthDate > 1980-01-01 AND ZIP > 90000", 10, db.Count, new string[] { "Managed Hand-Coded", "Native Hand-Coded", "Native separate and" },
+            Benchmark.Compare("BirthDate > 1980-01-01 AND ZIP > 90000", 20, db.Count, new string[] { "Managed Hand-Coded", "Native Hand-Coded", "Native separate and" },
                 () => CountCustom(db),
                 () => CountNative(db, nativeSet),
                 () => CountNativeSeparate(db, nativeSet, scratchSet)
@@ -125,7 +125,7 @@ namespace V5.ConsoleTest
             managedSet.None();
             WhereGreaterThan(db.BirthDateBuckets.RowBucketIndex, edge, managedSet);
 
-            nativeSet.All().And(db.BirthDateBuckets.RowBucketIndex, Query.Operator.GreaterThan, edge);
+            nativeSet.All(db.Count).And(db.BirthDateBuckets.RowBucketIndex, Query.Operator.GreaterThan, edge);
 
             if (!managedSet.Equals(nativeSet) || managedSet.Count != nativeSet.Count)
             {
@@ -166,7 +166,7 @@ namespace V5.ConsoleTest
             int zipBucket = db.ZipCodeBuckets.BucketForValue(zipMinimum, out isZipExact);
             if (zipBucket < 0 || zipBucket > db.ZipCodeBuckets.Minimum.Length - 1) return 0;
 
-            matches.All()
+            matches.All(db.Count)
                 .And(db.BirthDateBuckets.RowBucketIndex, Query.Operator.GreaterThan, (byte)birthdayBucket)
                 .And(db.ZipCodeBuckets.RowBucketIndex, Query.Operator.GreaterThan, (byte)zipBucket);
 
@@ -186,8 +186,8 @@ namespace V5.ConsoleTest
             int zipBucket = db.ZipCodeBuckets.BucketForValue(zipMinimum, out isZipExact);
             if (zipBucket < 0 || zipBucket > db.ZipCodeBuckets.Minimum.Length - 1) return 0;
 
-            matches1.All().And(db.BirthDateBuckets.RowBucketIndex, Query.Operator.GreaterThan, (byte)birthdayBucket);
-            matches2.All().And(db.ZipCodeBuckets.RowBucketIndex, Query.Operator.GreaterThan, (byte)zipBucket);
+            matches1.All(db.Count).And(db.BirthDateBuckets.RowBucketIndex, Query.Operator.GreaterThan, (byte)birthdayBucket);
+            matches2.All(db.Count).And(db.ZipCodeBuckets.RowBucketIndex, Query.Operator.GreaterThan, (byte)zipBucket);
 
             matches1.And(matches2);
 

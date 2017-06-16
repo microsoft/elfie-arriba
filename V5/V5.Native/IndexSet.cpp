@@ -80,10 +80,8 @@ namespace V5
 		IndexSet::IndexSet()
 		{ }
 
-		IndexSet::IndexSet(UInt32 offset, UInt32 length)
+		IndexSet::IndexSet(UInt32 length)
 		{
-			this->offset = offset;
-			this->length = length;
 			this->bitVector = gcnew array<UInt64>((length + 63) >> 6);
 		}
 
@@ -110,13 +108,17 @@ namespace V5
 			return CountInternal(pVector, this->bitVector->Length);
 		}
 
+		Int32 IndexSet::Capacity::get()
+		{
+			return this->bitVector->Length << 6;
+		}
+
 		Boolean IndexSet::Equals(Object^ o)
 		{
 			if (o == nullptr || GetType() != o->GetType()) return false;
 			IndexSet^ other = dynamic_cast<IndexSet^>(o);
 
-			if (this->offset != other->offset) return false;
-			if (this->length != other->length) return false;
+			if (this->bitVector->Length != other->bitVector->Length) return false;
 
 			for (int i = 0; i < this->bitVector->Length; ++i)
 			{
@@ -135,16 +137,16 @@ namespace V5
 			return this;
 		}
 
-		IndexSet^ IndexSet::All()
+		IndexSet^ IndexSet::All(UInt32 length)
 		{
 			for (int i = 0; i < this->bitVector->Length; ++i)
 			{
 				this->bitVector[i] = ~0x0ULL;
 			}
 
-			if ((this->length & 63) > 0)
+			if ((length & 63) > 0)
 			{
-				this->bitVector[this->bitVector->Length - 1] = (~0x0ULL) >> (64 - (this->length & 63));
+				this->bitVector[this->bitVector->Length - 1] = (~0x0ULL) >> (64 - (length & 63));
 			}
 
 			return this;
@@ -152,8 +154,7 @@ namespace V5
 
 		IndexSet^ IndexSet::And(IndexSet^ other)
 		{
-			if (this->offset != other->offset) throw gcnew InvalidOperationException();
-			if (this->length != other->length) throw gcnew InvalidOperationException();
+			if (this->bitVector->Length != other->bitVector->Length) throw gcnew InvalidOperationException();
 
 			for (int i = 0; i < this->bitVector->Length; ++i)
 			{
@@ -165,8 +166,7 @@ namespace V5
 
 		IndexSet^ IndexSet::AndNot(IndexSet^ other)
 		{
-			if (this->offset != other->offset) throw gcnew InvalidOperationException();
-			if (this->length != other->length) throw gcnew InvalidOperationException();
+			if (this->bitVector->Length != other->bitVector->Length) throw gcnew InvalidOperationException();
 
 			for (int i = 0; i < this->bitVector->Length; ++i)
 			{
@@ -179,8 +179,7 @@ namespace V5
 
 		IndexSet^ IndexSet::Or(IndexSet^ other)
 		{
-			if (this->offset != other->offset) throw gcnew InvalidOperationException();
-			if (this->length != other->length) throw gcnew InvalidOperationException();
+			if (this->bitVector->Length != other->bitVector->Length) throw gcnew InvalidOperationException();
 
 			for (int i = 0; i < this->bitVector->Length; ++i)
 			{

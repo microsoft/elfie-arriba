@@ -10,11 +10,11 @@ namespace V5.Test.Collections
         [TestMethod]
         public void IndexSet_Basics()
         {
-            IndexSet set = new IndexSet(0, 999);
+            IndexSet set = new IndexSet(999);
 
             Assert.AreEqual(0, set.Count, "Set should start empty");
 
-            set.All();
+            set.All(999);
             Assert.AreEqual(999, set.Count, "All should set through length only.");
 
             set.None();
@@ -32,7 +32,7 @@ namespace V5.Test.Collections
 
                 Array.Clear(values, 0, values.Length);
                 values[i] = 1;
-                set.All().And(values, Query.Operator.GreaterThan, (byte)0);
+                set.All(999).And(values, Query.Operator.GreaterThan, (byte)0);
                 AssertOnly(set, 999, i);
             }
         }

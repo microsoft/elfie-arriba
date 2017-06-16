@@ -10,23 +10,22 @@ namespace V5
 		public ref class IndexSet
 		{
 		private:
-			UInt32 offset;
-			UInt32 length;
 			array<UInt64>^ bitVector;
 
 		public:
 			IndexSet();
-			IndexSet(UInt32 offset, UInt32 length);
+			IndexSet(UInt32 length);
 
 			// Get/Set bits and see Count set
 			property Boolean default[Int32] { bool get(Int32 index); void set(Int32 index, Boolean value); }
 			property Int32 Count { Int32 get(); }
+			property Int32 Capacity { Int32 get(); }
 
 			virtual Boolean Equals(Object^ other) override;
 
 			// Set to None/All quickly
 			IndexSet^ None();
-			IndexSet^ All();
+			IndexSet^ All(UInt32 length);
 
 			// Set operations
 			IndexSet^ And(IndexSet^ other);
