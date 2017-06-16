@@ -2,55 +2,9 @@
 #include <intrin.h>
 #include <nmmintrin.h>
 #include "IndexSet.h"
-
-/*
-	Set operations using SSE vector instructions, using the XMM (16 byte) registers.
-
-	_mm_set1_epi8     - Load an XMM register with 16 copies of the passed byte.
-	_mm_loadu_si128   - Load an XMM register with 16 bytes from the unaligned source.
-
-	_mm_cmpgt_epi8    - Per-byte Greater Than: Set an XMM mask with all one bits where XMM1[i] > XMM2[i].
-	_mm_movemask_epi8 - Set lower 16 bits based on whether each byte in an XMM mask is all one.
-*/
+#include "CompareToVector.h"
 
 #pragma unmanaged
-
-void AndWhereGreaterThanInternal(unsigned __int8* set, int length, unsigned __int8 value, unsigned __int64* matchVector)
-{
-	int i = 0;
-
-	__m256i signedToUnsigned = _mm256_set1_epi8(-128);
-	__m256i blockOfValue = _mm256_sub_epi8(_mm256_set1_epi8(value), signedToUnsigned);
-
-	int blockLength = length - (length & 63);
-	for (; i < blockLength; i += 64)
-	{
-		__m256i block1 = _mm256_sub_epi8(_mm256_loadu_si256((__m256i*)(&set[i])), signedToUnsigned);
-		__m256i matchMask1 = _mm256_cmpgt_epi8(block1, blockOfValue);
-		unsigned int matchBits1 = _mm256_movemask_epi8(matchMask1);
-
-		__m256i block2 = _mm256_sub_epi8(_mm256_loadu_si256((__m256i*)(&set[i + 32])), signedToUnsigned);
-		__m256i matchMask2 = _mm256_cmpgt_epi8(block2, blockOfValue);
-		unsigned int matchBits2 = _mm256_movemask_epi8(matchMask2);
-
-		unsigned __int64 result = ((unsigned __int64)matchBits2) << 32 | matchBits1;
-		matchVector[i >> 6] &= result;
-	}
-
-	// Match remaining values individually
-	if ((length & 63) > 0)
-	{
-		unsigned __int64 last = 0;
-		for (; i < length; ++i)
-		{
-			if (set[i] > value)
-			{
-				last |= ((unsigned __int64)(1) << (i & 63));
-			}
-		}
-		matchVector[length >> 6] &= last;
-	}
-}
 
 int CountInternal(unsigned __int64* matchVector, int length)
 {
@@ -190,7 +144,30 @@ namespace V5
 
 				if (T::typeid == System::Byte::typeid)
 				{
-					AndWhereGreaterThanInternal((unsigned __int8*)pValues, values->Length, (unsigned char)value, pVector);
+					if (op == Operator::GreaterThan)
+					{
+						CompareToVector::AndWhereGreaterThan(true, (unsigned __int8*)pValues, values->Length, (unsigned char)value, pVector);
+					}
+					else if (op == Operator::LessThan)
+					{
+						CompareToVector::AndWhereLessThan(true, (unsigned __int8*)pValues, values->Length, (unsigned char)value, pVector);
+					}
+					else if (op == Operator::Equals)
+					{
+						CompareToVector::AndWhereEquals(true, (unsigned __int8*)pValues, values->Length, (unsigned char)value, pVector);
+					}
+					else if (op == Operator::LessThanOrEqual)
+					{
+						CompareToVector::AndWhereGreaterThan(false, (unsigned __int8*)pValues, values->Length, (unsigned char)value, pVector);
+					}
+					else if (op == Operator::GreaterThanOrEqual)
+					{
+						CompareToVector::AndWhereLessThan(false, (unsigned __int8*)pValues, values->Length, (unsigned char)value, pVector);
+					}
+					else if (op == Operator::NotEquals)
+					{
+						CompareToVector::AndWhereEquals(false, (unsigned __int8*)pValues, values->Length, (unsigned char)value, pVector);
+					}
 				}
 
 				return this;

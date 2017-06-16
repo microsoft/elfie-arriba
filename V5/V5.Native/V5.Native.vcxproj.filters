@@ -17,6 +17,9 @@
     <Filter Include="Text">
       <UniqueIdentifier>{d553130b-43d4-40f0-8f98-91688b68d9d5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Vector">
+      <UniqueIdentifier>{b7ede7c9-5dd6-4866-88b1-28d6583fae53}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Stdafx.h">
@@ -37,6 +40,9 @@
     <ClInclude Include="String8Native.h">
       <Filter>Text</Filter>
     </ClInclude>
+    <ClInclude Include="CompareToVector.h">
+      <Filter>Vector</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="IndexSet.cpp">
@@ -53,6 +59,9 @@
     </ClCompile>
     <ClCompile Include="String8Native.cpp">
       <Filter>Text</Filter>
+    </ClCompile>
+    <ClCompile Include="CompareToVector.cpp">
+      <Filter>Vector</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

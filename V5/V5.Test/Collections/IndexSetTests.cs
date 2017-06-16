@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
+using System.Linq;
 using V5.Collections;
 
 namespace V5.Test.Collections
@@ -46,6 +47,18 @@ namespace V5.Test.Collections
             {
                 Assert.AreEqual(j == expected, set[j]);
             }
+        }
+
+        [TestMethod]
+        public void IndexSet_Where()
+        {
+            IndexSet set = new IndexSet(120);
+            byte[] compareTo = Enumerable.Range(0, 120).Select((i) => (byte)i).ToArray();
+
+            Assert.AreEqual(0, set.Count, "Verify set starts empty.");
+            Assert.AreEqual(19, set.All(120).And<byte>(compareTo, Query.Operator.GreaterThan, 100).Count, "Verify 19 values > 100");
+
+            
         }
     }
 }
