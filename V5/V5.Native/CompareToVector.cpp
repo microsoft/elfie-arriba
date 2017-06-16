@@ -27,7 +27,7 @@
 
 #pragma unmanaged
 
-void CompareToVector::AndWhereGreaterThan(bool positive, unsigned __int8* set, int length, unsigned __int8 value, unsigned __int64* matchVector)
+void CompareToVector::WhereGreaterThan(bool positive, bool and, unsigned __int8* set, int length, unsigned __int8 value, unsigned __int64* matchVector)
 {
 	int i = 0;
 
@@ -50,7 +50,7 @@ void CompareToVector::AndWhereGreaterThan(bool positive, unsigned __int8* set, i
 		unsigned __int64 result = ((unsigned __int64)matchBits2) << 32 | matchBits1;
 
 		if (!positive) result = ~result;
-		matchVector[i >> 6] &= result;
+		if(and) matchVector[i >> 6] &= result; else matchVector[i >> 6] |= result;
 	}
 
 	// Match remaining values individually
@@ -64,12 +64,12 @@ void CompareToVector::AndWhereGreaterThan(bool positive, unsigned __int8* set, i
 				last |= (0x1ULL << (i & 63));
 			}
 		}
-		matchVector[length >> 6] &= last;
+		if(and) matchVector[length >> 6] &= last; else matchVector[length >> 6] |= last;
 	}
 }
 
 // *** EXACTLY *** the same as AndWhereGreaterThan with the compare operands swapped
-void CompareToVector::AndWhereLessThan(bool positive, unsigned __int8* set, int length, unsigned __int8 value, unsigned __int64* matchVector)
+void CompareToVector::WhereLessThan(bool positive, bool and, unsigned __int8* set, int length, unsigned __int8 value, unsigned __int64* matchVector)
 {
 	int i = 0;
 
@@ -92,7 +92,7 @@ void CompareToVector::AndWhereLessThan(bool positive, unsigned __int8* set, int 
 		unsigned __int64 result = ((unsigned __int64)matchBits2) << 32 | matchBits1;
 
 		if (!positive) result = ~result;
-		matchVector[i >> 6] &= result;
+		if (and) matchVector[i >> 6] &= result; else matchVector[i >> 6] |= result;
 	}
 
 	// Match remaining values individually
@@ -106,12 +106,12 @@ void CompareToVector::AndWhereLessThan(bool positive, unsigned __int8* set, int 
 				last |= (0x1ULL << (i & 63));
 			}
 		}
-		matchVector[length >> 6] &= last;
+		if (and) matchVector[length >> 6] &= last; else matchVector[length >> 6] |= last;
 	}
 }
 
 // *** EXACTLY *** the same as AndWhereGreaterThan with the compare operations changed
-void CompareToVector::AndWhereEquals(bool positive, unsigned __int8* set, int length, unsigned __int8 value, unsigned __int64* matchVector)
+void CompareToVector::WhereEquals(bool positive, bool and, unsigned __int8* set, int length, unsigned __int8 value, unsigned __int64* matchVector)
 {
 	int i = 0;
 
@@ -134,7 +134,7 @@ void CompareToVector::AndWhereEquals(bool positive, unsigned __int8* set, int le
 		unsigned __int64 result = ((unsigned __int64)matchBits2) << 32 | matchBits1;
 
 		if (!positive) result = ~result;
-		matchVector[i >> 6] &= result;
+		if (and) matchVector[i >> 6] &= result; else matchVector[i >> 6] |= result;
 	}
 
 	// Match remaining values individually
@@ -148,6 +148,6 @@ void CompareToVector::AndWhereEquals(bool positive, unsigned __int8* set, int le
 				last |= (0x1ULL << (i & 63));
 			}
 		}
-		matchVector[length >> 6] &= last;
+		if (and) matchVector[length >> 6] &= last; else matchVector[length >> 6] |= last;
 	}
 }

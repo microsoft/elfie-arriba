@@ -146,27 +146,27 @@ namespace V5
 				{
 					if (op == Operator::GreaterThan)
 					{
-						CompareToVector::AndWhereGreaterThan(true, (unsigned __int8*)pValues, values->Length, (unsigned char)value, pVector);
+						CompareToVector::WhereGreaterThan(true, true, (unsigned __int8*)pValues, values->Length, (unsigned char)value, pVector);
 					}
 					else if (op == Operator::LessThan)
 					{
-						CompareToVector::AndWhereLessThan(true, (unsigned __int8*)pValues, values->Length, (unsigned char)value, pVector);
+						CompareToVector::WhereLessThan(true, true, (unsigned __int8*)pValues, values->Length, (unsigned char)value, pVector);
 					}
 					else if (op == Operator::Equals)
 					{
-						CompareToVector::AndWhereEquals(true, (unsigned __int8*)pValues, values->Length, (unsigned char)value, pVector);
+						CompareToVector::WhereEquals(true, true, (unsigned __int8*)pValues, values->Length, (unsigned char)value, pVector);
 					}
 					else if (op == Operator::LessThanOrEqual)
 					{
-						CompareToVector::AndWhereGreaterThan(false, (unsigned __int8*)pValues, values->Length, (unsigned char)value, pVector);
+						CompareToVector::WhereGreaterThan(false, true, (unsigned __int8*)pValues, values->Length, (unsigned char)value, pVector);
 					}
 					else if (op == Operator::GreaterThanOrEqual)
 					{
-						CompareToVector::AndWhereLessThan(false, (unsigned __int8*)pValues, values->Length, (unsigned char)value, pVector);
+						CompareToVector::WhereLessThan(false, true, (unsigned __int8*)pValues, values->Length, (unsigned char)value, pVector);
 					}
 					else if (op == Operator::NotEquals)
 					{
-						CompareToVector::AndWhereEquals(false, (unsigned __int8*)pValues, values->Length, (unsigned char)value, pVector);
+						CompareToVector::WhereEquals(false, true, (unsigned __int8*)pValues, values->Length, (unsigned char)value, pVector);
 					}
 				}
 

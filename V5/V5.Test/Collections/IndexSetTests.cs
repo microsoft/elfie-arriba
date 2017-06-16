@@ -2,6 +2,7 @@
 using System;
 using System.Linq;
 using V5.Collections;
+using V5.Query;
 
 namespace V5.Test.Collections
 {
@@ -50,15 +51,18 @@ namespace V5.Test.Collections
         }
 
         [TestMethod]
-        public void IndexSet_Where()
+        public void IndexSet_And()
         {
             IndexSet set = new IndexSet(120);
             byte[] compareTo = Enumerable.Range(0, 120).Select((i) => (byte)i).ToArray();
 
             Assert.AreEqual(0, set.Count, "Verify set starts empty.");
-            Assert.AreEqual(19, set.All(120).And<byte>(compareTo, Query.Operator.GreaterThan, 100).Count, "Verify 19 values > 100");
-
-            
+            Assert.AreEqual(19, set.All(120).And<byte>(compareTo, Operator.GreaterThan, 100).Count, "Verify 19 values > 100");
+            Assert.AreEqual(20, set.All(120).And<byte>(compareTo, Operator.GreaterThanOrEqual, 100).Count, "Verify 20 values >= 100");
+            Assert.AreEqual(100, set.All(120).And<byte>(compareTo, Operator.LessThan, 100).Count, "Verify 100 values <= 100");
+            Assert.AreEqual(101, set.All(120).And<byte>(compareTo, Operator.LessThanOrEqual, 100).Count, "Verify 101 values < 100");
+            Assert.AreEqual(1, set.All(120).And<byte>(compareTo, Operator.Equals, 100).Count, "Verify 1 value == 100");
+            Assert.AreEqual(119, set.All(120).And<byte>(compareTo, Operator.NotEquals, 100).Count, "Verify 119 values != 100");
         }
     }
 }
