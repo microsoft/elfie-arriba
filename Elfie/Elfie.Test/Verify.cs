@@ -13,7 +13,7 @@ namespace Elfie.Test
 {
     public static class Verify
     {
-        public static void Exception<T>(Action run) where T : Exception
+        public static void Exception<T>(Action run, string message = null) where T : Exception
         {
             try
             {
@@ -28,10 +28,11 @@ namespace Elfie.Test
                 }
 
                 Assert.AreEqual(typeof(T), e.GetType(), "An exception was thrown but it was not of the expected type.");
+                if (!String.IsNullOrEmpty(message)) Assert.AreEqual(message, e.Message);
             }
         }
 
-        public static T RoundTrip<T>(T item, Action<BinaryWriter> change = null) where T : IBinarySerializable
+        public static void RoundTrip<T>(T itemToWrite, T itemToReadInto, Action<BinaryWriter> change = null) where T : IBinarySerializable
         {
             long bytesWritten = 0;
 
@@ -39,7 +40,7 @@ namespace Elfie.Test
             {
                 // Write the item
                 BinaryWriter writer = new BinaryWriter(stream);
-                item.WriteBinary(writer);
+                itemToWrite.WriteBinary(writer);
                 bytesWritten = stream.Position;
 
                 // Allow changes to the stream [if caller passed]
@@ -52,12 +53,10 @@ namespace Elfie.Test
                 // Read it back
                 stream.Seek(0, SeekOrigin.Begin);
                 BinaryReader reader = new BinaryReader(stream);
-                item.ReadBinary(reader);
+                itemToReadInto.ReadBinary(reader);
 
                 Assert.AreEqual(bytesWritten, stream.Position, "Reading item didn't read as many bytes as writing it wrote out.");
             }
-
-            return item;
         }
 
         public static void PerformanceByOperation(long opsPerSecondGoal, Func<long> actionReturningOperationCount)

@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -170,6 +169,28 @@ namespace Arriba.Model
             }
         }
 
+        public Type GetColumnType(string columnName)
+        {
+            _locker.EnterReadLock();
+
+            try
+            {
+                IUntypedColumn column;
+                if (_partitions[0].Columns.TryGetValue(columnName, out column))
+                {
+                    return column.ColumnType;
+                }
+                else
+                {
+                    return null;
+                }
+            }
+            finally
+            {
+                _locker.ExitReadLock();
+            }
+        }
+
         /// <summary>
         ///  Add a new column with the given type descriptor and default.
         ///  Columns must be added before values can be set on them.
@@ -305,42 +326,84 @@ namespace Arriba.Model
         #region AddOrUpdate (insert, update)
         public void AddColumnsFromBlock(DataBlock.ReadOnlyDataBlock values)
         {
-            bool foundIdColumn = (_partitions[0].IDColumn != null);
-            List<ColumnDetails> discoveredNewColumns = new List<ColumnDetails>();
+            List<ColumnDetails> columnsToAdd = new List<ColumnDetails>();
+
+            // Find the ID column
+            //  [The existing one, or one marked as primary key on the block, or one ending with 'ID', or the first column]
+            ColumnDetails idColumn = _partitions[0].IDColumn
+                ?? values.Columns.FirstOrDefault((cd) => cd.IsPrimaryKey)
+                ?? values.Columns.FirstOrDefault((cd) => cd.Name.EndsWith("ID"))
+                ?? values.Columns.FirstOrDefault();
+
+            // Mark the ID column
+            idColumn.IsPrimaryKey = true;
 
             for (int columnIndex = 0; columnIndex < values.ColumnCount; ++columnIndex)
             {
-                // Get the column name from the block
-                string columnName = values.Columns[columnIndex].Name;
+                ColumnDetails details = values.Columns[columnIndex];
+                bool hasNonDefaultValues = false;
 
-                // Add or alter columns only which weren't manually added
-                if (_partitions[0].ContainsColumn(columnName)) continue;
+                // If this column was already added, no need to scan these values
+                if (_partitions[0].ContainsColumn(details.Name)) continue;
 
-                // Make the ID column the first one to end with 'ID' or the first column
-                bool isIdColumn = (foundIdColumn == false && columnName.EndsWith("ID"));
+                // Figure out the column type. Did the DataBlock provide one?
+                Type determinedType = ColumnFactory.GetTypeFromTypeString(details.Type);
 
-                // Walk all values in this block to infer the column type
-                Type bestColumnType = null;
-                for (int rowIndex = 0; rowIndex < values.RowCount; ++rowIndex)
+                // If not, is the DataBlock column array typed?
+                determinedType = determinedType ?? values.GetTypeForColumn(columnIndex);
+                if (determinedType == typeof(object) || determinedType == typeof(Value)) determinedType = null;
+
+                // Get the column default, if provided, or the default for the type, if provided
+                object columnDefault = details.Default;
+                if (columnDefault == null && determinedType != null)
                 {
-                    bestColumnType = Value.Create(values[rowIndex, columnIndex]).BestType(bestColumnType);
+                    columnDefault = ColumnFactory.GetDefaultValueFromTypeString(determinedType.Name);
                 }
 
-                // If no values were set, default to string [can't tell actual best type]
-                if (bestColumnType == null) bestColumnType = typeof(String);
+                Type inferredType = null;
+                Value v = Value.Create(null);
+                DateTime defaultUtc = default(DateTime).ToUniversalTime();
 
-                discoveredNewColumns.Add(new ColumnDetails(columnName, bestColumnType.Name, null) { IsPrimaryKey = isIdColumn });
-                foundIdColumn |= isIdColumn;
-            }
+                for (int rowIndex = 0; rowIndex < values.RowCount; ++rowIndex)
+                {
+                    object value = values[rowIndex, columnIndex];
 
-            // If no column name ended with 'ID', the first one is the ID column
-            if (!foundIdColumn && discoveredNewColumns.Count > 0)
-            {
-                discoveredNewColumns[0].IsPrimaryKey = true;
+                    // Identify the best type for all block values, if no type was already determined
+                    if (determinedType == null)
+                    {
+                        v.Assign(value);
+                        Type newBestType = v.BestType(inferredType);
+
+                        // If the type has changed, get an updated default value
+                        if (newBestType != determinedType)
+                        {
+                            columnDefault = ColumnFactory.GetDefaultValueFromTypeString(newBestType.Name);
+                            inferredType = newBestType;
+                        }
+                    }
+
+                    // Track whether any non-default values were seen [could be raw types or Value wrapper]
+                    if (hasNonDefaultValues == false && value != null && !value.Equals("") && !value.Equals(defaultUtc))
+                    {
+                        if (columnDefault == null || value.Equals(columnDefault) == false)
+                        {
+                            hasNonDefaultValues = true;
+                        }
+                    }
+                }
+
+                // Set the column type
+                if (String.IsNullOrEmpty(details.Type) || details.Type.Equals(Arriba.Model.Column.ColumnDetails.UnknownType))
+                {
+                    details.Type = (determinedType ?? inferredType ?? typeof(string)).Name;
+                }
+
+                // Add the column if it had any non-default values (and didn't already exist)
+                if (hasNonDefaultValues || details.IsPrimaryKey) columnsToAdd.Add(details);
             }
 
             // Add the discovered columns. If any names match existing columns they'll be merged properly in Partition.AddColumn.
-            AddColumns(discoveredNewColumns);
+            AddColumns(columnsToAdd);
         }
 
         /// <summary>
@@ -374,13 +437,16 @@ namespace Arriba.Model
                 int idColumnIndex = values.IndexOfColumn(idColumn.Name);
                 if (idColumnIndex == -1) throw new ArribaException(StringExtensions.Format("AddOrUpdates must be passed the ID column, '{0}', in order to tell which items to update.", idColumn.Name));
 
-                // Verify all passed columns exist
-                foreach (ColumnDetails column in values.Columns)
+                // Verify all passed columns exist (if not adding them)
+                if (options.AddMissingColumns == false)
                 {
-                    ColumnDetails foundColumn;
-                    if (!_partitions[0].DetailsByColumn.TryGetValue(column.Name, out foundColumn))
+                    foreach (ColumnDetails column in values.Columns)
                     {
-                        throw new ArribaException(StringExtensions.Format("AddOrUpdate failed because values were passed for column '{0}', which is not in the table. Use AddColumn to add all columns first or ensure the first block added to the Table has all desired columns.", column.Name));
+                        ColumnDetails foundColumn;
+                        if (!_partitions[0].DetailsByColumn.TryGetValue(column.Name, out foundColumn))
+                        {
+                            throw new ArribaException(StringExtensions.Format("AddOrUpdate failed because values were passed for column '{0}', which is not in the table. Use AddColumn to add all columns first or ensure the first block added to the Table has all desired columns.", column.Name));
+                        }
                     }
                 }
 
@@ -443,7 +509,7 @@ namespace Arriba.Model
             }
         }
 
-        struct TargetPartitionInfo
+        private struct TargetPartitionInfo
         {
             public int StartIndex;
             public int Count;
@@ -642,9 +708,9 @@ namespace Arriba.Model
                 partitionInfo = localPartitionInfo;
             }
         }
-#endregion
+        #endregion
 
-#region Management
+        #region Management
         public void VerifyConsistency(VerificationLevel level, ExecutionDetails details)
         {
             _locker.EnterReadLock();
@@ -675,9 +741,9 @@ namespace Arriba.Model
                 _locker.ExitReadLock();
             }
         }
-#endregion
+        #endregion
 
-#region Serialization
+        #region Serialization
         /// <summary>
         ///  Returns the path where a Table with the given name will be serialized.
         ///  Used so that additional metadata (ex: security) can be written within it.
@@ -763,6 +829,26 @@ namespace Arriba.Model
             }
         }
 
+        public DateTime LastWriteTimeUtc
+        {
+            get
+            {
+                DateTime lastWriteTimeUtc = DateTime.MinValue;
+
+                var tablePath = BinarySerializable.FullPath(Path.Combine("Tables", this.Name));
+                if (Directory.Exists(tablePath))
+                {
+                    foreach (string filePath in Directory.GetFiles(tablePath))
+                    {
+                        lastWriteTimeUtc = File.GetLastWriteTimeUtc(filePath);
+                        break;
+                    }
+                }
+
+                return lastWriteTimeUtc;
+            }
+        }
+
         public void Save()
         {
             _locker.EnterReadLock();
@@ -782,9 +868,9 @@ namespace Arriba.Model
                 _locker.ExitReadLock();
             }
         }
-#endregion
+        #endregion
 
-#region Drop
+        #region Drop
         public void Drop()
         {
             _locker.EnterReadLock();
@@ -811,9 +897,9 @@ namespace Arriba.Model
             // Delete everything in the table folder (including any additional data, like security)
             Directory.Delete(tablePath, true);
         }
-#endregion
+        #endregion
 
-#region IDisposable
+        #region IDisposable
         public void Dispose()
         {
             Dispose(true);
@@ -829,6 +915,6 @@ namespace Arriba.Model
                 _locker = null;
             }
         }
-#endregion
+        #endregion
     }
 }

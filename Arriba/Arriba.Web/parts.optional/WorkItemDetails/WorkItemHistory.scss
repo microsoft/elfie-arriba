@@ -1,0 +1,31 @@
+div.history {  
+    // Add space between comments so that the border appears in the middle between them   
+    margin-top: 6px;
+    padding-bottom: 6px;
+
+    // Add a light dashed line between comments
+    border-bottom: dashed 1px #ddd;
+    &:last-child { border-bottom: none; }
+
+    // Make the name bold and smaller
+    .who {
+        color: black;
+        font-weight: bold;
+        font-size: 85%;
+
+        &:hover {
+            color: #3393f3;
+        }
+    }
+
+    // Make the time small
+    .when {
+        margin-left: 6px;
+        font-size: 80%;
+    }
+
+    // Indent the comment
+    .comment {
+        margin-left: 12px;
+    }
+}

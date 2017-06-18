@@ -67,10 +67,12 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model
             // Round trip a database without anything indexed. Verify file written, reload and search work without exceptions
             db.MutableRoot.AddChild(new MutableSymbol("System", SymbolType.Namespace));
             Assert.IsFalse(db.IsEmpty);
-            db = Verify.RoundTrip(db);
+
+            PackageDatabase readDB = new PackageDatabase();
+            Verify.RoundTrip(db, readDB);
 
             PartialArray<Symbol> results = new PartialArray<Symbol>(10);
-            new MemberQuery(NS_SAMPLE, false, false).TryFindMembers(db, ref results);
+            new MemberQuery(NS_SAMPLE, false, false).TryFindMembers(readDB, ref results);
             Assert.AreEqual(0, results.Count);
         }
 
@@ -438,20 +440,23 @@ Method LogUse @src\net35\Diagnostics\Logger.cs(32,21)"
         {
             // Build a sample PackageDatabase and round-trip it to the searchable form
             PackageDatabase builtDB = BuildDefaultSample();
-            PackageDatabase loadedDB = Verify.RoundTrip(builtDB);
+
+            PackageDatabase readDB = new PackageDatabase();
+            Verify.RoundTrip(builtDB, readDB);
 
             // Verify the two think they're the same size at least
-            Assert.AreEqual(loadedDB.Count, builtDB.Count);
-            Assert.AreEqual(loadedDB.Bytes, builtDB.Bytes);
+            Assert.AreEqual(readDB.Count, builtDB.Count);
+            Assert.AreEqual(readDB.Bytes, builtDB.Bytes);
 
-            return loadedDB;
+            return readDB;
         }
 
         private PackageDatabase BuildPrereleaseAndRoundtrip()
         {
             // Build a sample PackageDatabase and round-trip it to the searchable form
             PackageDatabase builtDB = BuildPreleaseSample();
-            PackageDatabase loadedDB = Verify.RoundTrip(builtDB);
+            PackageDatabase loadedDB = new PackageDatabase();
+            Verify.RoundTrip(builtDB, loadedDB);
 
             // Verify the two think they're the same size at least
             Assert.AreEqual(loadedDB.Count, builtDB.Count);
@@ -466,7 +471,7 @@ Method LogUse @src\net35\Diagnostics\Logger.cs(32,21)"
             PackageDatabase db = BuildDefaultSample();
 
             // Change the first int to '9' and verify format verification throws
-            Verify.RoundTrip(db, (w) => w.Write(9));
+            Verify.RoundTrip(db, new PackageDatabase(), (w) => w.Write(9));
         }
 
         private PackageDatabase BuildCheckAndConvert()

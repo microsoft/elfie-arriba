@@ -40,6 +40,7 @@ namespace Arriba.Communication.ContentTypes
             {
                 yield return "application/json";
                 yield return "application/javascript";
+                yield return "text/plain;charset=UTF-8";
             }
         }
 

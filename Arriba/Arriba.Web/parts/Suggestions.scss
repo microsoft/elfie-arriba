@@ -1,0 +1,47 @@
+@import '../configuration/theme';
+
+.suggestions {
+    position: relative; // Offset parent for svg.
+    background-color: white;
+    box-shadow: 0 3px 8px 0 rgba(0,0,0,0.2), 0 0 0 1px rgba(0,0,0,0.08);
+    z-index: 1;
+    max-height: 70vh;
+    min-width: 150px;
+    max-width: 600px;
+    overflow-x: hidden;
+    overflow-y: auto;
+
+    &:not(:first-child) { margin-left: 2px; }
+
+    svg {
+        position: absolute;
+        right: 0;
+        width: 80px;
+        height: 100%;
+        z-index: -1;
+        fill: $vlight;
+        opacity: 0.4; // lighten() doesn't work for all color inputs.
+    }
+
+    .suggestion {
+        font-size: 12pt;
+        font-weight: 600;
+        padding: 8px;
+        cursor: pointer;
+        box-sizing: border-box;
+        white-space: nowrap;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .suggestion-sel {
+        background-color: hsla(216, 80%, 85%, 0.25)
+    }
+
+    .suggestion-hint {
+        color: hsl(220, 40%, 50%);
+        margin-left: 30px;
+        font-size: 9pt;
+    }
+}

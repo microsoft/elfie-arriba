@@ -20,13 +20,14 @@ namespace Arriba.Communication.ContentTypes
 
         public JsonContentWriter(IEnumerable<JsonConverter> converters)
         {
-            _settings = new JsonSerializerSettings();
+            _settings = new JsonSerializerSettings()
+            {
+                ContractResolver = new CamelCasePropertyNamesContractResolver() { NamingStrategy = new CamelCaseNamingStrategy() { ProcessDictionaryKeys = false } }
+            };
+
 #if DEBUG
             _settings.Formatting = Newtonsoft.Json.Formatting.Indented;
 #endif
-
-            // Enable "PropertyName" to be output and read as "propertyName"
-            _settings.ContractResolver = new CamelCasePropertyNamesContractResolver();
 
             foreach (var converter in converters)
             {

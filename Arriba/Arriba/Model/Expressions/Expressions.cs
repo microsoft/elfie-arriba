@@ -7,9 +7,9 @@ using System.Linq;
 using System.Text;
 
 using Arriba.Extensions;
+using Arriba.Indexing;
 using Arriba.Model.Query;
 using Arriba.Structures;
-using Arriba.Indexing;
 
 namespace Arriba.Model.Expressions
 {
@@ -46,7 +46,7 @@ namespace Arriba.Model.Expressions
 
         public override string ToString()
         {
-            return StringExtensions.Format("({0})", String.Join(" OR ", (IList<IExpression>)_set));
+            return String.Join(" OR ", (IList<IExpression>)_set);
         }
     }
 
@@ -99,7 +99,26 @@ namespace Arriba.Model.Expressions
 
         public override string ToString()
         {
-            return StringExtensions.Format("({0})", String.Join(" AND ", (IList<IExpression>)_set));
+            StringBuilder result = new StringBuilder();
+            foreach (IExpression part in _set)
+            {
+                if (result.Length > 0) result.Append(" AND ");
+
+                if (part is OrExpression)
+                {
+                    // Explicit parenthesis are only required on an OR expression inside and AND expression.
+                    // AND takes precedence over OR, so A OR B AND C OR D => (A OR (B AND C) OR D)
+                    result.Append("(");
+                    result.Append(part);
+                    result.Append(")");
+                }
+                else
+                {
+                    result.Append(part);
+                }
+            }
+
+            return result.ToString();
         }
     }
 
@@ -195,9 +214,16 @@ namespace Arriba.Model.Expressions
 
     public class TermExpression : IExpression
     {
+        // The <Column> <operator> <Value> itself
         public string ColumnName;
         public Operator Operator;
         public Value Value;
+
+        // Parsing details to drive IntelliSense.
+        public IntelliSenseGuidance Guidance;
+
+        public TermExpression(object value) : this("*", Operator.Matches, value)
+        { }
 
         public TermExpression(string columnName, Operator op, object value)
         {
@@ -253,7 +279,51 @@ namespace Arriba.Model.Expressions
 
         public override string ToString()
         {
-            return StringExtensions.Format("{0}{1}{2}", QueryScanner.WrapColumnName(this.ColumnName), this.Operator.ToSyntaxString(), QueryScanner.WrapValue(this.Value.ToString()));
+            return StringExtensions.Format("{0}{1}{2}", QueryParser.WrapColumnName(this.ColumnName), this.Operator.ToSyntaxString(), QueryParser.WrapValue(this.Value));
+        }
+    }
+
+    public class AllExceptColumnsTermExpression : TermExpression
+    {
+        public HashSet<string> RestrictedColumns;
+
+        public AllExceptColumnsTermExpression(HashSet<string> restrictedColumns, Operator op, Value value) :
+            base("*", op, value)
+        {
+            this.RestrictedColumns = restrictedColumns;
+        }
+
+        public AllExceptColumnsTermExpression(HashSet<string> restrictedColumns, TermExpression previousExpression) :
+            this(restrictedColumns, previousExpression.Operator, previousExpression.Value)
+        { }
+
+        public override void TryEvaluate(Partition partition, ShortSet result, ExecutionDetails details)
+        {
+            if (details == null) throw new ArgumentNullException("details");
+            if (result == null) throw new ArgumentNullException("result");
+            if (partition == null) throw new ArgumentNullException("partition");
+
+            // Run on every column *except* excluded ones
+            bool succeeded = false;
+            ExecutionDetails perColumnDetails = new ExecutionDetails();
+
+            foreach (IColumn<object> column in partition.Columns.Values)
+            {
+                if (!this.RestrictedColumns.Contains(column.Name))
+                {
+                    perColumnDetails.Succeeded = true;
+                    column.TryWhere(this.Operator, this.Value, result, perColumnDetails);
+                    succeeded |= perColumnDetails.Succeeded;
+                }
+            }
+
+            details.Succeeded &= succeeded;
+
+            // If no column succeeded, report the full errors
+            if (!succeeded)
+            {
+                details.Merge(perColumnDetails);
+            }
         }
     }
 
@@ -315,10 +385,10 @@ namespace Arriba.Model.Expressions
             this.ColumnName = columnName;
             this.Operator = op;
             this.Values = values;
-            
+
             // If this is a "Matches" JOIN, split the values coming in into terms
             // which will each be matched.
-            if(op == Operator.Matches || op == Operator.MatchesExact)
+            if (op == Operator.Matches || op == Operator.MatchesExact)
             {
                 this.Values = GetUniqueTerms(values);
             }
@@ -327,7 +397,7 @@ namespace Arriba.Model.Expressions
         private Array GetUniqueTerms(Array values)
         {
             HashSet<ByteBlock> uniqueValues = new HashSet<ByteBlock>();
-           
+
             // Get every unique word split from every value in the array
             SetSplitter s = new SetSplitter();
             for (int i = 0; i < values.Length; ++i)
@@ -383,7 +453,7 @@ namespace Arriba.Model.Expressions
         public override string ToString()
         {
             StringBuilder result = new StringBuilder();
-            result.Append(this.ColumnName);
+            result.Append(QueryParser.WrapColumnName(this.ColumnName));
             result.Append(this.Operator.ToSyntaxString());
             result.Append("IN(");
 
@@ -397,7 +467,7 @@ namespace Arriba.Model.Expressions
                     break;
                 }
 
-                result.Append(this.Values.GetValue(i).ToString());
+                result.Append(QueryParser.WrapValue(this.Values.GetValue(i)));
             }
 
             result.Append(")");

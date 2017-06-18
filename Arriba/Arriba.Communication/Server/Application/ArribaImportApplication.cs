@@ -15,6 +15,7 @@ using Arriba.Serialization.Csv;
 using Arriba.Server.Authentication;
 using Arriba.Server.Hosting;
 using Arriba.Structures;
+using Arriba.Model;
 
 namespace Arriba.Server.Application
 {
@@ -35,17 +36,55 @@ namespace Arriba.Server.Application
 
             // POST /table/foo?type=json -- Post many objects
             this.PostAsync(new RouteSpecification("/table/:tableName", new UrlParameter("type", "json")), this.ValidateWriteAccessAsync, this.JSONArrayAppendAsync);
+
+            // POST /sample?type=csv -- Import CSV data 
+            this.Post(new RouteSpecification("/sample", new UrlParameter("type", "csv")), this.CsvSample);
+        }
+
+        private class SampleResult
+        {
+            public ICollection<ColumnDetails> Columns;
+            public int RowCount;
+        }
+
+        private IResponse CsvSample(IRequestContext ctx, Route route)
+        {
+            if (!ctx.Request.HasBody)
+            {
+                return ArribaResponse.BadRequest("Empty request body");
+            }
+
+            SampleResult result = new SampleResult();
+
+            var config = new CsvReaderSettings() { DisposeStream = true, HasHeaders = true };
+            using (CsvReader reader = new CsvReader(ctx.Request.InputStream, config))
+            {
+                // Read the CSV fragment into a DataBlock
+                DataBlock block = reader.ReadAsDataBlockBatch(10000).FirstOrDefault();
+
+                if (block == null) return ArribaResponse.BadRequest("No result content found.");
+
+                // Count the rows actually returned
+                result.RowCount = block.RowCount + 1;
+
+                // Insert only the first 100 rows and not the last (partial) row
+                block.SetRowCount(Math.Min(block.RowCount - 1, 100));
+
+                // Build a table with the sample
+                Table sample = new Table("Sample", 100);
+                sample.AddOrUpdate(block, new AddOrUpdateOptions() { AddMissingColumns = true });
+
+                // Return the created columns in the order they appeared in the CSV
+                result.Columns = sample.ColumnDetails.OrderBy((cd) => block.IndexOfColumn(cd.Name)).ToList();
+                
+                // Return the columns and row count from the sample
+                return ArribaResponse.Ok(result);
+            }
         }
 
         private IResponse CsvAppend(IRequestContext ctx, Route route)
         {
-            var content = ctx.Request.Headers["Content-Type"];
-
-            if (String.IsNullOrEmpty(content) || !String.Equals(content, "text/csv", StringComparison.OrdinalIgnoreCase))
-            {
-                return ArribaResponse.BadRequest("Content-Type of {0} was not expected", content);
-            }
-            else if (!ctx.Request.HasBody)
+            if (!ctx.Request.HasBody)
             {
                 return ArribaResponse.BadRequest("Empty request body");
             }
@@ -63,12 +102,7 @@ namespace Arriba.Server.Application
 
             var config = new CsvReaderSettings() { DisposeStream = true, HasHeaders = true };
 
-            var detail = new
-            {
-                RequestSize = ctx.Request.Headers["Content-Length"]
-            };
-
-            using (ctx.Monitor(MonitorEventLevel.Information, "Import.Csv", type: "Table", identity: tableName, detail: detail))
+            using (ctx.Monitor(MonitorEventLevel.Information, "Import.Csv", type: "Table", identity: tableName))
             {
                 using (CsvReader reader = new CsvReader(ctx.Request.InputStream, config))
                 {
@@ -77,12 +111,12 @@ namespace Arriba.Server.Application
                     foreach (var blockBatch in reader.ReadAsDataBlockBatch(BatchSize))
                     {
                         response.RowCount += blockBatch.RowCount;
-                        table.AddOrUpdate(blockBatch);
+                        table.AddOrUpdate(blockBatch, new AddOrUpdateOptions() { AddMissingColumns = true });
                     }
                 }
             }
 
-            return ArribaResponse.Created(response);
+            return ArribaResponse.Ok(response);
         }
 
         private async Task<IResponse> DataBlockAppendAsync(IRequestContext ctx, Route route)
@@ -98,7 +132,7 @@ namespace Arriba.Server.Application
             using (ctx.Monitor(MonitorEventLevel.Information, "Import.DataBlock", type: "Table", identity: tableName))
             {
                 DataBlock block = await ctx.Request.ReadBodyAsync<DataBlock>();
-                table.AddOrUpdate(block);
+                table.AddOrUpdate(block, new AddOrUpdateOptions() { AddMissingColumns = true });
 
                 ImportResponse response = new ImportResponse();
                 response.TableName = tableName;
@@ -183,7 +217,7 @@ namespace Arriba.Server.Application
                         }
                     }
 
-                    table.AddOrUpdate(block);
+                    table.AddOrUpdate(block, new AddOrUpdateOptions() { AddMissingColumns = true });
                 }
 
                 using (ctx.Monitor(MonitorEventLevel.Verbose, "table.save"))

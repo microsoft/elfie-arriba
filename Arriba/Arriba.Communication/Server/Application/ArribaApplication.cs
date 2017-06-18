@@ -85,6 +85,37 @@ namespace Arriba.Server
             return Task.FromResult<IResponse>(this.ValidateOwnerAccess(ctx, route));
         }
 
+        protected Task<IResponse> ValidateCreateAccessAsync(IRequestContext ctx, Route route)
+        {
+            return Task.FromResult<IResponse>(this.ValidateCreateAccess(ctx, route));
+        }
+
+        protected IResponse ValidateCreateAccess(IRequestContext ctx, Route route)
+        {
+            bool hasPermission = false;
+
+            var security = this.Database.DatabasePermissions();
+            if(!security.HasTableAccessSecurity)
+            {
+                // If there's no security, table create is only allowed if the service is running as the same user
+                hasPermission = ctx.Request.User.Identity.Name.Equals(WindowsIdentity.GetCurrent().Name);
+            }
+            else
+            {
+                // Otherwise, check for writer or better permissions at the DB level
+                hasPermission = HasPermission(security, ctx.Request.User, PermissionScope.Writer);
+            }
+
+            if(!hasPermission)
+            {
+                return ArribaResponse.Forbidden(String.Format("Create Table access denied for {0}.", ctx.Request.User.Identity.Name));
+            }
+            else
+            {
+                return ContinueToNextHandlerResponse;
+            }
+        }
+
         protected IResponse ValidateReadAccess(IRequestContext ctx, Route routeData)
         {
             return this.ValidateTableAccess(ctx, routeData, PermissionScope.Reader);
@@ -145,12 +176,18 @@ namespace Arriba.Server
         {
             var security = this.Database.Security(tableName);
 
-            // No Table Security? Allowed.
-            if (!security.HasTableAccessSecurity)
+            // No security? Allowed.
+            if(!security.HasTableAccessSecurity)
             {
                 return true;
             }
 
+            // Otherwise check permissions
+            return HasPermission(security, currentUser, scope);
+        }
+
+        protected bool HasPermission(SecurityPermissions security, IPrincipal currentUser, PermissionScope scope)
+        {
             // No user identity? Forbidden! 
             if (currentUser == null || !currentUser.Identity.IsAuthenticated)
             {

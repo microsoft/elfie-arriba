@@ -3,6 +3,8 @@
 
 using System;
 
+using Arriba.Diagnostics;
+
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Arriba.Diagnostics;
 

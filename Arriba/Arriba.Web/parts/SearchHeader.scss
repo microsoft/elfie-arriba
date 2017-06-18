@@ -1,0 +1,44 @@
+@import '../configuration/theme';
+
+.clickable {
+    cursor: pointer;
+    user-select: none;
+    &:hover { color: inherit; };
+}
+
+.header {
+    height: 64px;
+    display: flex;
+    flex-flow: row;
+    background-color: $medium;
+
+    /* Top Left Title - white, middle, bigger */
+    .title {
+        cursor: default;
+        padding: 16px 8px;
+        vertical-align: middle;
+        font-size: 18pt;
+        background-color: $vdark;
+    }
+
+    /* The title is a link; fix it to look like plain text */
+    .title a {
+        color: white;
+        font-weight: normal;
+    }
+
+    .searchBarAndButtons {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        padding: 8px;
+        padding-right: 10px;
+
+        & > a { // <a> assumed to be buttons.
+            padding: 8px;
+            font-size: 0; // Discard white space.
+            &:hover { opacity: 0.8; }
+        }
+    }
+}
+

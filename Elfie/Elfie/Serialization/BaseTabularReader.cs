@@ -25,7 +25,9 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
     ///  
     ///  Look up the indices of columns you want to read outside any loops.
     ///  
-    ///  Usage:
+    ///  USAGE
+    ///  =====
+    ///  String8Block block = new String8Block();
     ///  using (BaseTabularReader r = new XReader(loadFromPath, true))
     ///  {
     ///     // Look up column indices outside the loop
@@ -36,28 +38,36 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
     ///     // Use NextRow() and Current[index] to read values
     ///     while (r.NextRow())
     ///     {
-    ///         String8 title = r.Current[titleIndex];
-    ///         String8 description = r.Current[descriptionIndex];
-    ///         int itemType = r.Current[itemTypeIndex].ToInteger();
+    ///         // Copy values to be kept across rows
+    ///         String8 title = block.GetCopy(r.Current[titleIndex]);
     ///         
-    ///         // COPY String8s to be kept
+    ///         // Use values directly if used only before NextRow
+    ///         String8 description = r.Current[descriptionIndex].ToString8();
+    ///         
+    ///         // Use TryTo calls to convert values without allocation or boxing.
+    ///         int itemType;
+    ///         r.Current[itemTypeIndex].TryToInteger(out itemType);
     ///     }
+    ///     
+    ///     // Release String8Block memory used for copies when you're done with them
+    ///     block.Clear();
     /// }
     /// </summary>
     public abstract class BaseTabularReader : ITabularReader
     {
         private Stream _reader;
 
-        private List<string> _columnHeadingsList;
-        private Dictionary<string, int> _columnHeadings;
+        protected List<string> _columnHeadingsList;
+        protected Dictionary<string, int> _columnHeadings;
 
         private byte[] _buffer;
-        private int _rowCountRead;
         private int _nextRowIndexInBlock;
         private String8Set _currentBlock;
         private String8Set _currentRow;
         private PartialArray<int> _rowPositionArray;
         private PartialArray<int> _cellPositionArray;
+
+        private String8TabularValue[] _valueBoxes;
 
         /// <summary>
         ///  Construct a BaseTabularReader to read the given file.
@@ -81,7 +91,6 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             _columnHeadings = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
             _buffer = new byte[64 * 1024];
-            _rowCountRead = 0;
             _nextRowIndexInBlock = 0;
             _rowPositionArray = new PartialArray<int>(64, false);
             _cellPositionArray = new PartialArray<int>(1024, false);
@@ -93,10 +102,13 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
 
                 for (int i = 0; i < _currentRow.Count; ++i)
                 {
-                    string columnName = this.Current[i].ToString();
+                    string columnName = this.Current(i).ToString();
                     _columnHeadingsList.Add(columnName);
                     _columnHeadings[columnName] = i;
                 }
+
+                // Header row doesn't count toward row count read
+                RowCountRead = 0;
             }
         }
 
@@ -128,28 +140,34 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             if (_columnHeadings.TryGetValue(columnNameOrIndex, out columnIndex)) return columnIndex;
 
             // See if the column is a parsable integer index
-            if (int.TryParse(columnNameOrIndex, out columnIndex) && _columnHeadings.Count > columnIndex) return columnIndex;
+            if (int.TryParse(columnNameOrIndex, out columnIndex) && columnIndex >= 0 && _columnHeadings.Count > columnIndex) return columnIndex;
 
             throw new ColumnNotFoundException(String.Format("Column Name \"{0}\" not found in file.\nKnown Columns: \"{1}\"", columnNameOrIndex, String.Join(", ", _columnHeadings.Keys)));
         }
 
         /// <summary>
         ///  Return the cells for the current row.
-        ///  Get a single cell with reader.Current[columnIndex]
+        ///  Get a single cell with reader.Current[columnIndex].
         /// </summary>
         /// <returns>String8Set with the cells for the current row.</returns>
-        public String8Set Current
+        public ITabularValue Current(int index)
         {
-            get { return _currentRow; }
+            _valueBoxes[index].SetValue(_currentRow[index]);
+            return _valueBoxes[index];
         }
 
         /// <summary>
         ///  Returns the number of rows read so far.
         ///  If no newlines in rows, the RowCountRead is the line number of the current row.
         /// </summary>
-        public int RowCountRead
+        public int RowCountRead { get; protected set; }
+
+        /// <summary>
+        ///  Return how many bytes were read so far.
+        /// </summary>
+        public long BytesRead
         {
-            get { return _rowCountRead; }
+            get { return _reader.Position; }
         }
 
         /// <summary>
@@ -166,7 +184,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         ///  reading the first row.
         /// </summary>
         /// <returns>True if another row exists, False if the TSV is out of content</returns>
-        public bool NextRow()
+        public virtual bool NextRow()
         {
             // If we're on the last row, ask for more (we don't read the last row in case it was only partially read into the buffer)
             if (_nextRowIndexInBlock >= _currentBlock.Count - 1)
@@ -181,7 +199,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             String8 currentLine = _currentBlock[_nextRowIndexInBlock];
 
             // Strip leading UTF8 BOM, if found, on first row
-            if (_rowCountRead == 0)
+            if (this.RowCountRead == 0)
             {
                 if (currentLine.Length >= 3 && currentLine[0] == 0xEF && currentLine[1] == 0xBB && currentLine[2] == 0xBF)
                 {
@@ -192,8 +210,19 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             // Split the line into cells
             _currentRow = SplitCells(currentLine, _cellPositionArray);
 
-            _rowCountRead++;
+            this.RowCountRead++;
             _nextRowIndexInBlock++;
+
+            // Allocate a set of reusable String8TabularValues to avoid per-cell-value allocation or boxing.
+            if (_valueBoxes == null || _valueBoxes.Length < _currentRow.Count)
+            {
+                _valueBoxes = new String8TabularValue[_currentRow.Count];
+
+                for (int i = 0; i < _valueBoxes.Length; ++i)
+                {
+                    _valueBoxes[i] = new String8TabularValue();
+                }
+            }
 
             return true;
         }

@@ -8,8 +8,8 @@ using System.Linq;
 using System.Threading;
 
 using Arriba.Extensions;
-using Arriba.Serialization;
 using Arriba.Model.Query;
+using Arriba.Serialization;
 
 namespace Arriba.Model
 {
@@ -151,7 +151,7 @@ namespace Arriba.Model
             return tableLazy.Value;
         }
 
-        public void ReloadTable(string tableName)
+        public virtual void ReloadTable(string tableName)
         {
             lock (_tableLock)
             {

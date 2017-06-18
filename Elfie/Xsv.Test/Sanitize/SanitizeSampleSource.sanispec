@@ -1,0 +1,6 @@
+Sample,ID,0.5
+Echo,,N/A,Elfie
+Drop,IsUnderXsv
+Keep,IsEmptyPath
+Regex,Path,([^\\]+)\\,Phrase
+Map,Owner,PersonName

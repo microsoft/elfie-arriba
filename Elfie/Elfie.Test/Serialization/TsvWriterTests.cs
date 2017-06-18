@@ -26,10 +26,10 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
             {
                 writer.SetColumns(new string[] { "LineNumber", "IsEven", "Code", "When", "WhenDay", "Count", "Description", "Source" });
 
-                Assert.AreEqual(1, writer.RowCountWritten);
+                Assert.AreEqual(0, writer.RowCountWritten);
 
                 int sum = 0;
-                for (int i = 1; i <= 10; ++i)
+                for (int i = 0; i < 10; ++i)
                 {
                     Assert.AreEqual(i, writer.RowCountWritten);
 

@@ -45,7 +45,7 @@ namespace Arriba.Csv
       Arriba.Csv /mode:build /table:SP500 /csvPath:""C:\Temp\SP500 Price History.csv"" /maximumCount:50000
       Arriba.Csv /mode:query /table:SP500 /select:""Date, Adj Close"" /count:30
 ";
-        private static JsonSerializerSettings serializerSettings = new JsonSerializerSettings() { Formatting = Formatting.Indented, Converters = ConverterFactory.GetArribaConverters() };
+        private static JsonSerializerSettings s_serializerSettings = new JsonSerializerSettings() { Formatting = Formatting.Indented, Converters = ConverterFactory.GetArribaConverters() };
 
         public enum AddMode
         {
@@ -94,9 +94,20 @@ namespace Arriba.Csv
                 Console.WriteLine(Usage);
                 return -1;
             }
-            catch(Exception ex) when (!Debugger.IsAttached)
+            catch (Exception ex) when (!Debugger.IsAttached)
             {
-                Console.WriteLine(ex.Message);
+                if (ex is AggregateException)
+                {
+                    foreach (Exception inner in ((AggregateException)ex).InnerExceptions)
+                    {
+                        Console.WriteLine(inner.Message);
+                    }
+                }
+                else
+                {
+                    Console.WriteLine(ex.Message);
+                }
+
                 return -2;
             }
         }
@@ -121,7 +132,7 @@ namespace Arriba.Csv
                 {
                     d = new ColumnDetails(values[0], values[1], null);
                 }
-                else if(values.Length == 5)
+                else if (values.Length == 5)
                 {
                     d = new ColumnDetails(values[0], values[1], values[2], values[3], bool.Parse(values[4]));
                 }
@@ -151,7 +162,7 @@ namespace Arriba.Csv
                 table = new Table(tableName, maximumCount);
             }
             else
-            { 
+            {
                 table = new Table();
                 table.Load(tableName);
             }
@@ -165,7 +176,7 @@ namespace Arriba.Csv
             // Always add missing columns. Add rows only when not in 'decorate' mode
             AddOrUpdateOptions options = new AddOrUpdateOptions();
             options.AddMissingColumns = true;
-            options.Mode = (mode == AddMode.Decorate ? AddOrUpdateMode.UpdateAndIgnoreAdds: AddOrUpdateMode.AddOrUpdate);
+            options.Mode = (mode == AddMode.Decorate ? AddOrUpdateMode.UpdateAndIgnoreAdds : AddOrUpdateMode.AddOrUpdate);
 
             using (CsvReader reader = new CsvReader(csvFilePath))
             {
@@ -245,10 +256,10 @@ namespace Arriba.Csv
         }
 
         private static CombinedSettings LoadSettings(string settingsJsonPath)
-        { 
+        {
             CombinedSettings settings = new CombinedSettings();
             string settingsJson = File.ReadAllText(settingsJsonPath);
-            return JsonConvert.DeserializeObject<CombinedSettings>(settingsJson, serializerSettings);
+            return JsonConvert.DeserializeObject<CombinedSettings>(settingsJson, s_serializerSettings);
         }
 
         private static void GetSettings(string tableName, string settingsJsonPath)
@@ -264,7 +275,7 @@ namespace Arriba.Csv
             settings.ItemCountLimit = t.PartitionCount * ushort.MaxValue;
             settings.Schema = new List<ColumnDetails>(t.ColumnDetails);
 
-            string settingsJson = JsonConvert.SerializeObject(settings, serializerSettings);
+            string settingsJson = JsonConvert.SerializeObject(settings, s_serializerSettings);
             File.WriteAllText(settingsJsonPath, settingsJson);
         }
 
@@ -284,7 +295,6 @@ namespace Arriba.Csv
 
             // Apply the settings
             SetSettings(db[tableName], settings);
-
         }
 
         private static void SetSettings(Table table, CombinedSettings settings)

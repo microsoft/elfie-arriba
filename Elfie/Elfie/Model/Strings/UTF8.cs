@@ -7,10 +7,12 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
     {
         public const byte Null = (byte)'\0';
         public const byte Quote = (byte)'"';
+        public const byte Pound = (byte)'#';
         public const byte Comma = (byte)',';
         public const byte Dash = (byte)'-';
         public const byte Period = (byte)'.';
         public const byte Backslash = (byte)'\\';
+        public const byte Slash = (byte)'/';
         public const byte Pipe = (byte)'|';
         public const byte Tab = (byte)'\t';
         public const byte CR = (byte)'\r';
@@ -25,6 +27,11 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         public const byte Z = (byte)'Z';
         public const byte Zero = (byte)'0';
         public const byte Nine = (byte)'9';
+
+        public const byte LeftBrace = (byte)'{';
+        public const byte RightBrace = (byte)'}';
+        public const byte LeftBracket = (byte)'[';
+        public const byte RightBracket = (byte)']';
 
         public const byte ToUpperSubtract = 'a' - 'A';
         public const byte AlphabetLength = 'z' - 'a' + 1;

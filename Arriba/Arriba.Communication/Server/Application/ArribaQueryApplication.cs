@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Composition;
 using System.Linq;
 using System.Security.Principal;
@@ -12,6 +11,8 @@ using System.Threading.Tasks;
 using Arriba.Communication;
 using Arriba.Communication.Application;
 using Arriba.Model;
+using Arriba.Model.Column;
+using Arriba.Model.Correctors;
 using Arriba.Model.Expressions;
 using Arriba.Model.Query;
 using Arriba.Model.Security;
@@ -21,8 +22,6 @@ using Arriba.Serialization.Csv;
 using Arriba.Server.Authentication;
 using Arriba.Server.Hosting;
 using Arriba.Structures;
-using Arriba.Model.Correctors;
-using Arriba.Model.Column;
 
 namespace Arriba.Server
 {
@@ -51,6 +50,7 @@ namespace Arriba.Server
             this.PostAsync(new RouteSpecification("/table/:tableName", new UrlParameter("action", "aggregate")), this.ValidateReadAccessAsync, this.Aggregate);
 
             this.Get(new RouteSpecification("/allCount"), this.AllCount);
+            this.Get(new RouteSpecification("/suggest"), this.Suggest);
         }
 
         private async Task<IResponse> Select(IRequestContext ctx, Route route)
@@ -69,8 +69,8 @@ namespace Arriba.Server
             Table table = this.Database[tableName];
             SelectResult result = null;
 
-            // If this is RSS, just get the ID column
-            if(String.Equals(outputFormat, "rss", StringComparison.OrdinalIgnoreCase))
+            // If no columns were requested or this is RSS, get only the ID column
+            if (query.Columns == null || query.Columns.Count == 0 || String.Equals(outputFormat, "rss", StringComparison.OrdinalIgnoreCase))
             {
                 query.Columns = new string[] { table.IDColumn.Name };
             }
@@ -91,25 +91,25 @@ namespace Arriba.Server
                 result = this.Database.Query(wrappedQuery, (si) => this.IsInIdentity(ctx.Request.User, si));
             }
 
-            // Is this a CSV request? 
-            if (String.Equals(outputFormat, "csv", StringComparison.OrdinalIgnoreCase))
+            // Canonicalize column names (if query successful)
+            if (result.Details.Succeeded)
             {
-                // Do we want to include headers? 
-                bool includeHeaders = !String.Equals(ctx.Request.ResourceParameters["h"], "false", StringComparison.OrdinalIgnoreCase);
-
-                // Generate a filename of {TableName}-{Ticks}.csv
-                var fileName = String.Format("{0}-{1:yyyyMMdd}.csv", tableName, DateTime.Now);
-
-                // Stream datablock to CSV result
-                return ToCsvResponse(result, fileName);
-            }
-            else if(String.Equals(outputFormat, "rss", StringComparison.OrdinalIgnoreCase))
-            {
-                return ToRssResponse(result, "", query.TableName + ": " + query.Where, ctx.Request.ResourceParameters["iURL"]);
+                query.Columns = result.Values.Columns.Select((cd) => cd.Name).ToArray();
             }
 
-            // Regular, serialize result object 
-            return ArribaResponse.Ok(result);
+            // Format the result in the return format
+            switch ((outputFormat ?? "").ToLowerInvariant())
+            {
+                case "":
+                case "json":
+                    return ArribaResponse.Ok(result);
+                case "csv":
+                    return ToCsvResponse(result, $"{tableName}-{DateTime.Now:yyyyMMdd}.csv");
+                case "rss":
+                    return ToRssResponse(result, "", query.TableName + ": " + query.Where, ctx.Request.ResourceParameters["iURL"]);
+                default:
+                    throw new ArgumentException($"OutputFormat [fmt] passed, '{outputFormat}', was invalid.");
+            }
         }
 
         private async static Task<SelectQuery> SelectQueryFromRequest(Database db, IRequestContext ctx)
@@ -127,29 +127,27 @@ namespace Arriba.Server
             query.Columns = ReadParameterSet(ctx.Request, "c", "cols");
 
             string take = ctx.Request.ResourceParameters["t"];
-            if (!String.IsNullOrEmpty(take))
-            {
-                query.Count = UInt16.Parse(take);
-            }
+            if (!String.IsNullOrEmpty(take)) query.Count = UInt16.Parse(take);
 
-            string sortOrder = ctx.Request.ResourceParameters["so"];
-            if (!String.IsNullOrEmpty(sortOrder))
+            string sortOrder = ctx.Request.ResourceParameters["so"] ?? "";
+            switch (sortOrder.ToLowerInvariant())
             {
-                query.OrderByDescending = sortOrder.Equals("desc", StringComparison.OrdinalIgnoreCase);
+                case "":
+                case "asc":
+                    query.OrderByDescending = false;
+                    break;
+                case "desc":
+                    query.OrderByDescending = true;
+                    break;
+                default:
+                    throw new ArgumentException($"SortOrder [so] passed, '{sortOrder}' was not 'asc' or 'desc'.");
             }
 
             string highlightString = ctx.Request.ResourceParameters["h"];
-            string highlightStringEnd = ctx.Request.ResourceParameters["h2"];
-
             if (!String.IsNullOrEmpty(highlightString))
             {
                 // Set the end highlight string to the start highlight string if it is not set. 
-                if (String.IsNullOrEmpty(highlightStringEnd))
-                {
-                    highlightStringEnd = highlightString;
-                }
-
-                query.Highlighter = new Highlighter(highlightString, highlightStringEnd);
+                query.Highlighter = new Highlighter(highlightString, ctx.Request.ResourceParameters["h2"] ?? highlightString);
             }
 
             return query;
@@ -166,7 +164,7 @@ namespace Arriba.Server
             List<string> result = new List<string>();
 
             int i = 1;
-            while(true)
+            while (true)
             {
                 string value = request.ResourceParameters[baseName + i.ToString()];
                 if (String.IsNullOrEmpty(value)) break;
@@ -193,7 +191,7 @@ namespace Arriba.Server
             if (result.Count == 0)
             {
                 string delimitedValue = request.ResourceParameters[nameIfDelimited];
-                if(!String.IsNullOrEmpty(delimitedValue))
+                if (!String.IsNullOrEmpty(delimitedValue))
                 {
                     result = new List<string>(delimitedValue.Split(','));
                 }
@@ -209,12 +207,12 @@ namespace Arriba.Server
             List<string> joinQueries = ReadParameterSet(ctx.Request, "q");
             List<string> joinTables = ReadParameterSet(ctx.Request, "t");
 
-            for(int queryIndex = 0; queryIndex < Math.Min(joinQueries.Count, joinTables.Count); ++queryIndex)
+            for (int queryIndex = 0; queryIndex < Math.Min(joinQueries.Count, joinTables.Count); ++queryIndex)
             {
                 joins.Add(new SelectQuery() { Where = SelectQuery.ParseWhere(joinQueries[queryIndex]), TableName = joinTables[queryIndex] });
             }
 
-            if(joins.Count == 0)
+            if (joins.Count == 0)
             {
                 return primaryQuery;
             }
@@ -243,9 +241,9 @@ namespace Arriba.Server
                 // As a mitigation for round-tripping, the CsvReader will trim column names. Sigh. 
                 List<string> columns = new List<string>();
 
-                foreach(ColumnDetails column in items.Columns)
+                foreach (ColumnDetails column in items.Columns)
                 {
-                    if(columns.Count == 0 && column.Name.Equals("ID", StringComparison.OrdinalIgnoreCase))
+                    if (columns.Count == 0 && column.Name.Equals("ID", StringComparison.OrdinalIgnoreCase))
                     {
                         columns.Add(" ID");
                     }
@@ -327,10 +325,11 @@ namespace Arriba.Server
 
         private IResponse AllCount(IRequestContext ctx, Route route)
         {
-            List<CountResult> results = new List<CountResult>();
+            string queryString = ctx.Request.ResourceParameters["q"] ?? "";
+            AllCountResult result = new AllCountResult(queryString);
 
             // Build a Count query
-            IQuery<AggregationResult> query = new AggregationQuery("count", null, ctx.Request.ResourceParameters["q"] ?? "");
+            IQuery<AggregationResult> query = new AggregationQuery("count", null, queryString);
 
             // Wrap in Joins, if found
             query = WrapInJoinQueryIfFound(query, this.Database, ctx);
@@ -358,21 +357,46 @@ namespace Arriba.Server
 
                         if (!tableCount.Details.Succeeded || tableCount.Values == null)
                         {
-                            results.Add(new CountResult(tableName, 0, true, false));
+                            result.ResultsPerTable.Add(new CountResult(tableName, 0, true, false));
                         }
                         else
                         {
-                            results.Add(new CountResult(tableName, (ulong)tableCount.Values[0, 0], true, tableCount.Details.Succeeded));
+                            result.ResultsPerTable.Add(new CountResult(tableName, (ulong)tableCount.Values[0, 0], true, tableCount.Details.Succeeded));
                         }
                     }
                     else
                     {
-                        results.Add(new CountResult(tableName, 0, false, false));
+                        result.ResultsPerTable.Add(new CountResult(tableName, 0, false, false));
                     }
                 }
             }
 
-            return ArribaResponse.Ok(results.OrderByDescending((cr) => cr.Count));
+            // Sort results so that succeeding tables are first and are subsorted by count [descending]
+            result.ResultsPerTable.Sort((left, right) =>
+            {
+                int order = right.Succeeded.CompareTo(left.Succeeded);
+                if (order != 0) return order;
+
+                return right.Count.CompareTo(left.Count);
+            });
+
+            return ArribaResponse.Ok(result);
+        }
+
+        private class AllCountResult
+        {
+            public string Query { get; set; }
+            public string ParsedQuery { get; set; }
+
+            public List<CountResult> ResultsPerTable { get; set; }
+
+            public AllCountResult(string query)
+            {
+                this.Query = query;
+                this.ParsedQuery = QueryParser.Parse(query).ToString();
+
+                this.ResultsPerTable = new List<CountResult>();
+            }
         }
 
         private class CountResult
@@ -389,6 +413,37 @@ namespace Arriba.Server
                 this.AllowedToRead = allowedToRead;
                 this.Succeeded = succeeded;
             }
+        }
+
+        private IResponse Suggest(IRequestContext ctx, Route route)
+        {
+            string query = ctx.Request.ResourceParameters["q"];
+            string selectedTable = ctx.Request.ResourceParameters["t"];
+            IPrincipal user = ctx.Request.User;
+
+            IntelliSenseResult result = null;
+
+            using (ctx.Monitor(MonitorEventLevel.Verbose, "Suggest", type: "Suggest", detail: query))
+            {
+                // Get all available tables
+                List<Table> tables = new List<Table>();
+                foreach (string tableName in this.Database.TableNames)
+                {
+                    if (this.HasTableAccess(tableName, user, PermissionScope.Reader))
+                    {
+                        if (String.IsNullOrEmpty(selectedTable) || selectedTable.Equals(tableName, StringComparison.OrdinalIgnoreCase))
+                        {
+                            tables.Add(this.Database[tableName]);
+                        }
+                    }
+                }
+
+                // Get IntelliSense results and return
+                QueryIntelliSense qi = new QueryIntelliSense();
+                result = qi.GetIntelliSenseItems(query, tables);
+            }
+
+            return ArribaResponse.Ok(result);
         }
 
         private IResponse Query<T>(IRequestContext ctx, Route route, IQuery<T> query)
@@ -431,7 +486,7 @@ namespace Arriba.Server
                 return await ctx.Request.ReadBodyAsync<AggregationQuery>();
             }
 
-            string aggregationFunction = ctx.Request.ResourceParameters["a"];
+            string aggregationFunction = ctx.Request.ResourceParameters["a"] ?? "count";
             string columnName = ctx.Request.ResourceParameters["col"];
             string queryString = ctx.Request.ResourceParameters["q"];
 
@@ -444,13 +499,13 @@ namespace Arriba.Server
                 query.Where = String.IsNullOrEmpty(queryString) ? new AllExpression() : SelectQuery.ParseWhere(queryString);
             }
 
-            for(char dimensionPrefix = 'd'; ctx.Request.ResourceParameters.Contains(dimensionPrefix.ToString() + "1"); ++dimensionPrefix)
+            for (char dimensionPrefix = 'd'; ctx.Request.ResourceParameters.Contains(dimensionPrefix.ToString() + "1"); ++dimensionPrefix)
             {
                 List<string> dimensionParts = ReadParameterSet(ctx.Request, dimensionPrefix.ToString());
 
                 if (dimensionParts.Count == 1 && dimensionParts[0].EndsWith(">"))
                 {
-                    query.Dimensions.Add(new DistinctValueDimension(dimensionParts[0].TrimEnd('>')));
+                    query.Dimensions.Add(new DistinctValueDimension(QueryParser.UnwrapColumnName(dimensionParts[0].TrimEnd('>'))));
                 }
                 else
                 {
@@ -474,8 +529,9 @@ namespace Arriba.Server
                 return await ctx.Request.ReadBodyAsync<DistinctQuery>();
             }
 
-            DistinctQuery query = new DistinctQuery();
+            DistinctQueryTop query = new DistinctQueryTop();
             query.Column = ctx.Request.ResourceParameters["col"];
+            if (String.IsNullOrEmpty(query.Column)) throw new ArgumentException("Distinct Column [col] must be passed.");
 
             string queryString = ctx.Request.ResourceParameters["q"];
             using (ctx.Monitor(MonitorEventLevel.Verbose, "Arriba.ParseQuery", String.IsNullOrEmpty(queryString) ? "<none>" : queryString))
@@ -484,10 +540,7 @@ namespace Arriba.Server
             }
 
             string take = ctx.Request.ResourceParameters["t"];
-            if (!String.IsNullOrEmpty(take))
-            {
-                query.Count = UInt16.Parse(take);
-            }
+            if (!String.IsNullOrEmpty(take)) query.Count = UInt16.Parse(take);
 
             return query;
         }

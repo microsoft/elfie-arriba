@@ -2,12 +2,188 @@
 var highlightRangeRegex = new RegExp(highlightChar + '(.+?)' + highlightChar, 'g');
 var highlightCharOnlyRegex = new RegExp(highlightChar, 'g');
 
+function log() { console.log.apply(console, arguments) }
+
+function isIE () {
+    // Both Chrome and Edge report as "Chrome", only IE doesn't.
+    return navigator.userAgent.indexOf('Chrome') === -1;
+}
+
+function isEdge() {
+    return navigator.userAgent.indexOf('Edge') !== -1
+}
+
+Object.values = Object.values || function(o) {
+    var vals = [];
+    for(var key in o) {
+        if(o.hasOwnProperty(key)) vals.push(o[key]);
+    }
+    return vals;    
+}
+
+// From: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign
+Object.assign = Object.assign || function(target, varArgs) { // .length of function is 2
+    'use strict';
+    if (target == null) { // TypeError if undefined or null
+        throw new TypeError('Cannot convert undefined or null to object');
+    }
+    var to = Object(target);
+    for (var index = 1; index < arguments.length; index++) {
+        var nextSource = arguments[index];
+        if (nextSource != null) { // Skip over if undefined or null
+            for (var nextKey in nextSource) {
+                // Avoid bugs when hasOwnProperty is shadowed
+                if (Object.prototype.hasOwnProperty.call(nextSource, nextKey)) {
+                    to[nextKey] = nextSource[nextKey];
+                }
+            }
+        }
+    }
+    return to;
+};
+
+// Like Object.assign, but undefined properties do not overwrite the base.
+Object.merge = function() {
+    var args = [].slice.call(arguments).map(function(arg) { return (arg || {}).cleaned });
+    return Object.assign.apply(this, args);
+}
+
+Object.defineProperties(Object.prototype, {
+    // Strips undefined properties.
+    'cleaned': {
+        get: function() { return JSON.parse(JSON.stringify(this)) }
+    }
+});
+
+Object.map = function(o, f) {
+    return Object.keys(o).map(function(key) { return f(key, o[key]) });
+}
+
+Number.prototype.clamp = function(min, max) {
+    return Math.min(Math.max(this, min), max);
+};
+
+String.prototype.startsWith = String.prototype.startsWith || function(searchString, position) {
+    position = position || 0;
+    return this.indexOf(searchString, position) === position;
+};
+
+String.prototype.endsWith = String.prototype.endsWith || function(searchString, position) {
+    var subjectString = this.toString();
+    if (typeof position !== 'number' || !isFinite(position) || Math.floor(position) !== position || position > subjectString.length) {
+        position = subjectString.length;
+    }
+    position -= searchString.length;
+    var lastIndex = subjectString.lastIndexOf(searchString, position);
+    return lastIndex !== -1 && lastIndex === position;
+};
+
+String.prototype.trimIf = function(prefix) {
+    return this.startsWith(prefix)
+        ? this.substring(prefix.length)
+        : this;
+}
+
+// Polyfill.
+Array.prototype.includes = Array.prototype.includes || function() {
+    return Array.prototype.indexOf.apply(this, arguments) !== -1;
+};
+
+// Polyfill.
+Array.prototype.find = Array.prototype.find || function(predicate) {
+    for (var i = 0; i < this.length; i++) {
+        var element = this[i];
+        if (predicate.call(arguments[1], element, i, this)) return element;
+    }
+};
+
+Array.prototype.remove = function(item) {
+    var i = this.indexOf(item);
+    if (i >= 0) this.splice(i, 1);
+    return this;
+};
+
+// Additions are inserted at the front to cater to favorites which is the only current consumer of this method.
+Array.prototype.toggle = function(item) {
+    this.includes(item) ? this.remove(item) : this.unshift(item);
+    return this;
+}
+
+Array.prototype.emptyToUndefined = function() {
+    return this.length ? this : undefined;
+}
+
+// Takes two arrays: A (this), B (other)
+// Returns three arrays: Only-A, Both, Only-B
+// Order is preserved, A takes precedent.
+Array.prototype.venn = function(other) {
+    var self = this;
+    return [
+        this.filter(function(item) { return !other.includes(item) }),
+        this.filter(function(item) { return other.includes(item) }),
+        other.filter(function(item) { return !self.includes(item) }),
+    ];
+}
+
+Storage.prototype.getJson = function(keyName, fallback) {
+    return JSON.parse(this.getItem(keyName)) || fallback;
+};
+
+Storage.prototype.setJson = function(keyName, keyValue) {
+    this.setItem(keyName, JSON.stringify(keyValue));
+    this.dispatch(keyName);
+};
+
+Storage.prototype.updateJson = function(keyName, f) {
+    if (typeof f !== "function") return;
+    var value = localStorage.getJson(keyName);
+    this.setJson(keyName, f(value));
+    this.dispatch(keyName);
+}
+
+// Shallow merge the keyObject into localStorage.
+Storage.prototype.mergeJson = function(keyName, keyObject) {
+    if (typeof keyObject !== "object") return;
+    this.setJson(keyName, Object.merge(localStorage.getJson(keyName), keyObject));
+    this.dispatch(keyName);
+}
+
+// Chrome and Edge do not dispatch the storage event to the current tag (only other tabs).
+// IE dispatches to all tabs. In this case we desire the IE behavior and dispatch makes the other browsers simulate it.
+Storage.prototype.dispatch = function(keyName) {
+    if (isIE()) return;
+    if (isEdge()) {
+        var e = new Event("storage");
+        e.key = keyName;
+        dispatchEvent(e);        
+    } else {
+        dispatchEvent(new StorageEvent("storage", { key: keyName }));                
+    }
+}
+
+
 // Highlight values surrounded by Pi characters by wrapping them in <span class="h"></span>
 function highlight(value) {
     var replacement = '<span class="h">$1</span>';
 
     if (value !== undefined) {
-        return { __html: unescape(value.toString()).replace(highlightRangeRegex, replacement) };
+        // Escape the content to ensure it's not html
+        var escaper = document.createElement("div");
+        escaper.innerText = value;
+        var escaped = escaper.innerHTML;
+
+        return { __html: escaped.replace(highlightRangeRegex, replacement) };
+    }
+
+    return { __html: "" };
+};
+
+// Highlight surrounded by Pi characters by wrapping them in <span class="h"></span>
+function highlightHtml(value) {
+    var replacement = '<span class="h">$1</span>';
+
+    if (value !== undefined) {
+        return { __html: value.toString().replace(highlightRangeRegex, replacement) };
     }
 
     return { __html: "" };
@@ -64,6 +240,8 @@ function jsonQuery(url, onSuccess, onError, parameters) {
     }
 
     request.send();
+
+    return request;
 }
 
 // Build an object with a property for each querystring parameter
@@ -107,6 +285,7 @@ function getParameterArrayForPrefix(parameters, prefix) {
 
 // Put an array of parameters onto a parameters object with a prefix ({}, "P", [ "One", "Two", "Three" ]) => { "P1": "One", "P2": "Two", "P3": "Three" }
 function addArrayParameters(parameters, prefix, array) {
+    if (!array) return;
     for (var i = 0; i < array.length; ++i) {
         parameters[prefix + (i + 1).toString()] = array[i];
     }

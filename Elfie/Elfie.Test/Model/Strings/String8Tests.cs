@@ -135,6 +135,23 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
             Assert.AreEqual(binaryName.IndexOf('.', 18), binaryName8.IndexOf((byte)'.', 18));
             Assert.AreEqual(binaryName.LastIndexOf('.'), binaryName8.LastIndexOf((byte)'.'));
             Assert.AreEqual(binaryName.LastIndexOf('.', 18), binaryName8.LastIndexOf((byte)'.', 18));
+
+            string collections = "Collections";
+            String8 collections8 = String8.Convert(collections, new byte[String8.GetLength(collections)]);
+            Assert.AreEqual(binaryName.IndexOf(collections), binaryName8.IndexOf(collections8));
+            Assert.AreEqual(binaryName.IndexOf(collections, 7), binaryName8.IndexOf(collections8, 7));
+            Assert.AreEqual(binaryName.IndexOf(collections, 8), binaryName8.IndexOf(collections8, 8));
+
+            string lists = "Lists";
+            String8 lists8 = String8.Convert(lists, new byte[String8.GetLength(lists)]);
+            Assert.AreEqual(binaryName.IndexOf(lists), binaryName8.IndexOf(lists8));
+            Assert.AreEqual(binaryName.IndexOf(lists, 28), binaryName8.IndexOf(lists8, 28));
+
+            string list = "List";
+            String8 list8 = String8.Convert(list, new byte[String8.GetLength(list)]);
+            Assert.AreEqual(binaryName.IndexOf(list), binaryName8.IndexOf(list8));
+            Assert.AreEqual(binaryName.IndexOf(list, 20), binaryName8.IndexOf(list8, 20));
+            Assert.AreEqual(binaryName.IndexOf(list, 28), binaryName8.IndexOf(list8, 28));
         }
 
         [TestMethod]
@@ -149,7 +166,41 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
         }
 
         [TestMethod]
-        public void String8_ToInteger()
+        public void String8_TryToBoolean()
+        {
+            Assert.AreEqual(null, TryToBoolean(null));
+            Assert.AreEqual(null, TryToBoolean("-1"));
+            Assert.AreEqual(null, TryToBoolean("2"));
+            Assert.AreEqual(null, TryToBoolean("tru"));
+            Assert.AreEqual(null, TryToBoolean("falsey"));
+
+            Assert.AreEqual(false, TryToBoolean("0"));
+            Assert.AreEqual(false, TryToBoolean("false"));
+            Assert.AreEqual(false, TryToBoolean("False"));
+            Assert.AreEqual(false, TryToBoolean("FALSE"));
+
+            Assert.AreEqual(true, TryToBoolean("1"));
+            Assert.AreEqual(true, TryToBoolean("true"));
+            Assert.AreEqual(true, TryToBoolean("True"));
+            Assert.AreEqual(true, TryToBoolean("TRUE"));
+        }
+
+        private bool? TryToBoolean(string value)
+        {
+            String8 value8 = String8.Convert(value, new byte[String8.GetLength(value) + 1], 1);
+
+            bool? result = null;
+            bool parsed = false;
+            if (value8.TryToBoolean(out parsed))
+            {
+                result = parsed;
+            }
+
+            return result;
+        }
+
+        [TestMethod]
+        public void String8_TryToInteger()
         {
             Assert.AreEqual(null, TryToInteger(null));
             Assert.AreEqual(null, TryToInteger(String.Empty));
@@ -209,7 +260,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
         }
 
         [TestMethod]
-        public void String8_ToDateTime()
+        public void String8_TryToDateTime()
         {
             // Null/Empty
             Assert.AreEqual(null, TryToDateTime(null));
@@ -220,6 +271,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
             Assert.AreEqual(new DateTime(2017, 02, 15, 11, 33, 54, DateTimeKind.Utc), TryToDateTime("2017-02-15T11:33:54Z"));
             Assert.AreEqual(new DateTime(2017, 02, 15, 11, 33, 54, DateTimeKind.Utc), TryToDateTime("2017-02-15 11:33:54Z"));
             Assert.AreEqual(new DateTime(1, 2, 3, 4, 5, 6, DateTimeKind.Utc), TryToDateTime("0001-02-03T04:05:06Z"));
+            Assert.AreEqual(new DateTime(1, 2, 3, 4, 5, 6, DateTimeKind.Utc), TryToDateTime("0001-02-03T04:05:06"));
 
             // Min/Max
             Assert.AreEqual(DateTime.MinValue, TryToDateTime("0001-01-01T00:00:00Z"));

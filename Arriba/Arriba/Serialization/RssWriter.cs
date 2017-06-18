@@ -1,6 +1,10 @@
-﻿using Arriba.Structures;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.IO;
+
+using Arriba.Structures;
 
 namespace Arriba.Serialization
 {
@@ -20,41 +24,41 @@ namespace Arriba.Serialization
     /// </summary>
     public class RssWriter
     {
-        private static ByteBlock newline = "\r\n";
-        private static ByteBlock header = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\r\n<rss version=\"2.0\"><channel>";
-        private static ByteBlock footer = "</channel></rss>";
-        private static ByteBlock lastBuildDateTag = "lastBuildDate";
-        private static ByteBlock ttlTag = "ttl";
-        private static ByteBlock itemTag = "item";
-        private static ByteBlock titleTag = "title";
-        private static ByteBlock descriptionTag = "description";
-        private static ByteBlock linkTag = "link";
-        private static ByteBlock guidTag = "guid";
-        private static ByteBlock isPermalinkTrueAttribute = @"isPermaLink=""true""";
-        private static ByteBlock pubDateTag = "pubDate";
+        private static ByteBlock s_newline = "\r\n";
+        private static ByteBlock s_header = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\r\n<rss version=\"2.0\"><channel>";
+        private static ByteBlock s_footer = "</channel></rss>";
+        private static ByteBlock s_lastBuildDateTag = "lastBuildDate";
+        private static ByteBlock s_ttlTag = "ttl";
+        private static ByteBlock s_itemTag = "item";
+        private static ByteBlock s_titleTag = "title";
+        private static ByteBlock s_descriptionTag = "description";
+        private static ByteBlock s_linkTag = "link";
+        private static ByteBlock s_guidTag = "guid";
+        private static ByteBlock s_isPermalinkTrueAttribute = @"isPermaLink=""true""";
+        private static ByteBlock s_pubDateTag = "pubDate";
 
-        private Stream stream;
+        private Stream _stream;
 
         public RssWriter(ISerializationContext context)
         {
-            this.stream = context.Stream;
+            _stream = context.Stream;
         }
 
         public void WriteRssHeader(ByteBlock title, ByteBlock description, ByteBlock url, DateTime publishedDate, TimeSpan timeToLive)
         {
-            header.WriteTo(stream);
-            WriteTag(titleTag, title);
-            WriteTag(descriptionTag, description);
-            WriteTag(linkTag, url);
-            WriteTag(lastBuildDateTag, publishedDate.ToString("r"));
-            WriteTag(pubDateTag, publishedDate.ToString("r"));
-            WriteTag(ttlTag, timeToLive.TotalMinutes.ToString());
-            newline.WriteTo(stream);
+            s_header.WriteTo(_stream);
+            WriteTag(s_titleTag, title);
+            WriteTag(s_descriptionTag, description);
+            WriteTag(s_linkTag, url);
+            WriteTag(s_lastBuildDateTag, publishedDate.ToString("r"));
+            WriteTag(s_pubDateTag, publishedDate.ToString("r"));
+            WriteTag(s_ttlTag, timeToLive.TotalMinutes.ToString());
+            s_newline.WriteTo(_stream);
         }
 
         public void WriteRssFooter()
         {
-            footer.WriteTo(stream);
+            s_footer.WriteTo(_stream);
         }
 
         public void WriteItem(ByteBlock id, ByteBlock title, ByteBlock description, ByteBlock urlBeforeId, DateTime publishedDate)
@@ -64,35 +68,35 @@ namespace Arriba.Serialization
 
         public void WriteItem(ByteBlock id, ByteBlock title, Action<RssWriter> writeDescription, ByteBlock urlBeforeId, DateTime publishedDate)
         {
-            WriteOpenTag(itemTag);
+            WriteOpenTag(s_itemTag);
 
             // <title>[title]</title>
-            WriteTag(titleTag, title);
+            WriteTag(s_titleTag, title);
 
             // Call method to write description arbitrarily
-            WriteOpenTag(descriptionTag);
+            WriteOpenTag(s_descriptionTag);
             writeDescription(this);
-            WriteCloseTag(descriptionTag);
+            WriteCloseTag(s_descriptionTag);
 
             // <link>[urlBeforeId][Id]</link>
-            WriteOpenTag(linkTag);
+            WriteOpenTag(s_linkTag);
             WriteAsHtmlText(urlBeforeId);
             WriteAsHtmlText(id);
-            WriteCloseTag(linkTag);
+            WriteCloseTag(s_linkTag);
 
             // <guid isPermaLink="true">GUID</guid>
             Guid itemGuid = id.GetHashAsGuid();
             ByteBlock guidString = itemGuid.ToString("D");
-            WriteOpenTag(guidTag);
-            isPermalinkTrueAttribute.WriteTo(stream);
-            guidString.WriteTo(stream);
-            WriteCloseTag(guidTag);
+            WriteOpenTag(s_guidTag);
+            s_isPermalinkTrueAttribute.WriteTo(_stream);
+            guidString.WriteTo(_stream);
+            WriteCloseTag(s_guidTag);
 
             // <pubDate>[publishDate]</pubDate]
-            WriteTag(pubDateTag, publishedDate.ToString("r"));
+            WriteTag(s_pubDateTag, publishedDate.ToString("r"));
 
-            WriteCloseTag(itemTag);
-            newline.WriteTo(stream);
+            WriteCloseTag(s_itemTag);
+            s_newline.WriteTo(_stream);
         }
 
         public void WriteTag(ByteBlock tagName, ByteBlock innerText)
@@ -105,18 +109,18 @@ namespace Arriba.Serialization
         public void WriteOpenTag(ByteBlock tagName)
         {
             // <tagName>
-            stream.WriteByte(UTF8.LessThan);
-            tagName.WriteTo(stream);
-            stream.WriteByte(UTF8.GreaterThan);
+            _stream.WriteByte(UTF8.LessThan);
+            tagName.WriteTo(_stream);
+            _stream.WriteByte(UTF8.GreaterThan);
         }
 
         public void WriteCloseTag(ByteBlock tagName)
         {
             // </tagName>
-            stream.WriteByte(UTF8.LessThan);
-            stream.WriteByte(UTF8.Slash);
-            tagName.WriteTo(stream);
-            stream.WriteByte(UTF8.GreaterThan);
+            _stream.WriteByte(UTF8.LessThan);
+            _stream.WriteByte(UTF8.Slash);
+            tagName.WriteTo(_stream);
+            _stream.WriteByte(UTF8.GreaterThan);
         }
 
         /// <summary>
@@ -140,14 +144,14 @@ namespace Arriba.Serialization
                 {
                     // Copy characters before the one requiring escaping
                     length = i - nextIndexToCopy;
-                    if (length > 0) stream.Write(value.Array, nextIndexToCopy, length);
+                    if (length > 0) _stream.Write(value.Array, nextIndexToCopy, length);
 
                     // Write character as "&#xx;" with the decimal keypoint
-                    stream.WriteByte(UTF8.Amperstand);
-                    stream.WriteByte(UTF8.Pound);
-                    stream.WriteByte((byte)(UTF8.Zero + (c / 10)));
-                    stream.WriteByte((byte)(UTF8.Zero + (c % 10)));
-                    stream.WriteByte(UTF8.Semicolon);
+                    _stream.WriteByte(UTF8.Amperstand);
+                    _stream.WriteByte(UTF8.Pound);
+                    _stream.WriteByte((byte)(UTF8.Zero + (c / 10)));
+                    _stream.WriteByte((byte)(UTF8.Zero + (c % 10)));
+                    _stream.WriteByte(UTF8.Semicolon);
 
                     // Set the next character to copy (the one after this one)
                     nextIndexToCopy = i + 1;
@@ -156,7 +160,7 @@ namespace Arriba.Serialization
 
             // Copy the remaining characters
             length = end - nextIndexToCopy;
-            if (length > 0) stream.Write(value.Array, nextIndexToCopy, length);
+            if (length > 0) _stream.Write(value.Array, nextIndexToCopy, length);
         }
     }
 }

@@ -10,7 +10,6 @@ using Arriba.Communication;
 using Arriba.Communication.Application;
 using Arriba.Model;
 using Arriba.Model.Column;
-using Arriba.Model.Correctors;
 using Arriba.Model.Expressions;
 using Arriba.Model.Query;
 using Arriba.Model.Security;
@@ -31,11 +30,13 @@ namespace Arriba.Server.Application
             // GET - return tables in Database
             this.Get("", this.GetTables);
 
+            this.Get("/allBasics", this.GetAllBasics);
+
             // GET /table/foo - Get table information 
             this.Get("/table/:tableName", this.ValidateReadAccess, this.GetTableInformation);
 
-            // POST /table with create table payload 
-            this.PostAsync("/table", this.ValidateBodyAsync, this.CreateNew); // TODO: What are the minimum permissions to create a table? 
+            // POST /table with create table payload (Must be Writer/Owner in security directly in DiskCache folder, or identity running service)
+            this.PostAsync("/table", this.ValidateCreateAccessAsync, this.ValidateBodyAsync, this.CreateNew);
 
             // POST /table/foo/addcolumns
             this.PostAsync("/table/:tableName/addcolumns", this.ValidateWriteAccessAsync, this.AddColumns);
@@ -77,24 +78,69 @@ namespace Arriba.Server.Application
             return ArribaResponse.Ok(this.Database.TableNames);
         }
 
+        private IResponse GetAllBasics(IRequestContext ctx, Route route)
+        {
+            bool hasTables = false;
+
+            Dictionary<string, TableInformation> allBasics = new Dictionary<string, TableInformation>();
+            foreach (string tableName in this.Database.TableNames)
+            {
+                hasTables = true;
+
+                if (HasTableAccess(tableName, ctx.Request.User, PermissionScope.Reader))
+                {
+                    allBasics[tableName] = GetTableBasics(tableName, ctx);
+                }
+            }
+
+            // If you didn't have access to any tables, return a distinct result to show Access Denied in the browser
+            // but not a 401, because that is eaten by CORS.
+            if (allBasics.Count == 0 && hasTables)
+            {
+                return ArribaResponse.Ok(null);
+            }
+
+            return ArribaResponse.Ok(allBasics);
+        }
+
         private IResponse GetTableInformation(IRequestContext ctx, Route route)
         {
             var tableName = GetAndValidateTableName(route);
-
             if (!this.Database.TableExists(tableName))
             {
                 return ArribaResponse.NotFound();
             }
 
+            TableInformation ti = GetTableBasics(tableName, ctx);
+            return ArribaResponse.Ok(ti);
+        }
+
+        private TableInformation GetTableBasics(string tableName, IRequestContext ctx)
+        {
             var table = this.Database[tableName];
 
             TableInformation ti = new TableInformation();
             ti.Name = tableName;
-            ti.Columns = table.ColumnDetails;
             ti.PartitionCount = table.PartitionCount;
             ti.RowCount = table.Count;
+            ti.LastWriteTimeUtc = table.LastWriteTimeUtc;
 
-            return ArribaResponse.Ok(ti);
+            IList<string> restrictedColumns = this.Database.GetRestrictedColumns(tableName, (si) => this.IsInIdentity(ctx.Request.User, si));
+            if (restrictedColumns == null)
+            {
+                ti.Columns = table.ColumnDetails;
+            }
+            else
+            {
+                List<ColumnDetails> allowedColumns = new List<ColumnDetails>();
+                foreach (ColumnDetails column in table.ColumnDetails)
+                {
+                    if (!restrictedColumns.Contains(column.Name)) allowedColumns.Add(column);
+                }
+                ti.Columns = allowedColumns;
+            }
+
+            return ti;
         }
 
         private IResponse Drop(IRequestContext ctx, Route route)

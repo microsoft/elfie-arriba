@@ -70,7 +70,7 @@ namespace Arriba.Model.Query
             this.Where = corrector.Correct(this.Where);
         }
 
-        public DistinctResult Compute(Partition p)
+        public virtual DistinctResult Compute(Partition p)
         {
             if (p == null) throw new ArgumentNullException("p");
 
@@ -111,7 +111,7 @@ namespace Arriba.Model.Query
             return result;
         }
 
-        public DistinctResult Merge(DistinctResult[] partitionResults)
+        public virtual DistinctResult Merge(DistinctResult[] partitionResults)
         {
             if (partitionResults == null) throw new ArgumentNullException("partitionResults");
             if (partitionResults.Length == 0) throw new ArgumentException("Length==0 not supported", "partitionResults");
@@ -178,19 +178,19 @@ namespace Arriba.Model.Query
         {
             public override Array GetUniqueValuesFromColumn(IColumn column, ShortSet whereSet, int count, out bool allValuesReturned)
             {
-                if(count <= 0)
+                if (count <= 0)
                 {
                     allValuesReturned = false;
                     return new T[0];
                 }
-                
+
                 IColumn<T> typedColumn = (IColumn<T>)column;
 
                 // Boolean columns aren't sorted - just check true and false
-                if(typedColumn is BooleanColumn)
+                if (typedColumn is BooleanColumn)
                 {
                     int countBefore = whereSet.Count();
-                    if(countBefore == 0)
+                    if (countBefore == 0)
                     {
                         allValuesReturned = true;
                         return new bool[0];
@@ -211,12 +211,12 @@ namespace Arriba.Model.Query
                     if (countWhichAreTrue > 0 && countWhichAreFalse > 0)
                     {
                         // If both existed and only one value was requested, return the value which more items had
-                        if(count == 1)
+                        if (count == 1)
                         {
                             allValuesReturned = false;
                             return new bool[] { (countWhichAreTrue > countWhichAreFalse) };
                         }
-                        
+
                         return new bool[] { true, false };
                     }
                     else if (countWhichAreTrue > 0)
@@ -232,7 +232,7 @@ namespace Arriba.Model.Query
                 // Get all LIDs in sorted order
                 IList<ushort> sortedIndexes;
                 int sortedIndexesCount;
-                column.TryGetSortedIndexes(out sortedIndexes, out sortedIndexesCount);
+                if (!column.TryGetSortedIndexes(out sortedIndexes, out sortedIndexesCount)) throw new ArribaException(String.Format("Unable to sort by non-sorted column {0}", column.Name));
 
                 int uniqueValuesCount = 0;
                 T prevValue = default(T);

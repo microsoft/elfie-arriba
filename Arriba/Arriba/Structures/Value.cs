@@ -36,6 +36,13 @@ namespace Arriba.Structures
 
         public void Assign(object o)
         {
+            // Unwrap ValueTypeReference<object> *first*
+            if (o is ValueTypeReference<object>)
+            {
+                o = (o as ValueTypeReference<object>).Value;
+            }
+
+            // Copy properties if o is already a Value
             if (o != null && o is Value)
             {
                 Value v = (Value)o;
@@ -46,14 +53,7 @@ namespace Arriba.Structures
             }
             else
             {
-                if (o is ValueTypeReference<object>)
-                {
-                    _value = (o as ValueTypeReference<object>).Value;
-                }
-                else
-                {
-                    _value = o;
-                }
+                _value = o;
                 _cachedByteBlock = ByteBlock.Zero;
                 _cachedIdealTypeValue = null;
                 _cachedHashCode = 0;
@@ -264,59 +264,71 @@ namespace Arriba.Structures
 
         private object TryAsString()
         {
-            if (_value is string || _value is ValueTypeReference<string>)
+            string asString;
+
+            // Try to get string representation of value
+            if (_value is string)
             {
-                string asString = (_value is ValueTypeReference<string>) ? (_value as ValueTypeReference<string>).Value : (string)_value;
-
-                DateTime asDateTime = default(DateTime);
-                Guid asGuid = default(Guid);
-                bool asBool = default(bool);
-                double asDouble = default(double);
-                long asLong = default(long);
-                ulong asULong = default(ulong);
-                TimeSpan asTimeSpan = default(TimeSpan);
-
-                if (DateTime.TryParse(asString, DateTimeFormatInfo.CurrentInfo, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out asDateTime))
-                {
-                    return asDateTime;
-                }
-                else if (Guid.TryParse(asString, out asGuid))
-                {
-                    return asGuid;
-                }
-                else if (bool.TryParse(asString, out asBool))
-                {
-                    return asBool;
-                }
-                else if (long.TryParse(asString, out asLong))
-                {
-                    return asLong;
-                }
-                else if (ulong.TryParse(asString, out asULong))
-                {
-                    return asULong;
-                }
-                else if ((asString.StartsWith("0x", StringComparison.OrdinalIgnoreCase)) && ulong.TryParse(asString.TrimStart('0', 'x', 'X'), NumberStyles.HexNumber, null, out asULong))
-                {
-                    return asULong;
-                }
-                else if (double.TryParse(asString, out asDouble))
-                {
-                    return asDouble;
-                }
-                else if (TimeSpan.TryParse(asString, out asTimeSpan))
-                {
-                    // NOTE: TimeSpan must be after numeric types so that plain numbers are preferred as numeric types.
-                    // If some values to bestType can only be TimeSpans, that type will be picked.
-                    return asTimeSpan;
-                }
-                else
-                {
-                    return asString;
-                }
+                asString = (string)_value;
+            }
+            else if (_value is ValueTypeReference<string>)
+            {
+                asString = (_value as ValueTypeReference<string>).Value;
+            }
+            else
+            {
+                return null;
             }
 
-            return null;
+            if (String.IsNullOrEmpty(asString)) return asString;
+
+            // If gotten, try parsing conversions to other types
+            DateTime asDateTime = default(DateTime);
+            Guid asGuid = default(Guid);
+            bool asBool = default(bool);
+            double asDouble = default(double);
+            long asLong = default(long);
+            ulong asULong = default(ulong);
+            TimeSpan asTimeSpan = default(TimeSpan);
+
+            if (DateTime.TryParse(asString, DateTimeFormatInfo.CurrentInfo, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out asDateTime))
+            {
+                return asDateTime;
+            }
+            else if (Guid.TryParse(asString, out asGuid))
+            {
+                return asGuid;
+            }
+            else if (bool.TryParse(asString, out asBool))
+            {
+                return asBool;
+            }
+            else if (long.TryParse(asString, out asLong))
+            {
+                return asLong;
+            }
+            else if (ulong.TryParse(asString, out asULong))
+            {
+                return asULong;
+            }
+            else if ((asString.StartsWith("0x", StringComparison.OrdinalIgnoreCase)) && ulong.TryParse(asString.TrimStart('0', 'x', 'X'), NumberStyles.HexNumber, null, out asULong))
+            {
+                return asULong;
+            }
+            else if (double.TryParse(asString, out asDouble))
+            {
+                return asDouble;
+            }
+            else if (TimeSpan.TryParse(asString, out asTimeSpan))
+            {
+                // NOTE: TimeSpan must be after numeric types so that plain numbers are preferred as numeric types.
+                // If some values to bestType can only be TimeSpans, that type will be picked.
+                return asTimeSpan;
+            }
+            else
+            {
+                return asString;
+            }
         }
         #endregion
 
@@ -381,6 +393,10 @@ namespace Arriba.Structures
         /// <returns>Best type fitting both bestSoFar and this value</returns>
         public Type BestType(Type bestSoFar)
         {
+            // If there's an existing best and this value converts to it, keep it
+            object unused;
+            if (bestSoFar != null && TryConvert(bestSoFar, out unused)) return bestSoFar;
+
             Type thisBest = this.BestType();
 
             // If this is object, stick with bestSoFar
@@ -395,17 +411,37 @@ namespace Arriba.Structures
             // If either is string, it must be string
             if (thisBest.Equals(typeof(string)) || bestSoFar.Equals(typeof(string))) return typeof(string);
 
-            // If one int and one long, return long
-            if (bestSoFar.Equals(typeof(long)) && thisBest.Equals(typeof(int))) return typeof(long);
-            if (bestSoFar.Equals(typeof(int)) && thisBest.Equals(typeof(long))) return typeof(long);
+            // Allow converting to 'broader' types (int -> long, float -> double, int -> float)
+            if(bestSoFar.Equals(typeof(long)))
+            {
+                if (thisBest.Equals(typeof(int))) return typeof(long);
+                if (thisBest.Equals(typeof(float))) return typeof(float);
+                if (thisBest.Equals(typeof(double))) return typeof(double);
+            }
+            else if(bestSoFar.Equals(typeof(int)))
+            {
+                if (thisBest.Equals(typeof(long))) return typeof(long);
+                if (thisBest.Equals(typeof(float))) return typeof(float);
+                if (thisBest.Equals(typeof(double))) return typeof(double);
 
-            // If one int and one double, return double
-            if (bestSoFar.Equals(typeof(double)) && thisBest.Equals(typeof(float))) return typeof(double);
-            if (bestSoFar.Equals(typeof(float)) && thisBest.Equals(typeof(double))) return typeof(double);
-
-            // If one int and one TimeSpan, settle on TimeSpan
-            if (bestSoFar.Equals(typeof(int)) && thisBest.Equals(typeof(TimeSpan))) return typeof(TimeSpan);
-            if (bestSoFar.Equals(typeof(TimeSpan)) && thisBest.Equals(typeof(int))) return typeof(TimeSpan);
+                if (thisBest.Equals(typeof(TimeSpan))) return typeof(TimeSpan);
+            }
+            else if (bestSoFar.Equals(typeof(float)))
+            {
+                if (thisBest.Equals(typeof(int))) return typeof(float);
+                if (thisBest.Equals(typeof(long))) return typeof(float);
+                if (thisBest.Equals(typeof(double))) return typeof(double);
+            }
+            else if(bestSoFar.Equals(typeof(double)))
+            {
+                if (thisBest.Equals(typeof(int))) return typeof(double);
+                if (thisBest.Equals(typeof(long))) return typeof(double);
+                if (thisBest.Equals(typeof(float))) return typeof(double);
+            }
+            else if(bestSoFar.Equals(typeof(TimeSpan)))
+            {
+                if (thisBest.Equals(typeof(int))) return typeof(TimeSpan);
+            }
 
             // Otherwise, must fall back to string
             return typeof(string);
@@ -502,7 +538,7 @@ namespace Arriba.Structures
             }
 
             // If boolean and another type requested, offer as a number
-            if(idealTypeValue is bool)
+            if (idealTypeValue is bool)
             {
                 idealTypeValue = ((bool)idealTypeValue) ? 1 : 0;
             }
@@ -605,14 +641,14 @@ namespace Arriba.Structures
                     result = (double)asLong;
                     return true;
                 }
-                else if(t == typeof(bool))
+                else if (t == typeof(bool))
                 {
-                    if(asLong == 0)
+                    if (asLong == 0)
                     {
                         result = false;
                         return true;
                     }
-                    else if(asLong == 1)
+                    else if (asLong == 1)
                     {
                         result = true;
                         return true;

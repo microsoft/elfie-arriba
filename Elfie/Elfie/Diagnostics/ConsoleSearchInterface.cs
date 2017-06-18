@@ -1,12 +1,12 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using Microsoft.CodeAnalysis.Elfie.Extensions;
-
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
+
+using Microsoft.CodeAnalysis.Elfie.Extensions;
 
 namespace Microsoft.CodeAnalysis.Elfie.Diagnostics
 {
@@ -24,10 +24,10 @@ namespace Microsoft.CodeAnalysis.Elfie.Diagnostics
         private Position QueryEnd { get; set; }
         private Position End { get; set; }
 
-        private Func<string, IList<T>> Search { get; set; }
+        private Func<string, SearchResult<T>> Search { get; set; }
         private Action<T, StringBuilder> Write { get; set; }
 
-        public ConsoleSearchInterface(Func<string, IList<T>> searchMethod, Action<T, StringBuilder> writeMethod, int limitToShow = 20)
+        public ConsoleSearchInterface(Func<string, SearchResult<T>> searchMethod, Action<T, StringBuilder> writeMethod, int limitToShow = 20)
         {
             this.Query = String.Empty;
             this.Start = new Position();
@@ -61,21 +61,25 @@ namespace Microsoft.CodeAnalysis.Elfie.Diagnostics
                 {
                     // Find the results
                     w.Restart();
-                    IList<T> matches = this.Search(this.Query);
+                    SearchResult<T> result = this.Search(this.Query);
                     w.Stop();
 
                     StringBuilder output = new StringBuilder();
 
                     // Write summary line
-                    output.AppendFormat("\r\nFound {0:n0} matches for \"{1}\" in {2}.", matches.Count, this.Query, w.Elapsed.ToFriendlyString());
-                    if (matches.Count > this.LimitToShow) output.Append(showingLimit);
+                    output.AppendFormat("\r\nFound {0:n0} matches for \"{1}\" in {2}.", result.Count, this.Query, w.Elapsed.ToFriendlyString());
+                    if (result.Count > this.LimitToShow) output.Append(showingLimit);
                     output.AppendLine();
 
                     // Write each result
-                    int countToShow = Math.Min(matches.Count, this.LimitToShow);
-                    for (int i = 0; i < countToShow; ++i)
+                    int i = 0;
+                    if (result.Matches != null)
                     {
-                        this.Write(matches[i], output);
+                        while (result.Matches.MoveNext())
+                        {
+                            this.Write(result.Matches.Current, output);
+                            if (++i >= this.LimitToShow) break;
+                        }
                     }
 
                     // Highlight and output the results

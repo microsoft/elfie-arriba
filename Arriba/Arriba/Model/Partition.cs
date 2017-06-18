@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -236,10 +237,14 @@ namespace Arriba.Model
                 if (column.Count != newCount) column.SetSize(newCount);
             }
 
-            // Set values for each other provided column
+            // Set values for each other provided column which exists
+            //  Columns which don't exist at this point were omitted because they had no non-default values
             for (int columnIndex = 0; columnIndex < columnCount; ++columnIndex)
             {
-                FillPartitionColumn(values, columnIndex, itemLIDs);
+                if (this.ContainsColumn(values.Columns[columnIndex].Name))
+                {
+                    FillPartitionColumn(values, columnIndex, itemLIDs);
+                }
             }
 
             // Commit every column [ones with new values and ones resized with defaults]
@@ -265,6 +270,8 @@ namespace Arriba.Model
 
             return worker.FindOrAssignLIDs(this, values, idColumnIndex, mode);
         }
+
+        private Value _cachedValue = Value.Create(null);
 
         private void FillPartitionColumn(DataBlock.ReadOnlyDataBlock values, int columnIndex, ushort[] itemLIDs)
         {
@@ -362,9 +369,9 @@ namespace Arriba.Model
                             if (newlyAssignedLIDs.TryGetValue(externalID, out lid) == false)
                             {
                                 // If in "UpdateOnly" mode, throw
-                                if(mode == AddOrUpdateMode.UpdateOnly)
+                                if (mode == AddOrUpdateMode.UpdateOnly)
                                 {
-                                    throw new ArribaWriteException(externalID, p.IDColumn.Name, externalID, 
+                                    throw new ArribaWriteException(externalID, p.IDColumn.Name, externalID,
                                         new ArribaException("AddOrUpdate was in UpdateOnly mode but contained a new ID, which is an error."));
                                 }
 
@@ -373,7 +380,7 @@ namespace Arriba.Model
 
                                 if (lid == ushort.MaxValue)
                                 {
-                                    throw new ArribaWriteException(externalID, p.IDColumn.Name, externalID, 
+                                    throw new ArribaWriteException(externalID, p.IDColumn.Name, externalID,
                                         new ArribaException("Column full in Partition. Unable to add items."));
                                 }
 

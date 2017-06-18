@@ -5,12 +5,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 
+using Arriba.Model.Column;
 using Arriba.Model.Correctors;
 using Arriba.Model.Expressions;
 using Arriba.Model.Query;
 using Arriba.Model.Security;
 using Arriba.Serialization;
-using Arriba.Model.Column;
 
 namespace Arriba.Model
 {
@@ -20,11 +20,17 @@ namespace Arriba.Model
     /// </summary>
     public class SecureDatabase : Database
     {
+        private readonly object _tableLock = new object();
         private Dictionary<string, SecurityPermissions> _securityByTable;
 
         public SecureDatabase() : base()
         {
             _securityByTable = new Dictionary<string, SecurityPermissions>(StringComparer.OrdinalIgnoreCase);
+        }
+
+        public SecurityPermissions DatabasePermissions()
+        {
+            return Security("");
         }
 
         public SecurityPermissions Security(string tableName)
@@ -49,7 +55,10 @@ namespace Arriba.Model
                 }
 
                 // Cache the created|loaded security
-                _securityByTable[tableName] = security;
+                lock (_tableLock)
+                {
+                    _securityByTable[tableName] = security;
+                }
 
                 return security;
             }
@@ -66,12 +75,28 @@ namespace Arriba.Model
             ApplyTableSecurity(query, isCurrentUserIn, preExecuteDetails);
 
             T result = base.Query<T>(query);
-            if(result is IBaseResult)
+            if (result is IBaseResult)
             {
                 ((IBaseResult)result).Details.Merge(preExecuteDetails);
             }
 
             return result;
+        }
+
+        public IList<string> GetRestrictedColumns(string tableName, Func<SecurityIdentity, bool> isCurrentUserIn)
+        {
+            List<string> restrictedColumns = null;
+            SecurityPermissions security = this.Security(tableName);
+
+            foreach (var columnRestriction in security.RestrictedColumns)
+            {
+                if (!isCurrentUserIn(columnRestriction.Key))
+                {
+                    if (restrictedColumns == null) restrictedColumns = new List<string>();
+                    restrictedColumns.AddRange(columnRestriction.Value);
+                }
+            }
+            return restrictedColumns;
         }
 
         protected void ApplyTableSecurity<T>(IQuery<T> query, Func<SecurityIdentity, bool> isCurrentUserIn, ExecutionDetails details)
@@ -90,15 +115,7 @@ namespace Arriba.Model
             }
 
             // If table has column restrictions, build a list of excluded columns
-            List<string> restrictedColumns = null;
-            foreach (var columnRestriction in security.RestrictedColumns)
-            {
-                if (!isCurrentUserIn(columnRestriction.Key))
-                {
-                    if (restrictedColumns == null) restrictedColumns = new List<string>();
-                    restrictedColumns.AddRange(columnRestriction.Value);
-                }
-            }
+            IList<string> restrictedColumns = GetRestrictedColumns(query.TableName, isCurrentUserIn);
 
             // If no columns were restricted, return query as-is
             if (restrictedColumns == null) return;
@@ -194,7 +211,10 @@ namespace Arriba.Model
 
         public void SetSecurity(string tableName, SecurityPermissions security)
         {
-            _securityByTable[tableName] = security;
+            lock (_tableLock)
+            {
+                _securityByTable[tableName] = security;
+            }
         }
 
         public void SaveSecurity(string tableName)
@@ -205,8 +225,25 @@ namespace Arriba.Model
 
         private string SecurityCachePath(string tableName)
         {
+            // Database Level Security (for table creation)
+            if(tableName == "") return BinarySerializable.FullPath("security.bin");
+
+            // Table-specific security
             string tablePath = Table.TableCachePath(tableName);
             return Path.Combine(tablePath, "Metadata", "security.bin");
+        }
+
+        public override void ReloadTable(string tableName)
+        {
+            // Reload the table
+            base.ReloadTable(tableName);
+
+            // Reload the security
+            lock (_tableLock)
+            {
+                _securityByTable.Remove(tableName);
+                Security(tableName);
+            }
         }
     }
 }

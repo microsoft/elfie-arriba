@@ -331,7 +331,7 @@ namespace Arriba.Test.Model
             c.SetSize(ArrayExtensions.MinimumSize * 2);
             CommitIfRequired(c);
             ColumnTests.AssertConsistent(c);
-            c.TryGetSortedIndexes(out actualArray, out actualArrayCount);
+            Assert.IsTrue(c.TryGetSortedIndexes(out actualArray, out actualArrayCount));
             Assert.AreEqual(ArrayExtensions.MinimumSize * 2, (int)c.Count);
             Assert.AreEqual(ArrayExtensions.MinimumSize * 2, (int)actualArray.Count);
             Assert.AreEqual(ArrayExtensions.MinimumSize * 2, actualArrayCount);
@@ -339,7 +339,7 @@ namespace Arriba.Test.Model
             // Shrink enough to require underlying array resize
             c.SetSize(ArrayExtensions.MinimumSize);
             ColumnTests.AssertConsistent(c);
-            c.TryGetSortedIndexes(out actualArray, out actualArrayCount);
+            Assert.IsTrue(c.TryGetSortedIndexes(out actualArray, out actualArrayCount));
             Assert.AreEqual(ArrayExtensions.MinimumSize, (int)c.Count);
             Assert.AreEqual(ArrayExtensions.MinimumSize, (int)actualArray.Count);
             Assert.AreEqual(ArrayExtensions.MinimumSize, actualArrayCount);
@@ -365,7 +365,7 @@ namespace Arriba.Test.Model
             // check the size
             IList<ushort> sortedIndexes;
             int sortedIndexesCount;
-            c.TryGetSortedIndexes(out sortedIndexes, out sortedIndexesCount);
+            Assert.IsTrue(c.TryGetSortedIndexes(out sortedIndexes, out sortedIndexesCount));
 
             int realSize = sortedIndexes.Count;
 
@@ -463,7 +463,7 @@ namespace Arriba.Test.Model
 
             IList<ushort> sortedIndexes;
             int sortedIndexesCount;
-            c.TryGetSortedIndexes(out sortedIndexes, out sortedIndexesCount);
+            Assert.IsTrue(c.TryGetSortedIndexes(out sortedIndexes, out sortedIndexesCount));
 
             // Check sort order - lowest one was the last value added
             Assert.AreEqual("65534", sortedIndexes.First().ToString());

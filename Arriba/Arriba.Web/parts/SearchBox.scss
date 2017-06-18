@@ -1,0 +1,76 @@
+.input { // Coordinate styles between input and rail.
+    font-size: 16pt;
+    padding: 8px;
+}
+
+.searchBox {
+    background: hsl(0, 0, 97%);
+    flex: 1;
+    display: flex;
+    align-items: center;
+    position: relative;
+    padding-right: 4px;
+    margin-right: 8px;
+
+    // Needed to keep the rail above resultsListing floating headers in Edge.
+    // Apparently the first non absolute element about rail needs to be z-indexed to make it work.
+    z-index: 1;
+
+    input { @extend .input;
+        box-sizing: border-box;
+        border: none;
+        flex: 1;
+        color: #666666;
+        background: transparent; // Override user agent.
+    }
+
+    .searchIcon {
+        font-size: 16pt;
+        color: #666666;
+        padding: 4px;
+    }
+
+    .loading {
+        display: none;
+        position: absolute;
+        bottom: 0;
+        height: 3px;
+        width: 100%;
+
+        &.loading-active {
+            display: block;
+            background: linear-gradient(90deg, transparent 70%, hsl(136, 100%, 23%) 85%, transparent);
+            background-size: 200%;
+            animation: wave 1.5s linear 500ms infinite;
+
+            @keyframes wave {
+                0%    { background-position: 200% 50% }
+                100%  { background-position: 0%   50% }
+            }
+        }
+    }
+}
+
+// Contains invisible mirrored text to align the completion list.
+.rail {
+    display: inline-flex;
+    position: absolute;
+    left: 0; bottom: 0; height: 0;
+    white-space: pre;
+    visibility: hidden;
+    & > * { visibility: visible; }
+
+    @extend .input;
+    // Mimic global input styles manually (unable to programmatically reference).
+    font-family: "Segoe UI", "Segoe WP", Tahoma, Arial, sans-serif;
+    font-weight: 600;
+    padding-top: 0; padding-bottom: 0; // Override any possible padding values;
+}
+
+.railContents {
+    position: absolute;
+    top: 2px; left: -8px; // Manually match input padding.
+    display: flex;
+    align-items: flex-start;
+}
+
