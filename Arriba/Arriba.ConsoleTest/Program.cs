@@ -33,43 +33,61 @@ namespace Arriba.ConsoleTest
             //QueryPerformanceTest(table, "Priority = 1 AND Platform");
 
             InsertPerformance(32);
-            InsertPerformance(128);
+            //InsertPerformance(128);
         }
 
         private static void InsertPerformance(int numPartitions)
         {
-            const int insertSize = 1000000;
+            const int limit = 50000;
             int maxRows = numPartitions * ushort.MaxValue;
 
-            if (maxRows < insertSize) throw new ArgumentOutOfRangeException("need more partitions for this test");
+            if (maxRows < limit) throw new ArgumentOutOfRangeException("need more partitions for this test");
 
-            Table table = new Table("InsertPerf", numPartitions * ushort.MaxValue);
-            table.Drop();
+            Table table = null;
+            DataBlock items = null;
+            Action init = delegate()
+            {
+                ArrayExtensions.SizePolicy = ArrayExtensions.ArraySizePolicy.CreateAtSuggestedCapacity;
+                table = new Table("InsertPerf", numPartitions * ushort.MaxValue);
+                table.Drop();
 
-            const int limit = 1000000;
-            var seed = Enumerable.Range(0, limit);
+                // Define desired columns
+                table.AddColumn(new ColumnDetails("ID", "int", -1, "i", true), ushort.MaxValue);
+                table.AddColumn(new ColumnDetails("AllOnes", "int", 1, "ao", false), ushort.MaxValue);
+                table.AddColumn(new ColumnDetails("AllEvens", "short", 0, "even", false), ushort.MaxValue);
+                table.AddColumn(new ColumnDetails("Tens", "int", 0, "tens", false), ushort.MaxValue);
+                table.AddColumn(new ColumnDetails("Hundreds", "int", 0, "hundreds", false), ushort.MaxValue);
+                table.AddColumn(new ColumnDetails("Thousands", "int", 0, "thousands", false), ushort.MaxValue);
 
-            // Define desired columns
-            table.AddColumn(new ColumnDetails("ID", "int", -1, "i", true));
-            table.AddColumn(new ColumnDetails("AllOnes", "int", 1, "ao", false));
-            table.AddColumn(new ColumnDetails("AllEvens", "short", 0, "even", false));
-            table.AddColumn(new ColumnDetails("Tens", "int", 0, "tens", false));
-            table.AddColumn(new ColumnDetails("Hundreds", "int", 0, "hundreds", false));
-            table.AddColumn(new ColumnDetails("Thousands", "int", 0, "thousands", false));
+                DataBlock initial = new DataBlock(new string[] { "ID", "AllOnes", "AllEvens", "Tens", "Hundreds", "Thousands" }, 1);
+                var data = new int[] { limit+1 };
+                initial.SetColumn(0, data);
+                initial.SetColumn(1, data);
+                initial.SetColumn(2, data.Select(i=>(short)i).ToArray());
+                initial.SetColumn(3, data);
+                initial.SetColumn(4, data);
+                initial.SetColumn(5, data);
+                table.AddOrUpdate(initial, AddOrUpdateOptions.Default);
 
-            DataBlock items = new DataBlock(new string[] { "ID", "AllOnes", "AllEvens", "Tens", "Hundreds", "Thousands" }, limit);
-            items.SetColumn(0, seed.ToArray());
-            items.SetColumn(1, seed.Select(i => 1).ToArray());
-            items.SetColumn(2, seed.Select(i => i % 2).ToArray());
-            items.SetColumn(3, seed.Select(i => i / 10).ToArray());
-            items.SetColumn(4, seed.Select(i => i / 100).ToArray());
-            items.SetColumn(5, seed.Select(i => i / 1000).ToArray());
+                var seed = Enumerable.Range(0, limit);
 
+                items = new DataBlock(new string[] { "ID", "AllOnes", "AllEvens", "Tens", "Hundreds", "Thousands" }, limit);
+                items.SetColumn(0, seed.ToArray());
+                items.SetColumn(1, seed.Select(i => 1).ToArray<int>());
+                items.SetColumn(2, seed.Select(i => (short)(i % 2)).ToArray<short>());
+                items.SetColumn(3, seed.Select(i => i / 10).ToArray<int>());
+                items.SetColumn(4, seed.Select(i => i / 100).ToArray<int>());
+                items.SetColumn(5, seed.Select(i => i / 1000).ToArray<int>());
+            };
+
+            init();
+            Console.WriteLine("start profiling");
+            Console.ReadLine();
             Stopwatch timer = Stopwatch.StartNew();
-            table.AddOrUpdate(items.AsReadOnly(), new AddOrUpdateOptions());
+            table.AddOrUpdate(items, new AddOrUpdateOptions());
             timer.Stop();
 
-            Console.WriteLine("Took {0} ms to insert {1} items into {2} partitions", timer.ElapsedMilliseconds, limit, numPartitions);
+            //Console.WriteLine("Took {0} ms to insert {1} items into {2} partitions", timer.ElapsedMilliseconds, limit, numPartitions);
         }
 
         private static void FromAndPerformance()
