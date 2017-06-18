@@ -77,6 +77,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Data\IColumn.cs" />
+    <Compile Include="Data\PrimitiveColumn.cs" />
     <Compile Include="Data\SortBucketColumn.cs" />
     <Compile Include="Extensions\ArrayExtensions.cs" />
     <Compile Include="Extensions\BinarySerializer.cs" />
@@ -90,8 +91,6 @@
       <Name>V5.Native</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Collections\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

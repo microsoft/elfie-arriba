@@ -12,9 +12,9 @@ namespace V5.ConsoleTest
     {
         public const int ParallelCount = 2;
 
-        public long[] BirthDate;
-        public long[] WhenAdded;
-        public int[] ZipCode;
+        public PrimitiveColumn<long> BirthDate;
+        public PrimitiveColumn<long> WhenAdded;
+        public PrimitiveColumn<int> ZipCode;
 
         public SortBucketColumn<long> BirthDateBuckets;
         public SortBucketColumn<long> WhenAddedBuckets;
@@ -22,40 +22,40 @@ namespace V5.ConsoleTest
 
         public PersonDatabase(long capacity)
         {
-            this.BirthDate = new long[capacity];
-            this.WhenAdded = new long[capacity];
-            this.ZipCode = new int[capacity];
+            this.BirthDate = new PrimitiveColumn<long>("BirthDate", new long[capacity]);
+            this.WhenAdded = new PrimitiveColumn<long>("WhenAdded", new long[capacity]);
+            this.ZipCode = new PrimitiveColumn<int>("ZipCode", new int[capacity]);
         }
 
-        public uint Count => (uint)this.BirthDate.Length;
+        public uint Count => (uint)this.BirthDate.Count;
 
         public void Index(Random r)
         {
-            this.BirthDateBuckets = SortBucketColumn<long>.Build(this.BirthDate, 255, r, ParallelCount);
-            this.WhenAddedBuckets = SortBucketColumn<long>.Build(this.WhenAdded, 255, r, ParallelCount);
-            this.ZipCodeBuckets = SortBucketColumn<int>.Build(this.ZipCode, 255, r, ParallelCount);
+            this.BirthDateBuckets = SortBucketColumn<long>.Build("BirthDate", this.BirthDate.Values, 255, r, ParallelCount);
+            this.WhenAddedBuckets = SortBucketColumn<long>.Build("WhenAdded", this.WhenAdded.Values, 255, r, ParallelCount);
+            this.ZipCodeBuckets = SortBucketColumn<int>.Build("ZipCode", this.ZipCode.Values, 255, r, ParallelCount);
         }
 
         public void Load(string filePath)
         {
-            this.BirthDate = BinarySerializer.Read<long>(Path.Combine(filePath, "BirthDate", "V"));//.ToDateTimeArray();
-            this.WhenAdded = BinarySerializer.Read<long>(Path.Combine(filePath, "WhenAdded", "V"));//.ToDateTimeArray();
-            this.ZipCode = BinarySerializer.Read<int>(Path.Combine(filePath, "ZipCode", "V"));
+            this.BirthDate = PrimitiveColumn<long>.Read(filePath, "BirthDate");
+            this.WhenAdded = PrimitiveColumn<long>.Read(filePath, "WhenAdded");
+            this.ZipCode = PrimitiveColumn<int>.Read(filePath, "ZipCode");
 
-            this.BirthDateBuckets = SortBucketColumn<long>.Read(Path.Combine(filePath, "BirthDate"));
-            this.WhenAddedBuckets = SortBucketColumn<long>.Read(Path.Combine(filePath, "WhenAdded"));
-            this.ZipCodeBuckets = SortBucketColumn<int>.Read(Path.Combine(filePath, "ZipCode"));
+            this.BirthDateBuckets = SortBucketColumn<long>.Read(filePath, "BirthDate");
+            this.WhenAddedBuckets = SortBucketColumn<long>.Read(filePath, "WhenAdded");
+            this.ZipCodeBuckets = SortBucketColumn<int>.Read(filePath, "ZipCode");
         }
 
         public void Save(string filePath)
         {
-            BinarySerializer.Write(Path.Combine(filePath, "BirthDate", "V"), this.BirthDate);//.ToPrimitiveArray());
-            BinarySerializer.Write(Path.Combine(filePath, "WhenAdded", "V"), this.WhenAdded);//.ToPrimitiveArray());
-            BinarySerializer.Write(Path.Combine(filePath, "ZipCode", "V"), this.ZipCode);
+            this.BirthDate.Write(filePath);
+            this.WhenAdded.Write(filePath);
+            this.ZipCode.Write(filePath);
 
-            this.BirthDateBuckets.Write(Path.Combine(filePath, "BirthDate"));
-            this.WhenAddedBuckets.Write(Path.Combine(filePath, "WhenAdded"));
-            this.ZipCodeBuckets.Write(Path.Combine(filePath, "ZipCode"));
+            this.BirthDateBuckets.Write(filePath);
+            this.WhenAddedBuckets.Write(filePath);
+            this.ZipCodeBuckets.Write(filePath);
         }
     }
 
@@ -86,9 +86,9 @@ namespace V5.ConsoleTest
                     for (long i = 0; i < rowCount; ++i)
                     {
                         Person p = new Person(r);
-                        db.BirthDate[i] = p.BirthDate.ToUniversalTime().Ticks;
-                        db.WhenAdded[i] = p.WhenAdded.ToUniversalTime().Ticks;
-                        db.ZipCode[i] = p.ZipCode;
+                        db.BirthDate.Values[i] = p.BirthDate.ToUniversalTime().Ticks;
+                        db.WhenAdded.Values[i] = p.WhenAdded.ToUniversalTime().Ticks;
+                        db.ZipCode.Values[i] = p.ZipCode;
                     }
                 }
 
@@ -106,7 +106,7 @@ namespace V5.ConsoleTest
             IndexSet managedSet = new IndexSet(db.Count);
             IndexSet nativeSet = new IndexSet(db.Count).All(db.Count);
             IndexSet scratchSet = new IndexSet(db.Count);
-            int managedMatches = CountCustom(db);
+            int managedMatches = CountManagedDirectArrays(db, managedSet);
 
             Benchmark.Compare("IndexSet Ops", 1000, db.Count, new string[] { "All", "None", "Count" },
                 () => nativeSet.All(db.Count),
@@ -114,8 +114,9 @@ namespace V5.ConsoleTest
                 () => { int x = nativeSet.Count; }
             );
 
-            Benchmark.Compare("BirthDate > 1980-01-01 AND ZIP > 90000", 20, db.Count, new string[] { "Managed Hand-Coded", "Native Hand-Coded", "Native separate and" },
-                () => CountCustom(db),
+            Benchmark.Compare("BirthDate > 1980-01-01 AND ZIP > 90000", 20, db.Count, new string[] { "Managed Hand-Coded", "Managed Column", "Native Hand-Coded", "Native separate and" },
+                () => CountManagedDirectArrays(db, managedSet),
+                () => CountManagedColumn(db, managedSet),
                 () => CountNative(db, nativeSet),
                 () => CountNativeSeparate(db, nativeSet, scratchSet)
             );
@@ -140,17 +141,31 @@ namespace V5.ConsoleTest
             );
         }
 
-        private static int CountCustom(PersonDatabase db)
+        private static int CountManagedDirectArrays(PersonDatabase db, IndexSet matches)
         {
             long birthdayMinimum = new DateTime(1960, 01, 01).ToUniversalTime().Ticks;
             int zipMinimum = 60000;
 
-            int count = 0;
+            long[] birthDates = db.BirthDate.Values;
+            int[] zipCodes = db.ZipCode.Values;
+
             for (int i = 0; i < db.Count; ++i)
             {
-                if (db.ZipCode[i] > zipMinimum && db.BirthDate[i] > birthdayMinimum) count++;
+                if (zipCodes[i] > zipMinimum && birthDates[i] > birthdayMinimum) matches[i] = true;
             }
-            return count;
+            return matches.Count;
+        }
+
+        private static int CountManagedColumn(PersonDatabase db, IndexSet matches)
+        {
+            long birthdayMinimum = new DateTime(1960, 01, 01).ToUniversalTime().Ticks;
+            int zipMinimum = 60000;
+
+            matches.All(db.Count);
+            db.BirthDate.And(matches, Query.Operator.GreaterThan, birthdayMinimum);
+            db.WhenAdded.And(matches, Query.Operator.GreaterThan, zipMinimum);
+
+            return matches.Count;
         }
 
         private static int CountNative(PersonDatabase db, IndexSet matches)

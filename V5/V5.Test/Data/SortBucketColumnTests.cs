@@ -43,7 +43,7 @@ namespace V5.Test
         {
             // Try buckets for all values from 0 - 9999 [should all be multi-value; min and max should've been found]
             int[] allUnique = Enumerable.Range(0, 10000).ToArray();
-            SortBucketColumn<int> sbc = SortBucketColumn<int>.Build(allUnique, 256, new Random(5));
+            SortBucketColumn<int> sbc = SortBucketColumn<int>.Build("Nameless", allUnique, 256, new Random(5));
             Validate(sbc, allUnique);
 
             // Try buckets for only 32 unique values
@@ -53,7 +53,7 @@ namespace V5.Test
                 fewDistinct[i] = i % 32;
             }
 
-            sbc = SortBucketColumn<int>.Build(fewDistinct, 256, new Random(5));
+            sbc = SortBucketColumn<int>.Build("Nameless", fewDistinct, 256, new Random(5));
             Validate(sbc, fewDistinct);
 
             // Should have 33 buckets (each distinct value and a copy of the max)

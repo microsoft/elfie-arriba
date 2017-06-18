@@ -1,79 +1,45 @@
 ﻿using System;
 using System.IO;
 using V5.Collections;
-using V5.Serialization;
+using V5.Query;
 
 namespace V5.Data
 {
-    public class PrimitiveColumn<T> : IColumn
+    public class PrimitiveColumn<T> where T : IComparable<T>
     {
         public string Name { get; private set; }
-        public string TypeIdentifier { get; private set; }
+        public T[] Values { get; private set; }
+        public int Count { get; private set; }
 
-        private CachedLoader _loader;
-        private string _identifier;
-
-        private WeakReference<PartialArray<T>> _values;
-
-        public PrimitiveColumn(string name, string typeIdentifier, string parentIdentifier, CachedLoader loader)
+        public PrimitiveColumn(string name, T[] values, int count = -1)
         {
             this.Name = name;
-            this.TypeIdentifier = typeIdentifier;
-            this._loader = loader;
-            this._identifier = Path.Combine(parentIdentifier, name, "V." + this.TypeIdentifier + ".bin");
+            this.Values = values;
+            this.Count = (count < 0 ? values.Length : count);
         }
 
-        private PartialArray<T> Values
+        public void And(IndexSet set, Operator op, T value, int offset = 0)
         {
-            get
+            int end = Math.Min(this.Count - offset, set.Capacity);
+            for(int i = 0; i < end; ++i)
             {
-                PartialArray<T> result;
-                if(!_values.TryGetTarget(out result))
+                if(set[i])
                 {
-                    result = _loader.Get<PartialArray<T>>(this._identifier);
-                    _values.SetTarget(result);
+                    if (!(this.Values[i + offset].CompareTo(value) > 0)) set[i] = false;  
                 }
-
-                return result;
             }
         }
 
-        public void Save()
+        public static PrimitiveColumn<T> Read(string partitionPath, string columnName)
         {
-            this._loader.Save(this._identifier);
+            string columnValuesPath = Path.Combine(partitionPath, columnName, "V");
+            return new PrimitiveColumn<T>(columnName, BinarySerializer.Read<T>(columnValuesPath));
         }
 
-        public int Count => this.Values.Count;
-
-        public void Append(T[] values, int index, int length)
+        public void Write(string partitionPath)
         {
-            this.Values.AppendFrom(values, index, length);
-        }
-
-        public void SetCapacity(int capacity)
-        {
-            this.Values.SetCapacity(capacity);
-        }
-
-        public void AppendFrom(Array array, int index, int length)
-        {
-            // TODO: Need conversion at the array level
-            this.Values.AppendFrom((T[])array, index, length);
-        }
-
-        public void SetValues(Array values, uint[] indices)
-        {
-            this.Values.SetValues((T[])values, indices);
-        }
-
-        public void GetValues(Array result, uint[] indices)
-        {
-            this.Values.GetValues((T[])result, indices);
-        }
-
-        public Array TryGetArray()
-        {
-            return this.Values.TryGetArray();
+            string columnValuesPath = Path.Combine(partitionPath, this.Name, "V");
+            BinarySerializer.Write(columnValuesPath, this.Values);
         }
     }
 }

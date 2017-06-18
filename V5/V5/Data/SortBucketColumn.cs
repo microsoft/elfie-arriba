@@ -8,6 +8,8 @@ namespace V5.Data
 {
     public class SortBucketColumn<T> where T : IComparable<T>
     {
+        public string Name { get; private set; }
+
         // SortBucketColumn splits items into N buckets and each of these arrays has N+1 values.
         //  - Minimum[Length - 1] is the maximum value seen in any row.
         //  - IsMultiValue[Length - 1] is undefined.
@@ -21,8 +23,9 @@ namespace V5.Data
         private SortBucketColumn()
         { }
 
-        internal SortBucketColumn(T[] minimums)
+        internal SortBucketColumn(string name, T[] minimums)
         {
+            this.Name = name;
             this.Minimum = minimums;
             this.IsMultiValue = new bool[minimums.Length - 1];
             this.RowCount = new int[minimums.Length];
@@ -45,7 +48,7 @@ namespace V5.Data
             get => this.RowCount[this.RowCount.Length - 1];
         }
 
-        public static SortBucketColumn<T> Build(T[] values, int bucketCount, Random r, int parallelCount = 1)
+        public static SortBucketColumn<T> Build(string name, T[] values, int bucketCount, Random r, int parallelCount = 1)
         {
             // Choose bucket ranges [serially]
             T[] buckets = ChooseBuckets(values, bucketCount, r);
@@ -53,7 +56,7 @@ namespace V5.Data
             // Build a single array for the bucket per row
             byte[] rowBuckets = new byte[values.Length];
 
-            SortBucketColumn<T> result = new SortBucketColumn<T>(buckets);
+            SortBucketColumn<T> result = new SortBucketColumn<T>(name, buckets);
             result.RowBucketIndex = rowBuckets;
 
             if (parallelCount <= 1)
@@ -78,7 +81,7 @@ namespace V5.Data
 
                     // Build an inner SBC and bucket a slice of rows
                     // NOTE: RowBuckets is shared because each thread writes a distinct range
-                    SortBucketColumn<T> slice = new SortBucketColumn<T>(bucketCopy);
+                    SortBucketColumn<T> slice = new SortBucketColumn<T>(name, bucketCopy);
                     slice.BucketRows(values, index, length, rowBuckets);
 
                     // Merge the result into our main set
@@ -170,26 +173,25 @@ namespace V5.Data
             return index;
         }
 
-        public static SortBucketColumn<T> Read(string filePath)
+        public static SortBucketColumn<T> Read(string partitionPath, string columnName)
         {
-            SortBucketColumn<T> result = new SortBucketColumn<T>();
+            SortBucketColumn<T> result = new SortBucketColumn<T>(columnName, BinarySerializer.Read<T>(Path.Combine(partitionPath, columnName, "SV")));
 
-            result.Minimum = BinarySerializer.Read<T>(Path.Combine(filePath, "SV"));
-            result.IsMultiValue = BinarySerializer.Read<bool>(Path.Combine(filePath, "SSV"));
-            result.RowCount = BinarySerializer.Read<int>(Path.Combine(filePath, "SSC"));
+            result.IsMultiValue = BinarySerializer.Read<bool>(Path.Combine(partitionPath, columnName, "SSV"));
+            result.RowCount = BinarySerializer.Read<int>(Path.Combine(partitionPath, columnName, "SSC"));
 
-            result.RowBucketIndex = BinarySerializer.Read<byte>(Path.Combine(filePath, "SSR"));
+            result.RowBucketIndex = BinarySerializer.Read<byte>(Path.Combine(partitionPath, columnName, "SSR"));
 
             return result;
         }
 
-        public void Write(string filePath)
+        public void Write(string partitionPath)
         {
-            BinarySerializer.Write(Path.Combine(filePath, "SV"), this.Minimum);
-            BinarySerializer.Write(Path.Combine(filePath, "SSV"), this.IsMultiValue);
-            BinarySerializer.Write(Path.Combine(filePath, "SC"), this.RowCount);
+            BinarySerializer.Write(Path.Combine(partitionPath, this.Name, "SV"), this.Minimum);
+            BinarySerializer.Write(Path.Combine(partitionPath, this.Name, "SSV"), this.IsMultiValue);
+            BinarySerializer.Write(Path.Combine(partitionPath, this.Name, "SC"), this.RowCount);
 
-            BinarySerializer.Write(Path.Combine(filePath, "SSR"), this.RowBucketIndex);
+            BinarySerializer.Write(Path.Combine(partitionPath, this.Name, "SSR"), this.RowBucketIndex);
         }
     }
 }
