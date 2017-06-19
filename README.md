@@ -1,8 +1,18 @@
 # Arriba
 
-Arriba is an in-process C# data engine designed for free text search, structured search, and "conversational speed" data exploration across large single machine datasets. Arriba makes it easy to expose great "as you type" text search for your data on the web, to build high performance custom analytics in managed languages, or to work directly with large datasets in a managed process. Arriba has a simple, flexible [query syntax](../../wiki/Query-Syntax) which is designed to "just work" for web-style search, C#/VB/C++ expressions, and SQL WHERE clause styles. Type your query in your most familiar language and it should "just work". Arriba exposes a simple HTTP interface to allow querying and data manipulation via a service.
+Arriba is a C# data engine designed for instant structured search, free text search, and data exploration across large single machine datasets. 
 
-See the [Arriba QuickStart](https://github.com/Microsoft/elfie-arriba/wiki/Arriba-QuickStart) to get Arriba running with custom data in a few minutes!
+Give Arriba CSVs or simple C# arrays and it will automatically create tables with appropriately typed columns. 
+
+Arriba features a simple, elegant [query syntax](../../wiki/Query-Syntax) so that users can write anything from a web-style query "louvau -Closed" to a fully structured query ([Assigned To] = "Scott Louvau" AND ([State] != "Closed" OR [Remaining Work] > 0)).
+
+Arriba has a beautiful website to make search and exploration easy, with comprehensive query suggestions, a configurable listing, customizable item details, and a Grid for quick analytics. Query suggestions go beyond showing just column names and the search syntax by adding "Inline Insights", showing query-specific top values and distributions for columns and showing which columns word searches are matching to answer questions directly and help users construct the queries they really intend.
+
+Arriba exposes a comprehensive HTTP service you can use to programmatically run queries and aggregations, get query suggestions, and add/decorate/update/delete rows.
+
+You can even host the Arriba engine directly in your C# process, creating tables in-memory and making custom column types, queries, and aggregations by implementing simple interfaces.
+
+See the [Arriba QuickStart](https://github.com/Microsoft/elfie-arriba/wiki/Arriba-QuickStart) to get Arriba and the Website running with sample CSV data in 15 minutes.
 
 # Elfie
 
