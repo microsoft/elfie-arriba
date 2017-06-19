@@ -124,6 +124,8 @@ namespace Arriba.Server.Application
             ti.PartitionCount = table.PartitionCount;
             ti.RowCount = table.Count;
             ti.LastWriteTimeUtc = table.LastWriteTimeUtc;
+            ti.CanWrite = HasTableAccess(tableName, ctx.Request.User, PermissionScope.Writer);
+            ti.CanAdminister = HasTableAccess(tableName, ctx.Request.User, PermissionScope.Owner);
 
             IList<string> restrictedColumns = this.Database.GetRestrictedColumns(tableName, (si) => this.IsInIdentity(ctx.Request.User, si));
             if (restrictedColumns == null)
