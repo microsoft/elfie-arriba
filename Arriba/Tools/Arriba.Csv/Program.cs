@@ -18,6 +18,7 @@ using Arriba.Serialization.Csv;
 using Arriba.Structures;
 
 using Newtonsoft.Json;
+using Arriba.Model.Security;
 
 namespace Arriba.Csv
 {
@@ -34,12 +35,14 @@ namespace Arriba.Csv
     'query' to run a query from the command line.
     'getSettings' to write out JSON settings from a table.
     'setSettings' to configure a table from JSON settings.
+    'setCreators' to set the list of users or groups who can create tables.
     
     Arriba.Csv /mode:build /table:<TableName> /csvPath:<CsvFilePath> [/maximumCount:<RowLimitForTable>]? [/columns:""C1,C2,C3""]? [/settings:<SettingsJsonPath>]?
     Arriba.Csv /mode:query /table:<TableName> [/select:<ColumnList>]? [/orderBy:<ColumnName>]? [/count:<CountToShow>]?
     Arriba.Csv /mode:decorate /table:<TableName> /csvPath:<CsvFilePath> [/maximumCount:<RowLimitForTable>]? [/columns:""C1,C2,C3""]?
     Arriba.Csv /mode:getSettings /table:<TableName> /path:<SettingsJsonToWritePath>
     Arriba.Csv /mode:setSettings /table:<TableName> /path:<SettingsJsonToReadPath>
+    Arriba.Csv /mode:setCreators /users:u:DOMAIN\UserName;g:DOMAIN\GroupName
 
     Ex:
       Arriba.Csv /mode:build /table:SP500 /csvPath:""C:\Temp\SP500 Price History.csv"" /maximumCount:50000
@@ -80,6 +83,9 @@ namespace Arriba.Csv
                         break;
                     case "setsettings":
                         SetSettings(c.GetString("table"), c.GetString("path"));
+                        break;
+                    case "setcreators":
+                        SetTableCreators(c.GetString("users"));
                         break;
                     default:
                         Console.WriteLine(Usage);
@@ -295,6 +301,26 @@ namespace Arriba.Csv
 
             // Apply the settings
             SetSettings(db[tableName], settings);
+        }
+
+        private static void SetTableCreators(string creators)
+        {
+            Console.WriteLine("Setting table creators...");
+
+            SecurityPermissions createPermissions = new SecurityPermissions();
+            foreach (string creator in creators.Split(';'))
+            {
+                string[] parts = creator.Split(':');
+                IdentityScope scope = parts[0].Equals("u", StringComparison.OrdinalIgnoreCase) ? IdentityScope.User : IdentityScope.Group;
+                createPermissions.Grant(new SecurityIdentity(scope, parts[1]), PermissionScope.Owner);
+
+                Console.WriteLine($" - {scope} {parts[1]}");
+            }
+
+            // Create table, if required
+            SecureDatabase db = new SecureDatabase();
+            db.SetSecurity("", createPermissions);
+            db.SaveSecurity("");
         }
 
         private static void SetSettings(Table table, CombinedSettings settings)
