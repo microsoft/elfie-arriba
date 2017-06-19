@@ -152,7 +152,7 @@ namespace Arriba.Model.Query
         public static IExpression Parse(string whereClause, bool includeHintTerms = false)
         {
             // Empty Where means everything (consider aggregations)
-            if (String.IsNullOrEmpty(whereClause)) return new AllExpression();
+            if (String.IsNullOrEmpty(whereClause) || whereClause == "*") return new AllExpression();
 
             // Attempt to parse the query
             QueryParser parser = new QueryParser(new StringReader(whereClause));

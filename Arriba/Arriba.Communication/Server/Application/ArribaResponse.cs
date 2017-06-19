@@ -39,5 +39,16 @@ namespace Arriba.Server
         {
             return new ArribaResponse(ResponseStatus.Error, string.Format(format, args));
         }
+
+        // Replace Response.Error, Response.NotFound with ArribaResponseEnvelope-returning-versions
+        internal static new ArribaResponse Error(object body)
+        {
+            return new ArribaResponse(ResponseStatus.Error, body);
+        }
+
+        internal static new ArribaResponse NotFound(object body)
+        {
+            return new ArribaResponse(ResponseStatus.NotFound, body);
+        }
     }
 }

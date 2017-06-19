@@ -27,5 +27,11 @@ namespace Arriba.Types
 
         [DataMember]
         public IEnumerable<ColumnDetails> Columns { get; set; }
+
+        [DataMember]
+        public bool CanWrite { get; set; }
+
+        [DataMember]
+        public bool CanAdminister { get; set; }
     }
 }
