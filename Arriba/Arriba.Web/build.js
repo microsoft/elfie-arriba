@@ -5,41 +5,45 @@
 //   If no `configCustom` is given, default will be `~\configuration.default`. However, edits are never copied back to default.
 
 const fs = require('fs')
+const path = require('path');
 const {execSync} = require('child_process')
 function run(cmd) { try { execSync(cmd, { stdio: [0, 1, 2] }) } catch(e) {} } // Robocopy exit code isn't always 0, suppressing all errors for now.
 
-const wantSync = true // Set false if you're just testing
-const configDestination = `${__dirname}\\configuration`
-const configDefault = `${__dirname}\\configuration.default`
-const configSource = process.argv[2] || configDefault
+// Verify a configuration folder was passed
+if(!process.argv[2])
+    return console.log(`ERROR. Pass a configuration folder to build.js [pass 'configuration.default' for the default experience]`)
 
-// Validate input.
+const configDestination = `${__dirname}\\configuration`
+const configSource = path.resolve(process.argv[2])
+
+// Verify the configuration folder has a configuration.jsx
 if (!fs.existsSync(`${configSource}\\Configuration.jsx`))
     return console.log(`ERROR. '${configSource}' didn't contain a Configuration.jsx. Is your path right?`)
-
-// Copy any newer edits from configDestination back to configSource.
-if (wantSync && configSource !== configDefault && fs.existsSync(configDestination)) {
-    console.log(`Copying reverse...\n  ${configSource}\n  ${configDestination}`)
-    run(`ROBOCOPY /E /XO /NJH /NJS "${configDestination}" "${configSource}"`)
-}
-
-// Backup existing config.
-if (fs.existsSync(configDestination)) {
-    var backup = `${configDestination}.BAK`
-    console.log(`Backing up...\n  ${configDestination}\n  ${backup}`)
-    if (fs.existsSync(backup))
-        run(`RMDIR /S /Q "${backup}"`)
-    run(`MOVE "${configDestination}" "${backup}"`)
-}
-
-// Sync source -> destination.
-console.log(`Copying forward...\n  ${configSource}\n  ${configDestination}`)
-run(`ROBOCOPY /E /NJH /NJS "${configSource}" "${configDestination}"`)
 
 // Validate webpack available
 if (!fs.existsSync(`node_modules\\.bin\\webpack.cmd`))
     return console.log(`ERROR. 'node_modules\\.bin\\webpack.cmd'not found. Did you run "npm install" from Arriba.Web?`)
 
-// Run webpack.
-console.log(`Building Website...`)
+// Avoid losing work by copying any edits back to the previous config source
+if(fs.existsSync(`${configDestination}\\SourcePath.txt`)) {
+    var previousSource = fs.readFileSync(`${configDestination}\\SourcePath.txt`).toString()
+    console.log(`\n - Copying changes back to "${previousSource}"...`)
+    run(`ROBOCOPY /E /XO /NJH /NJS "${configDestination}" "${previousSource}" /XF SourcePath.txt`)
+}
+
+// Back up existing configuration folder.
+if (fs.existsSync(configDestination)) {
+    var backup = `${configDestination}.BAK`
+    console.log(`\n - Saving current configuration as "${backup}"...`)
+    if (fs.existsSync(backup)) run(`RMDIR /S /Q "${backup}"`)
+    run(`MOVE "${configDestination}" "${backup}"`)
+}
+
+// Copy passed configuration (finally).
+console.log(`\n - Getting configuration "${configSource}"...`)
+run(`ROBOCOPY /E /MIR /NJH /NJS "${configSource}" "${configDestination}"`)
+fs.writeFileSync(`${configDestination}\\SourcePath.txt`, configSource);
+
+// Run WebPack to bundle the site
+console.log(`\n - Building Arriba.Web bundle...`)
 run(`node_modules\\.bin\\webpack.cmd`)
