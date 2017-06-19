@@ -327,50 +327,6 @@ namespace Arriba.Model.Expressions
         }
     }
 
-    public class AllExceptColumnsTermExpression : TermExpression
-    {
-        public HashSet<string> RestrictedColumns;
-
-        public AllExceptColumnsTermExpression(HashSet<string> restrictedColumns, Operator op, Value value) :
-            base("*", op, value)
-        {
-            this.RestrictedColumns = restrictedColumns;
-        }
-
-        public AllExceptColumnsTermExpression(HashSet<string> restrictedColumns, TermExpression previousExpression) :
-            this(restrictedColumns, previousExpression.Operator, previousExpression.Value)
-        { }
-
-        public override void TryEvaluate(Partition partition, ShortSet result, ExecutionDetails details)
-        {
-            if (details == null) throw new ArgumentNullException("details");
-            if (result == null) throw new ArgumentNullException("result");
-            if (partition == null) throw new ArgumentNullException("partition");
-
-            // Run on every column *except* excluded ones
-            bool succeeded = false;
-            ExecutionDetails perColumnDetails = new ExecutionDetails();
-
-            foreach (IColumn<object> column in partition.Columns.Values)
-            {
-                if (!this.RestrictedColumns.Contains(column.Name))
-                {
-                    perColumnDetails.Succeeded = true;
-                    column.TryWhere(this.Operator, this.Value, result, perColumnDetails);
-                    succeeded |= perColumnDetails.Succeeded;
-                }
-            }
-
-            details.Succeeded &= succeeded;
-
-            // If no column succeeded, report the full errors
-            if (!succeeded)
-            {
-                details.Merge(perColumnDetails);
-            }
-        }
-    }
-
     public class TermInExpression : IExpression
     {
         public string ColumnName;
