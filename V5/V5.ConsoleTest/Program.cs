@@ -77,6 +77,11 @@ namespace V5.ConsoleTest
                     db.Load(PartitionPath);
                     Trace.WriteLine($" -> {db.Count:n0} rows");
                 }
+
+                using (new TraceWatch("Indexing Database [not needed in load]..."))
+                {
+                    db.Index(new Random(0));
+                }
             }
             else
             {
@@ -114,7 +119,7 @@ namespace V5.ConsoleTest
                 () => { int x = nativeSet.Count; }
             );
 
-            Benchmark.Compare("BirthDate > 1980-01-01 AND ZIP > 90000", 20, db.Count, new string[] { "Managed Hand-Coded", "Managed Column", "Native Hand-Coded", "Native separate and" },
+            Benchmark.Compare("BirthDate > 1960-01-01 AND ZIP > 60000", 20, db.Count, new string[] { "Managed Hand-Coded", "Managed Column", "Native Hand-Coded", "Native separate and" },
                 () => CountManagedDirectArrays(db, managedSet),
                 () => CountManagedColumn(db, managedSet),
                 () => CountNative(db, nativeSet),

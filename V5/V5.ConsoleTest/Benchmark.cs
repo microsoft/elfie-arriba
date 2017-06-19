@@ -7,7 +7,7 @@ namespace V5.ConsoleTest
     {
         public static void Compare(string description, int iterations, long itemCount, string[] variantNames, params Action[] variants)
         {
-            Console.WriteLine("{0}: {1:n0} iterations of {2:n0} bytes", description, iterations, itemCount);
+            Console.WriteLine("{0}: {1:n0} iterations of {2:n0} rows", description, iterations, itemCount);
 
             double benchmarkMilliseconds = 0.0;
 
