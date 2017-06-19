@@ -8,9 +8,6 @@
         // Name of tool to show [top right and elsewhere]
         toolName: "Bung",
 
-        // Theme to use [see theme.css for options and to define others]
-        theme: "theme-teal",
-
         // E-Mail addresses to whom feedback should go
         feedbackEmailAddresses: "slouvau@hotmail.com",
 
@@ -27,7 +24,7 @@
         databaseName : "Louvau",
         directLinkUrl : "https://scottlo.visualstudio.com/Louvau/_workitems/edit/",
 
-        // Grid: Pre-defined Grid queries
+        // Grid: Pre-defined Grid queries which appear in the 'Load' dropdown in the Grid view
         /* gridDefault: "<NameOfDefaultPredefinedQuery>", */
         gridDefaultQueries: {
             "Clear": {},

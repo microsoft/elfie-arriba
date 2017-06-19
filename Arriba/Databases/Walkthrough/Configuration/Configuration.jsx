@@ -8,9 +8,6 @@
         // Name of tool to show [top right and elsewhere]
         toolName: "Rates",
 
-        // Theme to use [see theme.css for options and to define others]
-        theme: "theme-orange",
-
         // E-Mail addresses to whom feedback should go
         feedbackEmailAddresses: "",
 
