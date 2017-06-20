@@ -10,7 +10,7 @@ namespace Xsv.Sanitize
     /// </summary>
     public class GuidMapper : ISanitizeMapper
     {
-        public string Generate(uint hash)
+        public Guid GenerateGuid(uint hash)
         {
             Guid result = new Guid(
                 hash,
@@ -24,7 +24,12 @@ namespace Xsv.Sanitize
                 (byte)((hash >> 8) & byte.MaxValue),
                 (byte)((hash >> 16) & byte.MaxValue),
                 (byte)((hash >> 24) & byte.MaxValue));
-            return result.ToString("D");
+            return result;
+        }
+
+        public string Generate(uint hash)
+        {
+           return GenerateGuid(hash).ToString("D");
         }
     }
 }

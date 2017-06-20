@@ -1,10 +1,12 @@
 ﻿using Microsoft.CodeAnalysis.Elfie.Diagnostics;
 using Microsoft.CodeAnalysis.Elfie.Extensions;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using V5;
 using V5.Collections;
+using V5.ConsoleTest.Model;
 using V5.Data;
 
 namespace V5.ConsoleTest
@@ -66,7 +68,8 @@ namespace V5.ConsoleTest
 
         static void Main(string[] args)
         {
-            bool isBoolPrimitive = typeof(bool).IsPrimitive;
+            WebRequestGenerator g = new WebRequestGenerator(new Random(5), DateTime.UtcNow.AddMonths(-6), 250);
+            List<WebRequest> data = g.Next(8);
 
             long rowCount = 8 * 1000 * 1000; // 0x1 << 23
             PersonDatabase db = new PersonDatabase(rowCount);

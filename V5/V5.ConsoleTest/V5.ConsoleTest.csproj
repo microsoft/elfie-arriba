@@ -84,9 +84,18 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Benchmark.cs" />
+    <Compile Include="Extensions\RandomExtensions.cs" />
     <Compile Include="GeneratePeopleSample.cs" />
+    <Compile Include="Generators\DataCenterMapper.cs" />
+    <Compile Include="Generators\EmailAddressMapper.cs" />
+    <Compile Include="Generators\FrequencyMapper.cs" />
+    <Compile Include="Generators\ServerNameMapper.cs" />
+    <Compile Include="Generators\UriStemMapper.cs" />
+    <Compile Include="Model\WebRequestGenerator.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="V0\EventDatabase.cs" />
+    <Compile Include="Model\WebRequest.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
