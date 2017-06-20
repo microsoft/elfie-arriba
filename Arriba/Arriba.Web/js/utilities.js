@@ -18,7 +18,7 @@ Object.values = Object.values || function(o) {
     for(var key in o) {
         if(o.hasOwnProperty(key)) vals.push(o[key]);
     }
-    return vals;    
+    return vals;
 }
 
 // From: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign
@@ -155,9 +155,9 @@ Storage.prototype.dispatch = function(keyName) {
     if (isEdge()) {
         var e = new Event("storage");
         e.key = keyName;
-        dispatchEvent(e);        
+        dispatchEvent(e);
     } else {
-        dispatchEvent(new StorageEvent("storage", { key: keyName }));                
+        dispatchEvent(new StorageEvent("storage", { key: keyName }));
     }
 }
 
@@ -222,9 +222,7 @@ function jsonQuery(url, onSuccess, onError, parameters) {
 
     var request = new XMLHttpRequest();
     request.withCredentials = true;
-    request.url = url + paramUri;
-    request.open('GET', request.url, true);
-    
+    request.open('GET', url + paramUri, true);
 
     request.onload = function () {
         if (request.status >= 200 && request.status < 400) {
