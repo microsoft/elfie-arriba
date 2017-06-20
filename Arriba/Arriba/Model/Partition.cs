@@ -322,7 +322,7 @@ namespace Arriba.Model
                     typedIdColumn = (IColumn<T>)idColumn.InnerColumn;
                 }
 
-                for( int index = 0; index < values.RowCount; ++index)
+                for (int index = 0; index < values.RowCount; ++index)
                 {
                     // Look for the LIDs a
                     T externalID = values.GetValueT<T>(index, idColumnIndex);
@@ -423,7 +423,7 @@ namespace Arriba.Model
                     typedColumn = (IColumn<T>)untypedColumn.InnerColumn;
                 }
 
-                for( int rowIndex = 0; rowIndex < values.RowCount; ++rowIndex)
+                for (int rowIndex = 0; rowIndex < values.RowCount; ++rowIndex)
                 {
                     T value = values.GetValueT<T>(rowIndex, columnIndex);
                     // If the item is new and no LID was assigned, we don't set values
