@@ -12,16 +12,10 @@ namespace V5
 		GreaterThanOrEqual = 5
 	};
 
-	public enum BooleanOperator : char
+	public enum class BooleanOperator : char
 	{
 		And = 0,
 		AndNot = 1,
 		Or = 2
-	};
-
-	public enum Signing : char
-	{
-		Unsigned = 0,
-		Signed = 1
 	};
 }
