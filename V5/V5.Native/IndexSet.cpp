@@ -144,27 +144,7 @@ namespace V5
 
 			if (T::typeid == System::Byte::typeid)
 			{
-				switch (op)
-				{
-					case CompareOperator::GreaterThan:
-						CompareToVector::WhereGreaterThan(true, true, (unsigned __int8*)pValues, values->Length, (unsigned char)value, pVector);
-						break;
-					case CompareOperator::LessThan:
-						CompareToVector::WhereLessThan(true, true, (unsigned __int8*)pValues, values->Length, (unsigned char)value, pVector);
-						break;
-					case CompareOperator::Equals:
-						CompareToVector::WhereEquals(true, true, (unsigned __int8*)pValues, values->Length, (unsigned char)value, pVector);
-						break;
-					case CompareOperator::LessThanOrEqual:
-						CompareToVector::WhereGreaterThan(false, true, (unsigned __int8*)pValues, values->Length, (unsigned char)value, pVector);
-						break;
-					case CompareOperator::GreaterThanOrEqual:
-						CompareToVector::WhereLessThan(false, true, (unsigned __int8*)pValues, values->Length, (unsigned char)value, pVector);
-						break;
-					case CompareOperator::NotEquals:
-						CompareToVector::WhereEquals(false, true, (unsigned __int8*)pValues, values->Length, (unsigned char)value, pVector);
-						break;
-				}
+				CompareToVector::Where((CompareOperatorN)op, BooleanOperatorN::And, (unsigned __int8*)pValues, values->Length, (unsigned char)value, pVector);
 			}
 
 			return this;

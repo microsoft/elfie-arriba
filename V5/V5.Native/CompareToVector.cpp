@@ -27,31 +27,9 @@
 */
 
 #pragma unmanaged
-public enum CompareOperatorN : char
-{
-	Equals = 0,
-	NotEquals = 1,
-	LessThan = 2,
-	LessThanOrEqual = 3,
-	GreaterThan = 4,
-	GreaterThanOrEqual = 5
-};
-
-public enum BooleanOperatorN : char
-{
-	And = 0,
-	AndNot = 1,
-	Or = 2
-};
-
-public enum SigningN : char
-{
-	Unsigned = 0,
-	Signed = 1
-};
 
 template<CompareOperatorN cOp, BooleanOperatorN bOp, SigningN sign>
-static void Where(unsigned __int8* set, int length, unsigned __int8 value, unsigned __int64* matchVector)
+static void WhereN(unsigned __int8* set, int length, unsigned __int8 value, unsigned __int64* matchVector)
 {
 	int i = 0;
 	unsigned __int64 result;
@@ -162,17 +140,43 @@ static void Where(unsigned __int8* set, int length, unsigned __int8 value, unsig
 	}
 }
 
-void CompareToVector::WhereGreaterThan(bool positive, bool and, unsigned __int8* set, int length, unsigned __int8 value, unsigned __int64* matchVector)
+template<BooleanOperatorN bOp>
+void CompareToVector::WhereB(CompareOperatorN cOp, unsigned __int8* set, int length, unsigned __int8 value, unsigned __int64* matchVector)
 {
-	Where<CompareOperatorN::GreaterThan, BooleanOperatorN::And, SigningN::Unsigned>(set, length, value, matchVector);
+	switch (cOp)
+	{
+	case CompareOperatorN::GreaterThan:
+		WhereN<CompareOperatorN::GreaterThan, BooleanOperatorN::And, SigningN::Unsigned>(set, length, value, matchVector);
+		break;
+	case CompareOperatorN::GreaterThanOrEqual:
+		WhereN<CompareOperatorN::GreaterThanOrEqual, BooleanOperatorN::And, SigningN::Unsigned>(set, length, value, matchVector);
+		break;
+	case CompareOperatorN::LessThan:
+		WhereN<CompareOperatorN::LessThan, BooleanOperatorN::And, SigningN::Unsigned>(set, length, value, matchVector);
+		break;
+	case CompareOperatorN::LessThanOrEqual:
+		WhereN<CompareOperatorN::LessThanOrEqual, BooleanOperatorN::And, SigningN::Unsigned>(set, length, value, matchVector);
+		break;
+	case CompareOperatorN::Equals:
+		WhereN<CompareOperatorN::Equals, BooleanOperatorN::And, SigningN::Unsigned>(set, length, value, matchVector);
+		break;
+	case CompareOperatorN::NotEquals:
+		WhereN<CompareOperatorN::NotEquals, BooleanOperatorN::And, SigningN::Unsigned>(set, length, value, matchVector);
+		break;
+	}
 }
 
-void CompareToVector::WhereLessThan(bool positive, bool and, unsigned __int8* set, int length, unsigned __int8 value, unsigned __int64* matchVector)
+void CompareToVector::Where(CompareOperatorN cOp, BooleanOperatorN bOp, unsigned __int8* set, int length, unsigned __int8 value, unsigned __int64* matchVector)
 {
-	Where<CompareOperatorN::LessThan, BooleanOperatorN::And, SigningN::Unsigned>(set, length, value, matchVector);
-}
-
-void CompareToVector::WhereEquals(bool positive, bool and, unsigned __int8* set, int length, unsigned __int8 value, unsigned __int64* matchVector)
-{
-	Where<CompareOperatorN::Equals, BooleanOperatorN::And, SigningN::Unsigned>(set, length, value, matchVector);
+	switch (bOp)
+	{
+		case BooleanOperatorN::And:
+			WhereB<BooleanOperatorN::And>(cOp, set, length, value, matchVector);
+			break;
+		case BooleanOperatorN::Or:
+			WhereB<BooleanOperatorN::Or>(cOp, set, length, value, matchVector);
+			break;
+		case BooleanOperatorN::AndNot:
+			WhereB<BooleanOperatorN::AndNot>(cOp, set, length, value, matchVector);
+	}
 }
