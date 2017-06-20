@@ -11,54 +11,54 @@ using V5.Data;
 
 namespace V5.ConsoleTest
 {
-    public class PersonDatabase
+    public class WebRequestDatabase
     {
         public const int ParallelCount = 2;
 
-        public PrimitiveColumn<long> BirthDate;
-        public PrimitiveColumn<long> WhenAdded;
-        public PrimitiveColumn<int> ZipCode;
+        public PrimitiveColumn<long> EventTime;
+        public PrimitiveColumn<ushort> HttpStatus;
+        public PrimitiveColumn<int> ResponseBytes;
 
-        public SortBucketColumn<long> BirthDateBuckets;
-        public SortBucketColumn<long> WhenAddedBuckets;
-        public SortBucketColumn<int> ZipCodeBuckets;
+        public SortBucketColumn<long> EventTimeBuckets;
+        public SortBucketColumn<ushort> HttpStatusBuckets;
+        public SortBucketColumn<int> ResponseBytesBuckets;
 
-        public PersonDatabase(long capacity)
+        public WebRequestDatabase(long capacity)
         {
-            this.BirthDate = new PrimitiveColumn<long>("BirthDate", new long[capacity]);
-            this.WhenAdded = new PrimitiveColumn<long>("WhenAdded", new long[capacity]);
-            this.ZipCode = new PrimitiveColumn<int>("ZipCode", new int[capacity]);
+            this.EventTime = new PrimitiveColumn<long>("EventTime", new long[capacity]);
+            this.HttpStatus = new PrimitiveColumn<ushort>("HttpStatus", new ushort[capacity]);
+            this.ResponseBytes = new PrimitiveColumn<int>("ResponseBytes", new int[capacity]);
         }
 
-        public uint Count => (uint)this.BirthDate.Count;
+        public uint Count => (uint)this.EventTime.Count;
 
         public void Index(Random r)
         {
-            this.BirthDateBuckets = SortBucketColumn<long>.Build("BirthDate", this.BirthDate.Values, 255, r, ParallelCount);
-            this.WhenAddedBuckets = SortBucketColumn<long>.Build("WhenAdded", this.WhenAdded.Values, 255, r, ParallelCount);
-            this.ZipCodeBuckets = SortBucketColumn<int>.Build("ZipCode", this.ZipCode.Values, 255, r, ParallelCount);
+            this.EventTimeBuckets = SortBucketColumn<long>.Build("EventTime", this.EventTime.Values, 255, r, ParallelCount);
+            this.HttpStatusBuckets = SortBucketColumn<ushort>.Build("HttpStatus", this.HttpStatus.Values, 255, r, ParallelCount);
+            this.ResponseBytesBuckets = SortBucketColumn<int>.Build("ResponseBytes", this.ResponseBytes.Values, 255, r, ParallelCount);
         }
 
         public void Load(string filePath)
         {
-            this.BirthDate = PrimitiveColumn<long>.Read(filePath, "BirthDate");
-            this.WhenAdded = PrimitiveColumn<long>.Read(filePath, "WhenAdded");
-            this.ZipCode = PrimitiveColumn<int>.Read(filePath, "ZipCode");
+            this.EventTime = PrimitiveColumn<long>.Read(filePath, "EventTime");
+            this.HttpStatus = PrimitiveColumn<ushort>.Read(filePath, "HttpStatus");
+            this.ResponseBytes = PrimitiveColumn<int>.Read(filePath, "ResponseBytes");
 
-            this.BirthDateBuckets = SortBucketColumn<long>.Read(filePath, "BirthDate");
-            this.WhenAddedBuckets = SortBucketColumn<long>.Read(filePath, "WhenAdded");
-            this.ZipCodeBuckets = SortBucketColumn<int>.Read(filePath, "ZipCode");
+            this.EventTimeBuckets = SortBucketColumn<long>.Read(filePath, "EventTime");
+            this.HttpStatusBuckets = SortBucketColumn<ushort>.Read(filePath, "HttpStatus");
+            this.ResponseBytesBuckets = SortBucketColumn<int>.Read(filePath, "ResponseBytes");
         }
 
         public void Save(string filePath)
         {
-            this.BirthDate.Write(filePath);
-            this.WhenAdded.Write(filePath);
-            this.ZipCode.Write(filePath);
+            this.EventTime.Write(filePath);
+            this.HttpStatus.Write(filePath);
+            this.ResponseBytes.Write(filePath);
 
-            this.BirthDateBuckets.Write(filePath);
-            this.WhenAddedBuckets.Write(filePath);
-            this.ZipCodeBuckets.Write(filePath);
+            this.EventTimeBuckets.Write(filePath);
+            this.HttpStatusBuckets.Write(filePath);
+            this.ResponseBytesBuckets.Write(filePath);
         }
     }
 
@@ -68,12 +68,10 @@ namespace V5.ConsoleTest
 
         static void Main(string[] args)
         {
-            WebRequestGenerator g = new WebRequestGenerator(new Random(5), DateTime.UtcNow.AddMonths(-6), 250);
-            List<WebRequest> data = g.Next(8);
-
-            long rowCount = 8 * 1000 * 1000; // 0x1 << 23
-            PersonDatabase db = new PersonDatabase(rowCount);
-
+            int rowCount = 8 * 1000 * 1000;
+            WebRequestDatabase db = new WebRequestDatabase(rowCount);
+            V0.WebRequestDatabase db0 = new V0.WebRequestDatabase();
+            
             if (Directory.Exists(PartitionPath))
             {
                 using (new TraceWatch("Loading Database..."))
@@ -89,15 +87,24 @@ namespace V5.ConsoleTest
             }
             else
             {
-                using (new TraceWatch($"Generating {rowCount.CountString()} sample rows..."))
+                List<WebRequest> data = null;
+
+                using (new TraceWatch($"Generating {rowCount:n0} sample rows..."))
                 {
-                    Random r = new Random(5);
-                    for (long i = 0; i < rowCount; ++i)
+                    WebRequestGenerator g = new WebRequestGenerator(new Random(5), DateTime.UtcNow.AddMonths(-6), 250);
+                    data = g.Next(rowCount);
+                }
+
+                db0.Requests = data;
+
+                using (new TraceWatch("Copying into Database..."))
+                { 
+                    for (int i = 0; i < rowCount; ++i)
                     {
-                        Person p = new Person(r);
-                        db.BirthDate.Values[i] = p.BirthDate.ToUniversalTime().Ticks;
-                        db.WhenAdded.Values[i] = p.WhenAdded.ToUniversalTime().Ticks;
-                        db.ZipCode.Values[i] = p.ZipCode;
+                        WebRequest row = data[i];
+                        db.EventTime.Values[i] = row.EventTime.Ticks;
+                        db.HttpStatus.Values[i] = row.HttpStatus;
+                        db.ResponseBytes.Values[i] = row.ResponseBytes;
                     }
                 }
 
@@ -113,133 +120,53 @@ namespace V5.ConsoleTest
             }
 
             IndexSet managedSet = new IndexSet(db.Count);
-            IndexSet nativeSet = new IndexSet(db.Count).All(db.Count);
-            IndexSet scratchSet = new IndexSet(db.Count);
-            int managedMatches = CountManagedDirectArrays(db, managedSet);
+            IndexSet v5Set = new IndexSet(db.Count);
 
-            Benchmark.Compare("IndexSet Ops", 1000, db.Count, new string[] { "All", "None", "Count" },
-                () => nativeSet.All(db.Count),
-                () => nativeSet.None(),
-                () => { int x = nativeSet.Count; }
+            Benchmark.Compare("HttpStatus = 404 AND ResponseBytes > 1000", 20, db.Count, new string[] {"Managed Column", "V5.Native" },
+                () => QueryManagedColumn(db, managedSet),
+                () => QueryV5(db, v5Set)
             );
 
-            Benchmark.Compare("BirthDate > 1960-01-01 AND ZIP > 60000", 20, db.Count, new string[] { "Managed Hand-Coded", "Managed Column", "Native Hand-Coded", "Native separate and" },
-                () => CountManagedDirectArrays(db, managedSet),
-                () => CountManagedColumn(db, managedSet),
-                () => CountNative(db, nativeSet),
-                () => CountNativeSeparate(db, nativeSet, scratchSet)
-            );
-
-            byte edge = 250;
-
-            managedSet.None();
-            WhereGreaterThan(db.BirthDateBuckets.RowBucketIndex, edge, managedSet);
-
-            nativeSet.All(db.Count).And(db.BirthDateBuckets.RowBucketIndex, CompareOperator.GreaterThan, edge);
-
-            if (!managedSet.Equals(nativeSet) || managedSet.Count != nativeSet.Count)
-            {
-                Console.WriteLine("ERROR");
-            }
-
-            ulong[] directVector = new ulong[db.Count + 63 >> 6];
-
-            Benchmark.Compare("Find Items in Range", 100, rowCount, new string[] { "Managed", "Native" },
-                () => WhereGreaterThan(db.BirthDateBuckets.RowBucketIndex, edge, managedSet),
-                () => nativeSet.And(db.BirthDateBuckets.RowBucketIndex, CompareOperator.GreaterThan, edge)
+            Benchmark.Compare("IndexSet Operations", 250, db.Count, new string[] { "All", "None", "Count", "WhereGreaterThan" },
+                () => v5Set.All(db.Count),
+                () => v5Set.None(),
+                () => { int x = v5Set.Count; },
+                () => v5Set.And(db.EventTimeBuckets.RowBucketIndex, CompareOperator.GreaterThan, (byte)200)
             );
         }
 
-        private static int CountManagedDirectArrays(PersonDatabase db, IndexSet matches)
+        private static int QueryManagedDirect(V0.WebRequestDatabase db, IndexSet matches)
         {
-            long birthdayMinimum = new DateTime(1960, 01, 01).ToUniversalTime().Ticks;
-            int zipMinimum = 60000;
-
-            long[] birthDates = db.BirthDate.Values;
-            int[] zipCodes = db.ZipCode.Values;
-
-            for (int i = 0; i < db.Count; ++i)
+            for (int i = 0; i < db.Requests.Count; ++i)
             {
-                if (zipCodes[i] > zipMinimum && birthDates[i] > birthdayMinimum) matches[i] = true;
+                if (db.Requests[i].HttpStatus == 404 && db.Requests[i].ResponseBytes > 1000) matches[i] = true;
             }
+
             return matches.Count;
         }
 
-        private static int CountManagedColumn(PersonDatabase db, IndexSet matches)
+        private static int QueryManagedColumn(WebRequestDatabase db, IndexSet matches)
         {
-            long birthdayMinimum = new DateTime(1960, 01, 01).ToUniversalTime().Ticks;
-            int zipMinimum = 60000;
-
             matches.All(db.Count);
-            db.BirthDate.And(matches, CompareOperator.GreaterThan, birthdayMinimum);
-            db.WhenAdded.And(matches, CompareOperator.GreaterThan, zipMinimum);
+            db.HttpStatus.And(matches, CompareOperator.Equals, 404);
+            db.ResponseBytes.And(matches, CompareOperator.GreaterThan, 1000);
 
             return matches.Count;
         }
 
-        private static int CountNative(PersonDatabase db, IndexSet matches)
+        private static int QueryV5(WebRequestDatabase db, IndexSet matches)
         {
-            long birthdayMinimum = new DateTime(1960, 01, 01).ToUniversalTime().Ticks;
-            int zipMinimum = 60000;
+            bool isHttpStatusSingleBucket;
+            int httpStatusBucket = db.HttpStatusBuckets.BucketForValue(404, out isHttpStatusSingleBucket);
 
-            bool isBirthdayExact;
-            int birthdayBucket = db.BirthDateBuckets.BucketForValue(birthdayMinimum, out isBirthdayExact);
-            if (birthdayBucket < 0 || birthdayBucket > db.BirthDateBuckets.Minimum.Length - 1) return 0;
-
-            bool isZipExact;
-            int zipBucket = db.ZipCodeBuckets.BucketForValue(zipMinimum, out isZipExact);
-            if (zipBucket < 0 || zipBucket > db.ZipCodeBuckets.Minimum.Length - 1) return 0;
+            bool isResponseBytesSingleBucket;
+            int responseBytesBucket = db.ResponseBytesBuckets.BucketForValue(1000, out isResponseBytesSingleBucket);
 
             matches.All(db.Count)
-                .And(db.BirthDateBuckets.RowBucketIndex, CompareOperator.GreaterThan, (byte)birthdayBucket)
-                .And(db.ZipCodeBuckets.RowBucketIndex, CompareOperator.GreaterThan, (byte)zipBucket);
+                .And(db.HttpStatusBuckets.RowBucketIndex, CompareOperator.Equals, (byte)httpStatusBucket)
+                .And(db.ResponseBytesBuckets.RowBucketIndex, CompareOperator.GreaterThan, (byte)responseBytesBucket);
 
             return matches.Count;
-        }
-
-        private static int CountNativeSeparate(PersonDatabase db, IndexSet matches1, IndexSet matches2)
-        {
-            long birthdayMinimum = new DateTime(1960, 01, 01).ToUniversalTime().Ticks;
-            int zipMinimum = 60000;
-
-            bool isBirthdayExact;
-            int birthdayBucket = db.BirthDateBuckets.BucketForValue(birthdayMinimum, out isBirthdayExact);
-            if (birthdayBucket < 0 || birthdayBucket > db.BirthDateBuckets.Minimum.Length - 1) return 0;
-
-            bool isZipExact;
-            int zipBucket = db.ZipCodeBuckets.BucketForValue(zipMinimum, out isZipExact);
-            if (zipBucket < 0 || zipBucket > db.ZipCodeBuckets.Minimum.Length - 1) return 0;
-
-            matches1.All(db.Count).And(db.BirthDateBuckets.RowBucketIndex, CompareOperator.GreaterThan, (byte)birthdayBucket);
-            matches2.All(db.Count).And(db.ZipCodeBuckets.RowBucketIndex, CompareOperator.GreaterThan, (byte)zipBucket);
-
-            matches1.And(matches2);
-
-            return matches1.Count;
-        }
-
-        private static int CountManaged(byte[] test, byte rangeStart, byte rangeEnd)
-        {
-            int count = 0;
-
-            for (int i = 0; i < test.Length; ++i)
-            {
-                byte value = test[i];
-                if (value >= rangeStart && value <= rangeEnd) count++;
-            }
-
-            return count;
-        }
-
-        private static void WhereGreaterThan(byte[] test, byte value, IndexSet result)
-        {
-            for (int i = 0; i < test.Length; ++i)
-            {
-                if (test[i] > value)
-                {
-                    result[i] = true;
-                }
-            }
         }
     }
 }

@@ -85,7 +85,6 @@
   <ItemGroup>
     <Compile Include="Benchmark.cs" />
     <Compile Include="Extensions\RandomExtensions.cs" />
-    <Compile Include="GeneratePeopleSample.cs" />
     <Compile Include="Generators\DataCenterMapper.cs" />
     <Compile Include="Generators\EmailAddressMapper.cs" />
     <Compile Include="Generators\FrequencyMapper.cs" />
