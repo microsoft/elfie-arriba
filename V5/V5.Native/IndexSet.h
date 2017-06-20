@@ -1,7 +1,6 @@
 #pragma once
 #include "Operator.h"
 using namespace System;
-using namespace V5::Query;
 
 namespace V5
 {
@@ -32,9 +31,8 @@ namespace V5
 			IndexSet^ AndNot(IndexSet^ other);
 			IndexSet^ Or(IndexSet^ other);
 
-			// Where [extension method]?
 			generic <typename T>
-			IndexSet^ And(array<T>^ values, Operator op, T value);
+			IndexSet^ And(array<T>^ values, CompareOperator cOp, T value);
 		};
 	}
 }

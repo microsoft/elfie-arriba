@@ -137,40 +137,37 @@ namespace V5
 		}
 
 		generic <typename T>
-			IndexSet^ IndexSet::And(array<T>^ values, Operator op, T value)
+		IndexSet^ IndexSet::And(array<T>^ values, CompareOperator op, T value)
+		{
+			pin_ptr<T> pValues = &values[0];
+			pin_ptr<UInt64> pVector = &(this->bitVector[0]);
+
+			if (T::typeid == System::Byte::typeid)
 			{
-				pin_ptr<T> pValues = &values[0];
-				pin_ptr<UInt64> pVector = &(this->bitVector[0]);
-
-				if (T::typeid == System::Byte::typeid)
+				switch (op)
 				{
-					if (op == Operator::GreaterThan)
-					{
+					case CompareOperator::GreaterThan:
 						CompareToVector::WhereGreaterThan(true, true, (unsigned __int8*)pValues, values->Length, (unsigned char)value, pVector);
-					}
-					else if (op == Operator::LessThan)
-					{
+						break;
+					case CompareOperator::LessThan:
 						CompareToVector::WhereLessThan(true, true, (unsigned __int8*)pValues, values->Length, (unsigned char)value, pVector);
-					}
-					else if (op == Operator::Equals)
-					{
+						break;
+					case CompareOperator::Equals:
 						CompareToVector::WhereEquals(true, true, (unsigned __int8*)pValues, values->Length, (unsigned char)value, pVector);
-					}
-					else if (op == Operator::LessThanOrEqual)
-					{
+						break;
+					case CompareOperator::LessThanOrEqual:
 						CompareToVector::WhereGreaterThan(false, true, (unsigned __int8*)pValues, values->Length, (unsigned char)value, pVector);
-					}
-					else if (op == Operator::GreaterThanOrEqual)
-					{
+						break;
+					case CompareOperator::GreaterThanOrEqual:
 						CompareToVector::WhereLessThan(false, true, (unsigned __int8*)pValues, values->Length, (unsigned char)value, pVector);
-					}
-					else if (op == Operator::NotEquals)
-					{
+						break;
+					case CompareOperator::NotEquals:
 						CompareToVector::WhereEquals(false, true, (unsigned __int8*)pValues, values->Length, (unsigned char)value, pVector);
-					}
+						break;
 				}
-
-				return this;
 			}
+
+			return this;
+		}
 	}
 }

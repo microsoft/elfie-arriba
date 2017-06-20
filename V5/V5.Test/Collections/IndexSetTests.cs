@@ -1,8 +1,8 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Linq;
+using V5;
 using V5.Collections;
-using V5.Query;
 
 namespace V5.Test.Collections
 {
@@ -34,7 +34,7 @@ namespace V5.Test.Collections
 
                 Array.Clear(values, 0, values.Length);
                 values[i] = 1;
-                set.All(999).And(values, Query.Operator.GreaterThan, (byte)0);
+                set.All(999).And(values, CompareOperator.GreaterThan, (byte)0);
                 AssertOnly(set, 999, i);
             }
         }
@@ -57,12 +57,12 @@ namespace V5.Test.Collections
             byte[] compareTo = Enumerable.Range(0, 120).Select((i) => (byte)i).ToArray();
 
             Assert.AreEqual(0, set.Count, "Verify set starts empty.");
-            Assert.AreEqual(19, set.All(120).And<byte>(compareTo, Operator.GreaterThan, 100).Count, "Verify 19 values > 100");
-            Assert.AreEqual(20, set.All(120).And<byte>(compareTo, Operator.GreaterThanOrEqual, 100).Count, "Verify 20 values >= 100");
-            Assert.AreEqual(100, set.All(120).And<byte>(compareTo, Operator.LessThan, 100).Count, "Verify 100 values <= 100");
-            Assert.AreEqual(101, set.All(120).And<byte>(compareTo, Operator.LessThanOrEqual, 100).Count, "Verify 101 values < 100");
-            Assert.AreEqual(1, set.All(120).And<byte>(compareTo, Operator.Equals, 100).Count, "Verify 1 value == 100");
-            Assert.AreEqual(119, set.All(120).And<byte>(compareTo, Operator.NotEquals, 100).Count, "Verify 119 values != 100");
+            Assert.AreEqual(19, set.All(120).And<byte>(compareTo, CompareOperator.GreaterThan, 100).Count, "Verify 19 values > 100");
+            Assert.AreEqual(20, set.All(120).And<byte>(compareTo, CompareOperator.GreaterThanOrEqual, 100).Count, "Verify 20 values >= 100");
+            Assert.AreEqual(100, set.All(120).And<byte>(compareTo, CompareOperator.LessThan, 100).Count, "Verify 100 values <= 100");
+            Assert.AreEqual(101, set.All(120).And<byte>(compareTo, CompareOperator.LessThanOrEqual, 100).Count, "Verify 101 values < 100");
+            Assert.AreEqual(1, set.All(120).And<byte>(compareTo, CompareOperator.Equals, 100).Count, "Verify 1 value == 100");
+            Assert.AreEqual(119, set.All(120).And<byte>(compareTo, CompareOperator.NotEquals, 100).Count, "Verify 119 values != 100");
         }
     }
 }

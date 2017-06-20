@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
+using V5;
 using V5.Collections;
-using V5.Query;
 
 namespace V5.Data
 {
@@ -18,7 +18,7 @@ namespace V5.Data
             this.Count = (count < 0 ? values.Length : count);
         }
 
-        public void And(IndexSet set, Operator op, T value, int offset = 0)
+        public void And(IndexSet set, CompareOperator op, T value, int offset = 0)
         {
             int end = Math.Min(this.Count - offset, set.Capacity);
             for(int i = 0; i < end; ++i)
