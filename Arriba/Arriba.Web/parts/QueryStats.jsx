@@ -1,4 +1,6 @@
-﻿// QueryStats is a bar just under the SearchHeader. It shows errors, if any, or the current query, returned count, and runtime.
+import "./QueryStats.scss";
+
+// QueryStats is a bar just under the SearchHeader. It shows errors, if any, or the current query, returned count, and runtime.
 export default React.createClass({
     onTableTileClick: function (name, e) {
         this.props.onSelectedTableChange(name);

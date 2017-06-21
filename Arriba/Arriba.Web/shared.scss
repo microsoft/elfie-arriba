@@ -4,6 +4,12 @@
     align-items: center; // Top/Bottom
 }
 
+@mixin ellipsis {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
 @mixin small-caps {
     font-size: 10px;
     font-weight: bold;
