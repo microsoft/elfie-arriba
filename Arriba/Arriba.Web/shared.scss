@@ -3,3 +3,9 @@
     justify-content: center; // Left/Right
     align-items: center; // Top/Bottom
 }
+
+@mixin small-caps {
+    font-size: 10px;
+    font-weight: bold;
+    text-transform: uppercase;
+}

@@ -53,10 +53,8 @@
         top: 28px;
         right: 20px;
 
-        text-transform: uppercase;
+        @include small-caps;
         color: transparentize($dark, 0.6);
-        font-size: 10px;
-        font-weight: bold;
         pointer-events: none;
     }
 
@@ -95,12 +93,8 @@
                 flex-grow: 1;
             }
             .hint {
-                text-transform: uppercase;
+                @include small-caps;
                 color: transparentize($dark, 0.6);
-                color: $dark;
-                font-size: 10px;
-                font-weight: bold;
-                opacity: 0.4;
             }
         }
     }

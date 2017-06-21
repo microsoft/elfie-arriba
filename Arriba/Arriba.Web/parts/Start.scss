@@ -16,12 +16,6 @@ $line: 1px solid $line-color;
     &:hover { color: inherit; };
 }
 
-.small-caps {
-    font-size: 10px;
-    font-weight: bold;
-    text-transform: uppercase;
-}
-
 .start {
     width: 550px;
     height: 500px;
@@ -74,7 +68,7 @@ $line: 1px solid $line-color;
             margin-bottom: 0px;
             color: hsl(0, 0%, 60%);
             &:hover { color: hsl(0, 0%, 30%); }
-            @extend .small-caps;
+            @include small-caps;
         }
     }
 
@@ -86,7 +80,7 @@ $line: 1px solid $line-color;
 
         .h1 {
             color: $vdark;
-            @extend .small-caps;
+            @include small-caps;
             margin-bottom: 5px;
         }
 
@@ -110,9 +104,7 @@ $line: 1px solid $line-color;
                         color: hsl(0, 0%, 100%);
                         background-color: hsl(0, 80%, 60%);
                     }
-                    font-size: 10px;
-                    font-weight: bold;
-                    text-transform: uppercase;
+                    @include small-caps;
                     padding: 0 15px;
 
                     align-self: stretch;
