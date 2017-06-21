@@ -290,6 +290,18 @@ a:visited:hover {
             padding-right: 4px;
             font-weight: bold;
         }
+
+        & span.delete {
+            padding: 0px 4px 1px;
+            font-size: 12px;
+            border-radius: 2px;
+            position: relative;
+            left: 4px;
+            &:hover {
+                color: hsl(0, 0%, 100%);
+                background-color: hsl(0, 80%, 60%);
+            }
+        }
     }
 }
 
@@ -643,7 +655,7 @@ a:visited:hover {
 
 /* Make Grid values very dark blue */
 .grid table td a {
-    color: #1E3CA9; 
+    color: #1E3CA9;
 }
 
 /* Make Grid values lighten and underline on hover */

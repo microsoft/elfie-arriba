@@ -1,4 +1,4 @@
-import "../Search.scss";
+﻿import "../Search.scss";
 import "!script-loader!../js/utilities.js";
 
 import Mru from "./Mru";
@@ -6,6 +6,7 @@ import ErrorPage from "./ErrorPage";
 import QueryStats from "./QueryStats";
 import SearchHeader from "./SearchHeader";
 import SearchBox from "./SearchBox";
+import DropShield from "./DropShield";
 
 import InfiniteScroll from "./InfiniteScroll";
 import SplitPane from "./SplitPane";
@@ -57,15 +58,20 @@ export default React.createClass({
     componentDidMount: function () {
         window.addEventListener("beforeunload", this); // For Mru
         this.mru = new Mru();
-
-        // On Page load, find the list of known table namesz
+        this.refreshAllBasics();
+    },
+    refreshAllBasics: function (then) {
+        // On Page load, find the list of known table names
         jsonQuery(configuration.url + "/allBasics",
             data => {
                 if (!data.content) {
                     this.setState({ blockingErrorStatus: 401 });
                 } else {
                     Object.values(data.content).forEach(table => table.idColumn = table.columns.find(col => col.isPrimaryKey).name || "");
-                    this.setState({ allBasics: data.content }, this.runSearch);
+                    this.setState({ allBasics: data.content }, () => {
+                        this.runSearch();
+                        if (then) then();
+                    });
                 }
             },
             (xhr, status, err) => {
@@ -127,14 +133,14 @@ export default React.createClass({
     onAddClause: function (name, value) {
         this.setState({ query: this.state.query + " AND [" + name + "]=\"" + value + "\"" }, this.runSearch);
     },
-    onSetColumns: function (columns) {
-        localStorage.mergeJson("table-" + this.state.currentTable, {
+    onSetColumns: function (columns, table) {
+        localStorage.mergeJson("table-" + (table || this.state.currentTable), {
             columns: columns
         });
 
         // Clear the userSelectedColumns to and rely on getTableBasics to recalcuate it.
         this.setState({
-            userSelectedTable: this.state.currentTable,
+            userSelectedTable: table || this.state.currentTable,
             userTableSettings: {}
         }, this.runSearch);
     },
@@ -158,8 +164,8 @@ export default React.createClass({
     getAllCounts: function () {
         // On query, ask for the count from every table.
 
-        // If there's no query, clear results and do nothing else
-        if (!this.state.query) {
+        // If there's no allBasics or query, clear results and do nothing else
+        if (!Object.keys(this.state.allBasics).length || !this.state.query) {
             this.setState({
                 loading: false,
                 allCountData: [],
@@ -185,7 +191,7 @@ export default React.createClass({
                     });
                 }
                 this.setState({
-                    allCountData: data, 
+                    allCountData: data,
                     currentTable: currentTable,
                     loading: false
                 }, this.getTableBasics);
@@ -199,6 +205,9 @@ export default React.createClass({
     getTableBasics: function () {
         // Once a table is selected, find out the columns and primary key column for the table
         var table = this.state.allBasics[this.state.currentTable];
+
+        // If allBasics is not ready, abort.
+        if (!table) return;
 
         // Must write to userTableSettings (and not directly to currentTableSettings) so the URL can refect this.
         // If a table was switched getAllCounts would have wiped userTableSettings and localStorage would show through.
@@ -331,7 +340,7 @@ export default React.createClass({
         var customDetailsView = (configuration.customDetailsProviders && configuration.customDetailsProviders[this.state.currentTable]) || ResultDetails;
 
         // Consider clearing the currentTable when the query is empty.
-        var mainContent = this.state.query && this.state.allBasics && this.state.currentTable
+        var mainContent = this.state.query && this.state.allBasics && Object.keys(this.state.allBasics).length && this.state.currentTable
             ? <SplitPane split="horizontal" minSize="300" isFirstVisible={this.state.listingData.content} isSecondVisible={this.state.userSelectedId}>
                 <InfiniteScroll page={this.state.page} hasMoreData={this.state.hasMoreData} loadMore={this.getResultsPage }>
                     <ResultListing ref={"list"}
@@ -345,13 +354,13 @@ export default React.createClass({
                         onSetColumns={this.onSetColumns} />
                 </InfiniteScroll>
                 <div className="scrollable">
-                    {React.createElement(customDetailsView, { 
-                        itemId: this.state.userSelectedId, 
-                        table: this.state.currentTable, 
-                        query: this.state.query, 
-                        data: this.state.selectedItemData, 
-                        onClose: this.onClose, 
-                        onAddClause: this.onAddClause 
+                    {React.createElement(customDetailsView, {
+                        itemId: this.state.userSelectedId,
+                        table: this.state.currentTable,
+                        query: this.state.query,
+                        data: this.state.selectedItemData,
+                        onClose: this.onClose,
+                        onAddClause: this.onAddClause
                     })}
                 </div>
             </SplitPane>
@@ -366,7 +375,12 @@ export default React.createClass({
         if (!this.state.query) gridUrl = "/Grid.html?p=default";
 
         return (
-            <div className="viewport" onKeyDown={this.handleKeyDown}>
+            <div ref="viewport" className="viewport" onKeyDown={this.handleKeyDown}
+                onDragEnter={e => {
+                    // Consider disabling pointer events for perf.
+                    if (!this.state.dropping) this.setState({ dropping: true, file: undefined })
+                }} >
+
                 <SearchHeader>
                     <SearchBox query={this.state.query}
                         parsedQuery={this.state.allCountData.content && this.state.allCountData.content.parsedQuery}
@@ -384,15 +398,25 @@ export default React.createClass({
                         <QueryStats query={this.state.query}
                                     error={this.state.error}
                                     allCountData={this.state.allCountData}
+                                    allBasics={this.state.allBasics}
                                     selectedData={this.state.listingData}
                                     rssUrl={rssUrl}
                                     csvUrl={csvUrl}
                                     currentTable={this.state.currentTable}
-                                    onSelectedTableChange={this.onSelectedTableChange} />
-                    
+                                    onSelectedTableChange={this.onSelectedTableChange}
+                                    refreshAllBasics={this.refreshAllBasics} />
+
                         {mainContent}
                     </div>
                 </div>
+
+                <DropShield
+                    dropping={this.state.dropping}
+                    droppingChanged={d => this.setState({ dropping: d })}
+                    existingTablenames={Object.keys(this.state.allBasics || {})}
+                    queryChanged={this.queryChanged}
+                    refreshAllBasics={this.refreshAllBasics}
+                    columnsChanged={(...args) => this.onSetColumns(...args)} />
             </div>
         );
     }

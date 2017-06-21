@@ -15,7 +15,7 @@ export default class Suggestions extends EventedComponent {
         };
     }
     componentDidUpdate(prevProps, prevState) {
-        if (prevProps.query !== this.props.query) this.fetch();
+        if (prevProps.query !== this.props.query && this.props.query !== "*") this.fetch();
 
         var suggestions = this.state.suggestions;
         var sel = this.state.sel;
@@ -28,7 +28,7 @@ export default class Suggestions extends EventedComponent {
         this.setState({
             suggestions: dataContent.suggestions,
             sel: this.props.sel || 0,
-            completed: dataContent.complete, 
+            completed: dataContent.complete,
             completionCharacters: dataContent.completionCharacters.map(c => ({ "\t": "Tab" })[c] || c),
         });
     }

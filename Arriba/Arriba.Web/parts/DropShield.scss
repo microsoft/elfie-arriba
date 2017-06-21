@@ -1,0 +1,125 @@
+@import './configuration/theme';
+
+.dropShield {
+    box-sizing: border-box;
+    * { box-sizing: border-box; }
+
+    position: fixed;
+    top: 0; bottom: 0; left: 0; right: 0;
+    background-color: hsla(0, 0%, 0%, 0.75);
+    z-index: 1; // Above the SearchBox.
+
+    display: flex;
+    justify-content: center; // Left/Right
+    align-items: center; // Top/Bottom
+
+    // Vitual "display none" to make fade-in easier.
+    transition: opacity 0.5s;
+    opacity: 0;
+    pointer-events: none;
+    &.dropShield-active {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .dialog {
+        background-color: white;
+        border-radius: 3px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .dialog-upload {
+        pointer-events: none;
+        padding: 25px;
+        padding-bottom: 20px;
+        img {
+            width: 28px;
+            margin-bottom: 7px;
+            align-self: center;
+        }
+        font-size: 11px;
+    }
+}
+
+.uploadConfirm {
+    box-sizing: border-box;
+    * { box-sizing: border-box; }
+
+    width: 350px;
+    position: relative; // For title.
+
+    .title {
+        position: absolute;
+        top: 28px;
+        right: 20px;
+
+        text-transform: uppercase;
+        color: transparentize($dark, 0.6);
+        font-size: 10px;
+        font-weight: bold;
+        pointer-events: none;
+    }
+
+    input[type=text] {
+        font-size: 16pt; // Match the SearchBox.
+        padding: 20px 15px 10px 25px;
+        border-style: none;
+        border-bottom: 1px solid hsl(0, 0%, 85%);
+        border-radius: 3px 3px 0 0; // Fit the rounded container.
+        &:hover { background-color: transparentize($vlight, 0.95); }
+        &.invalid { color: hsl(10, 90%, 50%); }
+        &::-ms-clear { display:none; }
+    }
+
+    .columns {
+        padding: 10px 0 20px;
+        font-size: 12px;
+
+        .rowCountEst {
+            margin-left: 25px;
+            margin-bottom: 10px;
+            font-size: 10px;
+            color: hsl(0, 0%, 60%);
+        }
+
+        .col {
+            padding: 3px 20px 3px 10px;
+            display: flex;
+            &:hover { background-color: transparentize($vlight, 0.95); }
+
+            .key {
+                width: 15px;
+                color: $vdark;
+            }
+            .name {
+                flex-grow: 1;
+            }
+            .hint {
+                text-transform: uppercase;
+                color: transparentize($dark, 0.6);
+                color: $dark;
+                font-size: 10px;
+                font-weight: bold;
+                opacity: 0.4;
+            }
+        }
+    }
+
+    .buttons {
+        border-top: 1px solid hsl(0, 0%, 85%);
+        display: flex;
+        & > * { margin-left: 5px; }
+    }
+
+    input[type=button] {
+        cursor: pointer;
+        flex-grow: 1;
+        font-size: 12px;
+        padding: 15px 0;
+        border: none;
+        border-radius: 3px;
+        background-color: transparent;
+        &:hover { background-color: transparentize($vlight, 0.95); }
+    }
+}

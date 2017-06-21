@@ -74,6 +74,8 @@ export default React.createClass({
         if (!this.props.allBasics || !content || !content.details.succeeded) return null;
 
         const table = this.props.allBasics[this.props.data.content.query.tableName];
+        if (!table) return null;
+
         var idColumn = table.idColumn;
         var idColumnIndex = content.query.columns.indexOf(idColumn);
 

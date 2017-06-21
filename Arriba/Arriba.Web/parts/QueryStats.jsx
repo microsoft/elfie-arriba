@@ -15,27 +15,36 @@ export default React.createClass({
             // Write tiles with results per table
             var tiles = [];
             for (var i = 0; i < allCountContent.resultsPerTable.length; ++i) {
-                var tableResult = allCountContent.resultsPerTable[i];
+                (() => {
+                    var tableResult = allCountContent.resultsPerTable[i];
 
-                var cssClasses = "";
-                var parts = [];
+                    var cssClasses = "";
+                    var parts = [];
 
-                if (tableResult.tableName === this.props.currentTable) cssClasses += " current";
+                    if (tableResult.tableName === this.props.currentTable) cssClasses += " current";
 
-                if (!tableResult.allowedToRead) {
-                    parts.push(<span className="lock-icon icon" />);
-                } else if (!tableResult.succeeded) {
-                    parts.push(<span className="countValue">‒</span>);
-                } else {
-                    parts.push(<span className="countValue">{tableResult.count.toLocaleString()}</span>);
-                }
+                    if (!tableResult.allowedToRead) {
+                        parts.push(<span className="lock-icon icon" />);
+                    } else if (!tableResult.succeeded) {
+                        parts.push(<span className="countValue">‒</span>);
+                    } else {
+                        parts.push(<span className="countValue">{tableResult.count.toLocaleString()}</span>);
+                    }
 
-                tiles.push(
-                    <span key={"tableTile_" + tableResult.tableName} className={cssClasses + " clickable"} onClick={this.onTableTileClick.bind(this, tableResult.tableName)}>
-                        {parts}
-                        <span>{tableResult.tableName}</span>
-                    </span>
-                );
+                    tiles.push(
+                        <span key={"tableTile_" + tableResult.tableName} className={cssClasses + " clickable"} onClick={this.onTableTileClick.bind(this, tableResult.tableName)}>
+                            {parts}
+                            <span>{tableResult.tableName}</span>
+                            {this.props.allBasics[tableResult.tableName] && this.props.allBasics[tableResult.tableName].canAdminister && <span className="delete" onClick={e => {
+                                e.stopPropagation();
+                                xhr(`table/${tableResult.tableName}/delete`)
+                                    .then(() => this.props.refreshAllBasics(() => {
+                                        this.props.onSelectedTableChange()
+                                    }));
+                            }}>✕</span>}
+                        </span>
+                    );
+                })();
             }
 
             // Write details for selected table
