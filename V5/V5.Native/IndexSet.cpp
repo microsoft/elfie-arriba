@@ -6,7 +6,7 @@
 
 #pragma unmanaged
 
-int CountInternal(unsigned __int64* matchVector, int length)
+int CountN(unsigned __int64* matchVector, int length)
 {
 	__int64 count = 0;
 
@@ -24,18 +24,43 @@ int CountInternal(unsigned __int64* matchVector, int length)
 //	return (_BitScanForward(&trailingZero, value) ? trailingZero : 64);
 //}
 
-//int Page(unsigned __int64* matchVector, int length, int start, int* result, int resultLength)
-//{
-//	for (int i = 0; i < length; ++i)
-//	{
-//		unsigned __int64 block = matchVector[i];
-//		
-//		while (true)
-//		{
-//			int nextIndex = ctz(block);
-//		}
-//	}
-//}
+int PageN(unsigned __int64* matchVector, int length, int start, int* result, int resultLength, int* countWritten)
+{
+	// Clear the Page
+	*countWritten = 0;
+
+	int count = 0;
+
+	// Find set bits until we scan all bits or fill the page
+	int i = start >> 6;
+	int j = start & 63;
+	for (; i < length; ++i)
+	{
+		unsigned __int64 block = matchVector[i];
+		if (block == 0) continue;
+		
+		for(; j < 64; ++j)
+		{
+			if ((block & (0x1ULL << j)) != 0)
+			{
+				result[count] = j;
+				count++;
+
+				if (count == resultLength) break;
+			}
+		}
+
+		if (count == resultLength) break;
+		j = 0;
+	}
+
+	// Set the count filled
+	*countWritten = count;
+
+	// Return -1 if we finished scanning, the next start index otherwise
+	int lastIndex = (i << 6) + j;
+	return (lastIndex >= length << 6 ? -1 : lastIndex + 1);
+}
 
 #pragma managed
 
@@ -71,7 +96,7 @@ namespace V5
 		Int32 IndexSet::Count::get()
 		{
 			pin_ptr<UInt64> pVector = &(this->bitVector)[0];
-			return CountInternal(pVector, this->bitVector->Length);
+			return CountN(pVector, this->bitVector->Length);
 		}
 
 		Int32 IndexSet::Capacity::get()
@@ -99,29 +124,40 @@ namespace V5
 
 		Int32 IndexSet::Page(Span<Int32>% page, Int32 fromIndex)
 		{
-			// Clear the page
-			page.Length = 0;
+			array<Int32>^ array = page.Array;
 
-			// Find set bits until we scan all bits or fill the page
-			int count = 0;
-			int capacity = page.Capacity;
+			pin_ptr<UInt64> pVector = &(this->bitVector)[0];
+			pin_ptr<Int32> pPage = &(array[page.Index]);
+			int countSet = 0;
+			
+			int nextIndex = PageN(pVector, this->bitVector->Length, fromIndex, pPage, page.Capacity, &countSet);
+			page.Length = countSet;
 
-			int i = fromIndex;
-			for (; i < this->Capacity; ++i)
-			{
-				if (this[i])
-				{
-					page[count] = i;
-					count++;
-					if (count == capacity) break;
-				}
-			}
+			return nextIndex;
 
-			// Set the Page Length to the count found
-			page.Length = count;
+			//// Clear the page
+			//page.Length = 0;
 
-			// Return -1 if we finished scanning, the next start index otherwise
-			return (i == this->Capacity ? -1 : i + 1);
+			//// Find set bits until we scan all bits or fill the page
+			//int count = 0;
+			//int capacity = page.Capacity;
+
+			//int i = fromIndex;
+			//for (; i < this->Capacity; ++i)
+			//{
+			//	if (this[i])
+			//	{
+			//		page[count] = i;
+			//		count++;
+			//		if (count == capacity) break;
+			//	}
+			//}
+
+			//// Set the Page Length to the count found
+			//page.Length = count;
+
+			//// Return -1 if we finished scanning, the next start index otherwise
+			//return (i == this->Capacity ? -1 : i + 1);
 		}
 
 		IndexSet^ IndexSet::None()

@@ -14,6 +14,10 @@ namespace V5
 			int _index;
 			int _length;
 
+		internal:
+			property array<T>^ Array { array<T>^ get(); }
+			property Int32 Index { Int32 get(); }
+
 		public:
 			Span(array<T>^ array);
 			Span(array<T>^ array, int index, int length);

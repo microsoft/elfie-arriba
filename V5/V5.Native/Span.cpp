@@ -29,6 +29,18 @@ namespace V5
 		}
 
 		generic <typename T>
+		array<T>^ Span<T>::Array::get()
+		{
+			return this->_array;
+		}
+
+		generic <typename T>
+		Int32 Span<T>::Index::get()
+		{
+			return this->_index;
+		}
+
+		generic <typename T>
 		Int32 Span<T>::Length::get()
 		{
 			return this->_length;
