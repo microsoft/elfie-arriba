@@ -132,14 +132,14 @@ export default React.createClass({
     onAddClause: function (name, value) {
         this.setState({ query: this.state.query + " AND [" + name + "]=\"" + value + "\"" }, this.runSearch);
     },
-    onSetColumns: function (columns) {
-        localStorage.mergeJson("table-" + this.state.currentTable, {
+    onSetColumns: function (columns, table) {
+        localStorage.mergeJson("table-" + (table || this.state.currentTable), {
             columns: columns
         });
 
         // Clear the userSelectedColumns to and rely on getTableBasics to recalcuate it.
         this.setState({
-            userSelectedTable: this.state.currentTable,
+            userSelectedTable: table || this.state.currentTable,
             userTableSettings: {}
         }, this.runSearch);
     },
