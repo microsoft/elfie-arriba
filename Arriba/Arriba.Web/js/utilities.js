@@ -84,6 +84,10 @@ String.prototype.trimIf = function(prefix) {
         : this;
 }
 
+String.ciEquals = function(a, b) {
+    return a.toUpperCase() === b.toUpperCase();
+}
+
 // Polyfill.
 Array.prototype.includes = Array.prototype.includes || function() {
     return Array.prototype.indexOf.apply(this, arguments) !== -1;
@@ -95,6 +99,10 @@ Array.prototype.find = Array.prototype.find || function(predicate) {
         var element = this[i];
         if (predicate.call(arguments[1], element, i, this)) return element;
     }
+};
+
+Array.prototype.any = function(predicate) {
+    return !!this.find(predicate);
 };
 
 Array.prototype.remove = function(item) {
