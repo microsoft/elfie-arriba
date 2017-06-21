@@ -15,22 +15,8 @@ namespace V5
 			int _length;
 
 		public:
-			Span(array<T>^ array)
-			{
-				this->_array = array;
-				this->_index = 0;
-				this->_length = array->Length;
-			}
-			
-			Span(array<T>^ array, int index, int length)
-			{
-				if (index < 0) throw gcnew ArgumentOutOfRangeException("index");
-				if (index + length > array->Length) throw gcnew ArgumentOutOfRangeException("length");
-
-				this->_array = array;
-				this->_index = index;
-				this->_length = length;
-			}
+			Span(array<T>^ array);
+			Span(array<T>^ array, int index, int length);
 
 			property Int32 Length { Int32 get(); }
 			property T default[Int32] { T get(Int32 index); void set(Int32 index, T value); }
