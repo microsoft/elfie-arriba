@@ -25,7 +25,7 @@ export default class Start extends React.Component {
 
         var itemGroup = (title, key, items, icon) => <div className="item-group" style={{ display: items.length ? '' : 'none' }}>
             <div className="h1">{title}</div>
-            {items.map(item => 
+            {items.map(item =>
                 <div className="item" onClick={() => this.props.queryChanged(item)}>
                     <span>{icon}</span>
                     <span>{item}</span>
@@ -45,7 +45,7 @@ export default class Start extends React.Component {
         var recents = localStorage.getJson("recents") || [];
         var [r, rf, f] = recents.venn(favs);
 
-        return <div className="center-center">
+        return <div className="start-wrapper">
             <div className="start" ref="start">
                 {itemCount
                     ? <h1>Instantly search <b>{itemCount.toLocaleString()}</b> items as of <b>{lastUpdated}</b></h1>
@@ -53,7 +53,7 @@ export default class Start extends React.Component {
                 {configuration.startContent && [
                     <div className="intro" style={{ display: hideIntro ? "none" : "" }}>
                         <div className="welcome">{configuration.startContent.overview}</div>
-                        {configuration.startContent.examples && Object.map(configuration.startContent.examples, (query, remark) => 
+                        {configuration.startContent.examples && Object.map(configuration.startContent.examples, (query, remark) =>
                             <div className="example">
                                 <div className="query clickable" onClick={() => this.props.queryChanged(query)}>{query}</div>{remark}
                             </div>
