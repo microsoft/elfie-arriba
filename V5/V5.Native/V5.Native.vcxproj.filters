@@ -43,6 +43,9 @@
     <ClInclude Include="CompareToVector.h">
       <Filter>Vector</Filter>
     </ClInclude>
+    <ClInclude Include="Span.h">
+      <Filter>Collections</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="IndexSet.cpp">
@@ -62,6 +65,9 @@
     </ClCompile>
     <ClCompile Include="CompareToVector.cpp">
       <Filter>Vector</Filter>
+    </ClCompile>
+    <ClCompile Include="Span.cpp">
+      <Filter>Collections</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

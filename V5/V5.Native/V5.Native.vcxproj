@@ -144,6 +144,7 @@
     <ClInclude Include="Operator.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="SortBucketColumnN.h" />
+    <ClInclude Include="Span.h" />
     <ClInclude Include="Stdafx.h" />
     <ClInclude Include="String8Native.h" />
   </ItemGroup>
@@ -152,6 +153,7 @@
     <ClCompile Include="IndexSet.cpp" />
     <ClCompile Include="AssemblyInfo.cpp" />
     <ClCompile Include="SortBucketColumnN.cpp" />
+    <ClCompile Include="Span.cpp" />
     <ClCompile Include="Stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
