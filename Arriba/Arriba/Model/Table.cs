@@ -395,7 +395,7 @@ namespace Arriba.Model
                 // Set the column type
                 if (String.IsNullOrEmpty(details.Type) || details.Type.Equals(Arriba.Model.Column.ColumnDetails.UnknownType))
                 {
-                    details.Type = (determinedType ?? inferredType ?? typeof(string)).Name;
+                    details.Type = ColumnFactory.GetCanonicalTypeName(determinedType ?? inferredType ?? typeof(string));
                 }
 
                 // Add the column if it had any non-default values (and didn't already exist)

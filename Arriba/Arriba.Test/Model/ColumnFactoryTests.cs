@@ -65,6 +65,27 @@ namespace Arriba.Test.Model
             Assert.AreEqual("UntypedColumn<ComparableColor>;ColorColumn", WriteCompleteType(ColumnFactory.Build(new ColumnDetails("Unused", "color", null), 0)));
         }
 
+        [TestMethod]
+        public void ColumnFactory_CanonicalTypeName()
+        {
+            Assert.AreEqual("guid", ColumnFactory.GetCanonicalTypeName(typeof(Guid)));
+            Assert.AreEqual("datetime", ColumnFactory.GetCanonicalTypeName(typeof(DateTime)));
+            Assert.AreEqual("timespan", ColumnFactory.GetCanonicalTypeName(typeof(TimeSpan)));
+
+            Assert.AreEqual("boolean", ColumnFactory.GetCanonicalTypeName(typeof(bool)));
+            Assert.AreEqual("byte", ColumnFactory.GetCanonicalTypeName(typeof(byte)));
+            Assert.AreEqual("sbyte", ColumnFactory.GetCanonicalTypeName(typeof(sbyte)));
+            Assert.AreEqual("short", ColumnFactory.GetCanonicalTypeName(typeof(short)));
+            Assert.AreEqual("ushort", ColumnFactory.GetCanonicalTypeName(typeof(ushort)));
+            Assert.AreEqual("int", ColumnFactory.GetCanonicalTypeName(typeof(int)));
+            Assert.AreEqual("uint", ColumnFactory.GetCanonicalTypeName(typeof(uint)));
+            Assert.AreEqual("long", ColumnFactory.GetCanonicalTypeName(typeof(long)));
+            Assert.AreEqual("ulong", ColumnFactory.GetCanonicalTypeName(typeof(ulong)));
+            Assert.AreEqual("float", ColumnFactory.GetCanonicalTypeName(typeof(float)));
+            Assert.AreEqual("double", ColumnFactory.GetCanonicalTypeName(typeof(double)));
+            Assert.AreEqual("string", ColumnFactory.GetCanonicalTypeName(typeof(string)));
+        }
+
         /// <summary>
         ///  Return a semicolon-delimited list of all of the column components including type parameters.
         ///  Ex: UntypedColumn&lt;Int32&gt;;SortedColumn&lt;Int32&gt;;ValueTypeColumn&lt;Int32&gt;
