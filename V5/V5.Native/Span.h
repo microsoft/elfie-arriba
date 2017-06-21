@@ -25,19 +25,23 @@ namespace V5
 			virtual Generic::IEnumerator<T>^ GetTypedEnumerator() = Generic::IEnumerable<T>::GetEnumerator;
 		};
 
-		/*generic <typename T>
-		public ref struct SpanEnumerator : IEnumerator<T>
+		generic <typename T>
+		public ref struct SpanEnumerator : Generic::IEnumerator<T>
 		{
 		private:
 			Span<T>^ _span;
 			int _index;
 
 		public:
-			virtual property T Current { T get(); }
+			SpanEnumerator(Span<T>^ span);
+			virtual ~SpanEnumerator();
+
+			virtual property Object^ CurrentBase { Object^ get() = IEnumerator::Current::get; }
+			virtual property T CurrentTyped { T get() = Generic::IEnumerator<T>::Current::get; }
 
 			virtual bool MoveNext();
 			virtual void Reset();
-		};*/
+		};
 	}
 }
 

@@ -18,6 +18,7 @@ namespace V5.Test.Collections
 
         private static void Span_Basics<T>(T[] array, T sample)
         {
+            int index;
             T previous;
 
             // Make a Span of the full array
@@ -30,18 +31,26 @@ namespace V5.Test.Collections
                 Assert.AreEqual(array[i], span[i]);
             }
 
-            // Verify setting values works
-            if (array.Length > 0)
+            // Verify enumerating works
+            index = 0;
+            foreach(T value in span)
             {
-                previous = span[0];
-                span[0] = sample;
-                Assert.AreEqual(sample, span[0]);
-                Assert.AreEqual(sample, array[0]);
-
-                span[0] = previous;
-                Assert.AreEqual(previous, span[0]);
-                Assert.AreEqual(previous, array[0]);
+                Assert.AreEqual(array[index++], value);
             }
+            Assert.AreEqual(index, span.Length);
+
+            // Remaining tests only work if the array is non-empty
+            if (array.Length == 0) return;
+
+            // Verify setting values works
+            previous = span[0];
+            span[0] = sample;
+            Assert.AreEqual(sample, span[0]);
+            Assert.AreEqual(sample, array[0]);
+
+            span[0] = previous;
+            Assert.AreEqual(previous, span[0]);
+            Assert.AreEqual(previous, array[0]);
 
             // Make a Span of part of the array
             Span<T> slice = new Span<T>(array, 1, array.Length - 1);
@@ -53,18 +62,23 @@ namespace V5.Test.Collections
                 Assert.AreEqual(array[i + 1], slice[i]);
             }
 
-            // Verify setting values works
-            if (array.Length > 1)
+            // Verify enumerating works
+            index = 0;
+            foreach (T value in slice)
             {
-                previous = slice[0];
-                slice[0] = sample;
-                Assert.AreEqual(sample, slice[0]);
-                Assert.AreEqual(sample, array[1]);
-
-                slice[0] = previous;
-                Assert.AreEqual(previous, slice[0]);
-                Assert.AreEqual(previous, array[1]);
+                Assert.AreEqual(array[++index], value);
             }
+            Assert.AreEqual(index, slice.Length);
+
+            // Verify setting values works
+            previous = slice[0];
+            slice[0] = sample;
+            Assert.AreEqual(sample, slice[0]);
+            Assert.AreEqual(sample, array[1]);
+
+            slice[0] = previous;
+            Assert.AreEqual(previous, slice[0]);
+            Assert.AreEqual(previous, array[1]);
         }
     }
 }

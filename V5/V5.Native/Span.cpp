@@ -18,6 +18,7 @@ namespace V5
 		Span<T>::Span(array<T>^ array, int index, int length)
 		{
 			if (index < 0) throw gcnew ArgumentOutOfRangeException("index");
+			if (length < 0) throw gcnew ArgumentOutOfRangeException("length");
 			if (index + length > array->Length) throw gcnew ArgumentOutOfRangeException("length");
 
 			this->_array = array;
@@ -46,14 +47,52 @@ namespace V5
 		generic <typename T>
 		IEnumerator^ Span<T>::GetBaseEnumerator()
 		{
-			return nullptr;
+			return this->GetTypedEnumerator();
 		}
 
 		generic <typename T>
 		Generic::IEnumerator<T>^ Span<T>::GetTypedEnumerator()
 		{
-			return nullptr;
+			return gcnew SpanEnumerator<T>(*this);
 		}
+
+		/* --- SpanEnumerator --- */
+
+		generic <typename T>
+		SpanEnumerator<T>::SpanEnumerator(Span<T>^ span)
+		{
+			this->_span = span;
+			this->_index = -1;
+		}
+
+		generic <typename T>
+		Object^ SpanEnumerator<T>::CurrentBase::get()
+		{
+			return this->_span[this->_index];
+		}
+
+		generic <typename T>
+		T SpanEnumerator<T>::CurrentTyped::get()
+		{
+			return this->_span[this->_index];
+		}
+
+		generic <typename T>
+		bool SpanEnumerator<T>::MoveNext()
+		{
+			this->_index++;
+			return this->_index < this->_span->Length;
+		}
+
+		generic <typename T>
+		void SpanEnumerator<T>::Reset()
+		{
+			this->_index = -1;
+		}
+
+		generic <typename T>
+		SpanEnumerator<T>::~SpanEnumerator()
+		{ }
 	}
 }
 
