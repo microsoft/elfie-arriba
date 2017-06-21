@@ -163,8 +163,8 @@ export default React.createClass({
     getAllCounts: function () {
         // On query, ask for the count from every table.
 
-        // If there's no query, clear results and do nothing else
-        if (!this.state.query) {
+        // If there's no allBasics or query, clear results and do nothing else
+        if (!Object.keys(this.state.allBasics).length || !this.state.query) {
             this.setState({
                 loading: false,
                 allCountData: [],
@@ -336,7 +336,7 @@ export default React.createClass({
         var customDetailsView = (configuration.customDetailsProviders && configuration.customDetailsProviders[this.state.currentTable]) || ResultDetails;
 
         // Consider clearing the currentTable when the query is empty.
-        var mainContent = this.state.query && this.state.allBasics && this.state.currentTable
+        var mainContent = this.state.query && this.state.allBasics && Object.keys(this.state.allBasics).length && this.state.currentTable
             ? <SplitPane split="horizontal" minSize="300" isFirstVisible={this.state.listingData.content} isSecondVisible={this.state.userSelectedId}>
                 <InfiniteScroll page={this.state.page} hasMoreData={this.state.hasMoreData} loadMore={this.getResultsPage }>
                     <ResultListing ref={"list"}
