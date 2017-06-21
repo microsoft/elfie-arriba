@@ -216,11 +216,11 @@ namespace Arriba.Test.Model
             Assert.AreEqual(5, t.ColumnDetails.Count);
 
             // Verify expected type inference
-            Assert.AreEqual("Int32", t.GetDetails("Priority").Type);
-            Assert.AreEqual("String", t.GetDetails("Title").Type);
-            Assert.AreEqual("Int32", t.GetDetails("ID").Type);
-            Assert.AreEqual("Boolean", t.GetDetails("IsDuplicate").Type);
-            Assert.AreEqual("TimeSpan", t.GetDetails("ActiveTime").Type);
+            Assert.AreEqual("int", t.GetDetails("Priority").Type);
+            Assert.AreEqual("string", t.GetDetails("Title").Type);
+            Assert.AreEqual("int", t.GetDetails("ID").Type);
+            Assert.AreEqual("boolean", t.GetDetails("IsDuplicate").Type);
+            Assert.AreEqual("timespan", t.GetDetails("ActiveTime").Type);
 
             // Identity column should be 'ID', even though not first
             Assert.AreEqual("ID", t.IDColumn.Name);
@@ -256,9 +256,9 @@ namespace Arriba.Test.Model
             // Verify AddOrUpdate with option set will add the new column
             t.AddOrUpdate(newData, new AddOrUpdateOptions() { AddMissingColumns = true });
 
-            Assert.AreEqual("UInt16", t.GetDetails("Stack Rank").Type);
-            Assert.AreEqual("Single", t.GetDetails("Remaining Cost").Type);
-            Assert.AreEqual("Single", t.GetDetails("Wrapped Cost").Type);
+            Assert.AreEqual("ushort", t.GetDetails("Stack Rank").Type);
+            Assert.AreEqual("float", t.GetDetails("Remaining Cost").Type);
+            Assert.AreEqual("float", t.GetDetails("Wrapped Cost").Type);
             Assert.IsNull(t.ColumnDetails.FirstOrDefault((cd) => cd.Name == "Original Estimate"));
             Assert.IsNull(t.ColumnDetails.FirstOrDefault((cd) => cd.Name == "Actual Cost"));
             Assert.IsNull(t.ColumnDetails.FirstOrDefault((cd) => cd.Name == "Tertiary Owner"));

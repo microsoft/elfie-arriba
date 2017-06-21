@@ -92,6 +92,20 @@ namespace Arriba
             return new FastAddSortedColumn<T>(column, initialCapacity);
         }
 
+        public static string GetCanonicalTypeName(Type t)
+        {
+            if (t == typeof(short)) return "short";
+            if (t == typeof(ushort)) return "ushort";
+            if (t == typeof(int)) return "int";
+            if (t == typeof(uint)) return "uint";
+            if (t == typeof(long)) return "long";
+            if (t == typeof(ulong)) return "ulong";
+            if (t == typeof(float)) return "float";
+            if (t == typeof(double)) return "double";
+
+            return t.Name.ToLowerInvariant();
+        }
+
         public static Type GetTypeFromTypeString(string columnDetailsType)
         {
             if (String.IsNullOrEmpty(columnDetailsType)) return null;
