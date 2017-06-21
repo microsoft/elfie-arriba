@@ -231,7 +231,7 @@ namespace Arriba.Model
 
             // If there are new items, resize every column for them
             ushort newCount = (ushort)(_itemCount);
-            for (int columnIndex = 0; columnIndex < columnCount; ++columnIndex)
+            for (int columnIndex = 0; columnIndex < this.Columns.Count; ++columnIndex)
             {
                 IColumn<object> column = this.Columns.Values[columnIndex];
                 if (column.Count != newCount) column.SetSize(newCount);
@@ -248,7 +248,7 @@ namespace Arriba.Model
             }
 
             // Commit every column [ones with new values and ones resized with defaults]
-            for (int columnIndex = 0; columnIndex < columnCount; ++columnIndex)
+            for (int columnIndex = 0; columnIndex < this.Columns.Count; ++columnIndex)
             {
                 IColumn<object> column = this.Columns.Values[columnIndex];
                 if (column is ICommittable) (column as ICommittable).Commit();
