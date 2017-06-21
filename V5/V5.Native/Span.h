@@ -1,13 +1,13 @@
 #pragma once
 using namespace System;
-using namespace System::Collections::Generic;
+using namespace System::Collections;
 
 namespace V5
 {
 	namespace Collections
 	{
 		generic <typename T>
-		public value struct Span //: IEnumerable<T>
+		public value struct Span : Generic::IEnumerable<T>
 		{
 		private:
 			array<T>^ _array;
@@ -21,7 +21,8 @@ namespace V5
 			property Int32 Length { Int32 get(); }
 			property T default[Int32] { T get(Int32 index); void set(Int32 index, T value); }
 			
-			//virtual IEnumerator<T>^ GetEnumerator();
+			virtual IEnumerator^ GetBaseEnumerator() = IEnumerable::GetEnumerator;
+			virtual Generic::IEnumerator<T>^ GetTypedEnumerator() = Generic::IEnumerable<T>::GetEnumerator;
 		};
 
 		/*generic <typename T>

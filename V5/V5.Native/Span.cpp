@@ -42,6 +42,18 @@ namespace V5
 		{
 			this->_array[this->_index + index] = value;
 		}
+
+		generic <typename T>
+		IEnumerator^ Span<T>::GetBaseEnumerator()
+		{
+			return nullptr;
+		}
+
+		generic <typename T>
+		Generic::IEnumerator<T>^ Span<T>::GetTypedEnumerator()
+		{
+			return nullptr;
+		}
 	}
 }
 
