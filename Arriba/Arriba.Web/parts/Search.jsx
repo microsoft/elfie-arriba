@@ -57,15 +57,20 @@ export default React.createClass({
     componentDidMount: function () {
         window.addEventListener("beforeunload", this); // For Mru
         this.mru = new Mru();
-
-        // On Page load, find the list of known table namesz
+        this.refreshAllBasics();
+    },
+    refreshAllBasics: function (then) {
+        // On Page load, find the list of known table names
         jsonQuery(configuration.url + "/allBasics",
             data => {
                 if (!data.content) {
                     this.setState({ blockingErrorStatus: 401 });
                 } else {
                     Object.values(data.content).forEach(table => table.idColumn = table.columns.find(col => col.isPrimaryKey).name || "");
-                    this.setState({ allBasics: data.content }, this.runSearch);
+                    this.setState({ allBasics: data.content }, () => {
+                        this.runSearch();
+                        if (then) then();
+                    });
                 }
             },
             (xhr, status, err) => {
