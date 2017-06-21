@@ -18,11 +18,11 @@ int CountInternal(unsigned __int64* matchVector, int length)
 	return (int)count;
 }
 
-unsigned int __inline ctz(unsigned __int64 value)
-{
-	unsigned long trailingZero = 0;
-	return (_BitScanForward(&trailingZero, value) ? trailingZero : 64);
-}
+//unsigned int __inline ctz(unsigned __int64 value)
+//{
+//	unsigned long trailingZero = 0;
+//	return (_BitScanForward(&trailingZero, value) ? trailingZero : 64);
+//}
 
 //int Page(unsigned __int64* matchVector, int length, int start, int* result, int resultLength)
 //{
@@ -97,10 +97,14 @@ namespace V5
 			return true;
 		}
 
-		Int32 IndexSet::Page(Span<Int32>^ page, Int32 fromIndex)
+		Int32 IndexSet::Page(Span<Int32>% page, Int32 fromIndex)
 		{
+			// Clear the page
+			page.Length = 0;
+
+			// Find set bits until we scan all bits or fill the page
 			int count = 0;
-			int capacity = page->Capacity;
+			int capacity = page.Capacity;
 
 			int i = fromIndex;
 			for (; i < this->Capacity; ++i)
@@ -113,8 +117,11 @@ namespace V5
 				}
 			}
 
-			if (i == this->Capacity) return -1;
-			return i + 1;
+			// Set the Page Length to the count found
+			page.Length = count;
+
+			// Return -1 if we finished scanning, the next start index otherwise
+			return (i == this->Capacity ? -1 : i + 1);
 		}
 
 		IndexSet^ IndexSet::None()

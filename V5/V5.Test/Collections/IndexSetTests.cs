@@ -14,6 +14,7 @@ namespace V5.Test.Collections
         {
             IndexSet set = new IndexSet(999);
 
+            // Verify Count, All, None
             Assert.AreEqual(0, set.Count, "Set should start empty");
 
             set.All(999);
@@ -22,21 +23,50 @@ namespace V5.Test.Collections
             set.None();
             Assert.AreEqual(0, set.Count, "None should clear");
 
+            // Verify individual set and get and Array.And
             byte[] values = new byte[999];
-
             for (int i = 0; i < 999; ++i)
             {
+                // Set only 'i' via setter and verify
                 set.None();
                 set[i] = true;
                 AssertOnly(set, 999, i);
 
+                // Set only 'i' via And(Array) and verify
                 set.None();
-
                 Array.Clear(values, 0, values.Length);
                 values[i] = 1;
                 set.All(999).And(values, CompareOperator.GreaterThan, (byte)0);
                 AssertOnly(set, 999, i);
             }
+        }
+
+        [TestMethod]
+        public void IndexSet_Page()
+        {
+            IndexSet set = new IndexSet(900);
+            Span<int> page = new Span<int>(new int[10]);
+
+            // Verify if nothing is set, page doesn't find anything and returns -1
+            set.None();
+            Assert.AreEqual(-1, set.Page(ref page, 0));
+            Assert.AreEqual(0, page.Length);
+
+            // Set 15 values (even indices under 30)
+            for (int i = 0; i < 30; i += 2)
+            {
+                set[i] = true;
+            }
+
+            // Verify a full page of results is returned with the correct next index to check
+            Assert.AreEqual(19, set.Page(ref page, 0));
+            Assert.AreEqual(10, page.Length);
+            Assert.AreEqual("0, 2, 4, 6, 8, 10, 12, 14, 16, 18", string.Join(", ", page));
+
+            // Verify the second page is returned with -1 and the last five values
+            Assert.AreEqual(-1, set.Page(ref page, 19));
+            Assert.AreEqual(5, page.Length);
+            Assert.AreEqual("20, 22, 24, 26, 28", string.Join(", ", page));
         }
 
         private static void AssertOnly(IndexSet set, int limit, int expected)

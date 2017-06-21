@@ -23,7 +23,7 @@ namespace V5
 
 			virtual Boolean Equals(Object^ other) override;
 
-			Int32 Page(Span<Int32>^ page, Int32 fromIndex);
+			Int32 Page(Span<Int32>% page, Int32 fromIndex);
 
 			// Set to None/All quickly
 			IndexSet^ None();

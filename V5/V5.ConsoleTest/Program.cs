@@ -138,8 +138,8 @@ namespace V5.ConsoleTest
             uint size = 8 * 1000 * 1000;
 
             int sum;
-            IndexSet managedSet = new IndexSet(size);
-            IndexSet v5Set = new IndexSet(size);
+            IndexSet set = new IndexSet(size);
+            Span<int> page = new Span<int>(new int[4096]);
 
             byte[] bucketSample = new byte[size];
             Span<byte> bucketSpan = new Span<byte>(bucketSample);
@@ -155,11 +155,30 @@ namespace V5.ConsoleTest
             );
 
             Benchmark.Compare("IndexSet Operations", 250, size, new string[] { "All", "None", "Count", "WhereGreaterThan" },
-                () => v5Set.All(size),
-                () => v5Set.None(),
-                () => { int x = v5Set.Count; },
-                () => v5Set.And(bucketSample, CompareOperator.GreaterThan, (byte)200)
+                () => set.All(size),
+                () => set.None(),
+                () => { int x = set.Count; },
+                () => set.And(bucketSample, CompareOperator.GreaterThan, (byte)200)
             );
+
+            set.None();
+            Benchmark.Compare("IndexSet Page", 250, size, new string[] { "Page None" }, () => PageAll(set, page));
+            set.All(size);
+            Benchmark.Compare("IndexSet Page", 250, size, new string[] { "Page All" }, () => PageAll(set, page));
+        }
+
+        private static int PageAll(IndexSet set, Span<int> page)
+        {
+            int count = 0;
+
+            int next = 0;
+            while(next != -1)
+            {
+                next = set.Page(ref page, next);
+                count += page.Length;
+            }
+
+            return count;
         }
 
         private static int QueryManagedDirect(V0.WebRequestDatabase db, IndexSet matches)
