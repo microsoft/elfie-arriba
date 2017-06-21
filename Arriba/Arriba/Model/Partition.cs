@@ -12,6 +12,7 @@ using Arriba.Model.Expressions;
 using Arriba.Model.Query;
 using Arriba.Serialization;
 using Arriba.Structures;
+using System.Collections.Concurrent;
 
 namespace Arriba.Model
 {
@@ -230,8 +231,9 @@ namespace Arriba.Model
 
             // If there are new items, resize every column for them
             ushort newCount = (ushort)(_itemCount);
-            foreach (IColumn<object> column in this.Columns.Values)
+            for (int columnIndex = 0; columnIndex < columnCount; ++columnIndex)
             {
+                IColumn<object> column = this.Columns.Values[columnIndex];
                 if (column.Count != newCount) column.SetSize(newCount);
             }
 
@@ -246,8 +248,9 @@ namespace Arriba.Model
             }
 
             // Commit every column [ones with new values and ones resized with defaults]
-            foreach (IColumn<object> column in this.Columns.Values)
+            for (int columnIndex = 0; columnIndex < columnCount; ++columnIndex)
             {
+                IColumn<object> column = this.Columns.Values[columnIndex];
                 if (column is ICommittable) (column as ICommittable).Commit();
             }
         }
@@ -258,7 +261,12 @@ namespace Arriba.Model
 
             // If the insert array matches types with the column then we can use the native type to do a direct assignment from the input array
             // to the column array.  If the types do not match, we need to fallback to object to allow the Value class to handle the type conversion
-            ITypedAddOrUpdateWorker worker = NativeContainer.CreateTypedInstance<ITypedAddOrUpdateWorker>(typeof(AddOrUpdateWorker<>), idColumnDataType);
+            ITypedAddOrUpdateWorker worker;
+            if (_cachedWorkers.TryGetValue(idColumnDataType, out worker) == false)
+            {
+                worker = NativeContainer.CreateTypedInstance<ITypedAddOrUpdateWorker>(typeof(AddOrUpdateWorker<>), idColumnDataType);
+                _cachedWorkers.Add(idColumnDataType, worker);
+            }
 
             return worker.FindOrAssignLIDs(this, values, idColumnIndex, mode);
         }
@@ -274,11 +282,17 @@ namespace Arriba.Model
 
             // If the insert array matches types with the column then we can use the native type to do a direct assignment from the input array
             // to the column array.  If the types do not match, we need to fallback to object to allow the Value class to handle the type conversion
-            ITypedAddOrUpdateWorker worker = NativeContainer.CreateTypedInstance<ITypedAddOrUpdateWorker>(typeof(AddOrUpdateWorker<>), dataBlockColumnDataType);
+            ITypedAddOrUpdateWorker worker;
+            if (_cachedWorkers.TryGetValue(dataBlockColumnDataType, out worker) == false)
+            {
+                worker = NativeContainer.CreateTypedInstance<ITypedAddOrUpdateWorker>(typeof(AddOrUpdateWorker<>), dataBlockColumnDataType);
+                _cachedWorkers.Add(dataBlockColumnDataType, worker);
+            }
 
             worker.FillPartitionColumn(this, values, columnIndex, itemLIDs);
         }
 
+        private Dictionary<Type, ITypedAddOrUpdateWorker> _cachedWorkers = new Dictionary<Type, ITypedAddOrUpdateWorker>();
 
         private interface ITypedAddOrUpdateWorker
         {
@@ -292,12 +306,11 @@ namespace Arriba.Model
         /// <typeparam name="T">Type of the column array</typeparam>
         private class AddOrUpdateWorker<T> : ITypedAddOrUpdateWorker
         {
+            private ValueTypeReference<T> vtr = new ValueTypeReference<T>();
+            Value v = Value.Create(null);
+
             public ushort[] FindOrAssignLIDs(Partition p, DataBlock.ReadOnlyDataBlock values, int idColumnIndex, AddOrUpdateMode mode)
             {
-                // TODO: consider keeping one instance of the worker long term? if so, this becomes a private class field
-                ValueTypeReference<T> vtr = new ValueTypeReference<T>();
-                Value v = Value.Create(null);
-
                 ushort[] itemLIDs = new ushort[values.RowCount];
                 int addCount = 0;
 
@@ -430,6 +443,7 @@ namespace Arriba.Model
                     {
                         throw new ArribaWriteException(values[rowIndex, 0], columnName, value, ex);
                     }
+
                 }
             }
         }
