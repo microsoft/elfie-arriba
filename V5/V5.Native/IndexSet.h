@@ -1,5 +1,6 @@
 #pragma once
 #include "Operator.h"
+#include "Span.h"
 using namespace System;
 
 namespace V5
@@ -22,6 +23,8 @@ namespace V5
 
 			virtual Boolean Equals(Object^ other) override;
 
+			Int32 Page(Span<Int32>^ page, Int32 fromIndex);
+
 			// Set to None/All quickly
 			IndexSet^ None();
 			IndexSet^ All(UInt32 length);
@@ -31,6 +34,7 @@ namespace V5
 			IndexSet^ AndNot(IndexSet^ other);
 			IndexSet^ Or(IndexSet^ other);
 
+			// Native speed And with array values
 			generic <typename T>
 			IndexSet^ And(array<T>^ values, CompareOperator cOp, T value);
 		};

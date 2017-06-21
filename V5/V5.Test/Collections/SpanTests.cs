@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 using V5.Collections;
 
 namespace V5.Test.Collections
@@ -14,6 +15,21 @@ namespace V5.Test.Collections
 
             Span_Basics(new byte[] { 0, 1, 2, 3 }, (byte)10);
             Span_Basics(new bool[] { true, false, true, false }, false);
+
+            // Verify constructor validation
+            Verify.Exception<ArgumentNullException>(() => new Span<int>(null));
+            Verify.Exception<ArgumentNullException>(() => new Span<int>(null, 0, 0));
+            Verify.Exception<ArgumentOutOfRangeException>(() => new Span<int>(new int[2], -1, 0));
+            Verify.Exception<ArgumentOutOfRangeException>(() => new Span<int>(new int[2], 0, -1));
+            Verify.Exception<ArgumentOutOfRangeException>(() => new Span<int>(new int[2], 2, 0));
+            Verify.Exception<ArgumentOutOfRangeException>(() => new Span<int>(new int[2], 1, 2));
+
+            // Verify length set validation
+            Span<int> slice = new Span<int>(new int[] { 0, 1, 2, 3 }, 1, 2);
+            Assert.AreEqual(2, slice.Length);
+            slice.Length = 3;
+            Assert.AreEqual(3, slice.Length);
+            Verify.Exception<ArgumentOutOfRangeException>(() => { slice.Length = 4; });
         }
 
         private static void Span_Basics<T>(T[] array, T sample)
@@ -25,6 +41,7 @@ namespace V5.Test.Collections
             Span<T> span = new Span<T>(array);
 
             // Verify the length and items are the same
+            Assert.AreEqual(array.Length, span.Capacity);
             Assert.AreEqual(array.Length, span.Length);
             for (int i = 0; i < span.Length; ++i)
             {
@@ -56,6 +73,7 @@ namespace V5.Test.Collections
             Span<T> slice = new Span<T>(array, 1, array.Length - 1);
 
             // Verify items are equal (offset by index)
+            Assert.AreEqual(array.Length - 1, slice.Capacity);
             Assert.AreEqual(array.Length - 1, slice.Length);
             for (int i = 0; i < slice.Length; ++i)
             {

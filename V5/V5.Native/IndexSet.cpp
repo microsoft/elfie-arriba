@@ -18,6 +18,25 @@ int CountInternal(unsigned __int64* matchVector, int length)
 	return (int)count;
 }
 
+unsigned int __inline ctz(unsigned __int64 value)
+{
+	unsigned long trailingZero = 0;
+	return (_BitScanForward(&trailingZero, value) ? trailingZero : 64);
+}
+
+//int Page(unsigned __int64* matchVector, int length, int start, int* result, int resultLength)
+//{
+//	for (int i = 0; i < length; ++i)
+//	{
+//		unsigned __int64 block = matchVector[i];
+//		
+//		while (true)
+//		{
+//			int nextIndex = ctz(block);
+//		}
+//	}
+//}
+
 #pragma managed
 
 namespace V5
@@ -76,6 +95,26 @@ namespace V5
 			}
 
 			return true;
+		}
+
+		Int32 IndexSet::Page(Span<Int32>^ page, Int32 fromIndex)
+		{
+			int count = 0;
+			int capacity = page->Capacity;
+
+			int i = fromIndex;
+			for (; i < this->Capacity; ++i)
+			{
+				if (this[i])
+				{
+					page[count] = i;
+					count++;
+					if (count == capacity) break;
+				}
+			}
+
+			if (i == this->Capacity) return -1;
+			return i + 1;
 		}
 
 		IndexSet^ IndexSet::None()

@@ -18,7 +18,9 @@ namespace V5
 			Span(array<T>^ array);
 			Span(array<T>^ array, int index, int length);
 
-			property Int32 Length { Int32 get(); }
+			property Int32 Length { Int32 get(); void set(Int32 value); }
+			property Int32 Capacity { Int32 get(); }
+
 			property T default[Int32] { T get(Int32 index); void set(Int32 index, T value); }
 			
 			virtual IEnumerator^ GetBaseEnumerator() = IEnumerable::GetEnumerator;

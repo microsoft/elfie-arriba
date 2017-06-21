@@ -9,6 +9,7 @@ namespace V5
 		generic <typename T>
 		Span<T>::Span(array<T>^ array)
 		{
+			if (array == nullptr) throw gcnew ArgumentNullException("array");
 			this->_array = array;
 			this->_index = 0;
 			this->_length = array->Length;
@@ -17,7 +18,8 @@ namespace V5
 		generic <typename T>
 		Span<T>::Span(array<T>^ array, int index, int length)
 		{
-			if (index < 0) throw gcnew ArgumentOutOfRangeException("index");
+			if (array == nullptr) throw gcnew ArgumentNullException("array");
+			if (index < 0 || index >= array->Length) throw gcnew ArgumentOutOfRangeException("index");
 			if (length < 0) throw gcnew ArgumentOutOfRangeException("length");
 			if (index + length > array->Length) throw gcnew ArgumentOutOfRangeException("length");
 
@@ -30,6 +32,19 @@ namespace V5
 		Int32 Span<T>::Length::get()
 		{
 			return this->_length;
+		}
+
+		generic <typename T>
+		void Span<T>::Length::set(Int32 value)
+		{
+			if (value > this->Capacity) throw gcnew ArgumentOutOfRangeException("value");
+			this->_length = value;
+		}
+
+		generic <typename T>
+		Int32 Span<T>::Capacity::get()
+		{
+			return this->_array->Length - this->_index;
 		}
 
 		generic <typename T>

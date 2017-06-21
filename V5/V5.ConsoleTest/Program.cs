@@ -68,6 +68,9 @@ namespace V5.ConsoleTest
 
         static void Main(string[] args)
         {
+            PerformanceTests();
+            return;
+
             int rowCount = 8 * 1000 * 1000;
             WebRequestDatabase db = new WebRequestDatabase(rowCount);
             V0.WebRequestDatabase db0 = new V0.WebRequestDatabase();
@@ -127,11 +130,35 @@ namespace V5.ConsoleTest
                 () => QueryV5(db, v5Set)
             );
 
-            Benchmark.Compare("IndexSet Operations", 250, db.Count, new string[] { "All", "None", "Count", "WhereGreaterThan" },
-                () => v5Set.All(db.Count),
+            PerformanceTests();
+        }
+
+        static void PerformanceTests()
+        {
+            uint size = 8 * 1000 * 1000;
+
+            int sum;
+            IndexSet managedSet = new IndexSet(size);
+            IndexSet v5Set = new IndexSet(size);
+
+            byte[] bucketSample = new byte[size];
+            Span<byte> bucketSpan = new Span<byte>(bucketSample);
+
+            Random r = new Random(6);
+            r.NextBytes(bucketSample);
+
+            Benchmark.Compare("Span Operations", 100, size, new string[] { "Array For", "Array ForEach", "Span For", "Span ForEach" },
+                () => { sum = 0; for(int i = 0; i < bucketSample.Length; ++i) { sum += bucketSample[i]; } },
+                () => { sum = 0; foreach (int item in bucketSample) { sum += item; } },
+                () => { sum = 0; for (int i = 0; i < bucketSpan.Length; ++i) { sum += bucketSpan[i]; } },
+                () => { sum = 0; foreach (int item in bucketSpan) { sum += item; } }
+            );
+
+            Benchmark.Compare("IndexSet Operations", 250, size, new string[] { "All", "None", "Count", "WhereGreaterThan" },
+                () => v5Set.All(size),
                 () => v5Set.None(),
                 () => { int x = v5Set.Count; },
-                () => v5Set.And(db.EventTimeBuckets.RowBucketIndex, CompareOperator.GreaterThan, (byte)200)
+                () => v5Set.And(bucketSample, CompareOperator.GreaterThan, (byte)200)
             );
         }
 
