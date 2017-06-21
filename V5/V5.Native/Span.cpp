@@ -53,41 +53,43 @@ namespace V5
 		generic <typename T>
 		Generic::IEnumerator<T>^ Span<T>::GetTypedEnumerator()
 		{
-			return gcnew SpanEnumerator<T>(*this);
+			return gcnew SpanEnumerator<T>(this->_array, this->_index, this->_length);
 		}
 
 		/* --- SpanEnumerator --- */
 
 		generic <typename T>
-		SpanEnumerator<T>::SpanEnumerator(Span<T>^ span)
+		SpanEnumerator<T>::SpanEnumerator(array<T>^ array, int index, int length)
 		{
-			this->_span = span;
-			this->_index = -1;
+			this->_array = array;
+			this->_index = index;
+			this->_end = index + length;
+			this->_current = index - 1;
 		}
 
 		generic <typename T>
 		Object^ SpanEnumerator<T>::CurrentBase::get()
 		{
-			return this->_span[this->_index];
+			return this->_array[this->_current];
 		}
 
 		generic <typename T>
 		T SpanEnumerator<T>::CurrentTyped::get()
 		{
-			return this->_span[this->_index];
+			return this->_array[this->_current];
 		}
 
 		generic <typename T>
 		bool SpanEnumerator<T>::MoveNext()
 		{
-			this->_index++;
-			return this->_index < this->_span->Length;
+			this->_current++;
+			return this->_current < this->_end;
 		}
 
 		generic <typename T>
 		void SpanEnumerator<T>::Reset()
 		{
-			this->_index = -1;
+			this->_current = this->_index - 1;
 		}
 
 		generic <typename T>

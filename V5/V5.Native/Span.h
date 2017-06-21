@@ -29,11 +29,15 @@ namespace V5
 		public ref struct SpanEnumerator : Generic::IEnumerator<T>
 		{
 		private:
-			Span<T>^ _span;
+			array<T>^ _array;
 			int _index;
+			int _end;
+			int _current;
+
+		internal:
+			SpanEnumerator(array<T>^ array, int index, int length);
 
 		public:
-			SpanEnumerator(Span<T>^ span);
 			virtual ~SpanEnumerator();
 
 			virtual property Object^ CurrentBase { Object^ get() = IEnumerator::Current::get; }
