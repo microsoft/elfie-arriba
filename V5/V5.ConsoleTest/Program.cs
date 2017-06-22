@@ -154,7 +154,9 @@ namespace V5.ConsoleTest
             //    () => { sum = 0; foreach (int item in bucketSpan) { sum += item; } }
             //);
 
-            Benchmark.Compare("IndexSet Operations", 250, size, new string[] { "All", "None", "Count", "WhereGreaterThan" },
+            int iterations = 100;
+
+            Benchmark.Compare("IndexSet Operations", iterations, size, new string[] { "All", "None", "Count", "WhereGreaterThan" },
                 () => set.All(size),
                 () => set.None(),
                 () => { int x = set.Count; },
@@ -162,16 +164,26 @@ namespace V5.ConsoleTest
             );
 
             set.None();
-            Benchmark.Compare("IndexSet Page", 250, size, new string[] { "Page None" }, () => PageAll(set, page));
-            set.All(size);
-            Benchmark.Compare("IndexSet Page", 250, size, new string[] { "Page All" }, () => PageAll(set, page));
+            Benchmark.Compare("IndexSet Page", iterations, size, new string[] { "Page None" }, () => PageAll(set, page));
 
             set.None();
-            for(int i = 0; i < set.Capacity; i += 3)
+            for (int i = 0; i < set.Capacity; i += 10)
             {
                 set[i] = true;
             }
-            Benchmark.Compare("IndexSet Page", 250, size, new string[] { "Page 1/3" }, () => PageAll(set, page));
+            Benchmark.Compare("IndexSet Page", iterations, size, new string[] { "Page 1/10" }, () => PageAll(set, page));
+
+            set.None();
+            for (int i = 0; i < set.Capacity; i += 3)
+            {
+                set[i] = true;
+            }
+            Benchmark.Compare("IndexSet Page", iterations, size, new string[] { "Page 1/3" }, () => PageAll(set, page));
+
+            set.All(size);
+            Benchmark.Compare("IndexSet Page", iterations, size, new string[] { "Page All" }, () => PageAll(set, page));
+
+            
         }
 
         private static int PageAll(IndexSet set, Span<int> page)
