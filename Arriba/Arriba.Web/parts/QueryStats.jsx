@@ -11,7 +11,7 @@ export default React.createClass({
             return <div className="queryStats"><span className="error-icon icon" /><span className="error">{this.props.error}</span></div>;
         } else {
             // If there's no query, keep this area empty
-            if (!this.props.allCountData || !this.props.allCountData.content) return null;
+            if (!this.props.allBasics || !this.props.allCountData || !this.props.allCountData.content) return null;
             var allCountContent = this.props.allCountData.content;
 
             // Write tiles with results per table
