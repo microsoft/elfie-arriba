@@ -59,6 +59,7 @@ export default class DropShield extends React.Component {
                 existingTablenames={this.props.existingTablenames}
                 refreshAllBasics={this.props.refreshAllBasics}
                 queryChanged={this.props.queryChanged}
+                getAllCounts={this.props.getAllCounts}
                 columnsChanged={this.props.columnsChanged} />}
         </div>
     }
@@ -108,9 +109,9 @@ class UploadConfirm extends React.Component {
                             .then(txt => {
                                 var loading = true;
                                 const check = () => {
-                                    if (loading) setTimeout(() => this.props.refreshAllBasics(check), 100);
+                                    if (loading) setTimeout(() => this.props.getAllCounts(check), 100);
                                 }
-                                check();
+                                this.props.refreshAllBasics(check);
                                 this.props.cancel();
                                 this.props.queryChanged("*");
                                 this.props.columnsChanged(this.props.columns.slice(0, 4).map(col => col.name), this.state.tablename);

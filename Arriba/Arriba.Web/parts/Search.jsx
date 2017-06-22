@@ -161,7 +161,7 @@ export default React.createClass({
         this.getAllCounts();
         this.setHistory();
     },
-    getAllCounts: function () {
+    getAllCounts: function (then) {
         // On query, ask for the count from every table.
 
         // If there's no allBasics or query, clear results and do nothing else
@@ -194,7 +194,10 @@ export default React.createClass({
                     allCountData: data,
                     currentTable: currentTable,
                     loading: false
-                }, this.getTableBasics);
+                }, () => {
+                    this.getTableBasics();
+                    if (then) then();
+                });
 
                 data.content.parsedQuery = data.content.parsedQuery.replace(/\[\*\]:/g, ""); // Other consumers want the [*] removed also.
                 this.mru.update(data.content.parsedQuery);
@@ -416,7 +419,8 @@ export default React.createClass({
                     existingTablenames={Object.keys(this.state.allBasics || {})}
                     queryChanged={this.queryChanged}
                     refreshAllBasics={this.refreshAllBasics}
-                    columnsChanged={(...args) => this.onSetColumns(...args)} />
+                    getAllCounts={this.getAllCounts}
+                    columnsChanged={this.onSetColumns} />
             </div>
         );
     }
