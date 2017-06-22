@@ -167,11 +167,11 @@ namespace V5.ConsoleTest
             Benchmark.Compare("IndexSet Page", 250, size, new string[] { "Page All" }, () => PageAll(set, page));
 
             set.None();
-            for(int i = 0; i < set.Capacity; i += 10)
+            for(int i = 0; i < set.Capacity; i += 3)
             {
                 set[i] = true;
             }
-            Benchmark.Compare("IndexSet Page", 250, size, new string[] { "Page 1/10" }, () => PageAll(set, page));
+            Benchmark.Compare("IndexSet Page", 250, size, new string[] { "Page 1/3" }, () => PageAll(set, page));
         }
 
         private static int PageAll(IndexSet set, Span<int> page)

@@ -21,7 +21,8 @@ int CountN(unsigned __int64* matchVector, int length)
 unsigned int __inline ctz(unsigned __int64 value)
 {
 	unsigned long trailingZero = 0;
-	return (_BitScanForward64(&trailingZero, value) ? trailingZero : 64);
+	_BitScanForward64(&trailingZero, value);
+	return trailingZero;
 }
 
 int PageN(unsigned __int64* matchVector, int length, int start, int* result, int resultLength, int* countSet)
@@ -35,12 +36,12 @@ int PageN(unsigned __int64* matchVector, int length, int start, int* result, int
 	int* resultEnd = result + resultLength;
 
 	// Get the index of the block and position within the block to start at
-	int blockIndex = start >> 6;
+	int base = start & ~63;
+	int end = length << 6;
 	int matchWithinBlock = start & 63;
 
 	// Get the first block
-	int base = blockIndex << 6;
-	unsigned __int64 block = matchVector[blockIndex];
+	unsigned __int64 block = matchVector[base >> 6];
 
 	// If we're resuming within this block, clear already checked bits
 	if (matchWithinBlock > 0) block &= (~0x0ULL << matchWithinBlock);
@@ -55,16 +56,13 @@ int PageN(unsigned __int64* matchVector, int length, int start, int* result, int
 			block &= block - 1;
 		}
 
-		++blockIndex;
-		base = blockIndex << 6;
-		matchWithinBlock = 0;
-		if (blockIndex >= length) break;
-
-		block = matchVector[blockIndex];
+		base += 64;
+		if (base >= end) break;
+		block = matchVector[base >> 6];
 	}
 
 	// Once the array is almost full, find matches only until the array is full
-	if (blockIndex < length)
+	if (base < end)
 	{
 		while (resultNext < resultEnd)
 		{
@@ -77,12 +75,9 @@ int PageN(unsigned __int64* matchVector, int length, int start, int* result, int
 
 			if (resultNext == resultEnd) break;
 
-			++blockIndex;
-			base = blockIndex << 6;
-			matchWithinBlock = 0;
-			if (blockIndex >= length) break;
-
-			block = matchVector[blockIndex];
+			base += 64;
+			if (base >= end) break;
+			block = matchVector[base >> 6];
 		}
 	}
 
@@ -90,8 +85,7 @@ int PageN(unsigned __int64* matchVector, int length, int start, int* result, int
 	*countSet = (int)(resultNext - result);
 
 	// Return -1 if we finished scanning, the next start index otherwise
-	int lastIndex = base + matchWithinBlock;
-	return (lastIndex >= length << 6 ? -1 : lastIndex + 1);
+	return (base >= end ? -1 : base + matchWithinBlock + 1);
 }
 
 #pragma managed
