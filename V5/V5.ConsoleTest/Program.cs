@@ -68,9 +68,6 @@ namespace V5.ConsoleTest
 
         static void Main(string[] args)
         {
-            PerformanceTests();
-            return;
-
             int rowCount = 8 * 1000 * 1000;
             WebRequestDatabase db = new WebRequestDatabase(rowCount);
             V0.WebRequestDatabase db0 = new V0.WebRequestDatabase();
@@ -124,17 +121,17 @@ namespace V5.ConsoleTest
 
             IndexSet managedSet = new IndexSet(db.Count);
             IndexSet v5Set = new IndexSet(db.Count);
+            Span<int> page = new Span<int>(new int[4096]);
 
             Benchmark.Compare("HttpStatus = 404 AND ResponseBytes > 1000", 20, db.Count, new string[] {"Managed Column", "V5.Native" },
-                () => QueryManagedColumn(db, managedSet),
+                () => QueryManagedColumn(db, managedSet, page),
                 () => QueryV5(db, v5Set)
             );
-
-            PerformanceTests();
         }
 
         static void PerformanceTests()
         {
+            int iterations = 100;
             uint size = 8 * 1000 * 1000;
 
             int sum;
@@ -147,14 +144,12 @@ namespace V5.ConsoleTest
             Random r = new Random(6);
             r.NextBytes(bucketSample);
 
-            //Benchmark.Compare("Span Operations", 100, size, new string[] { "Array For", "Array ForEach", "Span For", "Span ForEach" },
-            //    () => { sum = 0; for(int i = 0; i < bucketSample.Length; ++i) { sum += bucketSample[i]; } },
-            //    () => { sum = 0; foreach (int item in bucketSample) { sum += item; } },
-            //    () => { sum = 0; for (int i = 0; i < bucketSpan.Length; ++i) { sum += bucketSpan[i]; } },
-            //    () => { sum = 0; foreach (int item in bucketSpan) { sum += item; } }
-            //);
-
-            int iterations = 100;
+            Benchmark.Compare("Span Operations", iterations, size, new string[] { "Array For", "Array ForEach", "Span For", "Span ForEach" },
+                () => { sum = 0; for (int i = 0; i < bucketSample.Length; ++i) { sum += bucketSample[i]; } },
+                () => { sum = 0; foreach (int item in bucketSample) { sum += item; } },
+                () => { sum = 0; for (int i = 0; i < bucketSpan.Length; ++i) { sum += bucketSpan[i]; } },
+                () => { sum = 0; foreach (int item in bucketSpan) { sum += item; } }
+            );
 
             Benchmark.Compare("IndexSet Operations", iterations, size, new string[] { "All", "None", "Count", "WhereGreaterThan" },
                 () => set.All(size),
@@ -167,23 +162,21 @@ namespace V5.ConsoleTest
             Benchmark.Compare("IndexSet Page", iterations, size, new string[] { "Page None" }, () => PageAll(set, page));
 
             set.None();
+            for (int i = 0; i < set.Capacity; i += 50)
+            {
+                set[i] = true;
+            }
+            Benchmark.Compare("IndexSet Page", iterations, size, new string[] { "Page 1/50" }, () => PageAll(set, page));
+
+            set.None();
             for (int i = 0; i < set.Capacity; i += 10)
             {
                 set[i] = true;
             }
             Benchmark.Compare("IndexSet Page", iterations, size, new string[] { "Page 1/10" }, () => PageAll(set, page));
-
-            set.None();
-            for (int i = 0; i < set.Capacity; i += 3)
-            {
-                set[i] = true;
-            }
-            Benchmark.Compare("IndexSet Page", iterations, size, new string[] { "Page 1/3" }, () => PageAll(set, page));
-
+            
             set.All(size);
             Benchmark.Compare("IndexSet Page", iterations, size, new string[] { "Page All" }, () => PageAll(set, page));
-
-            
         }
 
         private static int PageAll(IndexSet set, Span<int> page)
@@ -210,13 +203,29 @@ namespace V5.ConsoleTest
             return matches.Count;
         }
 
-        private static int QueryManagedColumn(WebRequestDatabase db, IndexSet matches)
+        private static int QueryManagedColumn(WebRequestDatabase db, IndexSet matches, Span<int> page)
         {
-            matches.All(db.Count);
-            db.HttpStatus.And(matches, CompareOperator.Equals, 404);
-            db.ResponseBytes.And(matches, CompareOperator.GreaterThan, 1000);
+            // All Dense: 1,182ms
 
-            return matches.Count;
+            matches.All(db.Count);
+
+            // ISSUE: This isn't really working - PrimitiveColumn needs implementation for Equals
+            db.HttpStatus.And(matches, CompareOperator.Equals, 404);
+            //db.ResponseBytes.And(matches, CompareOperator.GreaterThan, 1000);
+
+            int count = 0;
+            int matchesBefore = 0;
+
+            int next = 0;
+            while (next != -1)
+            {
+                next = matches.Page(ref page, next);
+                matchesBefore += page.Length;
+
+                db.ResponseBytes.And(ref page, CompareOperator.GreaterThan, 1000);
+            }
+
+            return count;
         }
 
         private static int QueryV5(WebRequestDatabase db, IndexSet matches)

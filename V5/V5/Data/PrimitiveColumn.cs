@@ -30,6 +30,18 @@ namespace V5.Data
             }
         }
 
+        public void And(ref Span<int> page, CompareOperator op, T value, int offset = 0)
+        {
+            int nextWriteIndex = 0;
+            for (int i = 0; i < page.Length; ++i)
+            {
+                if (this.Values[i + offset].CompareTo(value) > 0)
+                {
+                    page[nextWriteIndex++] = i;
+                }
+            }
+        }
+
         public static PrimitiveColumn<T> Read(string partitionPath, string columnName)
         {
             string columnValuesPath = Path.Combine(partitionPath, columnName, "V");
