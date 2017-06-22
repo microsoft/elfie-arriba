@@ -149,30 +149,6 @@ namespace V5
 			page.Length = countSet;
 
 			return nextIndex;
-
-			//// Clear the page
-			//page.Length = 0;
-
-			//// Find set bits until we scan all bits or fill the page
-			//int count = 0;
-			//int capacity = page.Capacity;
-
-			//int i = fromIndex;
-			//for (; i < this->Capacity; ++i)
-			//{
-			//	if (this[i])
-			//	{
-			//		page[count] = i;
-			//		count++;
-			//		if (count == capacity) break;
-			//	}
-			//}
-
-			//// Set the Page Length to the count found
-			//page.Length = count;
-
-			//// Return -1 if we finished scanning, the next start index otherwise
-			//return (i == this->Capacity ? -1 : i + 1);
 		}
 
 		IndexSet^ IndexSet::None()
