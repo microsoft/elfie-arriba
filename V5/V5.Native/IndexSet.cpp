@@ -18,47 +18,79 @@ int CountN(unsigned __int64* matchVector, int length)
 	return (int)count;
 }
 
-//unsigned int __inline ctz(unsigned __int64 value)
-//{
-//	unsigned long trailingZero = 0;
-//	return (_BitScanForward(&trailingZero, value) ? trailingZero : 64);
-//}
-
-int PageN(unsigned __int64* matchVector, int length, int start, int* result, int resultLength, int* countWritten)
+unsigned int __inline ctz(unsigned __int64 value)
 {
-	// Clear the Page
-	*countWritten = 0;
+	unsigned long trailingZero = 0;
+	return (_BitScanForward64(&trailingZero, value) ? trailingZero : 64);
+}
 
-	int count = 0;
+int PageN(unsigned __int64* matchVector, int length, int start, int* result, int resultLength, int* countSet)
+{
+	*countSet = 0;
+	if (length == 0) return -1;
 
-	// Find set bits until we scan all bits or fill the page
-	int i = start >> 6;
-	int j = start & 63;
-	for (; i < length; ++i)
+	// Get pointers to the next index, the last place we can scan a block without checking bounds, and the end of the array
+	int* resultNext = result;
+	int* resultLastFull = result + resultLength - 64;
+	int* resultEnd = result + resultLength;
+
+	// Get the index of the block and position within the block to start at
+	int blockIndex = start >> 6;
+	int matchWithinBlock = start & 63;
+
+	// Get the first block
+	int base = blockIndex << 6;
+	unsigned __int64 block = matchVector[blockIndex];
+
+	// If we're resuming within this block, clear already checked bits
+	if (matchWithinBlock > 0) block &= (~0x0ULL << matchWithinBlock);
+
+	// While we have room for 64+ matches, find next set bits without checking if we're out of room
+	while(resultNext < resultLastFull)
 	{
-		unsigned __int64 block = matchVector[i];
-		if (block == 0) continue;
-		
-		for(; j < 64; ++j)
+		while (block != 0)
 		{
-			if ((block & (0x1ULL << j)) != 0)
-			{
-				result[count] = j;
-				count++;
-
-				if (count == resultLength) break;
-			}
+			matchWithinBlock = ctz(block);
+			*(resultNext++) = base + matchWithinBlock;
+			block &= block - 1;
 		}
 
-		if (count == resultLength) break;
-		j = 0;
+		++blockIndex;
+		base = blockIndex << 6;
+		matchWithinBlock = 0;
+		if (blockIndex >= length) break;
+
+		block = matchVector[blockIndex];
 	}
 
-	// Set the count filled
-	*countWritten = count;
+	// Once the array is almost full, find matches only until the array is full
+	if (blockIndex < length)
+	{
+		while (resultNext < resultEnd)
+		{
+			while (block != 0 && resultNext != resultEnd)
+			{
+				matchWithinBlock = ctz(block);
+				*(resultNext++) = base + matchWithinBlock;
+				block &= block - 1;
+			}
+
+			if (resultNext == resultEnd) break;
+
+			++blockIndex;
+			base = blockIndex << 6;
+			matchWithinBlock = 0;
+			if (blockIndex >= length) break;
+
+			block = matchVector[blockIndex];
+		}
+	}
+
+	// Record the match count found
+	*countSet = (int)(resultNext - result);
 
 	// Return -1 if we finished scanning, the next start index otherwise
-	int lastIndex = (i << 6) + j;
+	int lastIndex = base + matchWithinBlock;
 	return (lastIndex >= length << 6 ? -1 : lastIndex + 1);
 }
 
