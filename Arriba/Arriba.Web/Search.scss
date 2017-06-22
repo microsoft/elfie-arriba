@@ -161,20 +161,20 @@ table thead th, table thead td {
 /* Make a 'smallTable' option */
 .smallTable {
     font-size: 80%;
-}
 
-/* Smalltable heading rows are borderless, narrowly padded, black on surrounding background */
-.smallTable thead td {
-    border: none;
-    padding: 0px 6px;
+    /* Smalltable heading rows are borderless, narrowly padded, black on surrounding background */
+    thead td {
+        border: none;
+        padding: 0px 6px;
 
-    background-color: transparent;
-    color: black;
-}
+        background-color: transparent;
+        color: black;
+    }
 
-/* Smalltable cells are much more narrowly padded */
-.smallTable td {
-    padding: 1px 4px;
+    /* Smalltable cells are much more narrowly padded */
+    td {
+        padding: 1px 4px;
+    }
 }
 
 /* Highlight query matching text with yellow background highlight */
@@ -241,52 +241,50 @@ a:visited:hover {
 }
 
 /* --- Mode Bar [left side] --- */
-
 /* Make mode bar white on darker green, sized for icons, animated */
 .mode {
     color: white;
     background-color: $dark;
     width: 53px;
     overflow: hidden;
+
+    /* Make the currently selected mode grey on light grey (match main panel background) */
+    .selected {
+        color: #666666;
+        background: #F5F5F5;
+    }
+
+    /* Make the currently selected mode light up on hover but keep the matching background */
+    .selected:hover {
+        color: #222222;
+        background: #F5F5F5;
+    }
+
+    /* Make mode bar modes large icons */
+    a {
+        display: block;
+        width: 200px;
+        padding: 12px;
+
+        font-size: 12pt;
+        color: #EEEEEE;
+        text-decoration: none;
+
+        transition: all 0.2s ease-in;
+        transition-delay: 0s;
+    }
+
+    /* Make the mode links turn darker grey on hover */
+    a:hover {
+        color: #999;
+    }
+
+    /* Make mode bar icons large and spaced */
+    a i {
+        font-size: 22px;
+        margin-right: 12px;
+    }
 }
-
-/* Make the currently selected mode grey on light grey (match main panel background) */
-.mode .selected {
-    color: #666666;
-    background: #F5F5F5;
-}
-
-/* Make the currently selected mode light up on hover but keep the matching background */
-.mode .selected:hover {
-    color: #222222;
-    background: #F5F5F5;
-}
-
-/* Make mode bar modes large icons */
-.mode a {
-    display: block;
-    width: 200px;
-    padding: 12px;
-
-    font-size: 12pt;
-    color: #EEEEEE;
-    text-decoration: none;
-
-    transition: all 0.2s ease-in;
-    transition-delay: 0s;
-}
-
-/* Make the mode links turn darker grey on hover */
-.mode a:hover {
-    color: #999;
-}
-
-/* Make mode bar icons large and spaced */
-.mode a i {
-    font-size: 22px;
-    margin-right: 12px;
-}
-
 
 /* --- Splash Content UX --- */
 
@@ -308,44 +306,42 @@ a:visited:hover {
 }
 
 /* --- Error / Access Denied UX --- */
-
 /* Move the overall error page down and limit the width */
 .errorPage {
     padding: 48px 24px;
-}
 
-/* Make the heading large white text on red, centered, left-aligned. */
-/* Make the status code smaller, right-aligned. */
-.errorPage h1 {
-    color: white;
-    background: #e81123;
-    padding: 12px;
-    margin: auto;
-    width: 50%;
-    border: 2px solid #e81123;
-    display: flex;
-    align-items: center;
-    flex-direction: row;
-    justify-content: space-between;
-}
+    /* Make the heading large white text on red, centered, left-aligned. */
+    /* Make the status code smaller, right-aligned. */
+    h1 {
+        color: white;
+        background: #e81123;
+        padding: 12px;
+        margin: auto;
+        width: 50%;
+        border: 2px solid #e81123;
+        display: flex;
+        align-items: center;
+        flex-direction: row;
+        justify-content: space-between;
+    }
 
-.errorPage h1 > .errorTitle {
-    font-size: 24pt;
-}
+    h1 > .errorTitle {
+        font-size: 24pt;
+    }
 
-.errorPage h1 > .errorStatus {
-    font-size: 16px;
-}
+    h1 > .errorStatus {
+        font-size: 16px;
+    }
 
-/* Make error content centered, red border, spaced */
-.errorPage article {
-    margin: 0 auto;
-    width: 50%;
-    border: 2px solid #e81123;
-    padding: 12px;
-    font-size: 12pt;
+    /* Make error content centered, red border, spaced */
+    article {
+        margin: 0 auto;
+        width: 50%;
+        border: 2px solid #e81123;
+        padding: 12px;
+        font-size: 12pt;
+    }
 }
-
 
 /* --- Listing UX --- */
 
@@ -389,26 +385,26 @@ a:visited:hover {
             }
         }
     }
-}
 
-/* Show that table rows are all clickable (to open details) */
-.resultTable tr {
-    cursor: pointer;
+    /* Show that table rows are all clickable (to open details) */
+    tr {
+        cursor: pointer;
 
-    &:hover { background-color: $light; }
+        &:hover { background-color: $light; }
 
-    &.selected {
-        color: white;
-        background-color: $light;
-        font-weight: bold;
+        &.selected {
+            color: white;
+            background-color: $light;
+            font-weight: bold;
+        }
     }
-}
 
-/* Make listing table slightly more padded, ellipse on overflow */
-.resultTable td {
-    padding: 6px;
-    max-width: 400px; // Acts like min-width.
-    @include ellipsis;
+    /* Make listing table slightly more padded, ellipse on overflow */
+    td {
+        padding: 6px;
+        max-width: 400px; // Acts like min-width.
+        @include ellipsis;
+    }
 }
 
 /* Make the AddColumnList absolute positioned, on top, scrollable, black on white */
@@ -425,19 +421,19 @@ a:visited:hover {
     padding: 2px;
     overflow: auto;
     max-height: 24em;
-}
 
-/* Make Filter textbox in AddColumnList spaced from edges and narrow enough not to be covered by scrollbar */
-.add-list input {
-    width: 10.75em;
-    margin: 2px;
-    margin-bottom: 4px;
-}
+    /* Make Filter textbox in AddColumnList spaced from edges and narrow enough not to be covered by scrollbar */
+    input {
+        width: 10.75em;
+        margin: 2px;
+        margin-bottom: 4px;
+    }
 
-/* Make AddColumnList hovered on items look selected */
-.add-list div:hover {
-    color: white;
-    background-color: #3d56af;
+    /* Make AddColumnList hovered on items look selected */
+    div:hover {
+        color: white;
+        background-color: #3d56af;
+    }
 }
 
 /* Make the AddColumnList programmatically selected item look selected */
@@ -503,96 +499,96 @@ a:visited:hover {
 /* Add padding around grid */
 .grid {
     padding: 16px;
-}
 
-/* Make Grid text larger, semi-bold */
-.grid * {
-    font-size: 16px;
-    font-family: "Segoe UI Semibold", "Segoe UI", "Segoe WP", Tahoma, Arial, sans-serif;
-}
+    /* Make Grid text larger, semi-bold */
+    * {
+        font-size: 16px;
+        font-family: "Segoe UI Semibold", "Segoe UI", "Segoe WP", Tahoma, Arial, sans-serif;
+    }
 
-/* Make Grid cells animated and unpadded */
-.grid td {
-    padding: 0px;
-}
+    /* Make Grid cells animated and unpadded */
+    td {
+        padding: 0px;
+    }
 
-/* Make cell content padded, single-line, and standard width. [Not the cells themselves, so background bars are full size] */
-.grid table td div {
-    padding: 8px 8px;
+    /* Make cell content padded, single-line, and standard width. [Not the cells themselves, so background bars are full size] */
+    table td div {
+        padding: 8px 8px;
 
-    @include ellipsis;
+        @include ellipsis;
 
-    transition: all 0.15s ease-in;
-    transition-delay: 0s;
+        transition: all 0.15s ease-in;
+        transition-delay: 0s;
 
-    min-width: 150px;
-    max-width: 150px;
-}
+        min-width: 150px;
+        max-width: 150px;
+    }
 
-/* Ensure Grid cells don't grow wider than the values [excluding column and row headings] */
-.grid table tbody td.c {
-    width: 166px;
-}
+    /* Ensure Grid cells don't grow wider than the values [excluding column and row headings] */
+    table tbody td.c {
+        width: 166px;
+    }
 
-/* Row and Column heading cells have controls *outside* the div [to ensure they're clickable], so the cells need the padding, but less on the right */
-.grid td.grid-heading {
-    padding: 8px 2px 8px 8px;
-}
+    /* Row and Column heading cells have controls *outside* the div [to ensure they're clickable], so the cells need the padding, but less on the right */
+    td.grid-heading {
+        padding: 8px 2px 8px 8px;
+    }
 
-/* Make Row and Column heading divs (with the text only) small enough that the controls don't wrap */
-.grid td.grid-heading div {
-    padding: 0px;
+    /* Make Row and Column heading divs (with the text only) small enough that the controls don't wrap */
+    td.grid-heading div {
+        padding: 0px;
 
-    min-width: 125px;
-    max-width: 125px;
+        min-width: 125px;
+        max-width: 125px;
 
-    @include ellipsis;
-}
+        @include ellipsis;
+    }
 
-/* Allow *Row* heading divs to be wider */
-.grid tr td.grid-heading:first-child div {
-    width: auto;
-    min-width: 150px;
-    max-width: 300px;
-}
+    /* Allow *Row* heading divs to be wider */
+    tr td.grid-heading:first-child div {
+        width: auto;
+        min-width: 150px;
+        max-width: 300px;
+    }
 
-/* Allow *Column* headings to wrap */
-.grid thead td.grid-heading div {
-    min-width: 125px;
-    max-width: 125px;
+    /* Allow *Column* headings to wrap */
+    thead td.grid-heading div {
+        min-width: 125px;
+        max-width: 125px;
 
-    white-space: normal;
-}
+        white-space: normal;
+    }
 
-/* Grid column headings are wider when being edited, less padded, not animated. */
-.grid table td.grid-heading.editing div {
-    min-width: 300px;
-    max-width: 300px;
+    /* Grid column headings are wider when being edited, less padded, not animated. */
+    table td.grid-heading.editing div {
+        min-width: 300px;
+        max-width: 300px;
 
-    transition: none;
-}
+        transition: none;
+    }
 
-/* Editing Textboxes are narrow enough not to wrap with icons and are not bumped right against icons or each other */
-.grid table .editing input {
-    width: 260px;
-    margin-left: 4px;
-    margin-bottom: 4px;
-}
+    /* Editing Textboxes are narrow enough not to wrap with icons and are not bumped right against icons or each other */
+    table .editing input {
+        width: 260px;
+        margin-left: 4px;
+        margin-bottom: 4px;
+    }
 
-/* Make Grid values very dark blue */
-.grid table td a {
-    color: #1E3CA9;
-}
+    /* Make Grid values very dark blue */
+    table td a {
+        color: #1E3CA9;
+    }
 
-/* Make Grid values lighten and underline on hover */
-.grid table td a:hover {
-    color: #3D56AF;
-    text-decoration: underline;
-}
+    /* Make Grid values lighten and underline on hover */
+    table td a:hover {
+        color: #3D56AF;
+        text-decoration: underline;
+    }
 
-/* Put options panel a line below the Grid table */
-.grid .options {
-    padding-top: 24px;
+    /* Put options panel a line below the Grid table */
+    .options {
+        padding-top: 24px;
+    }
 }
 
 /* Make the Pie visualization small and off to the left */
