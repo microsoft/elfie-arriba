@@ -54,6 +54,11 @@
         }
     }
 
+    /* Mark error content with light red highlight */
+    .error {
+        background: #f67c87;
+    }
+
     /* Space out the QueryStats buttons a bit */
     a {
         font-size: 0; // Discard white space.
