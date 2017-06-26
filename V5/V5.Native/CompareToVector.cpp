@@ -146,22 +146,22 @@ void CompareToVector::WhereB(CompareOperatorN cOp, unsigned __int8* set, int len
 	switch (cOp)
 	{
 	case CompareOperatorN::GreaterThan:
-		WhereN<CompareOperatorN::GreaterThan, BooleanOperatorN::And, SigningN::Unsigned>(set, length, value, matchVector);
+		WhereN<CompareOperatorN::GreaterThan, bOp, SigningN::Unsigned>(set, length, value, matchVector);
 		break;
 	case CompareOperatorN::GreaterThanOrEqual:
-		WhereN<CompareOperatorN::GreaterThanOrEqual, BooleanOperatorN::And, SigningN::Unsigned>(set, length, value, matchVector);
+		WhereN<CompareOperatorN::GreaterThanOrEqual, bOp, SigningN::Unsigned>(set, length, value, matchVector);
 		break;
 	case CompareOperatorN::LessThan:
-		WhereN<CompareOperatorN::LessThan, BooleanOperatorN::And, SigningN::Unsigned>(set, length, value, matchVector);
+		WhereN<CompareOperatorN::LessThan, bOp, SigningN::Unsigned>(set, length, value, matchVector);
 		break;
 	case CompareOperatorN::LessThanOrEqual:
-		WhereN<CompareOperatorN::LessThanOrEqual, BooleanOperatorN::And, SigningN::Unsigned>(set, length, value, matchVector);
+		WhereN<CompareOperatorN::LessThanOrEqual, bOp, SigningN::Unsigned>(set, length, value, matchVector);
 		break;
 	case CompareOperatorN::Equals:
-		WhereN<CompareOperatorN::Equals, BooleanOperatorN::And, SigningN::Unsigned>(set, length, value, matchVector);
+		WhereN<CompareOperatorN::Equals, bOp, SigningN::Unsigned>(set, length, value, matchVector);
 		break;
 	case CompareOperatorN::NotEquals:
-		WhereN<CompareOperatorN::NotEquals, BooleanOperatorN::And, SigningN::Unsigned>(set, length, value, matchVector);
+		WhereN<CompareOperatorN::NotEquals, bOp, SigningN::Unsigned>(set, length, value, matchVector);
 		break;
 	}
 }

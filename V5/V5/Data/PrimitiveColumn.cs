@@ -20,14 +20,7 @@ namespace V5.Data
 
         public void And(IndexSet set, CompareOperator op, T value, int offset = 0)
         {
-            int end = Math.Min(this.Count - offset, set.Capacity);
-            for(int i = 0; i < end; ++i)
-            {
-                if(set[i])
-                {
-                    if (!(this.Values[i + offset].CompareTo(value) > 0)) set[i] = false;  
-                }
-            }
+            set.And(this.Values, op, value);
         }
 
         public void And(ref Span<int> page, CompareOperator op, T value, int offset = 0)

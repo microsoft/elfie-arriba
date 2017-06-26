@@ -212,12 +212,26 @@ namespace V5
 		generic <typename T>
 		IndexSet^ IndexSet::And(array<T>^ values, CompareOperator op, T value)
 		{
+			if (this->bitVector->Length * 64 > values->Length) throw gcnew IndexOutOfRangeException();
+
 			pin_ptr<T> pValues = &values[0];
 			pin_ptr<UInt64> pVector = &(this->bitVector[0]);
 
 			if (T::typeid == System::Byte::typeid)
 			{
 				CompareToVector::Where((CompareOperatorN)op, BooleanOperatorN::And, (unsigned __int8*)pValues, values->Length, (unsigned char)value, pVector);
+			}
+			else if (T::typeid == System::UInt16::typeid)
+			{
+				CompareToVector::WhereSingle((CompareOperatorN)op, BooleanOperatorN::And, (unsigned __int16*)pValues, values->Length, (unsigned __int16)value, pVector);
+			}
+			/*else if (T::typeid == System::UInt64::typeid)
+			{
+				CompareToVector::WhereSingle((CompareOperatorN)op, BooleanOperatorN::And, (unsigned __int64*)pValues, values->Length, (unsigned __int64)value, pVector);
+			}*/
+			else
+			{
+				throw gcnew NotImplementedException();
 			}
 
 			return this;

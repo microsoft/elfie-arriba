@@ -69,6 +69,7 @@
     <ClCompile Include="Span.cpp">
       <Filter>Collections</Filter>
     </ClCompile>
+    <ClCompile Include="CompareToSingle.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="app.ico">

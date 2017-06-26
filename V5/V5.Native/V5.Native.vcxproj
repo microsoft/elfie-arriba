@@ -149,6 +149,7 @@
     <ClInclude Include="String8Native.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="CompareToSingle.cpp" />
     <ClCompile Include="CompareToVector.cpp" />
     <ClCompile Include="IndexSet.cpp" />
     <ClCompile Include="AssemblyInfo.cpp" />
