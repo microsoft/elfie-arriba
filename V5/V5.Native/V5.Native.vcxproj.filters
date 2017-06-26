@@ -20,6 +20,9 @@
     <Filter Include="Vector">
       <UniqueIdentifier>{b7ede7c9-5dd6-4866-88b1-28d6583fae53}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Serialization">
+      <UniqueIdentifier>{65c52942-a146-4fba-aa4c-87c816765908}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Stdafx.h">
@@ -46,6 +49,9 @@
     <ClInclude Include="Span.h">
       <Filter>Collections</Filter>
     </ClInclude>
+    <ClInclude Include="BinaryReaderWriterExtensions.h">
+      <Filter>Serialization</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="IndexSet.cpp">
@@ -71,6 +77,9 @@
     </ClCompile>
     <ClCompile Include="CompareToSingle.cpp">
       <Filter>Vector</Filter>
+    </ClCompile>
+    <ClCompile Include="BinaryReaderWriterExtensions.cpp">
+      <Filter>Serialization</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
