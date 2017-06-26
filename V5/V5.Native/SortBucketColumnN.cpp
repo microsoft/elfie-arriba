@@ -75,17 +75,49 @@ void SortBucketColumnN::Bucket(array<T>^ values, int index, int length, array<T>
 	pin_ptr<Boolean> pIsMultiValue = &isMultiValue[0];
 
 	// Bucket the items
-	if (T::typeid == System::Int64::typeid)
+	if (T::typeid == System::Byte::typeid)
 	{
-		BucketInternal<__int64, unsigned __int8>((__int64*)pValues, index, length, (__int64*)pBucketMins, bucketMins->Length, pRowBucketIndex, pCountPerBucket, pIsMultiValue);
+		BucketInternal<unsigned __int8, unsigned __int8>((unsigned __int8*)pValues, index, length, (unsigned __int8*)pBucketMins, bucketMins->Length, pRowBucketIndex, pCountPerBucket, pIsMultiValue);
+	}
+	else if (T::typeid == System::SByte::typeid)
+	{
+		BucketInternal<__int8, unsigned __int8>((__int8*)pValues, index, length, (__int8*)pBucketMins, bucketMins->Length, pRowBucketIndex, pCountPerBucket, pIsMultiValue);
+	}
+	else if (T::typeid == System::UInt16::typeid)
+	{
+		BucketInternal<unsigned __int16, unsigned __int8>((unsigned __int16*)pValues, index, length, (unsigned __int16*)pBucketMins, bucketMins->Length, pRowBucketIndex, pCountPerBucket, pIsMultiValue);
+	}
+	else if (T::typeid == System::Int16::typeid)
+	{
+		BucketInternal<__int16, unsigned __int8>((__int16*)pValues, index, length, (__int16*)pBucketMins, bucketMins->Length, pRowBucketIndex, pCountPerBucket, pIsMultiValue);
+	}
+	else if (T::typeid == System::UInt32::typeid)
+	{
+		BucketInternal<unsigned __int32, unsigned __int8>((unsigned __int32*)pValues, index, length, (unsigned __int32*)pBucketMins, bucketMins->Length, pRowBucketIndex, pCountPerBucket, pIsMultiValue);
 	}
 	else if (T::typeid == System::Int32::typeid)
 	{
 		BucketInternal<__int32, unsigned __int8>((__int32*)pValues, index, length, (__int32*)pBucketMins, bucketMins->Length, pRowBucketIndex, pCountPerBucket, pIsMultiValue);
 	}
-	else if (T::typeid == System::Int16::typeid)
+	else if (T::typeid == System::UInt64::typeid)
 	{
-		BucketInternal<__int16, unsigned __int8>((__int16*)pValues, index, length, (__int16*)pBucketMins, bucketMins->Length, pRowBucketIndex, pCountPerBucket, pIsMultiValue);
+		BucketInternal<unsigned __int64, unsigned __int8>((unsigned __int64*)pValues, index, length, (unsigned __int64*)pBucketMins, bucketMins->Length, pRowBucketIndex, pCountPerBucket, pIsMultiValue);
+	}
+	else if (T::typeid == System::Int64::typeid)
+	{
+		BucketInternal<__int64, unsigned __int8>((__int64*)pValues, index, length, (__int64*)pBucketMins, bucketMins->Length, pRowBucketIndex, pCountPerBucket, pIsMultiValue);
+	}
+	else if (T::typeid == System::Single::typeid)
+	{
+		BucketInternal<float, unsigned __int8>((float*)pValues, index, length, (float*)pBucketMins, bucketMins->Length, pRowBucketIndex, pCountPerBucket, pIsMultiValue);
+	}
+	else if (T::typeid == System::Double::typeid)
+	{
+		BucketInternal<double, unsigned __int8>((double*)pValues, index, length, (double*)pBucketMins, bucketMins->Length, pRowBucketIndex, pCountPerBucket, pIsMultiValue);
+	}
+	else
+	{
+		throw gcnew NotImplementedException();
 	}
 
 	// Write the row total as the last countPerBucket value
@@ -103,19 +135,49 @@ int SortBucketColumnN::BucketIndex(array<T>^ bucketMins, T value)
 {
 	pin_ptr<T> pBucketMins = &bucketMins[0];
 
-	if (T::typeid == System::Int64::typeid)
+	if (T::typeid == System::Byte::typeid)
 	{
-		return BucketIndexInternal<__int64>((__int64*)pBucketMins, bucketMins->Length, (__int64)value);
+		return BucketIndexInternal<__int8>((__int8*)pBucketMins, bucketMins->Length, (__int8)value);
 	}
-	else if (T::typeid == System::Int32::typeid)
+	else if (T::typeid == System::SByte::typeid)
 	{
-		return BucketIndexInternal<__int32>((__int32*)pBucketMins, bucketMins->Length, (__int32)value);
+		return BucketIndexInternal<unsigned __int8>((unsigned __int8*)pBucketMins, bucketMins->Length, (unsigned __int8)value);
+	}
+	else if (T::typeid == System::UInt16::typeid)
+	{
+		return BucketIndexInternal<unsigned __int16>((unsigned __int16*)pBucketMins, bucketMins->Length, (unsigned __int16)value);
 	}
 	else if (T::typeid == System::Int16::typeid)
 	{
 		return BucketIndexInternal<__int16>((__int16*)pBucketMins, bucketMins->Length, (__int16)value);
 	}
-
-	return -2;
+	else if (T::typeid == System::UInt32::typeid)
+	{
+		return BucketIndexInternal<unsigned __int32>((unsigned __int32*)pBucketMins, bucketMins->Length, (unsigned __int32)value);
+	}
+	else if (T::typeid == System::Int32::typeid)
+	{
+		return BucketIndexInternal<__int32>((__int32*)pBucketMins, bucketMins->Length, (__int32)value);
+	}
+	else if (T::typeid == System::UInt64::typeid)
+	{
+		return BucketIndexInternal<unsigned __int64>((unsigned __int64*)pBucketMins, bucketMins->Length, (unsigned __int64)value);
+	}
+	else if (T::typeid == System::Int64::typeid)
+	{
+		return BucketIndexInternal<__int64>((__int64*)pBucketMins, bucketMins->Length, (__int64)value);
+	}
+	else if (T::typeid == System::Single::typeid)
+	{
+		return BucketIndexInternal<float>((float*)pBucketMins, bucketMins->Length, (float)value);
+	}
+	else if (T::typeid == System::Double::typeid)
+	{
+		return BucketIndexInternal<double>((double*)pBucketMins, bucketMins->Length, (double)value);
+	}
+	else
+	{
+		throw gcnew NotImplementedException();
+	}
 }
 

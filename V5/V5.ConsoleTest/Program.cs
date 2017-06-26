@@ -101,7 +101,7 @@ namespace V5.ConsoleTest
                 db0.Requests = data;
 
                 using (new TraceWatch("Copying into Database..."))
-                { 
+                {
                     for (int i = 0; i < rowCount; ++i)
                     {
                         WebRequest row = data[i];
@@ -122,14 +122,13 @@ namespace V5.ConsoleTest
                 }
             }
 
-            IndexSet managedSet = new IndexSet(db.Count);
-            IndexSet v5Set = new IndexSet(db.Count);
+            IndexSet set = new IndexSet(db.Count);
             Span<int> page = new Span<int>(new int[4096]);
 
             Benchmark.Compare("HttpStatus = 404 AND ResponseBytes > 1000", 20, db.Count, new string[] { "Managed Direct", "Managed Column", "V5.Native" },
-                () => QueryManagedDirect(db, managedSet),
-                () => QueryManagedColumn(db, managedSet, page),
-                () => QueryV5(db, v5Set, page)
+                () => QueryManagedDirect(db, set),
+                () => QueryManagedColumn(db, set, page),
+                () => QueryV5(db, set, page)
             );
         }
 
@@ -178,7 +177,7 @@ namespace V5.ConsoleTest
                 set[i] = true;
             }
             Benchmark.Compare("IndexSet Page", iterations, size, new string[] { "Page 1/10" }, () => PageAll(set, page));
-            
+
             set.All(size);
             Benchmark.Compare("IndexSet Page", iterations, size, new string[] { "Page All" }, () => PageAll(set, page));
         }
@@ -188,7 +187,7 @@ namespace V5.ConsoleTest
             int count = 0;
 
             int next = 0;
-            while(next != -1)
+            while (next != -1)
             {
                 next = set.Page(ref page, next);
                 count += page.Length;
@@ -224,37 +223,31 @@ namespace V5.ConsoleTest
             db.ResponseBytes.And(matches, CompareOperator.GreaterThan, 1000);
 
             return matches.Count;
-
-            //int count = 0;
-            //int matchesBefore = 0;
-
-            //int next = 0;
-            //while (next != -1)
-            //{
-            //    next = matches.Page(ref page, next);
-            //    matchesBefore += page.Length;
-
-            //    db.ResponseBytes.And(ref page, CompareOperator.GreaterThan, 1000);
-            //}
-
-            //return count;
         }
 
         private static int QueryV5(WebRequestDatabase db, IndexSet matches, Span<int> page)
         {
             // Look up the buckets for HttpStatus 404 and ResponseBytes 1000
-            bool isHttpStatusSingleBucket;
-            int httpStatusBucket = db.HttpStatusBuckets.BucketForValue(404, out isHttpStatusSingleBucket);
+            bool isHttpStatusExact;
+            int httpStatusBucket = db.HttpStatusBuckets.BucketForValue(404, out isHttpStatusExact);
+            bool needHttpStatusPostScan = (isHttpStatusExact == false && db.HttpStatusBuckets.IsMultiValue[httpStatusBucket]);
 
-            bool isResponseBytesSingleBucket;
-            int responseBytesBucket = db.ResponseBytesBuckets.BucketForValue(1000, out isResponseBytesSingleBucket);
+            bool isResponseBytesExact;
+            int responseBytesBucket = db.ResponseBytesBuckets.BucketForValue(1000, out isResponseBytesExact);
+            bool needResponseBytesPostScan = (isResponseBytesExact == false && db.ResponseBytesBuckets.IsMultiValue[responseBytesBucket]);
 
             // Get matches in those bucket ranges and intersect them
-            matches.All(db.Count)
-                .And(db.HttpStatusBuckets.RowBucketIndex, CompareOperator.Equals, (byte)httpStatusBucket)
-                .And(db.ResponseBytesBuckets.RowBucketIndex, CompareOperator.GreaterThan, (byte)responseBytesBucket);
+            matches.All(db.Count);
+            matches.And(db.HttpStatusBuckets.RowBucketIndex, CompareOperator.Equals, (byte)httpStatusBucket);
+            matches.And(db.ResponseBytesBuckets.RowBucketIndex, CompareOperator.GreaterThan, (byte)responseBytesBucket);
 
-            // Page through results and post-filter on the exact ResponseBytes (because it's not a single value bucket)
+            //return matches.Count;
+
+            // If no post-scans were required, return the bit vector count
+            if (!needHttpStatusPostScan && !needResponseBytesPostScan) return matches.Count;
+
+            // Otherwise, page through results and post-filter on required clauses
+            // [NOTE: We should prefer to scan twice and only filter boundary bucket rows when there are many matches]
             int count = 0;
             int matchesBefore = 0;
 
@@ -264,7 +257,9 @@ namespace V5.ConsoleTest
                 next = matches.Page(ref page, next);
                 matchesBefore += page.Length;
 
-                db.ResponseBytes.And(ref page, CompareOperator.GreaterThan, 1000);
+                if (needHttpStatusPostScan) db.HttpStatus.And(ref page, CompareOperator.Equals, 404);
+                if (needResponseBytesPostScan) db.ResponseBytes.And(ref page, CompareOperator.GreaterThan, 1000);
+
                 count += page.Length;
             }
 

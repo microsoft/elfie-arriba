@@ -168,8 +168,8 @@ namespace V5.Data
         {
             int index = SortBucketColumnN.BucketIndex<T>(this.Minimum, value);
 
-            isExact = (index < 0);
-            if (isExact) index = ~index;
+            isExact = (index >= 0);
+            if (!isExact) index = ~index;
             return index;
         }
 
