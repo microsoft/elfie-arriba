@@ -1,4 +1,4 @@
-﻿import "../Search.scss";
+import "../Search.scss";
 import "!script-loader!../js/utilities.js";
 
 import Mru from "./Mru";
@@ -165,7 +165,7 @@ export default React.createClass({
         // On query, ask for the count from every table.
 
         // If there's no allBasics or query, clear results and do nothing else
-        if (!Object.keys(this.state.allBasics).length || !this.state.query) {
+        if (!this.state.allBasics || !Object.keys(this.state.allBasics).length || !this.state.query) {
             this.setState({
                 loading: false,
                 allCountData: [],
