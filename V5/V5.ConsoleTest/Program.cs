@@ -228,6 +228,10 @@ namespace V5.ConsoleTest
         private static int QueryV5(WebRequestDatabase db, IndexSet matches, Span<int> page)
         {
             // Look up the buckets for HttpStatus 404 and ResponseBytes 1000
+            
+            // TODO: We don't need the post-scan for the ResponseBytes column, but we don't realize it.
+            // The bucket boundaries are 999 and 1,001, so the 1,001 bucket, while not equal to the query value, is the first in-range value.
+
             bool isHttpStatusExact;
             int httpStatusBucket = db.HttpStatusBuckets.BucketForValue(404, out isHttpStatusExact);
             bool needHttpStatusPostScan = (isHttpStatusExact == false && db.HttpStatusBuckets.IsMultiValue[httpStatusBucket]);
