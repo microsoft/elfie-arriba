@@ -208,25 +208,21 @@ namespace V5.ConsoleTest
 
         private static int QueryManagedColumn(WebRequestDatabase db, IndexSet matches, Span<int> page)
         {
-            // All Dense: 1,182ms
-
             matches.All(db.Count);
-
-            // ISSUE: This isn't really working - PrimitiveColumn needs implementation for Equals
-            db.HttpStatus.And(matches, CompareOperator.Equals, 404);
-            //db.ResponseBytes.And(matches, CompareOperator.GreaterThan, 1000);
+            //db.HttpStatus.And(matches, CompareOperator.Equals, 404);
+            db.ResponseBytes.And(matches, CompareOperator.GreaterThan, 1000);
 
             int count = 0;
-            int matchesBefore = 0;
+            //int matchesBefore = 0;
 
-            int next = 0;
-            while (next != -1)
-            {
-                next = matches.Page(ref page, next);
-                matchesBefore += page.Length;
+            //int next = 0;
+            //while (next != -1)
+            //{
+            //    next = matches.Page(ref page, next);
+            //    matchesBefore += page.Length;
 
-                db.ResponseBytes.And(ref page, CompareOperator.GreaterThan, 1000);
-            }
+            //    db.ResponseBytes.And(ref page, CompareOperator.GreaterThan, 1000);
+            //}
 
             return count;
         }

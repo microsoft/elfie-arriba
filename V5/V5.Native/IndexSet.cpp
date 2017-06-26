@@ -223,16 +223,44 @@ namespace V5
 
 			if (T::typeid == System::Byte::typeid)
 			{
-				CompareToVector::Where((CompareOperatorN)op, BooleanOperatorN::And, (unsigned __int8*)pValues, values->Length, (unsigned char)value, pVector);
+				CompareToVector::Where((CompareOperatorN)op, BooleanOperatorN::And, SigningN::Unsigned, (unsigned __int8*)pValues, values->Length, (unsigned __int8)value, pVector);
+			}
+			else if (T::typeid == System::SByte::typeid)
+			{
+				CompareToVector::Where((CompareOperatorN)op, BooleanOperatorN::And, SigningN::Signed, (unsigned __int8*)pValues, values->Length, (unsigned __int8)value, pVector);
 			}
 			else if (T::typeid == System::UInt16::typeid)
 			{
 				CompareToVector::WhereSingle((CompareOperatorN)op, BooleanOperatorN::And, (unsigned __int16*)pValues, values->Length, (unsigned __int16)value, pVector);
 			}
-			/*else if (T::typeid == System::UInt64::typeid)
+			else if (T::typeid == System::Int16::typeid)
+			{
+				CompareToVector::WhereSingle((CompareOperatorN)op, BooleanOperatorN::And, (__int16*)pValues, values->Length, (__int16)value, pVector);
+			}
+			else if (T::typeid == System::UInt32::typeid)
+			{
+				CompareToVector::WhereSingle((CompareOperatorN)op, BooleanOperatorN::And, (unsigned __int32*)pValues, values->Length, (unsigned __int32)value, pVector);
+			}
+			else if (T::typeid == System::Int32::typeid)
+			{
+				CompareToVector::WhereSingle((CompareOperatorN)op, BooleanOperatorN::And, (__int32*)pValues, values->Length, (__int32)value, pVector);
+			}
+			else if (T::typeid == System::UInt64::typeid)
 			{
 				CompareToVector::WhereSingle((CompareOperatorN)op, BooleanOperatorN::And, (unsigned __int64*)pValues, values->Length, (unsigned __int64)value, pVector);
-			}*/
+			}
+			else if (T::typeid == System::Int64::typeid)
+			{
+				CompareToVector::WhereSingle((CompareOperatorN)op, BooleanOperatorN::And, (__int64*)pValues, values->Length, (__int64)value, pVector);
+			}
+			else if (T::typeid == System::Single::typeid)
+			{
+				CompareToVector::WhereSingle((CompareOperatorN)op, BooleanOperatorN::And, (float*)pValues, values->Length, (float)value, pVector);
+			}
+			else if (T::typeid == System::Double::typeid)
+			{
+				CompareToVector::WhereSingle((CompareOperatorN)op, BooleanOperatorN::And, (double*)pValues, values->Length, (double)value, pVector);
+			}
 			else
 			{
 				throw gcnew NotImplementedException();

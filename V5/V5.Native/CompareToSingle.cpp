@@ -44,13 +44,13 @@ static void WhereSingle(T* set, int length, T value, unsigned __int64* matchVect
 		switch (bOp)
 		{
 		case BooleanOperatorN::And:
-			matchVector[i >> 6] &= result;
+			matchVector[vectorIndex] &= result;
 			break;
 		case BooleanOperatorN::Or:
-			matchVector[i >> 6] |= result;
+			matchVector[vectorIndex] |= result;
 			break;
 		case BooleanOperatorN::AndNot:
-			matchVector[i >> 6] &= ~result;
+			matchVector[vectorIndex] &= ~result;
 			break;
 		}
 	}
@@ -95,5 +95,6 @@ void CompareToVector::WhereSingle(CompareOperatorN cOp, BooleanOperatorN bOp, T*
 		break;
 	case BooleanOperatorN::AndNot:
 		WhereSingleB<BooleanOperatorN::AndNot, T>(cOp, set, length, value, matchVector);
+		break;
 	}
 }
