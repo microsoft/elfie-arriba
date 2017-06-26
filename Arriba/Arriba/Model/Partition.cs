@@ -226,24 +226,29 @@ namespace Arriba.Model
             int columnCount = values.ColumnCount;
             int idColumnIndex = values.IndexOfColumn(this.IDColumn.Name);
 
-            // Look up the LID for each item or add it
-            ushort[] itemLIDs = FindOrAssignLIDs(values, idColumnIndex, options.Mode);
-
-            // If there are new items, resize every column for them
-            ushort newCount = (ushort)(_itemCount);
-            for (int columnIndex = 0; columnIndex < this.Columns.Count; ++columnIndex)
+            unsafe
             {
-                IColumn<object> column = this.Columns.Values[columnIndex];
-                if (column.Count != newCount) column.SetSize(newCount);
-            }
+                ushort* itemLIDs = stackalloc ushort[values.RowCount];
 
-            // Set values for each other provided column which exists
-            //  Columns which don't exist at this point were omitted because they had no non-default values
-            for (int columnIndex = 0; columnIndex < columnCount; ++columnIndex)
-            {
-                if (this.ContainsColumn(values.Columns[columnIndex].Name))
+                // Look up the LID for each item or add it
+                FindOrAssignLIDs(values, idColumnIndex, options.Mode, itemLIDs);
+
+                // If there are new items, resize every column for them
+                ushort newCount = (ushort)(_itemCount);
+                for (int columnIndex = 0; columnIndex < this.Columns.Count; ++columnIndex)
                 {
-                    FillPartitionColumn(values, columnIndex, itemLIDs);
+                    IColumn<object> column = this.Columns.Values[columnIndex];
+                    if (column.Count != newCount) column.SetSize(newCount);
+                }
+
+                // Set values for each other provided column which exists
+                //  Columns which don't exist at this point were omitted because they had no non-default values
+                for (int columnIndex = 0; columnIndex < columnCount; ++columnIndex)
+                {
+                    if (this.ContainsColumn(values.Columns[columnIndex].Name))
+                    {
+                        FillPartitionColumn(values, columnIndex, itemLIDs);
+                    }
                 }
             }
 
@@ -255,7 +260,7 @@ namespace Arriba.Model
             }
         }
 
-        private ushort[] FindOrAssignLIDs(DataBlock.ReadOnlyDataBlock values, int idColumnIndex, AddOrUpdateMode mode)
+        private unsafe void FindOrAssignLIDs(DataBlock.ReadOnlyDataBlock values, int idColumnIndex, AddOrUpdateMode mode, ushort* itemLIDs)
         {
             Type idColumnDataType = values.GetTypeForColumn(idColumnIndex);
 
@@ -268,12 +273,12 @@ namespace Arriba.Model
                 _cachedWorkers.Add(idColumnDataType, worker);
             }
 
-            return worker.FindOrAssignLIDs(this, values, idColumnIndex, mode);
+            worker.FindOrAssignLIDs(this, values, idColumnIndex, mode, itemLIDs);
         }
 
         private Value _cachedValue = Value.Create(null);
 
-        private void FillPartitionColumn(DataBlock.ReadOnlyDataBlock values, int columnIndex, ushort[] itemLIDs)
+        private unsafe void FillPartitionColumn(DataBlock.ReadOnlyDataBlock values, int columnIndex, ushort* itemLIDs)
         {
             string columnName = values.Columns[columnIndex].Name;
             if (columnName.Equals(this.IDColumn.Name, StringComparison.OrdinalIgnoreCase)) return;
@@ -294,24 +299,23 @@ namespace Arriba.Model
 
         private Dictionary<Type, ITypedAddOrUpdateWorker> _cachedWorkers = new Dictionary<Type, ITypedAddOrUpdateWorker>();
 
-        private interface ITypedAddOrUpdateWorker
+        private unsafe interface ITypedAddOrUpdateWorker
         {
-            ushort[] FindOrAssignLIDs(Partition p, DataBlock.ReadOnlyDataBlock values, int idColumnIndex, AddOrUpdateMode mode);
-            void FillPartitionColumn(Partition p, DataBlock.ReadOnlyDataBlock values, int columnIndex, ushort[] itemLIDs);
+            void FindOrAssignLIDs(Partition p, DataBlock.ReadOnlyDataBlock values, int idColumnIndex, AddOrUpdateMode mode, ushort* itemLIDs);
+            void FillPartitionColumn(Partition p, DataBlock.ReadOnlyDataBlock values, int columnIndex, ushort* itemLIDs);
         }
 
         /// <summary>
         /// Strongly typed implementations of core loops used to operate on arrays in their native type to eliminate boxing/unboxing coversions
         /// </summary>
         /// <typeparam name="T">Type of the column array</typeparam>
-        private class AddOrUpdateWorker<T> : ITypedAddOrUpdateWorker
+        private unsafe class AddOrUpdateWorker<T> : ITypedAddOrUpdateWorker
         {
             private ValueTypeReference<T> vtr = new ValueTypeReference<T>();
             Value v = Value.Create(null);
 
-            public ushort[] FindOrAssignLIDs(Partition p, DataBlock.ReadOnlyDataBlock values, int idColumnIndex, AddOrUpdateMode mode)
+            public void FindOrAssignLIDs(Partition p, DataBlock.ReadOnlyDataBlock values, int idColumnIndex, AddOrUpdateMode mode, ushort* itemLIDs)
             {
-                ushort[] itemLIDs = new ushort[values.RowCount];
                 int addCount = 0;
 
                 IUntypedColumn idColumn = p.Columns[p.IDColumn.Name];
@@ -406,11 +410,9 @@ namespace Arriba.Model
                     // Commit the updates to the values column if the column requires it (FastAddSortedColumn does)
                     if (idColumn is ICommittable) (idColumn as ICommittable).Commit();
                 }
-
-                return itemLIDs;
             }
 
-            public void FillPartitionColumn(Partition p, DataBlock.ReadOnlyDataBlock values, int columnIndex, ushort[] itemLIDs)
+            public void FillPartitionColumn(Partition p, DataBlock.ReadOnlyDataBlock values, int columnIndex, ushort* itemLIDs)
             {
                 string columnName = values.Columns[columnIndex].Name;
                 if (columnName.Equals(p.IDColumn.Name, StringComparison.OrdinalIgnoreCase)) return;
