@@ -82,20 +82,18 @@ void CompareToVector::WhereSingleB(CompareOperatorN cOp, T* set, int length, T v
 	}
 }
 
-//template<typename T>
-void CompareToVector::WhereSingle(CompareOperatorN cOp, BooleanOperatorN bOp, unsigned __int16* set, int length, unsigned __int16 value, unsigned __int64* matchVector)
+template<typename T>
+void CompareToVector::WhereSingle(CompareOperatorN cOp, BooleanOperatorN bOp, T* set, int length, T value, unsigned __int64* matchVector)
 {
 	switch (bOp)
 	{
 	case BooleanOperatorN::And:
-		WhereSingleB<BooleanOperatorN::And>(cOp, set, length, value, matchVector);
+		WhereSingleB<BooleanOperatorN::And, T>(cOp, set, length, value, matchVector);
 		break;
 	case BooleanOperatorN::Or:
-		WhereSingleB<BooleanOperatorN::Or>(cOp, set, length, value, matchVector);
+		WhereSingleB<BooleanOperatorN::Or, T>(cOp, set, length, value, matchVector);
 		break;
 	case BooleanOperatorN::AndNot:
-		WhereSingleB<BooleanOperatorN::AndNot>(cOp, set, length, value, matchVector);
+		WhereSingleB<BooleanOperatorN::AndNot, T>(cOp, set, length, value, matchVector);
 	}
 }
-
-

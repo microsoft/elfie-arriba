@@ -2,7 +2,11 @@
 #include <intrin.h>
 #include <nmmintrin.h>
 #include "IndexSet.h"
+
 #include "CompareToVector.h"
+
+// Must include templated method implementations so that specific typed versions can compile.
+#include "CompareToSingle.cpp"
 
 #pragma unmanaged
 
