@@ -84,8 +84,15 @@ namespace V5.Test.Collections
         public void IndexSet_Where()
         {
             IndexSet_Where(Enumerable.Range(0, 120).Select((i) => (byte)i).ToArray(), (byte)100);
+            IndexSet_Where(Enumerable.Range(0, 120).Select((i) => (sbyte)i).ToArray(), (sbyte)100);
             IndexSet_Where(Enumerable.Range(0, 120).Select((i) => (ushort)i).ToArray(), (ushort)100);
+            IndexSet_Where(Enumerable.Range(0, 120).Select((i) => (short)i).ToArray(), (short)100);
+            IndexSet_Where(Enumerable.Range(0, 120).Select((i) => (uint)i).ToArray(), (uint)100);
+            IndexSet_Where(Enumerable.Range(0, 120).Select((i) => (int)i).ToArray(), (int)100);
+            IndexSet_Where(Enumerable.Range(0, 120).Select((i) => (ulong)i).ToArray(), (ulong)100);
             IndexSet_Where(Enumerable.Range(0, 120).Select((i) => (long)i).ToArray(), (long)100);
+            IndexSet_Where(Enumerable.Range(0, 120).Select((i) => (float)i).ToArray(), (float)100);
+            IndexSet_Where(Enumerable.Range(0, 120).Select((i) => (double)i).ToArray(), (double)100);
         }
 
         private static void IndexSet_Where<T>(T[] zeroToN, T oneHundred)

@@ -233,7 +233,7 @@ namespace V5
 			}
 			else if (T::typeid == System::SByte::typeid)
 			{
-				CompareToVector::Where((CompareOperatorN)op, (BooleanOperatorN)bOp, SigningN::Signed, (unsigned __int8*)pValues, values->Length, (unsigned __int8)value, pVector);
+				CompareToVector::Where((CompareOperatorN)op, (BooleanOperatorN)bOp, SigningN::Signed, (unsigned __int8*)(__int8*)pValues, values->Length, (unsigned __int8)(__int8)value, pVector);
 			}
 			else if (T::typeid == System::UInt16::typeid)
 			{
