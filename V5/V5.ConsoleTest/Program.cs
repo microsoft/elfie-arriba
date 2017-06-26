@@ -126,9 +126,10 @@ namespace V5.ConsoleTest
             IndexSet v5Set = new IndexSet(db.Count);
             Span<int> page = new Span<int>(new int[4096]);
 
-            Benchmark.Compare("HttpStatus = 404 AND ResponseBytes > 1000", 20, db.Count, new string[] {"Managed Column", "V5.Native" },
+            Benchmark.Compare("HttpStatus = 404 AND ResponseBytes > 1000", 20, db.Count, new string[] { "Managed Direct", "Managed Column", "V5.Native" },
+                () => QueryManagedDirect(db, managedSet),
                 () => QueryManagedColumn(db, managedSet, page),
-                () => QueryV5(db, v5Set)
+                () => QueryV5(db, v5Set, page)
             );
         }
 
@@ -148,16 +149,16 @@ namespace V5.ConsoleTest
             r.NextBytes(bucketSample);
 
             Benchmark.Compare("Span Operations", iterations, size, new string[] { "Array For", "Array ForEach", "Span For", "Span ForEach" },
-                () => { sum = 0; for (int i = 0; i < bucketSample.Length; ++i) { sum += bucketSample[i]; } },
-                () => { sum = 0; foreach (int item in bucketSample) { sum += item; } },
-                () => { sum = 0; for (int i = 0; i < bucketSpan.Length; ++i) { sum += bucketSpan[i]; } },
-                () => { sum = 0; foreach (int item in bucketSpan) { sum += item; } }
+                () => { sum = 0; for (int i = 0; i < bucketSample.Length; ++i) { sum += bucketSample[i]; } return sum; },
+                () => { sum = 0; foreach (int item in bucketSample) { sum += item; } return sum; },
+                () => { sum = 0; for (int i = 0; i < bucketSpan.Length; ++i) { sum += bucketSpan[i]; } return sum; },
+                () => { sum = 0; foreach (int item in bucketSpan) { sum += item; } return sum; }
             );
 
             Benchmark.Compare("IndexSet Operations", iterations, size, new string[] { "All", "None", "Count", "WhereGreaterThan" },
                 () => set.All(size),
                 () => set.None(),
-                () => { int x = set.Count; },
+                () => set.Count,
                 () => set.And(bucketSample, CompareOperator.GreaterThan, (byte)200)
             );
 
@@ -206,13 +207,25 @@ namespace V5.ConsoleTest
             return matches.Count;
         }
 
+        private static int QueryManagedDirect(WebRequestDatabase db, IndexSet matches)
+        {
+            for (int i = 0; i < db.Count; ++i)
+            {
+                if (db.HttpStatus.Values[i] == 404 && db.ResponseBytes.Values[i] > 1000) matches[i] = true;
+            }
+
+            return matches.Count;
+        }
+
         private static int QueryManagedColumn(WebRequestDatabase db, IndexSet matches, Span<int> page)
         {
             matches.All(db.Count);
-            //db.HttpStatus.And(matches, CompareOperator.Equals, 404);
+            db.HttpStatus.And(matches, CompareOperator.Equals, 404);
             db.ResponseBytes.And(matches, CompareOperator.GreaterThan, 1000);
 
-            int count = 0;
+            return matches.Count;
+
+            //int count = 0;
             //int matchesBefore = 0;
 
             //int next = 0;
@@ -224,22 +237,39 @@ namespace V5.ConsoleTest
             //    db.ResponseBytes.And(ref page, CompareOperator.GreaterThan, 1000);
             //}
 
-            return count;
+            //return count;
         }
 
-        private static int QueryV5(WebRequestDatabase db, IndexSet matches)
+        private static int QueryV5(WebRequestDatabase db, IndexSet matches, Span<int> page)
         {
+            // Look up the buckets for HttpStatus 404 and ResponseBytes 1000
             bool isHttpStatusSingleBucket;
             int httpStatusBucket = db.HttpStatusBuckets.BucketForValue(404, out isHttpStatusSingleBucket);
 
             bool isResponseBytesSingleBucket;
             int responseBytesBucket = db.ResponseBytesBuckets.BucketForValue(1000, out isResponseBytesSingleBucket);
 
+            // Get matches in those bucket ranges and intersect them
             matches.All(db.Count)
                 .And(db.HttpStatusBuckets.RowBucketIndex, CompareOperator.Equals, (byte)httpStatusBucket)
                 .And(db.ResponseBytesBuckets.RowBucketIndex, CompareOperator.GreaterThan, (byte)responseBytesBucket);
 
-            return matches.Count;
+            // Page through results and post-filter on the exact ResponseBytes (because it's not a single value bucket)
+            int count = 0;
+            int matchesBefore = 0;
+
+            int next = 0;
+            while (next != -1)
+            {
+                next = matches.Page(ref page, next);
+                matchesBefore += page.Length;
+
+                db.ResponseBytes.And(ref page, CompareOperator.GreaterThan, 1000);
+                count += page.Length;
+            }
+
+            // Return the final count
+            return count;
         }
     }
 }
