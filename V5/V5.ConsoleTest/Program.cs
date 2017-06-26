@@ -30,7 +30,7 @@ namespace V5.ConsoleTest
             this.ResponseBytes = new PrimitiveColumn<int>("ResponseBytes", new int[capacity]);
         }
 
-        public uint Count => (uint)this.EventTime.Count;
+        public int Count => this.EventTime.Count;
 
         public void Index(Random r)
         {
@@ -135,7 +135,7 @@ namespace V5.ConsoleTest
         static void PerformanceTests()
         {
             int iterations = 100;
-            uint size = 8 * 1000 * 1000;
+            int size = 8 * 1000 * 1000;
 
             int sum;
             IndexSet set = new IndexSet(size);

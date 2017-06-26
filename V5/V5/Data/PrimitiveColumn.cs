@@ -25,6 +25,9 @@ namespace V5.Data
 
         public void Where(ref Span<int> page, BooleanOperator bOp, CompareOperator op, T value, int offset = 0)
         {
+            if (bOp != BooleanOperator.And) throw new NotImplementedException();
+            if (op != CompareOperator.GreaterThan) throw new NotImplementedException();
+
             int nextWriteIndex = 0;
             for (int i = 0; i < page.Length; ++i)
             {

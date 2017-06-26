@@ -7,7 +7,7 @@
 template<CompareOperatorN cOp, BooleanOperatorN bOp, typename T>
 static void WhereSingle(T* set, int length, T value, unsigned __int64* matchVector)
 {
-	int vectorLength = length >> 6;
+	int vectorLength = (length + 63) >> 6;
 	for (int vectorIndex = 0; vectorIndex < vectorLength; ++vectorIndex)
 	{
 		unsigned __int64 result = 0;

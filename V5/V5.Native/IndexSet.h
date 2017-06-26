@@ -14,7 +14,7 @@ namespace V5
 
 		public:
 			IndexSet();
-			IndexSet(UInt32 length);
+			IndexSet(Int32 length);
 
 			// Get/Set bits and see Count set
 			property Boolean default[Int32] { bool get(Int32 index); void set(Int32 index, Boolean value); }
@@ -27,7 +27,7 @@ namespace V5
 
 			// Set to None/All quickly
 			IndexSet^ None();
-			IndexSet^ All(UInt32 length);
+			IndexSet^ All(Int32 length);
 
 			// Set operations
 			IndexSet^ And(IndexSet^ other);

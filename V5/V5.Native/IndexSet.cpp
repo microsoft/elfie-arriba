@@ -90,8 +90,9 @@ namespace V5
 		IndexSet::IndexSet()
 		{ }
 
-		IndexSet::IndexSet(UInt32 length)
+		IndexSet::IndexSet(Int32 length)
 		{
+			if (length < 0) throw gcnew ArgumentOutOfRangeException("length");
 			this->bitVector = gcnew array<UInt64>((length + 63) >> 6);
 		}
 
@@ -161,9 +162,14 @@ namespace V5
 			return this;
 		}
 
-		IndexSet^ IndexSet::All(UInt32 length)
+		IndexSet^ IndexSet::All(Int32 length)
 		{
-			for (int i = 0; i < this->bitVector->Length; ++i)
+			if (length < 0) throw gcnew ArgumentOutOfRangeException("length");
+
+			int end = length >> 6;
+			if (end > this->bitVector->Length) end = this->bitVector->Length;
+			
+			for (int i = 0; i < end; ++i)
 			{
 				this->bitVector[i] = ~0x0ULL;
 			}
