@@ -36,7 +36,7 @@ namespace V5.Test.Collections
                 set.None();
                 Array.Clear(values, 0, values.Length);
                 values[i] = 1;
-                set.All(999).And(values, CompareOperator.GreaterThan, (byte)0);
+                set.All(999).Where(BooleanOperator.And, values, CompareOperator.GreaterThan, (byte)0);
                 AssertOnly(set, 999, i);
             }
         }
@@ -81,18 +81,22 @@ namespace V5.Test.Collections
         }
 
         [TestMethod]
-        public void IndexSet_And()
+        public void IndexSet_Where()
         {
-            IndexSet set = new IndexSet(120);
-            byte[] compareTo = Enumerable.Range(0, 120).Select((i) => (byte)i).ToArray();
+            IndexSet_Where(Enumerable.Range(0, 120).Select((i) => (byte)i).ToArray(), (byte)120);
+        }
 
+        private static void IndexSet_Where<T>(T[] zeroToN, T oneHundred)
+        {
+            IndexSet set = new IndexSet((uint)zeroToN.Length);
             Assert.AreEqual(0, set.Count, "Verify set starts empty.");
-            Assert.AreEqual(19, set.All(120).And<byte>(compareTo, CompareOperator.GreaterThan, 100).Count, "Verify 19 values > 100");
-            Assert.AreEqual(20, set.All(120).And<byte>(compareTo, CompareOperator.GreaterThanOrEqual, 100).Count, "Verify 20 values >= 100");
-            Assert.AreEqual(100, set.All(120).And<byte>(compareTo, CompareOperator.LessThan, 100).Count, "Verify 100 values <= 100");
-            Assert.AreEqual(101, set.All(120).And<byte>(compareTo, CompareOperator.LessThanOrEqual, 100).Count, "Verify 101 values < 100");
-            Assert.AreEqual(1, set.All(120).And<byte>(compareTo, CompareOperator.Equals, 100).Count, "Verify 1 value == 100");
-            Assert.AreEqual(119, set.All(120).And<byte>(compareTo, CompareOperator.NotEquals, 100).Count, "Verify 119 values != 100");
+
+            Assert.AreEqual(zeroToN.Length - 101, set.All((uint)zeroToN.Length).Where(BooleanOperator.And, zeroToN, CompareOperator.GreaterThan, oneHundred).Count);
+            Assert.AreEqual(zeroToN.Length - 100, set.All((uint)zeroToN.Length).Where(BooleanOperator.And, zeroToN, CompareOperator.GreaterThanOrEqual, oneHundred).Count);
+            Assert.AreEqual(100, set.All((uint)zeroToN.Length).Where(BooleanOperator.And, zeroToN, CompareOperator.LessThan, oneHundred).Count);
+            Assert.AreEqual(101, set.All((uint)zeroToN.Length).Where(BooleanOperator.And, zeroToN, CompareOperator.LessThanOrEqual, oneHundred).Count);
+            Assert.AreEqual(1, set.All((uint)zeroToN.Length).Where(BooleanOperator.And, zeroToN, CompareOperator.Equals, oneHundred).Count);
+            Assert.AreEqual(zeroToN.Length - 1, set.All((uint)zeroToN.Length).Where(BooleanOperator.And, zeroToN, CompareOperator.NotEquals, oneHundred).Count);
         }
     }
 }

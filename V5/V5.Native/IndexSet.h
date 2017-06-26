@@ -34,9 +34,9 @@ namespace V5
 			IndexSet^ AndNot(IndexSet^ other);
 			IndexSet^ Or(IndexSet^ other);
 
-			// Native speed And with array values
+			// Native speed Where with array values
 			generic <typename T>
-			IndexSet^ And(array<T>^ values, CompareOperator cOp, T value);
+			IndexSet^ Where(BooleanOperator bOp, array<T>^ values, CompareOperator cOp, T value);
 		};
 	}
 }

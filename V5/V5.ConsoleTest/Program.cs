@@ -158,7 +158,7 @@ namespace V5.ConsoleTest
                 () => set.All(size),
                 () => set.None(),
                 () => set.Count,
-                () => set.And(bucketSample, CompareOperator.GreaterThan, (byte)200)
+                () => set.Where(BooleanOperator.And, bucketSample, CompareOperator.GreaterThan, (byte)200)
             );
 
             set.None();
@@ -219,8 +219,8 @@ namespace V5.ConsoleTest
         private static int QueryManagedColumn(WebRequestDatabase db, IndexSet matches, Span<int> page)
         {
             matches.All(db.Count);
-            db.HttpStatus.And(matches, CompareOperator.Equals, 404);
-            db.ResponseBytes.And(matches, CompareOperator.GreaterThan, 1000);
+            db.HttpStatus.Where(matches, BooleanOperator.And, CompareOperator.Equals, 404);
+            db.ResponseBytes.Where(matches, BooleanOperator.And, CompareOperator.GreaterThan, 1000);
 
             return matches.Count;
         }
@@ -238,8 +238,8 @@ namespace V5.ConsoleTest
 
             // Get matches in those bucket ranges and intersect them
             matches.All(db.Count);
-            matches.And(db.HttpStatusBuckets.RowBucketIndex, CompareOperator.Equals, (byte)httpStatusBucket);
-            matches.And(db.ResponseBytesBuckets.RowBucketIndex, CompareOperator.GreaterThan, (byte)responseBytesBucket);
+            matches.Where(BooleanOperator.And, db.HttpStatusBuckets.RowBucketIndex, CompareOperator.Equals, (byte)httpStatusBucket);
+            matches.Where(BooleanOperator.And, db.ResponseBytesBuckets.RowBucketIndex, CompareOperator.GreaterThan, (byte)responseBytesBucket);
 
             //return matches.Count;
 
@@ -257,8 +257,8 @@ namespace V5.ConsoleTest
                 next = matches.Page(ref page, next);
                 matchesBefore += page.Length;
 
-                if (needHttpStatusPostScan) db.HttpStatus.And(ref page, CompareOperator.Equals, 404);
-                if (needResponseBytesPostScan) db.ResponseBytes.And(ref page, CompareOperator.GreaterThan, 1000);
+                if (needHttpStatusPostScan) db.HttpStatus.Where(ref page, BooleanOperator.And, CompareOperator.Equals, 404);
+                if (needResponseBytesPostScan) db.ResponseBytes.Where(ref page, BooleanOperator.And, CompareOperator.GreaterThan, 1000);
 
                 count += page.Length;
             }

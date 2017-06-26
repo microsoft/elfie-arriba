@@ -18,12 +18,12 @@ namespace V5.Data
             this.Count = (count < 0 ? values.Length : count);
         }
 
-        public void And(IndexSet set, CompareOperator op, T value, int offset = 0)
+        public void Where(IndexSet set, BooleanOperator bOp, CompareOperator op, T value)
         {
-            set.And(this.Values, op, value);
+            set.Where(bOp, this.Values, op, value);
         }
 
-        public void And(ref Span<int> page, CompareOperator op, T value, int offset = 0)
+        public void Where(ref Span<int> page, BooleanOperator bOp, CompareOperator op, T value, int offset = 0)
         {
             int nextWriteIndex = 0;
             for (int i = 0; i < page.Length; ++i)
