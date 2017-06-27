@@ -212,9 +212,9 @@ export default React.createClass({
     },
     getTableBasics: function () {
         // Once a table is selected, find out the columns and primary key column for the table
-        var table = this.state.allBasics[this.state.currentTable];
 
         // If allBasics is not ready, abort.
+        const table = this.state.allBasics[this.state.currentTable];
         if (!table) return;
 
         // Must write to userTableSettings (and not directly to currentTableSettings) so the URL can refect this.
@@ -258,9 +258,10 @@ export default React.createClass({
         // If there's no table don't do anything yet.
         // Unlikely to reach this function before currentTable and allBasics are set.
         // Delayed getAllCounts() would have to return before the other two.
-        if (!this.state.currentTable) return;
+        const table = this.state.allBasics[this.state.currentTable];
+        if (!table) return;
 
-        var detailsQuery = this.state.allBasics[this.state.currentTable].idColumn + '="' + this.state.userSelectedId + '"';
+        var detailsQuery = table.idColumn + '="' + this.state.userSelectedId + '"';
         if (this.state.query) detailsQuery += " AND (" + this.state.query + ")";
 
         // Select all columns for the selected item, with highlighting
