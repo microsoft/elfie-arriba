@@ -68,8 +68,8 @@ namespace V5.ConsoleTest
 
         static void Main(string[] args)
         {
-            //PerformanceTests();
-            //return;
+            PerformanceTests();
+            return;
 
             int rowCount = 8 * 1000 * 1000;
             WebRequestDatabase db = new WebRequestDatabase(rowCount);
@@ -137,6 +137,21 @@ namespace V5.ConsoleTest
             int iterations = 100;
             int size = 8 * 1000 * 1000;
 
+            long[] array = new long[size];
+            Benchmark.Compare("ArrayExtensions", 10, size, new string[] { "WriteArray", "ReadArray" },
+                () => 
+                {
+                    using (BinaryWriter w = new BinaryWriter(File.OpenWrite("Sample.bin")))
+                    { w.Write(array); }
+                    return "";
+                },
+                () =>
+                {
+                    using (BinaryReader r = new BinaryReader(File.OpenRead("Sample.bin")))
+                    { array = r.ReadArray<long>(r.BaseStream.Length); }
+                    return "";
+                }
+                );
             int sum;
             IndexSet set = new IndexSet(size);
             Span<int> page = new Span<int>(new int[4096]);
@@ -144,8 +159,8 @@ namespace V5.ConsoleTest
             byte[] bucketSample = new byte[size];
             Span<byte> bucketSpan = new Span<byte>(bucketSample);
 
-            Random r = new Random(6);
-            r.NextBytes(bucketSample);
+            Random random = new Random(6);
+            random.NextBytes(bucketSample);
 
             Benchmark.Compare("Span Operations", iterations, size, new string[] { "Array For", "Array ForEach", "Span For", "Span ForEach" },
                 () => { sum = 0; for (int i = 0; i < bucketSample.Length; ++i) { sum += bucketSample[i]; } return sum; },
