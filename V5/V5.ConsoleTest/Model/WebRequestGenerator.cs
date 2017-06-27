@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Microsoft.CodeAnalysis.Elfie.Model.Strings;
+using Microsoft.CodeAnalysis.Elfie.Serialization;
+using System;
 using System.Collections.Generic;
 using V5.ConsoleTest.Extensions;
 using V5.ConsoleTest.Generators;
@@ -11,6 +13,7 @@ namespace V5.ConsoleTest.Model
         public Random Random { get; set; }
         public int CountPerSecond { get; set; }
         public DateTime Current { get; set; }
+        private long TicksBetweenEvents { get; set; }
 
         private GuidMapper GuidMapper { get; set; }
         private EmailAddressMapper UserMapper { get; set; }
@@ -29,6 +32,7 @@ namespace V5.ConsoleTest.Model
             this.Random = r;
             this.Current = start.ToUniversalTime();
             this.CountPerSecond = countPerSecond;
+            this.TicksBetweenEvents = TimeSpan.TicksPerSecond / this.CountPerSecond;
 
             this.GuidMapper = new GuidMapper();
             this.UserMapper = new EmailAddressMapper();
@@ -66,92 +70,156 @@ namespace V5.ConsoleTest.Model
                 new int[] { 500, 270, 70, 60, 40, 20, 16, 13, 9 });
         }
 
+        public WebRequest Next()
+        {
+            this.Current = this.Current.AddTicks(this.TicksBetweenEvents);
+
+            WebRequest request = new WebRequest();
+            bool isAnonymous = (this.Random.Next() % 16) < 4;
+            uint userIdentity = (uint)this.Random.Next();
+
+            // EventTime increases across events but not perfectly consistently
+            request.EventTime = this.Current.AddMilliseconds((this.Random.Next() % 16) - 8);
+
+            // ClientIP is completely random
+            request.ClientIP = this.Random.Next();
+
+            // UserName is an alias (for now)
+            request.UserName = (isAnonymous ? null : this.UserMapper.Generate(userIdentity));
+
+            // ServerName has three different stems and a numeric suffix for 96 options
+            request.ServerName = ServerNameMapper.Generate((uint)this.Random.Next());
+
+            // UriStem has 10 top values 90% of the time and a total of 512 + 256 + 10 = 778 unique values.
+            request.UriStem = this.UriStemMapper.Generate((uint)this.Random.Next());
+
+            // HttpMethod: GET 90% | POST 7% | DELETE 2% | PUT 1%
+            request.HttpMethod = this.HttpMethodMapper.Generate((uint)this.Random.Next());
+
+            // HttpStatus: 200 80% | 304 10% | 404 5% | 401 5% |  500 during issues 
+            request.HttpStatus = this.HttpStatusMapper.Generate((uint)this.Random.Next());
+
+            // RequestBytes is null except for POST, when it's random with a center at 1KB
+            request.RequestBytes = (request.HttpMethod != "POST" ? (int?)null : this.Random.NormalDistribution(1024, 150));
+
+            // ResponseBytes is normally distributed around 1KB
+            request.ResponseBytes = this.Random.NormalDistribution(1024, 100);
+
+            // TimeTaken is distributed around 100ms
+            request.TimeTakenMs = this.Random.NormalDistribution(100, 12);
+
+            // Protocol: All "TCP"
+            request.Protocol = "TCP";
+
+            // ServerPort: 443 40% | 80 40% | 11400 - 11600 20%
+            request.ServerPort = this.ServerPortMapper.Generate((uint)this.Random.Next());
+            if (request.ServerPort == 11400) request.ServerPort += (ushort)this.Random.Next(201);
+
+            // WasEncrypted: [Port 443 or 50% of 11k port range]
+            if (request.ServerPort == 443)
+            {
+                request.WasEncrypted = true;
+            }
+            else if (request.ServerPort > 11000)
+            {
+                request.WasEncrypted = this.Random.Next(2) == 1;
+            }
+
+            // WasCachedResponse: 80% true
+            request.WasCachedResponse = (this.Random.Next(100) < 80);
+
+            // ClientRegion: ISO 3166: US 28 % | CN 22 % | JP 17 % | GB 9 % | CA 8 % | IN 7 % | DE 5 % | AU 4 %
+            request.ClientRegion = this.ClientRegionMapper.Generate((uint)this.Random.Next());
+
+            // ClientBrowser: Chrome 58 30 % | IE 11 14 % | Chrome 57 10 % | Firefox 53 7 % | Chrome 45 5 % | Edge 14 5 % | Chrome 49 3 % | Chrome 56 2 % | Safari 10 2 % | IE 8 1.5 %
+            request.ClientBrowser = this.ClientBrowserMapper.Generate((uint)this.Random.Next());
+
+            // ClientOS: Windows 7 50 % | Windows 10 27 % | Windows 8.1 7 % | Windows XP 6 % | Mac OS X 10.12 4 % | Linux 2 % | Windows 8 1.6 % | Mac OS X 10.11 1.3 % | Mac OS X 10.10 0.9 %
+            request.ClientOs = this.ClientOSMapper.Generate((uint)this.Random.Next());
+
+            // DataCenter: West US 2 | Central US | East US 2 | West Europe | Central India | China East | Australia East
+            request.DataCenter = this.DataCenterMapper.Generate(request.ClientRegion, (uint)this.Random.Next());
+
+            if (!isAnonymous)
+            {
+                request.UserGuid = this.GuidMapper.GenerateGuid((uint)userIdentity);
+                request.IsPremiumUser = ((userIdentity % 4) == 0);
+                request.DaysSinceJoined = (ushort)((userIdentity % 8000) / 20);
+            }
+
+            return request;
+        }
+
         public List<WebRequest> Next(int count)
         {
             List<WebRequest> set = new List<WebRequest>(count);
-            long ticksBetweenEvents = TimeSpan.TicksPerSecond / this.CountPerSecond;
 
             for (int i = 0; i < count; ++i)
             {
-                this.Current = this.Current.AddTicks(ticksBetweenEvents);
-
-                WebRequest w = new WebRequest();
-                bool isAnonymous = (this.Random.Next() % 16) < 4;
-                uint userIdentity = (uint)this.Random.Next();
-
-                // EventTime increases across events but not perfectly consistently
-                w.EventTime = this.Current.AddMilliseconds((this.Random.Next() % 16) - 8);
-
-                // ClientIP is completely random
-                w.ClientIP = this.Random.Next();
-
-                // UserName is an alias (for now)
-                w.UserName = (isAnonymous ? null : this.UserMapper.Generate(userIdentity));
-
-                // ServerName has three different stems and a numeric suffix for 96 options
-                w.ServerName = ServerNameMapper.Generate((uint)this.Random.Next());
-
-                // UriStem has 10 top values 90% of the time and a total of 512 + 256 + 10 = 778 unique values.
-                w.UriStem = this.UriStemMapper.Generate((uint)this.Random.Next());
-                
-                // HttpMethod: GET 90% | POST 7% | DELETE 2% | PUT 1%
-                w.HttpMethod = this.HttpMethodMapper.Generate((uint)this.Random.Next());
-
-                // HttpStatus: 200 80% | 304 10% | 404 5% | 401 5% |  500 during issues 
-                w.HttpStatus = this.HttpStatusMapper.Generate((uint)this.Random.Next());
-
-                // RequestBytes is null except for POST, when it's random with a center at 1KB
-                w.RequestBytes = (w.HttpMethod != "POST" ? (int?)null : this.Random.NormalDistribution(1024, 150));
-
-                // ResponseBytes is normally distributed around 1KB
-                w.ResponseBytes = this.Random.NormalDistribution(1024, 100);
-
-                // TimeTaken is distributed around 100ms
-                w.TimeTakenMs = this.Random.NormalDistribution(100, 12);
-
-                // Protocol: All "TCP"
-                w.Protocol = "TCP";
-
-                // ServerPort: 443 40% | 80 40% | 11400 - 11600 20%
-                w.ServerPort = this.ServerPortMapper.Generate((uint)this.Random.Next());
-                if (w.ServerPort == 11400) w.ServerPort += (ushort)this.Random.Next(201);
-
-                // WasEncrypted: [Port 443 or 50% of 11k port range]
-                if (w.ServerPort == 443)
-                {
-                    w.WasEncrypted = true;
-                }
-                else if (w.ServerPort > 11000)
-                {
-                    w.WasEncrypted = this.Random.Next(2) == 1;
-                }
-
-                // WasCachedResponse: 80% true
-                w.WasCachedResponse = (this.Random.Next(100) < 80);
-
-                // ClientRegion: ISO 3166: US 28 % | CN 22 % | JP 17 % | GB 9 % | CA 8 % | IN 7 % | DE 5 % | AU 4 %
-                w.ClientRegion = this.ClientRegionMapper.Generate((uint)this.Random.Next());
-
-                // ClientBrowser: Chrome 58 30 % | IE 11 14 % | Chrome 57 10 % | Firefox 53 7 % | Chrome 45 5 % | Edge 14 5 % | Chrome 49 3 % | Chrome 56 2 % | Safari 10 2 % | IE 8 1.5 %
-                w.ClientBrowser = this.ClientBrowserMapper.Generate((uint)this.Random.Next());
-
-                // ClientOS: Windows 7 50 % | Windows 10 27 % | Windows 8.1 7 % | Windows XP 6 % | Mac OS X 10.12 4 % | Linux 2 % | Windows 8 1.6 % | Mac OS X 10.11 1.3 % | Mac OS X 10.10 0.9 %
-                w.ClientOs = this.ClientOSMapper.Generate((uint)this.Random.Next());
-
-                // DataCenter: West US 2 | Central US | East US 2 | West Europe | Central India | China East | Australia East
-                w.DataCenter = this.DataCenterMapper.Generate(w.ClientRegion, (uint)this.Random.Next());
-
-                if(!isAnonymous)
-                {
-                    w.UserGuid = this.GuidMapper.GenerateGuid((uint)userIdentity);
-                    w.IsPremiumUser = ((userIdentity % 4) == 0);
-                    w.DaysSinceJoined = (ushort)((userIdentity % 8000) / 20);
-                }
-
-                set.Add(w);
+                set.Add(this.Next());
             }
 
             return set;
+        }
+
+        public void WriteTo(ITabularWriter writer, int count)
+        {
+            String8Block block = new String8Block();
+
+            writer.SetColumns(new string[] {
+                "EventTime",
+                "ClientIP",
+                "UserName",
+                "ServerName",
+                "ServerPort",
+                "HttpMethod",
+                "UriStem",
+                /* "UriQuery", */
+                "HttpStatus",
+                "RequestBytes",
+                "ResponseBytes",
+                "TimeTakenMs",
+                "Protocol",
+                "WasEncrypted",
+                "WasCachedResponse",
+                "ClientRegion",
+                "ClientBrowser",
+                "ClientOs",
+                "DataCenter",
+                "UserGuid",
+                "IsPremiumUser",
+                "DaysSinceJoined"
+                /*, "ErrorStack" */ });
+
+            for(int i = 0; i < count; ++i)
+            {
+                WebRequest request = this.Next();
+                writer.Write(request.EventTime);
+                writer.Write(request.ClientIP);
+                writer.Write(block.GetCopy(request.UserName));
+                writer.Write(block.GetCopy(request.ServerName));
+                writer.Write(request.ServerPort);
+                writer.Write(block.GetCopy(request.HttpMethod));
+                writer.Write(block.GetCopy(request.UriStem));
+                //writer.Write(block.GetCopy(request.UriQuery));
+                writer.Write(request.HttpStatus);
+                writer.Write(request.RequestBytes ?? 0);
+                writer.Write(request.ResponseBytes);
+                writer.Write((int)request.TimeTakenMs);
+                writer.Write(block.GetCopy(request.Protocol));
+                writer.Write(request.WasEncrypted);
+                writer.Write(request.WasCachedResponse);
+                writer.Write(block.GetCopy(request.ClientRegion));
+                writer.Write(block.GetCopy(request.ClientBrowser));
+                writer.Write(block.GetCopy(request.ClientOs));
+                writer.Write(block.GetCopy(request.DataCenter));
+                writer.Write(block.GetCopy(request.UserGuid.ToString()));
+                writer.Write(request.IsPremiumUser ?? false);
+                writer.Write(request.DaysSinceJoined ?? 0);
+                //writer.Write(request.ErrorStack);
+
+                writer.NextRow();
+            }
         }
     }
 }

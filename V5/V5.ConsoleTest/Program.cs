@@ -1,5 +1,6 @@
 ﻿using Microsoft.CodeAnalysis.Elfie.Diagnostics;
 using Microsoft.CodeAnalysis.Elfie.Extensions;
+using Microsoft.CodeAnalysis.Elfie.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -68,6 +69,9 @@ namespace V5.ConsoleTest
 
         static void Main(string[] args)
         {
+            GenerateSampleCsv();
+            return;
+
             PerformanceTests();
             return;
 
@@ -284,6 +288,18 @@ namespace V5.ConsoleTest
 
             // Return the final count
             return count;
+        }
+
+        private static void GenerateSampleCsv()
+        {
+            Random r = new Random(5);
+            int rowCount = 1000 * 1000;
+
+            using (ITabularWriter writer = TabularFactory.BuildWriter($"WebRequests.V0.{rowCount}.csv"))
+            {
+                WebRequestGenerator generator = new WebRequestGenerator(r, DateTime.UtcNow.AddSeconds(-rowCount / 250), 250);
+                generator.WriteTo(writer, rowCount);
+            }
         }
     }
 }
