@@ -159,13 +159,11 @@ export default React.createClass({
         this.setState({ userSelectedTable: name }, this.runSearch);
     },
     queryChanged: function (value) {
-        this.setState({ query: value, userSelectedId: undefined }, this.delayedRunSearch);
-    },
-    delayedRunSearch: function () {
         // Only query every 250 milliseconds while typing
-        if (!this.timer) {
-            this.timer = window.setTimeout(this.runSearch, 250);
-        }
+        this.setState(
+            { query: value, userSelectedId: undefined },
+            () => this.timer = this.timer || window.setTimeout(this.runSearch, 250)
+        );
     },
     runSearch: function () {
         this.timer = null;
@@ -262,7 +260,7 @@ export default React.createClass({
 
         // If there's no table don't do anything yet.
         // Unlikely to reach this function before currentTable and allBasics are set.
-        // delayedRunSearch() would have to return before the other two.
+        // Delayed runSearch() would have to return before the other two.
         if (!this.state.currentTable) return;
 
         var detailsQuery = this.state.allBasics[this.state.currentTable].idColumn + '="' + this.state.userSelectedId + '"';
