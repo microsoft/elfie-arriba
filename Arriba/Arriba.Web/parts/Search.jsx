@@ -80,7 +80,7 @@ export default React.createClass({
                 } else {
                     Object.values(data.content).forEach(table => table.idColumn = table.columns.find(col => col.isPrimaryKey).name || "");
                     this.setState({ allBasics: data.content }, () => {
-                        this.runSearch();
+                        this.getAllCounts();
                         if (then) then();
                     });
                 }
@@ -139,10 +139,10 @@ export default React.createClass({
         this.setState({
             userSelectedTable: this.state.currentTable,
             userTableSettings: {}
-        }, this.runSearch);
+        }, this.getAllCounts);
     },
     onAddClause: function (name, value) {
-        this.setState({ query: this.state.query + " AND [" + name + "]=\"" + value + "\"" }, this.runSearch);
+        this.setState({ query: this.state.query + " AND [" + name + "]=\"" + value + "\"" }, this.getAllCounts);
     },
     onSetColumns: function (columns, table) {
         localStorage.mergeJson("table-" + (table || this.state.currentTable), {
@@ -153,24 +153,21 @@ export default React.createClass({
         this.setState({
             userSelectedTable: table || this.state.currentTable,
             userTableSettings: {}
-        }, this.runSearch);
+        }, this.getAllCounts);
     },
     onSelectedTableChange: function (name) {
-        this.setState({ userSelectedTable: name }, this.runSearch);
+        this.setState({ userSelectedTable: name }, this.getAllCounts);
     },
     queryChanged: function (value) {
         // Only query every 250 milliseconds while typing
         this.setState(
             { query: value, userSelectedId: undefined },
-            () => this.timer = this.timer || window.setTimeout(this.runSearch, 250)
+            () => this.timer = this.timer || window.setTimeout(this.getAllCounts, 250)
         );
-    },
-    runSearch: function () {
-        this.timer = null;
-        this.getAllCounts();
     },
     getAllCounts: function (then) {
         // On query, ask for the count from every table.
+        this.timer = null;
 
         // If there's no allBasics or query, clear results and do nothing else
         if (!this.state.allBasics || !Object.keys(this.state.allBasics).length || !this.state.query) {
@@ -260,7 +257,7 @@ export default React.createClass({
 
         // If there's no table don't do anything yet.
         // Unlikely to reach this function before currentTable and allBasics are set.
-        // Delayed runSearch() would have to return before the other two.
+        // Delayed getAllCounts() would have to return before the other two.
         if (!this.state.currentTable) return;
 
         var detailsQuery = this.state.allBasics[this.state.currentTable].idColumn + '="' + this.state.userSelectedId + '"';
