@@ -9,6 +9,7 @@ using V5;
 using V5.Collections;
 using V5.ConsoleTest.Model;
 using V5.Data;
+using V5.Serialization;
 
 namespace V5.ConsoleTest
 {
@@ -69,9 +70,6 @@ namespace V5.ConsoleTest
 
         static void Main(string[] args)
         {
-            GenerateSampleCsv();
-            return;
-
             PerformanceTests();
             return;
 
@@ -146,13 +144,13 @@ namespace V5.ConsoleTest
                 () => 
                 {
                     using (BinaryWriter w = new BinaryWriter(File.OpenWrite("Sample.bin")))
-                    { w.Write(array); }
+                    { BinarySerializer.Write(w, array); }
                     return "";
                 },
                 () =>
                 {
                     using (BinaryReader r = new BinaryReader(File.OpenRead("Sample.bin")))
-                    { array = r.ReadArray<long>(r.BaseStream.Length); }
+                    { array = BinarySerializer.ReadArray<long>(r, r.BaseStream.Length); }
                     return "";
                 }
                 );

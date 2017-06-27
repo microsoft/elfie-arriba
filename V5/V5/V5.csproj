@@ -80,7 +80,6 @@
     <Compile Include="Data\PrimitiveColumn.cs" />
     <Compile Include="Data\SortBucketColumn.cs" />
     <Compile Include="Extensions\ArrayExtensions.cs" />
-    <Compile Include="Extensions\BinarySerializer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

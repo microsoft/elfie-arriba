@@ -49,7 +49,7 @@
     <ClInclude Include="Span.h">
       <Filter>Collections</Filter>
     </ClInclude>
-    <ClInclude Include="BinaryReaderWriterExtensions.h">
+    <ClInclude Include="BinarySerializer.h">
       <Filter>Serialization</Filter>
     </ClInclude>
   </ItemGroup>
@@ -78,7 +78,7 @@
     <ClCompile Include="CompareToSingle.cpp">
       <Filter>Vector</Filter>
     </ClCompile>
-    <ClCompile Include="BinaryReaderWriterExtensions.cpp">
+    <ClCompile Include="BinarySerializer.cpp">
       <Filter>Serialization</Filter>
     </ClCompile>
   </ItemGroup>

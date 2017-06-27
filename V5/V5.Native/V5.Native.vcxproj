@@ -139,7 +139,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="BinaryReaderWriterExtensions.h" />
+    <ClInclude Include="BinarySerializer.h" />
     <ClInclude Include="CompareToVector.h" />
     <ClInclude Include="IndexSet.h" />
     <ClInclude Include="Operator.h" />
@@ -150,7 +150,7 @@
     <ClInclude Include="String8Native.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="BinaryReaderWriterExtensions.cpp" />
+    <ClCompile Include="BinarySerializer.cpp" />
     <ClCompile Include="CompareToSingle.cpp" />
     <ClCompile Include="CompareToVector.cpp" />
     <ClCompile Include="IndexSet.cpp" />

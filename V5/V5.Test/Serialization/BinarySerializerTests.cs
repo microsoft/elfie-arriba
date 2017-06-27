@@ -1,12 +1,13 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Linq;
+using V5.Serialization;
 
 namespace V5.Test.Serialization
 {
     [TestClass]
     public class BinarySerializerTests
     {
-        private const string SamplePath = "Sample.bin";
+        private const string SamplePath = "Sample";
 
         [TestMethod]
         public void BinarySerializer_Basic()
