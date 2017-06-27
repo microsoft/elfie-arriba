@@ -1,5 +1,6 @@
-import "../Search.scss";
+﻿import "../Search.scss";
 import "!script-loader!../js/utilities.js";
+import "../js/utilities.jsx";
 
 import Mru from "./Mru";
 import ErrorPage from "./ErrorPage";
@@ -60,6 +61,16 @@ export default React.createClass({
         this.mru = new Mru();
         this.refreshAllBasics();
     },
+    componentDidUpdate: function(prevProps, prevState) {
+        const diff = Object.diff(prevState, this.state);
+        if (diff.includes("query") ||
+            diff.includes("userSelectedTable") ||
+            diff.includes("userTableSettings") ||
+            diff.includes("userSelectedId") ||
+            diff.includes("currentTable")) {
+            this.setHistory();
+        }
+    },
     refreshAllBasics: function (then) {
         // On Page load, find the list of known table names
         jsonQuery(configuration.url + "/allBasics",
@@ -96,7 +107,7 @@ export default React.createClass({
                 userSelectedTable: undefined,
                 userTableSettings: {},
                 userSelectedId: undefined
-            }, this.setHistory);
+            });
         }
 
         // ESC: Close
@@ -116,7 +127,7 @@ export default React.createClass({
         this.setState({ userSelectedId: e }, this.getDetails);
     },
     onClose: function () {
-        this.setState({ userSelectedId: undefined }, this.setHistory);
+        this.setState({ userSelectedId: undefined });
     },
     onResort: function (sortColumn, sortOrder) {
         localStorage.mergeJson("table-" + this.state.currentTable, {
@@ -159,7 +170,6 @@ export default React.createClass({
     runSearch: function () {
         this.timer = null;
         this.getAllCounts();
-        this.setHistory();
     },
     getAllCounts: function (then) {
         // On query, ask for the count from every table.
@@ -225,7 +235,6 @@ export default React.createClass({
                 configuration.listingDefaults && configuration.listingDefaults[this.state.currentTable],
                 userTableSettings)
         }, () => {
-            this.setHistory(); // Due to userTableSettings being set.
             if (this.state.query) this.getResultsPage();
             if (this.state.userSelectedId) this.getDetails();
         });
@@ -269,7 +278,7 @@ export default React.createClass({
                     if (!this.state.query) {
                         this.setState({ selectedItemData: null, error: "Item '" + this.state.userSelectedId + "' not found." })
                     } else {
-                        this.setState({ selectedItemData: null, userSelectedId: undefined }, this.setHistory);
+                        this.setState({ selectedItemData: null, userSelectedId: undefined });
                     }
                 }
             }.bind(this),
@@ -282,8 +291,6 @@ export default React.createClass({
                 t: 1
             }
         );
-
-        this.setHistory();
     },
     jsonQueryWithError: function (url, onSuccess, parameters) {
         jsonQuery(
