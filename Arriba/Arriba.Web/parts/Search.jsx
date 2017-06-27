@@ -18,6 +18,14 @@ import ResultListing from "./ResultListing";
 
 window.configuration = require("../configuration/Configuration.jsx").default;
 
+const arrayToObject = (array, prefix) => {
+    array = array || [];
+    return array.reduce((o, col, i) => {
+        o[`c${i + 1}`] = col;
+        return o;
+    }, {});
+}
+
 // SearchMain wraps the overall search UI
 export default React.createClass({
     getInitialState: function () {
@@ -310,30 +318,30 @@ export default React.createClass({
         }
     },
     buildQueryUrl: function () {
-        var parameters = {
-            action: "select",
-            q: this.state.query,
-            ob: this.state.currentTableSettings.sortColumn,
-            so: this.state.currentTableSettings.sortOrder,
-            s: 0
-        };
-
-        addArrayParameters(parameters, "c", this.state.currentTableSettings.columns);
-
+        var parameters = Object.merge(
+            {
+                action: "select",
+                q: this.state.query,
+                ob: this.state.currentTableSettings.sortColumn,
+                so: this.state.currentTableSettings.sortOrder,
+                s: 0
+            },
+            arrayToObject(this.state.currentTableSettings.columns, `c`)
+        );
         return `${configuration.url}/table/${this.state.currentTable}${buildUrlParameters(parameters)}`;
     },
     buildThisUrl: function (includeOpen) {
         var userTableSettings = this.state.userTableSettings;
-        var parameters = ({
-            t: Object.keys(userTableSettings).length ? this.state.currentTable : this.state.userSelectedTable,
-            q: this.state.query || undefined,
-            ob: userTableSettings.sortColumn,
-            so: userTableSettings.sortOrder,
-            open: includeOpen && this.state.userSelectedId || undefined
-        }).cleaned;
-
-        addArrayParameters(parameters, "c", userTableSettings.columns);
-
+        var parameters = Object.merge(
+            {
+                t: Object.keys(userTableSettings).length ? this.state.currentTable : this.state.userSelectedTable,
+                q: this.state.query || undefined,
+                ob: userTableSettings.sortColumn,
+                so: userTableSettings.sortOrder,
+                open: includeOpen && this.state.userSelectedId || undefined,
+            },
+            arrayToObject(userTableSettings.columns, `c`)
+        );
         return `${window.location.protocol}//${window.location.host + window.location.pathname + buildUrlParameters(parameters)}`;
     },
     render: function () {
