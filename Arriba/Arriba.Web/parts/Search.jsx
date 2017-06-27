@@ -369,13 +369,10 @@ export default React.createClass({
             </SplitPane>
             : <Start allBasics={this.state.allBasics} showHelp={this.props.params.help === "true"} queryChanged={this.queryChanged} />;
 
-        var queryUrl = this.buildQueryUrl();
-        var baseUrl = this.buildThisUrl(false);
-        var rssUrl = queryUrl + "&fmt=rss&t=100&iURL=" + encodeURIComponent(baseUrl + "&open=");
-        var csvUrl = queryUrl + "&fmt=csv&t=50000";
-
-        var gridUrl = "/Grid.html" + buildUrlParameters({ t: this.state.currentTable, q: this.state.query });
-        if (!this.state.query) gridUrl = "/Grid.html?p=default";
+        const queryUrl = this.buildQueryUrl();
+        const gridUrl = this.state.query
+            ? `/Grid.html${buildUrlParameters({ t: this.state.currentTable, q: this.state.query })}`
+            : `/Grid.html?p=default`
 
         return (
             <div ref="viewport" className="viewport" onKeyDown={this.handleKeyDown}
@@ -403,8 +400,8 @@ export default React.createClass({
                                     allCountData={this.state.allCountData}
                                     allBasics={this.state.allBasics}
                                     selectedData={this.state.listingData}
-                                    rssUrl={rssUrl}
-                                    csvUrl={csvUrl}
+                                    rssUrl={`${queryUrl}&fmt=rss&t=100&iURL=${encodeURIComponent(this.buildThisUrl(false) + "&open=")}`}
+                                    csvUrl={`${queryUrl}&fmt=csv&t=50000`}
                                     currentTable={this.state.currentTable}
                                     onSelectedTableChange={this.onSelectedTableChange}
                                     refreshAllBasics={this.refreshAllBasics} />
