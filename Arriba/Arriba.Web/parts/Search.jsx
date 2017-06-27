@@ -39,6 +39,7 @@ export default React.createClass({
             blockingErrorStatus: null,
             loading: false,
 
+            allBasics: [],
             tables: [],
             allCountData: [],
             listingData: [],
@@ -60,9 +61,17 @@ export default React.createClass({
         window.addEventListener("beforeunload", this); // For Mru
         this.mru = new Mru();
         this.refreshAllBasics();
+        this.componentDidUpdate({}, {});
     },
     componentDidUpdate: function(prevProps, prevState) {
         const diff = Object.diff(prevState, this.state);
+
+        if (diff.includes("allBasics") ||
+            diff.includes("currentTable") || // currentTable is sometimes inferred from the query.
+            diff.includes("userSelectedId")) { // Not watching for query changes (to match old behavior).
+            this.getDetails();
+        }
+
         if (diff.includes("query") ||
             diff.includes("userSelectedTable") ||
             diff.includes("userTableSettings") ||
@@ -122,9 +131,6 @@ export default React.createClass({
             this.refs.list.selectByRelativeIndex(indexChange);
             e.stopPropagation();
         }
-    },
-    onSelectionChanged: function (e) {
-        this.setState({ userSelectedId: e }, this.getDetails);
     },
     onClose: function () {
         this.setState({ userSelectedId: undefined });
@@ -188,8 +194,10 @@ export default React.createClass({
         this.jsonQueryWithError(
             configuration.url + "/allCount",
             data => {
+                // Do not wipe userSelectedId if currentTable is going from `undefined` to defined.
+                // Scnario: On page load with open=something and table inferred from query.
                 var currentTable = this.state.userSelectedTable || data.content.resultsPerTable[0].tableName;
-                if (this.state.currentTable !== currentTable) {
+                if (this.state.currentTable && this.state.currentTable !== currentTable) {
                     this.setState({
                         userTableSettings: {},
                         userSelectedId: undefined
@@ -229,10 +237,7 @@ export default React.createClass({
                 { columns: [table.idColumn], sortColumn: table.idColumn, sortOrder: "asc" },
                 configuration.listingDefaults && configuration.listingDefaults[this.state.currentTable],
                 userTableSettings)
-        }, () => {
-            if (this.state.query) this.getResultsPage();
-            if (this.state.userSelectedId) this.getDetails();
-        });
+        }, this.getResultsPage);
     },
     getResultsPage: function (i) {
         // Once the counts query runs and table basics are loaded, get a page of results
@@ -260,6 +265,7 @@ export default React.createClass({
         // Delayed getAllCounts() would have to return before the other two.
         const table = this.state.allBasics[this.state.currentTable];
         if (!table) return;
+        if (!this.state.userSelectedId) return;
 
         var detailsQuery = table.idColumn + '="' + this.state.userSelectedId + '"';
         if (this.state.query) detailsQuery += " AND (" + this.state.query + ")";
@@ -356,7 +362,7 @@ export default React.createClass({
                         sortOrder={this.state.currentTableSettings.sortOrder}
                         selectedId={this.state.userSelectedId}
                         onResort={this.onResort}
-                        onSelectionChanged={this.onSelectionChanged}
+                        onSelectionChanged={id => this.setState({ userSelectedId: id })}
                         onSetColumns={this.onSetColumns} />
                 </InfiniteScroll>
                 <div className="scrollable">
