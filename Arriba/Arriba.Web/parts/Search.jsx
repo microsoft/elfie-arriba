@@ -342,88 +342,78 @@ export default React.createClass({
         return window.location.protocol + '//' + window.location.host + window.location.pathname + buildUrlParameters(relevantParams);
     },
     render: function () {
+        // Consider clearing the currentTable when the query is empty.
         if (this.state.blockingErrorStatus != null) return <ErrorPage status={this.state.blockingErrorStatus} />;
 
         var table = this.state.allBasics && this.state.currentTable && this.state.allBasics[this.state.currentTable] || undefined;
         var customDetailsView = (configuration.customDetailsProviders && configuration.customDetailsProviders[this.state.currentTable]) || ResultDetails;
-
-        // Consider clearing the currentTable when the query is empty.
-        var mainContent = this.state.query && table
-            ? <SplitPane split="horizontal" minSize="300" isFirstVisible={this.state.listingData.content} isSecondVisible={this.state.userSelectedId}>
-                <InfiniteScroll page={this.state.page} hasMoreData={this.state.hasMoreData} loadMore={this.getResultsPage }>
-                    <ResultListing ref={"list"}
-                        data={this.state.listingData}
-                        allBasics={this.state.allBasics}
-                        sortColumn={this.state.currentTableSettings.sortColumn}
-                        sortOrder={this.state.currentTableSettings.sortOrder}
-                        selectedId={this.state.userSelectedId}
-                        onResort={this.onResort}
-                        onSelectionChanged={id => this.setState({ userSelectedId: id })}
-                        onSetColumns={this.onSetColumns} />
-                </InfiniteScroll>
-                <div className="scrollable">
-                    {React.createElement(customDetailsView, {
-                        itemId: this.state.userSelectedId,
-                        table: this.state.currentTable,
-                        query: this.state.query,
-                        data: this.state.selectedItemData,
-                        onClose: this.onClose,
-                        onAddClause: this.onAddClause
-                    })}
-                </div>
-            </SplitPane>
-            : <Start allBasics={this.state.allBasics} showHelp={this.props.params.help === "true"} queryChanged={this.queryChanged} />;
-
         const queryUrl = this.buildQueryUrl();
         const gridUrl = this.state.query
             ? `/Grid.html${buildUrlParameters({ t: this.state.currentTable, q: this.state.query })}`
             : `/Grid.html?p=default`
 
-        return (
-            <div ref="viewport" className="viewport" onKeyDown={this.handleKeyDown}
-                onDragEnter={e => {
-                    // Consider disabling pointer events for perf.
-                    if (!this.state.dropping) this.setState({ dropping: true, file: undefined })
-                }} >
-
-                <SearchHeader>
-                    <SearchBox query={this.state.query}
-                        parsedQuery={this.state.allCountData.content && this.state.allCountData.content.parsedQuery}
-                        queryChanged={this.queryChanged}
-                        loading={this.state.loading} />
-                </SearchHeader>
-
-                <div className="middle">
-                    <nav className="mode">
-                        <a className="selected"><i className="icon-details"></i><span>Listing</span></a>
-                        <a href={gridUrl}><i className="icon-view-all-albums"></i><span>Grid</span></a>
-                    </nav>
-
-                    <div className="center">
-                        <QueryStats query={this.state.query}
-                                    error={this.state.error}
-                                    allCountData={this.state.allCountData}
-                                    allBasics={this.state.allBasics}
-                                    selectedData={this.state.listingData}
-                                    rssUrl={`${queryUrl}&fmt=rss&t=100&iURL=${encodeURIComponent(this.buildThisUrl(false) + "&open=")}`}
-                                    csvUrl={`${queryUrl}&fmt=csv&t=50000`}
-                                    currentTable={this.state.currentTable}
-                                    onSelectedTableChange={this.onSelectedTableChange}
-                                    refreshAllBasics={this.refreshAllBasics} />
-
-                        {mainContent}
-                    </div>
-                </div>
-
-                <DropShield
-                    dropping={this.state.dropping}
-                    droppingChanged={d => this.setState({ dropping: d })}
-                    existingTablenames={Object.keys(this.state.allBasics || {})}
+        return <div ref="viewport" className="viewport" onKeyDown={this.handleKeyDown}
+            onDragEnter={e => {
+                // Consider disabling pointer events for perf.
+                if (!this.state.dropping) this.setState({ dropping: true, file: undefined })
+            }} >
+            <SearchHeader>
+                <SearchBox query={this.state.query}
+                    parsedQuery={this.state.allCountData.content && this.state.allCountData.content.parsedQuery}
                     queryChanged={this.queryChanged}
-                    refreshAllBasics={this.refreshAllBasics}
-                    getAllCounts={this.getAllCounts}
-                    columnsChanged={this.onSetColumns} />
+                    loading={this.state.loading} />
+            </SearchHeader>
+            <div className="middle">
+                <nav className="mode">
+                    <a className="selected"><i className="icon-details"></i><span>Listing</span></a>
+                    <a href={gridUrl}><i className="icon-view-all-albums"></i><span>Grid</span></a>
+                </nav>
+                <div className="center">
+                    <QueryStats query={this.state.query}
+                                error={this.state.error}
+                                allCountData={this.state.allCountData}
+                                allBasics={this.state.allBasics}
+                                selectedData={this.state.listingData}
+                                rssUrl={`${queryUrl}&fmt=rss&t=100&iURL=${encodeURIComponent(this.buildThisUrl(false) + "&open=")}`}
+                                csvUrl={`${queryUrl}&fmt=csv&t=50000`}
+                                currentTable={this.state.currentTable}
+                                onSelectedTableChange={this.onSelectedTableChange}
+                                refreshAllBasics={this.refreshAllBasics} />
+                    {this.state.query && table
+                        ? <SplitPane split="horizontal" minSize="300" isFirstVisible={this.state.listingData.content} isSecondVisible={this.state.userSelectedId}>
+                            <InfiniteScroll page={this.state.page} hasMoreData={this.state.hasMoreData} loadMore={this.getResultsPage }>
+                                <ResultListing ref={"list"}
+                                    data={this.state.listingData}
+                                    allBasics={this.state.allBasics}
+                                    sortColumn={this.state.currentTableSettings.sortColumn}
+                                    sortOrder={this.state.currentTableSettings.sortOrder}
+                                    selectedId={this.state.userSelectedId}
+                                    onResort={this.onResort}
+                                    onSelectionChanged={id => this.setState({ userSelectedId: id })}
+                                    onSetColumns={this.onSetColumns} />
+                            </InfiniteScroll>
+                            <div className="scrollable">
+                                {React.createElement(customDetailsView, {
+                                    itemId: this.state.userSelectedId,
+                                    table: this.state.currentTable,
+                                    query: this.state.query,
+                                    data: this.state.selectedItemData,
+                                    onClose: this.onClose,
+                                    onAddClause: this.onAddClause
+                                })}
+                            </div>
+                        </SplitPane>
+                        : <Start allBasics={this.state.allBasics} showHelp={this.props.params.help === "true"} queryChanged={this.queryChanged} />}
+                </div>
             </div>
-        );
+            <DropShield
+                dropping={this.state.dropping}
+                droppingChanged={d => this.setState({ dropping: d })}
+                existingTablenames={Object.keys(this.state.allBasics || {})}
+                queryChanged={this.queryChanged}
+                refreshAllBasics={this.refreshAllBasics}
+                getAllCounts={this.getAllCounts}
+                columnsChanged={this.onSetColumns} />
+        </div>
     }
 });
