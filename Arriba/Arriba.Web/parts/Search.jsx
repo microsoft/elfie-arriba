@@ -320,26 +320,21 @@ export default React.createClass({
 
         addArrayParameters(parameters, "c", this.state.currentTableSettings.columns);
 
-        var queryString = buildUrlParameters(parameters);
-        return configuration.url + "/table/" + this.state.currentTable + queryString;
+        return `${configuration.url}/table/${this.state.currentTable}${buildUrlParameters(parameters)}`;
     },
     buildThisUrl: function (includeOpen) {
         var userTableSettings = this.state.userTableSettings;
-        var relevantParams = ({
-            t: this.state.userSelectedTable,
+        var parameters = ({
+            t: Object.keys(userTableSettings).length ? this.state.currentTable : this.state.userSelectedTable,
             q: this.state.query || undefined,
             ob: userTableSettings.sortColumn,
-            so: userTableSettings.sortOrder
+            so: userTableSettings.sortOrder,
+            open: includeOpen && this.state.userSelectedId || undefined
         }).cleaned;
 
-        addArrayParameters(relevantParams, "c", userTableSettings.columns);
-        if (Object.keys(userTableSettings).length) relevantParams.t = this.state.currentTable;
+        addArrayParameters(parameters, "c", userTableSettings.columns);
 
-        if (includeOpen && this.state.userSelectedId) {
-            relevantParams.open = this.state.userSelectedId;
-        }
-
-        return window.location.protocol + '//' + window.location.host + window.location.pathname + buildUrlParameters(relevantParams);
+        return `${window.location.protocol}//${window.location.host + window.location.pathname + buildUrlParameters(parameters)}`;
     },
     render: function () {
         // Consider clearing the currentTable when the query is empty.
