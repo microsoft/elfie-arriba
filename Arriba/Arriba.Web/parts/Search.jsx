@@ -266,7 +266,7 @@ export default React.createClass({
         // Select all columns for the selected item, with highlighting
         this.jsonQueryWithError(
             configuration.url + "/table/" + this.state.currentTable,
-            function (data) {
+            data => {
                 if (data.content.values) {
                     this.setState({ selectedItemData: arribaRowToObject(data.content.values, 0) });
                 } else {
@@ -276,7 +276,7 @@ export default React.createClass({
                         this.setState({ selectedItemData: null, userSelectedId: undefined });
                     }
                 }
-            }.bind(this),
+            },
             {
                 q: detailsQuery,
                 c1: "*",
@@ -294,9 +294,9 @@ export default React.createClass({
                 this.setState({ error: undefined });
                 onSuccess(data);
             },
-            function (xhr, status, err) {
+            (xhr, status, err) => {
                 this.setState({ allCountData: [], listingData: [], selectedItemData: null, loading: false, error: "Error: Server didn't respond to [" + xhr.url + "]. " + err });
-            }.bind(this),
+            },
             parameters
         );
     },
