@@ -70,8 +70,8 @@ namespace V5.ConsoleTest
 
         static void Main(string[] args)
         {
-            PerformanceTests();
-            return;
+            //PerformanceTests();
+            //return;
 
             int rowCount = 8 * 1000 * 1000;
             WebRequestDatabase db = new WebRequestDatabase(rowCount);

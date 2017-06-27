@@ -24,9 +24,9 @@ namespace V5
 			if (T::typeid == Int32::typeid) return "i32";
 			if (T::typeid == Int64::typeid) return "i64";
 
-			if (T::typeid == UInt16::typeid) return "i16";
-			if (T::typeid == UInt32::typeid) return "i32";
-			if (T::typeid == UInt64::typeid) return "i64";
+			if (T::typeid == UInt16::typeid) return "u16";
+			if (T::typeid == UInt32::typeid) return "u32";
+			if (T::typeid == UInt64::typeid) return "u64";
 
 			if (T::typeid == Single::typeid) return "f32";
 			if (T::typeid == Double::typeid) return "f64";
