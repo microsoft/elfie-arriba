@@ -26,6 +26,12 @@ window.xhr = (path, body) => {
     });
 };
 
+// Example: Object.diff({a: 1, b: 2, c: 3}, {b: 3, c: 3, d: 4}) >> [a, b, d]
+Object.diff = function(a, b) {
+    const allKeys = new Set([...Object.keys(a), ...Object.keys(b)]);
+    return [...allKeys.values()].filter(i => a[i] !== b[i]);
+}
+
 Blob.prototype.readAsText = function() {
     return new Promise((resolve, reject) => {
         var reader = new FileReader();
