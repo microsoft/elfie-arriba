@@ -167,6 +167,7 @@ namespace V5.ConsoleTest.Model
             String8Block block = new String8Block();
 
             writer.SetColumns(new string[] {
+                "ID",
                 "EventTime",
                 "ClientIP",
                 "UserName",
@@ -193,6 +194,8 @@ namespace V5.ConsoleTest.Model
 
             for(int i = 0; i < count; ++i)
             {
+                writer.Write(i);
+
                 WebRequest request = this.Next();
                 writer.Write(request.EventTime);
                 writer.Write(request.ClientIP);
@@ -219,6 +222,7 @@ namespace V5.ConsoleTest.Model
                 //writer.Write(request.ErrorStack);
 
                 writer.NextRow();
+                block.Clear();
             }
         }
     }
