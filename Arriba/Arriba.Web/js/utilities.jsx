@@ -26,11 +26,15 @@ window.xhr = (path, body) => {
     });
 };
 
-// Example: Object.diff({a: 1, b: 2, c: 3}, {b: 3, c: 3, d: 4}) >> [a, b, d]
+// Example: Object.diff({a: 1, b: 2, c: 3}, {b: 3, c: 3, d: 4}) >> Set(a, b, d)
 Object.diff = function(a, b) {
     const allKeys = new Set([...Object.keys(a), ...Object.keys(b)]);
-    return [...allKeys.values()].filter(i => a[i] !== b[i]);
-}
+    return new Set([...allKeys.values()].filter(i => a[i] !== b[i]));
+};
+
+Set.prototype.hasAny = function(...values) {
+    return values.any(v => this.has(v));
+};
 
 Blob.prototype.readAsText = function() {
     return new Promise((resolve, reject) => {
@@ -39,4 +43,4 @@ Blob.prototype.readAsText = function() {
         reader.onerror = reject;
         reader.readAsText(this);
     });
-}
+};

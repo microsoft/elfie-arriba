@@ -66,17 +66,13 @@ export default React.createClass({
     componentDidUpdate: function(prevProps, prevState) {
         const diff = Object.diff(prevState, this.state);
 
-        if (diff.includes("allBasics") ||
-            diff.includes("currentTable") || // currentTable is sometimes inferred from the query.
-            diff.includes("userSelectedId")) { // Not watching for query changes (to match old behavior).
+        // Watching currentTable as sometimes inferred from the query.
+        // Not watching for query changes (to match old behavior).
+        if (diff.hasAny("allBasics", "currentTable", "userSelectedId")) {
             this.getDetails();
         }
 
-        if (diff.includes("query") ||
-            diff.includes("userSelectedTable") ||
-            diff.includes("userTableSettings") ||
-            diff.includes("userSelectedId") ||
-            diff.includes("currentTable")) {
+        if (diff.hasAny("query", "userSelectedTable", "userTableSettings", "userSelectedId", "currentTable")) {
             this.setHistory();
         }
     },
