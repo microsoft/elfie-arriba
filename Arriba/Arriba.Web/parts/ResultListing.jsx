@@ -1,4 +1,5 @@
 ﻿import AddColumnList from "./AddColumnList";
+import "./ResultListing.scss";
 
 // ResultListing shows a table of items matching a query, with sortable columns
 export default React.createClass({
@@ -71,7 +72,9 @@ export default React.createClass({
     render: function () {
         var content = this.props.data.content;
 
-        if (!this.props.allBasics || !content || !content.details.succeeded) return null;
+        if (!this.props.allBasics || !content) return null;
+
+        if (!content.details.succeeded) return <div className="resultListing-error">{content.details.errors}</div>
 
         const table = this.props.allBasics[this.props.data.content.query.tableName];
         if (!table) return null;

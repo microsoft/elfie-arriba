@@ -211,6 +211,7 @@ function buildUrlParameters(parameters) {
     var paramUri = "?";
 
     if (parameters) {
+        parameters = parameters.cleaned;
         for (var name in parameters) {
             value = parameters[name];
             if (!value) value = "";

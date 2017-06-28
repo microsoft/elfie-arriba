@@ -58,7 +58,8 @@ export default React.createClass({
                     selectedDetails.push(<span>for <span className="explanation">{selectedContent.query.where}</span></span>);
                 }
 
-                if (selectedContent.details.errors) {
+                // Only show if the ResultListing isn't alredy showing the error.
+                if (selectedContent.values && selectedContent.details.errors) {
                     selectedDetails.push(<span>&nbsp;<span className="error-icon icon" /><b>{selectedContent.details.errors}</b></span>);
                 }
 

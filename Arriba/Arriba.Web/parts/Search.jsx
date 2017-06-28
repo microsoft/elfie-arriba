@@ -18,8 +18,25 @@ import ResultListing from "./ResultListing";
 
 window.configuration = require("../configuration/Configuration.jsx").default;
 
+const arrayToObject = (array, prefix) => {
+    array = array || [];
+    return array.reduce((o, col, i) => {
+        o[`c${i + 1}`] = col;
+        return o;
+    }, {});
+}
+
 // SearchMain wraps the overall search UI
 export default React.createClass({
+    getEmptyState: function () {
+        return {
+            loading: false,
+            allCountData: [],
+            listingData: [],
+            selectedItemData: null,
+            userTableSettings: {}, // {} denote no state, do not set to null.
+        }
+    },
     getInitialState: function () {
         // For schema detection and possible migration.
         localStorage.setItem("version", 1);
@@ -35,39 +52,35 @@ export default React.createClass({
             }).cleaned);
         }
 
-        return {
+        return Object.assign(this.getEmptyState(), {
             blockingErrorStatus: null,
-            loading: false,
-
+            allBasics: [],
             tables: [],
-            allCountData: [],
-            listingData: [],
             page: 0,
             hasMoreData: false,
-            selectedItemData: null,
-
             query: this.props.params.q || "",
-
             currentTable: table,
             currentTableSettings: {}, // {} denote no state, do not set to null.
-
             userSelectedTable: table,
-            userTableSettings: {}, // {} denote no state, do not set to null.
             userSelectedId: this.props.params.open
-        };
+        });
     },
     componentDidMount: function () {
         window.addEventListener("beforeunload", this); // For Mru
         this.mru = new Mru();
         this.refreshAllBasics();
+        this.componentDidUpdate({}, {});
     },
     componentDidUpdate: function(prevProps, prevState) {
         const diff = Object.diff(prevState, this.state);
-        if (diff.includes("query") ||
-            diff.includes("userSelectedTable") ||
-            diff.includes("userTableSettings") ||
-            diff.includes("userSelectedId") ||
-            diff.includes("currentTable")) {
+
+        // Watching currentTable as sometimes inferred from the query.
+        // Not watching for query changes (to match old behavior).
+        if (diff.hasAny("allBasics", "currentTable", "userSelectedId")) {
+            this.getDetails();
+        }
+
+        if (diff.hasAny("query", "userSelectedTable", "userTableSettings", "userSelectedId", "currentTable")) {
             this.setHistory();
         }
     },
@@ -100,14 +113,10 @@ export default React.createClass({
     handleKeyDown: function (e) {
         // Backspace: Clear state *if query empty*
         if (e.keyCode === 8 && !this.state.query) {
-            this.setState({
-                allCountData: [],
-                listingData: [],
-                selectedItemData: null,
-                userSelectedTable: undefined,
-                userTableSettings: {},
-                userSelectedId: undefined
-            });
+            const state = Object.assign(
+                this.getEmptyState(),
+                { userSelectedTable: undefined, userSelectedId: undefined });
+            this.setState(state);
         }
 
         // ESC: Close
@@ -122,9 +131,6 @@ export default React.createClass({
             this.refs.list.selectByRelativeIndex(indexChange);
             e.stopPropagation();
         }
-    },
-    onSelectionChanged: function (e) {
-        this.setState({ userSelectedId: e }, this.getDetails);
     },
     onClose: function () {
         this.setState({ userSelectedId: undefined });
@@ -171,13 +177,7 @@ export default React.createClass({
 
         // If there's no allBasics or query, clear results and do nothing else
         if (!this.state.allBasics || !Object.keys(this.state.allBasics).length || !this.state.query) {
-            this.setState({
-                loading: false,
-                allCountData: [],
-                listingData: [],
-                selectedItemData: null,
-                userTableSettings: {}
-            });
+            this.setState(this.getEmptyState());
             return;
         }
 
@@ -188,8 +188,10 @@ export default React.createClass({
         this.jsonQueryWithError(
             configuration.url + "/allCount",
             data => {
+                // Do not wipe userSelectedId if currentTable is going from `undefined` to defined.
+                // Scnario: On page load with open=something and table inferred from query.
                 var currentTable = this.state.userSelectedTable || data.content.resultsPerTable[0].tableName;
-                if (this.state.currentTable !== currentTable) {
+                if (this.state.currentTable && this.state.currentTable !== currentTable) {
                     this.setState({
                         userTableSettings: {},
                         userSelectedId: undefined
@@ -229,10 +231,7 @@ export default React.createClass({
                 { columns: [table.idColumn], sortColumn: table.idColumn, sortOrder: "asc" },
                 configuration.listingDefaults && configuration.listingDefaults[this.state.currentTable],
                 userTableSettings)
-        }, () => {
-            if (this.state.query) this.getResultsPage();
-            if (this.state.userSelectedId) this.getDetails();
-        });
+        }, this.getResultsPage);
     },
     getResultsPage: function (i) {
         // Once the counts query runs and table basics are loaded, get a page of results
@@ -260,9 +259,10 @@ export default React.createClass({
         // Delayed getAllCounts() would have to return before the other two.
         const table = this.state.allBasics[this.state.currentTable];
         if (!table) return;
+        if (!this.state.userSelectedId) return;
 
         var detailsQuery = table.idColumn + '="' + this.state.userSelectedId + '"';
-        if (this.state.query) detailsQuery += " AND (" + this.state.query + ")";
+        if (this.state.query) detailsQuery += " AND (" + this.state.query + ")"; // Query is included for term highlighting.
 
         // Select all columns for the selected item, with highlighting
         this.jsonQueryWithError(
@@ -296,7 +296,10 @@ export default React.createClass({
                 onSuccess(data);
             },
             (xhr, status, err) => {
-                this.setState({ allCountData: [], listingData: [], selectedItemData: null, loading: false, error: "Error: Server didn't respond to [" + xhr.url + "]. " + err });
+                const state = Object.assign(
+                    this.getEmptyState(),
+                    { error: `Error: Server didn't respond to [${xhr.url}]. ${err}` });
+                this.setState(state);
             },
             parameters
         );
@@ -308,120 +311,105 @@ export default React.createClass({
         }
     },
     buildQueryUrl: function () {
-        var parameters = {
-            action: "select",
-            q: this.state.query,
-            ob: this.state.currentTableSettings.sortColumn,
-            so: this.state.currentTableSettings.sortOrder,
-            s: 0
-        };
-
-        addArrayParameters(parameters, "c", this.state.currentTableSettings.columns);
-
-        var queryString = buildUrlParameters(parameters);
-        return configuration.url + "/table/" + this.state.currentTable + queryString;
+        var parameters = Object.merge(
+            {
+                action: "select",
+                q: this.state.query,
+                ob: this.state.currentTableSettings.sortColumn,
+                so: this.state.currentTableSettings.sortOrder,
+                s: 0
+            },
+            arrayToObject(this.state.currentTableSettings.columns, `c`)
+        );
+        return `${configuration.url}/table/${this.state.currentTable}${buildUrlParameters(parameters)}`;
     },
     buildThisUrl: function (includeOpen) {
         var userTableSettings = this.state.userTableSettings;
-        var relevantParams = ({
-            t: this.state.userSelectedTable,
-            q: this.state.query || undefined,
-            ob: userTableSettings.sortColumn,
-            so: userTableSettings.sortOrder
-        }).cleaned;
-
-        addArrayParameters(relevantParams, "c", userTableSettings.columns);
-        if (Object.keys(userTableSettings).length) relevantParams.t = this.state.currentTable;
-
-        if (includeOpen && this.state.userSelectedId) {
-            relevantParams.open = this.state.userSelectedId;
-        }
-
-        return window.location.protocol + '//' + window.location.host + window.location.pathname + buildUrlParameters(relevantParams);
+        var parameters = Object.merge(
+            {
+                t: Object.keys(userTableSettings).length ? this.state.currentTable : this.state.userSelectedTable,
+                q: this.state.query || undefined,
+                ob: userTableSettings.sortColumn,
+                so: userTableSettings.sortOrder,
+                open: includeOpen && this.state.userSelectedId || undefined,
+            },
+            arrayToObject(userTableSettings.columns, `c`)
+        );
+        return `${location.protocol}//${location.host + location.pathname + buildUrlParameters(parameters)}`;
     },
     render: function () {
+        // Consider clearing the currentTable when the query is empty.
         if (this.state.blockingErrorStatus != null) return <ErrorPage status={this.state.blockingErrorStatus} />;
 
         var table = this.state.allBasics && this.state.currentTable && this.state.allBasics[this.state.currentTable] || undefined;
         var customDetailsView = (configuration.customDetailsProviders && configuration.customDetailsProviders[this.state.currentTable]) || ResultDetails;
-
-        // Consider clearing the currentTable when the query is empty.
-        var mainContent = this.state.query && table
-            ? <SplitPane split="horizontal" minSize="300" isFirstVisible={this.state.listingData.content} isSecondVisible={this.state.userSelectedId}>
-                <InfiniteScroll page={this.state.page} hasMoreData={this.state.hasMoreData} loadMore={this.getResultsPage }>
-                    <ResultListing ref={"list"}
-                        data={this.state.listingData}
-                        allBasics={this.state.allBasics}
-                        sortColumn={this.state.currentTableSettings.sortColumn}
-                        sortOrder={this.state.currentTableSettings.sortOrder}
-                        selectedId={this.state.userSelectedId}
-                        onResort={this.onResort}
-                        onSelectionChanged={this.onSelectionChanged}
-                        onSetColumns={this.onSetColumns} />
-                </InfiniteScroll>
-                <div className="scrollable">
-                    {React.createElement(customDetailsView, {
-                        itemId: this.state.userSelectedId,
-                        table: this.state.currentTable,
-                        query: this.state.query,
-                        data: this.state.selectedItemData,
-                        onClose: this.onClose,
-                        onAddClause: this.onAddClause
-                    })}
-                </div>
-            </SplitPane>
-            : <Start allBasics={this.state.allBasics} showHelp={this.props.params.help === "true"} queryChanged={this.queryChanged} />;
-
         const queryUrl = this.buildQueryUrl();
         const gridUrl = this.state.query
             ? `/Grid.html${buildUrlParameters({ t: this.state.currentTable, q: this.state.query })}`
             : `/Grid.html?p=default`
 
-        return (
-            <div ref="viewport" className="viewport" onKeyDown={this.handleKeyDown}
-                onDragEnter={e => {
-                    // Consider disabling pointer events for perf.
-                    if (!this.state.dropping) this.setState({ dropping: true, file: undefined })
-                }} >
-
-                <SearchHeader>
-                    <SearchBox query={this.state.query}
-                        parsedQuery={this.state.allCountData.content && this.state.allCountData.content.parsedQuery}
-                        queryChanged={this.queryChanged}
-                        loading={this.state.loading} />
-                </SearchHeader>
-
-                <div className="middle">
-                    <nav className="mode">
-                        <a className="selected"><i className="icon-details"></i><span>Listing</span></a>
-                        <a href={gridUrl}><i className="icon-view-all-albums"></i><span>Grid</span></a>
-                    </nav>
-
-                    <div className="center">
-                        <QueryStats query={this.state.query}
-                                    error={this.state.error}
-                                    allCountData={this.state.allCountData}
-                                    allBasics={this.state.allBasics}
-                                    selectedData={this.state.listingData}
-                                    rssUrl={`${queryUrl}&fmt=rss&t=100&iURL=${encodeURIComponent(this.buildThisUrl(false) + "&open=")}`}
-                                    csvUrl={`${queryUrl}&fmt=csv&t=50000`}
-                                    currentTable={this.state.currentTable}
-                                    onSelectedTableChange={this.onSelectedTableChange}
-                                    refreshAllBasics={this.refreshAllBasics} />
-
-                        {mainContent}
-                    </div>
-                </div>
-
-                <DropShield
-                    dropping={this.state.dropping}
-                    droppingChanged={d => this.setState({ dropping: d })}
-                    existingTablenames={Object.keys(this.state.allBasics || {})}
+        return <div ref="viewport" className="viewport" onKeyDown={this.handleKeyDown}
+            onDragEnter={e => {
+                // Consider disabling pointer events for perf.
+                if (!this.state.dropping) this.setState({ dropping: true, file: undefined })
+            }} >
+            <SearchHeader>
+                <SearchBox query={this.state.query}
+                    parsedQuery={this.state.allCountData.content && this.state.allCountData.content.parsedQuery}
                     queryChanged={this.queryChanged}
-                    refreshAllBasics={this.refreshAllBasics}
-                    getAllCounts={this.getAllCounts}
-                    columnsChanged={this.onSetColumns} />
+                    loading={this.state.loading} />
+            </SearchHeader>
+            <div className="middle">
+                <nav className="mode">
+                    <a className="selected"><i className="icon-details"></i><span>Listing</span></a>
+                    <a href={gridUrl}><i className="icon-view-all-albums"></i><span>Grid</span></a>
+                </nav>
+                <div className="center">
+                    <QueryStats query={this.state.query}
+                                error={this.state.error}
+                                allCountData={this.state.allCountData}
+                                allBasics={this.state.allBasics}
+                                selectedData={this.state.listingData}
+                                rssUrl={`${queryUrl}&fmt=rss&t=100&iURL=${encodeURIComponent(this.buildThisUrl(false) + "&open=")}`}
+                                csvUrl={`${queryUrl}&fmt=csv&t=50000`}
+                                currentTable={this.state.currentTable}
+                                onSelectedTableChange={this.onSelectedTableChange}
+                                refreshAllBasics={this.refreshAllBasics} />
+                    {this.state.query && table
+                        ? <SplitPane split="horizontal" minSize="300" isFirstVisible={this.state.listingData.content} isSecondVisible={this.state.userSelectedId}>
+                            <InfiniteScroll page={this.state.page} hasMoreData={this.state.hasMoreData} loadMore={this.getResultsPage }>
+                                <ResultListing ref={"list"}
+                                    data={this.state.listingData}
+                                    allBasics={this.state.allBasics}
+                                    sortColumn={this.state.currentTableSettings.sortColumn}
+                                    sortOrder={this.state.currentTableSettings.sortOrder}
+                                    selectedId={this.state.userSelectedId}
+                                    onResort={this.onResort}
+                                    onSelectionChanged={id => this.setState({ userSelectedId: id })}
+                                    onSetColumns={this.onSetColumns} />
+                            </InfiniteScroll>
+                            <div className="scrollable">
+                                {React.createElement(customDetailsView, {
+                                    itemId: this.state.userSelectedId,
+                                    table: this.state.currentTable,
+                                    query: this.state.query,
+                                    data: this.state.selectedItemData,
+                                    onClose: this.onClose,
+                                    onAddClause: this.onAddClause
+                                })}
+                            </div>
+                        </SplitPane>
+                        : <Start allBasics={this.state.allBasics} showHelp={this.props.params.help === "true"} queryChanged={this.queryChanged} />}
+                </div>
             </div>
-        );
+            <DropShield
+                dropping={this.state.dropping}
+                droppingChanged={d => this.setState({ dropping: d })}
+                existingTablenames={Object.keys(this.state.allBasics || {})}
+                queryChanged={this.queryChanged}
+                refreshAllBasics={this.refreshAllBasics}
+                getAllCounts={this.getAllCounts}
+                columnsChanged={this.onSetColumns} />
+        </div>
     }
 });
