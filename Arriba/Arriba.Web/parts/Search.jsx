@@ -262,7 +262,7 @@ export default React.createClass({
         if (!this.state.userSelectedId) return;
 
         var detailsQuery = table.idColumn + '="' + this.state.userSelectedId + '"';
-        if (this.state.query) detailsQuery += " AND (" + this.state.query + ")";
+        if (this.state.query) detailsQuery += " AND (" + this.state.query + ")"; // Query is included for term highlighting.
 
         // Select all columns for the selected item, with highlighting
         this.jsonQueryWithError(
