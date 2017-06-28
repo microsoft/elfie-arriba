@@ -28,7 +28,9 @@ export default class DropShield extends React.Component {
                     }, 2500);
                 };
 
-                if (!file.name.toUpperCase().endsWith(".CSV")) {
+                if (!file) {
+                    this.props.droppingChanged(false); // Abort if user unintentionally drags an element of the page onto itself.
+                } else if (!file.name.toUpperCase().endsWith(".CSV")) {
                     notify(`*.csv Required!`);
                 } else if (file.size > limitGB * 1024 * 1024 * 1024) {
                     notify(`${limitGB}GB Limit!`);
