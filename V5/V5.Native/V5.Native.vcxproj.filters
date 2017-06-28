@@ -52,6 +52,9 @@
     <ClInclude Include="BinarySerializer.h">
       <Filter>Serialization</Filter>
     </ClInclude>
+    <ClInclude Include="Heap.h">
+      <Filter>Collections</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="IndexSet.cpp">
@@ -80,6 +83,9 @@
     </ClCompile>
     <ClCompile Include="BinarySerializer.cpp">
       <Filter>Serialization</Filter>
+    </ClCompile>
+    <ClCompile Include="Heap.cpp">
+      <Filter>Collections</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

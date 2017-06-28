@@ -141,6 +141,7 @@
   <ItemGroup>
     <ClInclude Include="BinarySerializer.h" />
     <ClInclude Include="CompareToVector.h" />
+    <ClInclude Include="Heap.h" />
     <ClInclude Include="IndexSet.h" />
     <ClInclude Include="Operator.h" />
     <ClInclude Include="resource.h" />
@@ -153,6 +154,7 @@
     <ClCompile Include="BinarySerializer.cpp" />
     <ClCompile Include="CompareToSingle.cpp" />
     <ClCompile Include="CompareToVector.cpp" />
+    <ClCompile Include="Heap.cpp" />
     <ClCompile Include="IndexSet.cpp" />
     <ClCompile Include="AssemblyInfo.cpp" />
     <ClCompile Include="SortBucketColumnN.cpp" />
