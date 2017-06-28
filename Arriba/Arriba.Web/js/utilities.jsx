@@ -32,6 +32,12 @@ Object.diff = function(a, b) {
     return new Set([...allKeys.values()].filter(i => a[i] !== b[i]));
 };
 
+Set.prototype.values = Set.prototype.values || function() { // For Edge/IE.
+    var values = [];
+    this.forEach(v => values.push[v]);
+    return values;
+};
+
 Set.prototype.hasAny = function(...values) {
     return values.any(v => this.has(v));
 };
