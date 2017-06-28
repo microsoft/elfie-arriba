@@ -28,13 +28,20 @@ window.xhr = (path, body) => {
 
 // Example: Object.diff({a: 1, b: 2, c: 3}, {b: 3, c: 3, d: 4}) >> Set(a, b, d)
 Object.diff = function(a, b) {
-    const allKeys = new Set([...Object.keys(a), ...Object.keys(b)]);
-    return new Set([...allKeys.values()].filter(i => a[i] !== b[i]));
+    const makeSet = iterable => {
+        // IE Set.ctor doesn't take args. Must manually add.
+        const s = new Set(iterable);
+        if (isIE()) iterable.forEach(k => s.add(k));
+        return s;
+    }
+
+    const allKeys = makeSet([...Object.keys(a), ...Object.keys(b)]);
+    return makeSet([...allKeys.values()].filter(i => a[i] !== b[i]));
 };
 
 Set.prototype.values = Set.prototype.values || function() { // For Edge/IE.
     var values = [];
-    this.forEach(v => values.push[v]);
+    this.forEach(v => values.push(v));
     return values;
 };
 
