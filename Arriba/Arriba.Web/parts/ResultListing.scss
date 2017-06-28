@@ -1,0 +1,10 @@
+@import '../shared.scss';
+
+.resultListing-error {
+    width: 100%;
+    height: 100%;
+    @include center-center;
+
+    font-size: 16pt;
+    color: hsl(0, 0%, 80%);
+}
