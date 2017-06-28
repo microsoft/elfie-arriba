@@ -28,6 +28,15 @@ const arrayToObject = (array, prefix) => {
 
 // SearchMain wraps the overall search UI
 export default React.createClass({
+    getEmptyState: function () {
+        return {
+            loading: false,
+            allCountData: [],
+            listingData: [],
+            selectedItemData: null,
+            userTableSettings: {}, // {} denote no state, do not set to null.
+        }
+    },
     getInitialState: function () {
         // For schema detection and possible migration.
         localStorage.setItem("version", 1);
@@ -43,27 +52,18 @@ export default React.createClass({
             }).cleaned);
         }
 
-        return {
+        return Object.assign(this.getEmptyState(), {
             blockingErrorStatus: null,
-            loading: false,
-
             allBasics: [],
             tables: [],
-            allCountData: [],
-            listingData: [],
             page: 0,
             hasMoreData: false,
-            selectedItemData: null,
-
             query: this.props.params.q || "",
-
             currentTable: table,
             currentTableSettings: {}, // {} denote no state, do not set to null.
-
             userSelectedTable: table,
-            userTableSettings: {}, // {} denote no state, do not set to null.
             userSelectedId: this.props.params.open
-        };
+        });
     },
     componentDidMount: function () {
         window.addEventListener("beforeunload", this); // For Mru
@@ -113,14 +113,10 @@ export default React.createClass({
     handleKeyDown: function (e) {
         // Backspace: Clear state *if query empty*
         if (e.keyCode === 8 && !this.state.query) {
-            this.setState({
-                allCountData: [],
-                listingData: [],
-                selectedItemData: null,
-                userSelectedTable: undefined,
-                userTableSettings: {},
-                userSelectedId: undefined
-            });
+            const state = Object.assign(
+                this.getEmptyState(),
+                { userSelectedTable: undefined, userSelectedId: undefined });
+            this.setState(state);
         }
 
         // ESC: Close
@@ -181,13 +177,7 @@ export default React.createClass({
 
         // If there's no allBasics or query, clear results and do nothing else
         if (!this.state.allBasics || !Object.keys(this.state.allBasics).length || !this.state.query) {
-            this.setState({
-                loading: false,
-                allCountData: [],
-                listingData: [],
-                selectedItemData: null,
-                userTableSettings: {}
-            });
+            this.setState(this.getEmptyState());
             return;
         }
 
@@ -306,7 +296,10 @@ export default React.createClass({
                 onSuccess(data);
             },
             (xhr, status, err) => {
-                this.setState({ allCountData: [], listingData: [], selectedItemData: null, loading: false, error: "Error: Server didn't respond to [" + xhr.url + "]. " + err });
+                const state = Object.assign(
+                    this.getEmptyState(),
+                    { error: `Error: Server didn't respond to [${xhr.url}]. ${err}` });
+                this.setState(state);
             },
             parameters
         );
