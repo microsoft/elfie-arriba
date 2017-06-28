@@ -335,7 +335,7 @@ export default React.createClass({
             },
             arrayToObject(userTableSettings.columns, `c`)
         );
-        return `${window.location.protocol}//${window.location.host + window.location.pathname + buildUrlParameters(parameters)}`;
+        return `${location.protocol}//${location.host + location.pathname + buildUrlParameters(parameters)}`;
     },
     render: function () {
         // Consider clearing the currentTable when the query is empty.
