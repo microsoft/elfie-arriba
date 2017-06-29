@@ -54,7 +54,8 @@ export default class SearchBox extends EventedComponent {
                             queryChanged={q => this.props.queryChanged(q)}
                             completedChanged={c => this.setState({ completed: c })}
                             selectedChanged={s => this.setState({ selected: s && s.category === "ColumnName" && s || undefined }) }
-                            refocus={() => this.refs.input.focus()} />
+                            refocus={() => this.refs.input.focus()}
+                            hasFocus={() => this.refs.input === document.activeElement}/>
 
                         <Suggestions
                             ref="peek"
