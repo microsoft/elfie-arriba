@@ -7,6 +7,7 @@ import ErrorPage from "./ErrorPage";
 import QueryStats from "./QueryStats";
 import SearchHeader from "./SearchHeader";
 import SearchBox from "./SearchBox";
+import Automator from "./Automator";
 import DropShield from "./DropShield";
 
 import InfiniteScroll from "./InfiniteScroll";
@@ -363,6 +364,7 @@ export default React.createClass({
                 <nav className="mode">
                     <a className="selected"><i className="icon-details"></i><span>Listing</span></a>
                     <a href={gridUrl}><i className="icon-view-all-albums"></i><span>Grid</span></a>
+                    <Automator />
                 </nav>
                 <div className="center">
                     <QueryStats query={this.state.query}

@@ -238,6 +238,7 @@ a:visited:hover {
 /* --- Mode Bar [left side] --- */
 /* Make mode bar white on darker green, sized for icons, animated */
 .mode {
+    position: relative; // Offset parent for Automator.
     color: white;
     background-color: $dark;
     width: 53px;
