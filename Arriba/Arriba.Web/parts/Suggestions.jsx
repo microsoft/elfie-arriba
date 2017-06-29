@@ -15,7 +15,11 @@ export default class Suggestions extends EventedComponent {
         };
     }
     componentDidUpdate(prevProps, prevState) {
-        if (prevProps.query !== this.props.query && this.props.query !== "*") this.fetch();
+        // Skip fetch in situations where the input is not focused. Namely, when a the query is set from the Recents/Favs.
+        if (prevProps.query !== this.props.query
+            && this.props.query !== "*"
+            && (!this.props.hasFocus || this.props.hasFocus())) // If hasFocus is not available, assume true.
+            this.fetch();
 
         var suggestions = this.state.suggestions;
         var sel = this.state.sel;
