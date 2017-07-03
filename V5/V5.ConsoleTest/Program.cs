@@ -128,10 +128,19 @@ namespace V5.ConsoleTest
             IndexSet set = new IndexSet(db.Count);
             Span<int> page = new Span<int>(new int[4096]);
 
+            int parallelCount = 2;
+            IndexSet[] sets = new IndexSet[parallelCount];
+            Span<int>[] pages = new Span<int>[parallelCount];
+            for(int i = 0; i < parallelCount; ++i)
+            {
+                sets[i] = new IndexSet(db.Count / parallelCount);
+                pages[i] = new Span<int>(new int[4096]);
+            }
+
             Benchmark.Compare("HttpStatus = 404 AND ResponseBytes > 1000", 20, db.Count, new string[] { "Managed Direct", "Managed Column", "V5.Native" },
                 () => QueryManagedDirect(db, set),
                 () => QueryManagedColumn(db, set, page),
-                () => QueryV5(db, set, page)
+                () => QueryV5(db, sets, pages)
             );
         }
 
@@ -273,7 +282,7 @@ namespace V5.ConsoleTest
             return matches.Count;
         }
 
-        private static int QueryV5(WebRequestDatabase db, IndexSet matches, Span<int> page)
+        private static int QueryV5(WebRequestDatabase db, IndexSet[] matches, Span<int>[] pages)
         {
             // Look up the buckets for HttpStatus 404 and ResponseBytes 1000
             
@@ -288,34 +297,54 @@ namespace V5.ConsoleTest
             int responseBytesBucket = db.ResponseBytesBuckets.BucketForValue(1000, out isResponseBytesExact);
             bool needResponseBytesPostScan = (isResponseBytesExact == false && db.ResponseBytesBuckets.IsMultiValue[responseBytesBucket]);
 
-            // Get matches in those bucket ranges and intersect them
-            matches.Where(BooleanOperator.Set, db.HttpStatusBuckets.RowBucketIndex, CompareOperator.Equals, (byte)httpStatusBucket);
-            matches.Where(BooleanOperator.And, db.ResponseBytesBuckets.RowBucketIndex, CompareOperator.GreaterThan, (byte)responseBytesBucket);
+            object locker = new object();
+            int total = 0;
 
-            return matches.Count;
-
-            // If no post-scans were required, return the bit vector count
-            if (!needHttpStatusPostScan && !needResponseBytesPostScan) return matches.Count;
-
-            // Otherwise, page through results and post-filter on required clauses
-            // [NOTE: We should prefer to scan twice and only filter boundary bucket rows when there are many matches]
-            int count = 0;
-            int matchesBefore = 0;
-
-            int next = 0;
-            while (next != -1)
+            Parallel.For(0, matches.Length, (i) =>
             {
-                next = matches.Page(ref page, next);
-                matchesBefore += page.Length;
+                int length = db.Count / matches.Length;
+                int offset = i * length;
 
-                if (needHttpStatusPostScan) db.HttpStatus.Where(ref page, BooleanOperator.And, CompareOperator.Equals, 404);
-                if (needResponseBytesPostScan) db.ResponseBytes.Where(ref page, BooleanOperator.And, CompareOperator.GreaterThan, 1000);
+                // Get matches in those bucket ranges and intersect them
+                matches[i].Where(BooleanOperator.Set, db.HttpStatusBuckets.RowBucketIndex, CompareOperator.Equals, (byte)httpStatusBucket, offset, length);
+                matches[i].Where(BooleanOperator.And, db.ResponseBytesBuckets.RowBucketIndex, CompareOperator.GreaterThan, (byte)responseBytesBucket, offset, length);
 
-                count += page.Length;
-            }
+                // If no post-scans were required, return the bit vector count
+                //if (!needHttpStatusPostScan && !needResponseBytesPostScan)
+                {
+                    lock (locker)
+                    {
+                        total += matches[i].Count;
+                    }
+
+                    return;
+                }
+
+                // Otherwise, page through results and post-filter on required clauses
+                // [NOTE: We should prefer to scan twice and only filter boundary bucket rows when there are many matches]
+                int count = 0;
+                int matchesBefore = 0;
+
+                int next = 0;
+                while (next != -1)
+                {
+                    next = matches[i].Page(ref pages[i], next);
+                    matchesBefore += pages[i].Length;
+
+                    if (needHttpStatusPostScan) db.HttpStatus.Where(ref pages[i], BooleanOperator.And, CompareOperator.Equals, 404, offset);
+                    if (needResponseBytesPostScan) db.ResponseBytes.Where(ref pages[i], BooleanOperator.And, CompareOperator.GreaterThan, 1000, offset);
+
+                    count += pages[i].Length;
+                }
+
+                lock(locker)
+                {
+                    total += count;
+                }
+            });
 
             // Return the final count
-            return count;
+            return total;
         }
 
         private static void GenerateSampleCsv()
