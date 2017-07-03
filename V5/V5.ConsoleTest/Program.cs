@@ -71,8 +71,8 @@ namespace V5.ConsoleTest
 
         static void Main(string[] args)
         {
-            PerformanceTests();
-            return;
+            //PerformanceTests();
+            //return;
 
             int rowCount = 8 * 1000 * 1000;
             WebRequestDatabase db = new WebRequestDatabase(rowCount);
@@ -289,11 +289,10 @@ namespace V5.ConsoleTest
             bool needResponseBytesPostScan = (isResponseBytesExact == false && db.ResponseBytesBuckets.IsMultiValue[responseBytesBucket]);
 
             // Get matches in those bucket ranges and intersect them
-            matches.All(db.Count);
-            matches.Where(BooleanOperator.And, db.HttpStatusBuckets.RowBucketIndex, CompareOperator.Equals, (byte)httpStatusBucket);
+            matches.Where(BooleanOperator.Set, db.HttpStatusBuckets.RowBucketIndex, CompareOperator.Equals, (byte)httpStatusBucket);
             matches.Where(BooleanOperator.And, db.ResponseBytesBuckets.RowBucketIndex, CompareOperator.GreaterThan, (byte)responseBytesBucket);
 
-            //return matches.Count;
+            return matches.Count;
 
             // If no post-scans were required, return the bit vector count
             if (!needHttpStatusPostScan && !needResponseBytesPostScan) return matches.Count;

@@ -83,6 +83,9 @@ static void WhereN(unsigned __int8* set, int length, unsigned __int8 value, unsi
 
 		switch (bOp)
 		{
+			case BooleanOperatorN::Set:
+				matchVector[i >> 6] = result;
+				break;
 			case BooleanOperatorN::And:
 				matchVector[i >> 6] &= result;
 				break;
@@ -127,6 +130,9 @@ static void WhereN(unsigned __int8* set, int length, unsigned __int8 value, unsi
 
 		switch (bOp)
 		{
+			case BooleanOperatorN::Set:
+				matchVector[i >> 6] = result;
+				break;
 			case BooleanOperatorN::And:
 				matchVector[i >> 6] &= result;
 				break;
@@ -171,6 +177,9 @@ void CompareToVector::WhereS(CompareOperatorN cOp, BooleanOperatorN bOp, unsigne
 {
 	switch (bOp)
 	{
+	case BooleanOperatorN::Set:
+		WhereB<BooleanOperatorN::Set, signing>(cOp, set, length, value, matchVector);
+		break;
 	case BooleanOperatorN::And:
 		WhereB<BooleanOperatorN::And, signing>(cOp, set, length, value, matchVector);
 		break;

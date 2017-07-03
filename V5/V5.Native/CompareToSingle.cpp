@@ -43,6 +43,9 @@ static void WhereSingle(T* set, int length, T value, unsigned __int64* matchVect
 
 		switch (bOp)
 		{
+		case BooleanOperatorN::Set:
+			matchVector[vectorIndex] = result;
+			break;
 		case BooleanOperatorN::And:
 			matchVector[vectorIndex] &= result;
 			break;
