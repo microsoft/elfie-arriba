@@ -220,52 +220,59 @@ namespace V5
 		}
 
 		generic <typename T>
-		IndexSet^ IndexSet::Where(BooleanOperator bOp, array<T>^ values, CompareOperator op, T value)
+		IndexSet^ IndexSet::Where(BooleanOperator bOp, array<T>^ values, CompareOperator cOp, T value)
 		{
-			if (this->bitVector->Length * 64 < values->Length) throw gcnew IndexOutOfRangeException();
+			return Where(bOp, values, cOp, value, 0, values->Length);
+		}
 
-			pin_ptr<T> pValues = &values[0];
+		generic <typename T>
+		IndexSet^ IndexSet::Where(BooleanOperator bOp, array<T>^ values, CompareOperator cOp, T value, int offset, int length)
+		{
+			if (offset + length > values->Length) throw gcnew IndexOutOfRangeException();
+			if (this->bitVector->Length * 64 < length) throw gcnew IndexOutOfRangeException();
+
+			pin_ptr<T> pValues = &values[offset];
 			pin_ptr<UInt64> pVector = &(this->bitVector[0]);
 
 			if (T::typeid == System::Byte::typeid)
 			{
-				CompareToVector::Where((CompareOperatorN)op, (BooleanOperatorN)bOp, SigningN::Unsigned, (unsigned __int8*)pValues, values->Length, (unsigned __int8)value, pVector);
+				CompareToVector::Where((CompareOperatorN)cOp, (BooleanOperatorN)bOp, SigningN::Unsigned, (unsigned __int8*)pValues, length, (unsigned __int8)value, pVector);
 			}
 			else if (T::typeid == System::SByte::typeid)
 			{
-				CompareToVector::Where((CompareOperatorN)op, (BooleanOperatorN)bOp, SigningN::Signed, (unsigned __int8*)(__int8*)pValues, values->Length, (unsigned __int8)(__int8)value, pVector);
+				CompareToVector::Where((CompareOperatorN)cOp, (BooleanOperatorN)bOp, SigningN::Signed, (unsigned __int8*)(__int8*)pValues, length, (unsigned __int8)(__int8)value, pVector);
 			}
 			else if (T::typeid == System::UInt16::typeid)
 			{
-				CompareToVector::WhereSingle((CompareOperatorN)op, (BooleanOperatorN)bOp, (unsigned __int16*)pValues, values->Length, (unsigned __int16)value, pVector);
+				CompareToVector::WhereSingle((CompareOperatorN)cOp, (BooleanOperatorN)bOp, (unsigned __int16*)pValues, length, (unsigned __int16)value, pVector);
 			}
 			else if (T::typeid == System::Int16::typeid)
 			{
-				CompareToVector::WhereSingle((CompareOperatorN)op, (BooleanOperatorN)bOp, (__int16*)pValues, values->Length, (__int16)value, pVector);
+				CompareToVector::WhereSingle((CompareOperatorN)cOp, (BooleanOperatorN)bOp, (__int16*)pValues, length, (__int16)value, pVector);
 			}
 			else if (T::typeid == System::UInt32::typeid)
 			{
-				CompareToVector::WhereSingle((CompareOperatorN)op, (BooleanOperatorN)bOp, (unsigned __int32*)pValues, values->Length, (unsigned __int32)value, pVector);
+				CompareToVector::WhereSingle((CompareOperatorN)cOp, (BooleanOperatorN)bOp, (unsigned __int32*)pValues, length, (unsigned __int32)value, pVector);
 			}
 			else if (T::typeid == System::Int32::typeid)
 			{
-				CompareToVector::WhereSingle((CompareOperatorN)op, (BooleanOperatorN)bOp, (__int32*)pValues, values->Length, (__int32)value, pVector);
+				CompareToVector::WhereSingle((CompareOperatorN)cOp, (BooleanOperatorN)bOp, (__int32*)pValues, length, (__int32)value, pVector);
 			}
 			else if (T::typeid == System::UInt64::typeid)
 			{
-				CompareToVector::WhereSingle((CompareOperatorN)op, (BooleanOperatorN)bOp, (unsigned __int64*)pValues, values->Length, (unsigned __int64)value, pVector);
+				CompareToVector::WhereSingle((CompareOperatorN)cOp, (BooleanOperatorN)bOp, (unsigned __int64*)pValues, length, (unsigned __int64)value, pVector);
 			}
 			else if (T::typeid == System::Int64::typeid)
 			{
-				CompareToVector::WhereSingle((CompareOperatorN)op, (BooleanOperatorN)bOp, (__int64*)pValues, values->Length, (__int64)value, pVector);
+				CompareToVector::WhereSingle((CompareOperatorN)cOp, (BooleanOperatorN)bOp, (__int64*)pValues, length, (__int64)value, pVector);
 			}
 			else if (T::typeid == System::Single::typeid)
 			{
-				CompareToVector::WhereSingle((CompareOperatorN)op, (BooleanOperatorN)bOp, (float*)pValues, values->Length, (float)value, pVector);
+				CompareToVector::WhereSingle((CompareOperatorN)cOp, (BooleanOperatorN)bOp, (float*)pValues, length, (float)value, pVector);
 			}
 			else if (T::typeid == System::Double::typeid)
 			{
-				CompareToVector::WhereSingle((CompareOperatorN)op, (BooleanOperatorN)bOp, (double*)pValues, values->Length, (double)value, pVector);
+				CompareToVector::WhereSingle((CompareOperatorN)cOp, (BooleanOperatorN)bOp, (double*)pValues, length, (double)value, pVector);
 			}
 			else
 			{

@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Threading.Tasks;
 using V5;
 using V5.Collections;
 using V5.ConsoleTest.Model;
@@ -70,8 +71,8 @@ namespace V5.ConsoleTest
 
         static void Main(string[] args)
         {
-            //PerformanceTests();
-            //return;
+            PerformanceTests();
+            return;
 
             int rowCount = 8 * 1000 * 1000;
             WebRequestDatabase db = new WebRequestDatabase(rowCount);
@@ -156,6 +157,16 @@ namespace V5.ConsoleTest
                 );
             int sum;
             IndexSet set = new IndexSet(size);
+            IndexSet other = new IndexSet(size);
+            other.All(size);
+
+            int parallelCount = 4;
+            IndexSet[] sets = new IndexSet[parallelCount];
+            for (int i = 0; i < sets.Length; ++i)
+            {
+                sets[i] = new IndexSet(size / parallelCount);
+            }
+
             Span<int> page = new Span<int>(new int[4096]);
 
             byte[] bucketSample = new byte[size];
@@ -171,11 +182,13 @@ namespace V5.ConsoleTest
                 () => { sum = 0; foreach (int item in bucketSpan) { sum += item; } return sum; }
             );
 
-            Benchmark.Compare("IndexSet Operations", iterations, size, new string[] { "All", "None", "Count", "WhereGreaterThan" },
+            Benchmark.Compare("IndexSet Operations", iterations, size, new string[] { "All", "None", "And", "Count", "WhereGreaterThan", $"Where Parallel x{parallelCount}" },
                 () => set.All(size),
                 () => set.None(),
+                () => set.And(other),
                 () => set.Count,
-                () => set.Where(BooleanOperator.And, bucketSample, CompareOperator.GreaterThan, (byte)200)
+                () => set.Where(BooleanOperator.And, bucketSample, CompareOperator.GreaterThan, (byte)200),
+                () => ParallelWhere(bucketSample, (byte)200, sets)
             );
 
             set.None();
@@ -197,6 +210,24 @@ namespace V5.ConsoleTest
 
             set.All(size);
             Benchmark.Compare("IndexSet Page", iterations, size, new string[] { "Page All" }, () => PageAll(set, page));
+        }
+
+        private static object ParallelWhere(byte[] column, byte value, IndexSet[] sets)
+        {
+            Parallel.For(0, sets.Length, (i) =>
+            {
+                int length = column.Length / sets.Length;
+                int offset = i * length;
+
+                sets[i].Where(BooleanOperator.And, column, CompareOperator.GreaterThan, value, offset, length);
+            });
+
+            int sum = 0;
+            //for(int i = 0; i < sets.Length; ++i)
+            //{
+            //    sum += sets[i].Count;
+            //}
+            return sum;
         }
 
         private static int PageAll(IndexSet set, Span<int> page)

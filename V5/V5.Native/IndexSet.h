@@ -37,6 +37,10 @@ namespace V5
 			// Native speed Where with array values
 			generic <typename T>
 			IndexSet^ Where(BooleanOperator bOp, array<T>^ values, CompareOperator cOp, T value);
+
+			// Where with offset (for parallel use)
+			generic <typename T>
+			IndexSet^ Where(BooleanOperator bOp, array<T>^ values, CompareOperator cOp, T value, int offset, int length);
 		};
 	}
 }
