@@ -44,7 +44,7 @@ static void WhereN(unsigned __int8* set, int length, unsigned __int8 value, unsi
 	if (sign == SigningN::Unsigned) blockOfValue = _mm256_sub_epi8(blockOfValue, unsignedToSigned);
 
 	// Compare 64-byte blocks and generate a 64-bit result while there's enough data
-	int blockLength = length - (length & 63);
+	int blockLength = length & ~63;
 	for (; i < blockLength; i += 64)
 	{
 		__m256i block1 = _mm256_loadu_si256((__m256i*)(&set[i]));
@@ -101,7 +101,7 @@ static void WhereN(unsigned __int8* set, int length, unsigned __int8 value, unsi
 	}
 
 	// Match remaining values individually
-	WhereSingle<cOp, bOp, unsigned char>(&set[i], length - i, value, &matchVector[i >> 6]);
+	if(length & 63) WhereSingle<cOp, bOp, unsigned char>(&set[i], length - i, value, &matchVector[i >> 6]);
 }
 
 template<BooleanOperatorN bOp, SigningN signing>
