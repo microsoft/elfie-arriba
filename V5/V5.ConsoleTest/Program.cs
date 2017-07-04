@@ -71,8 +71,8 @@ namespace V5.ConsoleTest
 
         static void Main(string[] args)
         {
-            PerformanceTests();
-            return;
+            //PerformanceTests();
+            //return;
 
             int rowCount = 8 * 1000 * 1000;
             WebRequestDatabase db = new WebRequestDatabase(rowCount);
@@ -310,7 +310,7 @@ namespace V5.ConsoleTest
                 matches[i].Where(BooleanOperator.And, db.ResponseBytesBuckets.RowBucketIndex, CompareOperator.GreaterThan, (byte)responseBytesBucket, offset, length);
 
                 // If no post-scans were required, return the bit vector count
-                //if (!needHttpStatusPostScan && !needResponseBytesPostScan)
+                if (!needHttpStatusPostScan && !needResponseBytesPostScan)
                 {
                     lock (locker)
                     {

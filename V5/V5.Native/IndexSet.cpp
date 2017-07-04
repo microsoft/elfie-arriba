@@ -15,7 +15,7 @@ int CountN(unsigned __int64* matchVector, int length)
 	__int64 count1 = 0, count2 = 0, count3 = 0, count4 = 0;
 
 	int i = 0;
-	int end = length & ~0x3;
+	int end = length & ~3;
 	for (; i < end; i += 4)
 	{
 		count1 += _mm_popcnt_u64(matchVector[i]);
@@ -71,7 +71,7 @@ int PageN(unsigned __int64* matchVector, int length, int start, int* result, int
 			// Add the match
 			*(resultNext++) = base + matchWithinBlock;
 
-			// Unset the last bit (mathematical identity) and continue
+			// Unset the last bit (mathematical identity) and continue [Note: _blsr_u64 faster for dense but slower for sparse sets]
 			block &= block - 1;
 		}
 
