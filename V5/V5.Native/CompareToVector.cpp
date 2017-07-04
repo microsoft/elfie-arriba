@@ -4,6 +4,8 @@
 #include "Operator.h"
 #include "CompareToVector.h"
 
+#include "CompareToSingle.cpp"
+
 /*
   Parallel set comparison operations using AVX vector instructions, which compare 32 bytes in parallel.
   These can compare ~12GB/s per core.
@@ -99,51 +101,7 @@ static void WhereN(unsigned __int8* set, int length, unsigned __int8 value, unsi
 	}
 
 	// Match remaining values individually
-	if ((length & 63) > 0)
-	{
-		result = 0;
-
-		for (; i < length; ++i)
-		{
-			switch (cOp)
-			{
-				case CompareOperatorN::GreaterThan:
-					if (set[i] > value) result |= (0x1ULL << (i & 63));
-					break;
-				case CompareOperatorN::GreaterThanOrEqual:
-					if (set[i] >= value) result |= (0x1ULL << (i & 63));
-					break;
-				case CompareOperatorN::LessThan:
-					if (set[i] < value) result |= (0x1ULL << (i & 63));
-					break;
-				case CompareOperatorN::LessThanOrEqual:
-					if (set[i] <= value) result |= (0x1ULL << (i & 63));
-					break;
-				case CompareOperatorN::Equals:
-					if (set[i] == value) result |= (0x1ULL << (i & 63));
-					break;
-				case CompareOperatorN::NotEquals:
-					if (set[i] != value) result |= (0x1ULL << (i & 63));
-					break;
-			}
-		}
-
-		switch (bOp)
-		{
-			case BooleanOperatorN::Set:
-				matchVector[i >> 6] = result;
-				break;
-			case BooleanOperatorN::And:
-				matchVector[i >> 6] &= result;
-				break;
-			case BooleanOperatorN::Or:
-				matchVector[i >> 6] |= result;
-				break;
-			case BooleanOperatorN::AndNot:
-				matchVector[i >> 6] &= ~result;
-				break;
-		}
-	}
+	WhereSingle<cOp, bOp, unsigned char>(&set[i], length - i, value, &matchVector[i >> 6]);
 }
 
 template<BooleanOperatorN bOp, SigningN signing>
