@@ -72,9 +72,6 @@
     <ClCompile Include="String8Native.cpp">
       <Filter>Text</Filter>
     </ClCompile>
-    <ClCompile Include="CompareToVector.cpp">
-      <Filter>Vector</Filter>
-    </ClCompile>
     <ClCompile Include="Span.cpp">
       <Filter>Collections</Filter>
     </ClCompile>
@@ -87,6 +84,10 @@
     <ClCompile Include="Heap.cpp">
       <Filter>Collections</Filter>
     </ClCompile>
+    <ClCompile Include="CompareToVector8.cpp">
+      <Filter>Vector</Filter>
+    </ClCompile>
+    <ClCompile Include="CompareToVector16.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="app.ico">

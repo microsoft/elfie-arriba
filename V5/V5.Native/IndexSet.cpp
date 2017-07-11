@@ -254,11 +254,11 @@ namespace V5
 			}
 			else if (T::typeid == System::UInt16::typeid)
 			{
-				CompareToVector::WhereSingle((CompareOperatorN)cOp, (BooleanOperatorN)bOp, (unsigned __int16*)pValues, length, (unsigned __int16)value, pVector);
+				CompareToVector::Where((CompareOperatorN)cOp, (BooleanOperatorN)bOp, SigningN::Unsigned, (unsigned __int16*)pValues, length, (unsigned __int16)value, pVector);
 			}
 			else if (T::typeid == System::Int16::typeid)
 			{
-				CompareToVector::WhereSingle((CompareOperatorN)cOp, (BooleanOperatorN)bOp, (__int16*)pValues, length, (__int16)value, pVector);
+				CompareToVector::Where((CompareOperatorN)cOp, (BooleanOperatorN)bOp, SigningN::Signed, (unsigned __int16*)(__int16*)pValues, length, (unsigned __int16)(__int16)value, pVector);
 			}
 			else if (T::typeid == System::UInt32::typeid)
 			{

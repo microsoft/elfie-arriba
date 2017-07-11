@@ -153,7 +153,8 @@
   <ItemGroup>
     <ClCompile Include="BinarySerializer.cpp" />
     <ClCompile Include="CompareToSingle.cpp" />
-    <ClCompile Include="CompareToVector.cpp" />
+    <ClCompile Include="CompareToVector16.cpp" />
+    <ClCompile Include="CompareToVector8.cpp" />
     <ClCompile Include="Heap.cpp" />
     <ClCompile Include="IndexSet.cpp" />
     <ClCompile Include="AssemblyInfo.cpp" />

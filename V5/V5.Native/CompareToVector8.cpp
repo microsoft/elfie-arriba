@@ -7,7 +7,7 @@
 #include "CompareToSingle.cpp"
 
 /*
-  Parallel set comparison operations using AVX vector instructions, which compare 32 bytes in parallel.
+  Parallel set comparison operations on single bytes using AVX vector instructions, which compare 32 bytes in parallel.
   These can compare ~12GB/s per core.
 
   Instructions are only provided for signed values, and only for greater than and equals.
@@ -16,7 +16,7 @@
   Other operators are done by swapping the operands.
     [ !(A > B) == (A <= B); !(A == B) == (A != B) ]
 
-  __mm256_loadu_si128   - Load 32 bytes of unaligned data.
+  __mm256_loadu_si256   - Load 32 bytes of unaligned data.
 
   __mm256_cmpgt_epi8    - Compare 32 bytes in parallel. Set a mask to 0x00 if A <= B or 0xFF if A > B
   __mm256_cmpeq_epi8    - Compare 32 bytes in parallel. Set a mask to 0x00 if A != B or 0xFF if A == B
@@ -101,7 +101,7 @@ static void WhereN(unsigned __int8* set, int length, unsigned __int8 value, unsi
 	}
 
 	// Match remaining values individually
-	if(length & 63) WhereSingle<cOp, bOp, unsigned char>(&set[i], length - i, value, &matchVector[i >> 6]);
+	if(length & 63) WhereSingle<cOp, bOp, unsigned __int8>(&set[i], length - i, value, &matchVector[i >> 6]);
 }
 
 template<BooleanOperatorN bOp, SigningN signing>
