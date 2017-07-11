@@ -142,6 +142,8 @@ namespace V5.ConsoleTest
                 () => QueryManagedColumn(db, set, page),
                 () => QueryV5(db, sets, pages)
             );
+
+            PerformanceTests();
         }
 
         static void PerformanceTests()

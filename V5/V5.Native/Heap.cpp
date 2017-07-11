@@ -39,23 +39,21 @@ namespace V5
 			this->_items[this->_items->Length] = T();
 			this->_items->Length--;
 			
-			// TODO: Fix percolate algorithm. 
-
 			// Find the correct place to re-insert it
 			int hole = 0;
-			int child = hole * 2 + 2;
+			int child = hole * 2 + 1;
 			int length = this->Length;
 
 			while (child < length)
 			{
 				// Find the smaller of the two children below the hole
-				int cmp = this->_comparison(this->_items[child - 1], this->_items[child]);
-				if (cmp < 0) child--;
+				int cmp = this->_comparison(this->_items[child], this->_items[child + 1]);
+				if (cmp > 0) child++;
 
 				// Copy the smaller item into the hole and continue
 				this->_items[hole] = this->_items[child];
 				hole = child;
-				child = child * 2 + 2;
+				child = child * 2 + 1;
 			}
 			
 			// If the last item had a single child, copy it up
@@ -76,7 +74,7 @@ namespace V5
 			while (hole > 0)
 			{
 				// If the new item is smaller than the parent, stop
-				int parent = hole / 2;
+				int parent = (hole - 1) / 2;
 				int cmp = this->_comparison(item, this->_items[parent]);
 				if (cmp > 0) break;
 
