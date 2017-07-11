@@ -232,7 +232,15 @@ namespace Arriba.Model.Query
                 }
             }
 
-            return localContext.Compute(p);
+            SelectResult result = localContext.Compute(p);
+
+            if (localContext.Pass1Results != null)
+            {
+                // If this isn't the first pass, use the total from the first pass
+                result.Total = localContext.Pass1Results.Total;
+            }
+
+            return result;
         }
 
         public SelectResult Merge(SelectResult[] partitionResults)
