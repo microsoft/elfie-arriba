@@ -67,6 +67,7 @@ namespace V5.ConsoleTest
 
     class Program
     {
+        public const int ParallelCount = 2;
         public const string PartitionPath = @"..\..\..\DiskCache\Tables\Person\0";
 
         static void Main(string[] args)
@@ -128,12 +129,11 @@ namespace V5.ConsoleTest
             IndexSet set = new IndexSet(db.Count);
             Span<int> page = new Span<int>(new int[4096]);
 
-            int parallelCount = 2;
-            IndexSet[] sets = new IndexSet[parallelCount];
-            Span<int>[] pages = new Span<int>[parallelCount];
-            for(int i = 0; i < parallelCount; ++i)
+            IndexSet[] sets = new IndexSet[ParallelCount];
+            Span<int>[] pages = new Span<int>[ParallelCount];
+            for(int i = 0; i < ParallelCount; ++i)
             {
-                sets[i] = new IndexSet(db.Count / parallelCount);
+                sets[i] = new IndexSet(db.Count / ParallelCount);
                 pages[i] = new Span<int>(new int[4096]);
             }
 
@@ -171,11 +171,10 @@ namespace V5.ConsoleTest
             IndexSet other = new IndexSet(size);
             other.All(size);
 
-            int parallelCount = 4;
-            IndexSet[] sets = new IndexSet[parallelCount];
+            IndexSet[] sets = new IndexSet[ParallelCount];
             for (int i = 0; i < sets.Length; ++i)
             {
-                sets[i] = new IndexSet(size / parallelCount);
+                sets[i] = new IndexSet(size / ParallelCount);
             }
 
             Span<int> page = new Span<int>(new int[4096]);
@@ -193,7 +192,7 @@ namespace V5.ConsoleTest
             //    () => { sum = 0; foreach (int item in bucketSpan) { sum += item; } return sum; }
             //);
 
-            Benchmark.Compare("IndexSet Operations", iterations, size, new string[] { "All", "None", "And", "Count", "WhereGreaterThan", $"Where Parallel x{parallelCount}" },
+            Benchmark.Compare("IndexSet Operations", iterations, size, new string[] { "All", "None", "And", "Count", "WhereGreaterThan", $"Where Parallel x{ParallelCount}" },
                 () => set.All(size),
                 () => set.None(),
                 () => set.And(other),
