@@ -46,6 +46,11 @@ namespace V5.Test.Collections
 
             // Verify items are popped in ascending order
             Assert.AreEqual("0, 1, 2, 3, 4", PopAll(heap));
+
+            // Try pre-building the heap as a max heap via constructor
+            heap = new Heap<int>((left, right) => right.CompareTo(left), new Span<int>(new int[] { 1, 3, 0, 4, 2 }), 5, 5);
+            Assert.AreEqual(5, heap.Length);
+            Assert.AreEqual("4, 3, 2, 1, 0", PopAll(heap));
         }
 
         private static string PopAll(Heap<int> heap)

@@ -14,8 +14,11 @@ namespace V5
 			Span<T>^ _items;
 			int _limit;
 
+			void PercolateUp(T item, int hole);
+
 		public:
 			Heap(Comparison<T>^ comparison, Span<T>^ items, int limit);
+			Heap(Comparison<T>^ comparison, Span<T>^ items, int limit, int initialCount);
 
 			property Int32 Length { Int32 get(); }
 
