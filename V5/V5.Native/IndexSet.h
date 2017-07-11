@@ -41,6 +41,8 @@ namespace V5
 			// Where with offset (for parallel use)
 			generic <typename T>
 			IndexSet^ Where(BooleanOperator bOp, array<T>^ values, CompareOperator cOp, T value, int offset, int length);
+
+			virtual String^ ToString() override;
 		};
 	}
 }

@@ -291,5 +291,10 @@ namespace V5
 
 			return this;
 		}
+
+		String^ IndexSet::ToString()
+		{
+			return this->Count.ToString();
+		}
 	}
 }
