@@ -182,8 +182,16 @@ namespace V5.ConsoleTest
             byte[] bucketSample = new byte[size];
             Span<byte> bucketSpan = new Span<byte>(bucketSample);
 
+            ushort[] bigBucketSample = new ushort[size];
+            Span<ushort> bigSpan = new Span<ushort>(bigBucketSample);
+
             Random random = new Random(6);
             random.NextBytes(bucketSample);
+            
+            for(int i = 0; i < size; ++i)
+            {
+                bigBucketSample[i] = (ushort)(random.Next() & ushort.MaxValue);
+            }
 
             //Benchmark.Compare("Span Operations", iterations, size, new string[] { "Array For", "Array ForEach", "Span For", "Span ForEach" },
             //    () => { sum = 0; for (int i = 0; i < bucketSample.Length; ++i) { sum += bucketSample[i]; } return sum; },
@@ -192,12 +200,13 @@ namespace V5.ConsoleTest
             //    () => { sum = 0; foreach (int item in bucketSpan) { sum += item; } return sum; }
             //);
 
-            Benchmark.Compare("IndexSet Operations", iterations, size, new string[] { "All", "None", "And", "Count", "WhereGreaterThan", $"Where Parallel x{ParallelCount}" },
+            Benchmark.Compare("IndexSet Operations", iterations, size, new string[] { "All", "None", "And", "Count", "WhereGreaterThan", "WhereGreaterThanTwoByte", $"Where Parallel x{ParallelCount}" },
                 () => set.All(size),
                 () => set.None(),
                 () => set.And(other),
                 () => set.Count,
-                () => set.Where(BooleanOperator.And, bucketSample, CompareOperator.GreaterThan, (byte)200),
+                () => set.Where(BooleanOperator.Set, bucketSample, CompareOperator.GreaterThan, (byte)200),
+                () => set.Where(BooleanOperator.Set, bigBucketSample, CompareOperator.GreaterThan, (ushort)65000),
                 () => ParallelWhere(bucketSample, (byte)200, sets)
             );
 
