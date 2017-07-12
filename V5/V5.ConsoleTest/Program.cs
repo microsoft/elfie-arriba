@@ -16,7 +16,7 @@ namespace V5.ConsoleTest
 {
     public class WebRequestDatabase
     {
-        public const int ParallelCount = 2;
+        public const int ParallelCount = 4;
 
         public PrimitiveColumn<long> EventTime;
         public PrimitiveColumn<ushort> HttpStatus;
