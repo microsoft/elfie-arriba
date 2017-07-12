@@ -93,6 +93,23 @@ namespace V5.Test.Collections
             IndexSet_Where(Enumerable.Range(0, 120).Select((i) => (long)i).ToArray(), (long)100);
             IndexSet_Where(Enumerable.Range(0, 120).Select((i) => (float)i).ToArray(), (float)100);
             IndexSet_Where(Enumerable.Range(0, 120).Select((i) => (double)i).ToArray(), (double)100);
+
+            int[] alternating = new int[120];
+            for(int i = 0; i < 120; ++i)
+            {
+                alternating[i] = (i % 2 == 0 ? i : 120 - i);
+            }
+
+            //IndexSet_WhereAlternating(alternating.Select((i) => (byte)i).ToArray(), (byte)100);
+            //IndexSet_WhereAlternating(alternating.Select((i) => (sbyte)i).ToArray(), (sbyte)100);
+            IndexSet_WhereAlternating(alternating.Select((i) => (ushort)i).ToArray(), (ushort)100);
+            IndexSet_WhereAlternating(alternating.Select((i) => (short)i).ToArray(), (short)100);
+            IndexSet_WhereAlternating(alternating.Select((i) => (uint)i).ToArray(), (uint)100);
+            IndexSet_WhereAlternating(alternating.Select((i) => (int)i).ToArray(), (int)100);
+            IndexSet_WhereAlternating(alternating.Select((i) => (ulong)i).ToArray(), (ulong)100);
+            IndexSet_WhereAlternating(alternating.Select((i) => (long)i).ToArray(), (long)100);
+            IndexSet_WhereAlternating(alternating.Select((i) => (float)i).ToArray(), (float)100);
+            IndexSet_WhereAlternating(alternating.Select((i) => (double)i).ToArray(), (double)100);
         }
 
         private static void IndexSet_Where<T>(T[] zeroToN, T oneHundred)
@@ -131,6 +148,21 @@ namespace V5.Test.Collections
             Assert.AreEqual(1, set.All(zeroToN.Length).Where(BooleanOperator.AndNot, zeroToN, CompareOperator.NotEquals, oneHundred).Count);
 
             Assert.AreEqual(0, set.None().Where(BooleanOperator.AndNot, zeroToN, CompareOperator.LessThanOrEqual, oneHundred).Count);
+        }
+
+        private static void IndexSet_WhereAlternating<T>(T[] alternatingToN, T oneHundred) where T : IComparable<T>
+        {
+            IndexSet set = new IndexSet(alternatingToN.Length);
+            
+            Assert.AreEqual(alternatingToN.Length - 101, set.Where(BooleanOperator.Set, alternatingToN, CompareOperator.GreaterThan, oneHundred).Count);
+
+            Span<int> values = new Span<int>(new int[set.Capacity]);
+            set.Page(ref values, 0);
+
+            for(int i = 0; i < alternatingToN.Length; ++i)
+            {
+                Assert.AreEqual(alternatingToN[i].CompareTo(oneHundred) > 0, set[i]);
+            }
         }
     }
 }
