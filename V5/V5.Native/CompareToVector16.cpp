@@ -26,11 +26,64 @@ __mm256_movemask_epi8  - Set 32 bits to the first bit of each mask byte (convert
 __mm256_set1_epi16     - Set all bytes of a register to the same one short value.
 __mm256_sub_epi16      - Subtract from each short in parallel.
 
-_pext_u32              - Parallel Bit Extract: Copy bits set on the mask from the input to adjacent bits on the output. 
-
+_pext_u32              - Parallel Bit Extract: For each bit set on the mask, copy that bit from the input to the next adjacent bit on the output. ("Squish" bits together)
+_pdep_u64              - Parallel Bit Deposit: For each bit set on the mask, copy the next adjacent bit from the input to the mask bit position on the output. ("Stretch" bits apart)
 */
 
 #pragma unmanaged
+
+const unsigned long long StretchMasks[] = {
+	0x0000000000000000, // 0 -> 8 bits [Not Valid]
+	0x0101010101010101, // 1 -> 8 bits [Pad 7 bits before every bit]
+	0x0303030303030303, // 2 -> 8 bits [Pad 6 bits before every two bits]
+	0x0707070707070707, // 3 -> 8 bits 
+	0x0F0F0F0F0F0F0F0F, // 4 -> 8 bits
+	0x1F1F1F1F1F1F1F1F, // 5 -> 8 bits
+	0x3F3F3F3F3F3F3F3F, // 6 -> 8 bits
+	0x7F7F7F7F7F7F7F7F, // 7 -> 8 bits
+	0xFFFFFFFFFFFFFFFF, // 8 -> 8 bits [Not Valid]
+	0x01FF01FF01FF01FF, // 9 -> 16 bits [Pad 7 bits before every 9 bits]
+	0x03FF03FF03FF03FF, // 10 -> 16 bits
+	0x07FF07FF07FF07FF, // 11 -> 16 bits
+	0x0FFF0FFF0FFF0FFF, // 12 -> 16 bits
+	0x1FFF1FFF1FFF1FFF, // 13 -> 16 bits
+	0x3FFF3FFF3FFF3FFF, // 14 -> 16 bits
+	0x7FFF7FFF7FFF7FFF, // 15 -> 16 bits
+	0xFFFFFFFFFFFFFFFF  // 16 -> 16 bits [Not Valid]
+};
+
+static void StretchBits(unsigned __int64* set, int index, int bitsPerValue, unsigned __int64* expanded, int expandLength)
+{
+	// Get a mask which PDEP will use to 'stretch' the bits to an even 8 or 16 bits per value
+	unsigned long long stretchMask = StretchMasks[bitsPerValue];
+
+	// Find the 'bit index' of the first value
+	int indexInBits = index * bitsPerValue;
+
+	// Calculate how many compressed bits are used up for each 64-bit result filled
+	int incrementBits = (bitsPerValue < 8 ? bitsPerValue * 8 : bitsPerValue * 4);
+
+	for (int i = 0; i < expandLength; ++i)
+	{
+		// Determine the ulong array offset of the next value [and how many bits in it is]
+		int indexInArray = indexInBits >> 6;
+		int bitIndexInValue = indexInBits & 63;
+
+		// Get the next 64 bits of compressed values, shifted so the first value starts in the lowest bit
+		unsigned long long compressedBits = set[indexInArray];
+		if (bitIndexInValue > 0)
+		{
+			compressedBits = compressedBits >> bitIndexInValue;
+			compressedBits |= (set[indexInArray + 1] << (64 - bitIndexInValue));
+		}
+
+		// Expand to 64 bits of result
+		expanded[i] = _pdep_u64(compressedBits, stretchMask);
+
+		// Calculate where to get the next block
+		indexInBits += incrementBits;
+	}
+}
 
 template<CompareOperatorN cOp, BooleanOperatorN bOp, SigningN sign>
 static void WhereN(unsigned __int16* set, int length, unsigned __int16 value, unsigned __int64* matchVector)
@@ -52,7 +105,16 @@ static void WhereN(unsigned __int16* set, int length, unsigned __int16 value, un
 	int blockLength = length & ~63;
 	for (; i < blockLength; i += 64)
 	{
-		// Load 64 2-byte values to compare
+		//// "Stretch" the next 64 rows into 2 bytes each. [64 * 2 bytes = 16 * 8 bytes]
+		//unsigned __int64 expandedBlocks[16];
+		//StretchBits((unsigned __int64*)set, i, 12, expandedBlocks, 16);
+		//	
+		//// Load 64 2-byte values to compare
+		//__m256i block1 = _mm256_loadu_si256((__m256i*)(&expandedBlocks[0]));
+		//__m256i block2 = _mm256_loadu_si256((__m256i*)(&expandedBlocks[16]));
+		//__m256i block3 = _mm256_loadu_si256((__m256i*)(&expandedBlocks[32]));
+		//__m256i block4 = _mm256_loadu_si256((__m256i*)(&expandedBlocks[48]));
+
 		__m256i block1 = _mm256_loadu_si256((__m256i*)(&set[i]));
 		__m256i block2 = _mm256_loadu_si256((__m256i*)(&set[i + 16]));
 		__m256i block3 = _mm256_loadu_si256((__m256i*)(&set[i + 32]));
