@@ -16,16 +16,17 @@ Comparisons on unsigned types are done by subtracting first.
 Other operators are done by swapping the operands.
 [ !(A > B) == (A <= B); !(A == B) == (A != B) ]
 
-__mm256_loadu_si256   - Load 32 bytes of unaligned data.
+__mm256_loadu_si256    - Load 32 bytes of unaligned data.
 
 __mm256_cmpgt_epi16    - Compare 16 shorts in parallel. Set a mask to 0x0000 if A <= B or 0xFFFF if A > B
 __mm256_cmpeq_epi16    - Compare 16 shorts in parallel. Set a mask to 0x0000 if A != B or 0xFFFF if A == B
 
-__mm256_blendv_epi8    - Set bytes in the output to the corresponding byte from one or the other input according to a mask.
 __mm256_movemask_epi8  - Set 32 bits to the first bit of each mask byte (convert byte mask to bit mask).
 
-__mm256_set1_epi16   - Set all bytes of a register to the same one short value.
-__mm256_sub_epi16    - Subtract from each short in parallel.
+__mm256_set1_epi16     - Set all bytes of a register to the same one short value.
+__mm256_sub_epi16      - Subtract from each short in parallel.
+
+_pext_u32              - Parallel Bit Extract: Copy bits set on the mask from the input to adjacent bits on the output. 
 
 */
 
@@ -51,11 +52,13 @@ static void WhereN(unsigned __int16* set, int length, unsigned __int16 value, un
 	int blockLength = length & ~63;
 	for (; i < blockLength; i += 64)
 	{
+		// Load 64 2-byte values to compare
 		__m256i block1 = _mm256_loadu_si256((__m256i*)(&set[i]));
 		__m256i block2 = _mm256_loadu_si256((__m256i*)(&set[i + 16]));
 		__m256i block3 = _mm256_loadu_si256((__m256i*)(&set[i + 32]));
 		__m256i block4 = _mm256_loadu_si256((__m256i*)(&set[i + 48]));
 
+		// Convert them to signed form, if needed
 		if (sign == SigningN::Unsigned)
 		{
 			block1 = _mm256_sub_epi16(block1, unsignedToSigned);
@@ -64,6 +67,7 @@ static void WhereN(unsigned __int16* set, int length, unsigned __int16 value, un
 			block4 = _mm256_sub_epi16(block4, unsignedToSigned);
 		}
 
+		// Compare them to the desired value, building a mask with 0xFFFF for matches and 0x0000 for non-matches
 		__m256i matchMask1;
 		__m256i matchMask2;
 		__m256i matchMask3;
@@ -94,21 +98,26 @@ static void WhereN(unsigned __int16* set, int length, unsigned __int16 value, un
 			break;
 		}
 
+		// Convert the masks into bits (one bit per byte, so still two duplicate bits per row matched)
 		unsigned int matchBits1 = _mm256_movemask_epi8(matchMask1);
 		unsigned int matchBits2 = _mm256_movemask_epi8(matchMask2);
 		unsigned int matchBits3 = _mm256_movemask_epi8(matchMask3);
 		unsigned int matchBits4 = _mm256_movemask_epi8(matchMask4);
 
+		// Get every other bit (so it's one per row) and merge together pairs
 		unsigned int matchBits2_1 = _pext_u32(matchBits2, everyOtherBit) << 16 | _pext_u32(matchBits1, everyOtherBit);
 		unsigned int matchBits4_3 = _pext_u32(matchBits4, everyOtherBit) << 16 | _pext_u32(matchBits3, everyOtherBit);
 
+		// Merge the result to get 64 bits for whether 64 rows matched
 		result = ((unsigned __int64)matchBits4_3) << 32 | matchBits2_1;
 
+		// Negate the result for operators we ran the opposites of
 		if (cOp == CompareOperatorN::LessThanOrEqual || cOp == CompareOperatorN::GreaterThanOrEqual || cOp == CompareOperatorN::NotEquals)
 		{
 			result = ~result;
 		}
 
+		// Merge the result with the existing bit vector bits based on the boolean operator requested
 		switch (bOp)
 		{
 		case BooleanOperatorN::Set:

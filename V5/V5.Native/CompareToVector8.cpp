@@ -47,12 +47,18 @@ static void WhereN(unsigned __int8* set, int length, unsigned __int8 value, unsi
 	int blockLength = length & ~63;
 	for (; i < blockLength; i += 64)
 	{
+		// Load 64 bytes to compare
 		__m256i block1 = _mm256_loadu_si256((__m256i*)(&set[i]));
 		__m256i block2 = _mm256_loadu_si256((__m256i*)(&set[i + 32]));
 
-		if (sign == SigningN::Unsigned) block1 = _mm256_sub_epi8(block1, unsignedToSigned);
-		if (sign == SigningN::Unsigned) block2 = _mm256_sub_epi8(block2, unsignedToSigned);
+		// Convert them to signed form, if needed
+		if (sign == SigningN::Unsigned)
+		{
+			block1 = _mm256_sub_epi8(block1, unsignedToSigned);
+			block2 = _mm256_sub_epi8(block2, unsignedToSigned);
+		}
 
+		// Compare them to the desired value, building a mask with 0xFF for matches and 0x00 for non-matches
 		__m256i matchMask1;
 		__m256i matchMask2;
 		switch (cOp)
@@ -74,15 +80,20 @@ static void WhereN(unsigned __int8* set, int length, unsigned __int8 value, unsi
 				break;
 		}
 
+		// Convert the masks into bits (one bit per byte)
 		unsigned int matchBits1 = _mm256_movemask_epi8(matchMask1);
 		unsigned int matchBits2 = _mm256_movemask_epi8(matchMask2);
+
+		// Merge the matches into 64 bits for whether 64 rows matched
 		result = ((unsigned __int64)matchBits2) << 32 | matchBits1;
 
+		// Negate the result for operators we ran the opposites of
 		if (cOp == CompareOperatorN::LessThanOrEqual || cOp == CompareOperatorN::GreaterThanOrEqual || cOp == CompareOperatorN::NotEquals)
 		{
 			result = ~result;
 		}
 
+		// Merge the result with the existing bit vector bits based on the boolean operator requested
 		switch (bOp)
 		{
 			case BooleanOperatorN::Set:
