@@ -44,8 +44,8 @@ static void WhereN(unsigned __int16* set, int length, unsigned __int16 value, un
 	__m256i blockOfValue = _mm256_set1_epi16(value);
 	if (sign == SigningN::Unsigned) blockOfValue = _mm256_sub_epi16(blockOfValue, unsignedToSigned);
 
-	// Build a mask to load alternate bytes from the result masks
-	__m256i alternateMask = _mm256_set1_epi16((__int16)0xFF00);
+	// Build a PEXT mask asking for every other bit (1010 = A)
+	unsigned int everyOtherBit = 0xAAAAAAAA;
 
 	// Compare 64-byte blocks and generate a 64-bit result while there's enough data
 	int blockLength = length & ~63;
@@ -66,30 +66,43 @@ static void WhereN(unsigned __int16* set, int length, unsigned __int16 value, un
 
 		__m256i matchMask1;
 		__m256i matchMask2;
+		__m256i matchMask3;
+		__m256i matchMask4;
 
 		switch (cOp)
 		{
 		case CompareOperatorN::GreaterThan:
 		case CompareOperatorN::LessThanOrEqual:
-			matchMask1 = _mm256_blendv_epi8(_mm256_cmpgt_epi16(block1, blockOfValue), _mm256_cmpgt_epi16(block2, blockOfValue), alternateMask);
-			matchMask2 = _mm256_blendv_epi8(_mm256_cmpgt_epi16(block3, blockOfValue), _mm256_cmpgt_epi16(block4, blockOfValue), alternateMask);
+			matchMask1 = _mm256_cmpgt_epi16(block1, blockOfValue);
+			matchMask2 = _mm256_cmpgt_epi16(block2, blockOfValue);
+			matchMask3 = _mm256_cmpgt_epi16(block3, blockOfValue);
+			matchMask4 = _mm256_cmpgt_epi16(block4, blockOfValue);
 			break;
 		case CompareOperatorN::LessThan:
 		case CompareOperatorN::GreaterThanOrEqual:
-			matchMask1 = _mm256_blendv_epi8(_mm256_cmpgt_epi16(blockOfValue, block1),_mm256_cmpgt_epi16(blockOfValue, block2), alternateMask);
-			matchMask2 = _mm256_blendv_epi8(_mm256_cmpgt_epi16(blockOfValue, block3),_mm256_cmpgt_epi16(blockOfValue, block4), alternateMask);
+			matchMask1 = _mm256_cmpgt_epi16(blockOfValue, block1);
+			matchMask2 = _mm256_cmpgt_epi16(blockOfValue, block2);
+			matchMask3 = _mm256_cmpgt_epi16(blockOfValue, block3);
+			matchMask4 = _mm256_cmpgt_epi16(blockOfValue, block4);
 			break;
 		case CompareOperatorN::Equals:
 		case CompareOperatorN::NotEquals:
-			matchMask1 = _mm256_blendv_epi8(_mm256_cmpeq_epi16(block1, blockOfValue), _mm256_cmpeq_epi16(block2, blockOfValue), alternateMask);
-			matchMask2 = _mm256_blendv_epi8(_mm256_cmpeq_epi16(block3, blockOfValue), _mm256_cmpeq_epi16(block4, blockOfValue), alternateMask);
+			matchMask1 = _mm256_cmpeq_epi16(block1, blockOfValue);
+			matchMask2 = _mm256_cmpeq_epi16(block2, blockOfValue);
+			matchMask3 = _mm256_cmpeq_epi16(block3, blockOfValue);
+			matchMask4 = _mm256_cmpeq_epi16(block4, blockOfValue);
 			break;
 		}
 
 		unsigned int matchBits1 = _mm256_movemask_epi8(matchMask1);
 		unsigned int matchBits2 = _mm256_movemask_epi8(matchMask2);
+		unsigned int matchBits3 = _mm256_movemask_epi8(matchMask3);
+		unsigned int matchBits4 = _mm256_movemask_epi8(matchMask4);
 
-		result = ((unsigned __int64)matchBits2) << 32 | matchBits1;
+		unsigned int matchBits2_1 = _pext_u32(matchBits2, everyOtherBit) << 16 | _pext_u32(matchBits1, everyOtherBit);
+		unsigned int matchBits4_3 = _pext_u32(matchBits4, everyOtherBit) << 16 | _pext_u32(matchBits3, everyOtherBit);
+
+		result = ((unsigned __int64)matchBits4_3) << 32 | matchBits2_1;
 
 		if (cOp == CompareOperatorN::LessThanOrEqual || cOp == CompareOperatorN::GreaterThanOrEqual || cOp == CompareOperatorN::NotEquals)
 		{

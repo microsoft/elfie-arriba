@@ -99,5 +99,8 @@ void CompareToVector::WhereSingle(CompareOperatorN cOp, BooleanOperatorN bOp, T*
 	case BooleanOperatorN::AndNot:
 		WhereSingleB<BooleanOperatorN::AndNot, T>(cOp, set, length, value, matchVector);
 		break;
+	case BooleanOperatorN::Set:
+		WhereSingleB<BooleanOperatorN::Set, T>(cOp, set, length, value, matchVector);
+		break;
 	}
 }

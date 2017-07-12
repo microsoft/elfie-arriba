@@ -100,8 +100,8 @@ namespace V5.Test.Collections
                 alternating[i] = (i % 2 == 0 ? i : 120 - i);
             }
 
-            //IndexSet_WhereAlternating(alternating.Select((i) => (byte)i).ToArray(), (byte)100);
-            //IndexSet_WhereAlternating(alternating.Select((i) => (sbyte)i).ToArray(), (sbyte)100);
+            IndexSet_WhereAlternating(alternating.Select((i) => (byte)i).ToArray(), (byte)100);
+            IndexSet_WhereAlternating(alternating.Select((i) => (sbyte)i).ToArray(), (sbyte)100);
             IndexSet_WhereAlternating(alternating.Select((i) => (ushort)i).ToArray(), (ushort)100);
             IndexSet_WhereAlternating(alternating.Select((i) => (short)i).ToArray(), (short)100);
             IndexSet_WhereAlternating(alternating.Select((i) => (uint)i).ToArray(), (uint)100);
