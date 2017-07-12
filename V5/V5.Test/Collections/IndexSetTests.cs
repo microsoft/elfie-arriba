@@ -83,86 +83,166 @@ namespace V5.Test.Collections
         [TestMethod]
         public void IndexSet_Where()
         {
-            IndexSet_Where(Enumerable.Range(0, 120).Select((i) => (byte)i).ToArray(), (byte)100);
-            IndexSet_Where(Enumerable.Range(0, 120).Select((i) => (sbyte)i).ToArray(), (sbyte)100);
-            IndexSet_Where(Enumerable.Range(0, 120).Select((i) => (ushort)i).ToArray(), (ushort)100);
-            IndexSet_Where(Enumerable.Range(0, 120).Select((i) => (short)i).ToArray(), (short)100);
-            IndexSet_Where(Enumerable.Range(0, 120).Select((i) => (uint)i).ToArray(), (uint)100);
-            IndexSet_Where(Enumerable.Range(0, 120).Select((i) => (int)i).ToArray(), (int)100);
-            IndexSet_Where(Enumerable.Range(0, 120).Select((i) => (ulong)i).ToArray(), (ulong)100);
-            IndexSet_Where(Enumerable.Range(0, 120).Select((i) => (long)i).ToArray(), (long)100);
-            IndexSet_Where(Enumerable.Range(0, 120).Select((i) => (float)i).ToArray(), (float)100);
-            IndexSet_Where(Enumerable.Range(0, 120).Select((i) => (double)i).ToArray(), (double)100);
+            // Try every operation on an ascending set
+            IndexSet_VerifyWhereAll(Enumerable.Range(0, 120).Select((i) => (byte)i).ToArray(), (byte)100);
+            IndexSet_VerifyWhereAll(Enumerable.Range(0, 120).Select((i) => (sbyte)i).ToArray(), (sbyte)100);
+            IndexSet_VerifyWhereAll(Enumerable.Range(0, 120).Select((i) => (ushort)i).ToArray(), (ushort)100);
+            IndexSet_VerifyWhereAll(Enumerable.Range(0, 120).Select((i) => (short)i).ToArray(), (short)100);
+            IndexSet_VerifyWhereAll(Enumerable.Range(0, 120).Select((i) => (uint)i).ToArray(), (uint)100);
+            IndexSet_VerifyWhereAll(Enumerable.Range(0, 120).Select((i) => (int)i).ToArray(), (int)100);
+            IndexSet_VerifyWhereAll(Enumerable.Range(0, 120).Select((i) => (ulong)i).ToArray(), (ulong)100);
+            IndexSet_VerifyWhereAll(Enumerable.Range(0, 120).Select((i) => (long)i).ToArray(), (long)100);
+            IndexSet_VerifyWhereAll(Enumerable.Range(0, 120).Select((i) => (float)i).ToArray(), (float)100);
+            IndexSet_VerifyWhereAll(Enumerable.Range(0, 120).Select((i) => (double)i).ToArray(), (double)100);
 
+            // Try every operation on an alternating set
             int[] alternating = new int[120];
-            for(int i = 0; i < 120; ++i)
+            for (int i = 0; i < 120; ++i)
             {
                 alternating[i] = (i % 2 == 0 ? i : 120 - i);
             }
 
-            IndexSet_WhereAlternating(alternating.Select((i) => (byte)i).ToArray(), (byte)100);
-            IndexSet_WhereAlternating(alternating.Select((i) => (sbyte)i).ToArray(), (sbyte)100);
-            IndexSet_WhereAlternating(alternating.Select((i) => (ushort)i).ToArray(), (ushort)100);
-            IndexSet_WhereAlternating(alternating.Select((i) => (short)i).ToArray(), (short)100);
-            IndexSet_WhereAlternating(alternating.Select((i) => (uint)i).ToArray(), (uint)100);
-            IndexSet_WhereAlternating(alternating.Select((i) => (int)i).ToArray(), (int)100);
-            IndexSet_WhereAlternating(alternating.Select((i) => (ulong)i).ToArray(), (ulong)100);
-            IndexSet_WhereAlternating(alternating.Select((i) => (long)i).ToArray(), (long)100);
-            IndexSet_WhereAlternating(alternating.Select((i) => (float)i).ToArray(), (float)100);
-            IndexSet_WhereAlternating(alternating.Select((i) => (double)i).ToArray(), (double)100);
+            IndexSet_VerifyWhereAll(alternating.Select((i) => (byte)i).ToArray(), (byte)100);
+            IndexSet_VerifyWhereAll(alternating.Select((i) => (sbyte)i).ToArray(), (sbyte)100);
+            IndexSet_VerifyWhereAll(alternating.Select((i) => (ushort)i).ToArray(), (ushort)100);
+            IndexSet_VerifyWhereAll(alternating.Select((i) => (short)i).ToArray(), (short)100);
+            IndexSet_VerifyWhereAll(alternating.Select((i) => (uint)i).ToArray(), (uint)100);
+            IndexSet_VerifyWhereAll(alternating.Select((i) => (int)i).ToArray(), (int)100);
+            IndexSet_VerifyWhereAll(alternating.Select((i) => (ulong)i).ToArray(), (ulong)100);
+            IndexSet_VerifyWhereAll(alternating.Select((i) => (long)i).ToArray(), (long)100);
+            IndexSet_VerifyWhereAll(alternating.Select((i) => (float)i).ToArray(), (float)100);
+            IndexSet_VerifyWhereAll(alternating.Select((i) => (double)i).ToArray(), (double)100);
         }
 
-        private static void IndexSet_Where<T>(T[] zeroToN, T oneHundred)
+        private static void IndexSet_VerifyWhereAll<T>(T[] array, T value) where T : IComparable<T>
         {
-            IndexSet set = new IndexSet(zeroToN.Length);
+            IndexSet_VerifyWhere(array, value, CompareOperator.Equals);
+            IndexSet_VerifyWhere(array, value, CompareOperator.NotEquals);
+            IndexSet_VerifyWhere(array, value, CompareOperator.GreaterThan);
+            IndexSet_VerifyWhere(array, value, CompareOperator.GreaterThanOrEqual);
+            IndexSet_VerifyWhere(array, value, CompareOperator.LessThan);
+            IndexSet_VerifyWhere(array, value, CompareOperator.LessThanOrEqual);
+        }
+
+        private static void IndexSet_VerifyWhere<T>(T[] array, T value, CompareOperator cOp) where T : IComparable<T>
+        {
+            IndexSet set = new IndexSet(array.Length);
             Assert.AreEqual(0, set.Count, "Verify set starts empty.");
 
-            // Test AND each operator
-            Assert.AreEqual(zeroToN.Length - 101, set.All(zeroToN.Length).Where(BooleanOperator.And, zeroToN, CompareOperator.GreaterThan, oneHundred).Count);
-            Assert.AreEqual(zeroToN.Length - 100, set.All(zeroToN.Length).Where(BooleanOperator.And, zeroToN, CompareOperator.GreaterThanOrEqual, oneHundred).Count);
-            Assert.AreEqual(100, set.All(zeroToN.Length).Where(BooleanOperator.And, zeroToN, CompareOperator.LessThan, oneHundred).Count);
-            Assert.AreEqual(101, set.All(zeroToN.Length).Where(BooleanOperator.And, zeroToN, CompareOperator.LessThanOrEqual, oneHundred).Count);
-            Assert.AreEqual(1, set.All(zeroToN.Length).Where(BooleanOperator.And, zeroToN, CompareOperator.Equals, oneHundred).Count);
-            Assert.AreEqual(zeroToN.Length - 1, set.All(zeroToN.Length).Where(BooleanOperator.And, zeroToN, CompareOperator.NotEquals, oneHundred).Count);
+            // Verify 'Set' on an empty set works as expected (normal matches)
+            set.Where(BooleanOperator.Set, array, cOp, value);
+            IndexSet_VerifySetMatches(set, array, value, cOp);
 
-            // Validate AND is using previous values
-            Assert.AreEqual(0, set.None().Where(BooleanOperator.And, zeroToN, CompareOperator.LessThanOrEqual, oneHundred).Count);
+            // Verify 'Set' on a full set works as expected (normal matches)
+            set.All(array.Length);
+            set.Where(BooleanOperator.Set, array, cOp, value);
+            IndexSet_VerifySetMatches(set, array, value, cOp);
 
-            // Test OR each operator
-            Assert.AreEqual(zeroToN.Length - 101, set.None().Where(BooleanOperator.Or, zeroToN, CompareOperator.GreaterThan, oneHundred).Count);
-            Assert.AreEqual(zeroToN.Length - 100, set.None().Where(BooleanOperator.Or, zeroToN, CompareOperator.GreaterThanOrEqual, oneHundred).Count);
-            Assert.AreEqual(100, set.None().Where(BooleanOperator.Or, zeroToN, CompareOperator.LessThan, oneHundred).Count);
-            Assert.AreEqual(101, set.None().Where(BooleanOperator.Or, zeroToN, CompareOperator.LessThanOrEqual, oneHundred).Count);
-            Assert.AreEqual(1, set.None().Where(BooleanOperator.Or, zeroToN, CompareOperator.Equals, oneHundred).Count);
-            Assert.AreEqual(zeroToN.Length - 1, set.None().Where(BooleanOperator.Or, zeroToN, CompareOperator.NotEquals, oneHundred).Count);
+            // Verify 'And' on an empty set works as expected (no matches)
+            set.None();
+            set.Where(BooleanOperator.And, array, cOp, value);
+            Assert.AreEqual(0, set.Count);
 
-            // Validate OR is using previous values
-            Assert.AreEqual(zeroToN.Length, set.All(zeroToN.Length).Where(BooleanOperator.Or, zeroToN, CompareOperator.LessThanOrEqual, oneHundred).Count);
+            // Verify 'And' on a full set works as expected (normal matches)
+            set.All(array.Length);
+            set.Where(BooleanOperator.And, array, cOp, value);
+            IndexSet_VerifySetMatches(set, array, value, cOp);
 
-            // Test AND NOT each operator
-            Assert.AreEqual(101, set.All(zeroToN.Length).Where(BooleanOperator.AndNot, zeroToN, CompareOperator.GreaterThan, oneHundred).Count);
-            Assert.AreEqual(100, set.All(zeroToN.Length).Where(BooleanOperator.AndNot, zeroToN, CompareOperator.GreaterThanOrEqual, oneHundred).Count);
-            Assert.AreEqual(zeroToN.Length - 100, set.All(zeroToN.Length).Where(BooleanOperator.AndNot, zeroToN, CompareOperator.LessThan, oneHundred).Count);
-            Assert.AreEqual(zeroToN.Length - 101, set.All(zeroToN.Length).Where(BooleanOperator.AndNot, zeroToN, CompareOperator.LessThanOrEqual, oneHundred).Count);
-            Assert.AreEqual(zeroToN.Length - 1, set.All(zeroToN.Length).Where(BooleanOperator.AndNot, zeroToN, CompareOperator.Equals, oneHundred).Count);
-            Assert.AreEqual(1, set.All(zeroToN.Length).Where(BooleanOperator.AndNot, zeroToN, CompareOperator.NotEquals, oneHundred).Count);
+            // Verify 'Or' on an empty set works as expected (normal matches)
+            set.None();
+            set.Where(BooleanOperator.Or, array, cOp, value);
+            IndexSet_VerifySetMatches(set, array, value, cOp);
 
-            Assert.AreEqual(0, set.None().Where(BooleanOperator.AndNot, zeroToN, CompareOperator.LessThanOrEqual, oneHundred).Count);
+            // Verify 'Or' on a full set works as expected (all matches)
+            set.All(array.Length);
+            set.Where(BooleanOperator.Or, array, cOp, value);
+            Assert.AreEqual(array.Length, set.Count);
+
+            // Verify 'AndNot' on an empty set works as expected (no matches)
+            set.None();
+            set.Where(BooleanOperator.AndNot, array, cOp, value);
+            Assert.AreEqual(0, set.Count);
+
+            // Verify 'AndNot' on a full set works as expected (complement of matches)
+            set.All(array.Length);
+            set.Where(BooleanOperator.AndNot, array, cOp, value);
+            IndexSet_VerifySetMatches(set, array, value, Complement(cOp));
         }
 
-        private static void IndexSet_WhereAlternating<T>(T[] alternatingToN, T oneHundred) where T : IComparable<T>
+        private static void IndexSet_VerifySetMatches<T>(IndexSet set, T[] array, T value, CompareOperator cOp) where T : IComparable<T>
         {
-            IndexSet set = new IndexSet(alternatingToN.Length);
-            
-            Assert.AreEqual(alternatingToN.Length - 101, set.Where(BooleanOperator.Set, alternatingToN, CompareOperator.GreaterThan, oneHundred).Count);
+            // Validate each array entry is included (or not) as the individual comparison would
+            int expectedCount = 0;
+            for(int i = 0; i < array.Length; ++i)
+            {
+                bool shouldBeIncluded = CompareSingle(array[i], value, cOp);
+                if (shouldBeIncluded) expectedCount++;
+                Assert.AreEqual(shouldBeIncluded, set[i]);
+            }
 
+            // Verify overall count is right
+            Assert.AreEqual(expectedCount, set.Count);
+
+            // Get a page of all matching indices
             Span<int> values = new Span<int>(new int[set.Capacity]);
             set.Page(ref values, 0);
 
-            for(int i = 0; i < alternatingToN.Length; ++i)
+            // Verify the paged indices have the right count and every index there matched
+            Assert.AreEqual(expectedCount, values.Length);
+            for(int i = 0; i < values.Length; ++i)
             {
-                Assert.AreEqual(alternatingToN[i].CompareTo(oneHundred) > 0, set[i]);
+                Assert.IsTrue(CompareSingle(array[values[i]], value, cOp));
             }
+        }
+
+        private static bool CompareSingle<T>(T left, T right, CompareOperator cOp) where T : IComparable<T>
+        {
+            // Implement dynamic comparison to validate V5 comparison
+            int cmp = left.CompareTo(right);
+
+            switch (cOp)
+            {
+                case CompareOperator.Equals:
+                    return cmp == 0;
+                case CompareOperator.NotEquals:
+                    return cmp != 0;
+                case CompareOperator.GreaterThan:
+                    return cmp > 0;
+                case CompareOperator.GreaterThanOrEqual:
+                    return cmp >= 0;
+                case CompareOperator.LessThan:
+                    return cmp < 0;
+                case CompareOperator.LessThanOrEqual:
+                    return cmp <= 0;
+            }
+
+            throw new NotImplementedException(cOp.ToString());
+        }
+
+        private static CompareOperator Complement(CompareOperator cOp)
+        {
+            switch(cOp)
+            {
+                case CompareOperator.Equals:
+                    return CompareOperator.NotEquals;
+
+                case CompareOperator.NotEquals:
+                    return CompareOperator.Equals;
+
+                case CompareOperator.GreaterThan:
+                    return CompareOperator.LessThanOrEqual;
+
+                case CompareOperator.GreaterThanOrEqual:
+                    return CompareOperator.LessThan;
+
+                case CompareOperator.LessThan:
+                    return CompareOperator.GreaterThanOrEqual;
+
+                case CompareOperator.LessThanOrEqual:
+                    return CompareOperator.GreaterThan;
+            }
+
+            throw new NotImplementedException(cOp.ToString());
         }
     }
 }
