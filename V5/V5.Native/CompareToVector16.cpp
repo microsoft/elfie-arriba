@@ -33,28 +33,33 @@ _pdep_u64              - Parallel Bit Deposit: For each bit set on the mask, cop
 #pragma unmanaged
 
 const unsigned long long StretchMasks[] = {
-	0x0000000000000000, // 0 -> 8 bits [Not Valid]
-	0x0101010101010101, // 1 -> 8 bits [Pad 7 bits before every bit]
-	0x0303030303030303, // 2 -> 8 bits [Pad 6 bits before every two bits]
-	0x0707070707070707, // 3 -> 8 bits 
-	0x0F0F0F0F0F0F0F0F, // 4 -> 8 bits
-	0x1F1F1F1F1F1F1F1F, // 5 -> 8 bits
-	0x3F3F3F3F3F3F3F3F, // 6 -> 8 bits
-	0x7F7F7F7F7F7F7F7F, // 7 -> 8 bits
-	0xFFFFFFFFFFFFFFFF, // 8 -> 8 bits [Not Valid]
-	0x01FF01FF01FF01FF, // 9 -> 16 bits [Pad 7 bits before every 9 bits]
-	0x03FF03FF03FF03FF, // 10 -> 16 bits
-	0x07FF07FF07FF07FF, // 11 -> 16 bits
-	0x0FFF0FFF0FFF0FFF, // 12 -> 16 bits
-	0x1FFF1FFF1FFF1FFF, // 13 -> 16 bits
-	0x3FFF3FFF3FFF3FFF, // 14 -> 16 bits
-	0x7FFF7FFF7FFF7FFF, // 15 -> 16 bits
-	0xFFFFFFFFFFFFFFFF  // 16 -> 16 bits [Not Valid]
+	0x0000'0000'0000'0000, // 0 -> 8 bits [Not Valid]
+	0x0101'0101'0101'0101, // 1 -> 8 bits [Pad 7 bits before every bit]
+	0x0303'0303'0303'0303, // 2 -> 8 bits [Pad 6 bits before every two bits]
+	0x0707'0707'0707'0707, // 3 -> 8 bits 
+	0x0F0F'0F0F'0F0F'0F0F, // 4 -> 8 bits
+	0x1F1F'1F1F'1F1F'1F1F, // 5 -> 8 bits
+	0x3F3F'3F3F'3F3F'3F3F, // 6 -> 8 bits
+	0x7F7F'7F7F'7F7F'7F7F, // 7 -> 8 bits
+	0xFFFF'FFFF'FFFF'FFFF, // 8 -> 8 bits [Not Valid]
+	0x01FF'01FF'01FF'01FF, // 9 -> 16 bits [Pad 7 bits before every 9 bits]
+	0x03FF'03FF'03FF'03FF, // 10 -> 16 bits
+	0x07FF'07FF'07FF'07FF, // 11 -> 16 bits
+	0x0FFF'0FFF'0FFF'0FFF, // 12 -> 16 bits
+	0x1FFF'1FFF'1FFF'1FFF, // 13 -> 16 bits
+	0x3FFF'3FFF'3FFF'3FFF, // 14 -> 16 bits
+	0x7FFF'7FFF'7FFF'7FFF, // 15 -> 16 bits
+	0xFFFF'FFFF'FFFF'FFFF  // 16 -> 16 bits [Not Valid]
 };
 
 static void Stretch12to16(unsigned __int64* set, int i, unsigned __int64* expanded)
 {
-	unsigned long long stretchMask = 0x0FFF0FFF0FFF0FFF;
+	// Hardcoded stretch is better but still ~3.5B/s (half the previous speed).
+	// Looking for pure AVX or AVX2 mechanism.
+	// 
+	// _mm256_shuffle_epi8 to get each byte close to the right place,
+	// _mm256_srlv_epi32 to shift parts of values
+	unsigned long long stretchMask = 0x0FFF'0FFF'0FFF'0FFF;
 
 	for (int targetIndex = 0; targetIndex < 16; targetIndex += 4, i += 3)
 	{
@@ -129,21 +134,20 @@ static void WhereN(unsigned __int16* set, int length, unsigned __int16 value, un
 	int blockLength = length & ~63;
 	for (; i < blockLength; i += 64)
 	{
-		// "Stretch" the next 64 rows into 2 bytes each. [64 * 2 bytes = 16 * 8 bytes]
-		unsigned __int64 expandedBlocks[16];
-		//StretchBits<12, 16>((unsigned __int64*)set, i, expandedBlocks);
-		Stretch12to16((unsigned __int64*)set, 3 * (i >> 6), expandedBlocks);
-			
-		// Load 64 2-byte values to compare
-		__m256i block1 = _mm256_loadu_si256((__m256i*)(&expandedBlocks[0]));
-		__m256i block2 = _mm256_loadu_si256((__m256i*)(&expandedBlocks[4]));
-		__m256i block3 = _mm256_loadu_si256((__m256i*)(&expandedBlocks[8]));
-		__m256i block4 = _mm256_loadu_si256((__m256i*)(&expandedBlocks[12]));
+		//// "Stretch" the next 64 rows into 2 bytes each. [64 * 2 bytes = 16 * 8 bytes]
+		//unsigned __int64 expandedBlocks[16];
+		//Stretch12to16((unsigned __int64*)set, 3 * (i >> 6), expandedBlocks);
+		//	
+		//// Load 64 2-byte values to compare
+		//__m256i block1 = _mm256_loadu_si256((__m256i*)(&expandedBlocks[0]));
+		//__m256i block2 = _mm256_loadu_si256((__m256i*)(&expandedBlocks[4]));
+		//__m256i block3 = _mm256_loadu_si256((__m256i*)(&expandedBlocks[8]));
+		//__m256i block4 = _mm256_loadu_si256((__m256i*)(&expandedBlocks[12]));
 
-		//__m256i block1 = _mm256_loadu_si256((__m256i*)(&set[i]));
-		//__m256i block2 = _mm256_loadu_si256((__m256i*)(&set[i + 16]));
-		//__m256i block3 = _mm256_loadu_si256((__m256i*)(&set[i + 32]));
-		//__m256i block4 = _mm256_loadu_si256((__m256i*)(&set[i + 48]));
+		__m256i block1 = _mm256_loadu_si256((__m256i*)(&set[i]));
+		__m256i block2 = _mm256_loadu_si256((__m256i*)(&set[i + 16]));
+		__m256i block3 = _mm256_loadu_si256((__m256i*)(&set[i + 32]));
+		__m256i block4 = _mm256_loadu_si256((__m256i*)(&set[i + 48]));
 
 		// Convert them to signed form, if needed
 		if (sign == SigningN::Unsigned)
