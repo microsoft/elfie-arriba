@@ -149,7 +149,14 @@ namespace Arriba.Test.Model
         }
 
         [TestMethod]
-        public void Table_All()
+        public void Table_All_SinglePartition()
+        {
+            ITable_All(() => new Table("Sample", 50000));
+
+        }
+
+        [TestMethod]
+        public void Table_All_MultiplePartition()
         {
             ITable_All(() => new Table("Sample", 75000));
         }

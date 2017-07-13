@@ -232,7 +232,15 @@ namespace Arriba.Model.Query
                 }
             }
 
-            return localContext.Compute(p);
+            SelectResult result = localContext.Compute(p);
+
+            if (localContext.Pass1Results != null)
+            {
+                // If this isn't the first pass, use the total from the first pass
+                result.Total = localContext.Pass1Results.Total;
+            }
+
+            return result;
         }
 
         public SelectResult Merge(SelectResult[] partitionResults)
@@ -247,7 +255,15 @@ namespace Arriba.Model.Query
                 }
             }
 
-            return localContext.Merge(partitionResults);
+            SelectResult result = localContext.Merge(partitionResults);
+
+            if (localContext.Pass1Results != null)
+            {
+                // If this isn't the first pass, use the total from the first pass
+                result.Total = localContext.Pass1Results.Total;
+            }
+
+            return result;
         }
 
         private class SelectContext
@@ -471,15 +487,7 @@ namespace Arriba.Model.Query
                     mergedResult.Details.Merge(partitionResults[i].Details);
                 }
 
-                if (this.Pass1Results == null)
-                {
-                    mergedResult.Total = totalFound;
-                }
-                else
-                {
-                    mergedResult.Total = this.Pass1Results.Total;
-                }
-
+                mergedResult.Total = totalFound;
                 mergedResult.CountReturned = (ushort)Math.Min(this.Count, totalReturned);
 
                 if (mergedResult.Details.Succeeded)
