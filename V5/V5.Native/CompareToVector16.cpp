@@ -52,38 +52,59 @@ const unsigned long long StretchMasks[] = {
 	0xFFFFFFFFFFFFFFFF  // 16 -> 16 bits [Not Valid]
 };
 
-static void StretchBits(unsigned __int64* set, int index, int bitsPerValue, unsigned __int64* expanded, int expandLength)
+static void Stretch12to16(unsigned __int64* set, int i, unsigned __int64* expanded)
 {
-	// Get a mask which PDEP will use to 'stretch' the bits to an even 8 or 16 bits per value
-	unsigned long long stretchMask = StretchMasks[bitsPerValue];
+	unsigned long long stretchMask = 0x0FFF0FFF0FFF0FFF;
 
-	// Find the 'bit index' of the first value
-	int indexInBits = index * bitsPerValue;
+	// 48 bits from set[0] to 64 bits
+	expanded[0] = _pdep_u64(set[i], stretchMask);
 
-	// Calculate how many compressed bits are used up for each 64-bit result filled
-	int incrementBits = (bitsPerValue < 8 ? bitsPerValue * 8 : bitsPerValue * 4);
+	// 16 bits from set[0] and 32 bits from set[1] to 64 bits
+	expanded[1] = _pdep_u64(set[i] >> 48 | set[i + 1] << 16, stretchMask);
 
-	for (int i = 0; i < expandLength; ++i)
-	{
-		// Determine the ulong array offset of the next value [and how many bits in it is]
-		int indexInArray = indexInBits >> 6;
-		int bitIndexInValue = indexInBits & 63;
+	// 32 bits from set[1] and 16 bits from set[2] to 64 bits
+	expanded[2] = _pdep_u64(set[i + 1] >> 32 | set[i + 2] << 32, stretchMask);
 
-		// Get the next 64 bits of compressed values, shifted so the first value starts in the lowest bit
-		unsigned long long compressedBits = set[indexInArray];
-		if (bitIndexInValue > 0)
-		{
-			compressedBits = compressedBits >> bitIndexInValue;
-			compressedBits |= (set[indexInArray + 1] << (64 - bitIndexInValue));
-		}
-
-		// Expand to 64 bits of result
-		expanded[i] = _pdep_u64(compressedBits, stretchMask);
-
-		// Calculate where to get the next block
-		indexInBits += incrementBits;
-	}
+	// 48 bits from set[2] to 64 bits
+	expanded[3] = _pdep_u64(set[i + 2] >> 16, stretchMask);
 }
+
+//template<int bitsPerValue, int expandLength>
+//static void StretchBits(unsigned __int64* set, int index, unsigned __int64* expanded)
+//{
+//	// Get a mask which PDEP will use to 'stretch' the bits to an even 8 or 16 bits per value
+//	unsigned long long stretchMask = StretchMasks[bitsPerValue];
+//
+//	// Find the 'bit index' of the first value
+//	int indexInBits = index * bitsPerValue;
+//
+//	// Calculate how many compressed bits are used up for each 64-bit result filled
+//	int incrementBits = (bitsPerValue < 8 ? bitsPerValue * 8 : bitsPerValue * 4);
+//
+//	for (int i = 0; i < expandLength; ++i)
+//	{
+//		// Determine the ulong array offset of the next value [and how many bits in it is]
+//		int indexInArray = indexInBits >> 6;
+//		int bitIndexInValue = indexInBits & 63;
+//
+//		// Get the next 64 bits of compressed values, shifted so the first value starts in the lowest bit
+//		unsigned long long compressedBits;
+//		if (bitIndexInValue == 0)
+//		{
+//			compressedBits = set[indexInArray];
+//		}
+//		else
+//		{
+//			compressedBits = (set[indexInArray] >> bitIndexInValue) | (set[indexInArray + 1] << (64 - bitIndexInValue));
+//		}
+//
+//		// Expand to 64 bits of result
+//		expanded[i] = _pdep_u64(compressedBits, stretchMask);
+//
+//		// Calculate where to get the next block
+//		indexInBits += incrementBits;
+//	}
+//}
 
 template<CompareOperatorN cOp, BooleanOperatorN bOp, SigningN sign>
 static void WhereN(unsigned __int16* set, int length, unsigned __int16 value, unsigned __int64* matchVector)
@@ -105,20 +126,21 @@ static void WhereN(unsigned __int16* set, int length, unsigned __int16 value, un
 	int blockLength = length & ~63;
 	for (; i < blockLength; i += 64)
 	{
-		//// "Stretch" the next 64 rows into 2 bytes each. [64 * 2 bytes = 16 * 8 bytes]
-		//unsigned __int64 expandedBlocks[16];
-		//StretchBits((unsigned __int64*)set, i, 12, expandedBlocks, 16);
-		//	
-		//// Load 64 2-byte values to compare
-		//__m256i block1 = _mm256_loadu_si256((__m256i*)(&expandedBlocks[0]));
-		//__m256i block2 = _mm256_loadu_si256((__m256i*)(&expandedBlocks[16]));
-		//__m256i block3 = _mm256_loadu_si256((__m256i*)(&expandedBlocks[32]));
-		//__m256i block4 = _mm256_loadu_si256((__m256i*)(&expandedBlocks[48]));
+		// "Stretch" the next 64 rows into 2 bytes each. [64 * 2 bytes = 16 * 8 bytes]
+		unsigned __int64 expandedBlocks[16];
+		//StretchBits<12, 16>((unsigned __int64*)set, i, expandedBlocks);
+		Stretch12to16((unsigned __int64*)set, 3 * (i >> 6), expandedBlocks);
+			
+		// Load 64 2-byte values to compare
+		__m256i block1 = _mm256_loadu_si256((__m256i*)(&expandedBlocks[0]));
+		__m256i block2 = _mm256_loadu_si256((__m256i*)(&expandedBlocks[4]));
+		__m256i block3 = _mm256_loadu_si256((__m256i*)(&expandedBlocks[8]));
+		__m256i block4 = _mm256_loadu_si256((__m256i*)(&expandedBlocks[12]));
 
-		__m256i block1 = _mm256_loadu_si256((__m256i*)(&set[i]));
-		__m256i block2 = _mm256_loadu_si256((__m256i*)(&set[i + 16]));
-		__m256i block3 = _mm256_loadu_si256((__m256i*)(&set[i + 32]));
-		__m256i block4 = _mm256_loadu_si256((__m256i*)(&set[i + 48]));
+		//__m256i block1 = _mm256_loadu_si256((__m256i*)(&set[i]));
+		//__m256i block2 = _mm256_loadu_si256((__m256i*)(&set[i + 16]));
+		//__m256i block3 = _mm256_loadu_si256((__m256i*)(&set[i + 32]));
+		//__m256i block4 = _mm256_loadu_si256((__m256i*)(&set[i + 48]));
 
 		// Convert them to signed form, if needed
 		if (sign == SigningN::Unsigned)
