@@ -56,17 +56,20 @@ static void Stretch12to16(unsigned __int64* set, int i, unsigned __int64* expand
 {
 	unsigned long long stretchMask = 0x0FFF0FFF0FFF0FFF;
 
-	// 48 bits from set[0] to 64 bits
-	expanded[0] = _pdep_u64(set[i], stretchMask);
+	for (int targetIndex = 0; targetIndex < 16; targetIndex += 4, i += 3)
+	{
+		// 48 bits from set[0] to 64 bits
+		expanded[targetIndex] = _pdep_u64(set[i], stretchMask);
 
-	// 16 bits from set[0] and 32 bits from set[1] to 64 bits
-	expanded[1] = _pdep_u64(set[i] >> 48 | set[i + 1] << 16, stretchMask);
+		// 16 bits from set[0] and 32 bits from set[1] to 64 bits
+		expanded[targetIndex + 1] = _pdep_u64(set[i] >> 48 | set[i + 1] << 16, stretchMask);
 
-	// 32 bits from set[1] and 16 bits from set[2] to 64 bits
-	expanded[2] = _pdep_u64(set[i + 1] >> 32 | set[i + 2] << 32, stretchMask);
+		// 32 bits from set[1] and 16 bits from set[2] to 64 bits
+		expanded[targetIndex + 2] = _pdep_u64(set[i + 1] >> 32 | set[i + 2] << 32, stretchMask);
 
-	// 48 bits from set[2] to 64 bits
-	expanded[3] = _pdep_u64(set[i + 2] >> 16, stretchMask);
+		// 48 bits from set[2] to 64 bits
+		expanded[targetIndex + 3] = _pdep_u64(set[i + 2] >> 16, stretchMask);
+	}
 }
 
 //template<int bitsPerValue, int expandLength>
