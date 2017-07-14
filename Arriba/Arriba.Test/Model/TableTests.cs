@@ -929,7 +929,7 @@ namespace Arriba.Test.Model
 
             // Add a new column with a non-null default
             string newColumnName = "Area Path";
-            string newColumnInitialDefault = @"5";
+            string newColumnInitialDefault = "5";
             table.AddColumn(new ColumnDetails(newColumnName, "string", newColumnInitialDefault));
 
             // Verify all rows have the new default
@@ -1109,7 +1109,7 @@ namespace Arriba.Test.Model
             string actualValue = GetBlockAsCsv(aggregateBlock);
 
             // Allow extra newlines in values for easier formatting in code.
-            Assert.AreEqual(expectedValue.Trim(), actualValue.Trim());
+            Verify.AreStringsEqual(expectedValue.Trim(), actualValue.Trim());
         }
     }
 }
