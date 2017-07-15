@@ -4,6 +4,7 @@
 using System;
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Arriba.Extensions;
 
 namespace Arriba.Test
 {
@@ -30,6 +31,13 @@ namespace Arriba.Test
                     Assert.AreEqual(expectedMessage, e.Message, "Exception didn't have expected mesage.");
                 }
             }
+        }
+
+        public static void AreStringsEqual(string expected, string actual)
+        {
+            expected = expected.CanonicalizeNewlines();
+            actual = actual.CanonicalizeNewlines();
+            Assert.IsTrue(expected == actual, "{0} != {1}", expected, actual);
         }
     }
 }

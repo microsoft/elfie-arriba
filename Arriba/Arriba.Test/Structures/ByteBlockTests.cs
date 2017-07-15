@@ -184,7 +184,7 @@ namespace Arriba.Test.Structures
                 ByteBlock c = "this value is already completely lowercase";
                 c.ToLowerInvariant();
 
-                ByteBlock d = @"Remove Arriba dependencies which aren't easily available in NuGet, so that it's easier for the open source community to consume. Remove Arriba dependencies which aren't easily available in NuGet, so that it's easier for the open source community to consume. Remove Arriba dependencies which aren't easily available in NuGet, so that it's easier for the open source community to consume. Anyway, we need 400 bytes here, so we need a few more...";
+                ByteBlock d = "Remove Arriba dependencies which aren't easily available in NuGet, so that it's easier for the open source community to consume. Remove Arriba dependencies which aren't easily available in NuGet, so that it's easier for the open source community to consume. Remove Arriba dependencies which aren't easily available in NuGet, so that it's easier for the open source community to consume. Anyway, we need 400 bytes here, so we need a few more...";
                 d.ToLowerInvariant();
             }
 

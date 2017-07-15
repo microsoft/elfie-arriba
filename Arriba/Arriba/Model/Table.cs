@@ -46,6 +46,10 @@ namespace Arriba.Model
         {
             this.Name = tableName;
 
+            // Pad the min row count by 5% to account for imperfect distribution of items
+            // based on the hashing algorithm.
+            long paddedMinItemCount = (long)(requiredItemCount * 1.05);
+
             // Translate the item limit to a number of partition bits (64k items per partition)
             _partitionBits = (byte)Math.Max(Math.Ceiling(Math.Log(requiredItemCount, 2)) - 16, 0);
 
