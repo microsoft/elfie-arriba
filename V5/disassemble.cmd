@@ -1,0 +1,1 @@
+windbg -z "%~dp0\V5.ConsoleTest\bin\x64\Release\V5.Native.dll"

@@ -213,6 +213,9 @@ GeneratedArtifacts/
 _Pvt_Extensions/
 ModelManifest.xml
 
+# Profiling Output
+*.etl
+
 Microsoft.CodeAnalysis.Elfie.dll.*
 *.addb
 *.zip
