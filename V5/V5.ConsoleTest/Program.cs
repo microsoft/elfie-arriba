@@ -170,10 +170,16 @@ namespace V5.ConsoleTest
             IndexSet set = new IndexSet(size);
             IndexSet other = new IndexSet(size);
 
-            IndexSet[] sets = new IndexSet[ParallelCount];
-            for (int i = 0; i < sets.Length; ++i)
+            IndexSet[] sets2 = new IndexSet[2];
+            for (int i = 0; i < sets2.Length; ++i)
             {
-                sets[i] = new IndexSet(size / ParallelCount);
+                sets2[i] = new IndexSet(size / 2);
+            }
+
+            IndexSet[] sets4 = new IndexSet[4];
+            for (int i = 0; i < sets4.Length; ++i)
+            {
+                sets4[i] = new IndexSet(size / 4);
             }
 
             Span<int> page = new Span<int>(new int[4096]);
@@ -200,13 +206,15 @@ namespace V5.ConsoleTest
             //    () => { sum = 0; foreach (int item in bucketSpan) { sum += item; } return sum; }
             //);
 
-            Benchmark.Compare("IndexSet Operations", iterations, size, new string[] { /*"All", "None", "And", "Count", "WhereGreaterThan",*/ "WhereGreaterThanTwoByte"/*, $"Where Parallel x{ParallelCount}"*/ },
+            Benchmark.Compare("IndexSet Operations", iterations, size, new string[] { /*"All", "None", "And", "Count", "WhereGreaterThan",*/ "Where2b", "Where2b x2", "Where2b x4" /*, $"Where Parallel x{ParallelCount}"*/ },
                 //() => set.All(size),
                 //() => set.None(),
                 //() => set.And(other),
                 //() => set.Count,
                 //() => set.Where(BooleanOperator.Set, bucketSample, CompareOperator.GreaterThan, (byte)200),
-                () => set.Where(BooleanOperator.Set, bigBucketSample, CompareOperator.GreaterThan, (ushort)65000)//,
+                () => set.Where(BooleanOperator.Set, bigBucketSample, CompareOperator.GreaterThan, (ushort)65000),
+                () => ParallelWhere(bigBucketSample, (ushort)65000, sets2),
+                () => ParallelWhere(bigBucketSample, (ushort)65000, sets4)//,
                 //() => ParallelWhere(bucketSample, (byte)200, sets)
             );
 
@@ -231,7 +239,7 @@ namespace V5.ConsoleTest
             //Benchmark.Compare("IndexSet Page", iterations, size, new string[] { "Page All" }, () => PageAll(set, page));
         }
 
-        private static object ParallelWhere(byte[] column, byte value, IndexSet[] sets)
+        private static object ParallelWhere<T>(T[] column, T value, IndexSet[] sets)
         {
             Parallel.For(0, sets.Length, (i) =>
             {

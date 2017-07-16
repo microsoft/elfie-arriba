@@ -134,20 +134,20 @@ static void WhereN(unsigned __int16* set, int length, unsigned __int16 value, un
 	int blockLength = length & ~63;
 	for (; i < blockLength; i += 64)
 	{
-		// "Stretch" the next 64 rows into 2 bytes each. [64 * 2 bytes = 16 * 8 bytes]
-		unsigned __int64 expandedBlocks[16];
-		Stretch12to16((unsigned __int64*)set, 3 * (i >> 6), expandedBlocks);
-			
-		// Load 64 2-byte values to compare
-		__m256i block1 = _mm256_loadu_si256((__m256i*)(&expandedBlocks[0]));
-		__m256i block2 = _mm256_loadu_si256((__m256i*)(&expandedBlocks[4]));
-		__m256i block3 = _mm256_loadu_si256((__m256i*)(&expandedBlocks[8]));
-		__m256i block4 = _mm256_loadu_si256((__m256i*)(&expandedBlocks[12]));
+		//// "Stretch" the next 64 rows into 2 bytes each. [64 * 2 bytes = 16 * 8 bytes]
+		//unsigned __int64 expandedBlocks[16];
+		//Stretch12to16((unsigned __int64*)set, 3 * (i >> 6), expandedBlocks);
+		//	
+		//// Load 64 2-byte values to compare
+		//__m256i block1 = _mm256_loadu_si256((__m256i*)(&expandedBlocks[0]));
+		//__m256i block2 = _mm256_loadu_si256((__m256i*)(&expandedBlocks[4]));
+		//__m256i block3 = _mm256_loadu_si256((__m256i*)(&expandedBlocks[8]));
+		//__m256i block4 = _mm256_loadu_si256((__m256i*)(&expandedBlocks[12]));
 
-		//__m256i block1 = _mm256_loadu_si256((__m256i*)(&set[i]));
-		//__m256i block2 = _mm256_loadu_si256((__m256i*)(&set[i + 16]));
-		//__m256i block3 = _mm256_loadu_si256((__m256i*)(&set[i + 32]));
-		//__m256i block4 = _mm256_loadu_si256((__m256i*)(&set[i + 48]));
+		__m256i block1 = _mm256_loadu_si256((__m256i*)(&set[i]));
+		__m256i block2 = _mm256_loadu_si256((__m256i*)(&set[i + 16]));
+		__m256i block3 = _mm256_loadu_si256((__m256i*)(&set[i + 32]));
+		__m256i block4 = _mm256_loadu_si256((__m256i*)(&set[i + 48]));
 
 		// Convert them to signed form, if needed
 		if (sign == SigningN::Unsigned)
