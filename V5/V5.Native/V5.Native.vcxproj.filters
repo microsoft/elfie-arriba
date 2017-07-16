@@ -55,6 +55,9 @@
     <ClInclude Include="Heap.h">
       <Filter>Collections</Filter>
     </ClInclude>
+    <ClInclude Include="Test.h">
+      <Filter>_Base</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="IndexSet.cpp">
@@ -90,6 +93,7 @@
     <ClCompile Include="CompareToVector16.cpp">
       <Filter>Vector</Filter>
     </ClCompile>
+    <ClCompile Include="Test.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="app.ico">

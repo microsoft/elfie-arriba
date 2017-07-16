@@ -148,8 +148,8 @@ namespace V5.ConsoleTest
 
         static void PerformanceTests()
         {
-            int iterations = 1000;
-            int size = 8 * 1000 * 1000;
+            int iterations = 500;
+            int size = 64 * 1000 * 1000;
 
             //long[] array = new long[size];
             //Benchmark.Compare("ArrayExtensions", 10, size, new string[] { "WriteArray", "ReadArray" },
@@ -198,6 +198,12 @@ namespace V5.ConsoleTest
                 bigBucketSample[i] = (ushort)(random.Next() & ushort.MaxValue);
             }
 
+            Benchmark.Compare("Bandwidth Test", iterations, size, new string[] { "AVX-256", "AVX-256 x2", "AVX-256 x4" },
+            () => V5.Test.Bandwidth(bucketSample, 0, bucketSample.Length),
+            () => ParallelBandwidth(bucketSample, 2),
+            () => ParallelBandwidth(bucketSample, 4)
+            );
+
             //int sum;
             //Benchmark.Compare("Span Operations", iterations, size, new string[] { "Array For", "Array ForEach", "Span For", "Span ForEach" },
             //    () => { sum = 0; for (int i = 0; i < bucketSample.Length; ++i) { sum += bucketSample[i]; } return sum; },
@@ -206,16 +212,17 @@ namespace V5.ConsoleTest
             //    () => { sum = 0; foreach (int item in bucketSpan) { sum += item; } return sum; }
             //);
 
-            Benchmark.Compare("IndexSet Operations", iterations, size, new string[] { /*"All", "None", "And", "Count", "WhereGreaterThan",*/ "Where2b", "Where2b x2", "Where2b x4" /*, $"Where Parallel x{ParallelCount}"*/ },
+            Benchmark.Compare("IndexSet Operations", iterations, size, new string[] { /*"All", "None", "And", "Count", */"Where1b", "Where1b x2", "Where1b x4", "Where2b", "Where2b x2", "Where2b x4" /*, $"Where Parallel x{ParallelCount}"*/ },
                 //() => set.All(size),
                 //() => set.None(),
                 //() => set.And(other),
                 //() => set.Count,
-                //() => set.Where(BooleanOperator.Set, bucketSample, CompareOperator.GreaterThan, (byte)200),
+                () => set.Where(BooleanOperator.Set, bucketSample, CompareOperator.GreaterThan, (byte)200),
+                () => ParallelWhere(bucketSample, (byte)200, sets2),
+                () => ParallelWhere(bucketSample, (byte)200, sets4),
                 () => set.Where(BooleanOperator.Set, bigBucketSample, CompareOperator.GreaterThan, (ushort)65000),
                 () => ParallelWhere(bigBucketSample, (ushort)65000, sets2),
-                () => ParallelWhere(bigBucketSample, (ushort)65000, sets4)//,
-                //() => ParallelWhere(bucketSample, (byte)200, sets)
+                () => ParallelWhere(bigBucketSample, (ushort)65000, sets4)
             );
 
             //set.None();
@@ -237,6 +244,20 @@ namespace V5.ConsoleTest
 
             //set.All(size);
             //Benchmark.Compare("IndexSet Page", iterations, size, new string[] { "Page All" }, () => PageAll(set, page));
+        }
+
+        private static object ParallelBandwidth(byte[] array, int parallelCount)
+        {
+            long result = 0;
+
+            Parallel.For(0, parallelCount, (i) =>
+            {
+                int length = array.Length / parallelCount;
+                int offset = i * length;
+                result += Test.Bandwidth(array, offset, length);
+            });
+
+            return result;
         }
 
         private static object ParallelWhere<T>(T[] column, T value, IndexSet[] sets)
