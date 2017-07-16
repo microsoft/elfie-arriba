@@ -28,7 +28,7 @@ namespace V5.ConsoleTest
                 double totalItems = itemCount * (long)iterations;
                 double billionPerSecond = ((double)totalItems / (double)(1000 * 1000 * 1000)) / ((double)w.ElapsedMilliseconds / (double)1000);
                 double relativePerformance = benchmarkMilliseconds / (double)w.ElapsedMilliseconds;
-                Console.WriteLine(" - {0} -> {1}: {2:n0}ms, {3:n2} B/s [{4:n1}x]", variantNames[i], result, w.ElapsedMilliseconds, billionPerSecond, relativePerformance);
+                Console.WriteLine(" - {0} -> {1}: {2:n0}ms, {3:n1} B/s [{4:n1}x]", variantNames[i], result, w.ElapsedMilliseconds, billionPerSecond, relativePerformance);
             }
 
             Console.WriteLine();

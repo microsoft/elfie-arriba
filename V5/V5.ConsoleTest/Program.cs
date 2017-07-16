@@ -212,18 +212,18 @@ namespace V5.ConsoleTest
             //    () => { sum = 0; foreach (int item in bucketSpan) { sum += item; } return sum; }
             //);
 
-            Benchmark.Compare("IndexSet Operations", iterations, size, new string[] { /*"All", "None", "And", "Count", */"Where1b", "Where1b x2", "Where1b x4", "Where2b", "Where2b x2", "Where2b x4" /*, $"Where Parallel x{ParallelCount}"*/ },
-                //() => set.All(size),
-                //() => set.None(),
-                //() => set.And(other),
-                //() => set.Count,
-                () => set.Where(BooleanOperator.Set, bucketSample, CompareOperator.GreaterThan, (byte)200),
-                () => ParallelWhere(bucketSample, (byte)200, sets2),
-                () => ParallelWhere(bucketSample, (byte)200, sets4),
-                () => set.Where(BooleanOperator.Set, bigBucketSample, CompareOperator.GreaterThan, (ushort)65000),
-                () => ParallelWhere(bigBucketSample, (ushort)65000, sets2),
-                () => ParallelWhere(bigBucketSample, (ushort)65000, sets4)
-            );
+            //Benchmark.Compare("IndexSet Operations", iterations, size, new string[] { /*"All", "None", "And", "Count", */"Where1b", "Where1b x2", "Where1b x4", "Where2b", "Where2b x2", "Where2b x4" /*, $"Where Parallel x{ParallelCount}"*/ },
+            //    //() => set.All(size),
+            //    //() => set.None(),
+            //    //() => set.And(other),
+            //    //() => set.Count,
+            //    () => set.Where(BooleanOperator.Set, bucketSample, CompareOperator.GreaterThan, (byte)200),
+            //    () => ParallelWhere(bucketSample, (byte)200, sets2),
+            //    () => ParallelWhere(bucketSample, (byte)200, sets4),
+            //    () => set.Where(BooleanOperator.Set, bigBucketSample, CompareOperator.GreaterThan, (ushort)65000),
+            //    () => ParallelWhere(bigBucketSample, (ushort)65000, sets2),
+            //    () => ParallelWhere(bigBucketSample, (ushort)65000, sets4)
+            //);
 
             //set.None();
             //Benchmark.Compare("IndexSet Page", iterations, size, new string[] { "Page None" }, () => PageAll(set, page));
