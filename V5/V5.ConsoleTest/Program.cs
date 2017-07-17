@@ -212,13 +212,10 @@ namespace V5.ConsoleTest
 
             Span<int> page = new Span<int>(new int[4096]);
 
-            byte[] bucketSample = new byte[size];
+            int bitsPerValue = 8;
+            byte[] bucketSample = new byte[(size * bitsPerValue) / 8];
             Span<byte> bucketSpan = new Span<byte>(bucketSample);
 
-            ushort[] bigBucketSample = new ushort[size];
-            Span<ushort> bigSpan = new Span<ushort>(bigBucketSample);
-
-            int bitsPerValue = 4;
             ushort[] values = new ushort[16];
             for (int i = 0; i < size; i += 16)
             {
@@ -230,22 +227,12 @@ namespace V5.ConsoleTest
 
                 // Compress into byte[]
                 CompressValues(values, bitsPerValue, bucketSample, i);
-
-                //bucketSample[i] = (byte)((i & 1) == 0 ? (i & 255) : (255 - i & 255));
-                //int v1 = i % 16;
-                //int v2 = (i + 1) % 16;
-                //bucketSample[i] = (byte)((v2 << 4) | v1);
-            }
-
-            for (int i = 0; i < size; ++i)
-            {
-                bigBucketSample[i] = (ushort)((i & 1) == 0 ? (i & 65535) : (65535 - i & 65535));
             }
 
             Benchmark.Compare("Bandwidth Test", iterations, size, new string[] { "x1", "x2", "x4" },
-            () => V5.Test.Bandwidth(bucketSample, 0, bucketSample.Length),
-            () => ParallelBandwidth(bucketSample, 2),
-            () => ParallelBandwidth(bucketSample, 4)
+            () => V5.Test.Bandwidth(bucketSample, bitsPerValue, 0, size),
+            () => ParallelBandwidth(bucketSample, bitsPerValue, size, 2),
+            () => ParallelBandwidth(bucketSample, bitsPerValue, size, 4)
             );
 
             //int sum;
@@ -255,6 +242,15 @@ namespace V5.ConsoleTest
             //    () => { sum = 0; for (int i = 0; i < bucketSpan.Length; ++i) { sum += bucketSpan[i]; } return sum; },
             //    () => { sum = 0; foreach (int item in bucketSpan) { sum += item; } return sum; }
             //);
+
+
+            //ushort[] bigBucketSample = new ushort[size];
+            //Span<ushort> bigSpan = new Span<ushort>(bigBucketSample);
+
+            //for (int i = 0; i < size; ++i)
+            //{
+            //    bigBucketSample[i] = (ushort)((i & 1) == 0 ? (i & 65535) : (65535 - i & 65535));
+            //}
 
             //Benchmark.Compare("IndexSet Operations", iterations, size, new string[] { /*"All", "None", "And", "Count", */"Where1b", "Where1b x2", "Where1b x4", "Where2b", "Where2b x2", "Where2b x4" /*, $"Where Parallel x{ParallelCount}"*/ },
             //    //() => set.All(size),
@@ -290,15 +286,19 @@ namespace V5.ConsoleTest
             //Benchmark.Compare("IndexSet Page", iterations, size, new string[] { "Page All" }, () => PageAll(set, page));
         }
 
-        private static object ParallelBandwidth(byte[] array, int parallelCount)
+        private static object ParallelBandwidth(byte[] array, int bitsPerValue, int rowCount, int parallelCount)
         {
             long result = 0;
 
+            // Get an even multiple of 64 rows to parallelize across
+            int segmentLength = (rowCount / parallelCount) & ~63;
+
             Parallel.For(0, parallelCount, (i) =>
             {
-                int length = array.Length / parallelCount;
-                int offset = i * length;
-                long part = Test.Bandwidth(array, offset, length);
+                int offset = i * segmentLength;
+                int length = (i == parallelCount - 1 ? rowCount - offset : segmentLength);
+
+                long part = Test.Bandwidth(array, bitsPerValue, offset, length);
 
                 lock(array)
                 {

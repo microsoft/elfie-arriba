@@ -122,6 +122,19 @@ __m128i GetShiftMask()
 	return shiftMask;
 }
 
+// TODO: Need to figure out how to properly declare __m128i constants. This isn't working.
+const __m128i AndMasks[] =
+{
+	{ 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000 },
+	{ 0x0100, 0x0100, 0x0100, 0x0100, 0x0100, 0x0100, 0x0100, 0x0100 },
+	{ 0x0300, 0x0300, 0x0300, 0x0300, 0x0300, 0x0300, 0x0300, 0x0300 },
+	{ 0x0700, 0x0700, 0x0700, 0x0700, 0x0700, 0x0700, 0x0700, 0x0700 },
+	{ 0x0F00, 0x0F00, 0x0F00, 0x0F00, 0x0F00, 0x0F00, 0x0F00, 0x0F00 },
+	{ 0x1F00, 0x1F00, 0x1F00, 0x1F00, 0x1F00, 0x1F00, 0x1F00, 0x1F00 },
+	{ 0x3F00, 0x3F00, 0x3F00, 0x3F00, 0x3F00, 0x3F00, 0x3F00, 0x3F00 },
+	{ 0x7F00, 0x7F00, 0x7F00, 0x7F00, 0x7F00, 0x7F00, 0x7F00, 0x7F00 },
+};
+
 __m128i GetAndMask(int bitsPerValue)
 {
 	return _mm_set1_epi16((0x00FF << bitsPerValue) & 0xFF00);
@@ -166,16 +179,17 @@ __m128i __inline StretchTo8From(__m128i block)
 	return _mm_or_si128(r1, r2);
 }
 
-__int64 CompareTestAVX128(__int8* set, int length)
+__int64 CompareTestAVX128(__int8* set, int bitsPerValue, int length)
 {
 	// Minimal Compare: Load, Compare, MoveMask, PopCount, add
 	__m128i value = _mm_set1_epi8(14);
 	__int64 count = 0;
 
-	for (int i = 0; i < length; i += 32)
+	int bytesPerBlock = (bitsPerValue * 16) / 8;
+	for (int rowIndex = 0, byteIndex = 0; rowIndex < length; rowIndex += 16, byteIndex += bytesPerBlock)
 	{
-		__m128i block = _mm_loadu_si128((__m128i*)(&set[i >> 1]));
-		block = StretchBits4to8(block);
+		__m128i block = _mm_loadu_si128((__m128i*)(&set[byteIndex]));
+		//block = StretchBits4to8(block);
 		//block = StretchTo8From<4>(block);
 		count += CompareAndCount(block, value);
 	}
@@ -186,10 +200,14 @@ __int64 CompareTestAVX128(__int8* set, int length)
 #pragma managed
 namespace V5
 {
-	__int64 Test::Bandwidth(array<Byte>^ values, int offset, int length)
+	__int64 Test::Bandwidth(array<Byte>^ values, int bitsPerValue, int offset, int length)
 	{
-		if (offset + length > values->Length) throw gcnew IndexOutOfRangeException();
-		pin_ptr<Byte> pValues = &values[offset];
-		return CompareTestAVX128((__int8*)pValues, length);
+		int byteOffset = (offset * bitsPerValue) / 8;
+		int byteLength = (length * bitsPerValue) / 8;
+
+		if (byteOffset + byteLength > values->Length) throw gcnew IndexOutOfRangeException();
+		pin_ptr<Byte> pValues = &values[byteOffset];
+		//return CompareTestAVX128((__int8*)pValues, bitsPerValue, length);
+		return BandwidthTestAVX128((__int8*)pValues, length);
 	}
 }

@@ -6,7 +6,7 @@ namespace V5
 	public ref class Test
 	{
 	public:
-		static __int64 Bandwidth(array<Byte>^ values, int index, int length);
+		static __int64 Bandwidth(array<Byte>^ values, int bitsPerValue, int index, int length);
 	};
 }
 
