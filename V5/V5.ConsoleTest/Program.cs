@@ -198,7 +198,7 @@ namespace V5.ConsoleTest
                 bigBucketSample[i] = (ushort)(random.Next() & ushort.MaxValue);
             }
 
-            Benchmark.Compare("Bandwidth Test", iterations, size, new string[] { "AVX-256", "AVX-256 x2", "AVX-256 x4" },
+            Benchmark.Compare("Bandwidth Test", iterations, size, new string[] { "x1", "x2", "x4" },
             () => V5.Test.Bandwidth(bucketSample, 0, bucketSample.Length),
             () => ParallelBandwidth(bucketSample, 2),
             () => ParallelBandwidth(bucketSample, 4)
@@ -254,7 +254,12 @@ namespace V5.ConsoleTest
             {
                 int length = array.Length / parallelCount;
                 int offset = i * length;
-                result += Test.Bandwidth(array, offset, length);
+                long part = Test.Bandwidth(array, offset, length);
+
+                lock(array)
+                {
+                    result += part;
+                }
             });
 
             return result;
