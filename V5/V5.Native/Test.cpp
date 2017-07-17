@@ -75,6 +75,97 @@ __m128i __inline StretchBits4to8(__m128i block)
 	return _mm_or_si128(r1, r2);
 }
 
+template<int bitsPerValue, int start>
+__m128i GetShuffleMask()
+{
+	__m128i shuffleMask;
+
+	int itemIndex = start;
+	for (int maskIndex = 0; maskIndex < 16; maskIndex += 2, itemIndex += 2)
+	{
+		// Item 'i' starts at bit (i * bitsPerValue).
+		int bitIndex = itemIndex * bitsPerValue;
+
+		// Item 'i' starts in byte (bitIndex / 8)
+		unsigned __int8 firstByteWithBits = bitIndex / 8;
+
+		// Get the byte with the first bit and the byte right afterward to shift
+		shuffleMask.m128i_u8[maskIndex] = firstByteWithBits;
+		shuffleMask.m128i_u8[maskIndex + 1] = firstByteWithBits + 1;
+	}
+
+	return shuffleMask;
+}
+
+template<int bitsPerValue, int start>
+__m128i GetShiftMask()
+{
+	__m128i shiftMask;
+
+	int itemIndex = start;
+	for (int maskIndex = 0; maskIndex < 8; maskIndex++, itemIndex += 2)
+	{
+		// Item 'i' starts at bit (i * bitsPerValue).
+		int bitIndex = itemIndex * bitsPerValue;
+
+		// Item 'i' is (bitIndex % 8) bits into the byte
+		unsigned __int8 offsetInByte = bitIndex % 8;
+
+		// Shift 8 bits to get to bottom of high byte, so 8 - offsetInByte
+		unsigned __int8 bitsToShift = 8 - offsetInByte;
+
+		// To shift that many bits, multiply by (2^bitsToShift) or 1 << bitsToShift.
+		unsigned __int16 multiplyBy = 1 << bitsToShift;
+		shiftMask.m128i_u16[maskIndex] = multiplyBy;
+	}
+
+	return shiftMask;
+}
+
+__m128i GetAndMask(int bitsPerValue)
+{
+	return _mm_set1_epi16((0x00FF << bitsPerValue) & 0xFF00);
+}
+
+template<int bitsPerValue>
+__m128i __inline StretchTo8From(__m128i block)
+{
+	// 'Stretch' n-bit values so that each is in the low bits of a separate byte for comparison.
+	// IN<3>: 0b...'nnnnnnnn'PPPOOONN'NMMMLLLK'KKJJJIII'HHHGGGFF'FEEEDDDC'CCBBBAAA
+	// OUT  : 0b...'00000GGG'00000FFF'00000EEE'00000DDD'00000CCC'00000BBB'00000AAA
+
+	// Use two 128-bit registers to expand alternating values (A, C, E, ...) and (B, D, F, ...)
+	// Because the method is templated, computation of the masks will be done at compile time only.
+	__m128i shuffleMask1 = _mm_set_epi16(0x0807, 0x0706, 0x0605, 0x0504, 0x0403, 0x0302, 0x0201, 0x0100); // GetShuffleMask<bitsPerValue, 0>();
+	__m128i shuffleMask2 = _mm_set_epi16(0x0807, 0x0706, 0x0605, 0x0504, 0x0403, 0x0302, 0x0201, 0x0100); // GetShuffleMask<bitsPerValue, 1>();
+	__m128i shiftMask1 = _mm_set_epi16(0x0100, 0x0100, 0x0100, 0x0100, 0x0100, 0x0100, 0x0100, 0x0100); // GetShiftMask<bitsPerValue, 0>();
+	__m128i shiftMask2 = _mm_set_epi16(0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010, 0x0010); // GetShiftMask<bitsPerValue, 1>();
+	__m128i andMask = _mm_set1_epi16(0b00001111'00000000); // GetAndMask(bitsPerValue);
+
+	// Use 'Shuffle' to get the two bytes containing the value into each 16-bit part.
+	// R1: 0b...|HHHGGGFF'FEEEDDDC|FEEEDDDC'CCBBBAAA|FEEEDDDC'CCBBBAAA [A, C, E, ...]
+	__m128i r1 = _mm_shuffle_epi8(block, shuffleMask1);
+	__m128i r2 = _mm_shuffle_epi8(block, shuffleMask2);
+
+	// Use 'Multiply Low' to shift the two byte value so the desired part is at the low edge of the high byte.
+	// R1:  0b...|nnnnnEEE'nnnnnnnn|nnnnnCCC'nnnnnnnn|nnnnnAAA'nnnnnnnn
+	r1 = _mm_mullo_epi16(r1, shiftMask1); 
+	r2 = _mm_mullo_epi16(r2, shiftMask2);
+
+	// AND with a mask to clear out the unused high bits and low byte.
+	// R1:  0b...|00000EEE'00000000|00000CCC'00000000|00000AAA'00000000
+	r1 = _mm_and_si128(r1, andMask);
+	r2 = _mm_and_si128(r2, andMask);
+
+	// Shift *one* register right by a whole byte to get those values into the low bytes
+	// R1:  0b...|00000000'00000EEE|00000000'00000CCC|00000000'00000AAA
+	r1 = _mm_srli_epi16(r1, 8);
+
+	// OR the two registers together to merge the results
+	// OUT: 0b...|00000FFF'00000EEE|00000DDD'00000CCC|00000BBB'00000AAA
+	return _mm_or_si128(r1, r2);
+}
+
 __int64 CompareTestAVX128(__int8* set, int length)
 {
 	// Minimal Compare: Load, Compare, MoveMask, PopCount, add
@@ -85,6 +176,7 @@ __int64 CompareTestAVX128(__int8* set, int length)
 	{
 		__m128i block = _mm_loadu_si128((__m128i*)(&set[i >> 1]));
 		block = StretchBits4to8(block);
+		//block = StretchTo8From<4>(block);
 		count += CompareAndCount(block, value);
 	}
 

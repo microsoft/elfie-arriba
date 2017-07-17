@@ -146,6 +146,34 @@ namespace V5.ConsoleTest
             PerformanceTests();
         }
 
+        private static void CompressValues(ushort[] values, int bitsPerValue, byte[] destination, int valueIndex)
+        {
+            int itemIndex = 0;
+            int destinationIndex = (valueIndex * bitsPerValue) / 8;
+
+            while (itemIndex < 16)
+            {
+                // Build up one byte
+                byte current = 0;
+                int bitIndex = (itemIndex * bitsPerValue) & 7;
+                while (bitIndex < 8)
+                {
+                    byte valueBits = (byte)(values[itemIndex] & (0xFF >> (8 - bitsPerValue)));
+                    current |= (byte)(valueBits << bitIndex);
+
+                    itemIndex++;
+                    bitIndex += bitsPerValue;
+                }
+
+                // Set the byte
+                destination[destinationIndex] = current;
+                destinationIndex++;
+
+                // Back up one index to get the first bits of the next byte, if needed
+                if (bitIndex != 8) itemIndex--;
+            }
+        }
+
         static void PerformanceTests()
         {
             int iterations = 500;
@@ -190,12 +218,28 @@ namespace V5.ConsoleTest
             ushort[] bigBucketSample = new ushort[size];
             Span<ushort> bigSpan = new Span<ushort>(bigBucketSample);
 
-            Random random = new Random(6);
-            random.NextBytes(bucketSample);
+            int bitsPerValue = 4;
+            ushort[] values = new ushort[16];
+            for (int i = 0; i < size; i += 16)
+            {
+                // Come up with 16 indices (zero to the max for the bitsPerValue)
+                for(int j = 0; j < 16; ++j)
+                {
+                    values[j] = (ushort)((i + j) % (1 << bitsPerValue));
+                }
+
+                // Compress into byte[]
+                CompressValues(values, bitsPerValue, bucketSample, i);
+
+                //bucketSample[i] = (byte)((i & 1) == 0 ? (i & 255) : (255 - i & 255));
+                //int v1 = i % 16;
+                //int v2 = (i + 1) % 16;
+                //bucketSample[i] = (byte)((v2 << 4) | v1);
+            }
 
             for (int i = 0; i < size; ++i)
             {
-                bigBucketSample[i] = (ushort)(random.Next() & ushort.MaxValue);
+                bigBucketSample[i] = (ushort)((i & 1) == 0 ? (i & 65535) : (65535 - i & 65535));
             }
 
             Benchmark.Compare("Bandwidth Test", iterations, size, new string[] { "x1", "x2", "x4" },
