@@ -3,7 +3,6 @@ import "!script-loader!../js/utilities.js";
 import "../js/utilities.jsx";
 
 import Mru from "./Mru";
-import ErrorPage from "./ErrorPage";
 import QueryStats from "./QueryStats";
 import SearchHeader from "./SearchHeader";
 import SearchBox from "./SearchBox";
@@ -54,7 +53,6 @@ export default React.createClass({
         }
 
         return Object.assign(this.getEmptyState(), {
-            blockingErrorStatus: null,
             allBasics: [],
             tables: [],
             page: 0,
@@ -69,40 +67,25 @@ export default React.createClass({
     componentDidMount: function () {
         window.addEventListener("beforeunload", this); // For Mru
         this.mru = new Mru();
-        this.refreshAllBasics();
         this.componentDidUpdate({}, {});
     },
     componentDidUpdate: function(prevProps, prevState) {
+        const diffProps = Object.diff(prevProps, this.props);
         const diff = Object.diff(prevState, this.state);
+
+        if (diffProps.hasAny("allBasics")) {
+            this.getAllCounts();
+        }
 
         // Watching currentTable as sometimes inferred from the query.
         // Not watching for query changes (to match old behavior).
-        if (diff.hasAny("allBasics", "currentTable", "userSelectedId")) {
+        if (diffProps.hasAny("allBasics") || diff.hasAny("currentTable", "userSelectedId")) {
             this.getDetails();
         }
 
         if (diff.hasAny("query", "userSelectedTable", "userTableSettings", "userSelectedId", "currentTable")) {
             this.setHistory();
         }
-    },
-    refreshAllBasics: function (then) {
-        // On Page load, find the list of known table names
-        jsonQuery(configuration.url + "/allBasics",
-            data => {
-                if (!data.content) {
-                    this.setState({ blockingErrorStatus: 401 });
-                } else {
-                    Object.values(data.content).forEach(table => table.idColumn = table.columns.find(col => col.isPrimaryKey).name || "");
-                    this.setState({ allBasics: data.content }, () => {
-                        this.getAllCounts();
-                        if (then) then();
-                    });
-                }
-            },
-            (xhr, status, err) => {
-                this.setState({ blockingErrorStatus: status });
-            }
-        );
     },
     componentWillUnmount: function () {
         window.removeEventListener("beforeunload", this);
@@ -177,7 +160,7 @@ export default React.createClass({
         this.timer = null;
 
         // If there's no allBasics or query, clear results and do nothing else
-        if (!this.state.allBasics || !Object.keys(this.state.allBasics).length || !this.state.query) {
+        if (!this.props.allBasics || !Object.keys(this.props.allBasics).length || !this.state.query) {
             this.setState(this.getEmptyState());
             return;
         }
@@ -217,7 +200,7 @@ export default React.createClass({
         // Once a table is selected, find out the columns and primary key column for the table
 
         // If allBasics is not ready, abort.
-        const table = this.state.allBasics[this.state.currentTable];
+        const table = this.props.allBasics[this.state.currentTable];
         if (!table) return;
 
         // Must write to userTableSettings (and not directly to currentTableSettings) so the URL can refect this.
@@ -258,7 +241,7 @@ export default React.createClass({
         // If there's no table don't do anything yet.
         // Unlikely to reach this function before currentTable and allBasics are set.
         // Delayed getAllCounts() would have to return before the other two.
-        const table = this.state.allBasics[this.state.currentTable];
+        const table = this.props.allBasics[this.state.currentTable];
         if (!table) return;
         if (!this.state.userSelectedId) return;
 
@@ -340,9 +323,8 @@ export default React.createClass({
     },
     render: function () {
         // Consider clearing the currentTable when the query is empty.
-        if (this.state.blockingErrorStatus != null) return <ErrorPage status={this.state.blockingErrorStatus} />;
 
-        var table = this.state.allBasics && this.state.currentTable && this.state.allBasics[this.state.currentTable] || undefined;
+        var table = this.props.allBasics && this.state.currentTable && this.props.allBasics[this.state.currentTable] || undefined;
         var customDetailsView = (configuration.customDetailsProviders && configuration.customDetailsProviders[this.state.currentTable]) || ResultDetails;
         const queryUrl = this.buildQueryUrl();
         const gridUrl = this.state.query
@@ -370,19 +352,19 @@ export default React.createClass({
                     <QueryStats query={this.state.query}
                                 error={this.state.error}
                                 allCountData={this.state.allCountData}
-                                allBasics={this.state.allBasics}
+                                allBasics={this.props.allBasics}
                                 selectedData={this.state.listingData}
                                 rssUrl={`${queryUrl}&fmt=rss&t=100&iURL=${encodeURIComponent(this.buildThisUrl(false) + "&open=")}`}
                                 csvUrl={`${queryUrl}&fmt=csv&t=50000`}
                                 currentTable={this.state.currentTable}
                                 onSelectedTableChange={this.onSelectedTableChange}
-                                refreshAllBasics={this.refreshAllBasics} />
+                                refreshAllBasics={this.props.refreshAllBasics} />
                     {this.state.query && table
                         ? <SplitPane split="horizontal" minSize="300" isFirstVisible={this.state.listingData.content} isSecondVisible={this.state.userSelectedId}>
                             <InfiniteScroll page={this.state.page} hasMoreData={this.state.hasMoreData} loadMore={this.getResultsPage }>
                                 <ResultListing ref={"list"}
                                     data={this.state.listingData}
-                                    allBasics={this.state.allBasics}
+                                    allBasics={this.props.allBasics}
                                     sortColumn={this.state.currentTableSettings.sortColumn}
                                     sortOrder={this.state.currentTableSettings.sortOrder}
                                     selectedId={this.state.userSelectedId}
@@ -401,15 +383,15 @@ export default React.createClass({
                                 })}
                             </div>
                         </SplitPane>
-                        : <Start allBasics={this.state.allBasics} showHelp={this.props.params.help === "true"} queryChanged={this.queryChanged} />}
+                        : <Start allBasics={this.props.allBasics} showHelp={this.props.params.help === "true"} queryChanged={this.queryChanged} />}
                 </div>
             </div>
             <DropShield
                 dropping={this.state.dropping}
                 droppingChanged={d => this.setState({ dropping: d })}
-                existingTablenames={Object.keys(this.state.allBasics || {})}
+                existingTablenames={Object.keys(this.props.allBasics || {})}
                 queryChanged={this.queryChanged}
-                refreshAllBasics={this.refreshAllBasics}
+                refreshAllBasics={this.props.refreshAllBasics}
                 getAllCounts={this.getAllCounts}
                 columnsChanged={this.onSetColumns} />
         </div>

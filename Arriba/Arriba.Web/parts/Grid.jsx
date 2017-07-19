@@ -35,7 +35,7 @@ var GridFunctionCell = React.createClass({
         return t.indexOf("int") === 0 || t.indexOf("uint") === 0 || t === "short" || t === "byte" || t === "float" || t === "double";
     },
     render: function () {
-        if (this.state.isEditing) { 
+        if (this.state.isEditing) {
             var columns = [];
 
             if (this.state.aggregationFunction === "COUNT") {
@@ -140,26 +140,26 @@ var GridHeadingCell = React.createClass({
                     <span className="icon-accept icon-column-heading clickable" title="Done" onClick={this.handleAccept} />
                     <div>
                         <span className="icon-find" />
-                        <input 
-                                ref="query" 
-                                autoFocus 
+                        <input
+                                ref="query"
+                                autoFocus
                                 tabIndex="2"
-                                type="text" 
+                                type="text"
                                 placeholder="Query"
-                                value={this.state.query} 
-                                onChange={this.handleQueryChange} 
+                                value={this.state.query}
+                                onChange={this.handleQueryChange}
                                 onKeyDown={this.handleKey} />
                     </div>
                     <div>
                         <span className="icon-rename" />
-                        <input 
-                                ref="label" 
+                        <input
+                                ref="label"
                                 tabIndex="3"
-                                type="text" 
+                                type="text"
                                 placeholder="Label"
-                                value={this.state.label} 
-                                onChange={this.handleLabelChange} 
-                                onKeyDown={this.handleKey} />                        
+                                value={this.state.label}
+                                onChange={this.handleLabelChange}
+                                onKeyDown={this.handleKey} />
                     </div>
 
                 </td>
@@ -202,7 +202,7 @@ var GridValueCell = React.createClass({
 
         var dataBlockRowIndex = this.props.rowIndex * this.props.columnCount + this.props.colIndex;
         var dataBlockValueColumnIndex = this.props.content.values.columnCount - 1;
-        
+
         // Bail out if we don't find the expected cell values
         if (this.props.content.values.rows.length <= dataBlockRowIndex || this.props.content.values.rows[dataBlockRowIndex].length <= dataBlockValueColumnIndex) {
             return nullCell;
@@ -271,7 +271,7 @@ var GridValueCell = React.createClass({
         if (this.props.showPortionAs === "bar") {
             // Target Width: 150px + (2 x 8x padding) = 166px.
             portionStyle = { boxShadow: colors[colorIndex] + " " + 166 * percentage + "px 0px 0px inset" };
-            
+
             // Fills 100% of the cell width, but doesn't animate [in Chrome, 12/2016]. The animation is a higher priority until we can find a way to get both.
             //portionStyle = { background: "linear-gradient(to right, " + colors[colorIndex] + " 0, " + colors[colorIndex] + " " + (100 * percentage).toFixed(0) + "%, rgba(0, 0, 0, 0) " + (100 * percentage).toFixed(0) + "%)" };
         }
@@ -291,8 +291,6 @@ var GridValueCell = React.createClass({
 export default React.createClass({
     getInitialState: function () {
         return {
-            blockingErrorStatus: null,
-
             query: this.props.params.q || "",
             currentTable: this.props.params.t,
             currentTableAllColumns: [],
@@ -436,7 +434,6 @@ export default React.createClass({
             }.bind(this),
             (xhr, status, err) => {
                 this.setState({ allCountData: [], error: "Error: Server didn't respond to [" + xhr.url + "]. " + err });
-                this.setState({ blockingErrorStatus: status });
             },
             { q: this.state.query }
         );
@@ -537,7 +534,7 @@ export default React.createClass({
         if (this.state.show !== "both") relevantParams.show = this.state.show;
         if (this.state.showPortionOf !== "total") relevantParams.of = this.state.showPortionOf;
         if (this.state.showPortionAs !== "bar") relevantParams.as = this.state.showPortionAs;
-        
+
         if (this.state.rows && this.state.rows.length > 0) addArrayParameters(relevantParams, "r", this.state.rows);
         if (this.state.cols && this.state.cols.length > 0) addArrayParameters(relevantParams, "c", this.state.cols);
         if (this.state.rowLabels && this.state.rowLabels.length > 0) addArrayParameters(relevantParams, "rl", this.state.rowLabels);
@@ -547,8 +544,6 @@ export default React.createClass({
 
     },
     render: function () {
-         if (this.state.blockingErrorStatus != null) return <ErrorPage status={this.state.blockingErrorStatus} />;
-
         var headings = [];
         var gridRows = [];
 
@@ -575,10 +570,10 @@ export default React.createClass({
                 cells.push(<GridHeadingCell key={"HR" + rows[rowIndex]} type="row" index={rowIndex} value={rows[rowIndex]} label={rowLabels[rowIndex]} onChange={this.handleQueryChange} />);
 
                 for (var colIndex = 0; colIndex < columns.length; ++colIndex) {
-                    cells.push(<GridValueCell 
-                                    key={"C" + colIndex + "R" + rowIndex} 
-                                    colIndex={colIndex} 
-                                    rowIndex={rowIndex} 
+                    cells.push(<GridValueCell
+                                    key={"C" + colIndex + "R" + rowIndex}
+                                    colIndex={colIndex}
+                                    rowIndex={rowIndex}
                                     content={content}
                                     columnCount={columns.length} rowCount={rows.length}
                                     show={this.state.show} showPortionAs={this.state.showPortionAs} showPortionOf={this.state.showPortionOf} />);
@@ -598,7 +593,7 @@ export default React.createClass({
                 <div className="grid">
                     <table className={this.state.showPortionOf}>
                         <thead>
-                            <tr>                                
+                            <tr>
                                 {headings}
                             </tr>
                         </thead>
@@ -654,6 +649,8 @@ export default React.createClass({
                     <div className="center">
                         <QueryStats error={this.state.error}
                                     allCountData={this.state.allCountData}
+                                    allBasics={this.props.allBasics}
+                                    refreshAllBasics={this.props.refreshAllBasics}
                                     selectedData={this.state.gridData}
                                     currentTable={this.state.currentTable}
                                     onSelectedTableChange={this.onSelectedTableChange} />
@@ -667,4 +664,3 @@ export default React.createClass({
         );
     }
 });
-
