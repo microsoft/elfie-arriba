@@ -35,13 +35,10 @@ class Index extends React.Component {
     render() {
         if (this.state.blockingErrorStatus != null) return <ErrorPage status={this.state.blockingErrorStatus} />;
 
-        return window.location.pathname.startsWith("/Grid.html")
-            ? <Grid params={getQueryStringParameters()}
-                allBasics={this.state.allBasics}
-                refreshAllBasics={then => this.refreshAllBasics(then)} />
-            : <Search params={getQueryStringParameters()}
-                allBasics={this.state.allBasics}
-                refreshAllBasics={then => this.refreshAllBasics(then)} />
+        const Page = window.location.pathname.startsWith("/Grid.html") ? Grid : Search;
+        return <Page params={getQueryStringParameters()}
+            allBasics={this.state.allBasics}
+            refreshAllBasics={then => this.refreshAllBasics(then)} />
     }
 }
 
