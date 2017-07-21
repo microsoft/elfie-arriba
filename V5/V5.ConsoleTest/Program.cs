@@ -176,24 +176,8 @@ namespace V5.ConsoleTest
 
         static void PerformanceTests()
         {
-            int iterations = 500;
+            int iterations = 250;
             int size = 64 * 1000 * 1000;
-
-            //long[] array = new long[size];
-            //Benchmark.Compare("ArrayExtensions", 10, size, new string[] { "WriteArray", "ReadArray" },
-            //    () => 
-            //    {
-            //        using (BinaryWriter w = new BinaryWriter(File.OpenWrite("Sample.bin")))
-            //        { BinarySerializer.Write(w, array); }
-            //        return "";
-            //    },
-            //    () =>
-            //    {
-            //        using (BinaryReader r = new BinaryReader(File.OpenRead("Sample.bin")))
-            //        { array = BinarySerializer.ReadArray<long>(r, r.BaseStream.Length); }
-            //        return "";
-            //    }
-            //    );
             
             IndexSet set = new IndexSet(size);
             IndexSet other = new IndexSet(size);
@@ -229,11 +213,26 @@ namespace V5.ConsoleTest
                 CompressValues(values, bitsPerValue, bucketSample, i);
             }
 
-            Benchmark.Compare("Bandwidth Test", iterations, size, new string[] { "x1", "x2", "x4" },
-            () => V5.Test.Bandwidth(bucketSample, bitsPerValue, 0, size),
-            () => ParallelBandwidth(bucketSample, bitsPerValue, size, 2),
-            () => ParallelBandwidth(bucketSample, bitsPerValue, size, 4)
-            );
+            foreach (Scenario scenario in Enum.GetValues(typeof(Scenario)))
+            {
+                TrySingleAndParallel(scenario, bucketSample, bitsPerValue, size, iterations);
+            }
+
+            //long[] array = new long[size];
+            //Benchmark.Compare("ArrayExtensions", 10, size, new string[] { "WriteArray", "ReadArray" },
+            //    () => 
+            //    {
+            //        using (BinaryWriter w = new BinaryWriter(File.OpenWrite("Sample.bin")))
+            //        { BinarySerializer.Write(w, array); }
+            //        return "";
+            //    },
+            //    () =>
+            //    {
+            //        using (BinaryReader r = new BinaryReader(File.OpenRead("Sample.bin")))
+            //        { array = BinarySerializer.ReadArray<long>(r, r.BaseStream.Length); }
+            //        return "";
+            //    }
+            //    );
 
             //int sum;
             //Benchmark.Compare("Span Operations", iterations, size, new string[] { "Array For", "Array ForEach", "Span For", "Span ForEach" },
@@ -286,7 +285,16 @@ namespace V5.ConsoleTest
             //Benchmark.Compare("IndexSet Page", iterations, size, new string[] { "Page All" }, () => PageAll(set, page));
         }
 
-        private static object ParallelBandwidth(byte[] array, int bitsPerValue, int rowCount, int parallelCount)
+        private static void TrySingleAndParallel(Scenario scenario, byte[] array, int bitsPerValue, int rowCount, int iterations)
+        {
+            Benchmark.Compare(scenario.ToString(), iterations, rowCount, new string[] { "x1", "x2", "x4" },
+                    () => V5.Test.Bandwidth(scenario, array, bitsPerValue, 0, rowCount),
+                    () => ParallelBandwidth(scenario, array, bitsPerValue, rowCount, 2),
+                    () => ParallelBandwidth(scenario, array, bitsPerValue, rowCount, 4)
+                );
+        }
+
+        private static object ParallelBandwidth(Scenario scenario, byte[] array, int bitsPerValue, int rowCount, int parallelCount)
         {
             long result = 0;
 
@@ -298,7 +306,7 @@ namespace V5.ConsoleTest
                 int offset = i * segmentLength;
                 int length = (i == parallelCount - 1 ? rowCount - offset : segmentLength);
 
-                long part = Test.Bandwidth(array, bitsPerValue, offset, length);
+                long part = Test.Bandwidth(scenario, array, bitsPerValue, offset, length);
 
                 lock(array)
                 {

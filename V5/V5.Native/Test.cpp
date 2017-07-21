@@ -42,6 +42,21 @@ __int64 __inline CompareAndCount(__m128i block, __m128i value)
 	return _mm_popcnt_u64(bits);
 }
 
+__int64 CompareAndCountAVX128(__int8* set, int length)
+{
+	// Minimal Compare: Load, Compare, MoveMask, PopCount, add
+	__m128i value = _mm_set1_epi8(14);
+	__int64 count = 0;
+
+	for (int i = 0; i < length; i += 16)
+	{
+		__m128i block = _mm_loadu_si128((__m128i*)(&set[i]));
+		count += CompareAndCount(block, value);
+	}
+
+	return count;
+}
+
 __m128i __inline StretchBits4to8(__m128i block)
 {
 	// NOTE: This one is fast! 4x variations still at 59B out of 64B with no stretch and 50% overlap and 67B scan and XOR only.
@@ -179,18 +194,19 @@ __m128i __inline StretchTo8From(__m128i block)
 	return _mm_or_si128(r1, r2);
 }
 
-__int64 CompareTestAVX128(__int8* set, int bitsPerValue, int length)
+__int64 CompareTestStretchAVX128(__int8* set, int bitsPerValue, int length)
 {
 	// Minimal Compare: Load, Compare, MoveMask, PopCount, add
 	__m128i value = _mm_set1_epi8(14);
 	__int64 count = 0;
 
 	int bytesPerBlock = (bitsPerValue * 16) / 8;
-	for (int rowIndex = 0, byteIndex = 0; rowIndex < length; rowIndex += 16, byteIndex += bytesPerBlock)
+	int byteLength = (bytesPerBlock * length) / 16;
+	for (int byteIndex = 0; byteIndex < byteLength; byteIndex += bytesPerBlock)
 	{
 		__m128i block = _mm_loadu_si128((__m128i*)(&set[byteIndex]));
 		//block = StretchBits4to8(block);
-		//block = StretchTo8From<4>(block);
+		block = StretchTo8From<4>(block);
 		count += CompareAndCount(block, value);
 	}
 
@@ -200,14 +216,25 @@ __int64 CompareTestAVX128(__int8* set, int bitsPerValue, int length)
 #pragma managed
 namespace V5
 {
-	__int64 Test::Bandwidth(array<Byte>^ values, int bitsPerValue, int offset, int length)
+	__int64 Test::Bandwidth(Scenario scenario, array<Byte>^ values, int bitsPerValue, int offset, int length)
 	{
 		int byteOffset = (offset * bitsPerValue) / 8;
 		int byteLength = (length * bitsPerValue) / 8;
 
 		if (byteOffset + byteLength > values->Length) throw gcnew IndexOutOfRangeException();
 		pin_ptr<Byte> pValues = &values[byteOffset];
-		//return CompareTestAVX128((__int8*)pValues, bitsPerValue, length);
-		return BandwidthTestAVX128((__int8*)pValues, length);
+
+		switch (scenario)
+		{
+			case Scenario::BandwidthAVX256:
+				return BandwidthTestAVX256((__int8*)pValues, length);
+			case Scenario::BandwidthAVX128:
+				return BandwidthTestAVX128((__int8*)pValues, length);
+			case Scenario::CompareAndCountAVX128:
+				return CompareAndCountAVX128((__int8*)pValues, length);
+			default:
+				throw gcnew NotImplementedException(scenario.ToString());
+		}
+		//return CompareTestStretchAVX128((__int8*)pValues, bitsPerValue, length);
 	}
 }
