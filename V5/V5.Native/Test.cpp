@@ -5,14 +5,17 @@
 
 #pragma unmanaged
 
-__int64 BandwidthTestAVX256(__int8* set, int length)
+__int64 BandwidthTestAVX256(__int8* set, int bitsPerValue, int length)
 {
 	// Maximum Bandwidth Test: Just load 256 bits and do a single XOR.
 	__m256i accumulator = _mm256_set1_epi8(0);
 
-	for (int i = 0; i < length; i += 32)
+	int bytesPerBlock = (32 * bitsPerValue) / 8;
+	int sourceIndex = 0;
+
+	for (int rowIndex = 0; rowIndex < length; rowIndex += 32, sourceIndex += bytesPerBlock)
 	{
-		__m256i block = _mm256_loadu_si256((__m256i*)(&set[i]));
+		__m256i block = _mm256_loadu_si256((__m256i*)(&set[sourceIndex]));
 		accumulator = _mm256_xor_si256(accumulator, block);
 	}
 
@@ -20,14 +23,17 @@ __int64 BandwidthTestAVX256(__int8* set, int length)
 	return _mm_popcnt_u64(mask);
 }
 
-__int64 BandwidthTestAVX128(__int8* set, int length)
+__int64 BandwidthTestAVX128(__int8* set, int bitsPerValue, int length)
 {
 	// Maximum Bandwidth Test: Just load 128 bits and do a single XOR.
 	__m128i accumulator = _mm_set1_epi8(0);
 
-	for (int i = 0; i < length; i += 16)
+	int bytesPerBlock = (16 * bitsPerValue) / 8;
+	int sourceIndex = 0;
+
+	for (int rowIndex = 0; rowIndex < length; rowIndex += 16, sourceIndex += bytesPerBlock)
 	{
-		__m128i block = _mm_loadu_si128((__m128i*)(&set[i]));
+		__m128i block = _mm_loadu_si128((__m128i*)(&set[sourceIndex]));
 		accumulator = _mm_xor_si128(accumulator, block);
 	}
 
@@ -37,33 +43,32 @@ __int64 BandwidthTestAVX128(__int8* set, int length)
 
 __int64 __inline CompareAndCount(__m128i block, __m128i value)
 {
-	__m128i mask = _mm_cmpgt_epi8(block, value);
+	__m128i mask = _mm_cmpgt_epi8(value, block);
 	unsigned __int64 bits = _mm_movemask_epi8(mask);
 	return _mm_popcnt_u64(bits);
 }
 
-__int64 CompareAndCountAVX128(__int8* set, int length)
+__int64 CompareAndCountAVX128(__int8* set, int bitsPerValue, int length)
 {
 	// Minimal Compare: Load, Compare, MoveMask, PopCount, add
-	__m128i value = _mm_set1_epi8(14);
+	__m128i value = _mm_set1_epi8(1);
 	__int64 count = 0;
 
-	for (int i = 0; i < length; i += 16)
+	int bytesPerBlock = (16 * bitsPerValue) / 8;
+	int sourceIndex = 0;
+
+	for (int rowIndex = 0; rowIndex < length; rowIndex += 16, sourceIndex += bytesPerBlock)
 	{
-		__m128i block = _mm_loadu_si128((__m128i*)(&set[i]));
+		__m128i block = _mm_loadu_si128((__m128i*)(&set[sourceIndex]));
 		count += CompareAndCount(block, value);
 	}
 
 	return count;
 }
 
-__m128i __inline StretchBits4to8(__m128i block)
+__m128i __inline StretchBits4to8(__m128i block)//, __m128i shuffleMask, __m128i and1, __m128i and2)
 {
-	// NOTE: This one is fast! 4x variations still at 59B out of 64B with no stretch and 50% overlap and 67B scan and XOR only.
-	// Other bit-nesses will need either more registers, parallel multiply, or variable shift, all of which will likely be slower.
-	// A general-purpose algorithm which would work for 2-7 would also be nice (template and look up from arrays with same steps).
-
-	// IN:  0bnnnnnnnn'nnnnnnnn'nnnnnnnn'nnnnnnnn'HHHHGGGG'FFFFEEEE'DDDDCCCC'BBBBAAAA 
+    // IN:  0bnnnnnnnn'nnnnnnnn'nnnnnnnn'nnnnnnnn'HHHHGGGG'FFFFEEEE'DDDDCCCC'BBBBAAAA 
 	// OUT: 0b0000HHHH'0000GGGG'0000FFFF'0000EEEE'0000DDDD'0000CCCC'0000BBBB'0000AAAA
 
 	// First, stretch the bytes out so each byte contains the bits it needs to end up with
@@ -79,11 +84,13 @@ __m128i __inline StretchBits4to8(__m128i block)
 	// AND each value to get rid of the upper bits and get the correctly set bytes only
 	//	   0b00000000'00001111'00000000'00001111'00000000'00001111'00000000'00001111			PAND		P015 L1 T0.33
 	// R1: 0b00000000'0000GGGG'00000000'0000EEEE'00000000'0000CCCC'0000BBBB'0000AAAA
-	r1 = _mm_and_si128(r1, _mm_set1_epi16(0b00000000'00001111));
+	__m128i and1 = _mm_set1_epi16(0b00000000'00001111);
+	r1 = _mm_and_si128(r1, and1);
 
 	//	   0b00001111'00000000'00001111'00000000'00001111'00000000'00001111'00000000			PAND		P015 L1 T0.33
 	// R2: 0b0000HHHH'00000000'0000FFFF'00000000'0000DDDD'00000000'0000BBBB'00000000
-	r2 = _mm_and_si128(r2, _mm_set1_epi16(0b00001111'00000000));
+	__m128i and2 = _mm_set1_epi16(0b00001111'00000000);
+	r2 = _mm_and_si128(r2, and2);
 
 	// Finally, OR together the two results
 	// OUT: 0b0000HHHH'0000GGGG'0000FFFF'0000EEEE'0000DDDD'0000CCCC'0000BBBB'0000AAAA			POR			P015 L1 T0.33
@@ -137,19 +144,6 @@ __m128i GetShiftMask()
 	return shiftMask;
 }
 
-// TODO: Need to figure out how to properly declare __m128i constants. This isn't working.
-const __m128i AndMasks[] =
-{
-	{ 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000 },
-	{ 0x0100, 0x0100, 0x0100, 0x0100, 0x0100, 0x0100, 0x0100, 0x0100 },
-	{ 0x0300, 0x0300, 0x0300, 0x0300, 0x0300, 0x0300, 0x0300, 0x0300 },
-	{ 0x0700, 0x0700, 0x0700, 0x0700, 0x0700, 0x0700, 0x0700, 0x0700 },
-	{ 0x0F00, 0x0F00, 0x0F00, 0x0F00, 0x0F00, 0x0F00, 0x0F00, 0x0F00 },
-	{ 0x1F00, 0x1F00, 0x1F00, 0x1F00, 0x1F00, 0x1F00, 0x1F00, 0x1F00 },
-	{ 0x3F00, 0x3F00, 0x3F00, 0x3F00, 0x3F00, 0x3F00, 0x3F00, 0x3F00 },
-	{ 0x7F00, 0x7F00, 0x7F00, 0x7F00, 0x7F00, 0x7F00, 0x7F00, 0x7F00 },
-};
-
 __m128i GetAndMask(int bitsPerValue)
 {
 	return _mm_set1_epi16((0x00FF << bitsPerValue) & 0xFF00);
@@ -196,8 +190,12 @@ __m128i __inline StretchTo8From(__m128i block)
 
 __int64 CompareTestStretchAVX128(__int8* set, int bitsPerValue, int length)
 {
+	__m128i shuffleMask = _mm_set_epi8(7, 7, 6, 6, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1, 0, 0);
+	__m128i and1 = _mm_set1_epi16(0b00000000'00001111);
+	__m128i and2 = _mm_set1_epi16(0b00001111'00000000);
+
 	// Minimal Compare: Load, Compare, MoveMask, PopCount, add
-	__m128i value = _mm_set1_epi8(14);
+	__m128i value = _mm_set1_epi8(1);
 	__int64 count = 0;
 
 	int bytesPerBlock = (bitsPerValue * 16) / 8;
@@ -205,8 +203,15 @@ __int64 CompareTestStretchAVX128(__int8* set, int bitsPerValue, int length)
 	for (int byteIndex = 0; byteIndex < byteLength; byteIndex += bytesPerBlock)
 	{
 		__m128i block = _mm_loadu_si128((__m128i*)(&set[byteIndex]));
-		//block = StretchBits4to8(block);
-		block = StretchTo8From<4>(block);
+		//block = StretchBits4to8(block);//, shuffleMask, and1, and2);
+		//block = StretchTo8From<4>(block);
+
+		__m128i r1 = _mm_shuffle_epi8(block, shuffleMask);
+		__m128i r2 = _mm_srli_epi16(r1, 4);
+		r1 = _mm_and_si128(r1, and1);
+		r2 = _mm_and_si128(r2, and2);
+		block = _mm_or_si128(r1, r2);
+
 		count += CompareAndCount(block, value);
 	}
 
@@ -227,14 +232,15 @@ namespace V5
 		switch (scenario)
 		{
 			case Scenario::BandwidthAVX256:
-				return BandwidthTestAVX256((__int8*)pValues, length);
+				return BandwidthTestAVX256((__int8*)pValues, bitsPerValue, length);
 			case Scenario::BandwidthAVX128:
-				return BandwidthTestAVX128((__int8*)pValues, length);
+				return BandwidthTestAVX128((__int8*)pValues, bitsPerValue, length);
 			case Scenario::CompareAndCountAVX128:
-				return CompareAndCountAVX128((__int8*)pValues, length);
+				return CompareAndCountAVX128((__int8*)pValues, bitsPerValue, length);
+			case Scenario::StretchCompareAndCountAVX128:
+				return CompareTestStretchAVX128((__int8*)pValues, bitsPerValue, length);
 			default:
 				throw gcnew NotImplementedException(scenario.ToString());
 		}
-		//return CompareTestStretchAVX128((__int8*)pValues, bitsPerValue, length);
 	}
 }

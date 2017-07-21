@@ -5,7 +5,8 @@ public enum class Scenario : char
 {
 	BandwidthAVX256,
 	BandwidthAVX128,
-	CompareAndCountAVX128
+	CompareAndCountAVX128,
+	StretchCompareAndCountAVX128
 };
 
 namespace V5

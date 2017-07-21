@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using V5;
 using V5.Collections;
@@ -148,55 +149,54 @@ namespace V5.ConsoleTest
 
         private static void CompressValues(ushort[] values, int bitsPerValue, byte[] destination, int valueIndex)
         {
-            int itemIndex = 0;
+            if ((values.Length * bitsPerValue) % 8 != 0) throw new InvalidOperationException("CompressValues must compress in blocks which produce an even number of bytes. Compress multiples of 8 rows.");
+
+            // Prepare a mask to get the bottom 'bitsPerValue' bits from each item
+            byte valueMask = (byte)(0xFF >> (8 - bitsPerValue));
+
+            // Calculate the first write position in the output array
+            int bitIndex = 0;
             int destinationIndex = (valueIndex * bitsPerValue) / 8;
+            byte current = 0;
 
-            while (itemIndex < 16)
+            // Copy each item into the correct slice of bits
+            for(int itemIndex = 0; itemIndex < values.Length; ++itemIndex)
             {
-                // Build up one byte
-                byte current = 0;
-                int bitIndex = (itemIndex * bitsPerValue) & 7;
-                while (bitIndex < 8)
+                // Get the bits for the next item
+                byte valueBits = (byte)(values[itemIndex] & valueMask);
+                
+                // Write them at the next position
+                current |= (byte)(valueBits << bitIndex);
+
+                // Calculate the start of the next value
+                bitIndex += bitsPerValue;
+                if(bitIndex >= 8)
                 {
-                    byte valueBits = (byte)(values[itemIndex] & (0xFF >> (8 - bitsPerValue)));
-                    current |= (byte)(valueBits << bitIndex);
+                    // If it's in the next byte, commit the last one
+                    destination[destinationIndex] = current;
 
-                    itemIndex++;
-                    bitIndex += bitsPerValue;
+                    destinationIndex++;
+                    bitIndex -= 8;
+
+                    // Start the next byte with any item bits which overlap into it
+                    current = (byte)(bitIndex == 0 ? 0 : valueBits >> (bitsPerValue - bitIndex));
                 }
-
-                // Set the byte
-                destination[destinationIndex] = current;
-                destinationIndex++;
-
-                // Back up one index to get the first bits of the next byte, if needed
-                if (bitIndex != 8) itemIndex--;
             }
+
+            // Write the last value, if needed
+            if (current != 0) destination[destinationIndex] = current;
         }
 
         static void PerformanceTests()
         {
             int iterations = 250;
             int size = 64 * 1000 * 1000;
-            
+            int bitsPerValue = 4;
+
             IndexSet set = new IndexSet(size);
             IndexSet other = new IndexSet(size);
-
-            IndexSet[] sets2 = new IndexSet[2];
-            for (int i = 0; i < sets2.Length; ++i)
-            {
-                sets2[i] = new IndexSet(size / 2);
-            }
-
-            IndexSet[] sets4 = new IndexSet[4];
-            for (int i = 0; i < sets4.Length; ++i)
-            {
-                sets4[i] = new IndexSet(size / 4);
-            }
-
             Span<int> page = new Span<int>(new int[4096]);
 
-            int bitsPerValue = 8;
             byte[] bucketSample = new byte[(size * bitsPerValue) / 8];
             Span<byte> bucketSpan = new Span<byte>(bucketSample);
 
@@ -213,9 +213,10 @@ namespace V5.ConsoleTest
                 CompressValues(values, bitsPerValue, bucketSample, i);
             }
 
-            foreach (Scenario scenario in Enum.GetValues(typeof(Scenario)))
+            Scenario[] scenarios = (Scenario[])Enum.GetValues(typeof(Scenario));
+            for(int i = scenarios.Length - 1; i >= 0; --i)
             {
-                TrySingleAndParallel(scenario, bucketSample, bitsPerValue, size, iterations);
+                TrySingleAndParallel(scenarios[i], bucketSample, bitsPerValue, size, iterations);
             }
 
             //long[] array = new long[size];
@@ -249,6 +250,18 @@ namespace V5.ConsoleTest
             //for (int i = 0; i < size; ++i)
             //{
             //    bigBucketSample[i] = (ushort)((i & 1) == 0 ? (i & 65535) : (65535 - i & 65535));
+            //}
+
+            //IndexSet[] sets2 = new IndexSet[2];
+            //for (int i = 0; i < sets2.Length; ++i)
+            //{
+            //    sets2[i] = new IndexSet(size / 2);
+            //}
+
+            //IndexSet[] sets4 = new IndexSet[4];
+            //for (int i = 0; i < sets4.Length; ++i)
+            //{
+            //    sets4[i] = new IndexSet(size / 4);
             //}
 
             //Benchmark.Compare("IndexSet Operations", iterations, size, new string[] { /*"All", "None", "And", "Count", */"Where1b", "Where1b x2", "Where1b x4", "Where2b", "Where2b x2", "Where2b x4" /*, $"Where Parallel x{ParallelCount}"*/ },
