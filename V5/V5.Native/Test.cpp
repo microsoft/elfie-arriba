@@ -66,7 +66,34 @@ __int64 CompareAndCountAVX128(__int8* set, int bitsPerValue, int length)
 	return count;
 }
 
-__m128i __inline StretchBits4to8(__m128i block)//, __m128i shuffleMask, __m128i and1, __m128i and2)
+__m128i __inline StretchBits4to8_V2(__m128i block)
+{
+	__m128i shuffleMask = _mm_set_epi8(7, 7, 6, 6, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1, 0, 0);
+	__m128i andMask = _mm_set1_epi16(0b11110000'00001111);
+
+	// IN:  0bnnnnnnnn'nnnnnnnn'nnnnnnnn'nnnnnnnn'HHHHGGGG'FFFFEEEE'DDDDCCCC'BBBBAAAA 
+	// OUT: 0b0000HHHH'0000GGGG'0000FFFF'0000EEEE'0000DDDD'0000CCCC'0000BBBB'0000AAAA
+
+	// First, stretch the bytes out so each byte contains the bits it needs to end up with
+	//			     3        3        2        2        1        1        0        0			PSHUFB		P5 L1 T1
+	//	R1: 0bHHHHGGGG'HHHHGGGG'FFFFEEEE'FFFFEEEE'DDDDCCCC'DDDDCCCC'BBBBAAAA'BBBBAAAA
+	__m128i r1 = _mm_shuffle_epi8(block, shuffleMask);
+
+	// AND to get only the desired bits in each byte
+	//	R1: 0bHHHH0000'0000GGGG'FFFF0000'0000EEEE'DDDD0000'0000CCCC'BBBB0000'0000AAAA			PAND		P015 L1 T0.33
+	r1 = _mm_and_si128(r1, andMask);
+
+	// In a copy, shift every word right four bits to align the high values and empty the low copies
+	//	R1: 0b0000HHHH'00000000'0000FFFF'00000000'0000DDDD'00000000'0000BBBB'00000000 			PSRLW		P01 L1 T0.5
+	__m128i r2 = _mm_srli_epi16(r1, 4);
+
+	// Finally, OR together the two results
+	// WRONG: 0bHHHHHHHH
+	// OUT: 0b0000HHHH'0000GGGG'0000FFFF'0000EEEE'0000DDDD'0000CCCC'0000BBBB'0000AAAA			POR			P015 L1 T0.33
+	return _mm_or_si128(r1, r2);
+}
+
+__m128i __inline StretchBits4to8(__m128i block)
 {
     // IN:  0bnnnnnnnn'nnnnnnnn'nnnnnnnn'nnnnnnnn'HHHHGGGG'FFFFEEEE'DDDDCCCC'BBBBAAAA 
 	// OUT: 0b0000HHHH'0000GGGG'0000FFFF'0000EEEE'0000DDDD'0000CCCC'0000BBBB'0000AAAA
@@ -97,8 +124,77 @@ __m128i __inline StretchBits4to8(__m128i block)//, __m128i shuffleMask, __m128i 
 	return _mm_or_si128(r1, r2);
 }
 
-template<int bitsPerValue, int start>
-__m128i GetShuffleMask()
+__int64 Stretch2to8CompareAndCountAVX128(__int8* set, int bitsPerValue, int length)
+{
+	// Get four copies of every byte
+	__m128i shuffleMask = _mm_set_epi8(3, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1, 0, 0, 0, 0);
+
+	// Get only the "in use" two bits for each byte
+	__m128i andMask = _mm_set1_epi32(0b11000000'00110000'00001100'00000011);
+
+	// Get copies of the desired value shifted two bits each
+	__m128i value = _mm_set_epi8(1 << 6, 1 << 4, 1 << 2, 1, 1 << 6, 1 << 4, 1 << 2, 1, 1 << 6, 1 << 4, 1 << 2, 1, 1 << 6, 1 << 4, 1 << 2, 1);
+
+	// Subtract only the values which use the high bit
+	__m128i subtract = _mm_set_epi8(128, 0, 0, 0, 128, 0, 0, 0, 128, 0, 0, 0, 128, 0, 0, 0);
+	value = _mm_sub_epi8(value, subtract);
+
+	__int64 count = 0;
+
+	int bytesPerBlock = (bitsPerValue * 16) / 8;
+	int byteLength = (bytesPerBlock * length) / 16;
+	for (int byteIndex = 0; byteIndex < byteLength; byteIndex += bytesPerBlock)
+	{
+		// Load the next block to compare
+		__m128i block = _mm_loadu_si128((__m128i*)(&set[byteIndex]));
+
+		// Get four copies of every byte
+		block = _mm_shuffle_epi8(block, shuffleMask);
+
+		// Get only the "in use" two bits for each byte
+		block = _mm_and_si128(block, andMask);
+		
+		// Subtract only the values using the high bit
+		block = _mm_sub_epi8(block, subtract);
+
+		// Compare and count the results
+		count += CompareAndCount(block, value);
+	}
+
+	return count;
+}
+
+__int64 Stretch4to8CompareAndCountAVX128(__int8* set, int bitsPerValue, int length)
+{
+	__m128i shuffleMask = _mm_set_epi8(7, 7, 6, 6, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1, 0, 0);
+	__m128i and1 = _mm_set1_epi16(0b00000000'00001111);
+	__m128i and2 = _mm_set1_epi16(0b00001111'00000000);
+
+	// Minimal Compare: Load, Compare, MoveMask, PopCount, add
+	__m128i value = _mm_set1_epi8(1);
+	__int64 count = 0;
+
+	int bytesPerBlock = (bitsPerValue * 16) / 8;
+	int byteLength = (bytesPerBlock * length) / 16;
+	for (int byteIndex = 0; byteIndex < byteLength; byteIndex += bytesPerBlock)
+	{
+		// Load the next block to compare
+		__m128i block = _mm_loadu_si128((__m128i*)(&set[byteIndex]));
+
+		// Stretch four bit values to 8 [really inlined]
+		__m128i r1 = _mm_shuffle_epi8(block, shuffleMask);
+		__m128i r2 = _mm_srli_epi16(r1, 4);
+		r1 = _mm_and_si128(r1, and1);
+		r2 = _mm_and_si128(r2, and2);
+		block = _mm_or_si128(r1, r2);
+
+		count += CompareAndCount(block, value);
+	}
+
+	return count;
+}
+
+__m128i GetShuffleMask(int bitsPerValue, int start)
 {
 	__m128i shuffleMask;
 
@@ -119,8 +215,7 @@ __m128i GetShuffleMask()
 	return shuffleMask;
 }
 
-template<int bitsPerValue, int start>
-__m128i GetShiftMask()
+__m128i GetShiftMask(int bitsPerValue, int start)
 {
 	__m128i shiftMask;
 
@@ -188,11 +283,13 @@ __m128i __inline StretchTo8From(__m128i block)
 	return _mm_or_si128(r1, r2);
 }
 
-__int64 CompareTestStretchAVX128(__int8* set, int bitsPerValue, int length)
+__int64 StretchGenericCompareAndCountAVX128(__int8* set, int bitsPerValue, int length)
 {
-	__m128i shuffleMask = _mm_set_epi8(7, 7, 6, 6, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1, 0, 0);
-	__m128i and1 = _mm_set1_epi16(0b00000000'00001111);
-	__m128i and2 = _mm_set1_epi16(0b00001111'00000000);
+	__m128i shuffleMask1 = GetShuffleMask(bitsPerValue, 0);
+	__m128i shuffleMask2 = GetShuffleMask(bitsPerValue, 1);
+	__m128i shiftMask1 = GetShiftMask(bitsPerValue, 0);
+	__m128i shiftMask2 = GetShiftMask(bitsPerValue, 1);
+	__m128i andMask = GetAndMask(bitsPerValue);
 
 	// Minimal Compare: Load, Compare, MoveMask, PopCount, add
 	__m128i value = _mm_set1_epi8(1);
@@ -202,14 +299,30 @@ __int64 CompareTestStretchAVX128(__int8* set, int bitsPerValue, int length)
 	int byteLength = (bytesPerBlock * length) / 16;
 	for (int byteIndex = 0; byteIndex < byteLength; byteIndex += bytesPerBlock)
 	{
+		// Load the next block to compare
 		__m128i block = _mm_loadu_si128((__m128i*)(&set[byteIndex]));
-		//block = StretchBits4to8(block);//, shuffleMask, and1, and2);
-		//block = StretchTo8From<4>(block);
 
-		__m128i r1 = _mm_shuffle_epi8(block, shuffleMask);
-		__m128i r2 = _mm_srli_epi16(r1, 4);
-		r1 = _mm_and_si128(r1, and1);
-		r2 = _mm_and_si128(r2, and2);
+		// Use 'Shuffle' to get the two bytes containing the value into each 16-bit part.
+		// R1: 0b...|HHHGGGFF'FEEEDDDC|FEEEDDDC'CCBBBAAA|FEEEDDDC'CCBBBAAA [A, C, E, ...]
+		__m128i r1 = _mm_shuffle_epi8(block, shuffleMask1);
+		__m128i r2 = _mm_shuffle_epi8(block, shuffleMask2);
+
+		// Use 'Multiply Low' to shift the two byte value so the desired part is at the low edge of the high byte.
+		// R1:  0b...|nnnnnEEE'nnnnnnnn|nnnnnCCC'nnnnnnnn|nnnnnAAA'nnnnnnnn
+		r1 = _mm_mullo_epi16(r1, shiftMask1);
+		r2 = _mm_mullo_epi16(r2, shiftMask2);
+
+		// AND with a mask to clear out the unused high bits and low byte.
+		// R1:  0b...|00000EEE'00000000|00000CCC'00000000|00000AAA'00000000
+		r1 = _mm_and_si128(r1, andMask);
+		r2 = _mm_and_si128(r2, andMask);
+
+		// Shift *one* register right by a whole byte to get those values into the low bytes
+		// R1:  0b...|00000000'00000EEE|00000000'00000CCC|00000000'00000AAA
+		r1 = _mm_srli_epi16(r1, 8);
+
+		// OR the two registers together to merge the results
+		// OUT: 0b...|00000FFF'00000EEE|00000DDD'00000CCC|00000BBB'00000AAA
 		block = _mm_or_si128(r1, r2);
 
 		count += CompareAndCount(block, value);
@@ -237,8 +350,12 @@ namespace V5
 				return BandwidthTestAVX128((__int8*)pValues, bitsPerValue, length);
 			case Scenario::CompareAndCountAVX128:
 				return CompareAndCountAVX128((__int8*)pValues, bitsPerValue, length);
-			case Scenario::StretchCompareAndCountAVX128:
-				return CompareTestStretchAVX128((__int8*)pValues, bitsPerValue, length);
+			case Scenario::Stretch4to8CompareAndCountAVX128:
+				return Stretch4to8CompareAndCountAVX128((__int8*)pValues, bitsPerValue, length);
+			case Scenario::StretchGenericCompareAndCountAVX128:
+				return StretchGenericCompareAndCountAVX128((__int8*)pValues, bitsPerValue, length);
+			case Scenario::Stretch2to8CompareAndCountAVX128:
+				return Stretch2to8CompareAndCountAVX128((__int8*)pValues, bitsPerValue, length);
 			default:
 				throw gcnew NotImplementedException(scenario.ToString());
 		}

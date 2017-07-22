@@ -191,7 +191,7 @@ namespace V5.ConsoleTest
         {
             int iterations = 250;
             int size = 64 * 1000 * 1000;
-            int bitsPerValue = 4;
+            int bitsPerValue = 8;
 
             IndexSet set = new IndexSet(size);
             IndexSet other = new IndexSet(size);
@@ -300,10 +300,11 @@ namespace V5.ConsoleTest
 
         private static void TrySingleAndParallel(Scenario scenario, byte[] array, int bitsPerValue, int rowCount, int iterations)
         {
-            Benchmark.Compare(scenario.ToString(), iterations, rowCount, new string[] { "x1", "x2", "x4" },
+            Benchmark.Compare(scenario.ToString(), iterations, rowCount, new string[] { "x1", "x2", "x4", "x8" },
                     () => V5.Test.Bandwidth(scenario, array, bitsPerValue, 0, rowCount),
                     () => ParallelBandwidth(scenario, array, bitsPerValue, rowCount, 2),
-                    () => ParallelBandwidth(scenario, array, bitsPerValue, rowCount, 4)
+                    () => ParallelBandwidth(scenario, array, bitsPerValue, rowCount, 4),
+                    () => ParallelBandwidth(scenario, array, bitsPerValue, rowCount, 8)
                 );
         }
 
