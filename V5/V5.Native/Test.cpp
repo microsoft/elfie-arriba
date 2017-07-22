@@ -66,6 +66,26 @@ __int64 CompareAndCountAVX128(__int8* set, int bitsPerValue, int length)
 	return count;
 }
 
+__int64 CompareAndCountTwoByteAVX128(__int8* set, int bitsPerValue, int length)
+{
+	// Minimal Compare: Load, Compare, MoveMask, PopCount, add
+	__m128i value = _mm_set1_epi16(1);
+	__int64 count = 0;
+
+	int bytesPerBlock = (8 * bitsPerValue) / 8;
+	int sourceIndex = 0;
+
+	for (int rowIndex = 0; rowIndex < length; rowIndex += 8, sourceIndex += bytesPerBlock)
+	{
+		__m128i block = _mm_loadu_si128((__m128i*)(&set[sourceIndex]));
+		__m128i mask = _mm_cmpgt_epi16(value, block);
+		unsigned __int64 bits = _mm_movemask_epi8(mask);
+		count += _mm_popcnt_u64(bits);
+	}
+
+	return count / 2;
+}
+
 __m128i __inline StretchBits4to8_V2(__m128i block)
 {
 	__m128i shuffleMask = _mm_set_epi8(7, 7, 6, 6, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1, 0, 0);
@@ -350,6 +370,8 @@ namespace V5
 				return BandwidthTestAVX128((__int8*)pValues, bitsPerValue, length);
 			case Scenario::CompareAndCountAVX128:
 				return CompareAndCountAVX128((__int8*)pValues, bitsPerValue, length);
+			case Scenario::CompareAndCountTwoByteAVX128:
+				return CompareAndCountTwoByteAVX128((__int8*)pValues, bitsPerValue, length);
 			case Scenario::Stretch4to8CompareAndCountAVX128:
 				return Stretch4to8CompareAndCountAVX128((__int8*)pValues, bitsPerValue, length);
 			case Scenario::StretchGenericCompareAndCountAVX128:
