@@ -191,7 +191,7 @@ namespace V5.ConsoleTest
         {
             int iterations = 250;
             int size = 64 * 1000 * 1000;
-            int bitsPerValue = 6;
+            int bitsPerValue = 8;
 
             IndexSet set = new IndexSet(size);
             IndexSet other = new IndexSet(size);
@@ -303,7 +303,7 @@ namespace V5.ConsoleTest
         private static void TrySingleAndParallel(Scenario scenario, byte[] array, int bitsPerValue, int rowCount, int iterations, ulong[] rawVector)
         {
             Benchmark.Compare(scenario.ToString(), iterations, rowCount, new string[] { "x1", "x2", "x4"/*, "x8" */},
-                    () => V5.Test.Bandwidth(scenario, array, bitsPerValue, 0, rowCount, rawVector),
+                    () => { Test.Bandwidth(scenario, array, bitsPerValue, 0, rowCount, rawVector); return Test.Count(rawVector); },
                     () => ParallelBandwidth(scenario, array, bitsPerValue, rowCount, rawVector, 2),
                     () => ParallelBandwidth(scenario, array, bitsPerValue, rowCount, rawVector, 4)//,
                     //() => ParallelBandwidth(scenario, array, bitsPerValue, rowCount, rawVector, 8)
@@ -312,8 +312,6 @@ namespace V5.ConsoleTest
 
         private static object ParallelBandwidth(Scenario scenario, byte[] array, int bitsPerValue, int rowCount, ulong[] rawVector, int parallelCount)
         {
-            long result = 0;
-
             // Get an even multiple of 64 rows to parallelize across
             int segmentLength = (rowCount / parallelCount) & ~63;
 
@@ -322,15 +320,10 @@ namespace V5.ConsoleTest
                 int offset = i * segmentLength;
                 int length = (i == parallelCount - 1 ? rowCount - offset : segmentLength);
 
-                long part = Test.Bandwidth(scenario, array, bitsPerValue, offset, length, rawVector);
-
-                lock(array)
-                {
-                    result += part;
-                }
+                Test.Bandwidth(scenario, array, bitsPerValue, offset, length, rawVector);
             });
 
-            return result;
+            return Test.Count(rawVector);
         }
 
         private static object ParallelWhere<T>(T[] column, T value, IndexSet[] sets)

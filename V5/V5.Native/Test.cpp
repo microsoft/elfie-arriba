@@ -4,6 +4,17 @@
 #include "Test.h"
 
 #pragma unmanaged
+__int64 CountN(unsigned __int64* matchVector, int length)
+{
+	__int64 count = 0;
+	
+	for (int i = 0; i < length; ++i)
+	{
+		count += _mm_popcnt_u64(matchVector[i]);
+	}
+
+	return count;
+}
 
 __int64 BandwidthTestAVX256(__int8* set, int bitsPerValue, int length)
 {
@@ -84,7 +95,7 @@ void CompareToVectorTwoByteAVX128(__int8* set, int bitsPerValue, int length, __i
 void CompareToVectorAVX256(__int8* set, int bitsPerValue, int length, __int32* vector)
 {
 	// Minimal Compare: Load, Compare, MoveMask, PopCount, add
-	__m128i value = _mm_set1_epi8(1);
+	__m256i value = _mm256_set1_epi8(1);
 
 	int bytesPerBlock = (32 * bitsPerValue) / 8;
 	int blockLength = length / 32;
@@ -92,9 +103,9 @@ void CompareToVectorAVX256(__int8* set, int bitsPerValue, int length, __int32* v
 
 	for (int blockIndex = 0; blockIndex < blockLength; ++blockIndex, sourceIndex += bytesPerBlock)
 	{
-		__m128i block = _mm_loadu_si128((__m128i*)(&set[sourceIndex]));
-		__m128i mask = _mm_cmpgt_epi8(value, block);
-		__int32 bits = (__int32)(_mm_movemask_epi8(mask) & 0xFFFFFFFF);
+		__m256i block = _mm256_loadu_si256((__m256i*)(&set[sourceIndex]));
+		__m256i mask = _mm256_cmpgt_epi8(value, block);
+		__int32 bits = (__int32)(_mm256_movemask_epi8(mask) & 0xFFFFFFFF);
 		vector[blockIndex] = bits;
 	}
 }
@@ -270,6 +281,12 @@ void StretchGenericCompareToVectorAVX128(__int8* set, int bitsPerValue, int leng
 #pragma managed
 namespace V5
 {
+	__int64 Test::Count(array<UInt64>^ vector)
+	{
+		pin_ptr<UInt64> pVector = &vector[0];
+		return CountN((unsigned __int64*)pVector, vector->Length);
+	}
+
 	__int64 Test::Bandwidth(Scenario scenario, array<Byte>^ values, int bitsPerValue, int offset, int length, array<UInt64>^ vector)
 	{
 		int byteOffset = (offset * bitsPerValue) / 8;
