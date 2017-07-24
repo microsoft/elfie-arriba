@@ -191,11 +191,13 @@ namespace V5.ConsoleTest
         {
             int iterations = 250;
             int size = 64 * 1000 * 1000;
-            int bitsPerValue = 4;
+            int bitsPerValue = 6;
 
             IndexSet set = new IndexSet(size);
             IndexSet other = new IndexSet(size);
             Span<int> page = new Span<int>(new int[4096]);
+
+            ulong[] rawVector = new ulong[size / 64];
 
             byte[] bucketSample = new byte[(size * bitsPerValue) / 8];
             Span<byte> bucketSpan = new Span<byte>(bucketSample);
@@ -216,7 +218,7 @@ namespace V5.ConsoleTest
             Scenario[] scenarios = (Scenario[])Enum.GetValues(typeof(Scenario));
             for(int i = scenarios.Length - 1; i >= 0; --i)
             {
-                TrySingleAndParallel(scenarios[i], bucketSample, bitsPerValue, size, iterations);
+                TrySingleAndParallel(scenarios[i], bucketSample, bitsPerValue, size, iterations, rawVector);
             }
 
             //long[] array = new long[size];
@@ -298,17 +300,17 @@ namespace V5.ConsoleTest
             //Benchmark.Compare("IndexSet Page", iterations, size, new string[] { "Page All" }, () => PageAll(set, page));
         }
 
-        private static void TrySingleAndParallel(Scenario scenario, byte[] array, int bitsPerValue, int rowCount, int iterations)
+        private static void TrySingleAndParallel(Scenario scenario, byte[] array, int bitsPerValue, int rowCount, int iterations, ulong[] rawVector)
         {
-            Benchmark.Compare(scenario.ToString(), iterations, rowCount, new string[] { "x1", "x2", "x4", "x8" },
-                    () => V5.Test.Bandwidth(scenario, array, bitsPerValue, 0, rowCount),
-                    () => ParallelBandwidth(scenario, array, bitsPerValue, rowCount, 2),
-                    () => ParallelBandwidth(scenario, array, bitsPerValue, rowCount, 4),
-                    () => ParallelBandwidth(scenario, array, bitsPerValue, rowCount, 8)
+            Benchmark.Compare(scenario.ToString(), iterations, rowCount, new string[] { "x1", "x2", "x4"/*, "x8" */},
+                    () => V5.Test.Bandwidth(scenario, array, bitsPerValue, 0, rowCount, rawVector),
+                    () => ParallelBandwidth(scenario, array, bitsPerValue, rowCount, rawVector, 2),
+                    () => ParallelBandwidth(scenario, array, bitsPerValue, rowCount, rawVector, 4)//,
+                    //() => ParallelBandwidth(scenario, array, bitsPerValue, rowCount, rawVector, 8)
                 );
         }
 
-        private static object ParallelBandwidth(Scenario scenario, byte[] array, int bitsPerValue, int rowCount, int parallelCount)
+        private static object ParallelBandwidth(Scenario scenario, byte[] array, int bitsPerValue, int rowCount, ulong[] rawVector, int parallelCount)
         {
             long result = 0;
 
@@ -320,7 +322,7 @@ namespace V5.ConsoleTest
                 int offset = i * segmentLength;
                 int length = (i == parallelCount - 1 ? rowCount - offset : segmentLength);
 
-                long part = Test.Bandwidth(scenario, array, bitsPerValue, offset, length);
+                long part = Test.Bandwidth(scenario, array, bitsPerValue, offset, length, rawVector);
 
                 lock(array)
                 {
