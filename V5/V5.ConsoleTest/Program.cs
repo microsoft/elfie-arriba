@@ -191,7 +191,7 @@ namespace V5.ConsoleTest
         {
             int iterations = 250;
             int size = 64 * 1000 * 1000;
-            int bitsPerValue = 7;
+            int bitsPerValue = 4;
 
             IndexSet set = new IndexSet(size);
             IndexSet other = new IndexSet(size);

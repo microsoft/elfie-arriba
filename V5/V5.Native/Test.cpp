@@ -225,11 +225,14 @@ __m128i GetShuffleMask(int bitsPerValue, int start)
 		int bitIndex = itemIndex * bitsPerValue;
 
 		// Item 'i' starts in byte (bitIndex / 8)
-		unsigned __int8 firstByteWithBits = bitIndex / 8;
+		unsigned __int8 firstByteToGet = bitIndex / 8;
 
-		// Get the byte with the first bit and the byte right afterward to shift
-		shuffleMask.m128i_u8[maskIndex] = firstByteWithBits;
-		shuffleMask.m128i_u8[maskIndex + 1] = firstByteWithBits + 1;
+		// If item 'i' starts at the very first bit, get an earlier byte
+		if (bitIndex % 8 == 0) firstByteToGet--;
+
+		// Get two adjacent bytes containing the bits, but not at the first position
+		shuffleMask.m128i_u8[maskIndex] = firstByteToGet;
+		shuffleMask.m128i_u8[maskIndex + 1] = firstByteToGet + 1;
 	}
 
 	return shuffleMask;
@@ -247,9 +250,10 @@ __m128i GetShiftMask(int bitsPerValue, int start)
 
 		// Item 'i' is (bitIndex % 8) bits into the byte
 		unsigned __int8 offsetInByte = bitIndex % 8;
+		if (offsetInByte == 0) offsetInByte += 8;
 
-		// Shift 8 bits to get to bottom of high byte, so 8 - offsetInByte
-		unsigned __int8 bitsToShift = 8 - offsetInByte;
+		// Shift even items to the beginning of the third byte, odd items to the beginning of the second byte
+		unsigned __int8 bitsToShift = (start == 0 ? 16 - offsetInByte : 8 - offsetInByte);
 
 		// To shift that many bits, multiply by (2^bitsToShift) or 1 << bitsToShift.
 		unsigned __int16 multiplyBy = 1 << bitsToShift;
@@ -259,9 +263,18 @@ __m128i GetShiftMask(int bitsPerValue, int start)
 	return shiftMask;
 }
 
-__m128i GetAndMask(int bitsPerValue)
+__m128i GetAndMask(int bitsPerValue, int start)
 {
-	return _mm_set1_epi16((0x00FF << bitsPerValue) & 0xFF00);
+	unsigned __int8 mask = (0xFF >> (8 - bitsPerValue));
+
+	if (start == 0)
+	{
+		return _mm_set_epi8(0, mask, 0, mask, 0, mask, 0, mask, 0, mask, 0, mask, 0, mask, 0, mask);
+	}
+	else
+	{
+		return _mm_set_epi8(mask, 0, mask, 0, mask, 0, mask, 0, mask, 0, mask, 0, mask, 0, mask, 0);
+	}
 }
 
 template<int bitsPerValue>
@@ -309,7 +322,8 @@ __int64 StretchGenericCompareAndCountAVX128(__int8* set, int bitsPerValue, int l
 	__m128i shuffleMask2 = GetShuffleMask(bitsPerValue, 1);
 	__m128i shiftMask1 = GetShiftMask(bitsPerValue, 0);
 	__m128i shiftMask2 = GetShiftMask(bitsPerValue, 1);
-	__m128i andMask = GetAndMask(bitsPerValue);
+	__m128i andMask1 = GetAndMask(bitsPerValue, 0);
+	__m128i andMask2 = GetAndMask(bitsPerValue, 1);
 
 	// Minimal Compare: Load, Compare, MoveMask, PopCount, add
 	__m128i value = _mm_set1_epi8(1);
@@ -323,23 +337,21 @@ __int64 StretchGenericCompareAndCountAVX128(__int8* set, int bitsPerValue, int l
 		__m128i block = _mm_loadu_si128((__m128i*)(&set[byteIndex]));
 
 		// Use 'Shuffle' to get the two bytes containing the value into each 16-bit part.
-		// R1: 0b...|HHHGGGFF'FEEEDDDC|FEEEDDDC'CCBBBAAA|FEEEDDDC'CCBBBAAA [A, C, E, ...]
+		// R1: 0b...|HHHGGGFF'FEEEDDDC|FEEEDDDC'CCBBBAAA|CCBBBAAA'nnnnnnnn [A, C, E, ...]
+		// R1: 0b...|HHHGGGFF'FEEEDDDC|HHHGGGFF'FEEEDDDC|FEEEDDDC'CCBBBAAA [B, D, F, ...]
 		__m128i r1 = _mm_shuffle_epi8(block, shuffleMask1);
 		__m128i r2 = _mm_shuffle_epi8(block, shuffleMask2);
 
-		// Use 'Multiply Low' to shift the two byte value so the desired part is at the low edge of the high byte.
-		// R1:  0b...|nnnnnEEE'nnnnnnnn|nnnnnCCC'nnnnnnnn|nnnnnAAA'nnnnnnnn
-		r1 = _mm_mullo_epi16(r1, shiftMask1);
+		// Use 'Multiply' to get even items to the low byte and odd items to the high byte.
+		// R1:  0b...|nnnnnnnn'nnnnnEEE|nnnnnnnn'nnnnnCCC|nnnnnnnn'nnnnnAAA
+		// R2:  0b...|nnnnnFFF'nnnnnnnn|nnnnnDDD'nnnnnnnn|nnnnnBBB'nnnnnnnn
+		r1 = _mm_mulhi_epi16(r1, shiftMask1);
 		r2 = _mm_mullo_epi16(r2, shiftMask2);
 
 		// AND with a mask to clear out the unused high bits and low byte.
 		// R1:  0b...|00000EEE'00000000|00000CCC'00000000|00000AAA'00000000
-		r1 = _mm_and_si128(r1, andMask);
-		r2 = _mm_and_si128(r2, andMask);
-
-		// Shift *one* register right by a whole byte to get those values into the low bytes
-		// R1:  0b...|00000000'00000EEE|00000000'00000CCC|00000000'00000AAA
-		r1 = _mm_srli_epi16(r1, 8);
+		r1 = _mm_and_si128(r1, andMask1);
+		r2 = _mm_and_si128(r2, andMask2);
 
 		// OR the two registers together to merge the results
 		// OUT: 0b...|00000FFF'00000EEE|00000DDD'00000CCC|00000BBB'00000AAA

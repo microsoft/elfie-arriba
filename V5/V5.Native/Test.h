@@ -8,8 +8,8 @@ public enum class Scenario : char
 	CompareAndCountAVX128,
 	CompareAndCountTwoByteAVX128,
 	Stretch4to8CompareAndCountAVX128,
-	StretchGenericCompareAndCountAVX128,
-	Stretch2to8CompareAndCountAVX128
+	Stretch2to8CompareAndCountAVX128,
+	StretchGenericCompareAndCountAVX128
 };
 
 namespace V5
