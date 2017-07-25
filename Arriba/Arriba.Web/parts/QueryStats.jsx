@@ -19,23 +19,13 @@ export default React.createClass({
             for (var i = 0; i < allCountContent.resultsPerTable.length; ++i) {
                 (() => {
                     var tableResult = allCountContent.resultsPerTable[i];
-
-                    var cssClasses = "";
-                    var parts = [];
-
-                    if (tableResult.tableName === this.props.currentTable) cssClasses += " current";
-
-                    if (!tableResult.allowedToRead) {
-                        parts.push(<span className="lock-icon icon" />);
-                    } else if (!tableResult.succeeded) {
-                        parts.push(<span className="countValue">‒</span>);
-                    } else {
-                        parts.push(<span className="countValue">{tableResult.count.toLocaleString()}</span>);
-                    }
+                    const isCurrentTable = tableResult.tableName === this.props.currentTable ? " current" : "";
 
                     tiles.push(
-                        <span key={"tableTile_" + tableResult.tableName} className={cssClasses + " clickable"} onClick={this.onTableTileClick.bind(this, tableResult.tableName)}>
-                            {parts}
+                        <span key={"tableTile_" + tableResult.tableName} className={isCurrentTable + " clickable"} onClick={this.onTableTileClick.bind(this, tableResult.tableName)}>
+                            {!tableResult.allowedToRead
+                                ? <span className="lock-icon icon" />
+                                : <span className="countValue">{tableResult.succeeded ? tableResult.count.toLocaleString() : "‒"}</span>}
                             <span>{tableResult.tableName}</span>
                             {this.props.allBasics[tableResult.tableName] && this.props.allBasics[tableResult.tableName].canAdminister && <span className="delete" onClick={e => {
                                 e.stopPropagation();
