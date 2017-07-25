@@ -9,93 +9,86 @@ export default React.createClass({
         if (this.props.error) {
             // If the query didn't return, show an error
             return <div className="queryStats"><span className="error-icon icon" /><span className="error">{this.props.error}</span></div>;
-        } else {
-            // If there's no query, keep this area empty
-            if (!this.props.allBasics || !this.props.allCountData || !this.props.allCountData.content) return null;
-            var allCountContent = this.props.allCountData.content;
+        }
 
-            // Write tiles with results per table
-            var tiles = [];
-            for (var i = 0; i < allCountContent.resultsPerTable.length; ++i) {
-                (() => {
-                    var tableResult = allCountContent.resultsPerTable[i];
-                    const isCurrentTable = tableResult.tableName === this.props.currentTable ? " current" : "";
+        // If there's no query, keep this area empty
+        if (!this.props.allBasics || !this.props.allCountData || !this.props.allCountData.content) return null;
+        var allCountContent = this.props.allCountData.content;
 
-                    tiles.push(
-                        <span key={"tableTile_" + tableResult.tableName} className={isCurrentTable + " clickable"} onClick={this.onTableTileClick.bind(this, tableResult.tableName)}>
-                            {!tableResult.allowedToRead
-                                ? <span className="lock-icon icon" />
-                                : <span className="countValue">{tableResult.succeeded ? tableResult.count.toLocaleString() : "‒"}</span>}
-                            <span>{tableResult.tableName}</span>
-                            {this.props.allBasics[tableResult.tableName] && this.props.allBasics[tableResult.tableName].canAdminister && <span className="delete" onClick={e => {
-                                e.stopPropagation();
-                                xhr(`table/${tableResult.tableName}/delete`)
-                                    .then(() => this.props.refreshAllBasics(() => {
-                                        this.props.onSelectedTableChange()
-                                    }));
-                            }}>✕</span>}
-                        </span>
-                    );
-                })();
+        // Write tiles with results per table
+        const tiles = allCountContent.resultsPerTable.map(tableResult => {
+            const isCurrentTable = tableResult.tableName === this.props.currentTable ? " current" : "";
+            return <span key={"tableTile_" + tableResult.tableName} className={isCurrentTable + " clickable"} onClick={this.onTableTileClick.bind(this, tableResult.tableName)}>
+                {!tableResult.allowedToRead
+                    ? <span className="lock-icon icon" />
+                    : <span className="countValue">{tableResult.succeeded ? tableResult.count.toLocaleString() : "‒"}</span>}
+                <span>{tableResult.tableName}</span>
+                {this.props.allBasics[tableResult.tableName] && this.props.allBasics[tableResult.tableName].canAdminister && <span className="delete" onClick={e => {
+                    e.stopPropagation();
+                    xhr(`table/${tableResult.tableName}/delete`)
+                        .then(() => this.props.refreshAllBasics(() => {
+                            this.props.onSelectedTableChange()
+                        }));
+                }}>✕</span>}
+            </span>
+        });
+
+        // Write details for selected table
+        var selectedDetails = [];
+        if (this.props.selectedData && this.props.selectedData.content) {
+            var selectedContent = this.props.selectedData.content;
+
+            if(selectedContent.query.where) {
+                selectedDetails.push(<span>for <span className="explanation">{selectedContent.query.where}</span></span>);
             }
 
-            // Write details for selected table
-            var selectedDetails = [];
-            if(this.props.selectedData && this.props.selectedData.content) {
-                var selectedContent = this.props.selectedData.content;
+            // Only show if the ResultListing isn't alredy showing the error.
+            if (selectedContent.values && selectedContent.details.errors) {
+                selectedDetails.push(<span>&nbsp;<span className="error-icon icon" /><b>{selectedContent.details.errors}</b></span>);
+            }
 
-                if(selectedContent.query.where) {
-                    selectedDetails.push(<span>for <span className="explanation">{selectedContent.query.where}</span></span>);
+            if (selectedContent.details.warnings) {
+                selectedDetails.push(<span>&nbsp;<span className="icon-warning icon" /><b>{selectedContent.details.warnings}</b></span>);
+            }
+
+            if (selectedContent.details.accessDeniedColumns) {
+                var deniedColumnList = "Denied Columns: ";
+                for (var i = 0; i < selectedContent.details.accessDeniedColumns.length; ++i) {
+                    if (i > 0) deniedColumnList += ", ";
+                    deniedColumnList += selectedContent.details.accessDeniedColumns[i];
                 }
 
-                // Only show if the ResultListing isn't alredy showing the error.
-                if (selectedContent.values && selectedContent.details.errors) {
-                    selectedDetails.push(<span>&nbsp;<span className="error-icon icon" /><b>{selectedContent.details.errors}</b></span>);
-                }
+                selectedDetails.push(<span>&nbsp;<span className="icon-lock icon" title={deniedColumnList} /></span>);
+            }
 
-                if (selectedContent.details.warnings) {
-                    selectedDetails.push(<span>&nbsp;<span className="icon-warning icon" /><b>{selectedContent.details.warnings}</b></span>);
-                }
+            selectedDetails.push(<span className="spacer"></span>)
 
-                if (selectedContent.details.accessDeniedColumns) {
-                    var deniedColumnList = "Denied Columns: ";
-                    for (var i = 0; i < selectedContent.details.accessDeniedColumns.length; ++i) {
-                        if (i > 0) deniedColumnList += ", ";
-                        deniedColumnList += selectedContent.details.accessDeniedColumns[i];
-                    }
-
-                    selectedDetails.push(<span>&nbsp;<span className="icon-lock icon" title={deniedColumnList} /></span>);
-                }
-
-                selectedDetails.push(<span className="spacer"></span>)
-
-                if (selectedContent.details.succeeded) {
-                    if (this.props.rssUrl) {
-                        selectedDetails.push(
-                            <a title="RSS Link" target="_blank" href={this.props.rssUrl}>
-                                <img src="/icons/rss.svg" alt="rss"/>
-                            </a>
-                        );
-                    }
-
-                    if (this.props.csvUrl) {
-                        selectedDetails.push(
-                            <a title="Download CSV" target="_blank" href={this.props.csvUrl}>
-                                <img src="/icons/download.svg" alt="download"/>
-                            </a>
-                        );
-                    }
-
+            if (selectedContent.details.succeeded) {
+                if (this.props.rssUrl) {
                     selectedDetails.push(
-                        <a title="Mail" href={
-                                "mailto:?subject=" + encodeURIComponent(configuration.toolName)
-                                + ": " + encodeURIComponent(this.props.query)
-                                + "&body=" + encodeURIComponent(window.location.href)
-                            }>
-                            <img src="/icons/mail.svg" alt="mail"/>
+                        <a title="RSS Link" target="_blank" href={this.props.rssUrl}>
+                            <img src="/icons/rss.svg" alt="rss"/>
                         </a>
                     );
                 }
+
+                if (this.props.csvUrl) {
+                    selectedDetails.push(
+                        <a title="Download CSV" target="_blank" href={this.props.csvUrl}>
+                            <img src="/icons/download.svg" alt="download"/>
+                        </a>
+                    );
+                }
+
+                selectedDetails.push(
+                    <a title="Mail" href={
+                            "mailto:?subject=" + encodeURIComponent(configuration.toolName)
+                            + ": " + encodeURIComponent(this.props.query)
+                            + "&body=" + encodeURIComponent(window.location.href)
+                        }>
+                        <img src="/icons/mail.svg" alt="mail"/>
+                    </a>
+                );
             }
         }
 
