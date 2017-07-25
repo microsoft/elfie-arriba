@@ -160,6 +160,11 @@ var ResultListingItem = React.createClass({
         var cells = [];
         for (var i = 0; i < this.props.data.length; ++i) {
             var item = this.props.data[i];
+
+            if (item.length > 200) { // Cap cell contents length for browser layout perf.
+                item = item.substr(0, 200) + "…";
+            }
+
             cells[i] = (
                 <td key={id + "_" + i} title={stripHighlight(item)} dangerouslySetInnerHTML={highlight(item)} />
             );
