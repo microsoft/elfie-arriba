@@ -8,7 +8,7 @@ export default React.createClass({
                     <a href="/">{configuration.toolName}</a>
                 </div>
 
-                <div className="searchBarAndButtons">
+                <div className="searchBoxAndButtons">
                     {this.props.children}
                     <a title="Feedback" href={"mailto:" + encodeURIComponent(configuration.feedbackEmailAddresses) + "?subject=" + encodeURIComponent(configuration.toolName) + " Feedback"}>
                         <img src="/icons/feedback.svg" alt="feedback"/>
