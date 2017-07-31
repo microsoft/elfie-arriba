@@ -80,6 +80,7 @@
     <Compile Include="Data\PrimitiveColumn.cs" />
     <Compile Include="Data\SortBucketColumn.cs" />
     <Compile Include="Extensions\ArrayExtensions.cs" />
+    <Compile Include="HashSet5.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

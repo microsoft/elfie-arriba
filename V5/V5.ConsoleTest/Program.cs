@@ -190,8 +190,23 @@ namespace V5.ConsoleTest
         static void PerformanceTests()
         {
             int iterations = 250;
-            int size = 64 * 1000 * 1000;
+            int size = 16 * 1000 * 1000;
             int bitsPerValue = 8;
+
+            Random r = new Random(5);
+            int[] sample = new int[size];
+            for(int i = 0; i < sample.Length; ++i)
+            {
+                sample[i] = r.Next();
+            }
+
+            HashSet<int> one = new HashSet<int>();
+            HashSet5<int> two = new HashSet5<int>();
+
+            Benchmark.Compare("HashSet", 1, size, new string[] { "HashSet", "HashSet5" },
+                () => { for (int i = 0; i < sample.Length; ++i) one.Add(sample[i]); return one; },
+                () => { for (int i = 0; i < sample.Length; ++i) two.Add(sample[i]); return two; }
+            );
 
             IndexSet set = new IndexSet(size);
             IndexSet other = new IndexSet(size);

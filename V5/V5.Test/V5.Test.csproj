@@ -85,6 +85,7 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Collections\HashSet5Tests.cs" />
     <Compile Include="Collections\HeapTests.cs" />
     <Compile Include="Collections\SpanTests.cs" />
     <Compile Include="Data\SortBucketColumnTests.cs" />
