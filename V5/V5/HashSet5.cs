@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Arriba;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -16,31 +17,47 @@ namespace V5
         private T[] Values;
         private byte[] Metadata;
 
+        private int LowestWealth;
+
         public HashSet5(int capacity = 16)
         {
-            if ((capacity & 15) != 0) capacity = (capacity + 16) & ~15;
+            capacity = (capacity + (capacity >> 5) + 1);
 
             this.Count = 0;
             this.Values = new T[capacity];
             this.Metadata = new byte[capacity];
             this.HashBitsUsed = HashBitsToUse(this.Metadata.Length);
+
+            this.LowestWealth = 255;
         }
 
         public void Clear()
         {
             Array.Clear(this.Metadata, 0, this.Metadata.Length);
             Array.Clear(this.Values, 0, this.Values.Length);
+
+            this.Count = 0;
+            this.LowestWealth = 255;
         }
 
         public int[] WealthVariance()
         {
-            int[] result = new int[16];
-            for(int i = 0; i < this.Metadata.Length; ++i)
+            //int[] result = new int[16];
+            //for(int i = 0; i < this.Metadata.Length; ++i)
+            //{
+            //    if (this.Metadata[i] >= 0x10)
+            //    {
+            //        int wealth = this.Metadata[i] >> 4;
+            //        result[15 - wealth]++;
+            //    }
+            //}
+
+            int[] result = new int[256];
+            for (int i = 0; i < this.Metadata.Length; ++i)
             {
                 if (this.Metadata[i] >= 0x10)
                 {
-                    int wealth = this.Metadata[i] >> 4;
-                    result[15 - wealth]++;
+                    result[255 - this.Metadata[i]]++;
                 }
             }
 
@@ -56,10 +73,10 @@ namespace V5
         private BucketAndSuffix Get(T value)
         {
             // Get the full hash of the value
-            uint hash = (uint)value.GetHashCode();
+            uint hash = (uint)(Hashing.MurmurHash3((ulong)value.GetHashCode(), 0) >> 32);
 
             // Keep only the count of bits we're using
-            hash = hash & ~(uint.MaxValue >> this.HashBitsUsed);
+            //hash = hash & ~(uint.MaxValue >> this.HashBitsUsed);
 
             BucketAndSuffix result;
 
@@ -79,15 +96,22 @@ namespace V5
 
         private bool Contains(T value, BucketAndSuffix location)
         {
-            // In the desired cell, a match would be the hash suffix and a 'wealth' of 15
-            byte metadataMatch = (byte)(location.Suffix + 0xF0);
-
-            // Search for the item
-            for (int bucket = location.Bucket; metadataMatch >= 0x10; ++bucket, metadataMatch -= 0x10)
+            int bucket = location.Bucket;
+            for (int wealth = 255; wealth >= this.LowestWealth; --wealth)
             {
-                if (bucket == this.Metadata.Length) bucket = 0;
-                if (this.Metadata[bucket] == metadataMatch && this.Values[bucket].Equals(value)) return true;
+                if (this.Values[bucket].Equals(value)) return true;
+                if (++bucket == this.Metadata.Length) bucket = 0;
             }
+
+            //// In the desired cell, a match would be the hash suffix and a 'wealth' of 15
+            //byte metadataMatch = (byte)(location.Suffix + 0xF0);
+
+            //// Search for the item
+            //for (int bucket = location.Bucket; metadataMatch >= 0x10; ++bucket, metadataMatch -= 0x10)
+            //{
+            //    if (bucket == this.Metadata.Length) bucket = 0;
+            //    if (this.Metadata[bucket] == metadataMatch && this.Values[bucket].Equals(value)) return true;
+            //}
 
             return false;
         }
@@ -101,34 +125,74 @@ namespace V5
 
         private bool Add(T value, BucketAndSuffix location)
         {
-            // Insert the item (swapping with existing items which are closer to their target bucket)
-            byte metadataMatch = (byte)(location.Suffix + 0xF0);
-            int bucket;
-            for (bucket = location.Bucket; metadataMatch >= 0x10; ++bucket, metadataMatch -= 0x10)
+            if (this.Count >= (this.Metadata.Length - (this.Metadata.Length >> 5)))
             {
-                if (bucket == this.Metadata.Length) bucket = 0;
+                Expand();
+                location = Get(value);
+            }
 
-                byte metaFound = this.Metadata[bucket];
-                if(metaFound < 0x10)
+            int bucket = location.Bucket;
+
+            for(byte wealth = 255; wealth > 0; --wealth)            
+            {
+                byte wealthFound = this.Metadata[bucket];
+                if(wealthFound == 0)
                 {
-                    // Cell empty - place item and return
+                    this.Metadata[bucket] = wealth;
                     this.Values[bucket] = value;
-                    this.Metadata[bucket] = metadataMatch;
                     this.Count++;
+
+                    if (wealth < this.LowestWealth) this.LowestWealth = wealth;
+
                     return true;
                 }
-                else if (metadataMatch < metaFound)
+                else if(wealthFound > wealth)
                 {
-                    // Put the item to place here
                     T valueMoved = this.Values[bucket];
-                    this.Values[bucket] = value;
-                    this.Metadata[bucket] = metadataMatch;
 
-                    // Get the evicted item to continue finding a place for
+                    this.Metadata[bucket] = wealth;
+                    this.Values[bucket] = value;
+
+                    if (wealth < this.LowestWealth)
+                    {
+                        this.LowestWealth = wealth;
+                    }
+
                     value = valueMoved;
-                    metadataMatch = metaFound;
+                    wealth = wealthFound;
                 }
+
+                if (++bucket == this.Metadata.Length) bucket = 0;
             }
+
+            //// Insert the item (swapping with existing items which are closer to their target bucket)
+            //byte metadataMatch = (byte)(location.Suffix + 0xF0);
+            //int bucket;
+            //for (bucket = location.Bucket; metadataMatch >= 0x10; ++bucket, metadataMatch -= 0x10)
+            //{
+            //    if (bucket == this.Metadata.Length) bucket = 0;
+
+            //    byte metaFound = this.Metadata[bucket];
+            //    if(metaFound < 0x10)
+            //    {
+            //        // Cell empty - place item and return
+            //        this.Values[bucket] = value;
+            //        this.Metadata[bucket] = metadataMatch;
+            //        this.Count++;
+            //        return true;
+            //    }
+            //    else if (metadataMatch < metaFound)
+            //    {
+            //        // Put the item to place here
+            //        T valueMoved = this.Values[bucket];
+            //        this.Values[bucket] = value;
+            //        this.Metadata[bucket] = metadataMatch;
+
+            //        // Get the evicted item to continue finding a place for
+            //        value = valueMoved;
+            //        metadataMatch = metaFound;
+            //    }
+            //}
 
             // If we get here, we couldn't place the item - we must expand
             Expand();
@@ -156,6 +220,7 @@ namespace V5
             this.Metadata = new byte[newSize];
             this.HashBitsUsed = HashBitsToUse(newSize);
             this.Count = 0;
+            this.LowestWealth = 255;
 
             // Re-add each item to the expanded table
             //if (this.HashBitsUsed != oldHashBitsUsed)
@@ -247,7 +312,8 @@ namespace V5
             {
                 while(++this.NextBucket < this.Set.Metadata.Length)
                 {
-                    if (this.Set.Metadata[this.NextBucket] >= 0x10) return true;
+                    //if (this.Set.Metadata[this.NextBucket] >= 0x10) return true;
+                    if (this.Set.Metadata[this.NextBucket] > 0) return true;
                 }
 
                 return false;

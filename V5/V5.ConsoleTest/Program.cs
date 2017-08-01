@@ -208,6 +208,8 @@ namespace V5.ConsoleTest
                 () => { for (int i = 0; i < sample.Length; ++i) two.Add(sample[i]); return two; }
             );
 
+            return;
+
             //IndexSet set = new IndexSet(size);
             //IndexSet other = new IndexSet(size);
             //Span<int> page = new Span<int>(new int[4096]);
