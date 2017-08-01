@@ -27,6 +27,8 @@ namespace V5.Test.Collections
                 Assert.IsTrue(actual.Contains(value));
             }
 
+            int[] variance = actual.WealthVariance();
+
             // Verify counts match
             Assert.AreEqual(expected.Count, actual.Count);
 

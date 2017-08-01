@@ -16,11 +16,13 @@ namespace V5
         private T[] Values;
         private byte[] Metadata;
 
-        public HashSet5()
+        public HashSet5(int capacity = 16)
         {
+            if ((capacity & 15) != 0) capacity = (capacity + 16) & ~15;
+
             this.Count = 0;
-            this.Values = new T[16];
-            this.Metadata = new byte[16];
+            this.Values = new T[capacity];
+            this.Metadata = new byte[capacity];
             this.HashBitsUsed = HashBitsToUse(this.Metadata.Length);
         }
 
@@ -28,6 +30,21 @@ namespace V5
         {
             Array.Clear(this.Metadata, 0, this.Metadata.Length);
             Array.Clear(this.Values, 0, this.Values.Length);
+        }
+
+        public int[] WealthVariance()
+        {
+            int[] result = new int[16];
+            for(int i = 0; i < this.Metadata.Length; ++i)
+            {
+                if (this.Metadata[i] >= 0x10)
+                {
+                    int wealth = this.Metadata[i] >> 4;
+                    result[15 - wealth]++;
+                }
+            }
+
+            return result;
         }
 
         private struct BucketAndSuffix
@@ -86,7 +103,8 @@ namespace V5
         {
             // Insert the item (swapping with existing items which are closer to their target bucket)
             byte metadataMatch = (byte)(location.Suffix + 0xF0);
-            for (int bucket = location.Bucket; metadataMatch >= 0x10; ++bucket, metadataMatch -= 0x10)
+            int bucket;
+            for (bucket = location.Bucket; metadataMatch >= 0x10; ++bucket, metadataMatch -= 0x10)
             {
                 if (bucket == this.Metadata.Length) bucket = 0;
 

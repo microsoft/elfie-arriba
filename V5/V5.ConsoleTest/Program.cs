@@ -195,22 +195,22 @@ namespace V5.ConsoleTest
 
             Random r = new Random(5);
             int[] sample = new int[size];
-            for(int i = 0; i < sample.Length; ++i)
+            for (int i = 0; i < sample.Length; ++i)
             {
-                sample[i] = r.Next();
+                sample[i] = r.Next() << 1;
             }
 
             HashSet<int> one = new HashSet<int>();
-            HashSet5<int> two = new HashSet5<int>();
+            HashSet5<int> two = new HashSet5<int>(size);
 
             Benchmark.Compare("HashSet", 1, size, new string[] { "HashSet", "HashSet5" },
                 () => { for (int i = 0; i < sample.Length; ++i) one.Add(sample[i]); return one; },
                 () => { for (int i = 0; i < sample.Length; ++i) two.Add(sample[i]); return two; }
             );
 
-            IndexSet set = new IndexSet(size);
-            IndexSet other = new IndexSet(size);
-            Span<int> page = new Span<int>(new int[4096]);
+            //IndexSet set = new IndexSet(size);
+            //IndexSet other = new IndexSet(size);
+            //Span<int> page = new Span<int>(new int[4096]);
 
             ulong[] rawVector = new ulong[size / 64];
 
@@ -229,6 +229,8 @@ namespace V5.ConsoleTest
                 // Compress into byte[]
                 CompressValues(values, bitsPerValue, bucketSample, i);
             }
+
+            //TrySingleAndParallel(Scenario.BandwidthAVX256, bucketSample, bitsPerValue, size, iterations, rawVector);
 
             Scenario[] scenarios = (Scenario[])Enum.GetValues(typeof(Scenario));
             for(int i = scenarios.Length - 1; i >= 0; --i)
