@@ -21,12 +21,15 @@ namespace V5
 
         public HashSet5(int capacity = 16)
         {
-            capacity = (capacity + (capacity >> 3) + 1);
+            Reset(capacity + (capacity >> 3) + 1);
+        }
+
+        private void Reset(int size)
+        {
+            this.Values = new T[size];
+            this.Wealth = new byte[size];
 
             this.Count = 0;
-            this.Values = new T[capacity];
-            this.Wealth = new byte[capacity];
-
             this.LowestWealth = 255;
         }
 
@@ -178,18 +181,12 @@ namespace V5
             byte[] oldWealth = this.Wealth;
 
             // Allocate the larger table
-            this.Values = new T[newSize];
-            this.Wealth = new byte[newSize];
-            this.Count = 0;
-            this.LowestWealth = 255;
+            Reset(newSize);
 
             // Add items to the enlarged table
             for (int i = 0; i < oldWealth.Length; ++i)
             {
-                if (oldWealth[i] > 0)
-                {
-                    Add(oldValues[i]);
-                }
+                if (oldWealth[i] > 0) Add(oldValues[i]);
             }
         }
 
