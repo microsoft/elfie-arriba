@@ -7,6 +7,32 @@ using System.Collections.Generic;
 
 namespace V5
 {
+    // https://en.wikipedia.org/wiki/MurmurHash, hardcoded for only 32-bit values
+    public static class MurmurHasher
+    {
+        public static uint Hash(uint value, uint seed)
+        {
+            uint h = seed;
+
+            uint k = value;
+            k *= 0xcc9e2d51;
+            k = (k << 15) | (k >> 17);
+            k *= 0x1b873593;
+            h ^= k;
+            h = (h << 13) | (h >> 19);
+            h = (h * 5) + 0xe6546b64;
+
+            h ^= 4;
+            h ^= h >> 16;
+            h *= 0x85ebca6b;
+            h ^= h >> 13;
+            h *= 0xc2b2ae35;
+            h ^= h >> 16;
+
+            return h;
+        }
+    }
+
     /// <summary>
     ///  HashSet5 is a HashSet using Robin Hood hashing to provide good insert and search performance
     ///  with much lower memory use than .NET HashSet.
@@ -72,6 +98,13 @@ namespace V5
             return result;
         }
 
+        private uint Hash(T value)
+        {
+            return (uint)value.GetHashCode();
+            //return (uint)(Arriba.Hashing.MurmurHash3(((ulong)value.GetHashCode()), 0) & uint.MaxValue);
+            //return MurmurHasher.Hash((uint)value.GetHashCode(), 0);
+        }
+
         private uint Bucket(uint hash)
         {
             // Use Lemire method to convert hash [0, 2^32) to [0, N) without modulus.
@@ -83,8 +116,13 @@ namespace V5
             //return (uint)(hash % this.Wealth.Length);
         }
 
-        private uint NextBucket(uint bucket)
+        private uint NextBucket(uint bucket, uint hash, int wealth)
         {
+            // Murmur hashing with changing seed
+            //hash = (uint)(Arriba.Hashing.MurmurHash3((ulong)hash, (uint)(256 - wealth)) & uint.MaxValue);
+            //hash = MurmurHasher.Hash(hash, (uint)(256 - wealth));
+            //return (uint)(((ulong)hash * (ulong)this.Wealth.Length) >> 32);
+
             // Sequential Probing - bad variance but fast due to cache coherency
             if (++bucket >= this.Wealth.Length) bucket = 0;
             return bucket;
@@ -102,7 +140,7 @@ namespace V5
 
         private int IndexOf(T value)
         {
-            uint hash = (uint)value.GetHashCode();
+            uint hash = Hash(value);
             uint bucket = Bucket(hash);
 
             // To find a value, just compare every value starting with the expected bucket
@@ -110,7 +148,7 @@ namespace V5
             for (int wealth = 255; wealth >= this.LowestWealth; --wealth)
             {
                 if (this.Values[bucket].Equals(value)) return (int)bucket;
-                bucket = NextBucket(bucket);
+                bucket = NextBucket(bucket, hash, wealth);
             }
 
             return -1;
@@ -146,42 +184,45 @@ namespace V5
             // Very full tables cause slower inserts as many items are shifted.
             if (this.Count >= (this.Wealth.Length - (this.Wealth.Length >> 3))) Expand();
 
-            uint hash = (uint)value.GetHashCode();
+            uint hash = Hash(value);
             uint bucket = Bucket(hash);
 
-            for(byte wealth = 255; wealth > 0; --wealth)            
+            for(int wealth = 255; wealth > 0; --wealth)            
             {
                 byte wealthFound = this.Wealth[bucket];
 
                 if (wealthFound == 0)
                 {
                     // If we found an empty cell (wealth zero), add the item and return
-                    this.Wealth[bucket] = wealth;
+                    this.Wealth[bucket] = (byte)wealth;
                     this.Values[bucket] = value;
                     if (wealth < this.LowestWealth) this.LowestWealth = wealth;
                     this.Count++;
 
                     return true;
                 }
-                else if (wealthFound >= wealth)
+                else if (wealthFound > wealth)
                 {
                     // If we found an item with a higher wealth, put the new item here and move the existing one
                     T valueMoved = this.Values[bucket];
 
-                    // If this is a duplicate of the new item, stop
-                    if (valueMoved.Equals(value)) return false;
-
-                    this.Wealth[bucket] = wealth;
+                    this.Wealth[bucket] = (byte)wealth;
                     this.Values[bucket] = value;
                     if (wealth < this.LowestWealth) this.LowestWealth = wealth;
 
                     value = valueMoved;
                     wealth = wealthFound;
+                    hash = Hash(value);
+                }
+                else if(wealthFound == wealth)
+                {
+                    // If this is a duplicate of the new item, stop
+                    if (this.Values[bucket].Equals(value)) return false;
                 }
 
-                bucket = NextBucket(bucket);
+                bucket = NextBucket(bucket, hash, wealth);
             }
-
+        
             // If we had to move an item more than 255 from the desired bucket, we need to resize
             Expand();
 

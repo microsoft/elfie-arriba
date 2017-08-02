@@ -8,6 +8,17 @@ namespace V5.Test.Collections
     [TestClass]
     public class HashSet5Tests
     {
+
+        [TestMethod]
+        public void Murmur_Basics()
+        {
+            HashSet<int> set = new HashSet<int>();
+            for(int i = 0; i < 100000; ++i)
+            {
+                Assert.IsTrue(set.Add(i));
+            }
+        }
+
         [TestMethod]
         public void HashSet5_Basics()
         {
@@ -36,6 +47,7 @@ namespace V5.Test.Collections
             // Enumerate expected values and verify they're all still found
             foreach(int value in expected)
             {
+                if (!actual.Contains(value)) Debugger.Break();
                 Assert.IsTrue(actual.Contains(value));
             }
 
