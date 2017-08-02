@@ -69,8 +69,7 @@ export default class SearchBox extends EventedComponent {
                     </div>
                 </span>
             </div>
-            <i className={"searchIcon clickable " + star} onClick={e => this.toggleFavorite(e)}></i>
-            <i className="searchIcon icon-find"></i>
+            <i className={"searchBoxIcon clickable " + star} onClick={e => this.toggleFavorite(e)}></i>
         </div>
     }
 }
