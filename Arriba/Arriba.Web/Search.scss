@@ -1,4 +1,4 @@
-﻿@import './configuration/theme';
+@import './configuration/theme';
 @import './shared.scss';
 
 /* Goals:
@@ -28,12 +28,6 @@ html, body, .viewport {
 .viewport {
     display: flex;
     flex-flow: column;
-}
-
-/* Make the header fixed height */
-.header {
-    height: 64px;
-    min-height: 64px;
 }
 
 /* Make the middle area resize and full width.

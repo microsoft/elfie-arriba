@@ -8,7 +8,6 @@
 }
 
 .header {
-    height: 64px;
     display: flex;
     align-items: center;    
     background-color: $medium;
@@ -28,8 +27,7 @@
         flex: 1;
         display: flex;
         align-items: center;
-        padding: 8px;
-        padding-right: 10px;
+        padding: 10px;
 
         & > a { // <a> assumed to be buttons.
             padding: 8px;
