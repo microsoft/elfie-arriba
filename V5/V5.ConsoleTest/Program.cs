@@ -187,6 +187,46 @@ namespace V5.ConsoleTest
             if (current != 0) destination[destinationIndex] = current;
         }
 
+        private static object HashSet(int[] values)
+        {
+            return Memory.Measure(() =>
+            {
+                HashSet<int> result = new HashSet<int>();
+                for (int i = 0; i < values.Length; ++i)
+                {
+                    result.Add(values[i]);
+                }
+
+                bool containsAll = true;
+                for (int i = 0; i < values.Length; ++i)
+                {
+                    containsAll &= result.Contains(values[i]);
+                }
+
+                return result;
+            }).MemoryUsedBytes.SizeString();
+        }
+
+        private static object HashSet5(int[] values)
+        {
+            return Memory.Measure(() =>
+            {
+                HashSet5<int> result = new HashSet5<int>(values.Length);
+                for (int i = 0; i < values.Length; ++i)
+                {
+                    result.Add(values[i]);
+                }
+
+                bool containsAll = true;
+                for (int i = 0; i < values.Length; ++i)
+                {
+                    containsAll &= result.Contains(values[i]);
+                }
+
+                return result;
+            }).MemoryUsedBytes.SizeString();
+        }
+
         static void PerformanceTests()
         {
             int iterations = 250;
@@ -200,12 +240,9 @@ namespace V5.ConsoleTest
                 sample[i] = r.Next() << 1;
             }
 
-            HashSet<int> one = new HashSet<int>();
-            HashSet5<int> two = new HashSet5<int>(size);
-
-            Benchmark.Compare("HashSet", 1, size, new string[] { "HashSet", "HashSet5" },
-                () => { for (int i = 0; i < sample.Length; ++i) one.Add(sample[i]); return one; },
-                () => { for (int i = 0; i < sample.Length; ++i) two.Add(sample[i]); return two; }
+            Benchmark.Compare("HashSet", 1, size, new string[] { "HashSet5", "HashSet" },
+                () => HashSet5(sample),
+                () => HashSet(sample)
             );
 
             return;
