@@ -1,17 +1,12 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using Arriba;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 
 namespace V5
 {
-    // TODO:
-    //  - Can I take LowestWealth tracking out of insert loop?
-    //  - Remove 'WealthVariance'
-
     /// <summary>
     ///  HashSet5 is a HashSet using Robin Hood hashing to provide good insert and search performance
     ///  with much lower memory use than .NET HashSet.
@@ -83,6 +78,9 @@ namespace V5
             // If hash is [0, 2^32), then N*hash is [0, N*2^32], and (N*hash)/2^32 is [0, N).
             // NOTE: This method uses the top bits of the hash only, so small integers with GetHashCode(i) == i will perform terribly.
             return (uint)(((ulong)hash * (ulong)this.Wealth.Length) >> 32);
+
+            // Simple modulus. Good for small incrementing integers but 33% slower insert for integers.
+            //return (uint)(hash % this.Wealth.Length);
         }
 
         private uint NextBucket(uint bucket)
