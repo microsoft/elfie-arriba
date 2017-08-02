@@ -187,44 +187,80 @@ namespace V5.ConsoleTest
             if (current != 0) destination[destinationIndex] = current;
         }
 
-        private static object HashSet(int[] values)
+        private static object HashSet(int[] values, out HashSet<int> output)
         {
-            return Memory.Measure(() =>
+            HashSet<int> set = null;
+
+            var measurements = Memory.Measure(() =>
             {
-                HashSet<int> result = new HashSet<int>();
+                set = new HashSet<int>();
+
                 for (int i = 0; i < values.Length; ++i)
                 {
-                    result.Add(values[i]);
+                    set.Add(values[i]);
                 }
 
                 bool containsAll = true;
                 for (int i = 0; i < values.Length; ++i)
                 {
-                    containsAll &= result.Contains(values[i]);
+                    containsAll &= set.Contains(values[i]);
                 }
 
-                return result;
-            }).MemoryUsedBytes.SizeString();
+                return set;
+            });
+
+            output = set;
+            return measurements.MemoryUsedBytes.SizeString();
         }
 
-        private static object HashSet5(int[] values)
+        private static object Search(int[] values, HashSet<int> set)
         {
-            return Memory.Measure(() =>
+            bool containsAll = true;
+            bool missingExpected = true;
+            for (int i = 0; i < values.Length; ++i)
             {
-                HashSet5<int> result = new HashSet5<int>(values.Length);
+                containsAll &= set.Contains(values[i]);
+                missingExpected &= !set.Contains(values[i] + 1);
+            }
+            return containsAll & missingExpected;
+        }
+
+        private static object HashSet(int[] values, out HashSet5<int> output)
+        {
+            HashSet5<int> set = null;
+
+            var measurements = Memory.Measure(() =>
+            {
+                set = new HashSet5<int>(values.Length);
+
                 for (int i = 0; i < values.Length; ++i)
                 {
-                    result.Add(values[i]);
+                    set.Add(values[i]);
                 }
 
                 bool containsAll = true;
                 for (int i = 0; i < values.Length; ++i)
                 {
-                    containsAll &= result.Contains(values[i]);
+                    containsAll &= set.Contains(values[i]);
                 }
 
-                return result;
-            }).MemoryUsedBytes.SizeString();
+                return set;
+            });
+
+            output = set;
+            return measurements.MemoryUsedBytes.SizeString();
+        }
+
+        private static object Search(int[] values, HashSet5<int> set)
+        {
+            bool containsAll = true;
+            bool missingExpected = true;
+            for (int i = 0; i < values.Length; ++i)
+            {
+                containsAll &= set.Contains(values[i]);
+                missingExpected &= !set.Contains(values[i] + 1);
+            }
+            return containsAll & missingExpected;
         }
 
         static void PerformanceTests()
@@ -240,9 +276,17 @@ namespace V5.ConsoleTest
                 sample[i] = r.Next() << 1;
             }
 
-            Benchmark.Compare("HashSet", 1, size, new string[] { "HashSet5", "HashSet" },
-                () => HashSet5(sample),
-                () => HashSet(sample)
+            HashSet5<int> set1 = null;
+            HashSet<int> set2 = null;
+
+            Benchmark.Compare("HashSet.Add", 1, size, new string[] { "HashSet5", "HashSet" },
+                () => HashSet(sample, out set1),
+                () => HashSet(sample, out set2)
+            );
+
+            Benchmark.Compare("HashSet.Search", 1, size, new string[] { "HashSet5", "HashSet" },
+                () => Search(sample, set1),
+                () => Search(sample, set2)
             );
 
             return;

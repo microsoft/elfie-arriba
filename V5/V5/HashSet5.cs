@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Arriba;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -9,11 +10,7 @@ namespace V5
 {
     // TODO:
     //  - Can I take LowestWealth tracking out of insert loop?
-    //  - Verify variance on resize with default hashing
     //  - Remove 'WealthVariance'
-    //  - Test with resizing happening
-    //  - Reduce resizes
-    //  - Cache cutoff for resize to avoid re-computing
 
     public class HashSet5<T> : IEnumerable<T> where T : IEquatable<T>
     {
@@ -24,7 +21,7 @@ namespace V5
 
         public HashSet5(int capacity = 16)
         {
-            capacity = (capacity + (capacity >> 5) + 1);
+            capacity = (capacity + (capacity >> 3) + 1);
 
             this.Count = 0;
             this.Values = new T[capacity];
@@ -42,7 +39,7 @@ namespace V5
             this.LowestWealth = 255;
         }
 
-        public int DistanceMean()
+        public double DistanceMean()
         {
             ulong distance = 0;
             for(int i = 0; i < this.Wealth.Length; ++i)
@@ -50,7 +47,7 @@ namespace V5
                 if (this.Wealth[i] > 0) distance += (ulong)(255 - this.Wealth[i]);
             }
 
-            return (int)(distance /= (ulong)this.Count);
+            return ((double)distance / (double)this.Count);
         }
 
         public int[] WealthVariance()
@@ -67,44 +64,84 @@ namespace V5
             return result;
         }
 
-        private uint Bucket(T value)
+        private uint Bucket(uint hash, int wealth)
         {
-            uint hash = (uint)(value.GetHashCode());
-            return (uint)(((ulong)hash * (ulong)this.Wealth.Length) >> 32);
+            // Goal: Choose a location nearby (w/in ~16 bytes?) with minimal chance to keep intersecting an initial collision
+
+            // Linear Probing using extra hash bits
+            //uint bucket = (uint)(((ulong)hash * (ulong)this.Wealth.Length) >> 32);
+            //bucket += (uint)((hash & 0x3) * (255 - wealth));
+            //if (bucket >= this.Wealth.Length) bucket -= (uint)this.Wealth.Length;
+            //return bucket;
+
+            // Use next hash bits
+            //hash = (hash << (255 - wealth)) & uint.MaxValue;
+            //return (uint)((hash * (ulong)this.Wealth.Length) >> 32);
+
+            // Kinda quadratic probing
+            //hash += (uint)1 << (64 - (255 - wealth));
+            //return (uint)(((ulong)hash * (ulong)this.Wealth.Length) >> 32);
+
+            // Sequential Probing - high variance but much faster
+            uint bucket = (uint)(((ulong)hash * (ulong)this.Wealth.Length) >> 32);
+            bucket += (uint)(255 - wealth);
+            if (bucket >= this.Wealth.Length) bucket -= (uint)this.Wealth.Length;
+            return bucket;
+
+            // Murmur Probing; completely new bucket each time
+            //ulong newHash = Hashing.MurmurHash3((ulong)hash, (uint)wealth) & uint.MaxValue;
+            //return (uint)((newHash * (ulong)this.Wealth.Length) >> 32);
         }
 
         public bool Contains(T value)
         {
-            uint bucket = Bucket(value);
+            return IndexOf(value) != -1;
+        }
+
+        private int IndexOf(T value)
+        {
+            uint hash = (uint)value.GetHashCode();
             for (int wealth = 255; wealth >= this.LowestWealth; --wealth)
             {
-                if (this.Values[bucket].Equals(value)) return true;
-                if (++bucket == this.Wealth.Length) bucket = 0;
+                uint bucket = Bucket(hash, wealth);
+                if (this.Values[bucket].Equals(value)) return (int)bucket;
             }
 
-            return false;
+            return -1;
+        }
+
+        public bool Remove(T value)
+        {
+            int index = IndexOf(value);
+            if (index == -1) return false;
+
+            this.Wealth[index] = 0;
+            this.Values[index] = default(T);
+            this.Count--;
+
+            return true;
         }
 
         public bool Add(T value)
         {
-            if (this.Count >= (this.Wealth.Length - (this.Wealth.Length >> 5)))
+            if (this.Count >= (this.Wealth.Length - (this.Wealth.Length >> 3)))
             {
                 Expand();
             }
 
-            uint bucket = Bucket(value);
+            uint hash = (uint)value.GetHashCode();
 
             for(byte wealth = 255; wealth > 0; --wealth)            
             {
+                uint bucket = Bucket(hash, wealth);
                 byte wealthFound = this.Wealth[bucket];
 
                 if (wealthFound == 0)
                 {
                     this.Wealth[bucket] = wealth;
                     this.Values[bucket] = value;
-                    this.Count++;
-
                     if (wealth < this.LowestWealth) this.LowestWealth = wealth;
+                    this.Count++;
 
                     return true;
                 }
@@ -115,17 +152,12 @@ namespace V5
 
                     this.Wealth[bucket] = wealth;
                     this.Values[bucket] = value;
-
-                    if (wealth < this.LowestWealth)
-                    {
-                        this.LowestWealth = wealth;
-                    }
+                    if (wealth < this.LowestWealth) this.LowestWealth = wealth;
 
                     value = valueMoved;
                     wealth = wealthFound;
+                    hash = (uint)value.GetHashCode();
                 }
-
-                if (++bucket == this.Wealth.Length) bucket = 0;
             }
 
             // If we get here, we couldn't place the item - we must expand
@@ -140,9 +172,6 @@ namespace V5
             // Expand the array to 1.5x the current size up to 1M items, 1.125x the current size thereafter
             int sizeShiftAmount = (this.Wealth.Length >= 1048576 ? 3 : 1);
             int newSize = this.Wealth.Length + (this.Wealth.Length >> sizeShiftAmount);
-
-            // Round the new size up to an even 16 item length
-            if ((newSize & 15) != 0) newSize = (newSize + 16) & ~15;
 
             // Save the current contents
             T[] oldValues = this.Values;

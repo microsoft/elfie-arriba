@@ -27,33 +27,35 @@ namespace V5.Test.Collections
                 Assert.IsTrue(actual.Contains(value));
             }
 
+            double mean = actual.DistanceMean();
             int[] variance = actual.WealthVariance();
 
             // Verify counts match
             Assert.AreEqual(expected.Count, actual.Count);
 
-            // Enumerate everything. Verify everything removed.
+            // Enumerate expected values and verify they're all still found
+            foreach(int value in expected)
+            {
+                Assert.IsTrue(actual.Contains(value));
+            }
+
+            // Enumerate everything, removing from expected as we go. Verify everything enumerated once.
             foreach(int value in actual)
             {
                 Assert.IsTrue(expected.Remove(value));
             }
-
             Assert.AreEqual(0, expected.Count);
-        }
 
-        [TestMethod]
-        public void HashSet5_FillTest()
-        {
-            HashSet5<int> set = new HashSet5<int>(1000);
-
-            Random r = new Random(5);
-            for(int i = 0; i < 900; ++i)
+            // Remove everything. Verify everything removed, items not yet removed are properly found
+            HashSet<int> copy = new HashSet<int>(actual);
+            foreach(int value in copy)
             {
-                set.Add(r.Next() << 1);
+                Assert.IsTrue(actual.Contains(value));
+                Assert.IsTrue(actual.Remove(value));
+                Assert.IsFalse(actual.Contains(value));
             }
 
-            int mean = set.DistanceMean();
-            int[] variance = set.WealthVariance();
+            Assert.AreEqual(0, actual.Count);
         }
     }
 }
