@@ -28,7 +28,7 @@ namespace V5.Test.Collections
             }
 
             double mean = actual.DistanceMean();
-            int[] variance = actual.WealthVariance();
+            int[] variance = actual.DistanceDistribution();
 
             // Verify counts match
             Assert.AreEqual(expected.Count, actual.Count);

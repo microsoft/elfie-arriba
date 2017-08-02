@@ -12,6 +12,14 @@ namespace V5
     //  - Can I take LowestWealth tracking out of insert loop?
     //  - Remove 'WealthVariance'
 
+    /// <summary>
+    ///  HashSet5 is a HashSet using Robin Hood hashing to provide good insert and search performance
+    ///  with much lower memory use than .NET HashSet.
+    ///  
+    ///  HashSet5 adds one byte of overhead and stays >= 75% full for large sizes;
+    ///  HashSet has 8 bytes overhead [cached hashcode and next node] and resizes more each time.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     public class HashSet5<T> : IEnumerable<T> where T : IEquatable<T>
     {
         public int Count { get; private set; }
@@ -42,6 +50,7 @@ namespace V5
             this.LowestWealth = 255;
         }
 
+        // Find the average distance items are from their target buckets. Debuggability.
         public double DistanceMean()
         {
             ulong distance = 0;
@@ -53,7 +62,8 @@ namespace V5
             return ((double)distance / (double)this.Count);
         }
 
-        public int[] WealthVariance()
+        // Return the counts of distance from desired bucket for each item. Debuggability.
+        public int[] DistanceDistribution()
         {
             int[] result = new int[256];
             for (int i = 0; i < this.Wealth.Length; ++i)
@@ -67,35 +77,26 @@ namespace V5
             return result;
         }
 
-        private uint Bucket(uint hash, int wealth)
+        private uint Bucket(uint hash)
         {
-            // Goal: Choose a location nearby (w/in ~16 bytes?) with minimal chance to keep intersecting an initial collision
-
-            // Linear Probing using extra hash bits
-            //uint bucket = (uint)(((ulong)hash * (ulong)this.Wealth.Length) >> 32);
-            //bucket += (uint)((hash & 0x3) * (255 - wealth));
-            //if (bucket >= this.Wealth.Length) bucket -= (uint)this.Wealth.Length;
-            //return bucket;
-
-            // Use next hash bits
-            //hash = (hash << (255 - wealth)) & uint.MaxValue;
-            //return (uint)((hash * (ulong)this.Wealth.Length) >> 32);
-
-            // Kinda quadratic probing
-            //hash += (uint)1 << (64 - (255 - wealth));
-            //return (uint)(((ulong)hash * (ulong)this.Wealth.Length) >> 32);
-
-            // Sequential Probing - high variance but much faster
-            uint bucket = (uint)(((ulong)hash * (ulong)this.Wealth.Length) >> 32);
-            bucket += (uint)(255 - wealth);
-            if (bucket >= this.Wealth.Length) bucket -= (uint)this.Wealth.Length;
-            return bucket;
-
-            // Murmur Probing; completely new bucket each time
-            //ulong newHash = Hashing.MurmurHash3((ulong)hash, (uint)wealth) & uint.MaxValue;
-            //return (uint)((newHash * (ulong)this.Wealth.Length) >> 32);
+            // Use Lemire method to convert hash [0, 2^32) to [0, N) without modulus.
+            // If hash is [0, 2^32), then N*hash is [0, N*2^32], and (N*hash)/2^32 is [0, N).
+            // NOTE: This method uses the top bits of the hash only, so small integers with GetHashCode(i) == i will perform terribly.
+            return (uint)(((ulong)hash * (ulong)this.Wealth.Length) >> 32);
         }
 
+        private uint NextBucket(uint bucket)
+        {
+            // Sequential Probing - bad variance but fast due to cache coherency
+            if (++bucket >= this.Wealth.Length) bucket = 0;
+            return bucket;
+        }
+
+        /// <summary>
+        ///  Return whether this set contains the given value.
+        /// </summary>
+        /// <param name="value">Value to find</param>
+        /// <returns>True if in set, False otherwise</returns>
         public bool Contains(T value)
         {
             return IndexOf(value) != -1;
@@ -104,20 +105,31 @@ namespace V5
         private int IndexOf(T value)
         {
             uint hash = (uint)value.GetHashCode();
+            uint bucket = Bucket(hash);
+
+            // To find a value, just compare every value starting with the expected bucket
+            // up to the farthest any value had to be moved from the desired bucket.
             for (int wealth = 255; wealth >= this.LowestWealth; --wealth)
             {
-                uint bucket = Bucket(hash, wealth);
                 if (this.Values[bucket].Equals(value)) return (int)bucket;
+                bucket = NextBucket(bucket);
             }
 
             return -1;
         }
 
+        /// <summary>
+        ///  Remove the given value from the set.
+        /// </summary>
+        /// <param name="value">Value to remove</param>
+        /// <returns>True if removed, False if not found</returns>
         public bool Remove(T value)
         {
             int index = IndexOf(value);
             if (index == -1) return false;
 
+            // To remove a value, just clear the value and wealth.
+            // Searches don't stop on empty buckets, so this is safe.
             this.Wealth[index] = 0;
             this.Values[index] = default(T);
             this.Count--;
@@ -125,22 +137,27 @@ namespace V5
             return true;
         }
 
+        /// <summary>
+        ///  Add the given value to the set.
+        /// </summary>
+        /// <param name="value">Value to add</param>
+        /// <returns>True if added, False if value was already in set</returns>
         public bool Add(T value)
         {
-            if (this.Count >= (this.Wealth.Length - (this.Wealth.Length >> 3)))
-            {
-                Expand();
-            }
+            // If the table is more than 7/8 full, expand it. 
+            // Very full tables cause slower inserts as many items are shifted.
+            if (this.Count >= (this.Wealth.Length - (this.Wealth.Length >> 3))) Expand();
 
             uint hash = (uint)value.GetHashCode();
+            uint bucket = Bucket(hash);
 
             for(byte wealth = 255; wealth > 0; --wealth)            
             {
-                uint bucket = Bucket(hash, wealth);
                 byte wealthFound = this.Wealth[bucket];
 
                 if (wealthFound == 0)
                 {
+                    // If we found an empty cell (wealth zero), add the item and return
                     this.Wealth[bucket] = wealth;
                     this.Values[bucket] = value;
                     if (wealth < this.LowestWealth) this.LowestWealth = wealth;
@@ -150,7 +167,10 @@ namespace V5
                 }
                 else if (wealthFound >= wealth)
                 {
+                    // If we found an item with a higher wealth, put the new item here and move the existing one
                     T valueMoved = this.Values[bucket];
+
+                    // If this is a duplicate of the new item, stop
                     if (valueMoved.Equals(value)) return false;
 
                     this.Wealth[bucket] = wealth;
@@ -159,14 +179,15 @@ namespace V5
 
                     value = valueMoved;
                     wealth = wealthFound;
-                    hash = (uint)value.GetHashCode();
                 }
+
+                bucket = NextBucket(bucket);
             }
 
-            // If we get here, we couldn't place the item - we must expand
+            // If we had to move an item more than 255 from the desired bucket, we need to resize
             Expand();
 
-            // Add the value, re-calculating where it goes
+            // If we resized, re-add the new value (recalculating the bucket for the new size)
             return Add(value);
         }
 
