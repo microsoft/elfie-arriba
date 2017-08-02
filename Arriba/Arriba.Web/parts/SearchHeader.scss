@@ -1,4 +1,5 @@
 @import '../configuration/theme';
+@import '../shared.scss';
 
 .clickable {
     cursor: pointer;
@@ -9,22 +10,18 @@
 .header {
     height: 64px;
     display: flex;
-    flex-flow: row;
+    align-items: center;    
     background-color: $medium;
 
-    /* Top Left Title - white, middle, bigger */
-    .title {
+    a.title {
+        align-self: stretch;
+
+        @include center-center;
         cursor: default;
-        padding: 16px 8px;
-        vertical-align: middle;
+        padding: 8px;
         font-size: 18pt;
         background-color: $vdark;
-    }
-
-    /* The title is a link; fix it to look like plain text */
-    .title a {
         color: white;
-        font-weight: normal;
     }
 
     .searchBoxAndButtons {

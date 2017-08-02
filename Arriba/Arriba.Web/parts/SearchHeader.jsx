@@ -4,10 +4,7 @@
 export default React.createClass({
     render: function () {
         return <div className="header">
-                <div className="title font-light">
-                    <a href="/">{configuration.toolName}</a>
-                </div>
-
+                <a className="title font-light" href="/">{configuration.toolName}</a>
                 <div className="searchBoxAndButtons">
                     {this.props.children}
                     <a title="Feedback" href={"mailto:" + encodeURIComponent(configuration.feedbackEmailAddresses) + "?subject=" + encodeURIComponent(configuration.toolName) + " Feedback"}>
