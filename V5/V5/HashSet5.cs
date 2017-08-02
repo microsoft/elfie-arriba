@@ -125,7 +125,13 @@ namespace V5
             //return (uint)(((ulong)hash * (ulong)this.Wealth.Length) >> 32);
 
             // Sequential Probing - bad variance but fast due to cache coherency
-            if (++bucket >= this.Wealth.Length) bucket = 0;
+            //if (++bucket >= this.Wealth.Length) bucket = 0;
+
+            // Linear Probing with next hash bits
+            int increment = (int)(hash & 15) + 1;
+            bucket += (uint)increment;
+            if (bucket >= this.Wealth.Length) bucket -= (uint)this.Wealth.Length;
+
             return bucket;
         }
 
