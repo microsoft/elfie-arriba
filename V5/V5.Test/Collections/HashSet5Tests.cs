@@ -47,11 +47,12 @@ namespace V5.Test.Collections
             HashSet5<int> set = new HashSet5<int>(1000);
 
             Random r = new Random(5);
-            for(int i = 0; i < 990; ++i)
+            for(int i = 0; i < 900; ++i)
             {
                 set.Add(r.Next() << 1);
             }
 
+            int mean = set.DistanceMean();
             int[] variance = set.WealthVariance();
         }
     }

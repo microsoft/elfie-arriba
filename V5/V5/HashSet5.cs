@@ -1,9 +1,20 @@
-﻿using System;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Collections;
 using System.Collections.Generic;
 
 namespace V5
 {
+    // TODO:
+    //  - Can I take LowestWealth tracking out of insert loop?
+    //  - Verify variance on resize with default hashing
+    //  - Remove 'WealthVariance'
+    //  - Test with resizing happening
+    //  - Reduce resizes
+    //  - Cache cutoff for resize to avoid re-computing
+
     public class HashSet5<T> : IEnumerable<T> where T : IEquatable<T>
     {
         public int Count { get; private set; }
@@ -31,12 +42,23 @@ namespace V5
             this.LowestWealth = 255;
         }
 
+        public int DistanceMean()
+        {
+            ulong distance = 0;
+            for(int i = 0; i < this.Wealth.Length; ++i)
+            {
+                if (this.Wealth[i] > 0) distance += (ulong)(255 - this.Wealth[i]);
+            }
+
+            return (int)(distance /= (ulong)this.Count);
+        }
+
         public int[] WealthVariance()
         {
             int[] result = new int[256];
             for (int i = 0; i < this.Wealth.Length; ++i)
             {
-                if (this.Wealth[i] >= 0x10)
+                if (this.Wealth[i] > 0)
                 {
                     result[255 - this.Wealth[i]]++;
                 }
