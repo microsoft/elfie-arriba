@@ -44,11 +44,12 @@ namespace V5
     public class HashSet5<T> : IEnumerable<T> where T : IEquatable<T>
     {
         public int Count { get; private set; }
+        public int LowestWealth { get; private set; }
+
         private T[] Values;
         private byte[] Wealth;
-        private int LowestWealth;
 
-        public HashSet5(int capacity = 16)
+        public HashSet5(int capacity = 28)
         {
             Reset(capacity + (capacity >> 3) + 1);
         }

@@ -38,7 +38,7 @@ namespace V5.Test.Collections
                 Assert.IsTrue(actual.Contains(value));
             }
 
-            double mean = actual.DistanceMean();
+            Trace.WriteLine($"Mean: {actual.DistanceMean():n2}, Max Probe: {(255 - actual.LowestWealth)}");
             int[] variance = actual.DistanceDistribution();
 
             // Verify counts match
