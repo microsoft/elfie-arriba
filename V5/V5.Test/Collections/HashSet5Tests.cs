@@ -12,10 +12,12 @@ namespace V5.Test.Collections
         [TestMethod]
         public void Murmur_Basics()
         {
-            HashSet<int> set = new HashSet<int>();
-            for(int i = 0; i < 100000; ++i)
+            HashSet<uint> set2 = new HashSet<uint>();
+            HashSet<uint> set3 = new HashSet<uint>();
+            for(uint i = 0; i < 100000; ++i)
             {
-                Assert.IsTrue(set.Add(i));
+                Assert.IsTrue(set2.Add(MurmurHasher.Murmur2(i, 0)));
+                Assert.IsTrue(set3.Add(MurmurHasher.Murmur3(i, 0)));
             }
         }
 

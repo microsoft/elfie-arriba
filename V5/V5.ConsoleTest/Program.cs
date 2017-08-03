@@ -273,7 +273,16 @@ namespace V5.ConsoleTest
             int[] sample = new int[size];
             for (int i = 0; i < sample.Length; ++i)
             {
+                // Random values with all high bits set
                 sample[i] = r.Next() << 1;
+
+                // Random positive only - bad if high bit important for bucket
+                //sample[i] = r.Next();
+
+                // Incrementing integers - great if choosing buckets with low bits
+                //sample[i] = i;
+
+                //sample[i] = i << 4;
             }
 
             HashSet5<int> set1 = null;

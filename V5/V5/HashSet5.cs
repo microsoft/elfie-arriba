@@ -10,7 +10,7 @@ namespace V5
     // https://en.wikipedia.org/wiki/MurmurHash, hardcoded for only 32-bit values
     public static class MurmurHasher
     {
-        public static uint Hash(uint value, uint seed)
+        public static uint Murmur3(uint value, uint seed)
         {
             uint h = seed;
 
@@ -28,6 +28,28 @@ namespace V5
             h ^= h >> 13;
             h *= 0xc2b2ae35;
             h ^= h >> 16;
+
+            return h;
+        }
+
+        private const uint M = 0x5bd1e995;
+        private const int R = 24;
+
+        public static uint Murmur2(uint value, uint seed)
+        {
+            uint h = seed ^ 4;
+
+            uint k = value;
+            k *= M;
+            k ^= k >> R;
+            k *= M;
+
+            h *= M;
+            h ^= k;
+
+            h ^= h >> 13;
+            h *= M;
+            h ^= h >> 15;
 
             return h;
         }
@@ -49,8 +71,9 @@ namespace V5
         private T[] Values;
         private byte[] Wealth;
 
-        public HashSet5(int capacity = 28)
+        public HashSet5(int capacity = -1)
         {
+            if (capacity < 28) capacity = 28;
             Reset(capacity + (capacity >> 3) + 1);
         }
 
@@ -101,9 +124,10 @@ namespace V5
 
         private uint Hash(T value)
         {
-            return (uint)value.GetHashCode();
+            //return (uint)value.GetHashCode();
             //return (uint)(Arriba.Hashing.MurmurHash3(((ulong)value.GetHashCode()), 0) & uint.MaxValue);
-            //return MurmurHasher.Hash((uint)value.GetHashCode(), 0);
+            //return MurmurHasher.Murmur2((uint)value.GetHashCode(), 0);
+            return MurmurHasher.Murmur3((uint)value.GetHashCode(), 0);
         }
 
         private uint Bucket(uint hash)
