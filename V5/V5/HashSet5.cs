@@ -205,7 +205,7 @@ namespace V5
             uint bucket = Bucket(hash);
             uint increment = Increment(hash);
 
-            for (int probeLength = 1; probeLength <= ProbeLengthLimit; ++probeLength)            
+            for (int probeLength = 1; probeLength <= ProbeLengthLimit; ++probeLength)
             {
                 int metadataFound = this.Metadata[bucket];
                 int probeLengthFound = (metadataFound >> 4);
@@ -231,9 +231,9 @@ namespace V5
 
                     value = valueMoved;
                     probeLength = probeLengthFound;
-                    increment = (uint)((metadataFound & 15) + 1);
+                    increment = Increment((uint)metadataFound);
                 }
-                else if(probeLengthFound == probeLength)
+                else if (probeLengthFound == probeLength)
                 {
                     // If this is a duplicate of the new item, stop
                     if (this.Keys[bucket].Equals(value)) return false;
@@ -242,7 +242,7 @@ namespace V5
                 bucket += increment;
                 if (bucket >= this.Metadata.Length) bucket -= (uint)this.Metadata.Length;
             }
-        
+
             // If we had to move an item more than the maximum distance from the desired bucket, we need to resize
             Expand();
 
@@ -298,7 +298,7 @@ namespace V5
 
             public void Reset()
             {
-                this.NextBucket = 0;
+                this.NextBucket = -1;
             }
         }
 
