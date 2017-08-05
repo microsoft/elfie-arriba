@@ -31,7 +31,7 @@ namespace V5.Test.Collections
             Random r = new Random(5);
             for(int i = 0; i < 100000; ++i)
             {
-                int value = r.Next() << 1;
+                int value = r.Next();
                 Assert.AreEqual(expected.Add(value), actual.Add(value));
                 if (!actual.Contains(value)) Debugger.Break();
                 Assert.IsTrue(actual.Contains(value));
