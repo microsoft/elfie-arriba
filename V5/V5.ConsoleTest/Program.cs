@@ -274,10 +274,10 @@ namespace V5.ConsoleTest
             for (int i = 0; i < sample.Length; ++i)
             {
                 // Random values with all high bits set
-                sample[i] = r.Next() << 1;
+                //sample[i] = r.Next() << 1;
 
                 // Random positive only - bad if high bit important for bucket
-                //sample[i] = r.Next();
+                sample[i] = r.Next();
 
                 // Incrementing integers - great if choosing buckets with low bits
                 //sample[i] = i;
@@ -297,6 +297,8 @@ namespace V5.ConsoleTest
                 () => Search(sample, set1),
                 () => Search(sample, set2)
             );
+
+            Console.WriteLine($"Mean: {set1.DistanceMean():n2}, Max Probe: {set1.MaxProbeLength}");
 
             return;
 

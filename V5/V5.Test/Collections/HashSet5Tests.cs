@@ -32,16 +32,12 @@ namespace V5.Test.Collections
             for(int i = 0; i < 100000; ++i)
             {
                 int value = r.Next() << 1;
-
-                bool alreadyAdded = expected.Contains(value);
-                Assert.AreEqual(alreadyAdded, actual.Contains(value));
                 Assert.AreEqual(expected.Add(value), actual.Add(value));
                 if (!actual.Contains(value)) Debugger.Break();
                 Assert.IsTrue(actual.Contains(value));
             }
 
-            Trace.WriteLine($"Mean: {actual.DistanceMean():n2}, Max Probe: {(255 - actual.LowestWealth)}");
-            int[] variance = actual.DistanceDistribution();
+            Trace.WriteLine($"Mean: {actual.DistanceMean():n2}, Max Probe: {(actual.MaxProbeLength)}");
 
             // Verify counts match
             Assert.AreEqual(expected.Count, actual.Count);

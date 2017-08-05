@@ -66,97 +66,81 @@ namespace V5
     public class HashSet5<T> : IEnumerable<T> where T : IEquatable<T>
     {
         public int Count { get; private set; }
-        public int LowestWealth { get; private set; }
+        public int MaxProbeLength { get; private set; }
 
-        private T[] Values;
-        private byte[] Wealth;
+        // The key values themselves
+        private T[] Keys;
+
+        // Metadata stores the probe length in the upper four bits and the probe increment in the lower four bits
+        private byte[] Metadata;
+
+        // Items can be a maximum of 14 buckets from the initial bucket they hash to, so the probe length fits in four bits with a sentinel zero
+        private const int ProbeLengthLimit = 14;
+
+        // The HashSet is a minimum of 28 items, which is size 32 with overhead.
+        private const int MinimumCapacity = 28;
+
+        // The HashSet is sized to (Capacity + Capacity >> CapacityOverheadShift), so 1 1/8 of base size for shift 3.
+        private const int CapacityOverheadShift = 3;
 
         public HashSet5(int capacity = -1)
         {
-            if (capacity < 28) capacity = 28;
-            Reset(capacity + (capacity >> 3) + 1);
+            if (capacity < MinimumCapacity) capacity = MinimumCapacity;
+            Reset(capacity + (capacity >> CapacityOverheadShift) + 1);
         }
 
         private void Reset(int size)
         {
-            this.Values = new T[size];
-            this.Wealth = new byte[size];
+            this.Keys = new T[size];
+            this.Metadata = new byte[size];
 
             this.Count = 0;
-            this.LowestWealth = 255;
+            this.MaxProbeLength = 0;
         }
 
         public void Clear()
         {
-            Array.Clear(this.Wealth, 0, this.Wealth.Length);
-            Array.Clear(this.Values, 0, this.Values.Length);
+            Array.Clear(this.Metadata, 0, this.Metadata.Length);
+            Array.Clear(this.Keys, 0, this.Keys.Length);
 
             this.Count = 0;
-            this.LowestWealth = 255;
+            this.MaxProbeLength = 0;
         }
 
         // Find the average distance items are from their target buckets. Debuggability.
         public double DistanceMean()
         {
             ulong distance = 0;
-            for(int i = 0; i < this.Wealth.Length; ++i)
+            for(int i = 0; i < this.Metadata.Length; ++i)
             {
-                if (this.Wealth[i] > 0) distance += (ulong)(255 - this.Wealth[i]);
+                if (this.Metadata[i] > 0) distance += (ulong)(this.Metadata[i] >> 4);
             }
 
             return ((double)distance / (double)this.Count);
         }
 
-        // Return the counts of distance from desired bucket for each item. Debuggability.
-        public int[] DistanceDistribution()
-        {
-            int[] result = new int[256];
-            for (int i = 0; i < this.Wealth.Length; ++i)
-            {
-                if (this.Wealth[i] > 0)
-                {
-                    result[255 - this.Wealth[i]]++;
-                }
-            }
-
-            return result;
-        }
-
         private uint Hash(T value)
         {
+            // Use Murmur2 to reshuffle base .NET hash code, so that incrementing integers (who hash to themselves) don't all end up in the same bucket
+            return MurmurHasher.Murmur2((uint)value.GetHashCode(), 0);
+
             //return (uint)value.GetHashCode();
-            //return (uint)(Arriba.Hashing.MurmurHash3(((ulong)value.GetHashCode()), 0) & uint.MaxValue);
-            //return MurmurHasher.Murmur2((uint)value.GetHashCode(), 0);
-            return MurmurHasher.Murmur3((uint)value.GetHashCode(), 0);
+            //return MurmurHasher.Murmur3((uint)value.GetHashCode(), 0);
         }
 
         private uint Bucket(uint hash)
         {
             // Use Lemire method to convert hash [0, 2^32) to [0, N) without modulus.
             // If hash is [0, 2^32), then N*hash is [0, N*2^32], and (N*hash)/2^32 is [0, N).
-            // NOTE: This method uses the top bits of the hash only, so small integers with GetHashCode(i) == i will perform terribly.
-            return (uint)(((ulong)hash * (ulong)this.Wealth.Length) >> 32);
-
-            // Simple modulus. Good for small incrementing integers but 33% slower insert for integers.
-            //return (uint)(hash % this.Wealth.Length);
+            // This uses the high bits of the hash, so the high bits need to vary and all be set. (Incrementing integers and non-negative integers are both bad).
+            return (uint)(((ulong)hash * (ulong)this.Metadata.Length) >> 32);
         }
 
-        private uint NextBucket(uint bucket, uint hash, int wealth)
+        private uint Increment(uint hashOrMetadata)
         {
-            // Murmur hashing with changing seed
-            //hash = (uint)(Arriba.Hashing.MurmurHash3((ulong)hash, (uint)(256 - wealth)) & uint.MaxValue);
-            //hash = MurmurHasher.Hash(hash, (uint)(256 - wealth));
-            //return (uint)(((ulong)hash * (ulong)this.Wealth.Length) >> 32);
-
-            // Sequential Probing - bad variance but fast due to cache coherency
-            //if (++bucket >= this.Wealth.Length) bucket = 0;
-
-            // Linear Probing with next hash bits
-            int increment = (int)(hash & 15) + 1;
-            bucket += (uint)increment;
-            if (bucket >= this.Wealth.Length) bucket -= (uint)this.Wealth.Length;
-
-            return bucket;
+            // Linear Probing with the low four bits of the hash.
+            // This causes only 1/16 of initially colliding values to re-collide, reducing the variance of the probe length.
+            return (hashOrMetadata & 15) + 1;
         }
 
         /// <summary>
@@ -173,13 +157,16 @@ namespace V5
         {
             uint hash = Hash(value);
             uint bucket = Bucket(hash);
+            uint increment = Increment(hash);
 
             // To find a value, just compare every value starting with the expected bucket
             // up to the farthest any value had to be moved from the desired bucket.
-            for (int wealth = 255; wealth >= this.LowestWealth; --wealth)
+            for (int probeLength = 1; probeLength <= this.MaxProbeLength; ++probeLength)
             {
-                if (this.Values[bucket].Equals(value)) return (int)bucket;
-                bucket = NextBucket(bucket, hash, wealth);
+                if (this.Keys[bucket].Equals(value)) return (int)bucket;
+
+                bucket += increment;
+                if (bucket >= this.Metadata.Length) bucket -= (uint)this.Metadata.Length;
             }
 
             return -1;
@@ -197,8 +184,8 @@ namespace V5
 
             // To remove a value, just clear the value and wealth.
             // Searches don't stop on empty buckets, so this is safe.
-            this.Wealth[index] = 0;
-            this.Values[index] = default(T);
+            this.Metadata[index] = 0;
+            this.Keys[index] = default(T);
             this.Count--;
 
             return true;
@@ -211,50 +198,52 @@ namespace V5
         /// <returns>True if added, False if value was already in set</returns>
         public bool Add(T value)
         {
-            // If the table is more than 7/8 full, expand it. 
-            // Very full tables cause slower inserts as many items are shifted.
-            if (this.Count >= (this.Wealth.Length - (this.Wealth.Length >> 3))) Expand();
+            // If the table is too close to full, expand it. Very full tables cause slower inserts as many items are shifted.
+            if (this.Count >= (this.Metadata.Length - (this.Metadata.Length >> CapacityOverheadShift))) Expand();
 
             uint hash = Hash(value);
             uint bucket = Bucket(hash);
+            uint increment = Increment(hash);
 
-            for(int wealth = 255; wealth > 0; --wealth)            
+            for (int probeLength = 1; probeLength <= ProbeLengthLimit; ++probeLength)            
             {
-                byte wealthFound = this.Wealth[bucket];
+                int metadataFound = this.Metadata[bucket];
+                int probeLengthFound = (metadataFound >> 4);
 
-                if (wealthFound == 0)
+                if (probeLengthFound == 0)
                 {
-                    // If we found an empty cell (wealth zero), add the item and return
-                    this.Wealth[bucket] = (byte)wealth;
-                    this.Values[bucket] = value;
-                    if (wealth < this.LowestWealth) this.LowestWealth = wealth;
+                    // If we found an empty cell (probe zero), add the item and return
+                    this.Metadata[bucket] = (byte)((probeLength << 4) + increment - 1);
+                    this.Keys[bucket] = value;
+                    if (probeLength > this.MaxProbeLength) this.MaxProbeLength = probeLength;
                     this.Count++;
 
                     return true;
                 }
-                else if (wealthFound > wealth)
+                else if (probeLengthFound < probeLength)
                 {
                     // If we found an item with a higher wealth, put the new item here and move the existing one
-                    T valueMoved = this.Values[bucket];
+                    T valueMoved = this.Keys[bucket];
 
-                    this.Wealth[bucket] = (byte)wealth;
-                    this.Values[bucket] = value;
-                    if (wealth < this.LowestWealth) this.LowestWealth = wealth;
+                    this.Metadata[bucket] = (byte)((probeLength << 4) + increment - 1);
+                    this.Keys[bucket] = value;
+                    if (probeLength > this.MaxProbeLength) this.MaxProbeLength = probeLength;
 
                     value = valueMoved;
-                    wealth = wealthFound;
-                    hash = Hash(value);
+                    probeLength = probeLengthFound;
+                    increment = (uint)((metadataFound & 15) + 1);
                 }
-                else if(wealthFound == wealth)
+                else if(probeLengthFound == probeLength)
                 {
                     // If this is a duplicate of the new item, stop
-                    if (this.Values[bucket].Equals(value)) return false;
+                    if (this.Keys[bucket].Equals(value)) return false;
                 }
 
-                bucket = NextBucket(bucket, hash, wealth);
+                bucket += increment;
+                if (bucket >= this.Metadata.Length) bucket -= (uint)this.Metadata.Length;
             }
         
-            // If we had to move an item more than 255 from the desired bucket, we need to resize
+            // If we had to move an item more than the maximum distance from the desired bucket, we need to resize
             Expand();
 
             // If we resized, re-add the new value (recalculating the bucket for the new size)
@@ -264,12 +253,11 @@ namespace V5
         private void Expand()
         {
             // Expand the array to 1.5x the current size up to 1M items, 1.125x the current size thereafter
-            int sizeShiftAmount = (this.Wealth.Length >= 1048576 ? 3 : 1);
-            int newSize = this.Wealth.Length + (this.Wealth.Length >> sizeShiftAmount);
+            int newSize = this.Metadata.Length + (this.Metadata.Length >= 1048576 ? this.Metadata.Length >> 3 : this.Metadata.Length >> 1);
 
             // Save the current contents
-            T[] oldValues = this.Values;
-            byte[] oldWealth = this.Wealth;
+            T[] oldValues = this.Keys;
+            byte[] oldWealth = this.Metadata;
 
             // Allocate the larger table
             Reset(newSize);
@@ -286,8 +274,8 @@ namespace V5
             private HashSet5<U> Set;
             private int NextBucket;
 
-            public U Current => this.Set.Values[this.NextBucket];
-            object IEnumerator.Current => this.Set.Values[this.NextBucket];
+            public U Current => this.Set.Keys[this.NextBucket];
+            object IEnumerator.Current => this.Set.Keys[this.NextBucket];
 
             public HashSet5Enumerator(HashSet5<U> set)
             {
@@ -300,9 +288,9 @@ namespace V5
 
             public bool MoveNext()
             {
-                while(++this.NextBucket < this.Set.Wealth.Length)
+                while(++this.NextBucket < this.Set.Metadata.Length)
                 {
-                    if (this.Set.Wealth[this.NextBucket] > 0) return true;
+                    if (this.Set.Metadata[this.NextBucket] >= 0x10) return true;
                 }
 
                 return false;
