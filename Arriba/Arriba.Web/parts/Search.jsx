@@ -1,4 +1,4 @@
-﻿import "../Search.scss";
+import "../Search.scss";
 import "!script-loader!../js/utilities.js";
 import "../js/utilities.jsx";
 
@@ -344,9 +344,16 @@ export default React.createClass({
             </SearchHeader>
             <div className="middle">
                 <nav className="mode">
-                    <a className="selected"><i className="icon-details"></i><span>Listing</span></a>
-                    <a href={gridUrl}><i className="icon-view-all-albums"></i><span>Grid</span></a>
+                    <a title="Listing" className="selected"><i className="icon-details"></i></a>
+                    <a title="Grid" href={gridUrl}><i className="icon-view-all-albums"></i></a>
+                    <span className="mode-fill"></span>
                     <Automator />
+                    <a title="Feedback" href={"mailto:" + encodeURIComponent(configuration.feedbackEmailAddresses) + "?subject=" + encodeURIComponent(configuration.toolName) + " Feedback"}>
+                        <img src="/icons/feedback.svg" alt="feedback"/>
+                    </a>
+                    <a title="Help" href="/?help=true">
+                        <img src="/icons/help.svg" alt="help"/>
+                    </a>
                 </nav>
                 <div className="center">
                     <QueryStats query={this.state.query}

@@ -642,8 +642,15 @@ export default React.createClass({
 
                 <div className="middle">
                     <div className="mode">
-                        <a href={listingUrl}><i className="icon-details" title="Listing"></i></a>
-                        <a className="selected"><i className="icon-view-all-albums" title="Grid"></i></a>
+                        <a title="Listing" href={listingUrl}><i className="icon-details" title="Listing"></i></a>
+                        <a title="Grid" className="selected"><i className="icon-view-all-albums" title="Grid"></i></a>
+                        <span className="mode-fill"></span>
+                        <a title="Feedback" href={"mailto:" + encodeURIComponent(configuration.feedbackEmailAddresses) + "?subject=" + encodeURIComponent(configuration.toolName) + " Feedback"}>
+                            <img src="/icons/feedback.svg" alt="feedback"/>
+                        </a>
+                        <a title="Help" href="/?help=true">
+                            <img src="/icons/help.svg" alt="help"/>
+                        </a>
                     </div>
 
                     <div className="center">
