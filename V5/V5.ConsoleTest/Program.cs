@@ -299,6 +299,43 @@ namespace V5.ConsoleTest
             Console.WriteLine($"Mean: {set1.DistanceMean():n2}, Max Probe: {set1.MaxProbeLength}");
         }
 
+        static void IndexSetOperations()
+        {
+            int iterations = 250;
+            int size = 16 * 1000 * 1000;
+
+            IndexSet set = new IndexSet(size);
+            IndexSet other = new IndexSet(size);
+            Span<int> page = new Span<int>(new int[4096]);
+
+            Benchmark.Compare("IndexSet Operations", iterations, size, new string[] { "All", "None", "And", "Count" },
+                () => set.All(size),
+                () => set.None(),
+                () => set.And(other),
+                () => set.Count
+            );
+
+            set.None();
+            Benchmark.Compare("IndexSet Page", iterations, size, new string[] { "Page None" }, () => PageAll(set, page));
+
+            set.None();
+            for (int i = 0; i < set.Capacity; i += 50)
+            {
+                set[i] = true;
+            }
+            Benchmark.Compare("IndexSet Page", iterations, size, new string[] { "Page 1/50" }, () => PageAll(set, page));
+
+            set.None();
+            for (int i = 0; i < set.Capacity; i += 10)
+            {
+                set[i] = true;
+            }
+            Benchmark.Compare("IndexSet Page", iterations, size, new string[] { "Page 1/10" }, () => PageAll(set, page));
+
+            set.All(size);
+            Benchmark.Compare("IndexSet Page", iterations, size, new string[] { "Page All" }, () => PageAll(set, page));
+        }
+
         static void PerformanceTests()
         {
             int iterations = 250;
@@ -356,11 +393,7 @@ namespace V5.ConsoleTest
             //);
 
             IndexSet set = new IndexSet(size);
-            IndexSet other = new IndexSet(size);
-            Span<int> page = new Span<int>(new int[4096]);
-
             ushort[] bigBucketSample = new ushort[size];
-            Span<ushort> bigSpan = new Span<ushort>(bigBucketSample);
 
             for (int i = 0; i < size; ++i)
             {
@@ -375,33 +408,6 @@ namespace V5.ConsoleTest
                 () => ParallelWhere(bigBucketSample, (ushort)65000, set, 2),
                 () => ParallelWhere(bigBucketSample, (ushort)65000, set, 4)
             );
-
-            Benchmark.Compare("IndexSet Operations", iterations, size, new string[] { "All", "None", "And", "Count" },
-                () => set.All(size),
-                () => set.None(),
-                () => set.And(other),
-                () => set.Count
-            );
-
-            set.None();
-            Benchmark.Compare("IndexSet Page", iterations, size, new string[] { "Page None" }, () => PageAll(set, page));
-
-            set.None();
-            for (int i = 0; i < set.Capacity; i += 50)
-            {
-                set[i] = true;
-            }
-            Benchmark.Compare("IndexSet Page", iterations, size, new string[] { "Page 1/50" }, () => PageAll(set, page));
-
-            set.None();
-            for (int i = 0; i < set.Capacity; i += 10)
-            {
-                set[i] = true;
-            }
-            Benchmark.Compare("IndexSet Page", iterations, size, new string[] { "Page 1/10" }, () => PageAll(set, page));
-
-            set.All(size);
-            Benchmark.Compare("IndexSet Page", iterations, size, new string[] { "Page All" }, () => PageAll(set, page));
         }
 
         private class RawBitVector

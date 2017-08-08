@@ -239,10 +239,11 @@ namespace V5
 		IndexSet^ IndexSet::Where(BooleanOperator bOp, array<T>^ values, CompareOperator cOp, T value, int offset, int length)
 		{
 			if (offset + length > values->Length) throw gcnew IndexOutOfRangeException();
-			if (this->bitVector->Length * 64 < length) throw gcnew IndexOutOfRangeException();
+			if (this->bitVector->Length * 64 < (offset + length)) throw gcnew IndexOutOfRangeException();
+			if (offset & 63 != 0) throw gcnew ArgumentException("Offset Where must run on a multiple of 64 offset.");
 
 			pin_ptr<T> pValues = &values[offset];
-			pin_ptr<UInt64> pVector = &(this->bitVector[0]);
+			pin_ptr<UInt64> pVector = &(this->bitVector[offset >> 6]);
 
 			if (T::typeid == System::Byte::typeid)
 			{
