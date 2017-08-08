@@ -263,11 +263,9 @@ namespace V5.ConsoleTest
             return containsAll & missingExpected;
         }
 
-        static void PerformanceTests()
+        static void HashSetPerformance()
         {
-            int iterations = 250;
-            int size = 16 * 1000 * 1000;
-            int bitsPerValue = 8;
+            int size = 64 * 1000 * 1000;
 
             Random r = new Random(5);
             int[] sample = new int[size];
@@ -299,14 +297,15 @@ namespace V5.ConsoleTest
             );
 
             Console.WriteLine($"Mean: {set1.DistanceMean():n2}, Max Probe: {set1.MaxProbeLength}");
+        }
 
-            return;
+        static void PerformanceTests()
+        {
+            int iterations = 250;
+            int size = 64 * 1000 * 1000;
+            int bitsPerValue = 8;
 
-            //IndexSet set = new IndexSet(size);
-            //IndexSet other = new IndexSet(size);
-            //Span<int> page = new Span<int>(new int[4096]);
-
-            ulong[] rawVector = new ulong[size / 64];
+            RawBitVector vector = new RawBitVector(size / 64);
 
             byte[] bucketSample = new byte[(size * bitsPerValue) / 8];
             Span<byte> bucketSpan = new Span<byte>(bucketSample);
@@ -324,12 +323,12 @@ namespace V5.ConsoleTest
                 CompressValues(values, bitsPerValue, bucketSample, i);
             }
 
-            //TrySingleAndParallel(Scenario.BandwidthAVX256, bucketSample, bitsPerValue, size, iterations, rawVector);
+            //TrySingleAndParallel(Scenario.BandwidthAVX256, bucketSample, bitsPerValue, size, iterations, vector);
 
             Scenario[] scenarios = (Scenario[])Enum.GetValues(typeof(Scenario));
             for(int i = scenarios.Length - 1; i >= 0; --i)
             {
-                TrySingleAndParallel(scenarios[i], bucketSample, bitsPerValue, size, iterations, rawVector);
+                TrySingleAndParallel(scenarios[i], bucketSample, bitsPerValue, size, iterations, vector);
             }
 
             //long[] array = new long[size];
@@ -356,103 +355,115 @@ namespace V5.ConsoleTest
             //    () => { sum = 0; foreach (int item in bucketSpan) { sum += item; } return sum; }
             //);
 
+            IndexSet set = new IndexSet(size);
+            IndexSet other = new IndexSet(size);
+            Span<int> page = new Span<int>(new int[4096]);
 
-            //ushort[] bigBucketSample = new ushort[size];
-            //Span<ushort> bigSpan = new Span<ushort>(bigBucketSample);
+            ushort[] bigBucketSample = new ushort[size];
+            Span<ushort> bigSpan = new Span<ushort>(bigBucketSample);
 
-            //for (int i = 0; i < size; ++i)
-            //{
-            //    bigBucketSample[i] = (ushort)((i & 1) == 0 ? (i & 65535) : (65535 - i & 65535));
-            //}
+            for (int i = 0; i < size; ++i)
+            {
+                bigBucketSample[i] = (ushort)((i & 1) == 0 ? (i & 65535) : (65535 - i & 65535));
+            }
 
-            //IndexSet[] sets2 = new IndexSet[2];
-            //for (int i = 0; i < sets2.Length; ++i)
-            //{
-            //    sets2[i] = new IndexSet(size / 2);
-            //}
+            Benchmark.Compare("IndexSet Operations", iterations, size, new string[] { "Where1b", "Where1b x2", "Where1b x4", "Where2b", "Where2b x2", "Where2b x4" },
+                () => set.Where(BooleanOperator.Set, bucketSample, CompareOperator.GreaterThan, (byte)200),
+                () => ParallelWhere(bucketSample, (byte)200, set, 2),
+                () => ParallelWhere(bucketSample, (byte)200, set, 4),
+                () => set.Where(BooleanOperator.Set, bigBucketSample, CompareOperator.GreaterThan, (ushort)65000),
+                () => ParallelWhere(bigBucketSample, (ushort)65000, set, 2),
+                () => ParallelWhere(bigBucketSample, (ushort)65000, set, 4)
+            );
 
-            //IndexSet[] sets4 = new IndexSet[4];
-            //for (int i = 0; i < sets4.Length; ++i)
-            //{
-            //    sets4[i] = new IndexSet(size / 4);
-            //}
+            Benchmark.Compare("IndexSet Operations", iterations, size, new string[] { "All", "None", "And", "Count" },
+                () => set.All(size),
+                () => set.None(),
+                () => set.And(other),
+                () => set.Count
+            );
 
-            //Benchmark.Compare("IndexSet Operations", iterations, size, new string[] { /*"All", "None", "And", "Count", */"Where1b", "Where1b x2", "Where1b x4", "Where2b", "Where2b x2", "Where2b x4" /*, $"Where Parallel x{ParallelCount}"*/ },
-            //    //() => set.All(size),
-            //    //() => set.None(),
-            //    //() => set.And(other),
-            //    //() => set.Count,
-            //    () => set.Where(BooleanOperator.Set, bucketSample, CompareOperator.GreaterThan, (byte)200),
-            //    () => ParallelWhere(bucketSample, (byte)200, sets2),
-            //    () => ParallelWhere(bucketSample, (byte)200, sets4),
-            //    () => set.Where(BooleanOperator.Set, bigBucketSample, CompareOperator.GreaterThan, (ushort)65000),
-            //    () => ParallelWhere(bigBucketSample, (ushort)65000, sets2),
-            //    () => ParallelWhere(bigBucketSample, (ushort)65000, sets4)
-            //);
+            set.None();
+            Benchmark.Compare("IndexSet Page", iterations, size, new string[] { "Page None" }, () => PageAll(set, page));
 
-            //set.None();
-            //Benchmark.Compare("IndexSet Page", iterations, size, new string[] { "Page None" }, () => PageAll(set, page));
+            set.None();
+            for (int i = 0; i < set.Capacity; i += 50)
+            {
+                set[i] = true;
+            }
+            Benchmark.Compare("IndexSet Page", iterations, size, new string[] { "Page 1/50" }, () => PageAll(set, page));
 
-            //set.None();
-            //for (int i = 0; i < set.Capacity; i += 50)
-            //{
-            //    set[i] = true;
-            //}
-            //Benchmark.Compare("IndexSet Page", iterations, size, new string[] { "Page 1/50" }, () => PageAll(set, page));
+            set.None();
+            for (int i = 0; i < set.Capacity; i += 10)
+            {
+                set[i] = true;
+            }
+            Benchmark.Compare("IndexSet Page", iterations, size, new string[] { "Page 1/10" }, () => PageAll(set, page));
 
-            //set.None();
-            //for (int i = 0; i < set.Capacity; i += 10)
-            //{
-            //    set[i] = true;
-            //}
-            //Benchmark.Compare("IndexSet Page", iterations, size, new string[] { "Page 1/10" }, () => PageAll(set, page));
-
-            //set.All(size);
-            //Benchmark.Compare("IndexSet Page", iterations, size, new string[] { "Page All" }, () => PageAll(set, page));
+            set.All(size);
+            Benchmark.Compare("IndexSet Page", iterations, size, new string[] { "Page All" }, () => PageAll(set, page));
         }
 
-        private static void TrySingleAndParallel(Scenario scenario, byte[] array, int bitsPerValue, int rowCount, int iterations, ulong[] rawVector)
+        private class RawBitVector
         {
-            Benchmark.Compare(scenario.ToString(), iterations, rowCount, new string[] { "x1", "x2", "x4"/*, "x8" */},
-                    () => { Test.Bandwidth(scenario, array, bitsPerValue, 0, rowCount, rawVector); return Test.Count(rawVector); },
-                    () => ParallelBandwidth(scenario, array, bitsPerValue, rowCount, rawVector, 2),
-                    () => ParallelBandwidth(scenario, array, bitsPerValue, rowCount, rawVector, 4)//,
-                    //() => ParallelBandwidth(scenario, array, bitsPerValue, rowCount, rawVector, 8)
+            public ulong[] Vector;
+
+            public RawBitVector(int count)
+            {
+                this.Vector = new ulong[count];
+            }
+
+            public override string ToString()
+            {
+                return Test.Count(Vector).ToString("n0");
+            }
+        }
+
+        private static void TrySingleAndParallel(Scenario scenario, byte[] array, int bitsPerValue, int rowCount, int iterations, RawBitVector vector)
+        {
+            Benchmark.Compare(scenario.ToString(), iterations, rowCount, new string[] { "x1", "x2", "x4" },
+                    () => { Test.Bandwidth(scenario, array, bitsPerValue, 0, rowCount, vector.Vector); return vector; },
+                    () => ParallelBandwidth(scenario, array, bitsPerValue, rowCount, vector, 2),
+                    () => ParallelBandwidth(scenario, array, bitsPerValue, rowCount, vector, 4)
                 );
         }
 
-        private static object ParallelBandwidth(Scenario scenario, byte[] array, int bitsPerValue, int rowCount, ulong[] rawVector, int parallelCount)
+        private static int SegmentLength(int totalLength, int parts)
+        {
+            int portionLength = totalLength / parts;
+            if ((portionLength & 63) != 0) portionLength = 64 + portionLength & ~63;
+            return portionLength;
+        }
+
+        private static object ParallelBandwidth(Scenario scenario, byte[] array, int bitsPerValue, int rowCount, RawBitVector vector, int parallelCount)
         {
             // Get an even multiple of 64 rows to parallelize across
-            int segmentLength = (rowCount / parallelCount) & ~63;
+            int segmentLength = SegmentLength(rowCount, parallelCount);
 
             Parallel.For(0, parallelCount, (i) =>
             {
                 int offset = i * segmentLength;
                 int length = (i == parallelCount - 1 ? rowCount - offset : segmentLength);
 
-                Test.Bandwidth(scenario, array, bitsPerValue, offset, length, rawVector);
+                Test.Bandwidth(scenario, array, bitsPerValue, offset, length, vector.Vector);
             });
 
-            return Test.Count(rawVector);
+            return vector;
         }
 
-        private static object ParallelWhere<T>(T[] column, T value, IndexSet[] sets)
+        private static object ParallelWhere<T>(T[] column, T value, IndexSet set, int parallelCount)
         {
-            Parallel.For(0, sets.Length, (i) =>
-            {
-                int length = column.Length / sets.Length;
-                int offset = i * length;
+            int segmentLength = SegmentLength(column.Length, parallelCount);
 
-                sets[i].Where(BooleanOperator.And, column, CompareOperator.GreaterThan, value, offset, length);
+            Parallel.For(0, parallelCount, (i) =>
+            {
+                int offset = i * segmentLength;
+                int length = (i == parallelCount - 1 ? column.Length - offset : segmentLength);
+
+                set.Where(BooleanOperator.And, column, CompareOperator.GreaterThan, value, offset, length);
             });
 
-            int sum = 0;
-            //for(int i = 0; i < sets.Length; ++i)
-            //{
-            //    sum += sets[i].Count;
-            //}
-            return sum;
+            return set;
         }
 
         private static int PageAll(IndexSet set, Span<int> page)
