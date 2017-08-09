@@ -74,6 +74,7 @@ namespace V5.ConsoleTest
         static void Main(string[] args)
         {
             PerformanceTests();
+            IndexSetOperations();
             return;
 
             int rowCount = 8 * 1000 * 1000;
@@ -340,7 +341,7 @@ namespace V5.ConsoleTest
         {
             int iterations = 250;
             int size = 64 * 1000 * 1000;
-            int bitsPerValue = 8;
+            int bitsPerValue = 4;
 
             RawBitVector vector = new RawBitVector(size / 64);
 

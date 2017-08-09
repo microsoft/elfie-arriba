@@ -5,9 +5,10 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-namespace V5
+namespace V5.Collections
 {
-    // https://en.wikipedia.org/wiki/MurmurHash, hardcoded for only 32-bit values
+    // https://en.wikipedia.org/wiki/MurmurHash, hardcoded for only 32-bit values.
+    // https://github.com/aappleby/smhasher
     public static class MurmurHasher
     {
         public static uint Murmur3(uint value, uint seed)
