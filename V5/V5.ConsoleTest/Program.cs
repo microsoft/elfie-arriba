@@ -5,13 +5,10 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 using V5;
 using V5.Collections;
 using V5.ConsoleTest.Model;
 using V5.Data;
-using V5.Serialization;
 using V5.Test.Collections;
 using V5.Test.Performance;
 
@@ -191,7 +188,7 @@ namespace V5.ConsoleTest
             int next = 0;
             while (next != -1)
             {
-                next = set.Page(ref page, next);
+                set.Page(ref page, ref next);
 
                 if (needHttpStatusPostScan) db.HttpStatus.Where(ref page, BooleanOperator.And, CompareOperator.Equals, 404);
                 if (needResponseBytesPostScan) db.ResponseBytes.Where(ref page, BooleanOperator.And, CompareOperator.GreaterThan, 1000);
@@ -211,14 +208,14 @@ namespace V5.ConsoleTest
                 b.Measure("WriteArray", array.Length, () =>
                 {
                     using (BinaryWriter w = new BinaryWriter(File.OpenWrite("Sample.bin")))
-                    { BinarySerializer.Write(w, array); }
+                    { w.Write(array); }
                     return "";
                 });
 
                 b.Measure("ReadArray", array.Length, () =>
                 {
                     using (BinaryReader r = new BinaryReader(File.OpenRead("Sample.bin")))
-                    { array = BinarySerializer.ReadArray<long>(r, r.BaseStream.Length); }
+                    { array = r.ReadArray<long>(r.BaseStream.Length); }
                     return "";
                 });
             }

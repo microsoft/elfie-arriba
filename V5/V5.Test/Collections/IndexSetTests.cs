@@ -17,7 +17,7 @@ namespace V5.Test.Collections
             int next = 0;
             while (next != -1)
             {
-                next = set.Page(ref page, next);
+                set.Page(ref page, ref next);
                 count += page.Length;
             }
 
@@ -34,6 +34,9 @@ namespace V5.Test.Collections
 
             set.All(999);
             Assert.AreEqual(999, set.Count, "All should set through length only.");
+
+            set.ClearAbove(900);
+            Assert.AreEqual(900, set.Count, "ClearAbove should clear past length only.");
 
             set.None();
             Assert.AreEqual(0, set.Count, "None should clear");
@@ -61,10 +64,14 @@ namespace V5.Test.Collections
         {
             IndexSet set = new IndexSet(900);
             Span<int> page = new Span<int>(new int[10]);
+            int index;
 
             // Verify if nothing is set, page doesn't find anything and returns -1
             set.None();
-            Assert.AreEqual(-1, set.Page(ref page, 0));
+
+            index = 0;
+            set.Page(ref page, ref index);
+            Assert.AreEqual(-1, index);
             Assert.AreEqual(0, page.Length);
 
             // Set 15 values (every 3rd under 45)
@@ -74,12 +81,15 @@ namespace V5.Test.Collections
             }
 
             // Verify a full page of results is returned with the correct next index to check
-            Assert.AreEqual(28, set.Page(ref page, 0));
+            index = 0;
+            set.Page(ref page, ref index);
+            Assert.AreEqual(28, index);
             Assert.AreEqual(10, page.Length);
             Assert.AreEqual("0, 3, 6, 9, 12, 15, 18, 21, 24, 27", string.Join(", ", page));
 
             // Verify the second page is returned with -1 and the last five values
-            Assert.AreEqual(-1, set.Page(ref page, 28));
+            set.Page(ref page, ref index);
+            Assert.AreEqual(-1, index);
             Assert.AreEqual(5, page.Length);
             Assert.AreEqual("30, 33, 36, 39, 42", string.Join(", ", page));
         }
@@ -200,7 +210,8 @@ namespace V5.Test.Collections
 
             // Get a page of all matching indices
             Span<int> values = new Span<int>(new int[set.Capacity]);
-            set.Page(ref values, 0);
+            int index = 0;
+            set.Page(ref values, ref index);
 
             // Verify the paged indices have the right count and every index there matched
             Assert.AreEqual(expectedCount, values.Length);

@@ -83,6 +83,7 @@
     <Compile Include="Data\SortBucketColumn.cs" />
     <Compile Include="Extensions\ArrayExtensions.cs" />
     <Compile Include="Collections\HashSet5.cs" />
+    <Compile Include="Extensions\BinarySerializer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Collections\IndexSet.cs" />
     <Compile Include="Query\Operator.cs" />

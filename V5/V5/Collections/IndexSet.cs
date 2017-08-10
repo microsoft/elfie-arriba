@@ -54,10 +54,9 @@ namespace V5.Collections
             get { return V5.Native.Collections.IndexSetN.Count(this._bitVector); }
         }
 
-        public int Page(ref Span<int> page, int fromIndex)
+        public void Page(ref Span<int> page, ref int fromIndex)
         {
             page.Length = V5.Native.Collections.IndexSetN.Page(this._bitVector, page._array, ref fromIndex);
-            return fromIndex;
         }
 
         public IndexSet Where<T>(BooleanOperator bOp, T[] values, CompareOperator cOp, T value)
@@ -87,7 +86,7 @@ namespace V5.Collections
             // Clear all fully empty vector parts
             if (lastIndex < this._bitVector.Length)
             {
-                Array.Clear(this._bitVector, lastIndex, this._bitVector.Length);
+                Array.Clear(this._bitVector, lastIndex, this._bitVector.Length - lastIndex);
             }
             
             return this;

@@ -1,6 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Linq;
-using V5.Serialization;
 
 namespace V5.Test.Serialization
 {
