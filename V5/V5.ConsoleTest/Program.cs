@@ -405,7 +405,7 @@ namespace V5.ConsoleTest
         static void WherePerformance()
         {
             int size = 64 * 1000 * 1000;
-            int bitsPerValue = 4;
+            int bitsPerValue = 8;
 
             byte[] bucketSample = new byte[(size * bitsPerValue) / 8];
             Span<byte> bucketSpan = new Span<byte>(bucketSample);

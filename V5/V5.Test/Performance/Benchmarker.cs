@@ -23,12 +23,20 @@ namespace V5.Test.Performance
     /// </summary>
     public class Benchmarker : IDisposable
     {
-        public const string BenchmarkTsvPath = @"..\..\..\V5.Benchmarks.tsv";
+        public static int MeasureForMilliseconds = 500;
+        public static string BenchmarkTsvName = "V5.Benchmarks.tsv";
         private StreamWriter _writer;
 
         public Benchmarker(string groupName)
         {
-            _writer = File.AppendText(BenchmarkTsvPath);
+            // Get to the nearest folder which isn't a build output
+            DirectoryInfo folder = new DirectoryInfo(Environment.CurrentDirectory);
+            while(folder.Name.Equals("Release") || folder.Name.Equals("Debug") || folder.Name.Equals("bin") || folder.Name.Equals("x64"))
+            {
+                folder = folder.Parent;
+            }
+
+            _writer = File.AppendText(Path.Combine(folder.FullName, BenchmarkTsvName));
             if (_writer.BaseStream.Length == 0) _writer.WriteLine("Name\tOutput\tX1\tX2\tX4");
 
             WriteHeading($"{groupName} on {Environment.MachineName} @{DateTime.UtcNow:u}");
@@ -137,13 +145,13 @@ namespace V5.Test.Performance
             object output = method();
             w.Stop();
 
-            if (w.Elapsed.TotalMilliseconds > 500)
+            if (w.Elapsed.TotalMilliseconds > Benchmarker.MeasureForMilliseconds)
             {
                 // If over 500ms, one iteration will do
                 return new BenchmarkResult() { Name = name, Output = output, ItemCount = itemCount, Iterations = 1, Elapsed = w.Elapsed };
             }
 
-            int iterations = (w.Elapsed.TotalMilliseconds < 1 ? 1000 : (int)(500 / w.Elapsed.TotalMilliseconds));
+            int iterations = (w.Elapsed.TotalMilliseconds < 1 ? 2 * Benchmarker.MeasureForMilliseconds : (int)(Benchmarker.MeasureForMilliseconds / w.Elapsed.TotalMilliseconds));
             w.Restart();
 
             for (int iteration = 0; iteration < iterations; ++iteration)
