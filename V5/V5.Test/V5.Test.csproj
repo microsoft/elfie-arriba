@@ -90,6 +90,7 @@
     <Compile Include="Collections\SpanTests.cs" />
     <Compile Include="Data\SortBucketColumnTests.cs" />
     <Compile Include="Collections\IndexSetTests.cs" />
+    <Compile Include="Performance\Benchmarker.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Serialization\BinarySerializerTests.cs" />
     <Compile Include="Verify.cs" />

@@ -14,7 +14,7 @@ public enum class Scenario : char
 
 namespace V5
 {
-	public ref class Test
+	public ref class Basics
 	{
 	public:
 		static __int64 Count(array<UInt64>^ vector);

@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include <intrin.h>
 #include <nmmintrin.h>
-#include "Test.h"
+#include "Basics.h"
 
 #pragma unmanaged
 __int64 CountN(unsigned __int64* matchVector, int length)
@@ -281,13 +281,13 @@ void StretchGenericCompareToVectorAVX128(__int8* set, int bitsPerValue, int leng
 #pragma managed
 namespace V5
 {
-	__int64 Test::Count(array<UInt64>^ vector)
+	__int64 Basics::Count(array<UInt64>^ vector)
 	{
 		pin_ptr<UInt64> pVector = &vector[0];
 		return CountN((unsigned __int64*)pVector, vector->Length);
 	}
 
-	__int64 Test::Bandwidth(Scenario scenario, array<Byte>^ values, int bitsPerValue, int offset, int length, array<UInt64>^ vector)
+	__int64 Basics::Bandwidth(Scenario scenario, array<Byte>^ values, int bitsPerValue, int offset, int length, array<UInt64>^ vector)
 	{
 		int byteOffset = (offset * bitsPerValue) / 8;
 		int byteLength = (length * bitsPerValue) / 8;

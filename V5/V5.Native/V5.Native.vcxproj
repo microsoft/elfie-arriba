@@ -151,7 +151,7 @@
     <ClInclude Include="Span.h" />
     <ClInclude Include="Stdafx.h" />
     <ClInclude Include="String8Native.h" />
-    <ClInclude Include="Test.h" />
+    <ClInclude Include="Basics.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BinarySerializer.cpp" />
@@ -170,7 +170,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="String8Native.cpp" />
-    <ClCompile Include="Test.cpp" />
+    <ClCompile Include="Basics.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="app.rc" />

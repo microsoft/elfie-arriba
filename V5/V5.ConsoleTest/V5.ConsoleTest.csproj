@@ -83,7 +83,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Benchmark.cs" />
     <Compile Include="Extensions\RandomExtensions.cs" />
     <Compile Include="Generators\DataCenterMapper.cs" />
     <Compile Include="Generators\EmailAddressMapper.cs" />
@@ -115,6 +114,10 @@
     <ProjectReference Include="..\V5.Native\V5.Native.vcxproj">
       <Project>{760fc534-0591-4209-a367-cda01aef52e0}</Project>
       <Name>V5.Native</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\V5.Test\V5.Test.csproj">
+      <Project>{54ab6c6a-6e45-4ee4-b40e-936e05d4c76b}</Project>
+      <Name>V5.Test</Name>
     </ProjectReference>
     <ProjectReference Include="..\V5\V5.csproj">
       <Project>{1da51967-11ec-4e76-b96b-8a7283575f73}</Project>
