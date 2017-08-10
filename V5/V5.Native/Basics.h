@@ -5,10 +5,8 @@ public enum class Scenario : char
 {
 	BandwidthAVX256,
 	BandwidthAVX128,
-	CompareToVectorAVX256,
 	CompareToVectorAVX128,
 	CompareToVectorTwoByteAVX128,
-	Stretch4to8CompareToVectorAVX128,
 	StretchGenericCompareToVectorAVX128
 };
 

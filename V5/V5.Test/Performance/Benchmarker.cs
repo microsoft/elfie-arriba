@@ -24,7 +24,7 @@ namespace V5.Test.Performance
     public class Benchmarker : IDisposable
     {
         public static int MeasureForMilliseconds = 500;
-        public static string BenchmarkTsvName = "V5.Benchmarks.tsv";
+        public static string BenchmarkTsvName = "%ComputerName%.Benchmarks.tsv";
         private StreamWriter _writer;
 
         public Benchmarker(string groupName)
@@ -36,10 +36,10 @@ namespace V5.Test.Performance
                 folder = folder.Parent;
             }
 
-            _writer = File.AppendText(Path.Combine(folder.FullName, BenchmarkTsvName));
+            _writer = File.AppendText(Path.Combine(folder.FullName, Environment.ExpandEnvironmentVariables(BenchmarkTsvName)));
             if (_writer.BaseStream.Length == 0) _writer.WriteLine("Name\tOutput\tX1\tX2\tX4");
 
-            WriteHeading($"{groupName} on {Environment.MachineName} @{DateTime.UtcNow:u}");
+            WriteHeading($"{groupName} @{DateTime.UtcNow:u}");
         }
 
         private void WriteHeading(string message)

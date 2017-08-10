@@ -52,26 +52,6 @@ __int64 BandwidthTestAVX128(__int8* set, int bitsPerValue, int length)
 	return _mm_popcnt_u64(mask);
 }
 
-__int64 CompareAndCountAVX128(__int8* set, int bitsPerValue, int length)
-{
-	// Minimal Compare: Load, Compare, MoveMask, PopCount, add
-	__m128i value = _mm_set1_epi8(1);
-	__int64 count = 0;
-
-	int bytesPerBlock = (16 * bitsPerValue) / 8;
-	int sourceIndex = 0;
-
-	for (int rowIndex = 0; rowIndex < length; rowIndex += 16, sourceIndex += bytesPerBlock)
-	{
-		__m128i block = _mm_loadu_si128((__m128i*)(&set[sourceIndex]));
-		__m128i mask = _mm_cmpgt_epi8(value, block);
-		unsigned __int64 bits = _mm_movemask_epi8(mask);
-		count += _mm_popcnt_u64(bits);
-	}
-
-	return count;
-}
-
 void CompareToVectorTwoByteAVX128(__int8* set, int bitsPerValue, int length, __int8* vector)
 {
 	// Minimal Compare: Load, Compare, MoveMask, PopCount, add
@@ -92,24 +72,6 @@ void CompareToVectorTwoByteAVX128(__int8* set, int bitsPerValue, int length, __i
 	}
 }
 
-void CompareToVectorAVX256(__int8* set, int bitsPerValue, int length, __int32* vector)
-{
-	// Minimal Compare: Load, Compare, MoveMask, PopCount, add
-	__m256i value = _mm256_set1_epi8(1);
-
-	int bytesPerBlock = (32 * bitsPerValue) / 8;
-	int blockLength = length / 32;
-	int sourceIndex = 0;
-
-	for (int blockIndex = 0; blockIndex < blockLength; ++blockIndex, sourceIndex += bytesPerBlock)
-	{
-		__m256i block = _mm256_loadu_si256((__m256i*)(&set[sourceIndex]));
-		__m256i mask = _mm256_cmpgt_epi8(value, block);
-		__int32 bits = (__int32)(_mm256_movemask_epi8(mask) & 0xFFFFFFFF);
-		vector[blockIndex] = bits;
-	}
-}
-
 void CompareToVectorAVX128(__int8* set, int bitsPerValue, int length, __int16* vector)
 {
 	// Minimal Compare: Load, Compare, MoveMask, PopCount, add
@@ -122,47 +84,6 @@ void CompareToVectorAVX128(__int8* set, int bitsPerValue, int length, __int16* v
 	for (int blockIndex = 0; blockIndex < blockLength; ++blockIndex, sourceIndex += bytesPerBlock)
 	{
 		__m128i block = _mm_loadu_si128((__m128i*)(&set[sourceIndex]));
-		__m128i mask = _mm_cmpgt_epi8(value, block);
-		__int16 bits = (__int16)(_mm_movemask_epi8(mask) & 0xFFFF);
-		vector[blockIndex] = bits;
-	}
-}
-
-void Stretch4to8CompareToVectorAVX128(__int8* set, int bitsPerValue, int length, __int16* vector)
-{
-	__m128i shuffleMask = _mm_set_epi8(7, 7, 6, 6, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1, 0, 0);
-	__m128i and1 = _mm_set1_epi16(0b00000000'00001111);
-	__m128i and2 = _mm_set1_epi16(0b00001111'00000000);
-
-	// Minimal Compare: Load, Compare, MoveMask, PopCount, add
-	__m128i value = _mm_set1_epi8(1);
-	__int64 count = 0;
-
-	int bytesPerBlock = (bitsPerValue * 16) / 8;
-	int byteLength = (bytesPerBlock * length) / 16;
-	for (int byteIndex = 0, blockIndex = 0; byteIndex < byteLength; byteIndex += bytesPerBlock, blockIndex++)
-	{
-		// Load the next block to compare
-		__m128i block = _mm_loadu_si128((__m128i*)(&set[byteIndex]));
-
-		// Stretch four bit values to 8 [really inlined]
-		//	R1: 0bHHHHGGGG'HHHHGGGG'FFFFEEEE'FFFFEEEE'DDDDCCCC'DDDDCCCC'BBBBAAAA'BBBBAAAA
-		__m128i r1 = _mm_shuffle_epi8(block, shuffleMask);
-
-		// In a copy, shift every word right four bits to align the alternating values
-		//	R2: 0b0000HHHH'GGGGHHHH'0000FFFF'EEEEFFFF'0000DDDD'CCCCDDDD'0000BBBB'AAAABBBB			PSRLW		P01 L1 T0.5
-		__m128i r2 = _mm_srli_epi16(r1, 4);
-
-		// AND each value to get rid of the upper bits and get the correctly set bytes only
-		//	   0b00000000'00001111'00000000'00001111'00000000'00001111'00000000'00001111			PAND		P015 L1 T0.33
-		// R1: 0b00000000'0000GGGG'00000000'0000EEEE'00000000'0000CCCC'0000BBBB'0000AAAA
-		r1 = _mm_and_si128(r1, and1);
-		r2 = _mm_and_si128(r2, and2);
-
-		// Finally, OR together the two results
-		// OUT: 0b0000HHHH'0000GGGG'0000FFFF'0000EEEE'0000DDDD'0000CCCC'0000BBBB'0000AAAA			POR			P015 L1 T0.33
-		block = _mm_or_si128(r1, r2);
-
 		__m128i mask = _mm_cmpgt_epi8(value, block);
 		__int16 bits = (__int16)(_mm_movemask_epi8(mask) & 0xFFFF);
 		vector[blockIndex] = bits;
@@ -302,17 +223,11 @@ namespace V5
 				return BandwidthTestAVX256((__int8*)pValues, bitsPerValue, length);
 			case Scenario::BandwidthAVX128:
 				return BandwidthTestAVX128((__int8*)pValues, bitsPerValue, length);
-			case Scenario::CompareToVectorAVX256:
-				CompareToVectorAVX256((__int8*)pValues, bitsPerValue, length, (__int32*)pVector);
-				return 0;
 			case Scenario::CompareToVectorAVX128:
 				CompareToVectorAVX128((__int8*)pValues, bitsPerValue, length, (__int16*)pVector);
 				return 0;
 			case Scenario::CompareToVectorTwoByteAVX128:
 				CompareToVectorTwoByteAVX128((__int8*)pValues, bitsPerValue, length, (__int8*)pVector);
-				return 0;
-			case Scenario::Stretch4to8CompareToVectorAVX128:
-				Stretch4to8CompareToVectorAVX128((__int8*)pValues, bitsPerValue, length, (__int16*)pVector);
 				return 0;
 			case Scenario::StretchGenericCompareToVectorAVX128:
 				StretchGenericCompareToVectorAVX128((__int8*)pValues, bitsPerValue, length, (__int16*)pVector);
