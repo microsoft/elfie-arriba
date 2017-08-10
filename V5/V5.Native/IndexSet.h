@@ -5,45 +5,21 @@ using namespace System;
 
 namespace V5
 {
-	namespace Collections
+	namespace Native
 	{
-		public ref class IndexSet
+		namespace Collections
 		{
-		private:
-			array<UInt64>^ bitVector;
+			public ref class IndexSetN
+			{
+			public:
+				static Int32 Count(array<UInt64>^ vector);
+				
+				static Int32 Page(array<UInt64>^ vector, array<Int32>^ page, Int32% fromIndex);
 
-		public:
-			IndexSet();
-			IndexSet(Int32 length);
-
-			// Get/Set bits and see Count set
-			property Boolean default[Int32] { bool get(Int32 index); void set(Int32 index, Boolean value); }
-			property Int32 Count { Int32 get(); }
-			property Int32 Capacity { Int32 get(); }
-
-			virtual Boolean Equals(Object^ other) override;
-
-			Int32 Page(Span<Int32>% page, Int32 fromIndex);
-
-			// Set to None/All quickly
-			IndexSet^ None();
-			IndexSet^ All(Int32 length);
-
-			// Set operations
-			IndexSet^ And(IndexSet^ other);
-			IndexSet^ AndNot(IndexSet^ other);
-			IndexSet^ Or(IndexSet^ other);
-
-			// Native speed Where with array values
-			generic <typename T>
-			IndexSet^ Where(BooleanOperator bOp, array<T>^ values, CompareOperator cOp, T value);
-
-			// Where with offset (for parallel use)
-			generic <typename T>
-			IndexSet^ Where(BooleanOperator bOp, array<T>^ values, CompareOperator cOp, T value, int offset, int length);
-
-			virtual String^ ToString() override;
-		};
+				generic <typename T>
+				static void Where(array<UInt64>^ vector, BooleanOperator bOp, array<T>^ values, CompareOperator cOp, T value, int offset, int length);
+			};
+		}
 	}
 }
 

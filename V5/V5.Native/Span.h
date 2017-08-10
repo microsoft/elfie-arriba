@@ -9,16 +9,15 @@ namespace V5
 		generic <typename T>
 		public value struct Span : Generic::IEnumerable<T>
 		{
-		private:
-			array<T>^ _array;
-			int _index;
-			int _length;
-
 		internal:
 			property array<T>^ Array { array<T>^ get(); }
 			property Int32 Index { Int32 get(); }
 
 		public:
+			array<T>^ _array;
+			int _index;
+			int _length;
+
 			Span(array<T>^ array);
 			Span(array<T>^ array, int index, int length);
 
