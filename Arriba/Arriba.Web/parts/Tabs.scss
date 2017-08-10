@@ -1,0 +1,62 @@
+@import '../shared.scss';
+
+.searchBoxAndTabs {
+    flex: 1;
+    font-size: 12px;
+    position: relative;
+
+    .explanation {
+        position: absolute;
+        background: hsl(0, 0, 97%);
+        padding: 10px;
+        margin-top: 2px;
+        box-shadow: 0 3px 8px 0 rgba(0,0,0,0.2), 0 0 0 1px rgba(0,0,0,0.08);
+        z-index: 1;
+    }
+}
+
+.tableTabs {
+    display: flex;
+
+    span.tableTabs-fill { flex: 1; }
+
+    span.tableTab {
+        padding: 5px 10px;
+        background: hsl(0, 0, 94%);        
+        border-bottom: 1px solid hsl(0, 0, 85%);
+        cursor: pointer;
+
+        &.locked { pointer-events: none; }
+
+        &:not(:first-child) {
+            border-left: 1px solid hsl(0, 0, 85%);
+        }
+
+        &.current, &.current:hover {
+            background: hsl(0, 0, 97%);            
+            border-bottom-color: transparent;
+        }
+
+        &:hover { background-color: hsl(0, 0, 88%); }
+        
+        span.delete {
+            padding: 0px 4px 1px;
+            font-size: 12px;
+            border-radius: 2px;
+            position: relative;
+            left: 4px;
+            &:hover {
+                color: hsl(0, 0%, 100%);
+                background-color: hsl(0, 80%, 60%);
+            }
+        }
+    }
+
+    a {
+        @include center-center;
+        margin: 2px 0 2px 4px;
+        padding: 4px;
+        
+        &:hover { background-color: hsla(0, 0, 0%, 0.1); }
+    }
+}

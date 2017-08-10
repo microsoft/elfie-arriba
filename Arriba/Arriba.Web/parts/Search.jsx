@@ -1,10 +1,11 @@
-import "../Search.scss";
+﻿import "../Search.scss";
 import "!script-loader!../js/utilities.js";
 import "../js/utilities.jsx";
 
 import Mru from "./Mru";
 import QueryStats from "./QueryStats";
 import SearchHeader from "./SearchHeader";
+import Tabs from "./Tabs";
 import SearchBox from "./SearchBox";
 import Automator from "./Automator";
 import DropShield from "./DropShield";
@@ -337,10 +338,23 @@ export default React.createClass({
                 if (!this.state.dropping) this.setState({ dropping: true, file: undefined })
             }} >
             <SearchHeader>
-                <SearchBox query={this.state.query}
-                    parsedQuery={this.state.allCountData.content && this.state.allCountData.content.parsedQuery}
-                    queryChanged={this.queryChanged}
-                    loading={this.state.loading} />
+                <Tabs
+                    allBasics={this.props.allBasics}
+                    allCountData={this.state.allCountData}
+                    currentTable={this.state.currentTable}
+                    listingDataContent={this.state.listingData && this.state.listingData.content}
+                    query={this.state.query}
+                    queryUrl={queryUrl}
+                    thisUrl={this.buildThisUrl(false)}
+                    onSelectedTableChange={this.onSelectedTableChange}
+                    refreshAllBasics={this.props.refreshAllBasics}>
+
+                    <SearchBox query={this.state.query}
+                        parsedQuery={this.state.allCountData.content && this.state.allCountData.content.parsedQuery}
+                        queryChanged={this.queryChanged}
+                        loading={this.state.loading} />
+
+                </Tabs>
             </SearchHeader>
             <div className="middle">
                 <nav className="mode">
@@ -356,16 +370,7 @@ export default React.createClass({
                     </a>
                 </nav>
                 <div className="center">
-                    <QueryStats query={this.state.query}
-                                error={this.state.error}
-                                allCountData={this.state.allCountData}
-                                allBasics={this.props.allBasics}
-                                selectedData={this.state.listingData}
-                                rssUrl={`${queryUrl}&fmt=rss&t=100&iURL=${encodeURIComponent(this.buildThisUrl(false) + "&open=")}`}
-                                csvUrl={`${queryUrl}&fmt=csv&t=50000`}
-                                currentTable={this.state.currentTable}
-                                onSelectedTableChange={this.onSelectedTableChange}
-                                refreshAllBasics={this.props.refreshAllBasics} />
+                    <QueryStats error={this.state.error} selectedData={this.state.listingData} />
                     {this.state.query && table
                         ? <SplitPane split="horizontal" minSize="300" isFirstVisible={this.state.listingData.content} isSecondVisible={this.state.userSelectedId}>
                             <InfiniteScroll page={this.state.page} hasMoreData={this.state.hasMoreData} loadMore={this.getResultsPage }>

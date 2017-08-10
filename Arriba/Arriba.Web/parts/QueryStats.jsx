@@ -2,45 +2,16 @@ import "./QueryStats.scss";
 
 // QueryStats is a bar just under the SearchHeader. It shows errors, if any, or the current query, returned count, and runtime.
 export default React.createClass({
-    onTableTileClick: function (name, e) {
-        this.props.onSelectedTableChange(name);
-    },
     render: function () {
         if (this.props.error) {
             // If the query didn't return, show an error
             return <div className="queryStats"><span className="error-icon icon" /><span className="error">{this.props.error}</span></div>;
         }
 
-        // If there's no query, keep this area empty
-        if (!this.props.allBasics || !this.props.allCountData || !this.props.allCountData.content) return null;
-        var allCountContent = this.props.allCountData.content;
-
-        // Write tiles with results per table
-        const tiles = allCountContent.resultsPerTable.map(tableResult => {
-            const isCurrentTable = tableResult.tableName === this.props.currentTable ? " current" : "";
-            return <span key={"tableTile_" + tableResult.tableName} className={isCurrentTable + " clickable"} onClick={this.onTableTileClick.bind(this, tableResult.tableName)}>
-                {!tableResult.allowedToRead
-                    ? <span className="lock-icon icon" />
-                    : <span className="countValue">{tableResult.succeeded ? tableResult.count.toLocaleString() : "‒"}</span>}
-                <span>{tableResult.tableName}</span>
-                {this.props.allBasics[tableResult.tableName] && this.props.allBasics[tableResult.tableName].canAdminister && <span className="delete" onClick={e => {
-                    e.stopPropagation();
-                    xhr(`table/${tableResult.tableName}/delete`)
-                        .then(() => this.props.refreshAllBasics(() => {
-                            this.props.onSelectedTableChange()
-                        }));
-                }}>✕</span>}
-            </span>
-        });
-
         // Write details for selected table
         var selectedDetails = [];
         if (this.props.selectedData && this.props.selectedData.content) {
             var selectedContent = this.props.selectedData.content;
-
-            if(selectedContent.query.where) {
-                selectedDetails.push(<span>for <span className="explanation">{selectedContent.query.where}</span></span>);
-            }
 
             // Only show if the ResultListing isn't alredy showing the error.
             if (selectedContent.values && selectedContent.details.errors) {
@@ -60,43 +31,8 @@ export default React.createClass({
 
                 selectedDetails.push(<span>&nbsp;<span className="icon-lock icon" title={deniedColumnList} /></span>);
             }
-
-            selectedDetails.push(<span className="spacer"></span>)
-
-            if (selectedContent.details.succeeded) {
-                if (this.props.rssUrl) {
-                    selectedDetails.push(
-                        <a title="RSS Link" target="_blank" href={this.props.rssUrl}>
-                            <img src="/icons/rss.svg" alt="rss"/>
-                        </a>
-                    );
-                }
-
-                if (this.props.csvUrl) {
-                    selectedDetails.push(
-                        <a title="Download CSV" target="_blank" href={this.props.csvUrl}>
-                            <img src="/icons/download.svg" alt="download"/>
-                        </a>
-                    );
-                }
-
-                selectedDetails.push(
-                    <a title="Mail" href={
-                            "mailto:?subject=" + encodeURIComponent(configuration.toolName)
-                            + ": " + encodeURIComponent(this.props.query)
-                            + "&body=" + encodeURIComponent(window.location.href)
-                        }>
-                        <img src="/icons/mail.svg" alt="mail"/>
-                    </a>
-                );
-            }
         }
 
-        return (
-            <div className="queryStats">
-                <span className="statsForTable">{tiles}</span>
-                {selectedDetails}
-            </div>
-        );
+        return !!selectedDetails.length && <div className="queryStats">{selectedDetails}</div>;
     }
 });
