@@ -142,12 +142,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CompareToVector.h" />
-    <ClInclude Include="Heap.h" />
     <ClInclude Include="IndexSet.h" />
     <ClInclude Include="Operator.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="SortBucketColumnN.h" />
-    <ClInclude Include="Span.h" />
     <ClInclude Include="Stdafx.h" />
     <ClInclude Include="String8Native.h" />
     <ClInclude Include="Basics.h" />
@@ -156,11 +154,9 @@
     <ClCompile Include="CompareToSingle.cpp" />
     <ClCompile Include="CompareToVector16.cpp" />
     <ClCompile Include="CompareToVector8.cpp" />
-    <ClCompile Include="Heap.cpp" />
     <ClCompile Include="IndexSet.cpp" />
     <ClCompile Include="AssemblyInfo.cpp" />
     <ClCompile Include="SortBucketColumnN.cpp" />
-    <ClCompile Include="Span.cpp" />
     <ClCompile Include="Stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

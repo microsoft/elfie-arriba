@@ -78,6 +78,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Collections\Heap.cs" />
+    <Compile Include="Collections\Span.cs" />
     <Compile Include="Data\IColumn.cs" />
     <Compile Include="Data\PrimitiveColumn.cs" />
     <Compile Include="Data\SortBucketColumn.cs" />

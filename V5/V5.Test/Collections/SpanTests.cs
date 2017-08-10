@@ -21,7 +21,6 @@ namespace V5.Test.Collections
             Verify.Exception<ArgumentNullException>(() => new Span<int>(null, 0, 0));
             Verify.Exception<ArgumentOutOfRangeException>(() => new Span<int>(new int[2], -1, 0));
             Verify.Exception<ArgumentOutOfRangeException>(() => new Span<int>(new int[2], 0, -1));
-            Verify.Exception<ArgumentOutOfRangeException>(() => new Span<int>(new int[2], 2, 0));
             Verify.Exception<ArgumentOutOfRangeException>(() => new Span<int>(new int[2], 1, 2));
 
             // Verify length set validation

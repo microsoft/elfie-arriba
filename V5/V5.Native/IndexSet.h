@@ -1,6 +1,5 @@
 #pragma once
 #include "Operator.h"
-#include "Span.h"
 using namespace System;
 
 namespace V5

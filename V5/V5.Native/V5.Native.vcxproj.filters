@@ -46,12 +46,6 @@
     <ClInclude Include="CompareToVector.h">
       <Filter>Vector</Filter>
     </ClInclude>
-    <ClInclude Include="Span.h">
-      <Filter>Collections</Filter>
-    </ClInclude>
-    <ClInclude Include="Heap.h">
-      <Filter>Collections</Filter>
-    </ClInclude>
     <ClInclude Include="Basics.h">
       <Filter>_Base</Filter>
     </ClInclude>
@@ -72,14 +66,8 @@
     <ClCompile Include="String8Native.cpp">
       <Filter>Text</Filter>
     </ClCompile>
-    <ClCompile Include="Span.cpp">
-      <Filter>Collections</Filter>
-    </ClCompile>
     <ClCompile Include="CompareToSingle.cpp">
       <Filter>Vector</Filter>
-    </ClCompile>
-    <ClCompile Include="Heap.cpp">
-      <Filter>Collections</Filter>
     </ClCompile>
     <ClCompile Include="CompareToVector8.cpp">
       <Filter>Vector</Filter>

@@ -56,7 +56,7 @@ namespace V5.Collections
 
         public void Page(ref Span<int> page, ref int fromIndex)
         {
-            page.Length = V5.Native.Collections.IndexSetN.Page(this._bitVector, page._array, ref fromIndex);
+            page.Length = V5.Native.Collections.IndexSetN.Page(this._bitVector, page.Array, ref fromIndex);
         }
 
         public IndexSet Where<T>(BooleanOperator bOp, T[] values, CompareOperator cOp, T value)
