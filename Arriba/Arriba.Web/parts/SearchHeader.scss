@@ -9,7 +9,8 @@
 
 .header {
     display: flex;
-    align-items: center;    
+    flex-shrink: 0;
+    align-items: center;
     background-color: $medium;
 
     a.title {
@@ -27,7 +28,8 @@
         flex: 1;
         display: flex;
         align-items: center;
-        padding: 12px 6px 12px 8px;
+        padding: 8px;
+        box-sizing: border-box;
 
         & > a { // <a> assumed to be buttons.
             padding: 8px;
