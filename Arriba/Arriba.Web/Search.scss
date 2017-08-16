@@ -331,9 +331,6 @@ a:visited:hover {
     border-collapse: separate;
     border-spacing: 0;
 
-    thead td, thead th {
-        border-top: $border-width $border-style $border-color;
-    }
     td {
         border-color: $border-color;
         border-width: 0 $border-width $border-width 0;
