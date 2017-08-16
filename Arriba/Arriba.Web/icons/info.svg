@@ -1,0 +1,25 @@
+<svg width="14" height="10" viewBox="0 0 14 10" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<title>info</title>
+<desc>Created using Figma</desc>
+<g id="Canvas" transform="translate(-1165 -190)">
+<g id="info">
+<g id="Vector 8">
+<use xlink:href="#path0_stroke" transform="translate(1165.5 190.5)" fill="#FFFFFF"/>
+</g>
+<g id="Vector 8">
+<use xlink:href="#path0_stroke" transform="matrix(-1 1.22465e-16 -1.22465e-16 -1 1178.5 199.5)" fill="#FFFFFF"/>
+</g>
+<g id="Ellipse 7">
+<use xlink:href="#path1_fill" transform="translate(1171.5 191)" fill="#FFFFFF"/>
+</g>
+<g id="Vector 9">
+<use xlink:href="#path2_stroke" transform="translate(1171 194.5)" fill="#FFFFFF"/>
+</g>
+</g>
+</g>
+<defs>
+<path id="path0_stroke" d="M 0 0L 0 -0.5L -0.5 -0.5L -0.5 0L 0 0ZM 0 9L -0.5 9L -0.5 9.5L 0 9.5L 0 9ZM 2.5 -0.5L 0 -0.5L 0 0.5L 2.5 0.5L 2.5 -0.5ZM -0.5 0L -0.5 9L 0.5 9L 0.5 0L -0.5 0ZM 0 9.5L 2.5 9.5L 2.5 8.5L 0 8.5L 0 9.5Z"/>
+<path id="path1_fill" d="M 2 1C 2 1.55228 1.55228 2 1 2C 0.447715 2 0 1.55228 0 1C 0 0.447715 0.447715 0 1 0C 1.55228 0 2 0.447715 2 1Z"/>
+<path id="path2_stroke" d="M 1.5 0L 1.97434 0.158114C 2.02517 0.00563986 1.9996 -0.161971 1.90562 -0.292355C 1.81165 -0.422739 1.66072 -0.5 1.5 -0.5L 1.5 0ZM 0 4.5L -0.474342 4.34189C -0.53205 4.51501 -0.490854 4.70583 -0.366861 4.83972C -0.242868 4.97362 -0.0557741 5.02933 0.121268 4.98507L 0 4.5ZM 0 0.5L 1.5 0.5L 1.5 -0.5L 0 -0.5L 0 0.5ZM 1.02566 -0.158114L -0.474342 4.34189L 0.474342 4.65811L 1.97434 0.158114L 1.02566 -0.158114ZM 0.121268 4.98507L 2.12127 4.48507L 1.87873 3.51493L -0.121268 4.01493L 0.121268 4.98507Z"/>
+</defs>
+</svg>

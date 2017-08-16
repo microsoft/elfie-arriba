@@ -1,4 +1,4 @@
-﻿@import './configuration/theme';
+@import './configuration/theme';
 @import './shared.scss';
 
 /* Goals:
@@ -30,12 +30,6 @@ html, body, .viewport {
     flex-flow: column;
 }
 
-/* Make the header fixed height */
-.header {
-    height: 64px;
-    min-height: 64px;
-}
-
 /* Make the middle area resize and full width.
     - Make contents of it flow across.
     - Ensure it's non-scrollable so the content will be scrollable
@@ -57,14 +51,9 @@ html, body, .viewport {
     min-height: 32px;
 }
 
-/* Make the left bar fixed width */
-.mode {
-    width: 53px;
-}
-
 /* Make the center [between left and right] full width, contents share height */
 .center {
-    flex: 1 100%;
+    flex: 1;
 
     display: flex;
     flex-flow: column;
@@ -238,11 +227,14 @@ a:visited:hover {
 /* --- Mode Bar [left side] --- */
 /* Make mode bar white on darker green, sized for icons, animated */
 .mode {
-    position: relative; // Offset parent for Automator.
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;    
     color: white;
     background-color: $dark;
-    width: 53px;
-    overflow: hidden;
+    width: 50px;
+
+    * { box-sizing: border-box; } // Eventually global.
 
     /* Make the currently selected mode grey on light grey (match main panel background) */
     .selected {
@@ -256,29 +248,22 @@ a:visited:hover {
         background: #F5F5F5;
     }
 
+    .mode-fill { flex: 1; }
+
     /* Make mode bar modes large icons */
     a {
-        display: block;
-        width: 200px;
-        padding: 12px;
+        width: 100%;
+        height: 50px;
 
-        font-size: 12pt;
+        font-size: 22px;
         color: #EEEEEE;
         text-decoration: none;
-
-        transition: all 0.2s ease-in;
-        transition-delay: 0s;
+        @include center-center;
     }
 
     /* Make the mode links turn darker grey on hover */
     a:hover {
         color: #999;
-    }
-
-    /* Make mode bar icons large and spaced */
-    a i {
-        font-size: 22px;
-        margin-right: 12px;
     }
 }
 
