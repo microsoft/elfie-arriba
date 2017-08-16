@@ -1,3 +1,4 @@
+@import '../configuration/theme';
 @import '../shared.scss';
 
 .searchBoxAndTabs {
@@ -6,12 +7,11 @@
     position: relative;
 
     .explanation {
-        position: absolute;
+        border-top: 1px dashed hsl(0, 0, 85%);
         background: hsl(0, 0, 97%);
         padding: 10px;
-        margin-top: 2px;
-        box-shadow: 0 3px 8px 0 rgba(0,0,0,0.2), 0 0 0 1px rgba(0,0,0,0.08);
-        z-index: 1;
+        color: $vdark;
+        font-family: monospace;
     }
 }
 
