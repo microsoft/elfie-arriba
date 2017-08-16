@@ -26,7 +26,10 @@
         border-bottom: 1px solid hsl(0, 0, 85%);
         cursor: pointer;
 
-        &.locked { pointer-events: none; }
+        &.locked {
+            pointer-events: none;
+            span.delete { pointer-events: auto; }            
+        }
 
         &:not(:first-child) {
             border-left: 1px solid hsl(0, 0, 85%);
