@@ -427,12 +427,16 @@ export default React.createClass({
         // Get the count of matches from each accessible table
         jsonQuery(
             configuration.url + "/allCount",
-            function (data) {
-                var tableToShow = this.state.userSelectedTable;
-                if (!tableToShow) tableToShow = data.content.resultsPerTable[0].tableName;
-
-                this.setState({ allCountData: data, currentTable: tableToShow, error: null }, this.getTableBasics.bind(this, this.getGrid));
-            }.bind(this),
+            data => {
+                var currentTable = this.state.userSelectedTable || data.content.resultsPerTable[0].tableName;
+                this.setState({
+                    allCountData: data,
+                    currentTable: currentTable,
+                    error: null
+                }, () => {
+                    this.getTableBasics(this.getGrid)
+                });
+            },
             (xhr, status, err) => {
                 this.setState({ allCountData: [], error: "Error: Server didn't respond to [" + xhr.url + "]. " + err });
             },
@@ -634,6 +638,7 @@ export default React.createClass({
             <div className="viewport" onKeyDown={this.handleKeyDown}>
                 <SearchHeader>
                     <SearchBox query={this.state.query}
+                        parsedQuery={this.state.allCountData && this.state.allCountData.content && this.state.allCountData.content.parsedQuery}
                         queryChanged={this.queryChanged} />
                 </SearchHeader>
 
