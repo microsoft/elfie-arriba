@@ -633,9 +633,7 @@ export default React.createClass({
         return (
             <div className="viewport" onKeyDown={this.handleKeyDown}>
                 <SearchHeader>
-                    <SearchBox name={configuration.toolName}
-                        query={this.state.query}
-                        allColumns={this.state.currentTableAllColumns}
+                    <SearchBox query={this.state.query}
                         queryChanged={this.queryChanged} />
                 </SearchHeader>
 
