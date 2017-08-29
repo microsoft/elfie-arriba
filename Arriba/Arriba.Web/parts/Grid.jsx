@@ -5,6 +5,7 @@ import ErrorPage from "./ErrorPage"
 import QueryStats from "./QueryStats"
 import SearchHeader from "./SearchHeader"
 import SearchBox from "./SearchBox";
+import Mode from "./Mode";
 
 window.configuration = require("../configuration/Configuration.jsx").default;
 
@@ -629,8 +630,6 @@ export default React.createClass({
             );
         }
 
-        var listingUrl = "/" + buildUrlParameters({ t: this.state.currentTable, q: this.state.query });
-
         return (
             <div className="viewport" onKeyDown={this.handleKeyDown}>
                 <SearchHeader>
@@ -641,18 +640,7 @@ export default React.createClass({
                 </SearchHeader>
 
                 <div className="middle">
-                    <div className="mode">
-                        <a title="Listing" href={listingUrl}><i className="icon-details"></i></a>
-                        <a title="Grid" className="selected"><i className="icon-view-all-albums"></i></a>
-                        <span className="mode-fill"></span>
-                        <a title="Feedback" href={"mailto:" + encodeURIComponent(configuration.feedbackEmailAddresses) + "?subject=" + encodeURIComponent(configuration.toolName) + " Feedback"}>
-                            <img src="/icons/feedback.svg" alt="feedback"/>
-                        </a>
-                        <a title="Help" href="/?help=true">
-                            <img src="/icons/help.svg" alt="help"/>
-                        </a>
-                    </div>
-
+                    <Mode query={this.state.query} currentTable={this.state.currentTable} />
                     <div className="center">
                         <QueryStats error={this.state.error}
                                     allCountData={this.state.allCountData}

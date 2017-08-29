@@ -7,6 +7,7 @@ import QueryStats from "./QueryStats";
 import SearchHeader from "./SearchHeader";
 import Tabs from "./Tabs";
 import SearchBox from "./SearchBox";
+import Mode from "./Mode";
 import Automator from "./Automator";
 import DropShield from "./DropShield";
 
@@ -328,9 +329,6 @@ export default React.createClass({
         var table = this.props.allBasics && this.state.currentTable && this.props.allBasics[this.state.currentTable] || undefined;
         var customDetailsView = (configuration.customDetailsProviders && configuration.customDetailsProviders[this.state.currentTable]) || ResultDetails;
         const queryUrl = this.buildQueryUrl();
-        const gridUrl = this.state.query
-            ? `/Grid.html${buildUrlParameters({ t: this.state.currentTable, q: this.state.query })}`
-            : `/Grid.html?p=default`
 
         return <div ref="viewport" className="viewport" onKeyDown={this.handleKeyDown}
             onDragEnter={e => {
@@ -357,18 +355,7 @@ export default React.createClass({
                 </Tabs>
             </SearchHeader>
             <div className="middle">
-                <nav className="mode">
-                    <a title="Listing" className="selected"><i className="icon-details"></i></a>
-                    <a title="Grid" href={gridUrl}><i className="icon-view-all-albums"></i></a>
-                    <span className="mode-fill"></span>
-                    <Automator />
-                    <a title="Feedback" href={"mailto:" + encodeURIComponent(configuration.feedbackEmailAddresses) + "?subject=" + encodeURIComponent(configuration.toolName) + " Feedback"}>
-                        <img src="/icons/feedback.svg" alt="feedback"/>
-                    </a>
-                    <a title="Help" href="/?help=true">
-                        <img src="/icons/help.svg" alt="help"/>
-                    </a>
-                </nav>
+                <Mode query={this.state.query} currentTable={this.state.currentTable} />
                 <div className="center">
                     <QueryStats error={this.state.error} selectedData={this.state.listingData} />
                     {this.state.query && table
