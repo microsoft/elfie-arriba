@@ -115,7 +115,8 @@ export default React.createClass({
         // Assumed to be type="beforeunload" as we only subscribed for that.
         this.mru.push();
     },
-    handleKeyDown: function (e) {
+
+    onKeyDown: function (e) {
         // Backspace: Clear state *if query empty*
         if (e.keyCode === 8 && !this.state.query) {
             const state = Object.assign(
@@ -163,6 +164,7 @@ export default React.createClass({
             () => this.timer = this.timer || window.setTimeout(this.getAllCounts, 250)
         );
     },
+
     getAllCounts: function (then) {
         // On query, ask for the count from every table.
         this.timer = null;
@@ -259,6 +261,7 @@ export default React.createClass({
             }
         );
     },
+
     jsonQueryWithError: function (url, onSuccess, parameters) {
         jsonQuery(
             url,
@@ -315,7 +318,7 @@ export default React.createClass({
         var customDetailsView = (configuration.customDetailsProviders && configuration.customDetailsProviders[this.state.currentTable]) || ResultDetails;
         const queryUrl = this.buildQueryUrl();
 
-        return <div ref="viewport" className="viewport" onKeyDown={this.handleKeyDown}
+        return <div ref="viewport" className="viewport" onKeyDown={this.onKeyDown}
             onDragEnter={e => {
                 // Consider disabling pointer events for perf.
                 if (!this.state.dropping) this.setState({ dropping: true, file: undefined })
