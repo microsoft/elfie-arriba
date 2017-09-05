@@ -137,8 +137,7 @@ export default React.createClass({
 
         // If a column heading was clicked, re-query with a new sort order
         this.setState({
-            userSelectedTable: this.state.currentTable,
-            userTableSettings: {}
+            userSelectedTable: this.state.currentTable
         }, this.getAllCounts);
     },
     onAddClause: function (name, value) {
@@ -151,8 +150,7 @@ export default React.createClass({
 
         // Clear the userSelectedColumns to and rely on getTableBasics to recalcuate it.
         this.setState({
-            userSelectedTable: table || this.state.currentTable,
-            userTableSettings: {}
+            userSelectedTable: table || this.state.currentTable
         }, this.getAllCounts);
     },
     onSelectedTableChange: function (name) {
@@ -185,9 +183,6 @@ export default React.createClass({
                 // Do not wipe userSelectedId if currentTable is going from `undefined` to defined.
                 // Scnario: On page load with open=something and table inferred from query.
                 var currentTable = this.state.userSelectedTable || data.content.resultsPerTable[0].tableName;
-                if (this.state.currentTable && this.state.currentTable !== currentTable) {
-                    this.setState({ userTableSettings: {} });
-                }
                 this.setState({
                     allCountData: data,
                     currentTable: currentTable,
