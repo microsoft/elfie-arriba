@@ -91,7 +91,19 @@ export default React.createClass({
         }
 
         if (diffProps.hasAny("allBasics") || diff.hasAny("currentTable")) {
-            this.getTableSettings(); // Set currentTableSettings, userTableSettings
+            const table = this.props.allBasics[this.state.currentTable];
+            if (!table) return;
+
+            // Must write to userTableSettings (and not directly to currentTableSettings) so the URL can refect this.
+            // Sample schema: { columns: ["Name", "IP"], sortColumn: "IP", sortOrder: "desc" }
+            var userTableSettings = localStorage.getJson("table-" + this.state.currentTable, {});
+            this.setState({
+                userTableSettings: userTableSettings,
+                currentTableSettings: Object.merge(
+                    { columns: [table.idColumn], sortColumn: table.idColumn, sortOrder: "asc" },
+                    configuration.listingDefaults && configuration.listingDefaults[this.state.currentTable],
+                    userTableSettings)
+            });
         }
 
         if (diff.hasAny("query", "currentTableSettings", "page")) {
@@ -192,21 +204,6 @@ export default React.createClass({
             },
             { q: this.state.query }
         );
-    },
-    getTableSettings: function () {
-        const table = this.props.allBasics[this.state.currentTable];
-        if (!table) return;
-
-        // Must write to userTableSettings (and not directly to currentTableSettings) so the URL can refect this.
-        // Sample schema: { columns: ["Name", "IP"], sortColumn: "IP", sortOrder: "desc" }
-        var userTableSettings = localStorage.getJson("table-" + this.state.currentTable, {});
-        this.setState({
-            userTableSettings: userTableSettings,
-            currentTableSettings: Object.merge(
-                { columns: [table.idColumn], sortColumn: table.idColumn, sortOrder: "asc" },
-                configuration.listingDefaults && configuration.listingDefaults[this.state.currentTable],
-                userTableSettings)
-        });
     },
     getListings: function () {
         if (!this.state.query ||
