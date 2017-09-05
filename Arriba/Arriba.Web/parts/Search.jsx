@@ -83,7 +83,7 @@ export default class Search extends EventedComponent {
         const diffProps = Object.diff(prevProps, this.props);
         const diff = Object.diff(prevState, this.state);
 
-        if (diffProps.hasAny("allBasics") || diff.hasAny("query")) {
+        if (diffProps.hasAny("allBasics") || diff.hasAny("debouncedQuery")) {
             this.getAllCounts();
         }
 
@@ -102,7 +102,7 @@ export default class Search extends EventedComponent {
             this.getTableSettings();
         }
 
-        if (diff.hasAny("query", "currentTableSettings", "page")) {
+        if (diff.hasAny("debouncedQuery", "currentTableSettings", "page")) {
             this.getListings();
         }
 
@@ -156,10 +156,8 @@ export default class Search extends EventedComponent {
     }
     queryChanged(value) {
         // Only query every 250 milliseconds while typing
-        this.setState(
-            { query: value, userSelectedId: undefined },
-            () => this.timer = this.timer || window.setTimeout(this.getAllCounts, 250)
-        );
+        this.setState({ query: value, userSelectedId: undefined });
+        this.timer = this.timer || window.setTimeout(() => this.setState({ debouncedQuery: this.state.query }), 2500);
     }
 
     getAllCounts(then) {
