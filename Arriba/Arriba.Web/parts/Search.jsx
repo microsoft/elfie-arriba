@@ -91,7 +91,7 @@ export default React.createClass({
         }
 
         if (diffProps.hasAny("allBasics") || diff.hasAny("currentTable")) {
-            this.getTableBasics(); // Set currentTableSettings, userTableSettings
+            this.getTableSettings(); // Set currentTableSettings, userTableSettings
         }
 
         if (diff.hasAny("query", "currentTableSettings", "page")) {
@@ -152,8 +152,6 @@ export default React.createClass({
         localStorage.mergeJson("table-" + (table || this.state.currentTable), {
             columns: columns
         });
-
-        // Clear the userSelectedColumns to and rely on getTableBasics to recalcuate it.
         this.setState({
             userSelectedTable: table || this.state.currentTable
         }, this.getAllCounts);
@@ -193,7 +191,7 @@ export default React.createClass({
             { q: this.state.query }
         );
     },
-    getTableBasics: function () {
+    getTableSettings: function () {
         // Once a table is selected, find out the columns and primary key column for the table
 
         // If allBasics is not ready, abort.
