@@ -79,6 +79,10 @@ export default React.createClass({
             this.getAllCounts();
         }
 
+        if (diff.hasAny("query", "currentTableSettings", "page")) {
+            this.getListings();
+        }
+
         // Watching currentTable as sometimes inferred from the query.
         // Not watching for query changes (to match old behavior).
         if (diffProps.hasAny("allBasics") || diff.hasAny("currentTable", "userSelectedId")) {
@@ -217,24 +221,16 @@ export default React.createClass({
                 { columns: [table.idColumn], sortColumn: table.idColumn, sortOrder: "asc" },
                 configuration.listingDefaults && configuration.listingDefaults[this.state.currentTable],
                 userTableSettings)
-        }, this.getResultsPage);
+        });
     },
-    getResultsPage: function (i) {
-        // Once the counts query runs and table basics are loaded, get a page of results
-
-        // If there's no query, or current table, don't do anything yet
-        if (!this.state.query || !this.state.currentTable) return;
-
-        // Get enough items to fill the requested page number (rather than trying to append one page)
-        if (!i) i = 0;
-        var pageSize = 50 * (i + 1);
-
-        // Get a page of matches for the given query for the desired columns and sort order, with highlighting.
+    getListings: function () {
+        if (!this.state.query ||
+            !this.state.currentTable ||
+            !Object.keys(this.state.currentTableSettings).length) return;
+        var rowCount = 50 * (this.state.page + 1);
         this.jsonQueryWithError(
-            this.buildQueryUrl() + "&h=%CF%80&t=" + pageSize,
-            function (data) {
-                this.setState({ listingData: data, hasMoreData: data.content.total > pageSize, page: i });
-            }.bind(this)
+            this.buildQueryUrl() + "&h=%CF%80&t=" + rowCount,
+            data => this.setState({ listingData: data, hasMoreData: data.content.total > rowCount })
         );
     },
     getDetails: function () {
@@ -360,7 +356,7 @@ export default React.createClass({
                     <QueryStats error={this.state.error} selectedData={this.state.listingData} />
                     {this.state.query && table
                         ? <SplitPane split="horizontal" minSize="300" isFirstVisible={this.state.listingData.content} isSecondVisible={this.state.userSelectedId}>
-                            <InfiniteScroll page={this.state.page} hasMoreData={this.state.hasMoreData} loadMore={this.getResultsPage }>
+                            <InfiniteScroll hasMoreData={this.state.hasMoreData} loadMore={() => this.setState({ page: this.state.page + 1 })}>
                                 <ResultListing ref={"list"}
                                     data={this.state.listingData}
                                     allBasics={this.props.allBasics}
