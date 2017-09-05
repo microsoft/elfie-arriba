@@ -81,13 +81,17 @@ export default React.createClass({
 
         if (diff.hasAny("userSelectedTable", "allCountData") && this.state.allCountData.content) {
             const currentTable = this.state.userSelectedTable || this.state.allCountData.content.resultsPerTable[0].tableName;
-            this.setState({ currentTable: currentTable }, () => this.getTableBasics());
+            this.setState({ currentTable: currentTable });
         }
 
         // Do not wipe userSelectedId if currentTable is going from `undefined` to defined.
         // Scnario: On page load with open=something and table inferred from query.
         if (diff.hasAny("currentTable") && prevState.currentTable) {
             this.setState({ userSelectedId: undefined });
+        }
+
+        if (diffProps.hasAny("allBasics") || diff.hasAny("currentTable")) {
+            this.getTableBasics(); // Set currentTableSettings, userTableSettings
         }
 
         if (diff.hasAny("query", "currentTableSettings", "page")) {
@@ -190,10 +194,7 @@ export default React.createClass({
                 this.setState({
                     allCountData: data,
                     loading: false
-                }, () => {
-                    this.getTableBasics();
-                    if (then) then();
-                });
+                }, then);
 
                 data.content.parsedQuery = data.content.parsedQuery.replace(/\[\*\]:/g, ""); // Other consumers want the [*] removed also.
                 this.mru.update(data.content.parsedQuery);
