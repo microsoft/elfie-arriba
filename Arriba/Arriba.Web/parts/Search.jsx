@@ -75,7 +75,7 @@ export default React.createClass({
         const diffProps = Object.diff(prevProps, this.props);
         const diff = Object.diff(prevState, this.state);
 
-        if (diffProps.hasAny("allBasics")) {
+        if (diffProps.hasAny("allBasics") || diff.hasAny("query")) {
             this.getAllCounts();
         }
 
@@ -152,7 +152,7 @@ export default React.createClass({
         }, this.getAllCounts);
     },
     onAddClause: function (name, value) {
-        this.setState({ query: this.state.query + " AND [" + name + "]=\"" + value + "\"" }, this.getAllCounts);
+        this.setState({ query: this.state.query + " AND [" + name + "]=\"" + value + "\"" });
     },
     onSetColumns: function (columns, table) {
         localStorage.mergeJson("table-" + (table || this.state.currentTable), {
@@ -165,7 +165,7 @@ export default React.createClass({
         }, this.getAllCounts);
     },
     onSelectedTableChange: function (name) {
-        this.setState({ userSelectedTable: name }, this.getAllCounts);
+        this.setState({ userSelectedTable: name });
     },
     queryChanged: function (value) {
         // Only query every 250 milliseconds while typing
