@@ -325,7 +325,7 @@ export default React.createClass({
 
                     <SearchBox query={this.state.query}
                         parsedQuery={this.state.allCountData.content && this.state.allCountData.content.parsedQuery}
-                        queryChanged={this.queryChanged}
+                        queryChanged={this.queryChanged.bind(this)}
                         loading={this.state.loading} />
 
                 </Tabs>
@@ -343,7 +343,7 @@ export default React.createClass({
                                     sortColumn={this.state.currentTableSettings.sortColumn}
                                     sortOrder={this.state.currentTableSettings.sortOrder}
                                     selectedId={this.state.userSelectedId}
-                                    onResort={this.onResort}
+                                    onResort={this.onResort.bind(this)}
                                     onSelectionChanged={id => this.setState({ userSelectedId: id })}
                                     onSetColumns={this.onSetColumns} />
                             </InfiniteScroll>
@@ -358,17 +358,17 @@ export default React.createClass({
                                 })}
                             </div>
                         </SplitPane>
-                        : <Start allBasics={this.props.allBasics} showHelp={this.props.params.help === "true"} queryChanged={this.queryChanged} />}
+                        : <Start allBasics={this.props.allBasics} showHelp={this.props.params.help === "true"} queryChanged={this.queryChanged.bind(this)} />}
                 </div>
             </div>
             <DropShield
                 dropping={this.state.dropping}
                 droppingChanged={d => this.setState({ dropping: d })}
                 existingTablenames={Object.keys(this.props.allBasics || {})}
-                queryChanged={this.queryChanged}
+                queryChanged={this.queryChanged.bind(this)}
                 refreshAllBasics={this.props.refreshAllBasics}
-                getAllCounts={this.getAllCounts}
-                columnsChanged={this.onSetColumns} />
+                getAllCounts={this.getAllCounts.bind(this)}
+                columnsChanged={this.onSetColumns.bind(this)} />
         </div>
     }
 });
