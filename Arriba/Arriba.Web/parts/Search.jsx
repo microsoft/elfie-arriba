@@ -42,6 +42,7 @@ export default class Search extends EventedComponent {
     }
     constructor(props) {
         super(props);
+        this.mru = new Mru();
 
         // For schema detection and possible migration.
         localStorage.setItem("version", 1);
@@ -75,7 +76,6 @@ export default class Search extends EventedComponent {
     }
     componentDidMount() {
         super.componentDidMount();
-        this.mru = new Mru();
         this.componentDidUpdate({}, {});
     }
     componentDidUpdate(prevProps, prevState) {
