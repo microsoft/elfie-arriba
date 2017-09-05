@@ -126,7 +126,7 @@ export default React.createClass({
 
         // ESC: Close
         if (e.keyCode === 27) {
-            this.onClose();
+            this.setState({ userSelectedId: undefined });
             e.stopPropagation();
         }
 
@@ -136,9 +136,6 @@ export default React.createClass({
             this.refs.list.selectByRelativeIndex(indexChange);
             e.stopPropagation();
         }
-    },
-    onClose: function () {
-        this.setState({ userSelectedId: undefined });
     },
     onResort: function (sortColumn, sortOrder) {
         localStorage.mergeJson("table-" + this.state.currentTable, {
@@ -373,7 +370,7 @@ export default React.createClass({
                                     table: this.state.currentTable,
                                     query: this.state.query,
                                     data: this.state.selectedItemData,
-                                    onClose: this.onClose,
+                                    onClose: () => this.setState({ userSelectedId: undefined }),
                                     onAddClause: this.onAddClause
                                 })}
                             </div>
