@@ -1,4 +1,4 @@
-﻿import "../Search.scss";
+import "../Search.scss";
 import "!script-loader!../js/utilities.js";
 import "../js/utilities.jsx";
 
@@ -345,7 +345,7 @@ export default class Search extends EventedComponent {
                                     selectedId={this.state.userSelectedId}
                                     onResort={this.onResort.bind(this)}
                                     onSelectionChanged={id => this.setState({ userSelectedId: id })}
-                                    onSetColumns={this.onSetColumns} />
+                                    onSetColumns={this.onSetColumns.bind(this)} />
                             </InfiniteScroll>
                             <div className="scrollable">
                                 {React.createElement(customDetailsView, {
