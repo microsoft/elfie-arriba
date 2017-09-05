@@ -158,9 +158,6 @@ export default React.createClass({
             userSelectedTable: table || this.state.currentTable
         }, this.getAllCounts);
     },
-    onSelectedTableChange: function (name) {
-        this.setState({ userSelectedTable: name });
-    },
     queryChanged: function (value) {
         // Only query every 250 milliseconds while typing
         this.setState(
@@ -334,7 +331,7 @@ export default React.createClass({
                     query={this.state.query}
                     queryUrl={queryUrl}
                     thisUrl={this.buildThisUrl(false)}
-                    onSelectedTableChange={this.onSelectedTableChange}
+                    onSelectedTableChange={name => this.setState({ userSelectedTable: name })}
                     refreshAllBasics={this.props.refreshAllBasics}>
 
                     <SearchBox query={this.state.query}
