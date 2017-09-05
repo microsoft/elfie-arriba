@@ -148,9 +148,6 @@ export default React.createClass({
             userSelectedTable: this.state.currentTable
         }, this.getAllCounts);
     },
-    onAddClause: function (name, value) {
-        this.setState({ query: this.state.query + " AND [" + name + "]=\"" + value + "\"" });
-    },
     onSetColumns: function (columns, table) {
         localStorage.mergeJson("table-" + (table || this.state.currentTable), {
             columns: columns
@@ -371,7 +368,7 @@ export default React.createClass({
                                     query: this.state.query,
                                     data: this.state.selectedItemData,
                                     onClose: () => this.setState({ userSelectedId: undefined }),
-                                    onAddClause: this.onAddClause
+                                    onAddClause: (name, value) => this.setState({ query: `${this.state.query} AND [${name}]="${value}"` })
                                 })}
                             </div>
                         </SplitPane>
