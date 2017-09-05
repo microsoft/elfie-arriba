@@ -117,7 +117,10 @@ export default React.createClass({
         }
 
         if (diff.hasAny("query", "userSelectedTable", "userTableSettings", "userSelectedId", "currentTable")) {
-            this.setHistory();
+            var url = this.buildThisUrl(true);
+            if (url !== window.location.href) {
+                history.pushState("", "", url);
+            }
         }
     },
     componentWillUnmount: function () {
@@ -268,12 +271,6 @@ export default React.createClass({
             },
             parameters
         );
-    },
-    setHistory: function () {
-        var url = this.buildThisUrl(true);
-        if (url !== window.location.href) {
-            history.pushState("", "", url);
-        }
     },
     buildQueryUrl: function () {
         var parameters = Object.merge(
