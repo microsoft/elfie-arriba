@@ -2,6 +2,7 @@
 import "!script-loader!../js/utilities.js";
 import "../js/utilities.jsx";
 
+import EventedComponent from "./EventedComponent";
 import Mru from "./Mru";
 import QueryStats from "./QueryStats";
 import SearchHeader from "./SearchHeader";
@@ -29,7 +30,7 @@ const arrayToObject = (array, prefix) => {
 }
 
 // SearchMain wraps the overall search UI
-export default class Search extends React.Component {
+export default class Search extends EventedComponent {
     getEmptyState() {
         return {
             loading: false,
@@ -67,9 +68,13 @@ export default class Search extends React.Component {
             userSelectedTable: table,
             userSelectedId: this.props.params.open
         });
+
+        this.events = {
+            "beforeunload": e => this.mru.push()
+        };
     }
     componentDidMount() {
-        window.addEventListener("beforeunload", this); // For Mru
+        super.componentDidMount();
         this.mru = new Mru();
         this.componentDidUpdate({}, {});
     }
@@ -124,13 +129,6 @@ export default class Search extends React.Component {
                 history.pushState("", "", url);
             }
         }
-    }
-    componentWillUnmount() {
-        window.removeEventListener("beforeunload", this);
-    }
-    handleEvent(e) {
-        // Assumed to be type="beforeunload" as we only subscribed for that.
-        this.mru.push();
     }
 
     onKeyDown(e) {
