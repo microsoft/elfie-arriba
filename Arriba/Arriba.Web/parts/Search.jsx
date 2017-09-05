@@ -79,6 +79,8 @@ export default React.createClass({
             this.getAllCounts();
         }
 
+        // Do not wipe userSelectedId if currentTable is going from `undefined` to defined.
+        // Scnario: On page load with open=something and table inferred from query.
         if (diff.hasAny("currentTable") && prevState.currentTable) {
             this.setState({ userSelectedId: undefined });
         }
@@ -180,8 +182,6 @@ export default React.createClass({
         this.jsonQueryWithError(
             configuration.url + "/allCount",
             data => {
-                // Do not wipe userSelectedId if currentTable is going from `undefined` to defined.
-                // Scnario: On page load with open=something and table inferred from query.
                 var currentTable = this.state.userSelectedTable || data.content.resultsPerTable[0].tableName;
                 this.setState({
                     allCountData: data,
