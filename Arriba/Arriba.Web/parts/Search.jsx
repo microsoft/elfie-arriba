@@ -79,6 +79,10 @@ export default React.createClass({
             this.getAllCounts();
         }
 
+        if (diff.hasAny("currentTable") && prevState.currentTable) {
+            this.setState({ userSelectedId: undefined });
+        }
+
         if (diff.hasAny("query", "currentTableSettings", "page")) {
             this.getListings();
         }
@@ -182,10 +186,7 @@ export default React.createClass({
                 // Scnario: On page load with open=something and table inferred from query.
                 var currentTable = this.state.userSelectedTable || data.content.resultsPerTable[0].tableName;
                 if (this.state.currentTable && this.state.currentTable !== currentTable) {
-                    this.setState({
-                        userTableSettings: {},
-                        userSelectedId: undefined
-                    });
+                    this.setState({ userTableSettings: {} });
                 }
                 this.setState({
                     allCountData: data,
