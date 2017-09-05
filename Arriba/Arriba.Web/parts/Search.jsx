@@ -194,18 +194,12 @@ export default React.createClass({
         );
     },
     getTableSettings: function () {
-        // Once a table is selected, find out the columns and primary key column for the table
-
-        // If allBasics is not ready, abort.
         const table = this.props.allBasics[this.state.currentTable];
         if (!table) return;
 
         // Must write to userTableSettings (and not directly to currentTableSettings) so the URL can refect this.
-        // If a table was switched getAllCounts would have wiped userTableSettings and localStorage would show through.
         // Sample schema: { columns: ["Name", "IP"], sortColumn: "IP", sortOrder: "desc" }
         var userTableSettings = localStorage.getJson("table-" + this.state.currentTable, {});
-
-        // Set the ID column, all columns, and listing columns
         this.setState({
             userTableSettings: userTableSettings,
             currentTableSettings: Object.merge(
