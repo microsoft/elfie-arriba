@@ -71,7 +71,8 @@ export default class Search extends EventedComponent {
         });
 
         this.events = {
-            "beforeunload": e => this.mru.push()
+            "beforeunload": e => this.mru.push(),
+            "storage": e => { if (e.key.startsWith("table-")) this.getTableSettings() },
         };
     }
     componentDidMount() {
@@ -98,19 +99,7 @@ export default class Search extends EventedComponent {
         }
 
         if (diffProps.hasAny("allBasics") || diff.hasAny("currentTable")) {
-            const table = this.props.allBasics[this.state.currentTable];
-            if (!table) return;
-
-            // Must write to userTableSettings (and not directly to currentTableSettings) so the URL can refect this.
-            // Sample schema: { columns: ["Name", "IP"], sortColumn: "IP", sortOrder: "desc" }
-            var userTableSettings = localStorage.getJson("table-" + this.state.currentTable, {});
-            this.setState({
-                userTableSettings: userTableSettings,
-                currentTableSettings: Object.merge(
-                    { columns: [table.idColumn], sortColumn: table.idColumn, sortOrder: "asc" },
-                    configuration.listingDefaults && configuration.listingDefaults[this.state.currentTable],
-                    userTableSettings)
-            });
+            this.getTableSettings();
         }
 
         if (diff.hasAny("query", "currentTableSettings", "page")) {
@@ -158,19 +147,12 @@ export default class Search extends EventedComponent {
             sortColumn: sortColumn,
             sortOrder: sortOrder
         });
-
-        // If a column heading was clicked, re-query with a new sort order
-        this.setState({
-            userSelectedTable: this.state.currentTable
-        }, this.getAllCounts);
+        this.setState({ userSelectedTable: this.state.currentTable });
     }
     onSetColumns(columns, table) {
-        localStorage.mergeJson("table-" + (table || this.state.currentTable), {
-            columns: columns
-        });
-        this.setState({
-            userSelectedTable: table || this.state.currentTable
-        }, this.getAllCounts);
+        table = table || this.state.currentTable;
+        localStorage.mergeJson("table-" + table, { columns: columns });
+        this.setState({ userSelectedTable: table });
     }
     queryChanged(value) {
         // Only query every 250 milliseconds while typing
@@ -207,6 +189,21 @@ export default class Search extends EventedComponent {
             },
             { q: this.state.query }
         );
+    }
+    getTableSettings() {
+        const table = this.props.allBasics[this.state.currentTable];
+        if (!table) return;
+
+        // Must write to userTableSettings (and not directly to currentTableSettings) so the URL can refect this.
+        // Sample schema: { columns: ["Name", "IP"], sortColumn: "IP", sortOrder: "desc" }
+        var userTableSettings = localStorage.getJson("table-" + this.state.currentTable, {});
+        this.setState({
+            userTableSettings: userTableSettings,
+            currentTableSettings: Object.merge(
+                { columns: [table.idColumn], sortColumn: table.idColumn, sortOrder: "asc" },
+                configuration.listingDefaults && configuration.listingDefaults[this.state.currentTable],
+                userTableSettings)
+        });
     }
     getListings() {
         if (!this.state.query ||
