@@ -301,7 +301,7 @@ export default class Search extends EventedComponent {
         var customDetailsView = (configuration.customDetailsProviders && configuration.customDetailsProviders[this.state.currentTable]) || ResultDetails;
         const queryUrl = this.buildQueryUrl();
 
-        return <div ref="viewport" className="viewport" onKeyDown={this.onKeyDown}
+        return <div ref="viewport" className="viewport" onKeyDown={this.onKeyDown.bind(this)}
             onDragEnter={e => {
                 // Consider disabling pointer events for perf.
                 if (!this.state.dropping) this.setState({ dropping: true, file: undefined })
