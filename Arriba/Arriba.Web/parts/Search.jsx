@@ -29,8 +29,8 @@ const arrayToObject = (array, prefix) => {
 }
 
 // SearchMain wraps the overall search UI
-export default React.createClass({
-    getEmptyState: function () {
+export default class Search extends React.Component {
+    getEmptyState() {
         return {
             loading: false,
             allCountData: [],
@@ -38,8 +38,10 @@ export default React.createClass({
             selectedItemData: null,
             userTableSettings: {}, // {} denote no state, do not set to null.
         }
-    },
-    getInitialState: function () {
+    }
+    constructor(props) {
+        super(props);
+
         // For schema detection and possible migration.
         localStorage.setItem("version", 1);
 
@@ -54,7 +56,7 @@ export default React.createClass({
             }).cleaned);
         }
 
-        return Object.assign(this.getEmptyState(), {
+        this.state = Object.assign(this.getEmptyState(), {
             allBasics: [],
             tables: [],
             page: 0,
@@ -65,13 +67,13 @@ export default React.createClass({
             userSelectedTable: table,
             userSelectedId: this.props.params.open
         });
-    },
-    componentDidMount: function () {
+    }
+    componentDidMount() {
         window.addEventListener("beforeunload", this); // For Mru
         this.mru = new Mru();
         this.componentDidUpdate({}, {});
-    },
-    componentDidUpdate: function(prevProps, prevState) {
+    }
+    componentDidUpdate(prevProps, prevState) {
         const diffProps = Object.diff(prevProps, this.props);
         const diff = Object.diff(prevState, this.state);
 
@@ -122,16 +124,16 @@ export default React.createClass({
                 history.pushState("", "", url);
             }
         }
-    },
-    componentWillUnmount: function () {
+    }
+    componentWillUnmount() {
         window.removeEventListener("beforeunload", this);
-    },
-    handleEvent: function (e) {
+    }
+    handleEvent(e) {
         // Assumed to be type="beforeunload" as we only subscribed for that.
         this.mru.push();
-    },
+    }
 
-    onKeyDown: function (e) {
+    onKeyDown(e) {
         // Backspace: Clear state *if query empty*
         if (e.keyCode === 8 && !this.state.query) {
             const state = Object.assign(
@@ -152,8 +154,8 @@ export default React.createClass({
             this.refs.list.selectByRelativeIndex(indexChange);
             e.stopPropagation();
         }
-    },
-    onResort: function (sortColumn, sortOrder) {
+    }
+    onResort(sortColumn, sortOrder) {
         localStorage.mergeJson("table-" + this.state.currentTable, {
             sortColumn: sortColumn,
             sortOrder: sortOrder
@@ -163,24 +165,24 @@ export default React.createClass({
         this.setState({
             userSelectedTable: this.state.currentTable
         }, this.getAllCounts);
-    },
-    onSetColumns: function (columns, table) {
+    }
+    onSetColumns(columns, table) {
         localStorage.mergeJson("table-" + (table || this.state.currentTable), {
             columns: columns
         });
         this.setState({
             userSelectedTable: table || this.state.currentTable
         }, this.getAllCounts);
-    },
-    queryChanged: function (value) {
+    }
+    queryChanged(value) {
         // Only query every 250 milliseconds while typing
         this.setState(
             { query: value, userSelectedId: undefined },
             () => this.timer = this.timer || window.setTimeout(this.getAllCounts, 250)
         );
-    },
+    }
 
-    getAllCounts: function (then) {
+    getAllCounts(then) {
         // On query, ask for the count from every table.
         this.timer = null;
 
@@ -207,8 +209,8 @@ export default React.createClass({
             },
             { q: this.state.query }
         );
-    },
-    getListings: function () {
+    }
+    getListings() {
         if (!this.state.query ||
             !this.state.currentTable ||
             !Object.keys(this.state.currentTableSettings).length) return;
@@ -217,8 +219,8 @@ export default React.createClass({
             this.buildQueryUrl() + "&h=%CF%80&t=" + rowCount,
             data => this.setState({ listingData: data, hasMoreData: data.content.total > rowCount })
         );
-    },
-    getDetails: function () {
+    }
+    getDetails() {
         // When an item is selected, get details for it
 
         // If there's no table don't do anything yet.
@@ -254,9 +256,9 @@ export default React.createClass({
                 t: 1
             }
         );
-    },
+    }
 
-    jsonQueryWithError: function (url, onSuccess, parameters) {
+    jsonQueryWithError(url, onSuccess, parameters) {
         jsonQuery(
             url,
             data => {
@@ -271,8 +273,8 @@ export default React.createClass({
             },
             parameters
         );
-    },
-    buildQueryUrl: function () {
+    }
+    buildQueryUrl() {
         var parameters = Object.merge(
             {
                 action: "select",
@@ -284,8 +286,8 @@ export default React.createClass({
             arrayToObject(this.state.currentTableSettings.columns, `c`)
         );
         return `${configuration.url}/table/${this.state.currentTable}${buildUrlParameters(parameters)}`;
-    },
-    buildThisUrl: function (includeOpen) {
+    }
+    buildThisUrl(includeOpen) {
         var userTableSettings = this.state.userTableSettings;
         var parameters = Object.merge(
             {
@@ -298,8 +300,8 @@ export default React.createClass({
             arrayToObject(userTableSettings.columns, `c`)
         );
         return `${location.protocol}//${location.host + location.pathname + buildUrlParameters(parameters)}`;
-    },
-    render: function () {
+    }
+    render() {
         // Consider clearing the currentTable when the query is empty.
 
         var table = this.props.allBasics && this.state.currentTable && this.props.allBasics[this.state.currentTable] || undefined;
@@ -371,4 +373,4 @@ export default React.createClass({
                 columnsChanged={this.onSetColumns.bind(this)} />
         </div>
     }
-});
+}
