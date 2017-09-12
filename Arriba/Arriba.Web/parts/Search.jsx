@@ -34,7 +34,6 @@ export default class Search extends EventedComponent {
     getEmptyState() {
         return {
             loading: false,
-            counts: undefined,
             userTableSettings: {}, // {} denote no state, do not set to null.
             userSelectedId: undefined,
         }
@@ -163,7 +162,7 @@ export default class Search extends EventedComponent {
 
         // If there's no allBasics or query, clear results and do nothing else
         if (!this.props.allBasics || !Object.keys(this.props.allBasics).length || !this.state.query) {
-            this.setState(this.getEmptyState());
+            this.setState(Object.assign(this.getEmptyState(), { counts: undefined }));
             return;
         }
 
