@@ -649,7 +649,7 @@ export default React.createClass({
                                     allCountData={this.state.allCountData}
                                     allBasics={this.props.allBasics}
                                     refreshAllBasics={this.props.refreshAllBasics}
-                                    selectedData={this.state.gridData}
+                                    selectedData={this.state.gridData && this.state.gridData.content}
                                     currentTable={this.state.currentTable}
                                     onSelectedTableChange={this.onSelectedTableChange} />
 

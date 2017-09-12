@@ -33,7 +33,7 @@ export default React.createClass({
     },
     onAddColumn: function (name) {
         if (name) {
-            var columns = this.props.data.content.query.columns;
+            var columns = this.props.data.query.columns;
             columns.push(name);
 
             this.setState({ addColumnsShowing: false }, this.props.onSetColumns(columns));
@@ -43,7 +43,7 @@ export default React.createClass({
     },
     handleRemoveColumn: function (e) {
         var columnName = e.target.getAttribute("data-column");
-        var newColumns = this.props.data.content.query.columns.filter(function (name) { return name !== columnName; });
+        var newColumns = this.props.data.query.columns.filter(function (name) { return name !== columnName; });
         this.props.onSetColumns(newColumns);
 
         e.stopPropagation();
@@ -51,7 +51,7 @@ export default React.createClass({
     selectByRelativeIndex: function (i) {
         // Figure out the current row count
         var count = 0;
-        if (this.props.data.content) count = this.props.data.content.values.rows.length;
+        if (this.props.data) count = this.props.data.values.rows.length;
 
         // See what index the caller wants selected
         var newSelectedIndex = this.state.selectedIndex + i;
@@ -63,20 +63,20 @@ export default React.createClass({
         if (newSelectedIndex < 0 || newSelectedIndex >= count) return;
 
         // Otherwise, trigger a selection change
-        var idColumn = this.props.allBasics && this.props.allBasics[this.props.data.content.query.tableName].idColumn;
-        var idColumnIndex = this.props.data.content.query.columns.indexOf(idColumn);
-        var row = this.props.data.content.values.rows[newSelectedIndex];
+        var idColumn = this.props.allBasics && this.props.allBasics[this.props.data.query.tableName].idColumn;
+        var idColumnIndex = this.props.data.query.columns.indexOf(idColumn);
+        var row = this.props.data.values.rows[newSelectedIndex];
         this.setState({ selectedIndex: newSelectedIndex });
         this.props.onSelectionChanged(stripHighlight(row[idColumnIndex]));
     },
     render: function () {
-        var content = this.props.data.content;
+        var content = this.props.data;
 
         if (!this.props.allBasics || !content) return null;
 
         if (!content.details.succeeded) return <div className="resultListing-error">{content.details.errors}</div>
 
-        const table = this.props.allBasics[this.props.data.content.query.tableName];
+        const table = this.props.allBasics[this.props.data.query.tableName];
         if (!table) return null;
 
         var idColumn = table.idColumn;

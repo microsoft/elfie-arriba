@@ -329,12 +329,12 @@ export default class Search extends EventedComponent {
             <div className="middle">
                 <Mode query={this.state.query} currentTable={this.state.currentTable} />
                 <div className="center">
-                    <QueryStats error={this.state.error} selectedData={this.state.listingData} />
+                    <QueryStats error={this.state.error} selectedData={this.state.listingData && this.state.listingData.content} />
                     {this.state.query && table
-                        ? <SplitPane split="horizontal" minSize="300" isFirstVisible={this.state.listingData.content} isSecondVisible={this.state.userSelectedId}>
+                        ? <SplitPane split="horizontal" minSize="300" isFirstVisible={this.state.listingData && this.state.listingData.content} isSecondVisible={this.state.userSelectedId}>
                             <InfiniteScroll hasMoreData={this.state.hasMoreData} loadMore={() => this.setState({ page: this.state.page + 1 })}>
                                 <ResultListing ref={"list"}
-                                    data={this.state.listingData}
+                                    data={this.state.listingData && this.state.listingData.content}
                                     allBasics={this.props.allBasics}
                                     sortColumn={this.state.currentTableSettings.sortColumn}
                                     sortOrder={this.state.currentTableSettings.sortOrder}

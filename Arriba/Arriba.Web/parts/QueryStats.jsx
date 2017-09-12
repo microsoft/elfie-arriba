@@ -10,8 +10,8 @@ export default React.createClass({
 
         // Write details for selected table
         var selectedDetails = [];
-        if (this.props.selectedData && this.props.selectedData.content) {
-            var selectedContent = this.props.selectedData.content;
+        if (this.props.selectedData) {
+            var selectedContent = this.props.selectedData;
 
             // Only show if the ResultListing isn't alredy showing the error.
             if (selectedContent.values && selectedContent.details.errors) {
