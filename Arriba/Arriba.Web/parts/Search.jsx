@@ -59,7 +59,6 @@ export default class Search extends EventedComponent {
         }
 
         this.state = Object.assign(this.getEmptyState(), {
-            allBasics: [],
             tables: [],
             page: 0,
             hasMoreData: false,
