@@ -35,7 +35,6 @@ export default class Search extends EventedComponent {
         return {
             loading: false,
             counts: undefined,
-            listingData: [],
             userTableSettings: {}, // {} denote no state, do not set to null.
             userSelectedId: undefined,
         }
@@ -61,7 +60,6 @@ export default class Search extends EventedComponent {
         this.state = Object.assign(this.getEmptyState(), {
             tables: [],
             page: 0,
-            hasMoreData: false,
             query: this.props.params.q || "",
             currentTable: table,
             currentTableSettings: {}, // {} denote no state, do not set to null.
@@ -205,7 +203,10 @@ export default class Search extends EventedComponent {
     getListings() {
         if (!this.state.query ||
             !this.state.currentTable ||
-            !Object.keys(this.state.currentTableSettings).length) return;
+            !Object.keys(this.state.currentTableSettings).length) {
+            this.setState({ listingData: undefined, hasMoreData: undefined })
+            return;
+        };
         var rowCount = 50 * (this.state.page + 1);
         this.jsonQueryWithError(
             this.buildQueryUrl() + "&h=%CF%80&t=" + rowCount,
