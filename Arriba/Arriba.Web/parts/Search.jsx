@@ -81,38 +81,38 @@ export default class Search extends EventedComponent {
     }
     componentDidUpdate(prevProps, prevState) {
         const diffProps = Object.diff(prevProps, this.props);
-        const diff = Object.diff(prevState, this.state);
+        const diffState = Object.diff(prevState, this.state);
 
-        if (diffProps.hasAny("allBasics") || diff.hasAny("debouncedQuery")) {
+        if (diffProps.hasAny("allBasics") || diffState.hasAny("debouncedQuery")) {
             this.getAllCounts();
         }
 
-        if (diff.hasAny("userSelectedTable", "allCountData") && this.state.allCountData.content) {
+        if (diffState.hasAny("userSelectedTable", "allCountData") && this.state.allCountData.content) {
             const currentTable = this.state.userSelectedTable || this.state.allCountData.content.resultsPerTable[0].tableName;
             this.setState({ currentTable: currentTable });
         }
 
         // Do not wipe userSelectedId if currentTable is going from `undefined` to defined.
         // Scnario: On page load with open=something and table inferred from query.
-        if (diff.hasAny("currentTable") && prevState.currentTable) {
+        if (diffState.hasAny("currentTable") && prevState.currentTable) {
             this.setState({ userSelectedId: undefined });
         }
 
-        if (diffProps.hasAny("allBasics") || diff.hasAny("currentTable")) {
+        if (diffProps.hasAny("allBasics") || diffState.hasAny("currentTable")) {
             this.getTableSettings();
         }
 
-        if (diff.hasAny("debouncedQuery", "currentTableSettings", "page")) {
+        if (diffState.hasAny("debouncedQuery", "currentTableSettings", "page")) {
             this.getListings();
         }
 
         // Watching currentTable as sometimes inferred from the query.
         // Not watching for query changes (to match old behavior).
-        if (diffProps.hasAny("allBasics") || diff.hasAny("currentTable", "userSelectedId")) {
+        if (diffProps.hasAny("allBasics") || diffState.hasAny("currentTable", "userSelectedId")) {
             this.getDetails();
         }
 
-        if (diff.hasAny("query", "userSelectedTable", "userTableSettings", "userSelectedId", "currentTable")) {
+        if (diffState.hasAny("query", "userSelectedTable", "userTableSettings", "userSelectedId", "currentTable")) {
             var url = this.buildThisUrl(true);
             if (url !== window.location.href) {
                 history.pushState("", "", url);
