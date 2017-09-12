@@ -34,7 +34,7 @@ export default class Search extends EventedComponent {
     getEmptyState() {
         return {
             loading: false,
-            allCountData: [],
+            counts: undefined,
             listingData: [],
             selectedItemData: null,
             userTableSettings: {}, // {} denote no state, do not set to null.
@@ -86,8 +86,8 @@ export default class Search extends EventedComponent {
             this.getAllCounts();
         }
 
-        if (diffState.hasAny("userSelectedTable", "allCountData") && this.state.allCountData.content) {
-            const currentTable = this.state.userSelectedTable || this.state.allCountData.content.resultsPerTable[0].tableName;
+        if (diffState.hasAny("userSelectedTable", "counts") && this.state.counts) {
+            const currentTable = this.state.userSelectedTable || this.state.counts.resultsPerTable[0].tableName;
             this.setState({ currentTable: currentTable });
         }
 
@@ -177,7 +177,7 @@ export default class Search extends EventedComponent {
             configuration.url + "/allCount",
             data => {
                 this.setState({
-                    allCountData: data,
+                    counts: data.content,
                     loading: false
                 }, then);
 
@@ -308,7 +308,7 @@ export default class Search extends EventedComponent {
             <SearchHeader>
                 <Tabs
                     allBasics={this.props.allBasics}
-                    allCountData={this.state.allCountData}
+                    counts={this.state.counts}
                     currentTable={this.state.currentTable}
                     listingDataContent={this.state.listingData && this.state.listingData.content}
                     query={this.state.query}
@@ -318,7 +318,7 @@ export default class Search extends EventedComponent {
                     refreshAllBasics={this.props.refreshAllBasics}>
 
                     <SearchBox query={this.state.query}
-                        parsedQuery={this.state.allCountData.content && this.state.allCountData.content.parsedQuery}
+                        parsedQuery={this.state.counts && this.state.counts.parsedQuery}
                         queryChanged={this.queryChanged.bind(this)}
                         loading={this.state.loading} />
 

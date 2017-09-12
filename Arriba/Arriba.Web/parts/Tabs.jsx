@@ -14,9 +14,8 @@ export default class Tabs extends React.Component {
             this.props.listingDataContent.query.where;
 
         const tables =
-            this.props.allCountData && 
-            this.props.allCountData.content && 
-            this.props.allCountData.content.resultsPerTable ||
+            this.props.counts &&
+            this.props.counts.resultsPerTable ||
             Object.map(this.props.allBasics, (k, v) => ({ tableName: k, count: v.rowCount, succeeded: true, locked: true }));
         tables.forEach(t => t.canAdminister =
             this.props.allBasics &&
