@@ -83,7 +83,7 @@ export default class Search extends EventedComponent {
         const diffState = Object.diff(prevState, this.state);
 
         if (diffProps.hasAny("allBasics") || diffState.hasAny("debouncedQuery")) {
-            this.getAllCounts();
+            this.getCounts();
         }
 
         if (diffState.hasAny("userSelectedTable", "counts") && this.state.counts) {
@@ -159,7 +159,7 @@ export default class Search extends EventedComponent {
         this.timer = this.timer || window.setTimeout(() => this.setState({ debouncedQuery: this.state.query }), 250);
     }
 
-    getAllCounts(then) {
+    getCounts(then) {
         // On query, ask for the count from every table.
         this.timer = null;
 
@@ -217,7 +217,7 @@ export default class Search extends EventedComponent {
 
         // If there's no table don't do anything yet.
         // Unlikely to reach this function before currentTable and allBasics are set.
-        // Delayed getAllCounts() would have to return before the other two.
+        // Delayed getCounts() would have to return before the other two.
         const table = this.props.allBasics[this.state.currentTable];
         if (!table) return;
         if (!this.state.userSelectedId) return;
@@ -361,7 +361,7 @@ export default class Search extends EventedComponent {
                 existingTablenames={Object.keys(this.props.allBasics || {})}
                 queryChanged={this.queryChanged.bind(this)}
                 refreshAllBasics={this.props.refreshAllBasics}
-                getAllCounts={this.getAllCounts.bind(this)}
+                getCounts={this.getCounts.bind(this)}
                 columnsChanged={this.onSetColumns.bind(this)} />
         </div>
     }
