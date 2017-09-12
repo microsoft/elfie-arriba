@@ -157,7 +157,7 @@ export default class Search extends EventedComponent {
     queryChanged(value) {
         // Only query every 250 milliseconds while typing
         this.setState({ query: value, userSelectedId: undefined });
-        this.timer = this.timer || window.setTimeout(() => this.setState({ debouncedQuery: this.state.query }), 2500);
+        this.timer = this.timer || window.setTimeout(() => this.setState({ debouncedQuery: this.state.query }), 250);
     }
 
     getAllCounts(then) {
