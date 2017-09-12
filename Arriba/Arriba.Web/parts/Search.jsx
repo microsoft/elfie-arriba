@@ -36,8 +36,8 @@ export default class Search extends EventedComponent {
             loading: false,
             counts: undefined,
             listingData: [],
-            selectedItemData: null,
             userTableSettings: {}, // {} denote no state, do not set to null.
+            userSelectedId: undefined,
         }
     }
     constructor(props) {
@@ -124,7 +124,7 @@ export default class Search extends EventedComponent {
         if (e.keyCode === 8 && !this.state.query && (this.state.userSelectedTable || this.state.userSelectedId)) {
             const state = Object.assign(
                 this.getEmptyState(),
-                { userSelectedTable: undefined, userSelectedId: undefined });
+                { userSelectedTable: undefined });
             this.setState(state);
         }
 
@@ -219,8 +219,10 @@ export default class Search extends EventedComponent {
         // Unlikely to reach this function before currentTable and allBasics are set.
         // Delayed getCounts() would have to return before the other two.
         const table = this.props.allBasics[this.state.currentTable];
-        if (!table) return;
-        if (!this.state.userSelectedId) return;
+        if (!table || !this.state.userSelectedId) {
+            this.setState({ selectedItemData: null });
+            return;
+        };
 
         var detailsQuery = table.idColumn + '="' + this.state.userSelectedId + '"';
         if (this.state.query) detailsQuery += " AND (" + this.state.query + ")"; // Query is included for term highlighting.
