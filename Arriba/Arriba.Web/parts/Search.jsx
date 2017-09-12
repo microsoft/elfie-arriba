@@ -122,7 +122,7 @@ export default class Search extends EventedComponent {
 
     onKeyDown(e) {
         // Backspace: Clear state *if query empty*
-        if (e.keyCode === 8 && !this.state.query) {
+        if (e.keyCode === 8 && !this.state.query && (this.state.userSelectedTable || this.state.userSelectedId)) {
             const state = Object.assign(
                 this.getEmptyState(),
                 { userSelectedTable: undefined, userSelectedId: undefined });
