@@ -210,7 +210,7 @@ export default class Search extends EventedComponent {
         var rowCount = 50 * (this.state.page + 1);
         this.jsonQueryWithError(
             this.buildQueryUrl() + "&h=%CF%80&t=" + rowCount,
-            data => this.setState({ listingData: data, hasMoreData: data.content.total > rowCount })
+            data => this.setState({ listingData: data.content, hasMoreData: data.content.total > rowCount })
         );
     }
     getDetails() {
@@ -313,7 +313,7 @@ export default class Search extends EventedComponent {
                     allBasics={this.props.allBasics}
                     counts={this.state.counts}
                     currentTable={this.state.currentTable}
-                    listingDataContent={this.state.listingData && this.state.listingData.content}
+                    listingDataContent={this.state.listingData}
                     query={this.state.query}
                     queryUrl={queryUrl}
                     thisUrl={this.buildThisUrl(false)}
@@ -330,12 +330,12 @@ export default class Search extends EventedComponent {
             <div className="middle">
                 <Mode query={this.state.query} currentTable={this.state.currentTable} />
                 <div className="center">
-                    <QueryStats error={this.state.error} selectedData={this.state.listingData && this.state.listingData.content} />
+                    <QueryStats error={this.state.error} selectedData={this.state.listingData} />
                     {this.state.query && table
-                        ? <SplitPane split="horizontal" minSize="300" isFirstVisible={this.state.listingData && this.state.listingData.content} isSecondVisible={this.state.userSelectedId}>
+                        ? <SplitPane split="horizontal" minSize="300" isFirstVisible={this.state.listingData} isSecondVisible={this.state.userSelectedId}>
                             <InfiniteScroll hasMoreData={this.state.hasMoreData} loadMore={() => this.setState({ page: this.state.page + 1 })}>
                                 <ResultListing ref={"list"}
-                                    data={this.state.listingData && this.state.listingData.content}
+                                    data={this.state.listingData}
                                     allBasics={this.props.allBasics}
                                     sortColumn={this.state.currentTableSettings.sortColumn}
                                     sortOrder={this.state.currentTableSettings.sortOrder}
