@@ -34,7 +34,6 @@ export default class Search extends EventedComponent {
     getEmptyState() {
         return {
             loading: false,
-            userTableSettings: {}, // {} denote no state, do not set to null.
             userSelectedId: undefined,
         }
     }
@@ -183,7 +182,10 @@ export default class Search extends EventedComponent {
     }
     getTableSettings() {
         const table = this.props.allBasics[this.state.currentTable];
-        if (!table) return;
+        if (!table) {
+            this.setState({ userTableSettings: undefined });
+            return;
+        }
 
         // Must write to userTableSettings (and not directly to currentTableSettings) so the URL can refect this.
         // Sample schema: { columns: ["Name", "IP"], sortColumn: "IP", sortOrder: "desc" }
@@ -279,7 +281,7 @@ export default class Search extends EventedComponent {
         return `${configuration.url}/table/${this.state.currentTable}${buildUrlParameters(parameters)}`;
     }
     buildThisUrl(includeOpen) {
-        var userTableSettings = this.state.userTableSettings;
+        var userTableSettings = this.state.userTableSettings || {};
         var parameters = Object.merge(
             {
                 t: Object.keys(userTableSettings).length ? this.state.currentTable : this.state.userSelectedTable,
