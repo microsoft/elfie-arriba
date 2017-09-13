@@ -82,8 +82,8 @@ export default class Search extends EventedComponent {
             this.getCounts();
         }
 
-        if (diffState.hasAny("userSelectedTable", "counts") && this.state.counts) {
-            const currentTable = this.state.userSelectedTable || this.state.counts.resultsPerTable[0].tableName;
+        if (diffState.hasAny("userSelectedTable", "counts")) {
+            const currentTable = this.state.userSelectedTable || this.state.counts && this.state.counts.resultsPerTable[0].tableName;
             this.setState({ currentTable: currentTable });
         }
 
