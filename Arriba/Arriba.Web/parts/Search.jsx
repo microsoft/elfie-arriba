@@ -31,12 +31,6 @@ const arrayToObject = (array, prefix) => {
 
 // SearchMain wraps the overall search UI
 export default class Search extends EventedComponent {
-    getEmptyState() {
-        return {
-            loading: false,
-            userSelectedId: undefined,
-        }
-    }
     constructor(props) {
         super(props);
         this.mru = new Mru();
@@ -55,7 +49,7 @@ export default class Search extends EventedComponent {
             }).cleaned);
         }
 
-        this.state = Object.assign(this.getEmptyState(), {
+        this.state = {
             tables: [],
             page: 0,
             query: this.props.params.q || "",
@@ -63,7 +57,7 @@ export default class Search extends EventedComponent {
             currentTableSettings: {}, // {} denote no state, do not set to null.
             userSelectedTable: table,
             userSelectedId: this.props.params.open
-        });
+        };
 
         this.events = {
             "beforeunload": e => this.mru.push(),
@@ -118,7 +112,7 @@ export default class Search extends EventedComponent {
     onKeyDown(e) {
         // Backspace: Clear state *if query empty*
         if (e.keyCode === 8 && !this.state.query && (this.state.userSelectedTable || this.state.userSelectedId)) {
-            this.setState(Object.assign(this.getEmptyState(), { userSelectedTable: undefined }));
+            this.setState({ userSelectedTable: undefined });
         }
 
         // ESC: Close
@@ -158,7 +152,7 @@ export default class Search extends EventedComponent {
 
         // If there's no allBasics or query, clear results and do nothing else
         if (!this.props.allBasics || !Object.keys(this.props.allBasics).length || !this.state.query) {
-            this.setState(Object.assign(this.getEmptyState(), { counts: undefined }));
+            this.setState({ counts: undefined, loading: false });
             return;
         }
 
@@ -259,10 +253,7 @@ export default class Search extends EventedComponent {
                 onSuccess(data);
             },
             (xhr, status, err) => {
-                const state = Object.assign(
-                    this.getEmptyState(),
-                    { error: `Error: Server didn't respond to [${xhr.url}]. ${err}` });
-                this.setState(state);
+                this.setState({ error: `Error: Server didn't respond to [${xhr.url}]. ${err}`, loading: false });
             },
             parameters
         );
