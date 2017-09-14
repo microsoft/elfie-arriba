@@ -158,7 +158,11 @@ namespace Arriba.Test.Model
         [TestMethod]
         public void Table_All_MultiplePartition()
         {
+            // Try table tests with a two partition table (to validate merge)
             ITable_All(() => new Table("Sample", 75000));
+
+            // Try table tests with a one partition table (to validate merge isn't required)
+            ITable_All(() => new Table("Sample", 50000));
         }
 
         [TestMethod]
