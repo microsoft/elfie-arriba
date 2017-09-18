@@ -419,12 +419,9 @@ export default React.createClass({
         }
     },
     runSearch: function () {
-        this.timer = null;
-        this.getAllCounts();
-    },
-    getAllCounts: function () {
         // On query, ask for the count from every table.
         // Get the count of matches from each accessible table
+        this.timer = null;
         jsonQuery(
             configuration.url + "/allCount",
             data => {
