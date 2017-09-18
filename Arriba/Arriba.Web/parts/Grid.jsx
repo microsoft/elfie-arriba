@@ -348,10 +348,6 @@ export default React.createClass({
         }
     },
 
-    handleSelectDefaultQuery: function (e) {
-        var name = e.target.value;
-        this.selectDefaultQuery(name);
-    },
     selectDefaultQuery: function(name) {
         this.setState(Object.assign(this.getClearedUserSelections(), configuration.gridDefaultQueries[name]), this.runSearch);
     },
@@ -604,7 +600,7 @@ export default React.createClass({
                         </select>
                         &nbsp;&nbsp;&nbsp;&nbsp;
                         Load&nbsp;
-                        <select value="" onChange={this.handleSelectDefaultQuery}>
+                        <select value="" onChange={e => this.selectDefaultQuery(e.target.value)}>
                             {defaultQueries}
                         </select>
                     </div>
