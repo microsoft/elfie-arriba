@@ -294,7 +294,6 @@ export default React.createClass({
         return {
             query: this.props.params.q || "",
             currentTable: this.props.params.t,
-            currentTableAllColumns: [],
 
             aggregationFunction: this.props.params.af || "COUNT",
             aggregateColumn: this.props.params.ac || "",
@@ -432,29 +431,12 @@ export default React.createClass({
                     allCountData: data,
                     currentTable: currentTable,
                     error: null
-                }, () => {
-                    this.getTableBasics(this.getGrid)
-                });
+                }, this.getGrid);
             },
             (xhr, status, err) => {
                 this.setState({ allCountData: [], error: "Error: Server didn't respond to [" + xhr.url + "]. " + err });
             },
             { q: this.state.query }
-        );
-    },
-    getTableBasics: function (next) {
-        // Once a table is selected, find out the columns
-        jsonQuery(configuration.url + "/table/" + this.state.currentTable,
-            function (data) {
-                this.setState(
-                    {
-                        currentTableAllColumns: data.content.columns,
-                        error: null
-                    }, next);
-            }.bind(this),
-            function (xhr, status, err) {
-                this.setState({ gridData: [], error: "Error: Server didn't respond to [" + xhr.url + "]. " + err });
-            }.bind(this)
         );
     },
     getGrid: function() {
@@ -559,7 +541,9 @@ export default React.createClass({
             var colLabels = this.state.colLabels;
             columns.push("All");
 
-            headings.push(<GridFunctionCell key="AC" aggregationFunction={this.state.aggregationFunction} aggregateColumn={this.state.aggregateColumn} allColumns={this.state.currentTableAllColumns} onChange={this.handleChangeAggregation} />);
+            const currentTableAllColumns = this.props.allBasics && this.state.currentTable && this.props.allBasics[this.state.currentTable].columns || [];
+
+            headings.push(<GridFunctionCell key="AC" aggregationFunction={this.state.aggregationFunction} aggregateColumn={this.state.aggregateColumn} allColumns={currentTableAllColumns} onChange={this.handleChangeAggregation} />);
             for (var columnIndex = 0; columnIndex < columns.length; ++columnIndex) {
                 headings.push(<GridHeadingCell key={"HC" + columns[columnIndex]} type="column" index={columnIndex} value={columns[columnIndex]} label={colLabels[columnIndex]} onChange={this.handleQueryChange } />);
             }
