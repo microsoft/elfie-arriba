@@ -348,6 +348,7 @@ export default React.createClass({
             }
         }
     },
+
     handleSelectDefaultQuery: function (e) {
         var name = e.target.value;
         this.selectDefaultQuery(name);
@@ -412,6 +413,7 @@ export default React.createClass({
     queryChanged: function (value) {
         this.setState({ query: value }, this.delayedRunSearch);
     },
+
     delayedRunSearch: function () {
         // Only query every 250 milliseconds while typing
         if (!this.timer) {
@@ -493,6 +495,7 @@ export default React.createClass({
             }.bind(this)
         );
     },
+
     buildQueryUrl: function () {
         var parameters = {
             action: "aggregate",
