@@ -338,6 +338,16 @@ export default React.createClass({
             this.runSearch();
         }
     },
+    componentDidUpdate: function(prevProps, prevState) {
+        const diffState = Object.diff(prevState, this.state);
+
+        if (diffState.hasAny("query", "currentTable", "aggregationFunction", "aggregateColumn", "show", "showPortionOf", "showPortionAs", "rows", "cols", "rowLabels", "colLabels")) {
+            var url = this.buildThisUrl(true);
+            if (url !== window.location.href) {
+                history.pushState("", "", url);
+            }
+        }
+    },
     handleSelectDefaultQuery: function (e) {
         var name = e.target.value;
         this.selectDefaultQuery(name);
@@ -349,13 +359,13 @@ export default React.createClass({
         this.setState({ aggregationFunction: aggregationFunction, aggregateColumn: aggregateColumn, userSelectedTable: this.state.currentTable }, this.runSearch);
     },
     handleChangeShow: function(e) {
-        this.setState({ show: e.target.value }, this.setHistory);
+        this.setState({ show: e.target.value });
     },
     handleChangeShowPortionOf: function (e) {
-        this.setState({ showPortionOf: e.target.value }, this.setHistory);
+        this.setState({ showPortionOf: e.target.value });
     },
     handleChangeShowPortionAs: function (e) {
-        this.setState({ showPortionAs: e.target.value }, this.setHistory);
+        this.setState({ showPortionAs: e.target.value });
     },
     handleQueryChange: function (type, index, value, label) {
         var newState = { userSelectedTable: this.state.currentTable, gridData: null, addColumn: false, addRow: false };
@@ -398,7 +408,7 @@ export default React.createClass({
     onSelectedTableChange: function (name) {
         if (this.state.currentTable === name) {
             // If the selected table is clicked, just mark it actively selected and fix the URL
-            this.setState({ userSelectedTable: name }, this.setHistory);
+            this.setState({ userSelectedTable: name });
         } else {
             // Otherwise, clear the columns/sort/sortOrder and query the new selected table
             var cleared = this.getClearedUserSelections();
@@ -420,7 +430,6 @@ export default React.createClass({
     runSearch: function () {
         this.timer = null;
         this.getAllCounts();
-        this.setHistory();
     },
     getAllCounts: function () {
         // On query, ask for the count from every table.
@@ -495,12 +504,6 @@ export default React.createClass({
                 this.setState({ gridData: [], error: "Error: Server didn't respond to [" + xhr.url + "]. " + err });
             }.bind(this)
         );
-    },
-    setHistory: function () {
-        var url = this.buildThisUrl(true);
-        if (url !== window.location.href) {
-            history.pushState("", "", url);
-        }
     },
     buildQueryUrl: function () {
         var parameters = {
