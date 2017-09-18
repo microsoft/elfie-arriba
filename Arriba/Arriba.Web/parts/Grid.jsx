@@ -358,15 +358,6 @@ export default React.createClass({
     handleChangeAggregation: function(aggregationFunction, aggregateColumn) {
         this.setState({ aggregationFunction: aggregationFunction, aggregateColumn: aggregateColumn, userSelectedTable: this.state.currentTable }, this.runSearch);
     },
-    handleChangeShow: function(e) {
-        this.setState({ show: e.target.value });
-    },
-    handleChangeShowPortionOf: function (e) {
-        this.setState({ showPortionOf: e.target.value });
-    },
-    handleChangeShowPortionAs: function (e) {
-        this.setState({ showPortionAs: e.target.value });
-    },
     handleQueryChange: function (type, index, value, label) {
         var newState = { userSelectedTable: this.state.currentTable, gridData: null, addColumn: false, addRow: false };
 
@@ -611,19 +602,19 @@ export default React.createClass({
                     </table>
                     <div className="options">
                         Show&nbsp;
-                        <select value={this.state.show} onChange={this.handleChangeShow}>
+                        <select value={this.state.show} onChange={e => this.setState({ show: e.target.value })}>
                             <option value="number">Number</option>
                             <option value="percentage">Percentage</option>
                             <option value="both">Both</option>
                         </select>
                         &nbsp;of&nbsp;
-                        <select value={this.state.showPortionOf} onChange={this.handleChangeShowPortionOf}>
+                        <select value={this.state.showPortionOf} onChange={e => this.setState({ showPortionOf: e.target.value })}>
                             <option value="total">Total</option>
                             <option value="row">Row</option>
                             <option value="col">Column</option>
                         </select>
                         &nbsp;as&nbsp;
-                        <select value={this.state.showPortionAs} onChange={this.handleChangeShowPortionAs}>
+                        <select value={this.state.showPortionAs} onChange={e => this.setState({ showPortionAs: e.target.value })}>
                             <option value="bar">Bar</option>
                             <option value="pie">Pie</option>
                         </select>
