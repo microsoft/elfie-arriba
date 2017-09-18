@@ -69,6 +69,10 @@ export default class Search extends EventedComponent {
         this.componentDidUpdate({}, {});
     }
     componentDidUpdate(prevProps, prevState) {
+        // Note: The order of the if-statements do not strictly imply sequence/dependency.
+        // Note: The inputs to each if-statement do not strictly imply values will mutate in that order.
+        // Note: Objects are compared by reference. It's possible an object with the exact same values counts as a change.
+
         const diffProps = Object.diff(prevProps, this.props);
         const diffState = Object.diff(prevState, this.state);
 
@@ -87,16 +91,21 @@ export default class Search extends EventedComponent {
             this.setState({ userSelectedId: undefined });
         }
 
+        // Cross-references currentTable with allBasics, configuration, and localStorage to determine
+        // currentTableSettings (columns, sortColumn, sortOrder).
         if (diffProps.hasAny("allBasics") || diffState.hasAny("currentTable")) {
             this.getTableSettings();
         }
 
+        // Technically depends on "currentTable" however listening to "currentTableSettings" is
+        // sufficient as the former is currently guaranteed to trigger the latter.
         if (diffState.hasAny("debouncedQuery", "currentTableSettings", "page")) {
             this.getListings();
         }
 
         // Watching currentTable as sometimes inferred from the query.
-        // Not watching for query changes (to match old behavior).
+        // Not watching for query changes (to match old behavior), therefore highlighting is not currently being updated.
+        // allBasics + currentTable = idColumn, which is needed for the query.
         if (diffProps.hasAny("allBasics") || diffState.hasAny("currentTable", "userSelectedId")) {
             this.getDetails();
         }
