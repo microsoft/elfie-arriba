@@ -72,7 +72,7 @@ export default class Search extends EventedComponent {
         const diffProps = Object.diff(prevProps, this.props);
         const diffState = Object.diff(prevState, this.state);
 
-        if (diffProps.hasAny("allBasics") || diffState.hasAny("debouncedQuery")) {
+        if (diffState.hasAny("debouncedQuery")) {
             this.getCounts();
         }
 
@@ -150,8 +150,7 @@ export default class Search extends EventedComponent {
         // On query, ask for the count from every table.
         this.timer = null;
 
-        // If there's no allBasics or query, clear results and do nothing else
-        if (!this.props.allBasics || !Object.keys(this.props.allBasics).length || !this.state.query) {
+        if (!this.state.query) {
             this.setState({ counts: undefined, loading: false });
             return;
         }
