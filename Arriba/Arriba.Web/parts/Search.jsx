@@ -1,12 +1,14 @@
-﻿import "../Search.scss";
+import "../Search.scss";
 import "!script-loader!../js/utilities.js";
 import "../js/utilities.jsx";
 
+import EventedComponent from "./EventedComponent";
 import Mru from "./Mru";
 import QueryStats from "./QueryStats";
 import SearchHeader from "./SearchHeader";
 import Tabs from "./Tabs";
 import SearchBox from "./SearchBox";
+import Mode from "./Mode";
 import Automator from "./Automator";
 import DropShield from "./DropShield";
 
@@ -28,17 +30,11 @@ const arrayToObject = (array, prefix) => {
 }
 
 // SearchMain wraps the overall search UI
-export default React.createClass({
-    getEmptyState: function () {
-        return {
-            loading: false,
-            allCountData: [],
-            listingData: [],
-            selectedItemData: null,
-            userTableSettings: {}, // {} denote no state, do not set to null.
-        }
-    },
-    getInitialState: function () {
+export default class Search extends EventedComponent {
+    constructor(props) {
+        super(props);
+        this.mru = new Mru();
+
         // For schema detection and possible migration.
         localStorage.setItem("version", 1);
 
@@ -53,60 +49,84 @@ export default React.createClass({
             }).cleaned);
         }
 
-        return Object.assign(this.getEmptyState(), {
-            allBasics: [],
+        this.state = {
             tables: [],
             page: 0,
-            hasMoreData: false,
             query: this.props.params.q || "",
             currentTable: table,
             currentTableSettings: {}, // {} denote no state, do not set to null.
             userSelectedTable: table,
             userSelectedId: this.props.params.open
-        });
-    },
-    componentDidMount: function () {
-        window.addEventListener("beforeunload", this); // For Mru
-        this.mru = new Mru();
-        this.componentDidUpdate({}, {});
-    },
-    componentDidUpdate: function(prevProps, prevState) {
-        const diffProps = Object.diff(prevProps, this.props);
-        const diff = Object.diff(prevState, this.state);
+        };
 
-        if (diffProps.hasAny("allBasics")) {
-            this.getAllCounts();
+        this.events = {
+            "beforeunload": e => this.mru.push(),
+            "storage": e => { if (e.key.startsWith("table-")) this.getTableSettings() },
+        };
+    }
+    componentDidMount() {
+        super.componentDidMount();
+        this.componentDidUpdate({}, {});
+    }
+    componentDidUpdate(prevProps, prevState) {
+        // Note: The order of the if-statements do not strictly imply sequence/dependency.
+        // Note: The inputs to each if-statement do not strictly imply values will mutate in that order.
+        // Note: Objects are compared by reference. It's possible an object with the exact same values counts as a change.
+
+        const diffProps = Object.diff(prevProps, this.props);
+        const diffState = Object.diff(prevState, this.state);
+
+        if (diffState.hasAny("debouncedQuery")) {
+            this.getCounts();
+        }
+
+        if (diffState.hasAny("userSelectedTable", "counts")) {
+            const currentTable = this.state.userSelectedTable || this.state.counts && this.state.counts.resultsPerTable[0].tableName;
+            this.setState({ currentTable: currentTable });
+        }
+
+        // Do not wipe userSelectedId if currentTable is going from `undefined` to defined.
+        // Scnario: On page load with open=something and table inferred from query.
+        if (diffState.hasAny("currentTable") && prevState.currentTable) {
+            this.setState({ userSelectedId: undefined });
+        }
+
+        // Cross-references currentTable with allBasics, configuration, and localStorage to determine
+        // currentTableSettings (columns, sortColumn, sortOrder).
+        if (diffProps.hasAny("allBasics") || diffState.hasAny("currentTable")) {
+            this.getTableSettings();
+        }
+
+        // Technically depends on "currentTable" however listening to "currentTableSettings" is
+        // sufficient as the former is currently guaranteed to trigger the latter.
+        if (diffState.hasAny("debouncedQuery", "currentTableSettings", "page")) {
+            this.getListings();
         }
 
         // Watching currentTable as sometimes inferred from the query.
-        // Not watching for query changes (to match old behavior).
-        if (diffProps.hasAny("allBasics") || diff.hasAny("currentTable", "userSelectedId")) {
+        // Not watching for query changes (to match old behavior), therefore highlighting is not currently being updated.
+        // allBasics + currentTable = idColumn, which is needed for the query.
+        if (diffProps.hasAny("allBasics") || diffState.hasAny("currentTable", "userSelectedId")) {
             this.getDetails();
         }
 
-        if (diff.hasAny("query", "userSelectedTable", "userTableSettings", "userSelectedId", "currentTable")) {
-            this.setHistory();
+        if (diffState.hasAny("query", "userSelectedTable", "userTableSettings", "userSelectedId", "currentTable")) {
+            var url = this.buildThisUrl(true);
+            if (url !== window.location.href) {
+                history.pushState("", "", url);
+            }
         }
-    },
-    componentWillUnmount: function () {
-        window.removeEventListener("beforeunload", this);
-    },
-    handleEvent: function (e) {
-        // Assumed to be type="beforeunload" as we only subscribed for that.
-        this.mru.push();
-    },
-    handleKeyDown: function (e) {
+    }
+
+    onKeyDown(e) {
         // Backspace: Clear state *if query empty*
-        if (e.keyCode === 8 && !this.state.query) {
-            const state = Object.assign(
-                this.getEmptyState(),
-                { userSelectedTable: undefined, userSelectedId: undefined });
-            this.setState(state);
+        if (e.keyCode === 8 && !this.state.query && (this.state.userSelectedTable || this.state.userSelectedId)) {
+            this.setState({ userSelectedTable: undefined });
         }
 
         // ESC: Close
         if (e.keyCode === 27) {
-            this.onClose();
+            this.setState({ userSelectedId: undefined });
             e.stopPropagation();
         }
 
@@ -116,53 +136,31 @@ export default React.createClass({
             this.refs.list.selectByRelativeIndex(indexChange);
             e.stopPropagation();
         }
-    },
-    onClose: function () {
-        this.setState({ userSelectedId: undefined });
-    },
-    onResort: function (sortColumn, sortOrder) {
+    }
+    onResort(sortColumn, sortOrder) {
         localStorage.mergeJson("table-" + this.state.currentTable, {
             sortColumn: sortColumn,
             sortOrder: sortOrder
         });
-
-        // If a column heading was clicked, re-query with a new sort order
-        this.setState({
-            userSelectedTable: this.state.currentTable,
-            userTableSettings: {}
-        }, this.getAllCounts);
-    },
-    onAddClause: function (name, value) {
-        this.setState({ query: this.state.query + " AND [" + name + "]=\"" + value + "\"" }, this.getAllCounts);
-    },
-    onSetColumns: function (columns, table) {
-        localStorage.mergeJson("table-" + (table || this.state.currentTable), {
-            columns: columns
-        });
-
-        // Clear the userSelectedColumns to and rely on getTableBasics to recalcuate it.
-        this.setState({
-            userSelectedTable: table || this.state.currentTable,
-            userTableSettings: {}
-        }, this.getAllCounts);
-    },
-    onSelectedTableChange: function (name) {
-        this.setState({ userSelectedTable: name }, this.getAllCounts);
-    },
-    queryChanged: function (value) {
+        this.setState({ userSelectedTable: this.state.currentTable });
+    }
+    onSetColumns(columns, table) {
+        table = table || this.state.currentTable;
+        localStorage.mergeJson("table-" + table, { columns: columns });
+        this.setState({ userSelectedTable: table });
+    }
+    queryChanged(value) {
         // Only query every 250 milliseconds while typing
-        this.setState(
-            { query: value, userSelectedId: undefined },
-            () => this.timer = this.timer || window.setTimeout(this.getAllCounts, 250)
-        );
-    },
-    getAllCounts: function (then) {
+        this.setState({ query: value, userSelectedId: undefined });
+        this.timer = this.timer || window.setTimeout(() => this.setState({ debouncedQuery: this.state.query }), 250);
+    }
+
+    getCounts(then) {
         // On query, ask for the count from every table.
         this.timer = null;
 
-        // If there's no allBasics or query, clear results and do nothing else
-        if (!this.props.allBasics || !Object.keys(this.props.allBasics).length || !this.state.query) {
-            this.setState(this.getEmptyState());
+        if (!this.state.query) {
+            this.setState({ counts: undefined, loading: false });
             return;
         }
 
@@ -173,78 +171,59 @@ export default React.createClass({
         this.jsonQueryWithError(
             configuration.url + "/allCount",
             data => {
-                // Do not wipe userSelectedId if currentTable is going from `undefined` to defined.
-                // Scnario: On page load with open=something and table inferred from query.
-                var currentTable = this.state.userSelectedTable || data.content.resultsPerTable[0].tableName;
-                if (this.state.currentTable && this.state.currentTable !== currentTable) {
-                    this.setState({
-                        userTableSettings: {},
-                        userSelectedId: undefined
-                    });
-                }
                 this.setState({
-                    allCountData: data,
-                    currentTable: currentTable,
+                    counts: data.content,
                     loading: false
-                }, () => {
-                    this.getTableBasics();
-                    if (then) then();
-                });
+                }, then);
 
                 data.content.parsedQuery = data.content.parsedQuery.replace(/\[\*\]:/g, ""); // Other consumers want the [*] removed also.
                 this.mru.update(data.content.parsedQuery);
             },
             { q: this.state.query }
         );
-    },
-    getTableBasics: function () {
-        // Once a table is selected, find out the columns and primary key column for the table
-
-        // If allBasics is not ready, abort.
+    }
+    getTableSettings() {
         const table = this.props.allBasics[this.state.currentTable];
-        if (!table) return;
+        if (!table) {
+            this.setState({ userTableSettings: undefined });
+            return;
+        }
 
         // Must write to userTableSettings (and not directly to currentTableSettings) so the URL can refect this.
-        // If a table was switched getAllCounts would have wiped userTableSettings and localStorage would show through.
         // Sample schema: { columns: ["Name", "IP"], sortColumn: "IP", sortOrder: "desc" }
         var userTableSettings = localStorage.getJson("table-" + this.state.currentTable, {});
-
-        // Set the ID column, all columns, and listing columns
         this.setState({
             userTableSettings: userTableSettings,
             currentTableSettings: Object.merge(
                 { columns: [table.idColumn], sortColumn: table.idColumn, sortOrder: "asc" },
                 configuration.listingDefaults && configuration.listingDefaults[this.state.currentTable],
                 userTableSettings)
-        }, this.getResultsPage);
-    },
-    getResultsPage: function (i) {
-        // Once the counts query runs and table basics are loaded, get a page of results
-
-        // If there's no query, or current table, don't do anything yet
-        if (!this.state.query || !this.state.currentTable) return;
-
-        // Get enough items to fill the requested page number (rather than trying to append one page)
-        if (!i) i = 0;
-        var pageSize = 50 * (i + 1);
-
-        // Get a page of matches for the given query for the desired columns and sort order, with highlighting.
+        });
+    }
+    getListings() {
+        if (!this.state.query ||
+            !this.state.currentTable ||
+            !Object.keys(this.state.currentTableSettings).length) {
+            this.setState({ listingData: undefined, hasMoreData: undefined })
+            return;
+        };
+        var rowCount = 50 * (this.state.page + 1);
         this.jsonQueryWithError(
-            this.buildQueryUrl() + "&h=%CF%80&t=" + pageSize,
-            function (data) {
-                this.setState({ listingData: data, hasMoreData: data.content.total > pageSize, page: i });
-            }.bind(this)
+            this.buildQueryUrl() + "&h=%CF%80&t=" + rowCount,
+            data => this.setState({ listingData: data.content, hasMoreData: data.content.total > rowCount })
         );
-    },
-    getDetails: function () {
+    }
+    getDetails() {
         // When an item is selected, get details for it
 
         // If there's no table don't do anything yet.
         // Unlikely to reach this function before currentTable and allBasics are set.
-        // Delayed getAllCounts() would have to return before the other two.
+        // Delayed getCounts() would have to return before the other two.
         const table = this.props.allBasics[this.state.currentTable];
-        if (!table) return;
-        if (!this.state.userSelectedId) return;
+        if (!table || !this.state.userSelectedId) {
+            this.setState({ selectedItemData: null });
+            return;
+        };
 
         var detailsQuery = table.idColumn + '="' + this.state.userSelectedId + '"';
         if (this.state.query) detailsQuery += " AND (" + this.state.query + ")"; // Query is included for term highlighting.
@@ -272,8 +251,9 @@ export default React.createClass({
                 t: 1
             }
         );
-    },
-    jsonQueryWithError: function (url, onSuccess, parameters) {
+    }
+
+    jsonQueryWithError(url, onSuccess, parameters) {
         jsonQuery(
             url,
             data => {
@@ -281,21 +261,12 @@ export default React.createClass({
                 onSuccess(data);
             },
             (xhr, status, err) => {
-                const state = Object.assign(
-                    this.getEmptyState(),
-                    { error: `Error: Server didn't respond to [${xhr.url}]. ${err}` });
-                this.setState(state);
+                this.setState({ error: `Error: Server didn't respond to [${xhr.url}]. ${err}`, loading: false });
             },
             parameters
         );
-    },
-    setHistory: function () {
-        var url = this.buildThisUrl(true);
-        if (url !== window.location.href) {
-            history.pushState("", "", url);
-        }
-    },
-    buildQueryUrl: function () {
+    }
+    buildQueryUrl() {
         var parameters = Object.merge(
             {
                 action: "select",
@@ -307,9 +278,9 @@ export default React.createClass({
             arrayToObject(this.state.currentTableSettings.columns, `c`)
         );
         return `${configuration.url}/table/${this.state.currentTable}${buildUrlParameters(parameters)}`;
-    },
-    buildThisUrl: function (includeOpen) {
-        var userTableSettings = this.state.userTableSettings;
+    }
+    buildThisUrl(includeOpen) {
+        var userTableSettings = this.state.userTableSettings || {};
         var parameters = Object.merge(
             {
                 t: Object.keys(userTableSettings).length ? this.state.currentTable : this.state.userSelectedTable,
@@ -321,18 +292,15 @@ export default React.createClass({
             arrayToObject(userTableSettings.columns, `c`)
         );
         return `${location.protocol}//${location.host + location.pathname + buildUrlParameters(parameters)}`;
-    },
-    render: function () {
+    }
+    render() {
         // Consider clearing the currentTable when the query is empty.
 
         var table = this.props.allBasics && this.state.currentTable && this.props.allBasics[this.state.currentTable] || undefined;
         var customDetailsView = (configuration.customDetailsProviders && configuration.customDetailsProviders[this.state.currentTable]) || ResultDetails;
         const queryUrl = this.buildQueryUrl();
-        const gridUrl = this.state.query
-            ? `/Grid.html${buildUrlParameters({ t: this.state.currentTable, q: this.state.query })}`
-            : `/Grid.html?p=default`
 
-        return <div ref="viewport" className="viewport" onKeyDown={this.handleKeyDown}
+        return <div ref="viewport" className="viewport" onKeyDown={this.onKeyDown.bind(this)}
             onDragEnter={e => {
                 // Consider disabling pointer events for perf.
                 if (!this.state.dropping) this.setState({ dropping: true, file: undefined })
@@ -340,49 +308,38 @@ export default React.createClass({
             <SearchHeader>
                 <Tabs
                     allBasics={this.props.allBasics}
-                    allCountData={this.state.allCountData}
+                    counts={this.state.counts}
                     currentTable={this.state.currentTable}
-                    listingDataContent={this.state.listingData && this.state.listingData.content}
+                    listingDataContent={this.state.listingData}
                     query={this.state.query}
                     queryUrl={queryUrl}
                     thisUrl={this.buildThisUrl(false)}
-                    onSelectedTableChange={this.onSelectedTableChange}
+                    onSelectedTableChange={name => this.setState({ userSelectedTable: name })}
                     refreshAllBasics={this.props.refreshAllBasics}>
 
                     <SearchBox query={this.state.query}
-                        parsedQuery={this.state.allCountData.content && this.state.allCountData.content.parsedQuery}
-                        queryChanged={this.queryChanged}
+                        parsedQuery={this.state.counts && this.state.counts.parsedQuery}
+                        queryChanged={this.queryChanged.bind(this)}
                         loading={this.state.loading} />
 
                 </Tabs>
             </SearchHeader>
             <div className="middle">
-                <nav className="mode">
-                    <a title="Listing" className="selected"><i className="icon-details"></i></a>
-                    <a title="Grid" href={gridUrl}><i className="icon-view-all-albums"></i></a>
-                    <span className="mode-fill"></span>
-                    <Automator />
-                    <a title="Feedback" href={"mailto:" + encodeURIComponent(configuration.feedbackEmailAddresses) + "?subject=" + encodeURIComponent(configuration.toolName) + " Feedback"}>
-                        <img src="/icons/feedback.svg" alt="feedback"/>
-                    </a>
-                    <a title="Help" href="/?help=true">
-                        <img src="/icons/help.svg" alt="help"/>
-                    </a>
-                </nav>
+                <Mode query={this.state.query} currentTable={this.state.currentTable} />
                 <div className="center">
                     <QueryStats error={this.state.error} selectedData={this.state.listingData} />
                     {this.state.query && table
-                        ? <SplitPane split="horizontal" minSize="300" isFirstVisible={this.state.listingData.content} isSecondVisible={this.state.userSelectedId}>
-                            <InfiniteScroll page={this.state.page} hasMoreData={this.state.hasMoreData} loadMore={this.getResultsPage }>
+                        ? <SplitPane split="horizontal" minSize="300" isFirstVisible={this.state.listingData} isSecondVisible={this.state.userSelectedId}>
+                            <InfiniteScroll hasMoreData={this.state.hasMoreData} loadMore={() => this.setState({ page: this.state.page + 1 })}>
                                 <ResultListing ref={"list"}
                                     data={this.state.listingData}
                                     allBasics={this.props.allBasics}
                                     sortColumn={this.state.currentTableSettings.sortColumn}
                                     sortOrder={this.state.currentTableSettings.sortOrder}
                                     selectedId={this.state.userSelectedId}
-                                    onResort={this.onResort}
+                                    onResort={this.onResort.bind(this)}
                                     onSelectionChanged={id => this.setState({ userSelectedId: id })}
-                                    onSetColumns={this.onSetColumns} />
+                                    onSetColumns={this.onSetColumns.bind(this)} />
                             </InfiniteScroll>
                             <div className="scrollable">
                                 {React.createElement(customDetailsView, {
@@ -390,22 +347,22 @@ export default React.createClass({
                                     table: this.state.currentTable,
                                     query: this.state.query,
                                     data: this.state.selectedItemData,
-                                    onClose: this.onClose,
-                                    onAddClause: this.onAddClause
+                                    onClose: () => this.setState({ userSelectedId: undefined }),
+                                    onAddClause: (name, value) => this.setState({ query: `${this.state.query} AND [${name}]="${value}"` })
                                 })}
                             </div>
                         </SplitPane>
-                        : <Start allBasics={this.props.allBasics} showHelp={this.props.params.help === "true"} queryChanged={this.queryChanged} />}
+                        : <Start allBasics={this.props.allBasics} showHelp={this.props.params.help === "true"} queryChanged={this.queryChanged.bind(this)} />}
                 </div>
             </div>
             <DropShield
                 dropping={this.state.dropping}
                 droppingChanged={d => this.setState({ dropping: d })}
                 existingTablenames={Object.keys(this.props.allBasics || {})}
-                queryChanged={this.queryChanged}
+                queryChanged={this.queryChanged.bind(this)}
                 refreshAllBasics={this.props.refreshAllBasics}
-                getAllCounts={this.getAllCounts}
-                columnsChanged={this.onSetColumns} />
+                getCounts={this.getCounts.bind(this)}
+                columnsChanged={this.onSetColumns.bind(this)} />
         </div>
     }
-});
+}

@@ -5,6 +5,7 @@ import ErrorPage from "./ErrorPage"
 import QueryStats from "./QueryStats"
 import SearchHeader from "./SearchHeader"
 import SearchBox from "./SearchBox";
+import Mode from "./Mode";
 
 window.configuration = require("../configuration/Configuration.jsx").default;
 
@@ -426,12 +427,16 @@ export default React.createClass({
         // Get the count of matches from each accessible table
         jsonQuery(
             configuration.url + "/allCount",
-            function (data) {
-                var tableToShow = this.state.userSelectedTable;
-                if (!tableToShow) tableToShow = data.content.resultsPerTable[0].tableName;
-
-                this.setState({ allCountData: data, currentTable: tableToShow, error: null }, this.getTableBasics.bind(this, this.getGrid));
-            }.bind(this),
+            data => {
+                var currentTable = this.state.userSelectedTable || data.content.resultsPerTable[0].tableName;
+                this.setState({
+                    allCountData: data,
+                    currentTable: currentTable,
+                    error: null
+                }, () => {
+                    this.getTableBasics(this.getGrid)
+                });
+            },
             (xhr, status, err) => {
                 this.setState({ allCountData: [], error: "Error: Server didn't respond to [" + xhr.url + "]. " + err });
             },
@@ -629,36 +634,22 @@ export default React.createClass({
             );
         }
 
-        var listingUrl = "/" + buildUrlParameters({ t: this.state.currentTable, q: this.state.query });
-
         return (
             <div className="viewport" onKeyDown={this.handleKeyDown}>
                 <SearchHeader>
-                    <SearchBox name={configuration.toolName}
-                        query={this.state.query}
-                        allColumns={this.state.currentTableAllColumns}
+                    <SearchBox query={this.state.query}
+                        parsedQuery={this.state.allCountData && this.state.allCountData.content && this.state.allCountData.content.parsedQuery}
                         queryChanged={this.queryChanged} />
                 </SearchHeader>
 
                 <div className="middle">
-                    <div className="mode">
-                        <a title="Listing" href={listingUrl}><i className="icon-details"></i></a>
-                        <a title="Grid" className="selected"><i className="icon-view-all-albums"></i></a>
-                        <span className="mode-fill"></span>
-                        <a title="Feedback" href={"mailto:" + encodeURIComponent(configuration.feedbackEmailAddresses) + "?subject=" + encodeURIComponent(configuration.toolName) + " Feedback"}>
-                            <img src="/icons/feedback.svg" alt="feedback"/>
-                        </a>
-                        <a title="Help" href="/?help=true">
-                            <img src="/icons/help.svg" alt="help"/>
-                        </a>
-                    </div>
-
+                    <Mode query={this.state.query} currentTable={this.state.currentTable} />
                     <div className="center">
                         <QueryStats error={this.state.error}
                                     allCountData={this.state.allCountData}
                                     allBasics={this.props.allBasics}
                                     refreshAllBasics={this.props.refreshAllBasics}
-                                    selectedData={this.state.gridData}
+                                    selectedData={this.state.gridData && this.state.gridData.content}
                                     currentTable={this.state.currentTable}
                                     onSelectedTableChange={this.onSelectedTableChange} />
 
