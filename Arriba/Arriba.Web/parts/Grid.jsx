@@ -525,13 +525,10 @@ export default React.createClass({
         if (this.state.gridData && this.state.gridData.content) {
             var content = this.state.gridData.content;
 
-            var rows = this.state.rows.slice();
-            var rowLabels = this.state.rowLabels;
-            rows.push("All");
-
-            var columns = this.state.cols.slice();
-            var colLabels = this.state.colLabels;
-            columns.push("All");
+            const rows = [...this.state.rows.slice(), "All"];
+            const rowLabels = this.state.rowLabels;
+            const columns = [...this.state.cols.slice(), "All"];
+            const colLabels = this.state.colLabels;
 
             const currentTableAllColumns =
                 this.props.allBasics && this.state.currentTable &&
