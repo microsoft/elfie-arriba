@@ -334,14 +334,21 @@ export default React.createClass({
         var defaultQuery = (this.props.params.p === "default" ? configuration.gridDefault : this.props.params.p);
         if (defaultQuery) {
             this.selectDefaultQuery(defaultQuery);
-        } else {
-            this.runSearch();
         }
+        this.componentDidUpdate({}, {});
     },
     componentDidUpdate: function(prevProps, prevState) {
         const diffState = Object.diff(prevState, this.state);
+        if (diffState.hasAny("query")) {
+            // Only query every 250 milliseconds while typing
+            this.timer = this.timer || window.setTimeout(() => this.setState({ debouncedQuery: this.state.query }), 250);
+        }
 
-        if (diffState.hasAny("query", "currentTable", "aggregationFunction", "aggregateColumn", "show", "showPortionOf", "showPortionAs", "rows", "cols", "rowLabels", "colLabels")) {
+        if (diffState.hasAny("debouncedQuery", "userSelectedTable", "currentTable", "aggregationFunction", "aggregateColumn", "cols", "rows", "colLabels", "rowLabels", "show", "showPortionOf", "showPortionAs")) {
+            this.runSearch();
+        }
+
+        if (diffState.hasAny("debouncedQuery", "currentTable", "aggregationFunction", "aggregateColumn", "show", "showPortionOf", "showPortionAs", "rows", "cols", "rowLabels", "colLabels")) {
             var url = this.buildThisUrl(true);
             if (url !== window.location.href) {
                 history.pushState("", "", url);
@@ -350,10 +357,10 @@ export default React.createClass({
     },
 
     selectDefaultQuery: function(name) {
-        this.setState(Object.assign(this.getClearedUserSelections(), configuration.gridDefaultQueries[name]), this.runSearch);
+        this.setState(Object.assign(this.getClearedUserSelections(), configuration.gridDefaultQueries[name]));
     },
     handleChangeAggregation: function(aggregationFunction, aggregateColumn) {
-        this.setState({ aggregationFunction: aggregationFunction, aggregateColumn: aggregateColumn, userSelectedTable: this.state.currentTable }, this.runSearch);
+        this.setState({ aggregationFunction: aggregationFunction, aggregateColumn: aggregateColumn, userSelectedTable: this.state.currentTable });
     },
     handleQueryChange: function (type, index, value, label) {
         var newState = { userSelectedTable: this.state.currentTable, gridData: null, addColumn: false, addRow: false };
@@ -391,7 +398,7 @@ export default React.createClass({
             newState.rowLabels = rowLabels;
         }
 
-        this.setState(newState, this.runSearch);
+        this.setState(newState);
     },
     onSelectedTableChange: function (name) {
         if (this.state.currentTable === name) {
@@ -402,20 +409,11 @@ export default React.createClass({
             var cleared = this.getClearedUserSelections();
             cleared.userSelectedTable = name;
             cleared.currentTable = name;
-            this.setState(cleared, this.runSearch);
+            this.setState(cleared);
         }
 
     },
-    queryChanged: function (value) {
-        this.setState({ query: value }, this.delayedRunSearch);
-    },
 
-    delayedRunSearch: function () {
-        // Only query every 250 milliseconds while typing
-        if (!this.timer) {
-            this.timer = window.setTimeout(this.runSearch, 250);
-        }
-    },
     runSearch: function () {
         // On query, ask for the count from every table.
         // Get the count of matches from each accessible table
@@ -622,12 +620,12 @@ export default React.createClass({
                         currentTable={this.state.currentTable}
                         listingDataContent={this.state.gridData && this.state.gridData.content}
                         query={this.state.query}
-                        onSelectedTableChange={name => this.setState({ userSelectedTable: name }, this.runSearch)}
+                        onSelectedTableChange={name => this.setState({ userSelectedTable: name })}
                         refreshAllBasics={this.props.refreshAllBasics}>
 
                         <SearchBox query={this.state.query}
                             parsedQuery={this.state.allCountData && this.state.allCountData.content && this.state.allCountData.content.parsedQuery}
-                            queryChanged={this.queryChanged.bind(this)} />
+                            queryChanged={value => this.setState({ query: value })} />
 
                     </Tabs>
                 </SearchHeader>
