@@ -509,8 +509,6 @@ export default class Grid extends EventedComponent {
 
     }
     render() {
-        var gridRows = [];
-
         var mainContent = null;
 
         const content = this.state.gridData && this.state.gridData.content;
@@ -525,23 +523,6 @@ export default class Grid extends EventedComponent {
                 this.props.allBasics && this.state.currentTable &&
                 this.props.allBasics[this.state.currentTable] &&
                 this.props.allBasics[this.state.currentTable].columns || [];
-
-            for (var rowIndex = 0; rowIndex < rows.length; ++rowIndex) {
-                var cells = [];
-                cells.push(<GridHeadingCell key={"HR" + rows[rowIndex]} type="row" index={rowIndex} value={rows[rowIndex]} label={rowLabels[rowIndex]} onChange={this.handleQueryChange} />);
-
-                for (var colIndex = 0; colIndex < columns.length; ++colIndex) {
-                    cells.push(<GridValueCell
-                                    key={"C" + colIndex + "R" + rowIndex}
-                                    colIndex={colIndex}
-                                    rowIndex={rowIndex}
-                                    content={content}
-                                    columnCount={columns.length} rowCount={rows.length}
-                                    show={this.state.show} showPortionAs={this.state.showPortionAs} showPortionOf={this.state.showPortionOf} />);
-                }
-
-                gridRows.push(<tr key={"R" + rowIndex }>{cells}</tr>);
-            }
 
             mainContent = (
                 <div className="grid">
@@ -563,7 +544,16 @@ export default class Grid extends EventedComponent {
                             </tr>
                         </thead>
                         <tbody>
-                            {gridRows}
+                            {rows.map((row, rowIndex) => <tr key={"R" + rowIndex }>
+                                <GridHeadingCell key={"HR" + rows[rowIndex]} type="row" index={rowIndex} value={rows[rowIndex]} label={rowLabels[rowIndex]} onChange={this.handleQueryChange} />
+                                {columns.map((col, colIndex) => <GridValueCell
+                                    key={"C" + colIndex + "R" + rowIndex}
+                                    colIndex={colIndex}
+                                    rowIndex={rowIndex}
+                                    content={content}
+                                    columnCount={columns.length} rowCount={rows.length}
+                                    show={this.state.show} showPortionAs={this.state.showPortionAs} showPortionOf={this.state.showPortionOf} />)}
+                            </tr>)}
                         </tbody>
                     </table>
                     <div className="options">
