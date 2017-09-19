@@ -539,7 +539,10 @@ export default React.createClass({
             var colLabels = this.state.colLabels;
             columns.push("All");
 
-            const currentTableAllColumns = this.props.allBasics && this.state.currentTable && this.props.allBasics[this.state.currentTable].columns || [];
+            const currentTableAllColumns =
+                this.props.allBasics && this.state.currentTable &&
+                this.props.allBasics[this.state.currentTable] &&
+                this.props.allBasics[this.state.currentTable].columns || [];
 
             headings.push(<GridFunctionCell key="AC" aggregationFunction={this.state.aggregationFunction} aggregateColumn={this.state.aggregateColumn} allColumns={currentTableAllColumns} onChange={this.handleChangeAggregation} />);
             for (var columnIndex = 0; columnIndex < columns.length; ++columnIndex) {
