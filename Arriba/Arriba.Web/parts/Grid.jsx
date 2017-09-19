@@ -322,8 +322,6 @@ export default React.createClass({
             show: "both",
             showPortionOf: "total",
             showPortionAs: "bar",
-
-            userSelectedTable: "",
         };
     },
     componentDidMount: function () {
@@ -347,6 +345,10 @@ export default React.createClass({
         if (diffState.hasAny("userSelectedTable", "counts")) {
             const currentTable = this.state.userSelectedTable || this.state.counts && this.state.counts.resultsPerTable[0].tableName;
             this.setState({ currentTable: currentTable });
+        }
+
+        if (diffState.hasAny("currentTable") && prevState.currentTable) {
+            this.setState(this.getClearedUserSelections());
         }
 
         if (diffState.hasAny("debouncedQuery", "currentTable", "aggregationFunction", "aggregateColumn", "rows", "rowLabels", "cols", "colLabels", "show", "showPortionOf", "showPortionAs")) {
@@ -399,19 +401,6 @@ export default React.createClass({
         }
 
         this.setState(newState);
-    },
-    onSelectedTableChange: function (name) {
-        if (this.state.currentTable === name) {
-            // If the selected table is clicked, just mark it actively selected and fix the URL
-            this.setState({ userSelectedTable: name });
-        } else {
-            // Otherwise, clear the columns/sort/sortOrder and query the new selected table
-            var cleared = this.getClearedUserSelections();
-            cleared.userSelectedTable = name;
-            cleared.currentTable = name;
-            this.setState(cleared);
-        }
-
     },
 
     getCounts: function () {
