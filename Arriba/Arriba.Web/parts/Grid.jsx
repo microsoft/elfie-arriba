@@ -355,9 +355,7 @@ export default React.createClass({
 
         if (diffState.hasAny("debouncedQuery", "currentTable", "aggregationFunction", "aggregateColumn", "rows", "rowLabels", "cols", "colLabels", "show", "showPortionOf", "showPortionAs")) {
             this.getGrid();
-        }
 
-        if (diffState.hasAny("debouncedQuery", "currentTable", "aggregationFunction", "aggregateColumn", "rows", "rowLabels", "cols", "colLabels", "show", "showPortionOf", "showPortionAs")) {
             var url = this.buildThisUrl(true);
             if (url !== window.location.href) {
                 history.pushState("", "", url);
