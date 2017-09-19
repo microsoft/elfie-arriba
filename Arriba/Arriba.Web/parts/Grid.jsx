@@ -344,8 +344,17 @@ export default React.createClass({
             this.timer = this.timer || window.setTimeout(() => this.setState({ debouncedQuery: this.state.query }), 250);
         }
 
-        if (diffState.hasAny("debouncedQuery", "userSelectedTable", "currentTable", "aggregationFunction", "aggregateColumn", "cols", "rows", "colLabels", "rowLabels", "show", "showPortionOf", "showPortionAs")) {
+        if (diffState.hasAny("debouncedQuery")) {
             this.getCounts();
+        }
+
+        if (diffState.hasAny("userSelectedTable", "counts")) {
+            const currentTable = this.state.userSelectedTable || this.state.counts && this.state.counts.resultsPerTable[0].tableName;
+            this.setState({ currentTable: currentTable });
+        }
+
+        if (diffState.hasAny("debouncedQuery", "currentTable", "aggregationFunction", "aggregateColumn", "cols", "rows", "colLabels", "rowLabels", "show", "showPortionOf", "showPortionAs")) {
+            this.getGrid();
         }
 
         if (diffState.hasAny("debouncedQuery", "currentTable", "aggregationFunction", "aggregateColumn", "show", "showPortionOf", "showPortionAs", "rows", "cols", "rowLabels", "colLabels")) {
@@ -417,14 +426,7 @@ export default React.createClass({
         this.timer = null;
         jsonQuery(
             configuration.url + "/allCount",
-            data => {
-                var currentTable = this.state.userSelectedTable || data.content.resultsPerTable[0].tableName;
-                this.setState({
-                    counts: data.content,
-                    currentTable: currentTable,
-                    error: null
-                }, this.getGrid);
-            },
+            data => this.setState({ counts: data.content, error: null }),
             (xhr, status, err) => {
                 this.setState({ counts: [], error: "Error: Server didn't respond to [" + xhr.url + "]. " + err });
             },
