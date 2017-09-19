@@ -517,7 +517,6 @@ export default React.createClass({
 
     },
     render: function () {
-        var headings = [];
         var gridRows = [];
 
         var mainContent = null;
@@ -534,15 +533,6 @@ export default React.createClass({
                 this.props.allBasics && this.state.currentTable &&
                 this.props.allBasics[this.state.currentTable] &&
                 this.props.allBasics[this.state.currentTable].columns || [];
-
-            headings.push(<GridFunctionCell key="AC"
-                aggregationFunction={this.state.aggregationFunction}
-                aggregateColumn={this.state.aggregateColumn}
-                allColumns={currentTableAllColumns}
-                onChange={(aggregationFunction, aggregateColumn) => this.setState({ aggregationFunction: aggregationFunction, aggregateColumn: aggregateColumn, userSelectedTable: this.state.currentTable })} />);
-            for (var columnIndex = 0; columnIndex < columns.length; ++columnIndex) {
-                headings.push(<GridHeadingCell key={"HC" + columns[columnIndex]} type="column" index={columnIndex} value={columns[columnIndex]} label={colLabels[columnIndex]} onChange={this.handleQueryChange } />);
-            }
 
             for (var rowIndex = 0; rowIndex < rows.length; ++rowIndex) {
                 var cells = [];
@@ -566,7 +556,18 @@ export default React.createClass({
                     <table className={this.state.showPortionOf}>
                         <thead>
                             <tr>
-                                {headings}
+                                <GridFunctionCell key="AC"
+                                    aggregationFunction={this.state.aggregationFunction}
+                                    aggregateColumn={this.state.aggregateColumn}
+                                    allColumns={currentTableAllColumns}
+                                    onChange={(aggregationFunction, aggregateColumn) => this.setState({ aggregationFunction: aggregationFunction, aggregateColumn: aggregateColumn, userSelectedTable: this.state.currentTable })} />
+                                {columns.map((col, i) => <GridHeadingCell
+                                    key={"HC" + col}
+                                    type="column"
+                                    index={i}
+                                    value={col}
+                                    label={colLabels[i]}
+                                    onChange={this.handleQueryChange.bind(this)} />)}
                             </tr>
                         </thead>
                         <tbody>
