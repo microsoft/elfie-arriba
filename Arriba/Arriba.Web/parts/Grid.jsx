@@ -345,7 +345,7 @@ export default React.createClass({
         }
 
         if (diffState.hasAny("debouncedQuery", "userSelectedTable", "currentTable", "aggregationFunction", "aggregateColumn", "cols", "rows", "colLabels", "rowLabels", "show", "showPortionOf", "showPortionAs")) {
-            this.runSearch();
+            this.getCounts();
         }
 
         if (diffState.hasAny("debouncedQuery", "currentTable", "aggregationFunction", "aggregateColumn", "show", "showPortionOf", "showPortionAs", "rows", "cols", "rowLabels", "colLabels")) {
@@ -411,7 +411,7 @@ export default React.createClass({
 
     },
 
-    runSearch: function () {
+    getCounts: function () {
         // On query, ask for the count from every table.
         // Get the count of matches from each accessible table
         this.timer = null;
