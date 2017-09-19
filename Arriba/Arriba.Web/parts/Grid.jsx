@@ -517,7 +517,7 @@ export default React.createClass({
         const colLabels = this.state.colLabels;
 
         // If content is stale (cell count less than expected) then skip render.
-        if (content && content.values.rows.length >= rows.length * columns.length) {
+        if (content && content.values && content.values.rows.length >= rows.length * columns.length) {
             const currentTableAllColumns =
                 this.props.allBasics && this.state.currentTable &&
                 this.props.allBasics[this.state.currentTable] &&
