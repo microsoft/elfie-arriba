@@ -52,6 +52,7 @@ export default class SearchBox extends EventedComponent {
                             ref="suggestions"
                             query={this.props.query}
                             queryChanged={q => this.props.queryChanged(q)}
+                            userSelectedTable={this.props.userSelectedTable}
                             completedChanged={c => this.setState({ completed: c })}
                             selectedChanged={s => this.setState({ selected: s && s.category === "ColumnName" && s || undefined }) }
                             refocus={() => this.refs.input.focus()}

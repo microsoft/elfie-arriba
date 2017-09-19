@@ -606,6 +606,7 @@ export default React.createClass({
 
                         <SearchBox query={this.state.query}
                             parsedQuery={this.state.counts && this.state.counts.parsedQuery}
+                            userSelectedTable={this.state.userSelectedTable}
                             queryChanged={value => this.setState({ query: value })} />
 
                     </Tabs>
