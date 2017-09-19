@@ -5,7 +5,7 @@ import Suggestions from "./Suggestions";
 export default class SearchBox extends EventedComponent {
     constructor(props) {
         super(props);
-        this.state = {};      
+        this.state = {};
         this.events = {
             "storage": e => {
                 if (!["favorites"].includes(e.key)) return;
@@ -38,7 +38,7 @@ export default class SearchBox extends EventedComponent {
             <div className={ "loading " + (this.props.loading ? "loading-active" : "") }></div>
             <input ref="input" type="text"
                 spellCheck="false"
-                placeholder="Search for..." 
+                placeholder="Search for..."
                 tabIndex="1"
                 value={this.props.query}
                 onClick={e => this.refs.suggestions.fetch()}
