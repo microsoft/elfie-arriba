@@ -353,11 +353,11 @@ export default React.createClass({
             this.setState({ currentTable: currentTable });
         }
 
-        if (diffState.hasAny("debouncedQuery", "currentTable", "aggregationFunction", "aggregateColumn", "cols", "rows", "colLabels", "rowLabels", "show", "showPortionOf", "showPortionAs")) {
+        if (diffState.hasAny("debouncedQuery", "currentTable", "aggregationFunction", "aggregateColumn", "rows", "rowLabels", "cols", "colLabels", "show", "showPortionOf", "showPortionAs")) {
             this.getGrid();
         }
 
-        if (diffState.hasAny("debouncedQuery", "currentTable", "aggregationFunction", "aggregateColumn", "show", "showPortionOf", "showPortionAs", "rows", "cols", "rowLabels", "colLabels")) {
+        if (diffState.hasAny("debouncedQuery", "currentTable", "aggregationFunction", "aggregateColumn", "rows", "rowLabels", "cols", "colLabels", "show", "showPortionOf", "showPortionAs")) {
             var url = this.buildThisUrl(true);
             if (url !== window.location.href) {
                 history.pushState("", "", url);
