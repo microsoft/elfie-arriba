@@ -1,6 +1,7 @@
 ﻿import "../Search.scss";
 import "!script-loader!../js/utilities.js";
 
+import EventedComponent from "./EventedComponent";
 import ErrorPage from "./ErrorPage"
 import QueryStats from "./QueryStats"
 import SearchHeader from "./SearchHeader"
@@ -290,9 +291,10 @@ var GridValueCell = React.createClass({
 });
 
 // GridMain wraps the overall grid UI
-export default React.createClass({
-    getInitialState: function () {
-        return {
+export default class Grid extends EventedComponent {
+    constructor(props) {
+        super(props);
+        this.state = {
             query: this.props.params.q || "",
             currentTable: this.props.params.t,
 
@@ -307,8 +309,8 @@ export default React.createClass({
             showPortionOf: this.props.params.of || "total",
             showPortionAs: this.props.params.as || "bar",
         };
-    },
-    getClearedUserSelections: function () {
+    }
+    getClearedUserSelections() {
         return {
             /* Query is kept to allow "re-exploring" the query. All other state is cleared. */
 
@@ -323,15 +325,16 @@ export default React.createClass({
             showPortionOf: "total",
             showPortionAs: "bar",
         };
-    },
-    componentDidMount: function () {
+    }
+    componentDidMount() {
+        super.componentDidMount();
         var defaultQuery = (this.props.params.p === "default" ? configuration.gridDefault : this.props.params.p);
         if (defaultQuery) {
             this.selectDefaultQuery(defaultQuery);
         }
         this.componentDidUpdate({}, {});
-    },
-    componentDidUpdate: function(prevProps, prevState) {
+    }
+    componentDidUpdate(prevProps, prevState) {
         const diffState = Object.diff(prevState, this.state);
         if (diffState.hasAny("query")) {
             // Only query every 250 milliseconds while typing
@@ -359,12 +362,12 @@ export default React.createClass({
                 history.pushState("", "", url);
             }
         }
-    },
+    }
 
-    selectDefaultQuery: function(name) {
+    selectDefaultQuery(name) {
         this.setState(Object.assign(this.getClearedUserSelections(), configuration.gridDefaultQueries[name]));
-    },
-    handleQueryChange: function (type, index, value, label) {
+    }
+    handleQueryChange(type, index, value, label) {
         var newState = { userSelectedTable: this.state.currentTable };
 
         // NOTE: When a column or row is changed, we lock the current table and clear the grid data.
@@ -401,9 +404,9 @@ export default React.createClass({
         }
 
         this.setState(newState);
-    },
+    }
 
-    getCounts: function () {
+    getCounts() {
         // On query, ask for the count from every table.
         // Get the count of matches from each accessible table
         this.timer = null;
@@ -415,8 +418,8 @@ export default React.createClass({
             },
             { q: this.state.query }
         );
-    },
-    getGrid: function() {
+    }
+    getGrid() {
         // Once the counts query runs and table basics are loaded, get a page of results
         if (!this.state.query || !this.state.currentTable) {
             this.setState({ gridData: undefined, error: null })
@@ -457,9 +460,9 @@ export default React.createClass({
                 this.setState({ gridData: undefined, error: "Error: Server didn't respond to [" + xhr.url + "]. " + err });
             }.bind(this)
         );
-    },
+    }
 
-    buildQueryUrl: function () {
+    buildQueryUrl() {
         var parameters = {
             action: "aggregate",
             q: this.state.query,
@@ -481,8 +484,8 @@ export default React.createClass({
 
         var queryString = buildUrlParameters(parameters);
         return configuration.url + "/table/" + this.state.currentTable + queryString;
-    },
-    buildThisUrl: function (includeOpen) {
+    }
+    buildThisUrl(includeOpen) {
         var relevantParams = {};
 
         if (this.state.query) relevantParams.q = this.state.query;
@@ -504,8 +507,8 @@ export default React.createClass({
 
         return window.location.protocol + '//' + window.location.host + window.location.pathname + buildUrlParameters(relevantParams);
 
-    },
-    render: function () {
+    }
+    render() {
         var gridRows = [];
 
         var mainContent = null;
@@ -624,4 +627,4 @@ export default React.createClass({
             </div>
         );
     }
-});
+}
