@@ -634,14 +634,7 @@ export default React.createClass({
                 <div className="middle">
                     <Mode query={this.state.query} currentTable={this.state.currentTable} />
                     <div className="center">
-                        <QueryStats error={this.state.error}
-                                    allCountData={this.state.allCountData}
-                                    allBasics={this.props.allBasics}
-                                    refreshAllBasics={this.props.refreshAllBasics}
-                                    selectedData={this.state.gridData && this.state.gridData.content}
-                                    currentTable={this.state.currentTable}
-                                    onSelectedTableChange={this.onSelectedTableChange} />
-
+                        <QueryStats error={this.state.error} selectedData={this.state.gridData && this.state.gridData.content} />
                         <div className="scrollable">
                             {mainContent}
                         </div>
