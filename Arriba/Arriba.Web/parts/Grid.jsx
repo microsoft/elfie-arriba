@@ -359,9 +359,6 @@ export default React.createClass({
     selectDefaultQuery: function(name) {
         this.setState(Object.assign(this.getClearedUserSelections(), configuration.gridDefaultQueries[name]));
     },
-    handleChangeAggregation: function(aggregationFunction, aggregateColumn) {
-        this.setState({ aggregationFunction: aggregationFunction, aggregateColumn: aggregateColumn, userSelectedTable: this.state.currentTable });
-    },
     handleQueryChange: function (type, index, value, label) {
         var newState = { userSelectedTable: this.state.currentTable, gridData: null, addColumn: false, addRow: false };
 
@@ -546,7 +543,7 @@ export default React.createClass({
                 aggregationFunction={this.state.aggregationFunction}
                 aggregateColumn={this.state.aggregateColumn}
                 allColumns={currentTableAllColumns}
-                onChange={this.handleChangeAggregation} />);
+                onChange={(aggregationFunction, aggregateColumn) => this.setState({ aggregationFunction: aggregationFunction, aggregateColumn: aggregateColumn, userSelectedTable: this.state.currentTable })} />);
             for (var columnIndex = 0; columnIndex < columns.length; ++columnIndex) {
                 headings.push(<GridHeadingCell key={"HC" + columns[columnIndex]} type="column" index={columnIndex} value={columns[columnIndex]} label={colLabels[columnIndex]} onChange={this.handleQueryChange } />);
             }
