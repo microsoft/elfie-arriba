@@ -510,14 +510,14 @@ export default React.createClass({
 
         var mainContent = null;
 
-        if (this.state.gridData && this.state.gridData.content) {
-            var content = this.state.gridData.content;
+        const content = this.state.gridData && this.state.gridData.content;
+        const rows = [...this.state.rows.slice(), "All"];
+        const rowLabels = this.state.rowLabels;
+        const columns = [...this.state.cols.slice(), "All"];
+        const colLabels = this.state.colLabels;
 
-            const rows = [...this.state.rows.slice(), "All"];
-            const rowLabels = this.state.rowLabels;
-            const columns = [...this.state.cols.slice(), "All"];
-            const colLabels = this.state.colLabels;
-
+        // If content is stale (cell count less than expected) then skip render.
+        if (content && content.values.rows.length >= rows.length * columns.length) {
             const currentTableAllColumns =
                 this.props.allBasics && this.state.currentTable &&
                 this.props.allBasics[this.state.currentTable] &&
