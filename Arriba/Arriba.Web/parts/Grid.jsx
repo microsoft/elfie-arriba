@@ -564,13 +564,6 @@ export default React.createClass({
                 gridRows.push(<tr key={"R" + rowIndex }>{cells}</tr>);
             }
 
-            var defaultQueries = [];
-            defaultQueries.push(<option key={"SQNone"} value=""></option>);
-
-            for (var name in configuration.gridDefaultQueries) {
-                defaultQueries.push(<option key={"SQ" + name} value={name }>{name}</option>);
-            }
-
             mainContent = (
                 <div className="grid">
                     <table className={this.state.showPortionOf}>
@@ -604,7 +597,8 @@ export default React.createClass({
                         &nbsp;&nbsp;&nbsp;&nbsp;
                         Load&nbsp;
                         <select value="" onChange={e => this.selectDefaultQuery(e.target.value)}>
-                            {defaultQueries}
+                            <option key={"SQNone"} value=""></option>
+                            {Object.keys(configuration.gridDefaultQueries || {}).map(name => <option key={"SQ" + name} value={name}>{name}</option>)}
                         </select>
                     </div>
                 </div>
