@@ -367,7 +367,7 @@ export default React.createClass({
         this.setState(Object.assign(this.getClearedUserSelections(), configuration.gridDefaultQueries[name]));
     },
     handleQueryChange: function (type, index, value, label) {
-        var newState = { userSelectedTable: this.state.currentTable, gridData: null, addColumn: false, addRow: false };
+        var newState = { userSelectedTable: this.state.currentTable, gridData: null };
 
         // NOTE: When a column or row is changed, we lock the current table and clear the grid data.
         //  We lock the table because the rows/cols are cleared when the active table is changed and we don't want "top query" changes to lose the cols/rows you've picked
