@@ -421,13 +421,12 @@ export default React.createClass({
                 var currentTable = this.state.userSelectedTable || data.content.resultsPerTable[0].tableName;
                 this.setState({
                     counts: data.content,
-                    allCountData: data,
                     currentTable: currentTable,
                     error: null
                 }, this.getGrid);
             },
             (xhr, status, err) => {
-                this.setState({ allCountData: [], error: "Error: Server didn't respond to [" + xhr.url + "]. " + err });
+                this.setState({ counts: [], error: "Error: Server didn't respond to [" + xhr.url + "]. " + err });
             },
             { q: this.state.query }
         );
@@ -625,7 +624,7 @@ export default React.createClass({
                         refreshAllBasics={this.props.refreshAllBasics}>
 
                         <SearchBox query={this.state.query}
-                            parsedQuery={this.state.allCountData && this.state.allCountData.content && this.state.allCountData.content.parsedQuery}
+                            parsedQuery={this.state.counts && this.state.counts.parsedQuery}
                             queryChanged={value => this.setState({ query: value })} />
 
                     </Tabs>
