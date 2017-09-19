@@ -306,8 +306,6 @@ export default React.createClass({
             show: this.props.params.show || "both",
             showPortionOf: this.props.params.of || "total",
             showPortionAs: this.props.params.as || "bar",
-
-            gridData: null
         };
     },
     getClearedUserSelections: function () {
@@ -326,8 +324,6 @@ export default React.createClass({
             showPortionAs: "bar",
 
             userSelectedTable: "",
-
-            gridData: null
         };
     },
     componentDidMount: function () {
@@ -367,7 +363,7 @@ export default React.createClass({
         this.setState(Object.assign(this.getClearedUserSelections(), configuration.gridDefaultQueries[name]));
     },
     handleQueryChange: function (type, index, value, label) {
-        var newState = { userSelectedTable: this.state.currentTable, gridData: null };
+        var newState = { userSelectedTable: this.state.currentTable };
 
         // NOTE: When a column or row is changed, we lock the current table and clear the grid data.
         //  We lock the table because the rows/cols are cleared when the active table is changed and we don't want "top query" changes to lose the cols/rows you've picked
@@ -433,6 +429,10 @@ export default React.createClass({
     },
     getGrid: function() {
         // Once the counts query runs and table basics are loaded, get a page of results
+        if (!this.state.query || !this.state.currentTable) {
+            this.setState({ gridData: undefined, error: null })
+            return;
+        }
 
         // Get a page of matches for the given query for the desired columns and sort order, with highlighting.
         jsonQuery(
@@ -465,7 +465,7 @@ export default React.createClass({
                 this.setState(newState);
             }.bind(this),
             function (xhr, status, err) {
-                this.setState({ gridData: [], error: "Error: Server didn't respond to [" + xhr.url + "]. " + err });
+                this.setState({ gridData: undefined, error: "Error: Server didn't respond to [" + xhr.url + "]. " + err });
             }.bind(this)
         );
     },
