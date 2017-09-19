@@ -4,6 +4,7 @@ import "!script-loader!../js/utilities.js";
 import ErrorPage from "./ErrorPage"
 import QueryStats from "./QueryStats"
 import SearchHeader from "./SearchHeader"
+import Tabs from "./Tabs";
 import SearchBox from "./SearchBox";
 import Mode from "./Mode";
 
@@ -424,6 +425,7 @@ export default React.createClass({
             data => {
                 var currentTable = this.state.userSelectedTable || data.content.resultsPerTable[0].tableName;
                 this.setState({
+                    counts: data.content,
                     allCountData: data,
                     currentTable: currentTable,
                     error: null
@@ -611,9 +613,20 @@ export default React.createClass({
         return (
             <div className="viewport" onKeyDown={this.handleKeyDown}>
                 <SearchHeader>
-                    <SearchBox query={this.state.query}
-                        parsedQuery={this.state.allCountData && this.state.allCountData.content && this.state.allCountData.content.parsedQuery}
-                        queryChanged={this.queryChanged} />
+                    <Tabs
+                        allBasics={this.props.allBasics}
+                        counts={this.state.counts}
+                        currentTable={this.state.currentTable}
+                        listingDataContent={this.state.gridData && this.state.gridData.content}
+                        query={this.state.query}
+                        onSelectedTableChange={name => this.setState({ userSelectedTable: name }, this.runSearch)}
+                        refreshAllBasics={this.props.refreshAllBasics}>
+
+                        <SearchBox query={this.state.query}
+                            parsedQuery={this.state.allCountData && this.state.allCountData.content && this.state.allCountData.content.parsedQuery}
+                            queryChanged={this.queryChanged.bind(this)} />
+
+                    </Tabs>
                 </SearchHeader>
 
                 <div className="middle">
