@@ -39,7 +39,7 @@ export default class DropShield extends React.Component {
                     const tablename = file.name.replace(".csv", "");
                     this.setState({ file, tablename });
                     file.slice(0, 64 * 1024).readAsText()
-                        .then(txt => xhr(`sample?type=csv`, txt))
+                        .then(txt => xhr(`sample?type=csv`, {},  txt))
                         .then(o => this.setState({
                             columns: o.columns,
                             rowCountEst: Math.floor((file.size / Math.min(64 * 1024, file.size)) * (o.rowCount - 1))
@@ -102,7 +102,7 @@ class UploadConfirm extends React.Component {
                     value={isReplacing ? "Replace ⚠" : "Upload"}
                     onClick={e => {
                         xhr(`table/${this.state.tablename}/delete`)
-                            .then(() => xhr(`table`, {
+                            .then(() => xhr(`table`, {}, {
                                 tableName: this.state.tablename,
                                 itemCountLimit: this.props.rowCountEst * 2,
                                 columns: this.props.columns
@@ -117,7 +117,7 @@ class UploadConfirm extends React.Component {
                                 this.props.cancel();
                                 this.props.queryChanged("*");
                                 this.props.columnsChanged(this.props.columns.slice(0, 4).map(col => col.name), this.state.tablename);
-                                return xhr(`table/${this.state.tablename}?type=csv`, txt)
+                                return xhr(`table/${this.state.tablename}?type=csv`, {}, txt)
                                     .then(() => loading = false)
                             });
                     }} />
