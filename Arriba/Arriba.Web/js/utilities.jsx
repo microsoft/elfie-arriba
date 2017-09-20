@@ -10,9 +10,10 @@ if (!window.Promise) {
 
 window.xhr = (path, params, body) => {
     return new Promise((resolve, reject) => {
+        const pathParams = path + buildUrlParameters(params);
         var xhr = new XMLHttpRequest();
         xhr.withCredentials = true;
-        xhr.open(body ? "POST" : "GET", configuration.url + "/" + path, true); // For testing: http://httpbin.org/post
+        xhr.open(body ? "POST" : "GET", configuration.url + "/" + pathParams, true); // For testing: http://httpbin.org/post
         xhr.onload = () => {
             if (xhr.status >= 200 && xhr.status < 300 || xhr.status === 404) { // 404 workaround for delete table.
                 const o = JSON.parse(xhr.responseText);
@@ -21,7 +22,10 @@ window.xhr = (path, params, body) => {
                 reject(xhr);
             }
         };
-        xhr.onerror = () => reject(xhr);
+        xhr.onerror = () => {
+            if (errorBar) errorBar(`Request failed: ${pathParams}`);
+            reject(xhr);
+        };
         xhr.send(typeof body === "string" ? body : JSON.stringify(body));
     });
 };
