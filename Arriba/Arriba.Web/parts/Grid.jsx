@@ -294,8 +294,10 @@ var GridValueCell = React.createClass({
 export default class Grid extends EventedComponent {
     constructor(props) {
         super(props);
+        const query = this.props.params.q || "";
         this.state = {
-            query: this.props.params.q || "",
+            query: query,
+            debouncedQuery: query,
             currentTable: this.props.params.t,
 
             aggregationFunction: this.props.params.af || "COUNT",
@@ -418,7 +420,7 @@ export default class Grid extends EventedComponent {
         }
 
         xhr('allCount', { q: this.state.query })
-            .then(data => this.setState({ counts: data.content }));
+            .then(data => this.setState({ counts: data }));
     }
     getGrid() {
         // Once the counts query runs and table basics are loaded, get a page of results
