@@ -589,7 +589,6 @@ export default class Grid extends EventedComponent {
                         allBasics={this.props.allBasics}
                         counts={this.state.counts}
                         currentTable={this.state.currentTable}
-                        detailsAndQuery={this.state.gridData && this.state.gridData.content}
                         query={this.state.query}
                         onSelectedTableChange={name => this.setState({ userSelectedTable: name })}
                         refreshAllBasics={this.props.refreshAllBasics}>
