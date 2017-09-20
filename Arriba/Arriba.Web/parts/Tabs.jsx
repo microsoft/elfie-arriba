@@ -6,12 +6,9 @@ export default class Tabs extends React.Component {
         this.state = {};
     }
     render() {
-        const succeeded =
-            this.props.detailsAndQuery &&
-            this.props.detailsAndQuery.details.succeeded;
-        const where =
-            this.props.detailsAndQuery &&
-            this.props.detailsAndQuery.query.where;
+        const parsedQuery =
+            this.props.counts &&
+            this.props.counts.parsedQuery;
 
         const tables =
             this.props.counts &&
@@ -40,13 +37,13 @@ export default class Tabs extends React.Component {
                     }}>✕</span>}
                 </span>)}
                 <span className="tableTabs-fill"></span>
-                {where && <a title="Explanation" href="#" onMouseOver={e => this.setState({ showExplanation: true })} onMouseOut={e => this.setState({ showExplanation: false })}>
+                {parsedQuery && <a title="Explanation" href="#" onMouseOver={e => this.setState({ showExplanation: true })} onMouseOut={e => this.setState({ showExplanation: false })}>
                     <img src="/icons/info.svg" alt="rss"/>
                 </a>}
-                {this.props.queryUrl && succeeded && <a title="RSS Link" target="_blank" href={`${this.props.queryUrl}&fmt=rss&t=100&iURL=${encodeURIComponent(this.props.thisUrl + "&open=")}`}>
+                {this.props.queryUrl && <a title="RSS Link" target="_blank" href={`${this.props.queryUrl}&fmt=rss&t=100&iURL=${encodeURIComponent(this.props.thisUrl + "&open=")}`}>
                     <img src="/icons/rss.svg" alt="rss"/>
                 </a>}
-                {this.props.queryUrl && succeeded && <a title="Download CSV" target="_blank" href={`${this.props.queryUrl}&fmt=csv&t=50000`}>
+                {this.props.queryUrl && <a title="Download CSV" target="_blank" href={`${this.props.queryUrl}&fmt=csv&t=50000`}>
                     <img src="/icons/download.svg" alt="download"/>
                 </a>}
                 {this.props.query && <a title="Mail" href={
@@ -59,7 +56,7 @@ export default class Tabs extends React.Component {
             </div>
             {this.props.children}
             {this.state.showExplanation && <div className="explanation">
-                {where || "Explanation"}
+                {parsedQuery || "Explanation"}
             </div>}
         </div>
     }

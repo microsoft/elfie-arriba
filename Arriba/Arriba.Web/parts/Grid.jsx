@@ -294,8 +294,10 @@ var GridValueCell = React.createClass({
 export default class Grid extends EventedComponent {
     constructor(props) {
         super(props);
+        const query = this.props.params.q || "";
         this.state = {
-            query: this.props.params.q || "",
+            query: query,
+            debouncedQuery: query,
             currentTable: this.props.params.t,
 
             aggregationFunction: this.props.params.af || "COUNT",
@@ -336,6 +338,7 @@ export default class Grid extends EventedComponent {
     }
     componentDidUpdate(prevProps, prevState) {
         const diffState = Object.diff(prevState, this.state);
+
         if (diffState.hasAny("query")) {
             // Only query every 250 milliseconds while typing
             this.timer = this.timer || window.setTimeout(() => this.setState({ debouncedQuery: this.state.query }), 250);
@@ -410,56 +413,50 @@ export default class Grid extends EventedComponent {
         // On query, ask for the count from every table.
         // Get the count of matches from each accessible table
         this.timer = null;
-        jsonQuery(
-            configuration.url + "/allCount",
-            data => this.setState({ counts: data.content, error: null }),
-            (xhr, status, err) => {
-                this.setState({ counts: [], error: "Error: Server didn't respond to [" + xhr.url + "]. " + err });
-            },
-            { q: this.state.query }
-        );
+
+        if (!this.state.query) {
+            this.setState({ counts: undefined })
+            return;
+        }
+
+        xhr('allCount', { q: this.state.query })
+            .then(data => this.setState({ counts: data }));
     }
     getGrid() {
         // Once the counts query runs and table basics are loaded, get a page of results
         if (!this.state.query || !this.state.currentTable) {
-            this.setState({ gridData: undefined, error: null })
+            this.setState({ gridData: undefined })
             return;
         }
 
         // Get a page of matches for the given query for the desired columns and sort order, with highlighting.
-        jsonQuery(
-            this.buildQueryUrl(),
-            function (data) {
-                var newState = { gridData: data, error: null };
+        xhr(this.buildQueryUrl()).then(data => {
+            var newState = { gridData: {content: data} };
 
-                // If the rows or columns were expanded by the query, use the expanded values so subsequent editing works
-                // NOTE: Track the dimension for rows and columns; if only columns were passed, dimensions[0] is the column.
-                var dimensions = data.content && data.content.query && data.content.query.dimensions;
-                if (dimensions) {
-                    var dimensionIndex = 0;
+            // If the rows or columns were expanded by the query, use the expanded values so subsequent editing works
+            // NOTE: Track the dimension for rows and columns; if only columns were passed, dimensions[0] is the column.
+            var dimensions = data.query && data.query.dimensions;
+            if (dimensions) {
+                var dimensionIndex = 0;
 
-                    var fetch = (key) => {
-                        var list = this.state[key + "s"];
-                        if (list && list.length) {
-                            if (list.length === 1 && list[0].endsWith(">")) {
-                                var dim = dimensions[dimensionIndex];
-                                newState[key + "s"] = dim && dim.groupByWhere || [];
-                                newState[key + "Labels"] = [];
-                            }
-                            dimensionIndex++;
+                var fetch = (key) => {
+                    var list = this.state[key + "s"];
+                    if (list && list.length) {
+                        if (list.length === 1 && list[0].endsWith(">")) {
+                            var dim = dimensions[dimensionIndex];
+                            newState[key + "s"] = dim && dim.groupByWhere || [];
+                            newState[key + "Labels"] = [];
                         }
+                        dimensionIndex++;
                     }
-
-                    fetch("row");
-                    fetch("col");
                 }
 
-                this.setState(newState);
-            }.bind(this),
-            function (xhr, status, err) {
-                this.setState({ gridData: undefined, error: "Error: Server didn't respond to [" + xhr.url + "]. " + err });
-            }.bind(this)
-        );
+                fetch("row");
+                fetch("col");
+            }
+
+            this.setState(newState);
+        });
     }
 
     buildQueryUrl() {
@@ -483,7 +480,7 @@ export default class Grid extends EventedComponent {
         }
 
         var queryString = buildUrlParameters(parameters);
-        return configuration.url + "/table/" + this.state.currentTable + queryString;
+        return "table/" + this.state.currentTable + queryString;
     }
     buildThisUrl(includeOpen) {
         var relevantParams = {};
@@ -590,12 +587,11 @@ export default class Grid extends EventedComponent {
                 <SearchHeader>
                     <Tabs
                         allBasics={this.props.allBasics}
-                        counts={this.state.counts}
+                        refreshAllBasics={this.props.refreshAllBasics}
                         currentTable={this.state.currentTable}
-                        detailsAndQuery={this.state.gridData && this.state.gridData.content}
-                        query={this.state.query}
                         onSelectedTableChange={name => this.setState({ userSelectedTable: name })}
-                        refreshAllBasics={this.props.refreshAllBasics}>
+                        query={this.state.query}
+                        counts={this.state.counts}>
 
                         <SearchBox query={this.state.query}
                             parsedQuery={this.state.counts && this.state.counts.parsedQuery}
@@ -608,7 +604,7 @@ export default class Grid extends EventedComponent {
                 <div className="middle">
                     <Mode query={this.state.query} currentTable={this.state.currentTable} />
                     <div className="center">
-                        <QueryStats error={this.state.error} selectedData={this.state.gridData && this.state.gridData.content} />
+                        <QueryStats selectedData={this.state.gridData && this.state.gridData.content} />
                         <div className="scrollable">
                             {mainContent}
                         </div>

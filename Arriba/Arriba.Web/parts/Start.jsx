@@ -1,5 +1,5 @@
-import Help from "./Help";
 import "./Start.scss";
+import Help from "./Help";
 
 export default class Start extends React.Component {
     constructor(props) {

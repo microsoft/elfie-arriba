@@ -1,3 +1,5 @@
+import "./Index.scss";
+
 import ErrorPage from "./ErrorPage";
 import Search from "./Search";
 import Grid from "./Grid";
@@ -12,6 +14,7 @@ class Index extends React.Component {
         };
     }
     componentDidMount() {
+        window.errorBar = msg => this.setState({ error: msg});
         this.refreshAllBasics();
     }
     refreshAllBasics(then) {
@@ -36,9 +39,12 @@ class Index extends React.Component {
         if (this.state.blockingErrorStatus != null) return <ErrorPage status={this.state.blockingErrorStatus} />;
 
         const Page = window.location.pathname.startsWith("/Grid.html") ? Grid : Search;
-        return <Page params={getQueryStringParameters()}
-            allBasics={this.state.allBasics}
-            refreshAllBasics={then => this.refreshAllBasics(then)} />
+        return <div className="viewport">
+            {this.state.error && <div className="errorBar">{this.state.error}</div>}
+            <Page params={getQueryStringParameters()}
+                allBasics={this.state.allBasics}
+                refreshAllBasics={then => this.refreshAllBasics(then)} />
+        </div>
     }
 }
 
