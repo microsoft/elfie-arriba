@@ -10,8 +10,8 @@ export default class Tabs extends React.Component {
             this.props.detailsAndQuery &&
             this.props.detailsAndQuery.details.succeeded;
         const where =
-            this.props.detailsAndQuery &&
-            this.props.detailsAndQuery.query.where;
+            this.props.counts &&
+            this.props.counts.parsedQuery;
 
         const tables =
             this.props.counts &&
