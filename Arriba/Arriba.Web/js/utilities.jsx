@@ -8,7 +8,7 @@ if (!window.Promise) {
     window.Promise = Promise;
 }
 
-window.xhr = (path, body) => {
+window.xhr = (path, params, body) => {
     return new Promise((resolve, reject) => {
         var xhr = new XMLHttpRequest();
         xhr.withCredentials = true;
