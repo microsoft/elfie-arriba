@@ -231,7 +231,8 @@ function jsonQuery(url, onSuccess, onError, parameters) {
 
     var request = new XMLHttpRequest();
     request.withCredentials = true;
-    request.open('GET', url + paramUri, true);
+    request.url = url + paramUri; // For error reporting.
+    request.open('GET', request.url, true);
 
     request.onload = function () {
         if (request.status >= 200 && request.status < 400) {
