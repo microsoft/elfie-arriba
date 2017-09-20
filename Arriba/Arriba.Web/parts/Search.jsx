@@ -49,10 +49,12 @@ export default class Search extends EventedComponent {
             }).cleaned);
         }
 
+        const query = this.props.params.q || "";
         this.state = {
             tables: [],
             page: 0,
-            query: this.props.params.q || "",
+            query: query,
+            debouncedQuery: query, // Required to trigger getCounts.
             currentTable: table,
             currentTableSettings: {}, // {} denote no state, do not set to null.
             userSelectedTable: table,
