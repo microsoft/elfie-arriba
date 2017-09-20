@@ -170,19 +170,13 @@ export default class Search extends EventedComponent {
         this.setState({ loading: true });
 
         // Get the count of matches from each accessible table
-        this.jsonQueryWithError(
-            configuration.url + "/allCount",
-            data => {
-                this.setState({
-                    counts: data.content,
-                    loading: false
-                }, then);
+        xhr("allCount", { q: this.state.query })
+            .then(data => {
+                this.setState({ counts: data, loading: false }, then);
 
-                data.content.parsedQuery = data.content.parsedQuery.replace(/\[\*\]:/g, ""); // Other consumers want the [*] removed also.
-                this.mru.update(data.content.parsedQuery);
-            },
-            { q: this.state.query }
-        );
+                data.parsedQuery = data.parsedQuery.replace(/\[\*\]:/g, ""); // Other consumers want the [*] removed also.
+                this.mru.update(data.parsedQuery);
+            });
     }
     getTableSettings() {
         const table = this.props.allBasics[this.state.currentTable];
