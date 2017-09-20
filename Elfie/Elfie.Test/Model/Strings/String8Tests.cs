@@ -266,12 +266,17 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
             Assert.AreEqual(null, TryToDateTime(null));
             Assert.AreEqual(null, TryToDateTime(String.Empty));
 
-            // Valid
+            // Valid, ISO 8601
             Assert.AreEqual(new DateTime(2017, 02, 15, 0, 0, 0, DateTimeKind.Utc), TryToDateTime("2017-02-15"));
             Assert.AreEqual(new DateTime(2017, 02, 15, 11, 33, 54, DateTimeKind.Utc), TryToDateTime("2017-02-15T11:33:54Z"));
             Assert.AreEqual(new DateTime(2017, 02, 15, 11, 33, 54, DateTimeKind.Utc), TryToDateTime("2017-02-15 11:33:54Z"));
             Assert.AreEqual(new DateTime(1, 2, 3, 4, 5, 6, DateTimeKind.Utc), TryToDateTime("0001-02-03T04:05:06Z"));
             Assert.AreEqual(new DateTime(1, 2, 3, 4, 5, 6, DateTimeKind.Utc), TryToDateTime("0001-02-03T04:05:06"));
+
+            // Valid, US format
+            Assert.AreEqual(new DateTime(2017, 02, 15, 0, 0, 0, DateTimeKind.Utc), TryToDateTime("02/15/2017"));
+            Assert.AreEqual(new DateTime(2017, 02, 15, 11, 33, 54, DateTimeKind.Utc), TryToDateTime("02/15/2017 11:33:54"));
+            Assert.AreEqual(new DateTime(2017, 02, 15, 11, 33, 54, DateTimeKind.Utc), TryToDateTime("02/15/2017 11:33:54Z"));
 
             // Min/Max
             Assert.AreEqual(DateTime.MinValue, TryToDateTime("0001-01-01T00:00:00Z"));
@@ -286,6 +291,12 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
             Assert.AreEqual(null, TryToDateTime("2017-02-15T11:33:54 "));
             Assert.AreEqual(null, TryToDateTime("2017|02-15"));
             Assert.AreEqual(null, TryToDateTime("2017-02|15"));
+            Assert.AreEqual(null, TryToDateTime("02-15/2017"));
+            Assert.AreEqual(null, TryToDateTime("02/15-2017"));
+            Assert.AreEqual(null, TryToDateTime("02/15-2017 11:33:54"));
+            Assert.AreEqual(null, TryToDateTime("02/15/2017 11-33:54Z"));
+            Assert.AreEqual(null, TryToDateTime("02/15/2017 11:33-54Z"));
+            Assert.AreEqual(null, TryToDateTime("02/15/2017 11:33-54 "));
 
             // Bad numbers
             Assert.AreEqual(null, TryToDateTime("-017-02-15T11:33:54Z"));
@@ -294,6 +305,14 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
             Assert.AreEqual(null, TryToDateTime("2017-02-15T24:33:54Z"));
             Assert.AreEqual(null, TryToDateTime("2017-02-15T11:60:54Z"));
             Assert.AreEqual(null, TryToDateTime("2017-02-15T11:33:60Z"));
+            Assert.AreEqual(null, TryToDateTime("mm/15/2017"));
+            Assert.AreEqual(null, TryToDateTime("02/dd/2017"));
+            Assert.AreEqual(null, TryToDateTime("02/15/yyyy"));
+            Assert.AreEqual(null, TryToDateTime("15/02/2017 11:33:54"));
+            Assert.AreEqual(null, TryToDateTime("02/32/2017 11:33:54"));
+            Assert.AreEqual(null, TryToDateTime("02/15/2017 24:33:54"));
+            Assert.AreEqual(null, TryToDateTime("02/15/2017 11:60:54"));
+            Assert.AreEqual(null, TryToDateTime("02/15/2017 11:33:60"));
 
             // Leap year handling
             Assert.AreEqual(new DateTime(2016, 02, 29, 0, 0, 0, DateTimeKind.Utc), TryToDateTime("2016-02-29"));
