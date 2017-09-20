@@ -310,7 +310,7 @@ export default class Search extends EventedComponent {
                     allBasics={this.props.allBasics}
                     counts={this.state.counts}
                     currentTable={this.state.currentTable}
-                    listingDataContent={this.state.listingData}
+                    detailsAndQuery={this.state.listingData}
                     query={this.state.query}
                     queryUrl={queryUrl}
                     thisUrl={this.buildThisUrl(false)}
