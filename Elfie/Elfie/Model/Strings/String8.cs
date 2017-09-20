@@ -300,6 +300,36 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         }
 
         /// <summary>
+        ///  Return the portion of the String8 before the first occurrence of 'c',
+        ///  or the whole value if 'b' is not in the String8.
+        /// </summary>
+        /// <param name="value">String8 to scan</param>
+        /// <param name="c">Byte to find</param>
+        /// <returns>value before first occurrence of 'c', or all of value if 'c' not found</returns>
+        public String8 BeforeFirst(byte c)
+        {
+            if (this.IsEmpty()) return this;
+            int index = this.IndexOf(c);
+            if (index < 0) return this;
+            return this.Substring(0, index);
+        }
+
+        /// <summary>
+        ///  Return the portion of the String8 after the first occurrence of 'c',
+        ///  or the whole value if 'b' is not in the String8.
+        /// </summary>
+        /// <param name="value">String8 to scan</param>
+        /// <param name="c">Byte to find</param>
+        /// <returns>value after first occurrence of 'c', or all of value if 'c' not found</returns>
+        public String8 AfterFirst(byte c)
+        {
+            if (this.IsEmpty()) return this;
+            int index = this.IndexOf(c);
+            if (index < 0) return this;
+            return this.Substring(index + 1);
+        }
+
+        /// <summary>
         ///  Return the last index at which the passed character appears in this string.
         /// </summary>
         /// <param name="c">Character to find</param>

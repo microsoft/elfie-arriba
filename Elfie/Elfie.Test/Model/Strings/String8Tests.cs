@@ -155,6 +155,25 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
         }
 
         [TestMethod]
+        public void String8_BeforeFirstAfterFirst()
+        {
+            string binaryName = "System.Collections.Generic.List!";
+            String8 binaryName8 = String8.Convert(binaryName, new byte[String8.GetLength(binaryName)]);
+
+            Assert.AreEqual("System", binaryName8.BeforeFirst((byte)'.').ToString());
+            Assert.AreEqual("Collections.Generic.List!", binaryName8.AfterFirst((byte)'.').ToString());
+
+            Assert.AreEqual(binaryName8, binaryName8.BeforeFirst((byte)'|').ToString());
+            Assert.AreEqual(binaryName8, binaryName8.AfterFirst((byte)'|').ToString());
+
+            Assert.AreEqual(string.Empty, String8.Empty.BeforeFirst((byte)'.').ToString());
+            Assert.AreEqual(string.Empty, String8.Empty.AfterFirst((byte)'.').ToString());
+
+            Assert.AreEqual(string.Empty, String8.Empty.BeforeFirst((byte)'S').ToString());
+            Assert.AreEqual(string.Empty, String8.Empty.AfterFirst((byte)'!').ToString());
+        }
+
+        [TestMethod]
         public void String8_Prefix()
         {
             String8 full = String8.Convert("One.Two.Three", new byte[13]);
