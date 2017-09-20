@@ -51,8 +51,9 @@ export default class Suggestions extends EventedComponent {
             return;
         }
 
+        const t = this.props.userSelectedTable ? `t=${encodeURIComponent(this.props.userSelectedTable)}&` : ""
         this.lastRequest = jsonQuery(
-            configuration.url + "/suggest?q=" + encodeURIComponent(this.props.query),
+            configuration.url + `/suggest?${t}q=` + encodeURIComponent(this.props.query),
             data => {
                 this.props.completedChanged(data.content.complete);
                 this.suggestions = data.content;

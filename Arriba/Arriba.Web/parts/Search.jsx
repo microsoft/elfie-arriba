@@ -310,7 +310,7 @@ export default class Search extends EventedComponent {
                     allBasics={this.props.allBasics}
                     counts={this.state.counts}
                     currentTable={this.state.currentTable}
-                    listingDataContent={this.state.listingData}
+                    detailsAndQuery={this.state.listingData}
                     query={this.state.query}
                     queryUrl={queryUrl}
                     thisUrl={this.buildThisUrl(false)}
@@ -320,6 +320,7 @@ export default class Search extends EventedComponent {
                     <SearchBox query={this.state.query}
                         parsedQuery={this.state.counts && this.state.counts.parsedQuery}
                         queryChanged={this.queryChanged.bind(this)}
+                        userSelectedTable={this.state.userSelectedTable}
                         loading={this.state.loading} />
 
                 </Tabs>

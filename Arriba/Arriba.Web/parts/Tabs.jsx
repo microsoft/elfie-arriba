@@ -7,11 +7,11 @@ export default class Tabs extends React.Component {
     }
     render() {
         const succeeded =
-            this.props.listingDataContent &&
-            this.props.listingDataContent.details.succeeded;
+            this.props.detailsAndQuery &&
+            this.props.detailsAndQuery.details.succeeded;
         const where =
-            this.props.listingDataContent &&
-            this.props.listingDataContent.query.where;
+            this.props.detailsAndQuery &&
+            this.props.detailsAndQuery.query.where;
 
         const tables =
             this.props.counts &&
@@ -26,7 +26,7 @@ export default class Tabs extends React.Component {
             <div className="tableTabs">
                 {tables.map(t => <span
                     key={t.tableName}
-                    className={`tableTab ${this.props.currentTable === t.tableName ? "current" : ""} ${t.locked ? "locked" : ""}`} 
+                    className={`tableTab ${this.props.currentTable === t.tableName ? "current" : ""} ${t.locked ? "locked" : ""}`}
                     onClick={e => this.props.onSelectedTableChange(t.tableName)}>
                     {t.tableName} <b>{t.allowedToRead === false /* no lock icon if undefined */
                         ? <span className="icon-lock icon" />
