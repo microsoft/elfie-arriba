@@ -206,13 +206,26 @@ export default class Search extends EventedComponent {
         if (!this.state.query ||
             !this.state.currentTable ||
             !Object.keys(this.state.currentTableSettings).length) {
-            this.setState({ listingData: undefined, hasMoreData: undefined })
+            this.setState({ queryUrl: undefined, listingData: undefined, hasMoreData: undefined })
             return;
         };
         var rowCount = 50 * (this.state.page + 1);
+
+        var parameters = Object.merge(
+            {
+                action: "select",
+                q: this.state.query,
+                ob: this.state.currentTableSettings.sortColumn,
+                so: this.state.currentTableSettings.sortOrder,
+                s: 0
+            },
+            arrayToObject(this.state.currentTableSettings.columns, `c`)
+        );
+        const queryUrl =  `${configuration.url}/table/${this.state.currentTable}${buildUrlParameters(parameters)}`;
+
         this.jsonQueryWithError(
-            this.buildQueryUrl() + "&h=%CF%80&t=" + rowCount,
-            data => this.setState({ listingData: data.content, hasMoreData: data.content.total > rowCount })
+            queryUrl + "&h=%CF%80&t=" + rowCount,
+            data => this.setState({ queryUrl: queryUrl, listingData: data.content, hasMoreData: data.content.total > rowCount })
         );
     }
     getDetails() {
@@ -268,19 +281,6 @@ export default class Search extends EventedComponent {
             parameters
         );
     }
-    buildQueryUrl() {
-        var parameters = Object.merge(
-            {
-                action: "select",
-                q: this.state.query,
-                ob: this.state.currentTableSettings.sortColumn,
-                so: this.state.currentTableSettings.sortOrder,
-                s: 0
-            },
-            arrayToObject(this.state.currentTableSettings.columns, `c`)
-        );
-        return `${configuration.url}/table/${this.state.currentTable}${buildUrlParameters(parameters)}`;
-    }
     buildThisUrl(includeOpen) {
         var userTableSettings = this.state.userTableSettings || {};
         var parameters = Object.merge(
@@ -300,7 +300,6 @@ export default class Search extends EventedComponent {
 
         var table = this.props.allBasics && this.state.currentTable && this.props.allBasics[this.state.currentTable] || undefined;
         var customDetailsView = (configuration.customDetailsProviders && configuration.customDetailsProviders[this.state.currentTable]) || ResultDetails;
-        const queryUrl = this.buildQueryUrl();
 
         return <div ref="viewport" className="viewport" onKeyDown={this.onKeyDown.bind(this)}
             onDragEnter={e => {
@@ -314,7 +313,7 @@ export default class Search extends EventedComponent {
                     currentTable={this.state.currentTable}
                     detailsAndQuery={this.state.listingData}
                     query={this.state.query}
-                    queryUrl={queryUrl}
+                    queryUrl={this.state.queryUrl}
                     thisUrl={this.buildThisUrl(false)}
                     onSelectedTableChange={name => this.setState({ userSelectedTable: name })}
                     refreshAllBasics={this.props.refreshAllBasics}>
