@@ -587,11 +587,11 @@ export default class Grid extends EventedComponent {
                 <SearchHeader>
                     <Tabs
                         allBasics={this.props.allBasics}
-                        counts={this.state.counts}
+                        refreshAllBasics={this.props.refreshAllBasics}
                         currentTable={this.state.currentTable}
-                        query={this.state.query}
                         onSelectedTableChange={name => this.setState({ userSelectedTable: name })}
-                        refreshAllBasics={this.props.refreshAllBasics}>
+                        query={this.state.query}
+                        counts={this.state.counts}>
 
                         <SearchBox query={this.state.query}
                             parsedQuery={this.state.counts && this.state.counts.parsedQuery}

@@ -309,13 +309,13 @@ export default class Search extends EventedComponent {
             <SearchHeader>
                 <Tabs
                     allBasics={this.props.allBasics}
-                    counts={this.state.counts}
-                    currentTable={this.state.currentTable}
+                    refreshAllBasics={this.props.refreshAllBasics}
                     query={this.state.query}
                     queryUrl={this.state.queryUrl}
                     thisUrl={this.buildThisUrl(false)}
+                    currentTable={this.state.currentTable}
                     onSelectedTableChange={name => this.setState({ userSelectedTable: name })}
-                    refreshAllBasics={this.props.refreshAllBasics}>
+                    counts={this.state.counts}>
 
                     <SearchBox query={this.state.query}
                         parsedQuery={this.state.counts && this.state.counts.parsedQuery}
