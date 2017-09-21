@@ -100,6 +100,7 @@ export default class Search extends EventedComponent {
             var indexChange = (e.key === "ArrowDown" ? 1 : -1);
             this.refs.list.selectByRelativeIndex(indexChange);
             e.stopPropagation();
+            e.preventDefault(); // Prevent viewport scroll.
         }
     }
     onResort(sortColumn, sortOrder) {
