@@ -25,6 +25,8 @@
     thead td {
         overflow: visible; // Undo.
 
+        &:hover { background-color: hsl(0, 0, 88%); } // Darken the default #EEEEEE.
+
         & > .th-inner {
             display: flex;
 
@@ -43,12 +45,11 @@
     tr {
         cursor: pointer;
 
-        &:hover { background-color: $light; }
+        &:hover { background-color: lighten($light, 40%); }
 
         &.selected {
             color: white;
             background-color: $light;
-            font-weight: bold;
         }
     }
 
@@ -57,6 +58,10 @@
         padding: 6px;
         max-width: 400px; // Acts like min-width.
         @include ellipsis;
+
+        &:last-child {
+            border-right-width: 0;
+        }
     }
 }
 

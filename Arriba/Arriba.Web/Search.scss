@@ -523,8 +523,7 @@ a:visited:hover {
 /* Make the resizer take the full container space, grey, on top of other content */
 .resizer {
     box-sizing: border-box;
-    opacity: 0.2;
-    background: #000;
+    background: #ccc; // Matches .resultTable td border color.
     z-index: 1;
     background-clip: padding-box;
 
@@ -537,8 +536,8 @@ a:visited:hover {
     &.vertical {
         width: 11px;
         margin: 0px -5px;
-        border-left: 5px solid rgba(255, 255, 255, 0);
-        border-right: 5px solid rgba(255, 255, 255, 0);
+        border-left: 5px solid transparent;
+        border-right: 5px solid transparent;
         cursor: col-resize;
     }
 
