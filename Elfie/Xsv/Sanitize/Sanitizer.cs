@@ -7,8 +7,6 @@ using System.Collections.Generic;
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.CodeAnalysis.Elfie.Serialization;
 
-using XsvConcat;
-
 namespace Xsv.Sanitize
 {
     public class Sanitizer

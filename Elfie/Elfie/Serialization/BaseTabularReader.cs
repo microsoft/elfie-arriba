@@ -126,23 +126,24 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
 
         /// <summary>
         ///  Look up the column index of a given column by name.
-        ///  Will only work if the TSV had a header row.
+        ///  Will only work if the file had a header row.
         ///  Column names are case insensitive.
-        ///  Will throw if the column name wasn't found.
+        ///  Will set to -1 and return false if not found.
         /// </summary>
         /// <param name="columnNameOrIndex">Column name for which to find column index, or already an integer index</param>
-        /// <returns>Index of column in TSV. Throws if column isn't found or no header row was read.</returns>
-        public int ColumnIndex(string columnNameOrIndex)
+        /// <param name="columnIndex">Column Index of column if found; -1 otherwise</param>
+        /// <returns>True if column found; False otherwise</returns>
+        public bool TryGetColumnIndex(string columnNameOrIndex, out int columnIndex)
         {
-            int columnIndex = 0;
-
             // Try to find the column as a name
-            if (_columnHeadings.TryGetValue(columnNameOrIndex, out columnIndex)) return columnIndex;
+            if (_columnHeadings.TryGetValue(columnNameOrIndex, out columnIndex)) return true;
 
             // See if the column is a parsable integer index
-            if (int.TryParse(columnNameOrIndex, out columnIndex) && columnIndex >= 0 && _columnHeadings.Count > columnIndex) return columnIndex;
+            if (int.TryParse(columnNameOrIndex, out columnIndex) && columnIndex >= 0 && _columnHeadings.Count > columnIndex) return true;
 
-            throw new ColumnNotFoundException(String.Format("Column Name \"{0}\" not found in file.\nKnown Columns: \"{1}\"", columnNameOrIndex, String.Join(", ", _columnHeadings.Keys)));
+            // Not found, so set to -1
+            columnIndex = -1;
+            return false;
         }
 
         /// <summary>

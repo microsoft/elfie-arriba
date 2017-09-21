@@ -49,5 +49,26 @@ namespace Xsv
                 }
             }
         }
+
+        /// <summary>
+        ///  Save a set of embedded resource streams to a folder.
+        /// </summary>
+        /// <param name="streamFolderName">Stream Folder Name (AssemblyName.Folders)</param>
+        /// <param name="folderPath">Relative Folder Path to save streams to</param>
+        /// <param name="asm">Assembly to read from, defaults to Xsv</param>
+        public static void SaveStreamFolderTo(string streamFolderName, string folderPath, Assembly asm = null)
+        {
+            if (asm == null) asm = Assembly.GetExecutingAssembly();
+
+            Directory.CreateDirectory(folderPath);
+            foreach(string streamName in asm.GetManifestResourceNames())
+            {
+                if(streamName.StartsWith(streamFolderName))
+                {
+                    string fileName = streamName.Substring(streamFolderName.Length + 1);
+                    SaveStreamTo(streamName, Path.Combine(folderPath, fileName), asm);
+                }
+            }
+        }
     }
 }

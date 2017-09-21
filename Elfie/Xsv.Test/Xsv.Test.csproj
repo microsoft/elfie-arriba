@@ -50,6 +50,7 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="OnlyLatest\OnlyLatestTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Sanitize\SampleMappers.cs" />
     <Compile Include="Sanitize\SanitizerTests.cs" />
@@ -73,6 +74,10 @@
     <None Include="App.config" />
     <EmbeddedResource Include="Sanitize\SanitizeSampleSource.csv" />
     <EmbeddedResource Include="Sanitize\SanitizeSampleSource.sanispec" />
+    <EmbeddedResource Include="OnlyLatest\Inputs\20170901.csv" />
+    <EmbeddedResource Include="OnlyLatest\Inputs\20170902.csv" />
+    <EmbeddedResource Include="OnlyLatest\Inputs\20170903.csv" />
+    <EmbeddedResource Include="OnlyLatest\OnlyLatest.Merged.Expected.csv" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

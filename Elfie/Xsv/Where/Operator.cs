@@ -3,8 +3,6 @@
 
 using System;
 
-using XsvConcat;
-
 namespace Xsv.Where
 {
     /// <summary>
