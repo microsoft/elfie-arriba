@@ -128,7 +128,7 @@ class Index extends EventedComponent {
                     thisUrl={this.state.thisUrl}
 
                     currentTable={this.state.currentTable}
-                    onSelectedTableChange={name => this.setState({ userSelectedTable: name })}
+                    userSelectedTableChanged={name => this.setState({ userSelectedTable: name })}
 
                     counts={this.state.counts}>
 

@@ -27,7 +27,7 @@ export default class Tabs extends React.Component {
                 {tables.map(t => <span
                     key={t.tableName}
                     className={`tableTab ${this.props.currentTable === t.tableName ? "current" : ""} ${t.locked ? "locked" : ""}`}
-                    onClick={e => this.props.onSelectedTableChange(t.tableName)}>
+                    onClick={e => this.props.userSelectedTableChanged(t.tableName)}>
                     {t.tableName} <b>{t.allowedToRead === false /* no lock icon if undefined */
                         ? <span className="icon-lock icon" />
                         : t.succeeded ? t.count.toLocaleString() : "‒"}</b>
@@ -35,7 +35,7 @@ export default class Tabs extends React.Component {
                         e.stopPropagation();
                         xhr(`table/${tableResult.tableName}/delete`)
                             .then(() => this.props.refreshAllBasics(() => {
-                                this.props.onSelectedTableChange()
+                                this.props.userSelectedTableChanged()
                             }));
                     }}>✕</span>}
                 </span>)}
