@@ -556,7 +556,7 @@ export default class Grid extends EventedComponent {
         }
 
         return (
-            <div className="viewport" onKeyDown={this.handleKeyDown}>
+            <div className="viewport">
                 <div className="middle">
                     <Mode query={this.props.query} currentTable={this.props.currentTable} />
                     <div className="center">
