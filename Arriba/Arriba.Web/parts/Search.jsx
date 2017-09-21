@@ -261,7 +261,7 @@ export default class Search extends EventedComponent {
                                     query: this.props.query,
                                     data: this.state.selectedItemData,
                                     onClose: () => this.setState({ userSelectedId: undefined }),
-                                    onAddClause: (name, value) => queryChanged(`${this.props.query} AND [${name}]="${value}"`)
+                                    onAddClause: (name, value) => this.props.queryChanged(`${this.props.query} AND [${name}]="${value}"`)
                                 })}
                             </div>
                         </SplitPane>
