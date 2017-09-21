@@ -12,8 +12,11 @@ export default class Tabs extends React.Component {
 
         const tables =
             this.props.counts &&
-            this.props.counts.resultsPerTable ||
-            Object.map(this.props.allBasics, (k, v) => ({ tableName: k, count: v.rowCount, succeeded: true, locked: true }));
+                this.props.counts.resultsPerTable ||
+            Object.keys(this.props.allBasics).length &&
+                Object.map(this.props.allBasics, (k, v) => ({ tableName: k, count: v.rowCount, succeeded: true, locked: true })) ||
+            [{ tableName: "Loading...", succeeded: false, locked: true }]; // Solely to prevent jumpy re-layout when allBasics comes in.
+
         tables.forEach(t => t.canAdminister =
             this.props.allBasics &&
             this.props.allBasics[t.tableName] &&

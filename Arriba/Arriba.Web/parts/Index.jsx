@@ -33,7 +33,7 @@ class Index extends EventedComponent {
 
         this.state = {
             blockingErrorStatus: null,
-            allBasics: [],
+            allBasics: {},
             query: query,
             debouncedQuery: query, // Required to trigger getCounts.
             currentTable: table,
