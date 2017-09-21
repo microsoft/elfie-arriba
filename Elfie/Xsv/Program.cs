@@ -12,8 +12,9 @@ using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.CodeAnalysis.Elfie.Serialization;
 
 using Xsv.Where;
+using System.IO;
 
-namespace XsvConcat
+namespace Xsv
 {
     public class Program
     {
@@ -51,6 +52,9 @@ namespace XsvConcat
 
     Xsv onlyIn <input> <output> <onlyInFilePath> <onlyInColumnIdentifier>
      Copy rows from input to output if the 'onlyInColumnIdentifier' was also found in 'onlyInFilePath'.
+
+    Xsv onlyLatest <inputFolder> <outputFile> <idColumnIdentifier>
+     Copy the last row for each ID from the input folder to the output file, walking inputs alphabetically.
 
     Xsv sanitize <input> <output> <specFile> <hashKey>
      Sanitize (re-map identifying values) from input to output using specFile rules.
@@ -128,6 +132,11 @@ namespace XsvConcat
                             if (args.Length < 5) throw new UsageException("onlyIn requires a second input file and column identifier");
                             Trace.WriteLine(String.Format("Writing \"{0}\" values into \"{1}\" where \"{2}\" also had the same \"{3}\"...", args[1], args[2], args[3], args[4]));
                             OnlyIn(args[1], args[2], args[3], args[4]);
+                            break;
+                        case "onlylatest":
+                            if (args.Length < 4) throw new UsageException("onlyLatest requires a, input folder, output file, and column identifier");
+                            Trace.WriteLine(String.Format("Copying latest rows by \"{2}\" from \"{0}\" into \"{1}\"...", args[1], args[2], args[3]));
+                            OnlyLatest(args[1], args[2], args[3]);
                             break;
                         case "sanitize":
                             if (args.Length < 5) throw new UsageException("sanitize requires input, output, specFile, hashKey");
@@ -376,6 +385,86 @@ namespace XsvConcat
             }
         }
 
+        private static void OnlyLatest(string inputFolderPath, string outputFilePath, string idColumnIdentifier)
+        {
+            String8Block block = new String8Block();
+            Dictionary<String8, Tuple<string, int>> latestFileAndRowByID = new Dictionary<String8, Tuple<string, int>>();
+            IReadOnlyList<string> writerColumns = null;
+
+            // Walk the input files to figure out the latest copy of each ID
+            Trace.WriteLine($"Identifying latest {idColumnIdentifier} in all files in {inputFolderPath}...");
+            int rowCountRead = 0;
+            foreach(string inputFilePath in Directory.GetFiles(inputFolderPath))
+            {
+                using (ITabularReader reader = TabularFactory.BuildReader(inputFilePath))
+                {
+                    int idColumnIndex = reader.ColumnIndex(idColumnIdentifier);
+
+                    while(reader.NextRow())
+                    {
+                        rowCountRead++;
+                        String8 id = reader.Current(idColumnIndex).ToString8();
+                        id.ToUpperInvariant();
+
+                        // Record the file and row containing this ID, overwriting previous entries
+                        latestFileAndRowByID[block.GetCopy(id)] = new Tuple<string, int>(inputFilePath, reader.RowCountRead);
+                    }
+
+                    // Capture the columns from the last CSV to write
+                    writerColumns = reader.Columns;
+                }
+            }
+            Trace.WriteLine($"Scan Complete. {rowCountRead:n0} rows read; {latestFileAndRowByID.Count:n0} distinct IDs found.");
+
+            using (ITabularWriter writer = TabularFactory.BuildWriter(outputFilePath))
+            {
+                writer.SetColumns(writerColumns);
+                int[] writerColumnIndexInReader = new int[writerColumns.Count];
+
+                foreach (string inputFilePath in Directory.GetFiles(inputFolderPath))
+                {
+                    using (ITabularReader reader = TabularFactory.BuildReader(inputFilePath))
+                    {
+                        // Look up each output column's position in the input file
+                        for (int i = 0; i < writerColumns.Count; ++i)
+                        {
+                            reader.TryGetColumnIndex(writerColumns[i], out writerColumnIndexInReader[i]);
+                        }
+
+                        int idColumnIndex = reader.ColumnIndex(idColumnIdentifier);
+
+                        while (reader.NextRow())
+                        {
+                            String8 id = reader.Current(idColumnIndex).ToString8();
+                            id.ToUpperInvariant();
+
+                            // Copy this row to the output file, *if* it's the latest for this ID
+                            Tuple<string, int> latestForID = latestFileAndRowByID[id];
+                            if(latestForID.Item1 == inputFilePath && latestForID.Item2 == reader.RowCountRead)
+                            {
+                                for (int i = 0; i < writerColumns.Count; ++i)
+                                {
+                                    int readerColumnIndex = writerColumnIndexInReader[i];
+                                    if(readerColumnIndex >= 0 && readerColumnIndex < reader.CurrentRowColumns)
+                                    {
+                                        writer.Write(reader.Current(i).ToString8());
+                                    }
+                                    else
+                                    {
+                                        writer.Write(String8.Empty);
+                                    }
+                                }
+
+                                writer.NextRow();
+                            }
+                        }
+                    }
+                }
+
+                WriteSizeSummary(null, writer);
+            }
+        }
+
         private static void NotStartsWith(string inputFilePath, string outputFilePath, string valueColumnIdentifier, string nameColumnIdentifier)
         {
             using (ITabularReader reader = TabularFactory.BuildReader(inputFilePath))
@@ -566,25 +655,30 @@ namespace XsvConcat
 
         private static void WriteSizeSummary(ITabularReader reader, ITabularWriter writer)
         {
-            long bytesRead = reader.BytesRead;
+            if (reader != null)
+            {
+                long bytesRead = reader.BytesRead;
+                if (bytesRead <= 0)
+                {
+                    Trace.WriteLine(String.Format("Read: {0:n0} rows.", reader.RowCountRead));
+                }
+                else
+                {
+                    Trace.WriteLine(String.Format("Read: {0}, {1:n0} rows.", bytesRead.SizeString(), reader.RowCountRead));
+                }
+            }
 
-            if (bytesRead <= 0)
+            if (writer != null)
             {
-                Trace.WriteLine(String.Format("Read: {0:n0} rows.", reader.RowCountRead));
-            }
-            else
-            {
-                Trace.WriteLine(String.Format("Read: {0}, {1:n0} rows.", bytesRead.SizeString(), reader.RowCountRead));
-            }
-
-            long bytesWritten = writer.BytesWritten;
-            if (bytesWritten <= 0)
-            {
-                Trace.WriteLine(String.Format("Wrote: {0:n0} rows.", writer.RowCountWritten));
-            }
-            else
-            {
-                Trace.WriteLine(String.Format("Wrote: {0}, {1:n0} rows.", bytesWritten.SizeString(), writer.RowCountWritten));
+                long bytesWritten = writer.BytesWritten;
+                if (bytesWritten <= 0)
+                {
+                    Trace.WriteLine(String.Format("Wrote: {0:n0} rows.", writer.RowCountWritten));
+                }
+                else
+                {
+                    Trace.WriteLine(String.Format("Wrote: {0}, {1:n0} rows.", bytesWritten.SizeString(), writer.RowCountWritten));
+                }
             }
         }
 

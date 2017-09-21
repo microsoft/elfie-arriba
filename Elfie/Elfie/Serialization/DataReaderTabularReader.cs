@@ -58,17 +58,21 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             get { return -1; }
         }
 
-        public int ColumnIndex(string columnNameOrIndex)
+        public bool TryGetColumnIndex(string columnNameOrIndex, out int columnIndex)
         {
-            int columnIndex;
-            if (int.TryParse(columnNameOrIndex, out columnIndex)) return columnIndex;
+            if (int.TryParse(columnNameOrIndex, out columnIndex)) return true;
 
             for (int i = 0; i < this.Columns.Count; ++i)
             {
-                if (String.Compare(columnNameOrIndex, this.Columns[i], true) == 0) return i;
+                if (String.Compare(columnNameOrIndex, this.Columns[i], true) == 0)
+                {
+                    columnIndex = i;
+                    return true;
+                }
             }
 
-            throw new ColumnNotFoundException(String.Format("Column Name \"{0}\" not found in file.\nKnown Columns: \"{1}\"", columnNameOrIndex, String.Join(", ", _columnNames)));
+            columnIndex = -1;
+            return false;
         }
 
         public bool NextRow()

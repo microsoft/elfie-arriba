@@ -14,8 +14,6 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using Xsv.Sanitize;
 
-using XsvConcat;
-
 namespace Xsv.Test
 {
     [TestClass]

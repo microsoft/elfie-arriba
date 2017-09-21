@@ -51,11 +51,12 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         /// <summary>
         ///  Look up the column index of a given column by name.
         ///  Column names are case insensitive.
-        ///  Will throw if the column name wasn't found.
+        ///  Will set to -1 and return false if not found.
         /// </summary>
         /// <param name="columnNameOrIndex">Column name for which to find column index, or already an integer index</param>
-        /// <returns>Index of column in source. Throws if the column wasn't found.</returns>
-        int ColumnIndex(string columnNameOrIndex);
+        /// <param name="columnIndex">Column Index of column if found; -1 otherwise</param>
+        /// <returns>True if column found; False otherwise</returns>
+        bool TryGetColumnIndex(string columnNameOrIndex, out int columnIndex);
 
         /// <summary>
         ///  Return a cell for the current row.
@@ -103,6 +104,22 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         {
             if (reader.CurrentRowColumns > index) return reader.Current(index);
             return String8TabularValue.Empty;
+        }
+
+        /// <summary>
+        ///  Look up the column index of a given column by name.
+        ///  Will only work if the file had a header row.
+        ///  Column names are case insensitive.
+        ///  Will throw if the column name wasn't found.
+        /// </summary>
+        /// <param name="columnNameOrIndex">Column name for which to find column index, or already an integer index</param>
+        /// <returns>Index of column in TSV. Throws if column isn't found or no header row was read.</returns>
+        public static int ColumnIndex(this ITabularReader reader, string columnNameOrIndex)
+        {
+            int columnIndex;
+            if (reader.TryGetColumnIndex(columnNameOrIndex, out columnIndex)) return columnIndex;
+
+            throw new ColumnNotFoundException(String.Format("Column Name \"{0}\" not found in file.\nKnown Columns: \"{1}\"", columnNameOrIndex, String.Join(", ", reader.Columns)));
         }
     }
 }

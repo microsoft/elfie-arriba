@@ -4,8 +4,6 @@
 using System;
 using System.Collections.Generic;
 
-using XsvConcat;
-
 namespace Xsv.Sanitize
 {
     public interface ISanitizerProvider

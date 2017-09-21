@@ -12,8 +12,6 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using Xsv.Where;
 
-using XsvConcat;
-
 namespace Xsv.Test.Where
 {
     [TestClass]
