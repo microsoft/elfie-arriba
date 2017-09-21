@@ -96,9 +96,8 @@ export default class Search extends EventedComponent {
             e.stopPropagation();
         }
 
-        // Up/Down: Open Previous/Next
-        if (e.keyCode === 40 || e.keyCode === 38) {
-            var indexChange = (e.keyCode === 40 ? 1 : -1);
+        if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+            var indexChange = (e.key === "ArrowDown" ? 1 : -1);
             this.refs.list.selectByRelativeIndex(indexChange);
             e.stopPropagation();
         }
