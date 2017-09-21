@@ -3,11 +3,7 @@ import "!script-loader!../js/utilities.js";
 import "../js/utilities.jsx";
 
 import EventedComponent from "./EventedComponent";
-import Mru from "./Mru";
 import QueryStats from "./QueryStats";
-import SearchHeader from "./SearchHeader";
-import Tabs from "./Tabs";
-import SearchBox from "./SearchBox";
 import Mode from "./Mode";
 import Automator from "./Automator";
 import DropShield from "./DropShield";
@@ -33,31 +29,12 @@ const arrayToObject = (array, prefix) => {
 export default class Search extends EventedComponent {
     constructor(props) {
         super(props);
-        this.mru = new Mru();
-
-        // For schema detection and possible migration.
-        localStorage.setItem("version", 1);
-
-        var table = this.props.params.t;
-        var columns = getParameterArrayForPrefix(this.props.params, "c");
-
-        if (table) {
-            localStorage.mergeJson("table-" + table, ({
-                columns: columns.emptyToUndefined(),
-                sortColumn: this.props.params.ob || undefined, // Filter out empty strings.
-                sortOrder: this.props.params.so || undefined
-            }).cleaned);
-        }
 
         const query = this.props.params.q || "";
         this.state = {
             tables: [],
             page: 0,
-            query: query,
-            debouncedQuery: query, // Required to trigger getCounts.
-            currentTable: table,
             currentTableSettings: {}, // {} denote no state, do not set to null.
-            userSelectedTable: table,
             userSelectedId: this.props.params.open
         };
 
@@ -78,54 +55,41 @@ export default class Search extends EventedComponent {
         const diffProps = Object.diff(prevProps, this.props);
         const diffState = Object.diff(prevState, this.state);
 
-        if (diffState.hasAny("debouncedQuery")) {
-            this.getCounts();
-        }
-
-        if (diffState.hasAny("userSelectedTable", "counts")) {
-            const currentTable = this.state.userSelectedTable || this.state.counts && this.state.counts.resultsPerTable[0].tableName;
-            this.setState({ currentTable: currentTable });
-        }
-
         // Do not wipe userSelectedId if currentTable is going from `undefined` to defined.
         // Scnario: On page load with open=something and table inferred from query.
-        if (diffState.hasAny("currentTable") && prevState.currentTable) {
+        if (diffProps.hasAny("currentTable") && prevProps.currentTable) {
             this.setState({ userSelectedId: undefined });
         }
 
         // Cross-references currentTable with allBasics, configuration, and localStorage to determine
         // currentTableSettings (columns, sortColumn, sortOrder).
-        if (diffProps.hasAny("allBasics") || diffState.hasAny("currentTable")) {
+        if (diffProps.hasAny("allBasics", "currentTable")) {
             this.getTableSettings();
         }
 
         // Technically depends on "currentTable" however listening to "currentTableSettings" is
         // sufficient as the former is currently guaranteed to trigger the latter.
-        if (diffState.hasAny("debouncedQuery", "currentTableSettings", "page")) {
+        if (diffProps.hasAny("debouncedQuery") || diffState.hasAny("currentTableSettings", "page")) {
             this.getListings();
         }
 
         // Watching currentTable as sometimes inferred from the query.
         // Not watching for query changes (to match old behavior), therefore highlighting is not currently being updated.
         // allBasics + currentTable = idColumn, which is needed for the query.
-        if (diffProps.hasAny("allBasics") || diffState.hasAny("currentTable", "userSelectedId")) {
+        if (diffProps.hasAny("allBasics", "currentTable") || diffState.hasAny("userSelectedId")) {
             this.getDetails();
         }
 
-        if (diffState.hasAny("query", "userSelectedTable", "userTableSettings", "userSelectedId", "currentTable")) {
+        if (diffProps.hasAny("debouncedQuery", "userSelectedTable", "currentTable") || diffState.hasAny("userTableSettings", "userSelectedId")) {
             var url = this.buildThisUrl(true);
             if (url !== window.location.href) {
+                this.props.thisUrlChanged(url);
                 history.pushState("", "", url);
             }
         }
     }
 
     onKeyDown(e) {
-        // Backspace: Clear state *if query empty*
-        if (e.keyCode === 8 && !this.state.query && (this.state.userSelectedTable || this.state.userSelectedId)) {
-            this.setState({ userSelectedTable: undefined });
-        }
-
         // ESC: Close
         if (e.keyCode === 27) {
             this.setState({ userSelectedId: undefined });
@@ -140,46 +104,20 @@ export default class Search extends EventedComponent {
         }
     }
     onResort(sortColumn, sortOrder) {
-        localStorage.mergeJson("table-" + this.state.currentTable, {
+        localStorage.mergeJson("table-" + this.props.currentTable, {
             sortColumn: sortColumn,
             sortOrder: sortOrder
         });
-        this.setState({ userSelectedTable: this.state.currentTable });
+        this.props.userSelectedTableChanged(this.props.currentTable);
     }
     onSetColumns(columns, table) {
-        table = table || this.state.currentTable;
+        table = table || this.props.currentTable;
         localStorage.mergeJson("table-" + table, { columns: columns });
-        this.setState({ userSelectedTable: table });
-    }
-    queryChanged(value) {
-        // Only query every 250 milliseconds while typing
-        this.setState({ query: value, userSelectedId: undefined });
-        this.timer = this.timer || window.setTimeout(() => this.setState({ debouncedQuery: this.state.query }), 250);
+        this.props.userSelectedTableChanged(table);
     }
 
-    getCounts(then) {
-        // On query, ask for the count from every table.
-        this.timer = null;
-
-        if (!this.state.query) {
-            this.setState({ counts: undefined, loading: false });
-            return;
-        }
-
-        // Notify any listeners (such as the loading animation).
-        this.setState({ loading: true });
-
-        // Get the count of matches from each accessible table
-        xhr("allCount", { q: this.state.query })
-            .then(data => {
-                this.setState({ counts: data, loading: false }, then);
-
-                data.parsedQuery = data.parsedQuery.replace(/\[\*\]:/g, ""); // Other consumers want the [*] removed also.
-                this.mru.update(data.parsedQuery);
-            });
-    }
     getTableSettings() {
-        const table = this.props.allBasics[this.state.currentTable];
+        const table = this.props.allBasics[this.props.currentTable];
         if (!table) {
             this.setState({ userTableSettings: undefined });
             return;
@@ -187,20 +125,20 @@ export default class Search extends EventedComponent {
 
         // Must write to userTableSettings (and not directly to currentTableSettings) so the URL can refect this.
         // Sample schema: { columns: ["Name", "IP"], sortColumn: "IP", sortOrder: "desc" }
-        var userTableSettings = localStorage.getJson("table-" + this.state.currentTable, {});
+        var userTableSettings = localStorage.getJson("table-" + this.props.currentTable, {});
         this.setState({
             userTableSettings: userTableSettings,
             currentTableSettings: Object.merge(
                 { columns: [table.idColumn], sortColumn: table.idColumn, sortOrder: "asc" },
-                configuration.listingDefaults && configuration.listingDefaults[this.state.currentTable],
+                configuration.listingDefaults && configuration.listingDefaults[this.props.currentTable],
                 userTableSettings)
         });
     }
     getListings() {
-        if (!this.state.query ||
-            !this.state.currentTable ||
+        if (!this.props.query ||
+            !this.props.currentTable ||
             !Object.keys(this.state.currentTableSettings).length) {
-            this.setState({ queryUrl: undefined, listingData: undefined, hasMoreData: undefined })
+            this.setState({ listingData: undefined, hasMoreData: undefined })
             return;
         };
         var rowCount = 50 * (this.state.page + 1);
@@ -208,18 +146,19 @@ export default class Search extends EventedComponent {
         var parameters = Object.merge(
             {
                 action: "select",
-                q: this.state.query,
+                q: this.props.query,
                 ob: this.state.currentTableSettings.sortColumn,
                 so: this.state.currentTableSettings.sortOrder,
                 s: 0
             },
             arrayToObject(this.state.currentTableSettings.columns, `c`)
         );
-        const queryUrl =  `${configuration.url}/table/${this.state.currentTable}${buildUrlParameters(parameters)}`;
+        const queryUrl = `${configuration.url}/table/${this.props.currentTable}${buildUrlParameters(parameters)}`;
 
+        this.props.queryUrlChanged(queryUrl);
         this.jsonQueryWithError(
             queryUrl + "&h=%CF%80&t=" + rowCount,
-            data => this.setState({ queryUrl: queryUrl, listingData: data.content, hasMoreData: data.content.total > rowCount })
+            data => this.setState({ listingData: data.content, hasMoreData: data.content.total > rowCount })
         );
     }
     getDetails() {
@@ -228,23 +167,23 @@ export default class Search extends EventedComponent {
         // If there's no table don't do anything yet.
         // Unlikely to reach this function before currentTable and allBasics are set.
         // Delayed getCounts() would have to return before the other two.
-        const table = this.props.allBasics[this.state.currentTable];
+        const table = this.props.allBasics[this.props.currentTable];
         if (!table || !this.state.userSelectedId) {
             this.setState({ selectedItemData: null });
             return;
         };
 
         var detailsQuery = table.idColumn + '="' + this.state.userSelectedId + '"';
-        if (this.state.query) detailsQuery += " AND (" + this.state.query + ")"; // Query is included for term highlighting.
+        if (this.props.query) detailsQuery += " AND (" + this.props.query + ")"; // Query is included for term highlighting.
 
         // Select all columns for the selected item, with highlighting
         this.jsonQueryWithError(
-            configuration.url + "/table/" + this.state.currentTable,
+            configuration.url + "/table/" + this.props.currentTable,
             data => {
                 if (data.content.values) {
                     this.setState({ selectedItemData: arribaRowToObject(data.content.values, 0) });
                 } else {
-                    if (!this.state.query) {
+                    if (!this.props.query) {
                         this.setState({ selectedItemData: null, error: "Item '" + this.state.userSelectedId + "' not found." })
                     } else {
                         this.setState({ selectedItemData: null, userSelectedId: undefined });
@@ -279,8 +218,8 @@ export default class Search extends EventedComponent {
         var userTableSettings = this.state.userTableSettings || {};
         var parameters = Object.merge(
             {
-                t: Object.keys(userTableSettings).length ? this.state.currentTable : this.state.userSelectedTable,
-                q: this.state.query || undefined,
+                t: Object.keys(userTableSettings).length ? this.props.currentTable : this.props.userSelectedTable,
+                q: this.props.query || undefined,
                 ob: userTableSettings.sortColumn,
                 so: userTableSettings.sortOrder,
                 open: includeOpen && this.state.userSelectedId || undefined,
@@ -290,40 +229,19 @@ export default class Search extends EventedComponent {
         return `${location.protocol}//${location.host + location.pathname + buildUrlParameters(parameters)}`;
     }
     render() {
-        // Consider clearing the currentTable when the query is empty.
-
-        var table = this.props.allBasics && this.state.currentTable && this.props.allBasics[this.state.currentTable] || undefined;
-        var customDetailsView = (configuration.customDetailsProviders && configuration.customDetailsProviders[this.state.currentTable]) || ResultDetails;
+        var table = this.props.allBasics && this.props.currentTable && this.props.allBasics[this.props.currentTable] || undefined;
+        var customDetailsView = (configuration.customDetailsProviders && configuration.customDetailsProviders[this.props.currentTable]) || ResultDetails;
 
         return <div ref="viewport" className="viewport" onKeyDown={this.onKeyDown.bind(this)}
             onDragEnter={e => {
                 // Consider disabling pointer events for perf.
                 if (!this.state.dropping) this.setState({ dropping: true, file: undefined })
             }} >
-            <SearchHeader>
-                <Tabs
-                    allBasics={this.props.allBasics}
-                    refreshAllBasics={this.props.refreshAllBasics}
-                    query={this.state.query}
-                    queryUrl={this.state.queryUrl}
-                    thisUrl={this.buildThisUrl(false)}
-                    currentTable={this.state.currentTable}
-                    onSelectedTableChange={name => this.setState({ userSelectedTable: name })}
-                    counts={this.state.counts}>
-
-                    <SearchBox query={this.state.query}
-                        parsedQuery={this.state.counts && this.state.counts.parsedQuery}
-                        queryChanged={this.queryChanged.bind(this)}
-                        userSelectedTable={this.state.userSelectedTable}
-                        loading={this.state.loading} />
-
-                </Tabs>
-            </SearchHeader>
             <div className="middle">
-                <Mode query={this.state.query} currentTable={this.state.currentTable} />
+                <Mode query={this.props.query} currentTable={this.props.currentTable} />
                 <div className="center">
                     <QueryStats error={this.state.error} selectedData={this.state.listingData} />
-                    {this.state.query && table
+                    {this.props.query && table
                         ? <SplitPane split="horizontal" minSize="300" isFirstVisible={this.state.listingData} isSecondVisible={this.state.userSelectedId}>
                             <InfiniteScroll hasMoreData={this.state.hasMoreData} loadMore={() => this.setState({ page: this.state.page + 1 })}>
                                 <ResultListing ref={"list"}
@@ -339,24 +257,24 @@ export default class Search extends EventedComponent {
                             <div className="scrollable">
                                 {React.createElement(customDetailsView, {
                                     itemId: this.state.userSelectedId,
-                                    table: this.state.currentTable,
-                                    query: this.state.query,
+                                    table: this.props.currentTable,
+                                    query: this.props.query,
                                     data: this.state.selectedItemData,
                                     onClose: () => this.setState({ userSelectedId: undefined }),
-                                    onAddClause: (name, value) => this.setState({ query: `${this.state.query} AND [${name}]="${value}"` })
+                                    onAddClause: (name, value) => queryChanged(`${this.props.query} AND [${name}]="${value}"`)
                                 })}
                             </div>
                         </SplitPane>
-                        : <Start allBasics={this.props.allBasics} showHelp={this.props.params.help === "true"} queryChanged={this.queryChanged.bind(this)} />}
+                        : <Start allBasics={this.props.allBasics} showHelp={this.props.params.help === "true"} queryChanged={this.props.queryChanged} />}
                 </div>
             </div>
             <DropShield
                 dropping={this.state.dropping}
                 droppingChanged={d => this.setState({ dropping: d })}
                 existingTablenames={Object.keys(this.props.allBasics || {})}
-                queryChanged={this.queryChanged.bind(this)}
+                queryChanged={this.props.queryChanged}
                 refreshAllBasics={this.props.refreshAllBasics}
-                getCounts={this.getCounts.bind(this)}
+                getCounts={this.props.getCounts}
                 columnsChanged={this.onSetColumns.bind(this)} />
         </div>
     }

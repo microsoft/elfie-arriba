@@ -30,7 +30,13 @@ window.xhr = (path, params, body) => {
     });
 };
 
+Object.keysNoFunctions = function(o) {
+    const keys = Object.keys(o)
+    return keys.filter(k => typeof o[k] !== "function")
+}
+
 // Example: Object.diff({a: 1, b: 2, c: 3}, {b: 3, c: 3, d: 4}) >> Set(a, b, d)
+// Note: Ignores function values are they don't compare predictably.
 Object.diff = function(a, b) {
     const makeSet = iterable => {
         // IE Set.ctor doesn't take args. Must manually add.
@@ -39,7 +45,7 @@ Object.diff = function(a, b) {
         return s;
     }
 
-    const allKeys = makeSet([...Object.keys(a), ...Object.keys(b)]);
+    const allKeys = makeSet([...Object.keysNoFunctions(a), ...Object.keysNoFunctions(b)]);
     return makeSet([...allKeys.values()].filter(i => a[i] !== b[i]));
 };
 
