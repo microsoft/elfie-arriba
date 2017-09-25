@@ -6,7 +6,6 @@ import ErrorPage from "./ErrorPage";
 import SearchHeader from "./SearchHeader";
 import Tabs from "./Tabs";
 import SearchBox from "./SearchBox";
-import Mode from "./Mode";
 import Search from "./Search";
 import Grid from "./Grid";
 window.configuration = require("../configuration/Configuration.jsx").default;
@@ -39,6 +38,7 @@ class Index extends EventedComponent {
             debouncedQuery: query, // Required to trigger getCounts.
             currentTable: table,
             userSelectedTable: table,
+            mode: window.location.pathname.startsWith("/Grid.html") // false means Search, true means Grid.
         };
     }
     componentDidMount() {
@@ -116,7 +116,7 @@ class Index extends EventedComponent {
     render() {
         if (this.state.blockingErrorStatus != null) return <ErrorPage status={this.state.blockingErrorStatus} />;
 
-        const Page = window.location.pathname.startsWith("/Grid.html") ? Grid : Search;
+        const Page = this.state.mode ? Grid : Search;
         return <div className="viewport" onKeyDown={this.onKeyDown.bind(this)}>
             {this.state.error && <div className="errorBar">{this.state.error}</div>}
             <SearchHeader>
@@ -143,7 +143,19 @@ class Index extends EventedComponent {
                 </Tabs>
             </SearchHeader>
             <div className="middle">
-                <Mode query={this.state.query} currentTable={this.state.currentTable} />
+                <div className="mode">
+                    <a title="Listing" className={!this.state.mode ? "selected" : undefined}
+                        onClick={e => this.setState({ mode: false }) }><i className="icon-details"></i></a>
+                    <a title="Grid" className={this.state.mode ? "selected" : undefined}
+                        onClick={e => this.setState({ mode: true }) }><i className="icon-view-all-albums"></i></a>
+                    <span className="mode-fill"></span>
+                    <a title="Feedback" href={"mailto:" + encodeURIComponent(configuration.feedbackEmailAddresses) + "?subject=" + encodeURIComponent(configuration.toolName) + " Feedback"}>
+                        <img src="/icons/feedback.svg" alt="feedback"/>
+                    </a>
+                    <a title="Help" href="/?help=true">
+                        <img src="/icons/help.svg" alt="help"/>
+                    </a>
+                </div>
                 <Page params={this.params}
                     allBasics={this.state.allBasics}
                     refreshAllBasics={then => this.refreshAllBasics(then)}

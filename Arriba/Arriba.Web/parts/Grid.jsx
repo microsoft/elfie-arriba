@@ -320,8 +320,8 @@ export default class Grid extends EventedComponent {
     }
     componentDidMount() {
         super.componentDidMount();
-        var defaultQuery = (this.props.params.p === "default" ? configuration.gridDefault : this.props.params.p);
-        if (defaultQuery) {
+        var defaultQuery = this.props.params.p || configuration.gridDefault;
+        if (!this.props.query && defaultQuery) {
             this.selectDefaultQuery(defaultQuery);
         }
         this.componentDidUpdate({}, {});
@@ -471,8 +471,7 @@ export default class Grid extends EventedComponent {
         if (this.state.rowLabels && this.state.rowLabels.length > 0) addArrayParameters(relevantParams, "rl", this.state.rowLabels);
         if (this.state.colLabels && this.state.colLabels.length > 0) addArrayParameters(relevantParams, "cl", this.state.colLabels);
 
-        return window.location.protocol + '//' + window.location.host + window.location.pathname + buildUrlParameters(relevantParams);
-
+        return location.protocol + '//' + location.host + "/Grid.html" + buildUrlParameters(relevantParams);
     }
     render() {
         var mainContent = null;

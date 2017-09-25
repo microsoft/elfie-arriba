@@ -226,7 +226,7 @@ export default class Search extends EventedComponent {
             },
             arrayToObject(userTableSettings.columns, `c`)
         );
-        return `${location.protocol}//${location.host + location.pathname + buildUrlParameters(parameters)}`;
+        return `${location.protocol}//${location.host + "/" + buildUrlParameters(parameters)}`;
     }
     render() {
         var table = this.props.allBasics && this.props.currentTable && this.props.allBasics[this.props.currentTable] || undefined;
