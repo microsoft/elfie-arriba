@@ -118,38 +118,31 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
 
             BlockPart targetBlock = null;
 
-            // Find the Block hosting the value (if it is already here)
-            int blockIndex = _blocks.Count - 1;
-            for (; blockIndex >= 0; --blockIndex)
+            // If "first" is the last thing on the last block...
+            if(_blocks.Count > 0)
             {
-                if (first._buffer == _blocks[blockIndex].Block)
+                targetBlock = _blocks[_blocks.Count - 1];
+                if (targetBlock.Block == first._buffer && targetBlock.LengthUsed == first._index + first._length)
                 {
-                    targetBlock = _blocks[blockIndex];
-                    break;
-                }
-            }
+                    // If there's room to concatenate in place, do that
+                    if (targetBlock.Block.Length >= targetBlock.LengthUsed + delimiter.Length + second.Length)
+                    {
+                        targetBlock.LengthUsed += delimiter.WriteTo(targetBlock.Block, targetBlock.LengthUsed);
+                        targetBlock.LengthUsed += second.WriteTo(targetBlock.Block, targetBlock.LengthUsed);
+                        return new String8(first._buffer, first._index, targetBlock.LengthUsed - first._index);
+                    }
 
-            // If "first" is the last thing on the block...
-            if (targetBlock != null && targetBlock.LengthUsed == first._index + first._length)
-            {
-                // If there's room to concatenate in place, do that
-                if (targetBlock.Block.Length >= targetBlock.LengthUsed + delimiter.Length + second.Length)
-                {
-                    targetBlock.LengthUsed += delimiter.WriteTo(targetBlock.Block, targetBlock.LengthUsed);
-                    targetBlock.LengthUsed += second.WriteTo(targetBlock.Block, targetBlock.LengthUsed);
-                    return new String8(first._buffer, first._index, targetBlock.LengthUsed - first._index);
-                }
-
-                // If not, "remove" first from the block to recycle the space
-                if (first._index == 0)
-                {
-                    // If first was alone, remove the whole block
-                    _blocks.RemoveAt(blockIndex);
-                }
-                else
-                {
-                    // Deduct the used space for "first"
-                    _blocks[blockIndex].LengthUsed -= first.Length;
+                    // If not, "remove" first from the block to recycle the space
+                    if (first._index == 0)
+                    {
+                        // If first was alone, remove the whole block
+                        _blocks.RemoveAt(_blocks.Count - 1);
+                    }
+                    else
+                    {
+                        // Deduct the used space for "first"
+                        _blocks[_blocks.Count - 1].LengthUsed -= first.Length;
+                    }
                 }
             }
 
