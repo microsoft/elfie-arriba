@@ -3,7 +3,6 @@ import "!script-loader!../js/utilities.js";
 
 import EventedComponent from "./EventedComponent";
 import QueryStats from "./QueryStats"
-import Mode from "./Mode";
 
 window.configuration = require("../configuration/Configuration.jsx").default;
 
@@ -555,18 +554,11 @@ export default class Grid extends EventedComponent {
             );
         }
 
-        return (
-            <div className="viewport">
-                <div className="middle">
-                    <Mode query={this.props.query} currentTable={this.props.currentTable} />
-                    <div className="center">
-                        <QueryStats selectedData={this.state.gridData && this.state.gridData.content} />
-                        <div className="scrollable">
-                            {mainContent}
-                        </div>
-                    </div>
-                </div>
+        return <div className="center">
+            <QueryStats selectedData={this.state.gridData && this.state.gridData.content} />
+            <div className="scrollable">
+                {mainContent}
             </div>
-        );
+        </div>;
     }
 }

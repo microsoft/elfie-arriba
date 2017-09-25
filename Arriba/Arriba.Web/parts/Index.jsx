@@ -6,6 +6,7 @@ import ErrorPage from "./ErrorPage";
 import SearchHeader from "./SearchHeader";
 import Tabs from "./Tabs";
 import SearchBox from "./SearchBox";
+import Mode from "./Mode";
 import Search from "./Search";
 import Grid from "./Grid";
 window.configuration = require("../configuration/Configuration.jsx").default;
@@ -141,23 +142,26 @@ class Index extends EventedComponent {
 
                 </Tabs>
             </SearchHeader>
-            <Page params={this.params}
-                allBasics={this.state.allBasics}
-                refreshAllBasics={then => this.refreshAllBasics(then)}
+            <div className="middle">
+                <Mode query={this.state.query} currentTable={this.state.currentTable} />
+                <Page params={this.params}
+                    allBasics={this.state.allBasics}
+                    refreshAllBasics={then => this.refreshAllBasics(then)}
 
-                query={this.state.query}
-                debouncedQuery={this.state.debouncedQuery}
-                queryChanged={query => this.setState({ query: query })}
+                    query={this.state.query}
+                    debouncedQuery={this.state.debouncedQuery}
+                    queryChanged={query => this.setState({ query: query })}
 
-                userSelectedTable={this.state.userSelectedTable}
-                userSelectedTableChanged={table => this.setState({ userSelectedTable: table })}
-                currentTable={this.state.currentTable}
+                    userSelectedTable={this.state.userSelectedTable}
+                    userSelectedTableChanged={table => this.setState({ userSelectedTable: table })}
+                    currentTable={this.state.currentTable}
 
-                queryUrlChanged={url => this.setState({ queryUrl: url })}
-                thisUrlChanged={url => this.setState({ thisUrl: url })}
+                    queryUrlChanged={url => this.setState({ queryUrl: url })}
+                    thisUrlChanged={url => this.setState({ thisUrl: url })}
 
-                getCounts={this.getCounts.bind(this)}
-                />
+                    getCounts={this.getCounts.bind(this)}
+                    />
+            </div>
         </div>
     }
 }

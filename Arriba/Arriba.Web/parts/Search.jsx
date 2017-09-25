@@ -4,7 +4,6 @@ import "../js/utilities.jsx";
 
 import EventedComponent from "./EventedComponent";
 import QueryStats from "./QueryStats";
-import Mode from "./Mode";
 import Automator from "./Automator";
 import DropShield from "./DropShield";
 
@@ -233,42 +232,36 @@ export default class Search extends EventedComponent {
         var table = this.props.allBasics && this.props.currentTable && this.props.allBasics[this.props.currentTable] || undefined;
         var customDetailsView = (configuration.customDetailsProviders && configuration.customDetailsProviders[this.props.currentTable]) || ResultDetails;
 
-        return <div ref="viewport" className="viewport"
-            onDragEnter={e => {
+        return <div className="center" onDragEnter={e => {
                 // Consider disabling pointer events for perf.
                 if (!this.state.dropping) this.setState({ dropping: true, file: undefined })
-            }} >
-            <div className="middle">
-                <Mode query={this.props.query} currentTable={this.props.currentTable} />
-                <div className="center">
-                    <QueryStats error={this.state.error} selectedData={this.state.listingData} />
-                    {this.props.query && table
-                        ? <SplitPane split="horizontal" minSize="300" isFirstVisible={this.state.listingData} isSecondVisible={this.state.userSelectedId}>
-                            <InfiniteScroll hasMoreData={this.state.hasMoreData} loadMore={() => this.setState({ page: this.state.page + 1 })}>
-                                <ResultListing ref={"list"}
-                                    data={this.state.listingData}
-                                    allBasics={this.props.allBasics}
-                                    sortColumn={this.state.currentTableSettings.sortColumn}
-                                    sortOrder={this.state.currentTableSettings.sortOrder}
-                                    selectedId={this.state.userSelectedId}
-                                    onResort={this.onResort.bind(this)}
-                                    onSelectionChanged={id => this.setState({ userSelectedId: id })}
-                                    onSetColumns={this.onSetColumns.bind(this)} />
-                            </InfiniteScroll>
-                            <div className="scrollable">
-                                {React.createElement(customDetailsView, {
-                                    itemId: this.state.userSelectedId,
-                                    table: this.props.currentTable,
-                                    query: this.props.query,
-                                    data: this.state.selectedItemData,
-                                    onClose: () => this.setState({ userSelectedId: undefined }),
-                                    onAddClause: (name, value) => this.props.queryChanged(`${this.props.query} AND [${name}]="${value}"`)
-                                })}
-                            </div>
-                        </SplitPane>
-                        : <Start allBasics={this.props.allBasics} showHelp={this.props.params.help === "true"} queryChanged={this.props.queryChanged} />}
-                </div>
-            </div>
+            }}>
+            <QueryStats error={this.state.error} selectedData={this.state.listingData} />
+            {this.props.query && table
+                ? <SplitPane split="horizontal" minSize="300" isFirstVisible={this.state.listingData} isSecondVisible={this.state.userSelectedId}>
+                    <InfiniteScroll hasMoreData={this.state.hasMoreData} loadMore={() => this.setState({ page: this.state.page + 1 })}>
+                        <ResultListing ref={"list"}
+                            data={this.state.listingData}
+                            allBasics={this.props.allBasics}
+                            sortColumn={this.state.currentTableSettings.sortColumn}
+                            sortOrder={this.state.currentTableSettings.sortOrder}
+                            selectedId={this.state.userSelectedId}
+                            onResort={this.onResort.bind(this)}
+                            onSelectionChanged={id => this.setState({ userSelectedId: id })}
+                            onSetColumns={this.onSetColumns.bind(this)} />
+                    </InfiniteScroll>
+                    <div className="scrollable">
+                        {React.createElement(customDetailsView, {
+                            itemId: this.state.userSelectedId,
+                            table: this.props.currentTable,
+                            query: this.props.query,
+                            data: this.state.selectedItemData,
+                            onClose: () => this.setState({ userSelectedId: undefined }),
+                            onAddClause: (name, value) => this.props.queryChanged(`${this.props.query} AND [${name}]="${value}"`)
+                        })}
+                    </div>
+                </SplitPane>
+                : <Start allBasics={this.props.allBasics} showHelp={this.props.params.help === "true"} queryChanged={this.props.queryChanged} />}
             <DropShield
                 dropping={this.state.dropping}
                 droppingChanged={d => this.setState({ dropping: d })}
