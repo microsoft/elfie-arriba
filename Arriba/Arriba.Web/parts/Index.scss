@@ -1,3 +1,5 @@
+@import '../shared.scss';
+
 .errorBar {
     background-color: hsl(10, 80%, 60%);
     color: white;
@@ -5,4 +7,13 @@
     text-align: center;
     font-size: 12px;
     padding: 10px;
+}
+
+.body-error {
+    width: 100%;
+    height: 100%;
+    @include center-center;
+
+    font-size: 16pt;
+    color: hsl(0, 0%, 80%);
 }

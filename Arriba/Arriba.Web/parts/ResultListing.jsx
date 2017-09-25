@@ -74,7 +74,7 @@ export default React.createClass({
 
         if (!this.props.allBasics || !content) return null;
 
-        if (!content.details.succeeded) return <div className="resultListing-error">{content.details.errors}</div>
+        if (!content.details.succeeded) return <div className="body-error">{content.details.errors}</div>
 
         const table = this.props.allBasics[this.props.data.query.tableName];
         if (!table) return null;

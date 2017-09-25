@@ -482,8 +482,11 @@ export default class Grid extends EventedComponent {
         const columns = [...this.state.cols.slice(), "All"];
         const colLabels = this.state.colLabels;
 
-        // If content is stale (cell count less than expected) then skip render.
-        if (content && content.values && content.values.rows.length >= rows.length * columns.length) {
+        if (content && !content.details.succeeded) {
+            mainContent = <div className="body-error">{content.details.errors}</div>
+        } else if (content && content.values && content.values.rows.length >= rows.length * columns.length) {
+            // If content is stale (cell count less than expected) then skip render.
+
             const currentTableAllColumns =
                 this.props.allBasics && this.props.currentTable &&
                 this.props.allBasics[this.props.currentTable] &&
