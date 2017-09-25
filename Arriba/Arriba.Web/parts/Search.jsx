@@ -41,6 +41,7 @@ export default class Search extends EventedComponent {
         this.events = {
             "beforeunload": e => this.mru.push(),
             "storage": e => { if (e.key.startsWith("table-")) this.getTableSettings() },
+            "keydown": e => this.onKeyDown(e),
         };
     }
     componentDidMount() {
@@ -232,7 +233,7 @@ export default class Search extends EventedComponent {
         var table = this.props.allBasics && this.props.currentTable && this.props.allBasics[this.props.currentTable] || undefined;
         var customDetailsView = (configuration.customDetailsProviders && configuration.customDetailsProviders[this.props.currentTable]) || ResultDetails;
 
-        return <div ref="viewport" className="viewport" onKeyDown={this.onKeyDown.bind(this)}
+        return <div ref="viewport" className="viewport"
             onDragEnter={e => {
                 // Consider disabling pointer events for perf.
                 if (!this.state.dropping) this.setState({ dropping: true, file: undefined })

@@ -95,6 +95,7 @@ export default class Suggestions extends EventedComponent {
         }
         if (e.key === "Escape") {
             this.clear();
+            e.stopPropagation(); // Prevent SelectedItem clear.
         }
     }
 
