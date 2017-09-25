@@ -149,31 +149,16 @@ export default React.createClass({
     }
 });
 
-var ResultListingItem = React.createClass({
-    handleClick: function (e) {
-        this.props.onSelectionChanged(this);
-    },
-    render: function () {
-        var id = this.props.itemId;
-
-        // Write a cell for each property of each item with highlighting
-        var cells = [];
-        for (var i = 0; i < this.props.data.length; ++i) {
-            var item = this.props.data[i];
-
-            if (item.length > 200) { // Cap cell contents length for browser layout perf.
-                item = item.substr(0, 200) + "…";
-            }
-
-            cells[i] = (
-                <td key={id + "_" + i} title={stripHighlight(item)} dangerouslySetInnerHTML={highlight(item)} />
-            );
-        }
-
-        return (
-            <tr onClick={this.handleClick} className={(this.props.selected ? "selected" : "")}>
-                {cells}
-            </tr>
-        );
+class ResultListingItem extends React.Component {
+    render() {
+        return <tr onClick={() => this.props.onSelectionChanged(this)}
+            className={(this.props.selected ? "selected" : "")}>
+            {this.props.data.map((item, i) => {
+                if (item.length > 200) { // Cap cell contents length for browser layout perf.
+                    item = item.substr(0, 200) + "…";
+                }
+                return <td key={`${this.props.itemId}_${i}`} title={stripHighlight(item)} dangerouslySetInnerHTML={highlight(item)} />
+            })}
+        </tr>;
     }
-});
+}
