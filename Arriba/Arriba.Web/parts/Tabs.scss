@@ -53,6 +53,13 @@
                 background-color: hsl(0, 80%, 60%);
             }
         }
+
+        .pinned {
+            position: relative;
+            left: -1px;
+            top: 1px;
+            margin-right: 5px;
+        }
     }
 
     a {

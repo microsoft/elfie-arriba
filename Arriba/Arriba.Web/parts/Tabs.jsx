@@ -28,6 +28,7 @@ export default class Tabs extends React.Component {
                     key={t.tableName}
                     className={`tableTab ${this.props.currentTable === t.tableName ? "current" : ""} ${t.locked ? "locked" : ""}`}
                     onClick={e => this.props.userSelectedTableChanged(t.tableName)}>
+                    {t.tableName === this.props.userSelectedTable && <img src="/icons/pinned.svg" alt="pinned" className="pinned" />}
                     {t.tableName} <b>{t.allowedToRead === false /* no lock icon if undefined */
                         ? <span className="icon-lock icon" />
                         : t.succeeded ? t.count.toLocaleString() : "‒"}</b>
