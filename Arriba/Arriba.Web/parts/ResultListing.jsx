@@ -84,10 +84,7 @@ export default React.createClass({
         var idColumnIndex = content.query.columns.indexOf(idColumn);
 
         // Write a column heading row - click to sort, remove/add columns
-        var columnCells = [];
-        for (var i = 0; i < content.values.columns.length; ++i) {
-            var column = content.values.columns[i];
-
+        const columnCells = content.values.columns.map((column, i) => {
             var commands = [];
 
             // Non-ID column commands
@@ -121,13 +118,13 @@ export default React.createClass({
                 : "";
 
             // Extra element div.th-inner because display:flex cannot be applied to td as td is already display:table.
-            columnCells.push(<td key={"heading_" + column.name} onClick={this.handleResort.bind(this, column.name)}>
+            return <td key={"heading_" + column.name} onClick={this.handleResort.bind(this, column.name)}>
                 <div className="th-inner">
                     <span className="th-title">{column.name}{sort}</span>
                     {commands}
                 </div>
-            </td>);
-        }
+            </td>;
+        });
 
         // Write a row for each item
         var index = 0;
