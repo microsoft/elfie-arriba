@@ -1,4 +1,5 @@
 import "./Tabs.scss";
+import Delete from "./Delete"
 
 export default class Tabs extends React.Component {
     constructor(props) {
@@ -29,16 +30,19 @@ export default class Tabs extends React.Component {
                     className={`tableTab ${this.props.currentTable === t.tableName ? "current" : ""} ${t.locked ? "locked" : ""}`}
                     onClick={e => this.props.userSelectedTableChanged(t.tableName)}>
                     {t.tableName === this.props.userSelectedTable && <img src="/icons/pinned.svg" alt="pinned" className="pinned" />}
-                    {t.tableName} <b>{t.allowedToRead === false /* no lock icon if undefined */
+                    <span>{t.tableName}</span>
+                    <b>{t.allowedToRead === false /* no lock icon if undefined */
                         ? <span className="icon-lock icon" />
                         : t.succeeded ? t.count.toLocaleString() : "‒"}</b>
-                    {t.canAdminister && <span className="delete" onClick={e => {
+                    {t.canAdminister && <Delete onClick={e => {
                         e.stopPropagation();
-                        xhr(`table/${tableResult.tableName}/delete`)
-                            .then(() => this.props.refreshAllBasics(() => {
-                                this.props.userSelectedTableChanged()
-                            }));
-                    }}>✕</span>}
+                        if (confirm(`Delete table "${t.tableName}"?`)) {
+                            xhr(`table/${tableResult.tableName}/delete`)
+                                .then(() => this.props.refreshAllBasics(() => {
+                                    this.props.userSelectedTableChanged()
+                                }));
+                        }
+                    }} />}
                 </span>)}
                 <span className="tableTabs-fill"></span>
                 {parsedQuery && <a title="Explanation" href="#" onMouseOver={e => this.setState({ showExplanation: true })} onMouseOut={e => this.setState({ showExplanation: false })}>
