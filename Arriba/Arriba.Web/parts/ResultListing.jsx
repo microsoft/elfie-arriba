@@ -42,13 +42,6 @@ export default React.createClass({
             this.setState({ addColumnsShowing: false });
         }
     },
-    handleRemoveColumn: function (e) {
-        var columnName = e.target.getAttribute("data-column");
-        var newColumns = this.props.data.query.columns.filter(function (name) { return name !== columnName; });
-        this.props.onSetColumns(newColumns);
-
-        e.stopPropagation();
-    },
     selectByRelativeIndex: function (i) {
         // Figure out the current row count
         var count = 0;
@@ -95,9 +88,11 @@ export default React.createClass({
 
                 // Remove button
                 commands.push(<Delete key={"remove_" + column.name}
-                    data-column={column.name}
                     title="Remove Column"
-                    onClick={this.handleRemoveColumn} />);
+                    onClick={e => {
+                        this.props.onSetColumns(this.props.data.query.columns.filter(name => name !== column.name));
+                        e.stopPropagation();
+                    }} />);
             }
 
             // Last column
