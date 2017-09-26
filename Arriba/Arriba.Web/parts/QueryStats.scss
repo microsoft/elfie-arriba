@@ -7,63 +7,8 @@
     display: flex;
     & > * { padding: 6px 0; }
 
-    .explanation {
-        border: 1px solid hsl(0, 0, 75%);
-        padding: 1px 6px 2px;
-        margin-left: 3px;
-    }
-
-    .spacer {
-        flex-grow: 1;
-    }
-
-    /* Make the per-table buttons dark grey and spaced out */
-    .statsForTable {
-        margin-right: 8px;
-
-        & > span {
-            border: 1px solid hsl(0, 0, 75%);
-            padding: 1px 8px 2px 6px;
-
-            &:not(:first-child) {
-                border-left: 0;
-            }
-
-            /* Make the selected table white */
-            &.current {
-                background-color: white;
-            }
-
-            /* Make the per-table counts bold and add spacing before the table name */
-            & .countValue {
-                padding-right: 4px;
-                font-weight: bold;
-            }
-
-            & span.delete {
-                padding: 0px 4px 1px;
-                font-size: 12px;
-                border-radius: 2px;
-                position: relative;
-                left: 4px;
-                &:hover {
-                    color: hsl(0, 0%, 100%);
-                    background-color: hsl(0, 80%, 60%);
-                }
-            }
-        }
-    }
-
     /* Mark error content with light red highlight */
     .error {
         background: #f67c87;
-    }
-
-    /* Space out the QueryStats buttons a bit */
-    a {
-        font-size: 0; // Discard white space.
-        padding: 11px 7px;
-        &:last-child { padding-right: 7px + 5px; }
-        &:hover { background-color: hsl(0, 0, 75%); }
     }
 }
