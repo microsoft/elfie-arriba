@@ -1,5 +1,6 @@
 ﻿import AddColumnList from "./AddColumnList";
 import "./ResultListing.scss";
+import Delete from "./Delete"
 
 // ResultListing shows a table of items matching a query, with sortable columns
 export default React.createClass({
@@ -96,7 +97,10 @@ export default React.createClass({
                 commands.push(<a href={gridUrl} className="icon-view-all-albums icon-column-heading" title={"Grid By " + column.name } />);
 
                 // Remove button
-                commands.push(<div key={"remove_" + column.name} data-column={column.name} className="icon-cancel icon-column-heading" title="Remove Column" onClick={this.handleRemoveColumn} />);
+                commands.push(<Delete key={"remove_" + column.name}
+                    data-column={column.name}
+                    title="Remove Column"
+                    onClick={this.handleRemoveColumn} />);
             }
 
             // Last column

@@ -29,6 +29,7 @@
 
         & > .th-inner {
             display: flex;
+            align-items: center;
 
             & > :first-child { // Typically the title.
                 flex: 1;

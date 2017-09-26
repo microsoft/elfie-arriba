@@ -1,0 +1,9 @@
+svg.delete {
+    padding: 5px;
+    border-radius: 3px;
+    transition: all 100ms ease-in-out;
+    &:hover {
+        background-color: hsl(0, 90%, 65%);
+        path { fill: hsl(0, 0%, 100%); }
+    }
+}
