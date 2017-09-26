@@ -120,7 +120,7 @@ class Index extends EventedComponent {
         return <div className="viewport" onKeyDown={this.onKeyDown.bind(this)}>
             {this.state.error && <div className="errorBar">{this.state.error}</div>}
             <SearchHeader reset={() => {
-                this.setState({ query: "", userSelectedTable: undefined });
+                this.setState({ mode: false, query: "", userSelectedTable: undefined });
                 this.refs.searchBox.focus();
             }}>
                 <Tabs
