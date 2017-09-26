@@ -76,72 +76,54 @@ export default React.createClass({
         var idColumn = table.idColumn;
         var idColumnIndex = content.query.columns.indexOf(idColumn);
 
-        // Write a column heading row - click to sort, remove/add columns
-        const columnCells = content.values.columns.map((column, i) => {
-            var commands = [];
-
-            // Non-ID column commands
-            if (column.name !== idColumn) {
-                // Add 'Pivot to Grid' URL
-                var gridUrl = "Grid.html" + buildUrlParameters({ q: content.query.where, t: content.query.tableName, R1: column.name + ">" });
-                commands.push(<a href={gridUrl} className="grid-icon" title={"Grid By " + column.name }><img src="/icons/grid.svg"/></a>);
-
-                // Remove button
-                commands.push(<Delete key={"remove_" + column.name}
-                    title="Remove Column"
-                    onClick={e => {
-                        this.props.onSetColumns(this.props.data.query.columns.filter(name => name !== column.name));
-                        e.stopPropagation();
-                    }} />);
-            }
-
-            // Last column
-            if (i == content.values.columns.length - 1) {
-                // Add column button
-                commands.push(
-                    <div ref={"addButton"} className="add-column-button icon-add icon-column-heading" title="Add Column" onClick={this.handleAdd}>
-                        <AddColumnList showing={this.state.addColumnsShowing}
-                                       onAddColumn={this.onAddColumn}
-                                       allColumns={table.columns}
-                                       currentColumns={content.query.columns} />
-                    </div>
-                );
-            }
-
-            var sort = this.props.sortColumn === column.name
-                ? this.props.sortOrder === "asc" ? " ↑" : " ↓"
-                : "";
-
-            // Extra element div.th-inner because display:flex cannot be applied to td as td is already display:table.
-            return <td key={"heading_" + column.name} onClick={this.handleResort.bind(this, column.name)}>
-                <div className="th-inner">
-                    <span className="th-title">{column.name}{sort}</span>
-                    {commands}
-                </div>
-            </td>;
-        });
-
         // Write a row for each item
         var index = 0;
         var selectFunction = this.handleSelect;
         var selectedId = this.props.selectedId;
-        var listingItems = content.values.rows.map(function (row) {
-            var id = stripHighlight(row[idColumnIndex]);
-            return <ResultListingItem key={id} itemId={id} itemIndex={index++} data={row} onSelectionChanged={selectFunction} selected={selectedId === id } />;
-        });
 
-        return (
-            <table className="resultTable" tabIndex="2">
-                <thead>
-                    <tr>
-                        {columnCells}
-                    </tr>
-                </thead>
-                <tbody>
-                    {listingItems}
-                </tbody>
-            </table>
-        );
+        return <table className="resultTable" tabIndex="2">
+            <thead>
+                <tr>
+                    {content.values.columns.map((column, i) => {
+                        var sort = this.props.sortColumn === column.name
+                            ? this.props.sortOrder === "asc" ? " ↑" : " ↓"
+                            : "";
+
+                        // Extra element div.th-inner because display:flex cannot be applied to td as td is already display:table.
+                        return <td key={"heading_" + column.name} onClick={this.handleResort.bind(this, column.name)}>
+                            <div className="th-inner">
+                                <span className="th-title">{column.name}{sort}</span>
+                                {column.name !== idColumn && <a
+                                    href={"Grid.html" + buildUrlParameters({ q: content.query.where, t: content.query.tableName, R1: column.name + ">" })}
+                                    className="grid-icon"
+                                    title={"Grid By " + column.name }>
+                                    <img src="/icons/grid.svg"/>
+                                </a>}
+                                {column.name !== idColumn && <Delete key={"remove_" + column.name}
+                                    title="Remove Column"
+                                    onClick={e => {
+                                        this.props.onSetColumns(this.props.data.query.columns.filter(name => name !== column.name));
+                                        e.stopPropagation();
+                                    }} />}
+                                {i == content.values.columns.length - 1 && <div ref={"addButton"} className="add-column-button icon-add icon-column-heading" title="Add Column" onClick={this.handleAdd}>
+                                    <AddColumnList
+                                        showing={this.state.addColumnsShowing}
+                                        onAddColumn={this.onAddColumn}
+                                        allColumns={table.columns}
+                                        currentColumns={content.query.columns} />
+                                </div>}
+                            </div>
+                        </td>;
+                    })}
+                </tr>
+            </thead>
+            <tbody>
+                {content.values.rows.map(function (row) {
+                    var id = stripHighlight(row[idColumnIndex]);
+                    return <ResultListingItem key={id} itemId={id} itemIndex={index++} data={row} onSelectionChanged={selectFunction} selected={selectedId === id } />;
+                })}
+            </tbody>
+        </table>;
     }
 });
 
