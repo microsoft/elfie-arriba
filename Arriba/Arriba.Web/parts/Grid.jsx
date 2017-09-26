@@ -334,7 +334,8 @@ export default class Grid extends EventedComponent {
             this.setState(this.getClearedUserSelections());
         }
 
-        if (diffProps.hasAny("debouncedQuery", "currentTable") || diffState.hasAny("aggregationFunction", "aggregateColumn", "rows", "rowLabels", "cols", "colLabels", "show", "showPortionOf", "showPortionAs")) {
+        // These require a re-render but not new getGrid: "rowLabels", "colLabels", "show", "showPortionOf", "showPortionAs".
+        if (diffProps.hasAny("debouncedQuery", "currentTable") || diffState.hasAny("aggregationFunction", "aggregateColumn", "rows", "cols")) {
             this.getGrid();
 
             var url = this.buildThisUrl(true);
