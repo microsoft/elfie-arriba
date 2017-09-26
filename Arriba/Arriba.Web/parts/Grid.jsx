@@ -2,12 +2,7 @@
 import "!script-loader!../js/utilities.js";
 
 import EventedComponent from "./EventedComponent";
-import ErrorPage from "./ErrorPage"
 import QueryStats from "./QueryStats"
-import SearchHeader from "./SearchHeader"
-import Tabs from "./Tabs";
-import SearchBox from "./SearchBox";
-import Mode from "./Mode";
 
 window.configuration = require("../configuration/Configuration.jsx").default;
 
@@ -294,12 +289,7 @@ var GridValueCell = React.createClass({
 export default class Grid extends EventedComponent {
     constructor(props) {
         super(props);
-        const query = this.props.params.q || "";
         this.state = {
-            query: query,
-            debouncedQuery: query,
-            currentTable: this.props.params.t,
-
             aggregationFunction: this.props.params.af || "COUNT",
             aggregateColumn: this.props.params.ac || "",
             rows: getParameterArrayForPrefix(this.props.params, "r"),
@@ -330,34 +320,21 @@ export default class Grid extends EventedComponent {
     }
     componentDidMount() {
         super.componentDidMount();
-        var defaultQuery = (this.props.params.p === "default" ? configuration.gridDefault : this.props.params.p);
-        if (defaultQuery) {
+        var defaultQuery = this.props.params.p || configuration.gridDefault;
+        if (!this.props.query && defaultQuery) {
             this.selectDefaultQuery(defaultQuery);
         }
         this.componentDidUpdate({}, {});
     }
     componentDidUpdate(prevProps, prevState) {
+        const diffProps = Object.diff(prevProps, this.props);
         const diffState = Object.diff(prevState, this.state);
 
-        if (diffState.hasAny("query")) {
-            // Only query every 250 milliseconds while typing
-            this.timer = this.timer || window.setTimeout(() => this.setState({ debouncedQuery: this.state.query }), 250);
-        }
-
-        if (diffState.hasAny("debouncedQuery")) {
-            this.getCounts();
-        }
-
-        if (diffState.hasAny("userSelectedTable", "counts")) {
-            const currentTable = this.state.userSelectedTable || this.state.counts && this.state.counts.resultsPerTable[0].tableName;
-            this.setState({ currentTable: currentTable });
-        }
-
-        if (diffState.hasAny("currentTable") && prevState.currentTable) {
+        if (diffProps.hasAny("currentTable") && prevProps.currentTable) {
             this.setState(this.getClearedUserSelections());
         }
 
-        if (diffState.hasAny("debouncedQuery", "currentTable", "aggregationFunction", "aggregateColumn", "rows", "rowLabels", "cols", "colLabels", "show", "showPortionOf", "showPortionAs")) {
+        if (diffProps.hasAny("debouncedQuery", "currentTable") || diffState.hasAny("aggregationFunction", "aggregateColumn", "rows", "rowLabels", "cols", "colLabels", "show", "showPortionOf", "showPortionAs")) {
             this.getGrid();
 
             var url = this.buildThisUrl(true);
@@ -368,10 +345,15 @@ export default class Grid extends EventedComponent {
     }
 
     selectDefaultQuery(name) {
-        this.setState(Object.assign(this.getClearedUserSelections(), configuration.gridDefaultQueries[name]));
+        const query = Object.assign(this.getClearedUserSelections(), configuration.gridDefaultQueries[name]);
+        if (query.query) this.props.queryChanged(query.query);
+        if (query.userSelectedTable) this.props.userSelectedTableChanged(query.userSelectedTable);
+        delete query.query;
+        delete query.userSelectedTable;
+        this.setState(query);
     }
     handleQueryChange(type, index, value, label) {
-        var newState = { userSelectedTable: this.state.currentTable };
+        this.props.userSelectedTableChanged(this.props.currentTable);
 
         // NOTE: When a column or row is changed, we lock the current table and clear the grid data.
         //  We lock the table because the rows/cols are cleared when the active table is changed and we don't want "top query" changes to lose the cols/rows you've picked
@@ -409,22 +391,9 @@ export default class Grid extends EventedComponent {
         this.setState(newState);
     }
 
-    getCounts() {
-        // On query, ask for the count from every table.
-        // Get the count of matches from each accessible table
-        this.timer = null;
-
-        if (!this.state.query) {
-            this.setState({ counts: undefined })
-            return;
-        }
-
-        xhr('allCount', { q: this.state.query })
-            .then(data => this.setState({ counts: data }));
-    }
     getGrid() {
         // Once the counts query runs and table basics are loaded, get a page of results
-        if (!this.state.query || !this.state.currentTable) {
+        if (!this.props.query || !this.props.currentTable) {
             this.setState({ gridData: undefined })
             return;
         }
@@ -462,7 +431,7 @@ export default class Grid extends EventedComponent {
     buildQueryUrl() {
         var parameters = {
             action: "aggregate",
-            q: this.state.query,
+            q: this.props.query,
             a: this.state.aggregationFunction,
             col: this.state.aggregateColumn,
         };
@@ -480,13 +449,13 @@ export default class Grid extends EventedComponent {
         }
 
         var queryString = buildUrlParameters(parameters);
-        return "table/" + this.state.currentTable + queryString;
+        return "table/" + this.props.currentTable + queryString;
     }
     buildThisUrl(includeOpen) {
         var relevantParams = {};
 
-        if (this.state.query) relevantParams.q = this.state.query;
-        if (this.state.currentTable) relevantParams.t = this.state.currentTable;
+        if (this.props.query) relevantParams.q = this.props.query;
+        if (this.props.currentTable) relevantParams.t = this.props.currentTable;
 
         if (this.state.aggregationFunction !== "COUNT") {
             relevantParams.af = this.state.aggregationFunction;
@@ -502,8 +471,7 @@ export default class Grid extends EventedComponent {
         if (this.state.rowLabels && this.state.rowLabels.length > 0) addArrayParameters(relevantParams, "rl", this.state.rowLabels);
         if (this.state.colLabels && this.state.colLabels.length > 0) addArrayParameters(relevantParams, "cl", this.state.colLabels);
 
-        return window.location.protocol + '//' + window.location.host + window.location.pathname + buildUrlParameters(relevantParams);
-
+        return location.protocol + '//' + location.host + "/Grid.html" + buildUrlParameters(relevantParams);
     }
     render() {
         var mainContent = null;
@@ -514,12 +482,15 @@ export default class Grid extends EventedComponent {
         const columns = [...this.state.cols.slice(), "All"];
         const colLabels = this.state.colLabels;
 
-        // If content is stale (cell count less than expected) then skip render.
-        if (content && content.values && content.values.rows.length >= rows.length * columns.length) {
+        if (content && !content.details.succeeded) {
+            mainContent = <div className="body-error">{content.details.errors}</div>
+        } else if (content && content.values && content.values.rows.length >= rows.length * columns.length) {
+            // If content is stale (cell count less than expected) then skip render.
+
             const currentTableAllColumns =
-                this.props.allBasics && this.state.currentTable &&
-                this.props.allBasics[this.state.currentTable] &&
-                this.props.allBasics[this.state.currentTable].columns || [];
+                this.props.allBasics && this.props.currentTable &&
+                this.props.allBasics[this.props.currentTable] &&
+                this.props.allBasics[this.props.currentTable].columns || [];
 
             mainContent = (
                 <div className="grid">
@@ -530,7 +501,10 @@ export default class Grid extends EventedComponent {
                                     aggregationFunction={this.state.aggregationFunction}
                                     aggregateColumn={this.state.aggregateColumn}
                                     allColumns={currentTableAllColumns}
-                                    onChange={(aggregationFunction, aggregateColumn) => this.setState({ aggregationFunction: aggregationFunction, aggregateColumn: aggregateColumn, userSelectedTable: this.state.currentTable })} />
+                                    onChange={(aggregationFunction, aggregateColumn) => {
+                                        this.props.userSelectedTableChanged(this.props.currentTable);
+                                        this.setState({ aggregationFunction: aggregationFunction, aggregateColumn: aggregateColumn });
+                                    }} />
                                 {columns.map((col, i) => <GridHeadingCell
                                     key={"HC" + col}
                                     type="column"
@@ -582,35 +556,11 @@ export default class Grid extends EventedComponent {
             );
         }
 
-        return (
-            <div className="viewport" onKeyDown={this.handleKeyDown}>
-                <SearchHeader>
-                    <Tabs
-                        allBasics={this.props.allBasics}
-                        refreshAllBasics={this.props.refreshAllBasics}
-                        currentTable={this.state.currentTable}
-                        onSelectedTableChange={name => this.setState({ userSelectedTable: name })}
-                        query={this.state.query}
-                        counts={this.state.counts}>
-
-                        <SearchBox query={this.state.query}
-                            parsedQuery={this.state.counts && this.state.counts.parsedQuery}
-                            userSelectedTable={this.state.userSelectedTable}
-                            queryChanged={value => this.setState({ query: value })} />
-
-                    </Tabs>
-                </SearchHeader>
-
-                <div className="middle">
-                    <Mode query={this.state.query} currentTable={this.state.currentTable} />
-                    <div className="center">
-                        <QueryStats selectedData={this.state.gridData && this.state.gridData.content} />
-                        <div className="scrollable">
-                            {mainContent}
-                        </div>
-                    </div>
-                </div>
+        return <div className="center">
+            <QueryStats selectedData={this.state.gridData && this.state.gridData.content} />
+            <div className="scrollable">
+                {mainContent}
             </div>
-        );
+        </div>;
     }
 }

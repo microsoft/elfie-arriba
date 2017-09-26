@@ -1,10 +1,66 @@
+@import './configuration/theme';
 @import '../shared.scss';
 
-.resultListing-error {
-    width: 100%;
-    height: 100%;
-    @include center-center;
+/* So far only used within the context of the resultTable. */
+@mixin border-collapse($border-color, $border-width: 1px, $border-style: solid) {
+    border-collapse: separate;
+    border-spacing: 0;
 
-    font-size: 16pt;
-    color: hsl(0, 0%, 80%);
+    td {
+        border-color: $border-color;
+        border-width: 0 $border-width $border-width 0;
+        &:first-child { border-left-width: $border-width; }
+    }
+}
+
+/* Make the result listing take the full available width */
+.resultTable {
+    width: 100%;
+
+    // Manually create the effect for border-collapse to enable frozen headers.
+    // Otherwise the borders won't stick to the frozen headers.
+    @include border-collapse(#ccc);
+
+    // Special-casing td so items (ex: AddCol) can be attached to it.
+    thead td {
+        overflow: visible; // Undo.
+
+        &:hover { background-color: hsl(0, 0, 88%); } // Darken the default #EEEEEE.
+
+        & > .th-inner {
+            display: flex;
+
+            & > :first-child { // Typically the title.
+                flex: 1;
+                @include ellipsis;
+            }
+
+            .icon-column-heading {
+                float: none; // Undo.
+            }
+        }
+    }
+
+    /* Show that table rows are all clickable (to open details) */
+    tr {
+        cursor: pointer;
+
+        &:hover { background-color: lighten($light, 40%); }
+
+        &.selected {
+            color: white;
+            background-color: $light;
+        }
+    }
+
+    /* Make listing table slightly more padded, ellipse on overflow */
+    td {
+        padding: 6px;
+        max-width: 400px; // Acts like min-width.
+        @include ellipsis;
+
+        &:last-child {
+            border-right-width: 0;
+        }
+    }
 }

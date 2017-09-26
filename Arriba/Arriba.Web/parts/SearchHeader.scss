@@ -17,11 +17,16 @@
         align-self: stretch;
 
         @include center-center;
-        cursor: default;
+        cursor: pointer;
         padding: 12px;
         font-size: 18pt;
+
         background-color: $vdark;
         color: white;
+        &:hover {
+            color: white; // Suppress global a:hover.
+            background-color: lighten($vdark, 5%);
+        }
     }
 
     .searchBoxAndButtons {
@@ -38,4 +43,3 @@
         }
     }
 }
-

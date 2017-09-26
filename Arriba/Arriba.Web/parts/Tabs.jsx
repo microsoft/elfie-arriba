@@ -12,8 +12,11 @@ export default class Tabs extends React.Component {
 
         const tables =
             this.props.counts &&
-            this.props.counts.resultsPerTable ||
-            Object.map(this.props.allBasics, (k, v) => ({ tableName: k, count: v.rowCount, succeeded: true, locked: true }));
+                this.props.counts.resultsPerTable ||
+            Object.keys(this.props.allBasics).length &&
+                Object.map(this.props.allBasics, (k, v) => ({ tableName: k, count: v.rowCount, succeeded: true, locked: true })) ||
+            [{ tableName: "Loading...", succeeded: false, locked: true }]; // Solely to prevent jumpy re-layout when allBasics comes in.
+
         tables.forEach(t => t.canAdminister =
             this.props.allBasics &&
             this.props.allBasics[t.tableName] &&
@@ -24,7 +27,8 @@ export default class Tabs extends React.Component {
                 {tables.map(t => <span
                     key={t.tableName}
                     className={`tableTab ${this.props.currentTable === t.tableName ? "current" : ""} ${t.locked ? "locked" : ""}`}
-                    onClick={e => this.props.onSelectedTableChange(t.tableName)}>
+                    onClick={e => this.props.userSelectedTableChanged(t.tableName)}>
+                    {t.tableName === this.props.userSelectedTable && <img src="/icons/pinned.svg" alt="pinned" className="pinned" />}
                     {t.tableName} <b>{t.allowedToRead === false /* no lock icon if undefined */
                         ? <span className="icon-lock icon" />
                         : t.succeeded ? t.count.toLocaleString() : "‒"}</b>
@@ -32,7 +36,7 @@ export default class Tabs extends React.Component {
                         e.stopPropagation();
                         xhr(`table/${tableResult.tableName}/delete`)
                             .then(() => this.props.refreshAllBasics(() => {
-                                this.props.onSelectedTableChange()
+                                this.props.userSelectedTableChanged()
                             }));
                     }}>✕</span>}
                 </span>)}
