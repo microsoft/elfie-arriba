@@ -94,7 +94,7 @@ export default React.createClass({
             if (column.name !== idColumn) {
                 // Add 'Pivot to Grid' URL
                 var gridUrl = "Grid.html" + buildUrlParameters({ q: content.query.where, t: content.query.tableName, R1: column.name + ">" });
-                commands.push(<a href={gridUrl} className="icon-view-all-albums icon-column-heading" title={"Grid By " + column.name } />);
+                commands.push(<a href={gridUrl} className="grid-icon" title={"Grid By " + column.name }><img src="/icons/grid.svg"/></a>);
 
                 // Remove button
                 commands.push(<Delete key={"remove_" + column.name}

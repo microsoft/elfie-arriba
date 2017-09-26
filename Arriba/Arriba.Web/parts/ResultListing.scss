@@ -65,3 +65,12 @@
         }
     }
 }
+
+.grid-icon {
+    font-size: 0;
+    padding: 5px;
+    border-radius: 3px;
+    &:hover {
+        background-color: hsl(0, 0%, 100%);
+    }
+}
