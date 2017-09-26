@@ -1,0 +1,45 @@
+
+/* Make the panes split on width via flex layout */
+.splitpane {
+    z-index: 0; // Z-group to contain the resizer.
+    display: flex;
+    flex: 1 1 0%;
+    outline: none;
+    overflow: hidden;
+
+    /* Make the panes take up the space and use flex inside, with no scrolling. */
+    .pane {
+        flex: 1 1 0%;
+
+        display: flex;
+        overflow: hidden;
+    }
+
+    /* Make the resizer take the full container space, grey, on top of other content */
+    .resizer {
+        box-sizing: border-box;
+        background: #ccc; // Matches .resultTable td border color.
+        z-index: 1;
+        background-clip: padding-box;
+
+        /* Make the resizer visibility animate */
+        &:hover {
+            transition: all 1s ease;
+        }
+
+        /* Make the resizer 11px wide but appear only 1px wide, with the left-right resize cursor */
+        &.vertical {
+            width: 11px;
+            margin: 0px -5px;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            cursor: col-resize;
+        }
+
+        /* Make the full resizer target area partially visible on hover */
+        &.vertical:hover {
+            border-left: 5px solid rgba(0, 0, 0, 0.5);
+            border-right: 5px solid rgba(0, 0, 0, 0.5);
+        }
+    }
+}
