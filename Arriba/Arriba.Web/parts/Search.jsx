@@ -229,8 +229,8 @@ export default class Search extends EventedComponent {
         return `${location.protocol}//${location.host + "/" + buildUrlParameters(parameters)}`;
     }
     render() {
-        var table = this.props.allBasics && this.props.currentTable && this.props.allBasics[this.props.currentTable] || undefined;
-        var customDetailsView = (configuration.customDetailsProviders && configuration.customDetailsProviders[this.props.currentTable]) || ResultDetails;
+        const table = this.props.allBasics && this.props.currentTable && this.props.allBasics[this.props.currentTable] || undefined;
+        const CustomDetailsView = (configuration.customDetailsProviders && configuration.customDetailsProviders[this.props.currentTable]) || ResultDetails;
 
         return <div className="center" onDragEnter={e => {
                 // Consider disabling pointer events for perf.
@@ -251,14 +251,13 @@ export default class Search extends EventedComponent {
                             onSetColumns={this.onSetColumns.bind(this)} />
                     </InfiniteScroll>
                     <div className="scrollable">
-                        {React.createElement(customDetailsView, {
-                            itemId: this.state.userSelectedId,
-                            table: this.props.currentTable,
-                            query: this.props.query,
-                            data: this.state.selectedItemData,
-                            onClose: () => this.setState({ userSelectedId: undefined }),
-                            onAddClause: (name, value) => this.props.queryChanged(`${this.props.query} AND [${name}]="${value}"`)
-                        })}
+                        <CustomDetailsView
+                            itemId={this.state.userSelectedId}
+                            table={this.props.currentTable}
+                            query={this.props.query}
+                            data={this.state.selectedItemData}
+                            onClose={() => this.setState({ userSelectedId: undefined })}
+                            onAddClause={(name, value) => this.props.queryChanged(`${this.props.query} AND [${name}]="${value}"`)} />
                     </div>
                 </SplitPane>
                 : <Start allBasics={this.props.allBasics} showHelp={this.props.params.help === "true"} queryChanged={this.props.queryChanged} />}
