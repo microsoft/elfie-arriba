@@ -112,9 +112,20 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             }
         }
 
+        // Break a row from the file into contiguous ranges for each logical cell
         protected abstract String8Set SplitCells(String8 row, PartialArray<int> cellPositionArray);
 
+        // Break a block from the file into contiguous ranges for each logical row
         protected abstract String8Set SplitRows(String8 block, PartialArray<int> rowPositionArray);
+
+        // Identify where the values are for each column in the current row
+        protected virtual void SplitValues(String8Set rowCells, String8TabularValue[] rowValues)
+        {
+            for(int i = 0; i < rowCells.Count; ++i)
+            {
+                rowValues[i].SetValue(rowCells[i]);
+            }
+        }
 
         /// <summary>
         ///  Return the column headings found. The set is empty if there was no heading row.
@@ -139,7 +150,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             if (_columnHeadings.TryGetValue(columnNameOrIndex, out columnIndex)) return true;
 
             // See if the column is a parsable integer index
-            if (int.TryParse(columnNameOrIndex, out columnIndex) && columnIndex >= 0 && _columnHeadings.Count > columnIndex) return true;
+            if (int.TryParse(columnNameOrIndex, out columnIndex) && columnIndex >= 0) return true;
 
             // Not found, so set to -1
             columnIndex = -1;
@@ -153,7 +164,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         /// <returns>String8Set with the cells for the current row.</returns>
         public ITabularValue Current(int index)
         {
-            _valueBoxes[index].SetValue(_currentRow[index]);
+            if (index >= _currentRow.Count) throw new ArgumentOutOfRangeException();
             return _valueBoxes[index];
         }
 
@@ -224,6 +235,9 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
                     _valueBoxes[i] = new String8TabularValue();
                 }
             }
+
+            // Get the value portions of the cells into String8TabularValues
+            SplitValues(_currentRow, _valueBoxes);
 
             return true;
         }
