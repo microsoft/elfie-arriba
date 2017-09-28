@@ -27,7 +27,7 @@ export default class extends EventedComponent {
     handleKeyDown(e) {
         if (e.keyCode === 27) {
             // ESC - Close AddColumnList
-            this.setState(this.getInitialState());
+            this.setState({ filter: null, filteredColumns: this.filterColumns(null), selectedIndex: 0 });
             this.props.onAddColumn(null);
             e.stopPropagation();
         } else if (e.keyCode === 13 || e.keyCode === 9) {
@@ -45,10 +45,6 @@ export default class extends EventedComponent {
             e.stopPropagation();
         }
     }
-    handleAddColumn(e) {
-        this.props.onAddColumn(e.target.getAttribute("data-name"));
-        e.stopPropagation();
-    }
     handleFilterChanged(e) {
         var newFilter = e.target.value;
         var newFilteredColumns = this.filterColumns(newFilter);
@@ -58,16 +54,19 @@ export default class extends EventedComponent {
         // Write an add column list (shown only once the '+' is clicked)
         if (!this.props.showing) return null;
 
-        var addColumns = [];
-        for(var i = 0; i < this.state.filteredColumns.length; ++i) {
-            var name = this.state.filteredColumns[i];
-            var className = (i === this.state.selectedIndex ? "add-list-selected" : "");
-            addColumns.push(<div key={"add_" + name} data-name={name} onClick={this.handleAddColumn.bind(this)} className={className}>{name}</div>);
-        }
-
         return <div className="add-list" onKeyDown={this.handleKeyDown.bind(this)} >
             <input type="text" autoFocus placeholder="Filter Columns" value={this.state.filter} onChange={this.handleFilterChanged.bind(this)} onKeyDown={this.handleKeyDown.bind(this)} />
-            <div className="addColumnsList">{addColumns}</div>
+            <div className="addColumnsList">
+                {this.state.filteredColumns.map((name, i) => <div
+                    key={"add_" + name}
+                    onClick={e => {
+                        this.props.onAddColumn(name);
+                        e.stopPropagation();
+                    }}
+                    className={(i === this.state.selectedIndex) && "add-list-selected"}>
+                    {name}
+                </div>)}
+            </div>
         </div>;
     }
 }
