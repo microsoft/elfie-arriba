@@ -111,15 +111,7 @@ select,
 button,
 textarea {
     font-family: "Segoe UI", "Segoe WP", Tahoma, Arial, sans-serif;
-    font-weight: 600;
-}
-
-/* Disable the blue border on selected inputs */
-textarea:focus,
-input:focus,
-select:focus,
-div:focus {
-    outline: 0;
+    &:focus { outline: 0; } // Disable the blue border on selected inputs
 }
 
 /* Add a style to request indentation */
