@@ -108,12 +108,11 @@ export default React.createClass({
                                         this.props.onSetColumns(this.props.data.query.columns.filter(name => name !== column.name));
                                         e.stopPropagation();
                                     }} />}
-                                {i == content.values.columns.length - 1 && <div ref={"addButton"} className="add-column-button icon-add icon-column-heading" title="Add Column" onClick={this.handleAdd}>
-                                    <AddColumnList
-                                        showing={this.state.addColumnsShowing}
-                                        onAddColumn={this.onAddColumn}
-                                        allColumns={table.columns}
-                                        currentColumns={content.query.columns} />
+                                {i == content.values.columns.length - 1 && <div
+                                    ref={"addButton"}
+                                    className="add-column-button icon-add icon-column-heading"
+                                    title="Add Column"
+                                    onClick={this.handleAdd}>
                                 </div>}
                             </div>
                         </td>;
@@ -126,7 +125,11 @@ export default React.createClass({
                     return <ResultListingItem key={id} itemId={id} itemIndex={index++} data={row} columns={content.values.columns} onSelectionChanged={selectFunction} selected={selectedId === id } />;
                 })}
             </tbody>
-
+            <AddColumnList
+                showing={this.state.addColumnsShowing}
+                onAddColumn={this.onAddColumn}
+                allColumns={table.columns}
+                currentColumns={content.query.columns} />
         </table>;
     }
 });

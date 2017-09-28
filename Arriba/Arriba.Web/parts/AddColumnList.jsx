@@ -62,13 +62,9 @@ export default React.createClass({
             addColumns.push(<div key={"add_" + name} data-name={name} onClick={addFunction} className={className}>{name}</div>);
         }
 
-        return (
-            <div style={{position: "absolute"}}>
-                <div className="add-list" onKeyDown={this.handleKeyDown} >
-                    <input type="text" autoFocus placeholder="Filter" value={this.state.filter} onChange={this.handleFilterChanged} onKeyDown={this.handleKeyDown} />
-                    {addColumns}
-                </div>
-            </div>
-        );
+        return <div className="add-list" onKeyDown={this.handleKeyDown} >
+            <input type="text" autoFocus placeholder="Filter Columns" value={this.state.filter} onChange={this.handleFilterChanged} onKeyDown={this.handleKeyDown} />
+            <div className="addColumnsList">{addColumns}</div>
+        </div>;
     }
 });

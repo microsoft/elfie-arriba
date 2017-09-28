@@ -319,39 +319,56 @@ a:visited:hover {
 
 /* --- Listing UX --- */
 
+.offsetParent {
+    position: relative;
+    height: 100%;
+}
+
 /* Make the AddColumnList absolute positioned, on top, scrollable, black on white */
 /* ISSUE: Unsure how to ensure it isn't too tall when very little height */
 .add-list {
-    z-index: 10;
+    box-sizing: border-box;
+    * { box-sizing: border-box; }
+
     position: absolute;
+    right: 10px;
+    top: 33px + 10px;
+    bottom: 20px;
+    box-shadow: 0 3px 8px 0 rgba(0,0,0,0.2), 0 0 0 1px rgba(0,0,0,0.08);
+
+    flex-shrink: 0;
     background: white;
-    color: black;
-    border: 1px solid #888;
-    top: 0em;
-    right: -1em;
-    width: 12em;
-    padding: 2px;
-    overflow: auto;
-    max-height: 24em;
+    border-left: 1px solid #ccc;
+    width: 250px;
+
+    display: flex;
+    flex-flow: column;
 
     /* Make Filter textbox in AddColumnList spaced from edges and narrow enough not to be covered by scrollbar */
     input {
-        width: 10.75em;
-        margin: 2px;
-        margin-bottom: 4px;
+        flex: 0 0;
+        width: 100%;
+        padding: 15px;
+        border: 0;
+        border-bottom: 1px solid #ccc;
+        &::placeholder {
+            color: lighten($vlight, 20%);
+        }
     }
 
-    /* Make AddColumnList hovered on items look selected */
-    div:hover {
-        color: white;
-        background-color: #3d56af;
-    }
-}
+    .addColumnsList {
+        overflow-y: auto;
 
-/* Make the AddColumnList programmatically selected item look selected */
-.add-list-selected {
-    color: white;
-    background-color: #3d56af;
+        & > div {
+            @include ellipsis;
+            font-size: 12px;
+            padding: 8px 10px 8px 15px;
+            cursor: pointer;
+            &:hover, .add-list-selected {
+                background-color: hsla(216, 80%, 85%, 0.25)
+            }
+        }
+    }
 }
 
 /* --- Details UX --- */
