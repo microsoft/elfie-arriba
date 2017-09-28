@@ -108,12 +108,12 @@ export default React.createClass({
                                         this.props.onSetColumns(this.props.data.query.columns.filter(name => name !== column.name));
                                         e.stopPropagation();
                                     }} />}
-                                {i == content.values.columns.length - 1 && <div
+                                {i == content.values.columns.length - 1 && <img
+                                    src="/icons/add.svg"
+                                    className="grid-icon"
                                     ref={"addButton"}
-                                    className="add-column-button icon-add icon-column-heading"
                                     title="Add Column"
-                                    onClick={this.handleAdd}>
-                                </div>}
+                                    onClick={this.handleAdd}/>}
                             </div>
                         </td>;
                     })}
