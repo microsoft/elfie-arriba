@@ -12,7 +12,11 @@ import SplitPane from "./SplitPane";
 import Start from "./Start";
 
 import ResultDetails from "./ResultDetails";
+import AddColumnList from "./AddColumnList";
 import ResultListing from "./ResultListing";
+
+import createDOMPurify  from "DOMPurify";
+const DOMPurify = createDOMPurify(window); // Consider lazy instantiation.
 
 window.configuration = require("../configuration/Configuration.jsx").default;
 
@@ -181,7 +185,14 @@ export default class Search extends EventedComponent {
             configuration.url + "/table/" + this.props.currentTable,
             data => {
                 if (data.content.values) {
-                    this.setState({ selectedItemData: arribaRowToObject(data.content.values, 0) });
+                    const dictionary = arribaRowToObject(data.content.values, 0);
+                    table.columnsLookup = table.columnsLookup || table.columns.toObject(c => c.name);
+                    for (const key in dictionary) {
+                        if (dictionary[key] && table.columnsLookup[key].type === "Html") { // Make case insensitive in future.
+                            dictionary[key] = DOMPurify.sanitize(dictionary[key]);
+                        }
+                    }
+                    this.setState({ selectedItemData: dictionary });
                 } else {
                     if (!this.props.query) {
                         this.setState({ selectedItemData: null, error: "Item '" + this.state.userSelectedId + "' not found." })

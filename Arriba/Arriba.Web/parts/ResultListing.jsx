@@ -2,6 +2,9 @@
 import "./ResultListing.scss";
 import Delete from "./Delete"
 
+import createDOMPurify  from "DOMPurify";
+const DOMPurify = createDOMPurify(window);
+
 // ResultListing shows a table of items matching a query, with sortable columns
 export default React.createClass({
     getInitialState: function () {
@@ -120,9 +123,10 @@ export default React.createClass({
             <tbody>
                 {content.values.rows.map(function (row) {
                     var id = stripHighlight(row[idColumnIndex]);
-                    return <ResultListingItem key={id} itemId={id} itemIndex={index++} data={row} onSelectionChanged={selectFunction} selected={selectedId === id } />;
+                    return <ResultListingItem key={id} itemId={id} itemIndex={index++} data={row} columns={content.values.columns} onSelectionChanged={selectFunction} selected={selectedId === id } />;
                 })}
             </tbody>
+
         </table>;
     }
 });
@@ -134,6 +138,10 @@ class ResultListingItem extends React.Component {
             {this.props.data.map((item, i) => {
                 if (item.length > 200) { // Cap cell contents length for browser layout perf.
                     item = item.substr(0, 200) + "…";
+                }
+                const type = this.props.columns[i].type;
+                if (type === "Html") { // Make case insensitive.
+                    item = DOMPurify.sanitize(item);
                 }
                 return <td key={`${this.props.itemId}_${i}`} title={stripHighlight(item)} dangerouslySetInnerHTML={highlight(item)} />
             })}
