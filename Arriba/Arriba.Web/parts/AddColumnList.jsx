@@ -1,11 +1,13 @@
 import "./AddColumnList.scss";
+import EventedComponent from "./EventedComponent";
 
 // AddColumnList is the list of unselected columns which shows up in the listing when the '+' is clicked.
-export default React.createClass({
-    getInitialState: function () {
-        return { filter: null, filteredColumns: this.filterColumns(null), selectedIndex: 0 }
-    },
-    filterColumns: function (filter) {
+export default class extends EventedComponent {
+    constructor(props) {
+        super(props);
+        this.state = { filter: null, filteredColumns: this.filterColumns(null), selectedIndex: 0 };
+    }
+    filterColumns(filter) {
         if (!filter) filter = "";
         filter = filter.toLowerCase();
 
@@ -21,8 +23,8 @@ export default React.createClass({
         }
 
         return filteredColumns;
-    },
-    handleKeyDown: function (e) {
+    }
+    handleKeyDown(e) {
         if (e.keyCode === 27) {
             // ESC - Close AddColumnList
             this.setState(this.getInitialState());
@@ -42,31 +44,30 @@ export default React.createClass({
             this.setState({ selectedIndex: (this.state.selectedIndex >= this.state.filteredColumns.length ? this.state.filteredColumns.length - 1 : this.state.selectedIndex + 1) });
             e.stopPropagation();
         }
-    },
-    handleAddColumn: function (e) {
+    }
+    handleAddColumn(e) {
         this.props.onAddColumn(e.target.getAttribute("data-name"));
         e.stopPropagation();
-    },
-    handleFilterChanged: function (e) {
+    }
+    handleFilterChanged(e) {
         var newFilter = e.target.value;
         var newFilteredColumns = this.filterColumns(newFilter);
         this.setState({ filter: newFilter, filteredColumns: newFilteredColumns, selectedIndex: 0 });
-    },
-    render: function () {
+    }
+    render() {
         // Write an add column list (shown only once the '+' is clicked)
         if (!this.props.showing) return null;
 
-        var addFunction = this.handleAddColumn;
         var addColumns = [];
         for(var i = 0; i < this.state.filteredColumns.length; ++i) {
             var name = this.state.filteredColumns[i];
             var className = (i === this.state.selectedIndex ? "add-list-selected" : "");
-            addColumns.push(<div key={"add_" + name} data-name={name} onClick={addFunction} className={className}>{name}</div>);
+            addColumns.push(<div key={"add_" + name} data-name={name} onClick={this.handleAddColumn.bind(this)} className={className}>{name}</div>);
         }
 
-        return <div className="add-list" onKeyDown={this.handleKeyDown} >
-            <input type="text" autoFocus placeholder="Filter Columns" value={this.state.filter} onChange={this.handleFilterChanged} onKeyDown={this.handleKeyDown} />
+        return <div className="add-list" onKeyDown={this.handleKeyDown.bind(this)} >
+            <input type="text" autoFocus placeholder="Filter Columns" value={this.state.filter} onChange={this.handleFilterChanged.bind(this)} onKeyDown={this.handleKeyDown.bind(this)} />
             <div className="addColumnsList">{addColumns}</div>
         </div>;
     }
-});
+}
