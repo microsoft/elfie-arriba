@@ -1,4 +1,5 @@
-﻿import "../Search.scss";
+import "../Search.scss";
+﻿import "./Grid.scss";
 import "!script-loader!../js/utilities.js";
 
 import EventedComponent from "./EventedComponent";

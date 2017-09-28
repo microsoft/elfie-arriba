@@ -1,3 +1,4 @@
+@import './configuration/theme';
 @import '../shared.scss';
 
 .errorBar {
@@ -16,4 +17,45 @@
 
     font-size: 16pt;
     color: hsl(0, 0%, 80%);
+}
+
+.mode {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    color: white;
+    background-color: $dark;
+    width: 50px;
+
+    * { box-sizing: border-box; } // Eventually global.
+
+    /* Make the currently selected mode grey on light grey (match main panel background) */
+    .selected {
+        color: #666666;
+        background: #F5F5F5;
+    }
+
+    /* Make the currently selected mode light up on hover but keep the matching background */
+    .selected:hover {
+        color: #222222;
+        background: #F5F5F5;
+    }
+
+    .mode-fill { flex: 1; }
+
+    /* Make mode bar modes large icons */
+    a {
+        width: 100%;
+        height: 50px;
+
+        font-size: 22px;
+        color: #EEEEEE;
+        text-decoration: none;
+        @include center-center;
+    }
+
+    /* Make the mode links turn darker grey on hover */
+    a:hover {
+        color: #999;
+    }
 }

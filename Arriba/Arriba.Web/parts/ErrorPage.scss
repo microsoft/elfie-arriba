@@ -1,0 +1,35 @@
+.errorPage {
+    padding: 48px 24px;
+
+    /* Make the heading large white text on red, centered, left-aligned. */
+    /* Make the status code smaller, right-aligned. */
+    h1 {
+        color: white;
+        background: #e81123;
+        padding: 12px;
+        margin: auto;
+        width: 50%;
+        border: 2px solid #e81123;
+        display: flex;
+        align-items: center;
+        flex-direction: row;
+        justify-content: space-between;
+    }
+
+    h1 > .errorTitle {
+        font-size: 24pt;
+    }
+
+    h1 > .errorStatus {
+        font-size: 16px;
+    }
+
+    /* Make error content centered, red border, spaced */
+    article {
+        margin: 0 auto;
+        width: 50%;
+        border: 2px solid #e81123;
+        padding: 12px;
+        font-size: 12pt;
+    }
+}
