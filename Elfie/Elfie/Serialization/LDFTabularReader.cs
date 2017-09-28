@@ -7,6 +7,15 @@ using System.Security.Principal;
 
 namespace Microsoft.CodeAnalysis.Elfie.Serialization
 {
+    /// <summary>
+    ///  LdfTabularReader is a tabular reader for the LDF or LDIF format, which
+    ///  Active Directory tools like LDIFDE produce.
+    ///  
+    ///  See https://en.wikipedia.org/wiki/LDAP_Data_Interchange_Format.
+    ///  
+    ///  This implementation internally decodes:
+    ///     'objectSid', if seen, into an SDDL formatted SID.
+    /// </summary>
     public class LdfTabularReader : ITabularReader
     {
         private static String8 MultiValueDelimiter = String8.Convert(";", new byte[1]);
@@ -98,8 +107,8 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
                 }
 
                 // Save the last line and read another block
-                System.Buffer.BlockCopy(buffer, 0, buffer, lastLine._index, lastLine.Length);
-                lengthRead = lastLine.Length + stream.Read(buffer, lastLine.Length, buffer.Length - lastLine.Length);
+                lengthRead = lastLine.WriteTo(buffer, 0);
+                lengthRead += stream.Read(buffer, lengthRead, buffer.Length - lengthRead);
             }
 
             stream.Seek(0, SeekOrigin.Begin);
@@ -107,8 +116,8 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
 
         private void ReadColumnLine(String8 line)
         {
-            // Skip empty and continuation lines
-            if (line.Length == 0 || line[0] == UTF8.CR || line[0] == UTF8.Space) return;
+            // Skip empty, continuation, and comment lines
+            if (line.Length == 0 || line[0] == UTF8.CR || line[0] == UTF8.Space || line[0] == UTF8.Pound) return;
 
             // Find the column name part of the line
             String8 columnName = line.BeforeFirst(UTF8.Colon);
@@ -151,7 +160,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             rowPositionArray.Clear();
             rowPositionArray.Add(0);
 
-            for (int i = 0; i < _blockLines.Count; ++i)
+            for (int i = 0; i < _blockLines.Count - 1; ++i)
             {
                 String8 line = _blockLines[i];
 
@@ -162,7 +171,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
                 }
             }
 
-            rowPositionArray.Add(_lineArray[_blockLines.Count]);
+            rowPositionArray.Add(block.Length + 1);
 
             return new String8Set(block, 1, rowPositionArray);
         }
@@ -185,10 +194,12 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             String8 currentPropertyValue = String8.Empty;
             bool currentIsBase64 = false;
 
-            int currentLineIndex = _nextLineIndex;
-            while (currentLineIndex < _blockLines.Count)
+            for(; _nextLineIndex < _blockLines.Count; ++_nextLineIndex)
             {
-                String8 line = _blockLines[currentLineIndex];
+                String8 line = _blockLines[_nextLineIndex];
+
+                // Skip comment lines
+                if (line.StartsWith(UTF8.Pound)) continue;
 
                 // Trim trailing CR, if found
                 if (line.EndsWith(UTF8.CR)) line = line.Substring(0, line.Length - 1);
@@ -216,12 +227,13 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
                     currentIsBase64 = (line[currentPropertyName.Length + 1] == UTF8.Colon);
                     if (currentIsBase64) currentPropertyValue = currentPropertyValue.Substring(1);                    
                 }
-
-                currentLineIndex++;
             }
 
+            // Set the last property value
             SetColumnValue(currentPropertyName, currentPropertyValue, currentIsBase64);
-            _nextLineIndex = currentLineIndex + 1;
+
+            // The next row starts after the row separator line
+            _nextLineIndex++;
 
             this.RowCountRead++;
             return true;
@@ -240,6 +252,10 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             {
                 currentPropertyValue = DecodeSid(currentPropertyValue);
             }
+
+            // TODO: Decode ".0Z" time format
+
+            // TODO: Decode NT file time format
 
             int columnIndex;
             if (_columnIndices8.TryGetValue(currentPropertyName, out columnIndex))

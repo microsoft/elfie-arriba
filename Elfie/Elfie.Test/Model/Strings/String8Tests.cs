@@ -174,6 +174,44 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
         }
 
         [TestMethod]
+        public void String8_StartsWithEndsWith()
+        {
+            string collections = "Collections";
+            String8 collections8 = String8.Convert(collections, new byte[String8.GetLength(collections)]);
+
+            string collectionsCasing = "coLLecTionS";
+            String8 collectionsCasing8 = String8.Convert(collectionsCasing, new byte[String8.GetLength(collectionsCasing)]);
+
+            Assert.IsFalse(String8.Empty.StartsWith(UTF8.Space));
+            Assert.IsFalse(String8.Empty.EndsWith(UTF8.Space));
+
+            Assert.IsTrue(collections8.StartsWith((byte)'C'));
+            Assert.IsFalse(collections8.StartsWith((byte)'c'));
+            Assert.IsFalse(collections8.StartsWith(UTF8.Newline));
+
+            Assert.IsTrue(collections8.EndsWith((byte)'s'));
+            Assert.IsFalse(collections8.EndsWith((byte)'S'));
+            Assert.IsFalse(collections8.EndsWith(UTF8.Newline));
+
+            Assert.IsFalse(String8.Empty.StartsWith(collections8));
+            Assert.IsFalse(String8.Empty.EndsWith(collections8));
+            Assert.IsFalse(String8.Empty.StartsWith(collections8, true));
+            Assert.IsFalse(String8.Empty.EndsWith(collections8, true));
+
+            Assert.IsTrue(collections8.EndsWith(collections8));
+            Assert.IsTrue(collections8.EndsWith(collections8.Substring(1)));
+            Assert.IsTrue(collections8.EndsWith(collections8.Substring(8)));
+            Assert.IsFalse(collections8.EndsWith(collectionsCasing8));
+            Assert.IsTrue(collections8.EndsWith(collectionsCasing8, true));
+
+            Assert.IsTrue(collections8.StartsWith(collections8));
+            Assert.IsTrue(collections8.StartsWith(collections8.Substring(0, collections8.Length - 1)));
+            Assert.IsTrue(collections8.StartsWith(collections8.Substring(0, 3)));
+            Assert.IsFalse(collections8.StartsWith(collectionsCasing8));
+            Assert.IsTrue(collections8.StartsWith(collectionsCasing8, true));
+        }
+
+        [TestMethod]
         public void String8_Prefix()
         {
             String8 full = String8.Convert("One.Two.Three", new byte[13]);

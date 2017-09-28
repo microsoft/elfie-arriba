@@ -26,6 +26,8 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             s_readers["tsv"] = (path) => new TsvReader(path);
             s_readers["tsvNH"] = (path) => new TsvReader(MapExtension(path, ".tsv"), false);
             s_readers["iislog"] = (path) => new IISTabularReader(MapExtension(path, ".log"));
+            s_readers["ldf"] = (path) => new LdfTabularReader(path);
+            s_readers["ldif"] = (path) => new LdfTabularReader(path);
 
             s_writers["cout"] = (path) => new ConsoleTabularWriter();
             s_writers["csv"] = (path) => new CsvWriter(path, true);

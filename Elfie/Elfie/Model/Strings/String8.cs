@@ -352,6 +352,17 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         /// </summary>
         /// <param name="c">Character to check for</param>
         /// <returns>True if string ends with character, false otherwise</returns>
+        public bool StartsWith(byte c)
+        {
+            if (_length == 0) return false;
+            return (_buffer[0] == c);
+        }
+
+        /// <summary>
+        ///  Return whether this string ends with the given character.
+        /// </summary>
+        /// <param name="c">Character to check for</param>
+        /// <returns>True if string ends with character, false otherwise</returns>
         public bool EndsWith(byte c)
         {
             if (_length == 0) return false;
@@ -367,6 +378,18 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         public bool StartsWith(String8 other, bool ignoreCase = false)
         {
             return other.CompareAsPrefixTo(this, ignoreCase) == 0;
+        }
+
+        /// <summary>
+        ///  Return whether this string starts with the given other string.
+        /// </summary>
+        /// <param name="other">The potential prefix to this string</param>
+        /// <param name="ignoreCase">True for case insensitive comparison, False otherwise</param>
+        /// <returns></returns>
+        public bool EndsWith(String8 other, bool ignoreCase = false)
+        {
+            if (other.Length > this.Length) return false;
+            return other.CompareTo(this.Substring(this.Length - other.Length), ignoreCase) == 0;
         }
 
         /// <summary>
