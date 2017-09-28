@@ -1,27 +1,51 @@
 ﻿using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.CodeAnalysis.Elfie.Model.Structures;
+using System;
 using System.Collections.Generic;
 using System.IO;
 
 namespace Microsoft.CodeAnalysis.Elfie.Serialization
 {
-    public class LDFTabularReader : BaseTabularReader
+    public class LdfTabularReader : ITabularReader
     {
-        private String8Block _columnNamesBlock;
+        private Stream _stream;
 
+        private String8Block _columnNamesBlock;
+        private Dictionary<string, int> _columnIndices;
+        private List<string> _columnNames;
+
+        private byte[] _buffer;
         private String8Set _blockLines;
         private PartialArray<int> _linePositionArray;
         private int _nextRowFirstLine;
 
-        public LDFTabularReader(string filePath) : this(new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+        public IReadOnlyList<string> Columns => _columnNames;
+
+        public int RowCountRead { get; private set; }
+
+        public long BytesRead => _stream.Position;
+
+        public int CurrentRowColumns => throw new System.NotImplementedException();
+
+        public LdfTabularReader(string filePath) : this(new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
         { }
 
-        public LDFTabularReader(Stream stream) : base(stream, false)
+        public LdfTabularReader(Stream stream)
         {
-            ReadColumns(stream);
+            _stream = stream;
+
+            _columnNamesBlock = new String8Block();
+            _columnIndices = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            _columnNames = new List<string>();
+
+            _buffer = new byte[64 * 1024];
+            _linePositionArray = new PartialArray<int>();
+
+            ReadColumns();
         }
 
-        private void ReadColumns(Stream stream)
+        #region ReadColumns
+        private void ReadColumns()
         {
             // Allocate a fixed array to hold split lines
             _linePositionArray = new PartialArray<int>(1024);
@@ -31,19 +55,18 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
 
             // Walk the whole LDF by line looking for every unique column name found
             Dictionary<String8, int> columnsFound = new Dictionary<String8, int>();
-            byte[] buffer = new byte[64 * 1024];
-            int lengthRead = stream.Read(buffer, 0, buffer.Length);
+            int lengthRead = _stream.Read(_buffer, 0, _buffer.Length);
 
-            while(true)
+            while (true)
             {
                 // Read a block from the file
-                String8 block = new String8(buffer, 0, lengthRead);
+                String8 block = new String8(_buffer, 0, lengthRead);
 
                 // Split the block into lines
                 String8Set lines = block.Split(UTF8.Newline, _linePositionArray);
 
                 // Read and track all column names down to the second-to-last line
-                for(int i = 0; i < lines.Count - 1; ++i)
+                for (int i = 0; i < lines.Count - 1; ++i)
                 {
                     ReadColumnLine(lines[i], columnsFound);
                 }
@@ -51,23 +74,23 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
                 String8 lastLine = lines[lines.Count - 1];
 
                 // If we ran out of file, read the last line and stop
-                if (lengthRead < buffer.Length)
+                if (lengthRead < _buffer.Length)
                 {
                     ReadColumnLine(lastLine, columnsFound);
                     break;
                 }
 
                 // If this was one big line, double the buffer to read more
-                if(lines.Count == 1)
+                if (lines.Count == 1)
                 {
-                    byte[] newBuffer = new byte[buffer.Length * 2];
-                    System.Buffer.BlockCopy(buffer, 0, newBuffer, 0, buffer.Length);
-                    buffer = newBuffer;
+                    byte[] newBuffer = new byte[_buffer.Length * 2];
+                    System.Buffer.BlockCopy(_buffer, 0, newBuffer, 0, _buffer.Length);
+                    _buffer = newBuffer;
                 }
 
                 // Save the last line and read another block
-                System.Buffer.BlockCopy(buffer, 0, buffer, lastLine._index, lastLine.Length);
-                lengthRead = lastLine.Length + stream.Read(buffer, lastLine.Length, buffer.Length - lastLine.Length);
+                System.Buffer.BlockCopy(_buffer, 0, _buffer, lastLine._index, lastLine.Length);
+                lengthRead = lastLine.Length + _stream.Read(_buffer, lastLine.Length, _buffer.Length - lastLine.Length);
             }
         }
 
@@ -86,10 +109,12 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
                 columnsFound[_columnNamesBlock.GetCopy(columnName)] = columnIndex;
 
                 string columnNameString = columnName.ToString();
-                _columnHeadingsList.Add(columnNameString);
-                _columnHeadings[columnNameString] = columnIndex;
+                _columnNames.Add(columnNameString);
+                _columnIndices[columnNameString] = columnIndex;
             }
         }
+
+        #endregion
 
         protected String8Set Split(String8 block, PartialArray<int> rowPositionArray, PartialArray<int> cellPositionArray)
         {
@@ -121,100 +146,32 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             return new String8Set(block, 1, rowPositionArray);
         }
 
-        protected override void SplitValues(String8Set rowCells, String8TabularValue[] rowValues)
+        public bool TryGetColumnIndex(string columnNameOrIndex, out int columnIndex)
         {
-            base.SplitValues(rowCells, rowValues);
+            if (_columnIndices.TryGetValue(columnNameOrIndex, out columnIndex)) return true;
+            if (int.TryParse(columnNameOrIndex, out columnIndex) && columnIndex >= 0 && columnIndex < _columnNames.Count) return true;
+
+            columnIndex = -1;
+            return false;
         }
 
-        protected override String8Set SplitCells(String8 row, PartialArray<int> cellPositionArray)
+        public ITabularValue Current(int index)
         {
-            // Identify cell boundaries (a line starting with space is a continuation of the previous value)
-            cellPositionArray.Clear();
-
-            int rowIndexInBlock = row._index - _blockReference._index;
-            int rowEndInBlock = rowIndexInBlock + row.Length;
-
-            //String8Set lines = new String8Set(_blockReference, 1, cellPositionArray);
-            //int currentLineIndex = _nextRowFirstLine;
-            //for (; currentLineIndex < lines.Count; ++currentLineIndex)
-            //{
-            //    String8 line = lines[currentLineIndex];
-
-            //    // If line is outside row, stop
-            //    if (line._index > rowEndInBlock) break;
-
-            //    switch(line[0])
-            //    {
-            //        case UTF8.Space:
-            //            // Multi-line attribute - unwrap
-            //            case UTF8
-            //    }
-            //}
-
-
-            // Walk lines after the last row identifying value boundaries (a line continues the previous value if it starts with space)
-            //int shiftBackAmount = 0;
-            int currentLineIndex = _nextRowFirstLine + 1;
-            for(; currentLineIndex < _linePositionArray.Count; ++currentLineIndex)
-            {
-                int lineStartIndex = _linePositionArray[currentLineIndex];
-
-                // If this line is after the row, stop
-                if (lineStartIndex >= rowEndInBlock) break;
-
-                // If the line starts with a space, shift it back to make it contiguous
-                if (_blockReference[lineStartIndex] != UTF8.Space)
-                {
-                    // Convert the block index to a row-relative index
-                    cellPositionArray.Add(lineStartIndex - rowIndexInBlock);
-                }
-                //else
-                //{
-                //    shiftBackAmount += 2;
-                //    if (_blockReference[lineStartIndex - 2] == UTF8.CR) shiftBackAmount++;
-
-                //    _blockReference.Substring(lineStartIndex, _linePositionArray[currentLineIndex + 1] - lineStartIndex).ShiftBack(shiftBackAmount);
-                //}
-            }
-
-            // Track the line which starts the next row
-            _nextRowFirstLine = currentLineIndex;
-
-            return new String8Set(row, 1, cellPositionArray);
+            throw new System.NotImplementedException();
         }
 
-        protected override String8Set SplitRows(String8 block, PartialArray<int> rowPositionArray)
+        public bool NextRow()
         {
-            // LDF files are line-based. We want to split the entire block on newlines and then
-            // reconstruct the logical row and cell boundaries by looking at the lines.
+            throw new System.NotImplementedException();
+        }
 
-            // Split the entire block into lines
-            _blockLines = block.Split(UTF8.Newline, _linePositionArray);
-
-            // Track lines read so far, so each row and cell read can process by line
-            _nextRowFirstLine = 0;
-
-            // Identify row boundaries (a completely empty line [\n\n or \r\n\r\n] is a new 'row')
-            rowPositionArray.Clear();
-            rowPositionArray.Add(0);
-
-            for (int i = 0; i < _blockLines.Count; ++i)
+        public void Dispose()
+        {
+            if(_stream != null)
             {
-                String8 line = _blockLines[i];
-
-                if(line.Length == 0)
-                {
-                    // \n\n is a row boundary
-                    rowPositionArray.Add(_linePositionArray[i]);
-                }
-                else if (line.Length == 1 && line[0] == UTF8.CR)
-                {
-                    // \n\r\n is a row boundary
-                    rowPositionArray.Add(_linePositionArray[i]);
-                }
+                _stream.Dispose();
+                _stream = null;
             }
-
-            return new String8Set(block, 1, rowPositionArray);
         }
     }
 }

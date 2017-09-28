@@ -39,7 +39,7 @@ objectSid:: AQUAAAAAAAUVAAAAF
         {
             File.WriteAllText("Sample.ldf", SampleContent);
 
-            using (ITabularReader reader = new LDFTabularReader("Sample.ldf"))
+            using (ITabularReader reader = new LdfTabularReader("Sample.ldf"))
             {
                 // Validate column names found
                 Assert.AreEqual("dn, changetype, cn, whenCreated, whenChanged, pwdLastSet, objectSid, distinguishedName, memberOf", string.Join(", ", reader.Columns));
