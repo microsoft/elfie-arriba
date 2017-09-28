@@ -123,6 +123,7 @@ textarea {
 table {
     border-collapse: collapse;
     background: white;
+    &:focus { outline: 0; }
 }
 
 /* Give table cells decent padding, silver borders, and put text at the top */
