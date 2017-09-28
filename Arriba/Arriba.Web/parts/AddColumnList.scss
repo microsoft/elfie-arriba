@@ -21,7 +21,6 @@
     display: flex;
     flex-flow: column;
 
-    /* Make Filter textbox in AddColumnList spaced from edges and narrow enough not to be covered by scrollbar */
     input {
         flex: 0 0;
         width: 100%;
@@ -41,7 +40,7 @@
             font-size: 12px;
             padding: 8px 10px 8px 15px;
             cursor: pointer;
-            &:hover, .add-list-selected {
+            &:hover, &.add-list-selected {
                 background-color: hsla(216, 80%, 85%, 0.25)
             }
         }
