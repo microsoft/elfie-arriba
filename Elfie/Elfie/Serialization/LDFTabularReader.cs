@@ -3,32 +3,31 @@ using Microsoft.CodeAnalysis.Elfie.Model.Structures;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Security.Principal;
 
 namespace Microsoft.CodeAnalysis.Elfie.Serialization
 {
-
-
     public class LdfTabularReader : ITabularReader
     {
-        private static String8 MultiValueDelimiter = String8.Convert("; ", new byte[2]);
+        private static String8 MultiValueDelimiter = String8.Convert(";", new byte[1]);
 
-        private Stream _stream;
+        private BufferedRowReader _reader;
 
         private String8Block _columnNamesBlock;
         private Dictionary<String8, int> _columnIndices8;
         private Dictionary<string, int> _columnIndices;
         private List<string> _columnNames;
 
-        private byte[] _buffer;
         private String8Set _blockLines;
-        private PartialArray<int> _linePositionArray;
-        private int _nextRowFirstLineIndex;
+        private PartialArray<int> _lineArray;
+        private int _nextLineIndex;
 
+        private String8Block _currentRowBlock;
         private String8TabularValue[] _currentRowValues;
 
         public IReadOnlyList<string> Columns => _columnNames;
         public int CurrentRowColumns => _columnNames.Count;
-        public long BytesRead => _stream.Position;
+        public long BytesRead => _reader.BytesRead;
 
         public int RowCountRead { get; private set; }
 
@@ -37,44 +36,43 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
 
         public LdfTabularReader(Stream stream)
         {
-            _stream = stream;
+            _reader = new BufferedRowReader(stream, SplitRows);
 
             _columnNamesBlock = new String8Block();
             _columnIndices8 = new Dictionary<String8, int>();
             _columnIndices = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
             _columnNames = new List<string>();
 
-            _buffer = new byte[64 * 1024];
-            _linePositionArray = new PartialArray<int>();
+            _currentRowBlock = new String8Block();
 
-            ReadColumns();
+            ReadColumns(stream);
 
             _currentRowValues = new String8TabularValue[_columnNames.Count];
-            for(int i = 0; i < _currentRowValues.Length; ++i)
+            for (int i = 0; i < _currentRowValues.Length; ++i)
             {
                 _currentRowValues[i] = new String8TabularValue();
             }
         }
 
         #region ReadColumns
-        private void ReadColumns()
+        private void ReadColumns(Stream stream)
         {
-            // Allocate a fixed array to hold split lines
-            _linePositionArray = new PartialArray<int>(1024);
+            byte[] buffer = new byte[64 * 1024];
+            _lineArray = new PartialArray<int>(1024, false);
 
             // Allocate a block to hold copies of unique column names
             _columnNamesBlock = new String8Block();
 
             // Walk the whole LDF by line looking for every unique column name found
-            int lengthRead = _stream.Read(_buffer, 0, _buffer.Length);
+            int lengthRead = stream.Read(buffer, 0, buffer.Length);
 
             while (true)
             {
                 // Read a block from the file
-                String8 block = new String8(_buffer, 0, lengthRead);
+                String8 block = new String8(buffer, 0, lengthRead);
 
                 // Split the block into lines
-                _blockLines = block.Split(UTF8.Newline, _linePositionArray);
+                _blockLines = block.Split(UTF8.Newline, _lineArray);
 
                 // Read and track all column names down to the second-to-last line
                 for (int i = 0; i < _blockLines.Count - 1; ++i)
@@ -85,7 +83,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
                 String8 lastLine = _blockLines[_blockLines.Count - 1];
 
                 // If we ran out of file, read the last line and stop
-                if (lengthRead < _buffer.Length)
+                if (lengthRead < buffer.Length)
                 {
                     ReadColumnLine(lastLine);
                     break;
@@ -94,15 +92,17 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
                 // If this was one big line, double the buffer to read more
                 if (_blockLines.Count == 1)
                 {
-                    byte[] newBuffer = new byte[_buffer.Length * 2];
-                    System.Buffer.BlockCopy(_buffer, 0, newBuffer, 0, _buffer.Length);
-                    _buffer = newBuffer;
+                    byte[] newBuffer = new byte[buffer.Length * 2];
+                    System.Buffer.BlockCopy(buffer, 0, newBuffer, 0, buffer.Length);
+                    buffer = newBuffer;
                 }
 
                 // Save the last line and read another block
-                System.Buffer.BlockCopy(_buffer, 0, _buffer, lastLine._index, lastLine.Length);
-                lengthRead = lastLine.Length + _stream.Read(_buffer, lastLine.Length, _buffer.Length - lastLine.Length);
+                System.Buffer.BlockCopy(buffer, 0, buffer, lastLine._index, lastLine.Length);
+                lengthRead = lastLine.Length + stream.Read(buffer, lastLine.Length, buffer.Length - lastLine.Length);
             }
+
+            stream.Seek(0, SeekOrigin.Begin);
         }
 
         private void ReadColumnLine(String8 line)
@@ -140,90 +140,140 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             return _currentRowValues[index];
         }
 
-        public bool NextRow()
+        private String8Set SplitRows(String8 block, PartialArray<int> rowPositionArray)
         {
-            return false;
+            // Split the block into lines (and save the split for use splitting columns)
+            _blockLines = block.Split(UTF8.Newline, _lineArray);
+
+            // Reset where which line the next row begins with
+            _nextLineIndex = 0;
+
+            rowPositionArray.Clear();
+            rowPositionArray.Add(0);
+
+            for (int i = 0; i < _blockLines.Count; ++i)
+            {
+                String8 line = _blockLines[i];
+
+                // An empty line (or \n\r\n) indicates a new logical row
+                if (line.Length == 0 || (line.Length == 1 && line[0] == UTF8.CR))
+                {
+                    rowPositionArray.Add(_lineArray[i + 1]);
+                }
+            }
+
+            rowPositionArray.Add(_lineArray[_blockLines.Count]);
+
+            return new String8Set(block, 1, rowPositionArray);
         }
 
-        //    // Clear values for row
-        //    for(int i = 0; i < _currentRowValues.Length; ++i)
-        //    {
-        //        _currentRowValues[i].SetValue(String8.Empty);
-        //    }
+        public bool NextRow()
+        {
+            _currentRowBlock.Clear();
 
-        //    // Read available complete lines
-        //    String8 currentPropertyName = String8.Empty;
-        //    String8 currentPropertyValue = String8.Empty;
+            String8 row = _reader.NextRow();
+            if (row.IsEmpty()) return false;
 
-        //    int currentLineIndex = _nextRowFirstLineIndex;
-        //    while (currentLineIndex < _blockLines.Count - 1)
-        //    {
-        //        String8 line = _blockLines[currentLineIndex];
+            // Clear values for row
+            for (int i = 0; i < _currentRowValues.Length; ++i)
+            {
+                _currentRowValues[i].SetValue(String8.Empty);
+            }
 
-        //        // Trim trailing CR, if found
-        //        if (line.EndsWith(UTF8.CR)) line = line.Substring(0, line.Length - 1);
+            // Read available complete lines
+            String8 currentPropertyName = String8.Empty;
+            String8 currentPropertyValue = String8.Empty;
+            bool currentIsBase64 = false;
 
-        //        // An empty line means the end of this row
-        //        if (line.Length == 0)
-        //        {
-        //            // Set the last value
-        //            SetColumnValue(currentPropertyName, currentPropertyValue);
+            int currentLineIndex = _nextLineIndex;
+            while (currentLineIndex < _blockLines.Count)
+            {
+                String8 line = _blockLines[currentLineIndex];
 
-        //            // Return that a row was found
-        //            return true;
-        //        }
+                // Trim trailing CR, if found
+                if (line.EndsWith(UTF8.CR)) line = line.Substring(0, line.Length - 1);
 
-        //        // Look for a wrapped line
-        //        if (line[0] == UTF8.Space)
-        //        {
-        //            // If found, concatenate the value after the space onto the value so far
-        //            line = line.Substring(1);
-        //            Buffer.BlockCopy(_buffer, line._index, _buffer, currentPropertyValue._index + currentPropertyValue.Length, line.Length);
-        //            currentPropertyValue = new String8(_buffer, currentPropertyValue._index, currentPropertyValue._length + line.Length);
-        //        }
-        //        else
-        //        {
-        //            // Get the column name for this value
-        //            String8 columnName = line.BeforeFirst(UTF8.Colon);
+                // An empty line or out of lines for the row range
+                if (line.Length == 0 || line._index >= row._index + row._length) break;
 
-        //            // If it's the same as the previous one, concatenate the values
-        //            // ISSUE: Are multi-value base64 values possible?
-        //            if(currentColumnName.Equals(columnName))
-        //            {
-        //                line = line.Substring(columnName.Length + 2);
+                // Look for a wrapped line
+                if (line[0] == UTF8.Space)
+                {
+                    // If found, concatenate the value after the space onto the value so far
+                    line = line.Substring(1);
+                    currentPropertyValue = _currentRowBlock.Concatenate(currentPropertyValue, String8.Empty, line);
+                }
+                else
+                {
+                    // Set or Append the value just completed
+                    SetColumnValue(currentPropertyName, currentPropertyValue, currentIsBase64);
 
-        //                Buffer.BlockCopy(_buffer, line._index, _buffer, currentPropertyValue._index + currentPropertyValue.Length, line.Length);
+                    // Split the property name and value [value is after colon and space]
+                    currentPropertyName = line.BeforeFirst(UTF8.Colon);
+                    currentPropertyValue = line.Substring(currentPropertyName.Length + 2);
 
-        //                currentPropertyValue = new String8(_buffer, currentPropertyValue._index, currentPropertyValue._length + line.Length);
-        //            }
-        //        }
+                    // Determine if the value is encoded
+                    currentIsBase64 = (line[currentPropertyName.Length + 1] == UTF8.Colon);
+                    if (currentIsBase64) currentPropertyValue = currentPropertyValue.Substring(1);                    
+                }
 
-        //        currentLineIndex++;
-        //    }
+                currentLineIndex++;
+            }
 
-        //    int lengthRead = _stream.Read(_buffer, 0, _buffer.Length);
-        //    String8 block = new String8(_buffer, 0, lengthRead);
-        //    _blockLines = block.Split(UTF8.Newline, _linePositionArray);
-        //    _nextRowFirstLineIndex = 0;           
-        //}
+            SetColumnValue(currentPropertyName, currentPropertyValue, currentIsBase64);
+            _nextLineIndex = currentLineIndex + 1;
 
-        //private void SetColumnValue(String8 currentPropertyName, String8 currentPropertyValue)
-        //{
-        //    // TODO: Unescape base64, translate SIDs, convert DateTimes
-        //    int columnIndex;
-        //    if(_columnIndices8.TryGetValue(currentPropertyName, out columnIndex))
-        //    {
+            this.RowCountRead++;
+            return true;
+        }
 
-        //        _currentRowValues[columnIndex].SetValue(currentPropertyValue);
-        //    }
-        //}
+        private void SetColumnValue(String8 currentPropertyName, String8 currentPropertyValue, bool isEncoded)
+        {
+            if (currentPropertyName.IsEmpty()) return;
+
+            if(isEncoded)
+            {
+                currentPropertyValue = DecodeBase64(currentPropertyValue);
+            }
+
+            if (currentPropertyName.CompareTo("objectSid", true) == 0)
+            {
+                currentPropertyValue = DecodeSid(currentPropertyValue);
+            }
+
+            int columnIndex;
+            if (_columnIndices8.TryGetValue(currentPropertyName, out columnIndex))
+            {
+                String8 previousValue = _currentRowValues[columnIndex].ToString8();
+                if (!previousValue.IsEmpty())
+                {
+                    currentPropertyValue = _currentRowBlock.Concatenate(previousValue, MultiValueDelimiter, currentPropertyValue);
+                }
+
+                _currentRowValues[columnIndex].SetValue(currentPropertyValue);
+            }
+        }
+
+        private String8 DecodeBase64(String8 value)
+        {
+            // Horrible
+            byte[] decoded = Convert.FromBase64String(value.ToString());
+            return _currentRowBlock.GetCopy(new String8(decoded, 0, decoded.Length));
+        }
+
+        private String8 DecodeSid(String8 sidBytes)
+        {
+            // Slightly Horrible
+            SecurityIdentifier sid = new SecurityIdentifier(sidBytes._buffer, sidBytes._index);
+            return _currentRowBlock.GetCopy(sid.ToString());
+        }
 
         public void Dispose()
         {
-            if(_stream != null)
+            if (_reader != null)
             {
-                _stream.Dispose();
-                _stream = null;
+                _reader.Dispose();
+                _reader = null;
             }
         }
     }

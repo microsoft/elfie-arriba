@@ -31,6 +31,7 @@ cn: Second User
 dn: CN=Third User,OU=UserAccounts,DC=domain,DC=com
 changetype: add
 cn: Third User
+lockoutTime: 131505223204018920
 objectSid:: AQUAAAAAAAUVAAAAF
  doFDGWeMwFVdzMB9AEAAA==";
 
@@ -39,22 +40,55 @@ objectSid:: AQUAAAAAAAUVAAAAF
         {
             File.WriteAllText("Sample.ldf", SampleContent);
 
+            int colIndex;
             using (ITabularReader reader = new LdfTabularReader("Sample.ldf"))
             {
                 // Validate column names found
-                Assert.AreEqual("dn, changetype, cn, whenCreated, whenChanged, pwdLastSet, objectSid, distinguishedName, memberOf", string.Join(", ", reader.Columns));
+                Assert.AreEqual("dn, changetype, cn, whenCreated, whenChanged, pwdLastSet, objectSid, distinguishedName, memberOf, lockoutTime", string.Join(", ", reader.Columns));
 
-                while (reader.NextRow())
+                colIndex = 0;
+                Assert.IsTrue(reader.NextRow());
+                Assert.AreEqual(10, reader.CurrentRowColumns);
+                Assert.AreEqual("CN=Scott Louvau,OU=UserAccounts,DC=domain,DC=com", reader.Current(colIndex++).ToString());
+                Assert.AreEqual("add", reader.Current(colIndex++).ToString());
+                Assert.AreEqual("Scott Louvau", reader.Current(colIndex++).ToString());
+                Assert.AreEqual("19990410024913.0Z", reader.Current(colIndex++).ToString());
+                Assert.AreEqual("20170922025542.0Z", reader.Current(colIndex++).ToString());
+                Assert.AreEqual("131505223204018920", reader.Current(colIndex++).ToString());
+                Assert.AreEqual("S-1-5-21-201710101-20160101-20150101-500", reader.Current(colIndex++).ToString());
+                Assert.AreEqual("CN=Scott Louvau,OU=UserAccounts,DC=domain,DC=com", reader.Current(colIndex++).ToString());
+                Assert.AreEqual("CN=Interesting Group,OU=Distribution Lists,DC=domain,DC=com;CN=Another Group,OU=Distribution Lists,DC=domain,DC=com;CN=Wrapped Group,OU=Specific OU,OU=Container OU,OU=Resources,DC=domain,DC=com", reader.Current(colIndex++).ToString());
+                Assert.AreEqual("", reader.Current(colIndex++).ToString());
+
+                colIndex = 0;
+                Assert.IsTrue(reader.NextRow());
+                Assert.AreEqual(10, reader.CurrentRowColumns);
+                Assert.AreEqual("CN=Second User,OU=UserAccounts,DC=domain,DC=com", reader.Current(colIndex++).ToString());
+                Assert.AreEqual("add", reader.Current(colIndex++).ToString());
+                Assert.AreEqual("Second User", reader.Current(colIndex++).ToString());
+                while (colIndex < reader.CurrentRowColumns)
                 {
-                    // Spot Check values
-                    Assert.AreEqual("2017-05-13", reader.Current(0).ToString());
-                    Assert.AreEqual("10.10.1.1", reader.Current(2).ToString());
-                    Assert.AreEqual("GET", reader.Current(3).ToString());
-                    Assert.AreEqual("https://arriba/", reader.Current(10).ToString());
+                    Assert.AreEqual("", reader.Current(colIndex++).ToString());
                 }
 
+                colIndex = 0;
+                Assert.IsTrue(reader.NextRow());
+                Assert.AreEqual(10, reader.CurrentRowColumns);
+                Assert.AreEqual("CN=Third User,OU=UserAccounts,DC=domain,DC=com", reader.Current(colIndex++).ToString());
+                Assert.AreEqual("add", reader.Current(colIndex++).ToString());
+                Assert.AreEqual("Third User", reader.Current(colIndex++).ToString());
+                Assert.AreEqual("", reader.Current(colIndex++).ToString());
+                Assert.AreEqual("", reader.Current(colIndex++).ToString());
+                Assert.AreEqual("", reader.Current(colIndex++).ToString());
+                Assert.AreEqual("S-1-5-21-201710101-20160101-20150101-500", reader.Current(colIndex++).ToString());
+                Assert.AreEqual("", reader.Current(colIndex++).ToString());
+                Assert.AreEqual("", reader.Current(colIndex++).ToString());
+                Assert.AreEqual("131505223204018920", reader.Current(colIndex++).ToString());
+
+                Assert.IsFalse(reader.NextRow());
+
                 // Validate row count read
-                Assert.AreEqual(7, reader.RowCountRead);
+                Assert.AreEqual(3, reader.RowCountRead);
             }
         }
     }
