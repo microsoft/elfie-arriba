@@ -111,15 +111,6 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         // Break a block from the file into contiguous ranges for each logical row
         protected abstract String8Set SplitRows(String8 block, PartialArray<int> rowPositionArray);
 
-        // Identify where the values are for each column in the current row
-        protected virtual void SplitValues(String8Set rowCells, String8TabularValue[] rowValues)
-        {
-            for(int i = 0; i < rowCells.Count; ++i)
-            {
-                rowValues[i].SetValue(rowCells[i]);
-            }
-        }
-
         /// <summary>
         ///  Return the column headings found. The set is empty if there was no heading row.
         /// </summary>
@@ -157,7 +148,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         /// <returns>String8Set with the cells for the current row.</returns>
         public ITabularValue Current(int index)
         {
-            if (index >= _currentRowColumns.Count) throw new ArgumentOutOfRangeException();
+            _valueBoxes[index].SetValue(_currentRowColumns[index]);
             return _valueBoxes[index];
         }
 
@@ -209,9 +200,6 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
                     _valueBoxes[i] = new String8TabularValue();
                 }
             }
-
-            // Get the value portions of the cells into String8TabularValues
-            SplitValues(_currentRowColumns, _valueBoxes);
 
             return true;
         }
