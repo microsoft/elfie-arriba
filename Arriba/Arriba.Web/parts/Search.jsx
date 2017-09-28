@@ -42,7 +42,6 @@ export default class Search extends EventedComponent {
         };
 
         this.events = {
-            "beforeunload": e => this.mru.push(),
             "storage": e => { if (e.key.startsWith("table-")) this.getTableSettings() },
             "keydown": e => this.onKeyDown(e),
         };

@@ -40,6 +40,10 @@ class Index extends EventedComponent {
             userSelectedTable: table,
             mode: window.location.pathname.startsWith("/Grid.html") // false means Search, true means Grid.
         };
+
+        this.events = {
+            "beforeunload": e => this.mru.push(),
+        }
     }
     componentDidMount() {
         super.componentDidMount();
