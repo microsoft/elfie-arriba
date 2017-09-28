@@ -1,7 +1,7 @@
 import "./Tabs.scss";
 import Delete from "./Delete"
 
-export default class Tabs extends React.Component {
+export default class extends React.Component {
     constructor(props) {
         super(props);
         this.state = {};

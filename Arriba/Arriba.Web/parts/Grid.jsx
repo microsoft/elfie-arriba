@@ -286,7 +286,7 @@ var GridValueCell = React.createClass({
 });
 
 // GridMain wraps the overall grid UI
-export default class Grid extends EventedComponent {
+export default class extends EventedComponent {
     constructor(props) {
         super(props);
         this.state = {

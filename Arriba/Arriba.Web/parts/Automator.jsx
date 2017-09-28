@@ -17,7 +17,7 @@ Object.defineProperties(HTMLElement.prototype, {
 // Emits a hidden clickable square that, when clicked, provides
 // a rudimentary way to test the site via automated `commands`.
 // There is currently no error reporting, just watch the console for issues.
-export default class Automator extends React.Component {
+export default class extends React.Component {
     run() {
         if (isIE()) return; // Not working for IE yet due to Eventing model.
 

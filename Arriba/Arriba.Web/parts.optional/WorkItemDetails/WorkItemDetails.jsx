@@ -7,7 +7,7 @@ import DetailsField from "../../parts/DetailsField";
 import DetailsTable from "../../parts/DetailsTable";
 
 // WorkItemDetails shows details for a TFS Work Item
-export default class WorkItemDetails extends React.Component {
+export default class extends React.Component {
     constructor(props) {
         super(props);
         this.state = { allTableShown: true };

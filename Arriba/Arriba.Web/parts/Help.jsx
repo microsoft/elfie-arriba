@@ -1,6 +1,6 @@
 import "./Help.scss";
 
-export default class Help extends React.Component {
+export default class extends React.Component {
     render() {
         return <div className="helpContent">
             <div className="features">

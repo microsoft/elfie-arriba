@@ -2,7 +2,7 @@ import "./SearchBox.scss";
 import EventedComponent from "./EventedComponent";
 import Suggestions from "./Suggestions";
 
-export default class SearchBox extends EventedComponent {
+export default class extends EventedComponent {
     constructor(props) {
         super(props);
         this.state = {};

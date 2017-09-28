@@ -1,6 +1,6 @@
 import "./Delete.scss";
 
-export default class Tabs extends React.Component {
+export default class extends React.Component {
     render() {
         const {title, ...others} = this.props;
         return <svg className="delete" width="10" height="10" viewBox="0 0 10 10" {...others}>

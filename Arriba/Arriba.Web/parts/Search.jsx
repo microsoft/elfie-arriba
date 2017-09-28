@@ -29,7 +29,7 @@ const arrayToObject = (array, prefix) => {
 }
 
 // SearchMain wraps the overall search UI
-export default class Search extends EventedComponent {
+export default class extends EventedComponent {
     constructor(props) {
         super(props);
 

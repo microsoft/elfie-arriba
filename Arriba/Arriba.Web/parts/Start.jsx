@@ -1,7 +1,7 @@
 import "./Start.scss";
 import Help from "./Help";
 
-export default class Start extends React.Component {
+export default class extends React.Component {
     constructor(props) {
         super(props);
         this.state = { showHelp: props.showHelp };

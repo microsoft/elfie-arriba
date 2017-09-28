@@ -1,7 +1,7 @@
 import "./DropShield.scss";
 import "../js/utilities.jsx";
 
-export default class DropShield extends React.Component {
+export default class extends React.Component {
     constructor(props) {
         super(props);
         this.state = { label: "Upload" };
