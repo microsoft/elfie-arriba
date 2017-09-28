@@ -36,22 +36,21 @@ export default class extends EventedComponent {
         return filteredColumns;
     }
     handleKeyDown(e) {
-        if (e.keyCode === 27) {
-            // ESC - Close AddColumnList
+        if (e.key === "Escape") {
             this.setState({ filter: undefined });
             this.props.onAddColumn(null);
             e.stopPropagation();
-        } else if (e.keyCode === 13 || e.keyCode === 9) {
-            // ENTER/TAB - commit highlighted match
+        }
+        if (e.key === "Enter" || e.key === "Tab") {
             var currentColumn = this.state.filteredColumns[this.state.selectedIndex];
             if(currentColumn) this.props.onAddColumn(currentColumn);
             e.stopPropagation();
-        } else if (e.keyCode === 38) {
-            // Up Arrow - select previous
+        }
+        if (e.key === "ArrowUp") {
             this.setState({ selectedIndex: (this.state.selectedIndex <= 0 ? 0 : this.state.selectedIndex - 1) });
             e.stopPropagation();
-        } else if (e.keyCode === 40) {
-            // Down Arrow - select next
+        }
+        if (e.key === "ArrowDown") {
             this.setState({ selectedIndex: (this.state.selectedIndex >= this.state.filteredColumns.length ? this.state.filteredColumns.length - 1 : this.state.selectedIndex + 1) });
             e.stopPropagation();
         }
