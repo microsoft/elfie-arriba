@@ -16,24 +16,12 @@ export default class extends EventedComponent {
         const diffState = Object.diff(prevState, this.state);
 
         if (diffProps.hasAny("allColumns") || diffState.hasAny("filter")) {
-            this.setState({ filteredColumns: this.filterColumns(), selectedIndex: 0 });
+            const filter = (this.state.filter || "").toLowerCase();
+            const filteredColumns = this.props.allColumns
+                .map(col => col.name)
+                .filter(name => !filter || name.toLowerCase().includes(filter) && !this.props.currentColumns.includes(name));
+            this.setState({ filteredColumns, selectedIndex: 0 });
         }
-    }
-    filterColumns() {
-        const filter = (this.state.filter || "").toLowerCase();
-
-        var filteredColumns = [];
-        for (var i = 0; i < this.props.allColumns.length; ++i) {
-            var column = this.props.allColumns[i];
-
-            // Filter columns already added and those not starting with the filter
-            if (this.props.currentColumns.indexOf(column.name) !== -1) continue;
-            if (filter && column.name.toLowerCase().indexOf(filter) !== 0) continue;
-
-            filteredColumns.push(column.name);
-        }
-
-        return filteredColumns;
     }
     handleKeyDown(e) {
         if (e.key === "Escape") {
