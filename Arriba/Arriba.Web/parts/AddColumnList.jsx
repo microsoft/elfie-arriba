@@ -1,4 +1,6 @@
-﻿// AddColumnList is the list of unselected columns which shows up in the listing when the '+' is clicked.
+import "./AddColumnList.scss";
+
+// AddColumnList is the list of unselected columns which shows up in the listing when the '+' is clicked.
 export default React.createClass({
     getInitialState: function () {
         return { filter: null, filteredColumns: this.filterColumns(null), selectedIndex: 0 }

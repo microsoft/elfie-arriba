@@ -1,0 +1,49 @@
+@import './configuration/theme';
+@import './shared.scss';
+
+/* Make the AddColumnList absolute positioned, on top, scrollable, black on white */
+/* ISSUE: Unsure how to ensure it isn't too tall when very little height */
+.add-list {
+    box-sizing: border-box;
+    * { box-sizing: border-box; }
+
+    position: absolute;
+    right: 10px;
+    top: 33px + 10px;
+    bottom: 20px;
+    box-shadow: 0 3px 8px 0 rgba(0,0,0,0.2), 0 0 0 1px rgba(0,0,0,0.08);
+
+    flex-shrink: 0;
+    background: white;
+    border-left: 1px solid #ccc;
+    width: 250px;
+
+    display: flex;
+    flex-flow: column;
+
+    /* Make Filter textbox in AddColumnList spaced from edges and narrow enough not to be covered by scrollbar */
+    input {
+        flex: 0 0;
+        width: 100%;
+        padding: 15px;
+        border: 0;
+        border-bottom: 1px solid #ccc;
+        &::placeholder {
+            color: lighten($vlight, 20%);
+        }
+    }
+
+    .addColumnsList {
+        overflow-y: auto;
+
+        & > div {
+            @include ellipsis;
+            font-size: 12px;
+            padding: 8px 10px 8px 15px;
+            cursor: pointer;
+            &:hover, .add-list-selected {
+                background-color: hsla(216, 80%, 85%, 0.25)
+            }
+        }
+    }
+}
