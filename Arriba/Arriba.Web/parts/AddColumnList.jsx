@@ -5,11 +5,22 @@ import EventedComponent from "./EventedComponent";
 export default class extends EventedComponent {
     constructor(props) {
         super(props);
-        this.state = { filter: null, filteredColumns: this.filterColumns(null), selectedIndex: 0 };
+        this.state = { filteredColumns: [], selectedIndex: 0 };
     }
-    filterColumns(filter) {
-        if (!filter) filter = "";
-        filter = filter.toLowerCase();
+    componentDidMount() {
+        super.componentDidMount();
+        this.componentDidUpdate({}, {});
+    }
+    componentDidUpdate(prevProps, prevState) {
+        const diffProps = Object.diff(prevProps, this.props);
+        const diffState = Object.diff(prevState, this.state);
+
+        if (diffProps.hasAny("allColumns") || diffState.hasAny("filter")) {
+            this.setState({ filteredColumns: this.filterColumns(), selectedIndex: 0 });
+        }
+    }
+    filterColumns() {
+        const filter = (this.state.filter || "").toLowerCase();
 
         var filteredColumns = [];
         for (var i = 0; i < this.props.allColumns.length; ++i) {
@@ -27,7 +38,7 @@ export default class extends EventedComponent {
     handleKeyDown(e) {
         if (e.keyCode === 27) {
             // ESC - Close AddColumnList
-            this.setState({ filter: null, filteredColumns: this.filterColumns(null), selectedIndex: 0 });
+            this.setState({ filter: undefined });
             this.props.onAddColumn(null);
             e.stopPropagation();
         } else if (e.keyCode === 13 || e.keyCode === 9) {
@@ -45,17 +56,12 @@ export default class extends EventedComponent {
             e.stopPropagation();
         }
     }
-    handleFilterChanged(e) {
-        var newFilter = e.target.value;
-        var newFilteredColumns = this.filterColumns(newFilter);
-        this.setState({ filter: newFilter, filteredColumns: newFilteredColumns, selectedIndex: 0 });
-    }
     render() {
         // Write an add column list (shown only once the '+' is clicked)
         if (!this.props.showing) return null;
 
         return <div className="add-list" onKeyDown={this.handleKeyDown.bind(this)} >
-            <input type="text" autoFocus placeholder="Filter Columns" value={this.state.filter} onChange={this.handleFilterChanged.bind(this)} onKeyDown={this.handleKeyDown.bind(this)} />
+            <input type="text" autoFocus placeholder="Filter Columns" value={this.state.filter} onChange={e => this.setState({ filter: e.target.value })} onKeyDown={this.handleKeyDown.bind(this)} />
             <div className="addColumnsList">
                 {this.state.filteredColumns.map((name, i) => <div
                     key={"add_" + name}
