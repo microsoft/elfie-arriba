@@ -91,6 +91,7 @@
     <Compile Include="Serialization\IISLogReaderTests.cs" />
     <Compile Include="Serialization\ITabularValueTests.cs" />
     <Compile Include="Serialization\JsonTabularWriterTests.cs" />
+    <Compile Include="Serialization\LDFReaderTests.cs" />
     <Compile Include="Serialization\TsvWriterTests.cs" />
     <Compile Include="Verify.cs" />
   </ItemGroup>

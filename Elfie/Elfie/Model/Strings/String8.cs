@@ -926,6 +926,17 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
 
         #region Output
         /// <summary>
+        ///  Move this String8 backwards in the byte array by the specified number of bytes.
+        ///  Used to un-escape values escaped with extra characters.
+        /// </summary>
+        /// <param name="byteCount">Number of byte to shift this string</param>
+        public void ShiftBack(int byteCount)
+        {
+            if (this._index < byteCount) throw new ArgumentOutOfRangeException("amount");
+            System.Buffer.BlockCopy(_buffer, _index, _buffer, _index - byteCount, _length);
+        }
+
+        /// <summary>
         ///  Write this value to the target byte[] at the given index as UTF8.
         /// </summary>
         /// <param name="buffer">byte[] to write to</param>
