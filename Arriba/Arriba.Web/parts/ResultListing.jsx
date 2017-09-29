@@ -98,7 +98,7 @@ export default React.createClass({
                                 <span className="th-title">{column.name}{sort}</span>
                                 {column.name !== idColumn && <a
                                     href={"Grid.html" + buildUrlParameters({ q: content.query.where, t: content.query.tableName, R1: column.name + ">" })}
-                                    className="grid-icon"
+                                    className="icon-button"
                                     title={"Grid By " + column.name }>
                                     <img src="/icons/grid.svg"/>
                                 </a>}
@@ -110,7 +110,7 @@ export default React.createClass({
                                     }} />}
                                 {i == content.values.columns.length - 1 && <img
                                     src="/icons/add.svg"
-                                    className="grid-icon"
+                                    className="icon-button add-column-button"
                                     ref={"addButton"}
                                     title="Add Column"
                                     onClick={this.handleAdd}/>}
