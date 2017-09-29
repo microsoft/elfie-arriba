@@ -559,14 +559,18 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
 
             if (_length < 20)
             {
-                // Not max length: Parse without bounds check
+                // Not max length: Parse normally
                 result = ParseWithCutoff(ulong.MaxValue, ref valid);
             }
             else
             {
-                // Max Length: Parse all but last digit, check bounds, finish converting
+                // Max Length: Parse all but last digit
                 result = 10 * this.Substring(0, this.Length - 1).ParseWithCutoff(ulong.MaxValue / 10, ref valid);
+
+                // Limit Last digit so sum is <= ulong.MaxValue
                 result += this.Substring(this.Length - 1).ParseWithCutoff(ulong.MaxValue - result, ref valid);
+
+                // Ensure overflows are reset to zero
                 if (!valid) result = 0;
             }
 
