@@ -7,7 +7,8 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Serialization
     [TestClass]
     public class LDFReaderTests
     {
-        private const string SampleContent = @"dn: CN=Scott Louvau,OU=UserAccounts,DC=domain,DC=com
+        private const string SampleContent = @"#Comment
+dn: CN=Scott Louvau,OU=UserAccounts,DC=domain,DC=com
 changetype: add
 cn: Scott Louvau
 whenCreated: 19990410024913.0Z

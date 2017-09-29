@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Text;
 
@@ -15,6 +14,16 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
 {
+    public static class StringExtensions
+    {
+        public static String8 TestConvert(this string value)
+        {
+            // Convert the string to a String8, *but not at the very start of the buffer*.
+            // This is a common source of bugs.
+            return String8.Convert(value, new byte[String8.GetLength(value) + 1], 1);
+        }
+    }
+
     [TestClass]
     public class String8Tests
     {
@@ -25,12 +34,12 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
             byte[] buffer = new byte[1024 + 4];
 
             // Null and Empty conversion
-            Assert.IsTrue(String8.Convert(null, buffer).IsEmpty());
-            Assert.IsTrue(String8.Convert(String.Empty, buffer).IsEmpty());
+            Assert.IsTrue(((string)null).TestConvert().IsEmpty());
+            Assert.IsTrue(string.Empty.TestConvert().IsEmpty());
 
             // Null and Empty comparison [both ways]
-            Assert.AreEqual(0, new String8(null, 0, 0).CompareTo(String8.Convert(String.Empty, buffer)));
-            Assert.AreEqual(0, String8.Convert(String.Empty, buffer).CompareTo(new String8(null, 0, 0)));
+            Assert.AreEqual(0, new String8(null, 0, 0).CompareTo(string.Empty.TestConvert()));
+            Assert.AreEqual(0, string.Empty.TestConvert().CompareTo(new String8(null, 0, 0)));
 
             // Sort sample strings by ordinal
             string[] samples = new string[] { "A", "AA", "AAA", "short", "four", "!@#$%^&*()", "A\U00020213C", "Diagnostics", "NonePadded", new string('z', 1024) };
@@ -41,7 +50,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
             for (int i = 0; i < samples.Length; ++i)
             {
                 int length = String8.GetLength(samples[i]);
-                converted[i] = String8.Convert(samples[i], new byte[length]);
+                converted[i] = String8.Convert(samples[i], new byte[length + 1], 1);
             }
 
             // Verify round-trip
@@ -86,7 +95,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
                 Assert.IsTrue(converted[i].CompareTo(converted[i]) == 0);
 
                 // This equals a new instance of the same value
-                Assert.IsTrue(converted[i].CompareTo(String8.Convert(samples[i], buffer)) == 0);
+                Assert.IsTrue(converted[i].CompareTo(samples[i].TestConvert()) == 0);
 
                 // This is greater than a prefix of itself
                 Assert.IsTrue(converted[i].CompareTo(String8.Convert(samples[i], 0, samples[i].Length - 1, buffer)) > 0);
@@ -130,25 +139,25 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
         public void String8_IndexOf()
         {
             string binaryName = "System.Collections.Generic.List";
-            String8 binaryName8 = String8.Convert(binaryName, new byte[String8.GetLength(binaryName)]);
+            String8 binaryName8 = binaryName.TestConvert();
             Assert.AreEqual(binaryName.IndexOf('.'), binaryName8.IndexOf((byte)'.'));
             Assert.AreEqual(binaryName.IndexOf('.', 18), binaryName8.IndexOf((byte)'.', 18));
             Assert.AreEqual(binaryName.LastIndexOf('.'), binaryName8.LastIndexOf((byte)'.'));
             Assert.AreEqual(binaryName.LastIndexOf('.', 18), binaryName8.LastIndexOf((byte)'.', 18));
 
             string collections = "Collections";
-            String8 collections8 = String8.Convert(collections, new byte[String8.GetLength(collections)]);
+            String8 collections8 = collections.TestConvert();
             Assert.AreEqual(binaryName.IndexOf(collections), binaryName8.IndexOf(collections8));
             Assert.AreEqual(binaryName.IndexOf(collections, 7), binaryName8.IndexOf(collections8, 7));
             Assert.AreEqual(binaryName.IndexOf(collections, 8), binaryName8.IndexOf(collections8, 8));
 
             string lists = "Lists";
-            String8 lists8 = String8.Convert(lists, new byte[String8.GetLength(lists)]);
+            String8 lists8 = lists.TestConvert();
             Assert.AreEqual(binaryName.IndexOf(lists), binaryName8.IndexOf(lists8));
             Assert.AreEqual(binaryName.IndexOf(lists, 28), binaryName8.IndexOf(lists8, 28));
 
             string list = "List";
-            String8 list8 = String8.Convert(list, new byte[String8.GetLength(list)]);
+            String8 list8 = list.TestConvert();
             Assert.AreEqual(binaryName.IndexOf(list), binaryName8.IndexOf(list8));
             Assert.AreEqual(binaryName.IndexOf(list, 20), binaryName8.IndexOf(list8, 20));
             Assert.AreEqual(binaryName.IndexOf(list, 28), binaryName8.IndexOf(list8, 28));
@@ -158,7 +167,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
         public void String8_BeforeFirstAfterFirst()
         {
             string binaryName = "System.Collections.Generic.List!";
-            String8 binaryName8 = String8.Convert(binaryName, new byte[String8.GetLength(binaryName)]);
+            String8 binaryName8 = binaryName.TestConvert();
 
             Assert.AreEqual("System", binaryName8.BeforeFirst((byte)'.').ToString());
             Assert.AreEqual("Collections.Generic.List!", binaryName8.AfterFirst((byte)'.').ToString());
@@ -177,10 +186,10 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
         public void String8_StartsWithEndsWith()
         {
             string collections = "Collections";
-            String8 collections8 = String8.Convert(collections, new byte[String8.GetLength(collections)]);
+            String8 collections8 = collections.TestConvert();
 
             string collectionsCasing = "coLLecTionS";
-            String8 collectionsCasing8 = String8.Convert(collectionsCasing, new byte[String8.GetLength(collectionsCasing)]);
+            String8 collectionsCasing8 = collectionsCasing.TestConvert();
 
             Assert.IsFalse(String8.Empty.StartsWith(UTF8.Space));
             Assert.IsFalse(String8.Empty.EndsWith(UTF8.Space));
@@ -214,10 +223,10 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
         [TestMethod]
         public void String8_Prefix()
         {
-            String8 full = String8.Convert("One.Two.Three", new byte[13]);
-            String8 start = String8.Convert("One", new byte[3]);
-            String8 part = String8.Convert("Two", new byte[3]);
-            String8 startInsensitive = String8.Convert("ONE", new byte[3]);
+            String8 full = "One.Two.Three".TestConvert();
+            String8 start = "One".TestConvert();
+            String8 part = "Two".TestConvert();
+            String8 startInsensitive = "ONE".TestConvert();
 
             Assert.AreEqual(0, start.CompareAsPrefixTo(full));
         }
@@ -244,7 +253,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
 
         private bool? TryToBoolean(string value)
         {
-            String8 value8 = String8.Convert(value, new byte[String8.GetLength(value) + 1], 1);
+            String8 value8 = value.TestConvert();
 
             bool? result = null;
             bool parsed = false;
@@ -276,7 +285,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
 
         private int? TryToInteger(string value)
         {
-            String8 value8 = String8.Convert(value, new byte[String8.GetLength(value) + 1], 1);
+            String8 value8 = value.TestConvert();
 
             int? result = null;
             int parsed = 0;
@@ -378,7 +387,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
 
         private DateTime? TryToDateTime(string value)
         {
-            String8 value8 = String8.Convert(value, new byte[String8.GetLength(value) + 1], 1);
+            String8 value8 = value.TestConvert();
 
             DateTime? result = null;
             DateTime parsed = DateTime.MinValue;
@@ -396,7 +405,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
             // Verify no exception
             String8.Empty.ToUpperInvariant();
 
-            String8 sample = String8.Convert("abcABC", new byte[6]);
+            String8 sample = "abcABC".TestConvert();
             sample.ToUpperInvariant();
             Assert.AreEqual("ABCABC", sample.ToString());
         }
@@ -404,7 +413,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
         [TestMethod]
         public void String8_GetHashCode()
         {
-            byte[] buffer = new byte[20];
+            byte[] buffer = new byte[21];
             String8 value;
 
             HashSet<int> hashes = new HashSet<int>();
@@ -412,7 +421,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
 
             for (int i = 0; i < 10000; ++i)
             {
-                value = String8.Convert(i.ToString(), buffer);
+                value = String8.Convert(i.ToString(), buffer, 1);
                 int valueHash = value.GetHashCode();
                 if (!hashes.Add(valueHash)) collisions++;
             }
@@ -436,8 +445,8 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
 
         private void EnsureComparesConsistent(string left, string right)
         {
-            String8 left8 = String8.Convert(left, new byte[String8.GetLength(left)]);
-            String8 right8 = String8.Convert(right, new byte[String8.GetLength(right)]);
+            String8 left8 = left.TestConvert();
+            String8 right8 = right.TestConvert();
 
             CompareResult caseSensitiveExpected = ToResult(String.Compare(left, right, StringComparison.Ordinal));
             CompareResult caseInsensitiveExpected = ToResult(String.Compare(left, right, StringComparison.OrdinalIgnoreCase));

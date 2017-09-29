@@ -355,7 +355,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         public bool StartsWith(byte c)
         {
             if (_length == 0) return false;
-            return (_buffer[0] == c);
+            return (_buffer[_index] == c);
         }
 
         /// <summary>
