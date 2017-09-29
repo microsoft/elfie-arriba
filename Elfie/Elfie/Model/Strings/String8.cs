@@ -443,43 +443,134 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             return false;
         }
 
-        /// <summary>
-        ///  Convert a String8 with an integer to the numeric value.
-        /// </summary>
-        /// <param name="result">Integer value found, if there was a valid integer</param>
-        /// <returns>True if an integer was found, False otherwise.</returns>
-        public bool TryToInteger(out int result)
+        private static byte ParseDigit(byte digit, ref bool valid)
         {
-            result = -1;
-            if (IsEmpty()) return false;
-            if (_length > 11) return false;
+            byte value = (byte)(digit - UTF8.Zero);
+            valid &= value <= 9;
+            return value;
+        }
 
-            long value = 0;
-            int i = _index;
+        private ulong ParseWithCutoff(ulong cutoff, ref bool valid)
+        {
+            // Validate non-empty and not too long to convert
+            valid &= _length > 0;
+            valid &= _length < 20;
+
+            // Stop early if too long or short
+            if (!valid) return 0;
+
+            ulong value = 0;
+
+            // Convert the digits
             int end = _index + _length;
-
-            // Check for negative sign
-            bool isNegative = this._buffer[i] == UTF8.Dash;
-            if (isNegative) i++;
-
-            // Decode digits
-            for (; i < end; ++i)
+            for (int i = _index; i < end; ++i)
             {
-                byte digitValue = (byte)(this._buffer[i] - UTF8.Zero);
-                if (digitValue > 9) return false;
-
                 value *= 10;
-                value += digitValue;
+                value += ParseDigit(_buffer[i], ref valid);
             }
 
-            // Negate if negative sign was found
-            if (isNegative) value = -value;
+            // Validate under cutoff
+            valid &= value <= cutoff;
 
-            // Ensure within integer bounds
-            if (value > int.MaxValue || value < int.MinValue) return false;
+            // Always return zero when invalid
+            if (!valid) value = 0;
 
-            result = (int)value;
-            return true;
+            return value;
+        }
+
+        private long Negate(ulong value, ref bool valid)
+        {
+            // Validate value is non-zero
+            valid &= (value != 0);
+            if (!valid) return 0;
+
+            // Decrement to ensure in range, then cast
+            long inRange = (long)(value - 1);
+
+            // Negate and undo the decrement
+            return -inRange - 1;
+        }
+
+        /// <summary>
+        ///  Convert a String8 with a numeric value to the int representation, if in range.
+        /// </summary>
+        /// <param name="result">Numeric value found, if in range, otherwise zero</param>
+        /// <returns>True if valid, False otherwise</returns>
+        public bool TryToInteger(out int result)
+        {
+            bool valid = true;
+
+            if (this.StartsWith(UTF8.Dash))
+            {
+                // Negative: Parse after dash, negate safely, cast and return
+                result = (int)Negate(this.Substring(1).ParseWithCutoff(((ulong)int.MaxValue) + 1, ref valid), ref valid);
+            }
+            else
+            {
+                result = (int)ParseWithCutoff(int.MaxValue, ref valid);
+            }
+
+            return valid;
+        }
+
+        /// <summary>
+        ///  Convert a String8 with a numeric value to the uint representation, if in range.
+        /// </summary>
+        /// <param name="result">Numeric value found, if in range, otherwise zero</param>
+        /// <returns>True if valid, False otherwise</returns>
+        public bool TryToUInt(out uint result)
+        {
+            bool valid = true;
+            result = (uint)ParseWithCutoff(uint.MaxValue, ref valid);
+            return valid;
+        }
+
+        /// <summary>
+        ///  Convert a String8 with a numeric value to the long representation, if in range.
+        /// </summary>
+        /// <param name="result">Numeric value found, if in range, otherwise zero</param>
+        /// <returns>True if valid, False otherwise</returns>
+        public bool TryToLong(out long result)
+        {
+            bool valid = true;
+
+            if (this.StartsWith(UTF8.Dash))
+            {
+                // Negative: Parse after dash, negate safely, cast and return
+                result = Negate(this.Substring(1).ParseWithCutoff(((ulong)long.MaxValue) + 1, ref valid), ref valid);
+            }
+            else
+            {
+                // Positive: Parse and Convert normally
+                result = (long)ParseWithCutoff(long.MaxValue, ref valid);
+            }
+
+            return valid;
+        }
+
+        /// <summary>
+        ///  Convert a String8 with a numeric value to the ulong representation, if in range.
+        /// </summary>
+        /// <param name="result">Numeric value found, if in range, otherwise zero</param>
+        /// <returns>True if valid, False otherwise</returns>
+        public bool TryToULong(out ulong result)
+        {
+            bool valid = true;
+
+            if (_length < 20)
+            {
+                // Not max length: Parse without bounds check
+                result = ParseWithCutoff(ulong.MaxValue, ref valid);
+            }
+            else
+            {
+                // Max Length: Parse all but last digit, check bounds, finish converting
+                result = 10 * this.Substring(0, this.Length - 1).ParseWithCutoff(ulong.MaxValue / 10, ref valid);
+                result += this.Substring(this.Length - 1).ParseWithCutoff(ulong.MaxValue - result, ref valid);
+                if (!valid) result = 0;
+            }
+
+            return valid;
         }
 
         /// <summary>

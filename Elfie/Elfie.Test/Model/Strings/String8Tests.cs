@@ -266,35 +266,47 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
         }
 
         [TestMethod]
-        public void String8_TryToInteger()
+        public void String8_NumberConversions()
         {
-            Assert.AreEqual(null, TryToInteger(null));
-            Assert.AreEqual(null, TryToInteger(String.Empty));
-            Assert.AreEqual(5, TryToInteger("5"));
-            Assert.AreEqual(12345, TryToInteger("12345"));
-            Assert.AreEqual(-6, TryToInteger("-6"));
-            Assert.AreEqual(-1, TryToInteger("-1"));
-            Assert.AreEqual(0, TryToInteger("0"));
-            Assert.AreEqual(1, TryToInteger("1"));
-            Assert.AreEqual(int.MaxValue, TryToInteger(int.MaxValue.ToString()));
-            Assert.AreEqual(int.MinValue, TryToInteger(int.MinValue.ToString()));
-            Assert.AreEqual(null, TryToInteger("123g"));
-            Assert.AreEqual(null, TryToInteger("9999999999"));
-            Assert.AreEqual(null, TryToInteger("12345678901234567890"));
+            TryNumberConversions("-0");
+
+            TryNumberConversions(null);
+            TryNumberConversions(string.Empty);
+            TryNumberConversions("0");
+            TryNumberConversions("-1");
+            TryNumberConversions("1");
+            TryNumberConversions("--1");
+            TryNumberConversions("123A");
+            TryNumberConversions(int.MinValue.ToString());
+            TryNumberConversions(int.MaxValue.ToString());
+            TryNumberConversions(((long)int.MaxValue + 1).ToString());
+            TryNumberConversions(long.MinValue.ToString());
+            TryNumberConversions(long.MaxValue.ToString());
+            TryNumberConversions(((ulong)long.MaxValue + 1).ToString());
+            TryNumberConversions(ulong.MaxValue.ToString());
+            TryNumberConversions("18446744073709551616"); // ulong.MaxValue + 1
+            TryNumberConversions(ulong.MaxValue.ToString() + "0");
         }
 
-        private int? TryToInteger(string value)
+        private static void TryNumberConversions(string value)
         {
             String8 value8 = value.TestConvert();
 
-            int? result = null;
-            int parsed = 0;
-            if (value8.TryToInteger(out parsed))
-            {
-                result = parsed;
-            }
+            // .NET Parses "-0" successfully as int and long, but not ulong.
+            // I don't want "-0" to be considered valid on any parse.
+            if (value == "-0") value = "Invalid";
 
-            return result;
+            int expectedInt, actualInt;
+            Assert.AreEqual(int.TryParse(value, out expectedInt), value8.TryToInteger(out actualInt));
+            Assert.AreEqual(expectedInt, actualInt);
+
+            long expectedLong, actualLong;
+            Assert.AreEqual(long.TryParse(value, out expectedLong), value8.TryToLong(out actualLong));
+            Assert.AreEqual(expectedLong, actualLong);
+
+            ulong expectedULong, actualULong;
+            Assert.AreEqual(ulong.TryParse(value, out expectedULong), value8.TryToULong(out actualULong));
+            Assert.AreEqual(expectedULong, actualULong);
         }
 
         [TestMethod]
