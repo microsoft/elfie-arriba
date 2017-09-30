@@ -11,6 +11,7 @@ using Elfie.Test;
 using Microsoft.CodeAnalysis.Elfie.Extensions;
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Diagnostics;
 
 namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
 {
@@ -276,6 +277,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
             TryNumberConversions("-1");
             TryNumberConversions("1");
             TryNumberConversions("--1");
+            TryNumberConversions("-");
             TryNumberConversions("123A");
             TryNumberConversions(int.MinValue.ToString());
             TryNumberConversions(int.MaxValue.ToString());
@@ -286,6 +288,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
             TryNumberConversions(ulong.MaxValue.ToString());
             TryNumberConversions("18446744073709551616"); // ulong.MaxValue + 1
             TryNumberConversions(ulong.MaxValue.ToString() + "0");
+            TryNumberConversions(new string((char)(UTF8.Zero - 1), 19)); // Worst case for digit overflow; will convert as if each digit is 255
         }
 
         private static void TryNumberConversions(string value)
@@ -478,6 +481,41 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
             // Case Insensitive Stable is the insensitive order, then the sensitive order for ties
             CompareResult caseInsensitiveStableExpected = (caseInsensitiveExpected == CompareResult.Equal ? caseSensitiveExpected : caseInsensitiveExpected);
             Assert.AreEqual(caseInsensitiveStableExpected, ToResult(left8.CompareCaseInsensitiveStableTo(right8)), "Case insensitive stable String8 to string comparison result incorrect.");
+        }
+
+        // TryToLong is ~3x faster than the .NET default long.TryParse.
+#if PERFORMANCE
+        [TestMethod]
+#endif
+        public void String8_ToIntegerPerformance()
+        {
+            string one = "123456789";
+            String8 one8 = one.TestConvert();
+
+            long value = 0;
+            long sum = 0;
+
+            int iterations = 1 * 1000 * 1000;
+            Stopwatch w = Stopwatch.StartNew();
+            for(int i = 0; i < iterations; ++i)
+            {
+                one8.TryToLong(out value);
+                sum += value;
+            }
+            w.Stop();
+
+            sum = 0;
+            Stopwatch w2 = Stopwatch.StartNew();
+            for (int i = 0; i < iterations; ++i)
+            {
+                long.TryParse(one, out value);
+                sum += value;
+            }
+            w2.Stop();
+
+            // Validate TryToLong is at least 2x as fast as long.TryParse
+            Assert.IsTrue(w.ElapsedMilliseconds * 2 < w2.ElapsedMilliseconds);
+            Trace.WriteLine($"{w.ElapsedMilliseconds:n0}ms String8.TryToLong; {w2.ElapsedMilliseconds:n0}ms long.TryParse.");
         }
 
 #if PERFORMANCE

@@ -462,6 +462,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             ulong value = 0;
 
             // Convert the digits
+            // NOTE: Don't need to check digits valid, because even 19 255 digits won't overflow
             int end = _index + _length;
             for (int i = _index; i < end; ++i)
             {
