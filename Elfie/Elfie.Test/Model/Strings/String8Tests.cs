@@ -184,6 +184,17 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
         }
 
         [TestMethod]
+        public void String8_TrimEnd()
+        {
+            String8 sample = "Interesting   ".TestConvert();
+            Assert.AreEqual("Interesting", sample.TrimEnd(UTF8.Space).ToString());
+            Assert.AreEqual(sample.ToString(), sample.TrimEnd(UTF8.Tab).ToString());
+            Assert.AreEqual(string.Empty, String8.Empty.TrimEnd(UTF8.Space).ToString());
+            Assert.AreEqual(string.Empty, "   ".TestConvert().TrimEnd(UTF8.Space).ToString());
+            Assert.AreEqual("A", "A   ".TestConvert().TrimEnd(UTF8.Space).ToString());
+        }
+
+        [TestMethod]
         public void String8_StartsWithEndsWith()
         {
             string collections = "Collections";

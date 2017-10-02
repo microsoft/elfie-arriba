@@ -348,6 +348,22 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         }
 
         /// <summary>
+        ///  Return this string with all trailing 'c's removed.
+        /// </summary>
+        /// <param name="c">Character to trim</param>
+        /// <returns>String8 without any trailing copies of c</returns>
+        public String8 TrimEnd(byte c)
+        {
+            int index = _index + _length - 1;
+            for(; index >= _index; --index)
+            {
+                if (_buffer[index] != c) break;
+            }
+
+            return new String8(_buffer, _index, index - _index + 1);
+        }
+
+        /// <summary>
         ///  Return whether this string ends with the given character.
         /// </summary>
         /// <param name="c">Character to check for</param>
