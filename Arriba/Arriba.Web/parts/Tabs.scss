@@ -21,10 +21,16 @@
     span.tableTabs-fill { flex: 1; }
 
     span.tableTab {
-        padding: 5px 10px;
+        display: flex;
+        align-items: center;
+        padding: 3px 10px;
         background: hsl(0, 0, 94%);
         border-bottom: 1px solid hsl(0, 0, 85%);
         cursor: pointer;
+
+        & > *:not(:last-child) {
+            margin-right: 5px;
+        }
 
         &.locked {
             pointer-events: none;
@@ -42,23 +48,14 @@
 
         &:hover { background-color: hsl(0, 0, 88%); }
 
-        span.delete {
-            padding: 0px 4px 1px;
-            font-size: 12px;
-            border-radius: 2px;
-            position: relative;
-            left: 4px;
-            &:hover {
-                color: hsl(0, 0%, 100%);
-                background-color: hsl(0, 80%, 60%);
-            }
+        svg.delete {
+            margin-right: -6px;
         }
 
         .pinned {
             position: relative;
             left: -1px;
             top: 1px;
-            margin-right: 5px;
         }
     }
 

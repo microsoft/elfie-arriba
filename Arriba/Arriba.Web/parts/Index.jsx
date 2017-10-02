@@ -119,7 +119,10 @@ class Index extends EventedComponent {
         const Page = this.state.mode ? Grid : Search;
         return <div className="viewport" onKeyDown={this.onKeyDown.bind(this)}>
             {this.state.error && <div className="errorBar">{this.state.error}</div>}
-            <SearchHeader>
+            <SearchHeader reset={() => {
+                this.setState({ mode: false, query: "", userSelectedTable: undefined });
+                this.refs.searchBox.focus();
+            }}>
                 <Tabs
                     allBasics={this.state.allBasics}
                     refreshAllBasics={() => this.refreshAllBasics()}
@@ -134,7 +137,8 @@ class Index extends EventedComponent {
 
                     counts={this.state.counts}>
 
-                    <SearchBox query={this.state.query}
+                    <SearchBox ref="searchBox"
+                        query={this.state.query}
                         parsedQuery={this.state.counts && this.state.counts.parsedQuery}
                         queryChanged={query => this.setState({ query: query })}
                         userSelectedTable={this.state.userSelectedTable}

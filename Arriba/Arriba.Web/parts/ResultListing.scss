@@ -29,6 +29,7 @@
 
         & > .th-inner {
             display: flex;
+            align-items: center;
 
             & > :first-child { // Typically the title.
                 flex: 1;
@@ -62,5 +63,14 @@
         &:last-child {
             border-right-width: 0;
         }
+    }
+}
+
+.grid-icon {
+    font-size: 0;
+    padding: 5px;
+    border-radius: 3px;
+    &:hover {
+        background-color: hsl(0, 0%, 100%);
     }
 }
