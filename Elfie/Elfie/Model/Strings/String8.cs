@@ -734,20 +734,19 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         {
             result = DateTime.MinValue;
 
-            int year, month, day;
+            uint year, month, day;
 
             // Parse the date numbers
-            if (!this.Substring(yearIndex, 4).TryToInteger(out year)) return false;
-            if (!this.Substring(monthIndex, 2).TryToInteger(out month)) return false;
-            if (!this.Substring(dayIndex, 2).TryToInteger(out day)) return false;
+            if (!this.Substring(yearIndex, 4).TryToUInt(out year)) return false;
+            if (!this.Substring(monthIndex, 2).TryToUInt(out month)) return false;
+            if (!this.Substring(dayIndex, 2).TryToUInt(out day)) return false;
 
             // Validate the date number ranges (no month-specific day validation)
-            if (year < 0) return false;
             if (month < 1 || month > 12) return false;
             if (day < 1 || day > 31) return false;
 
             // Construct DateTime to avoid failures due to days being out of range (leap year and month length)
-            result = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
+            result = new DateTime((int)year, (int)month, 1, 0, 0, 0, DateTimeKind.Utc);
             if (day > 1) result = result.AddDays(day - 1);
 
             // Return false for invalid leap days
@@ -769,20 +768,20 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             // Convert the Date first
             if (!TryToDateTimeExact(out result, yearIndex, monthIndex, dayIndex)) return false;
 
-            int hour, minute, second;
+            uint hour, minute, second;
 
             // Parse the time numbers
-            if (!this.Substring(11, 2).TryToInteger(out hour)) return false;
-            if (!this.Substring(14, 2).TryToInteger(out minute)) return false;
-            if (!this.Substring(17, 2).TryToInteger(out second)) return false;
+            if (!this.Substring(11, 2).TryToUInt(out hour)) return false;
+            if (!this.Substring(14, 2).TryToUInt(out minute)) return false;
+            if (!this.Substring(17, 2).TryToUInt(out second)) return false;
 
             // Validate the time number ranges
-            if (hour < 0 || hour > 23) return false;
-            if (minute < 0 || minute > 59) return false;
-            if (second < 0 || second > 59) return false;
+            if (hour > 23) return false;
+            if (minute > 59) return false;
+            if (second > 59) return false;
 
             // Add the time part
-            result = result.Add(new TimeSpan(hour, minute, second));
+            result = result.Add(new TimeSpan((int)hour, (int)minute, (int)second));
 
             return true;
         }
