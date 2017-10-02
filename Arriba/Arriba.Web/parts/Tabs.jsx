@@ -11,17 +11,22 @@ export default class extends React.Component {
             this.props.counts &&
             this.props.counts.parsedQuery;
 
-        const tables =
+        var tables =
             this.props.counts &&
                 this.props.counts.resultsPerTable ||
             Object.keys(this.props.allBasics).length &&
                 Object.map(this.props.allBasics, (k, v) => ({ tableName: k, count: v.rowCount, succeeded: true, locked: true })) ||
             [{ tableName: "Loading...", succeeded: false, locked: true }]; // Solely to prevent jumpy re-layout when allBasics comes in.
 
-        tables.forEach(t => t.canAdminister =
-            this.props.allBasics &&
-            this.props.allBasics[t.tableName] &&
-            this.props.allBasics[t.tableName].canAdminister);
+        tables.forEach(t => {
+            t.pinned = t.tableName === this.props.userSelectedTable;
+            t.canAdminister =
+                this.props.allBasics &&
+                this.props.allBasics[t.tableName] &&
+                this.props.allBasics[t.tableName].canAdminister;
+        });
+
+        tables = [...tables.filter(t => t.pinned), ...tables.filter(t => !t.pinned)];
 
         return <div className="searchBoxAndTabs">
             <div className="tableTabs">
@@ -29,7 +34,7 @@ export default class extends React.Component {
                     key={t.tableName}
                     className={`tableTab ${this.props.currentTable === t.tableName ? "current" : ""} ${t.locked ? "locked" : ""}`}
                     onClick={e => this.props.userSelectedTableChanged(t.tableName)}>
-                    {t.tableName === this.props.userSelectedTable && <img src="/icons/pinned.svg" alt="pinned" className="pinned" />}
+                    {t.pinned && <img src="/icons/pinned.svg" alt="pinned" className="pinned" />}
                     <span>{t.tableName}</span>
                     <b>{t.allowedToRead === false /* no lock icon if undefined */
                         ? <span className="icon-lock icon" />
