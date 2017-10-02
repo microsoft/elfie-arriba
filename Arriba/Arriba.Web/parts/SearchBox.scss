@@ -11,10 +11,6 @@
     position: relative;
     padding-right: 4px;
 
-    // Needed to keep the rail above resultsListing floating headers in Edge.
-    // Apparently the first non absolute element about rail needs to be z-indexed to make it work.
-    z-index: 1;
-
     input { @extend .input;
         box-sizing: border-box;
         border: none;
