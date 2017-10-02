@@ -1,4 +1,5 @@
 import "./Tabs.scss";
+import AnchoredPopup from "./AnchoredPopup"
 import Delete from "./Delete"
 
 export default class extends React.Component {
@@ -28,27 +29,36 @@ export default class extends React.Component {
 
         tables = [...tables.filter(t => t.pinned), ...tables.filter(t => !t.pinned)];
 
+        const overflowLimit = 5;
+        const tabs = tables.map(t => <span
+            key={t.tableName}
+            className={`tableTab ${this.props.currentTable === t.tableName ? "current" : ""} ${t.locked ? "locked" : ""}`}
+            onClick={e => this.props.userSelectedTableChanged(t.tableName)}>
+            {t.pinned && <img src="/icons/pinned.svg" alt="pinned" className="pinned" />}
+            <span>{t.tableName}</span>
+            <b>{t.allowedToRead === false /* no lock icon if undefined */
+                ? <span className="icon-lock icon" />
+                : t.succeeded ? t.count.toLocaleString() : "‒"}</b>
+            {t.canAdminister && <Delete onClick={e => {
+                e.stopPropagation();
+                if (confirm(`Delete table "${t.tableName}"?`)) {
+                    xhr(`table/${tableResult.tableName}/delete`)
+                        .then(() => this.props.refreshAllBasics(() => {
+                            this.props.userSelectedTableChanged()
+                        }));
+                }
+            }} />}
+        </span>);
+
         return <div className="searchBoxAndTabs">
             <div className="tableTabs">
-                {tables.map(t => <span
-                    key={t.tableName}
-                    className={`tableTab ${this.props.currentTable === t.tableName ? "current" : ""} ${t.locked ? "locked" : ""}`}
-                    onClick={e => this.props.userSelectedTableChanged(t.tableName)}>
-                    {t.pinned && <img src="/icons/pinned.svg" alt="pinned" className="pinned" />}
-                    <span>{t.tableName}</span>
-                    <b>{t.allowedToRead === false /* no lock icon if undefined */
-                        ? <span className="icon-lock icon" />
-                        : t.succeeded ? t.count.toLocaleString() : "‒"}</b>
-                    {t.canAdminister && <Delete onClick={e => {
-                        e.stopPropagation();
-                        if (confirm(`Delete table "${t.tableName}"?`)) {
-                            xhr(`table/${tableResult.tableName}/delete`)
-                                .then(() => this.props.refreshAllBasics(() => {
-                                    this.props.userSelectedTableChanged()
-                                }));
-                        }
-                    }} />}
-                </span>)}
+                {tabs.slice(0, overflowLimit)}
+                {tabs.length > overflowLimit && <span key="overflow" className="tableTab" style={{ position: "relative" }} onClick={e => this.setState({ showOverflow: !this.state.showOverflow })}>
+                    ⋯
+                    {this.state.showOverflow && <AnchoredPopup className="tabs-overflow" bottom="-5px" left="0">
+                        {tabs.slice(overflowLimit)}
+                    </AnchoredPopup>}
+                </span>}
                 <span className="tableTabs-fill"></span>
                 {parsedQuery && <a title="Explanation" href="#" onMouseOver={e => this.setState({ showExplanation: true })} onMouseOut={e => this.setState({ showExplanation: false })}>
                     <img src="/icons/info.svg" alt="rss"/>

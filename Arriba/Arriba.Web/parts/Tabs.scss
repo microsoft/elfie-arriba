@@ -27,6 +27,7 @@
         background: hsl(0, 0, 94%);
         border-bottom: 1px solid hsl(0, 0, 85%);
         cursor: pointer;
+        user-select: none;
 
         & > *:not(:last-child) {
             margin-right: 5px;
@@ -35,10 +36,6 @@
         &.locked {
             pointer-events: none;
             span.delete { pointer-events: auto; }
-        }
-
-        &:not(:first-child) {
-            border-left: 1px solid hsl(0, 0, 85%);
         }
 
         &.current, &.current:hover {
@@ -50,6 +47,24 @@
 
         svg.delete {
             margin-right: -6px;
+        }
+    }
+
+    & > span.tableTab:not(:first-child) { // Only non-overflow tabs.
+        border-left: 1px solid hsl(0, 0, 85%);
+    }
+
+    .tabs-overflow {
+        box-shadow: 0 3px 8px 0 rgba(0,0,0,0.2), 0 0 0 1px rgba(0,0,0,0.08);
+        z-index: 2;
+
+        span.tableTab {
+            padding: 10px 15px;
+
+            :first-child {
+                flex-grow: 1;
+                margin-right: 15px;
+            }
         }
     }
 
