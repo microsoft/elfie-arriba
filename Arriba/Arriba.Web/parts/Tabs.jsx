@@ -34,7 +34,10 @@ export default class extends React.Component {
             key={t.tableName}
             className={`tableTab ${this.props.currentTable === t.tableName ? "current" : ""} ${t.locked ? "locked" : ""}`}
             onClick={e => this.props.userSelectedTableChanged(t.tableName)}>
-            {t.pinned && <img src="/icons/pinned.svg" alt="pinned" className="pinned" />}
+            {t.pinned && <img src="/icons/pinned.svg" alt="pinned" className="pinned" onClick={e => {
+                e.stopPropagation();
+                this.props.userSelectedTableChanged(undefined);
+            }} />}
             <span>{t.tableName}</span>
             <b>{t.allowedToRead === false /* no lock icon if undefined */
                 ? <span className="icon-lock icon" />
