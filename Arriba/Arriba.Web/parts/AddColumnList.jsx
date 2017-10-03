@@ -15,11 +15,11 @@ export default class extends EventedComponent {
         const diffProps = Object.diff(prevProps, this.props);
         const diffState = Object.diff(prevState, this.state);
 
-        if (diffProps.hasAny("allColumns") || diffState.hasAny("filter")) {
+        if (diffProps.hasAny("allColumns", "currentColumns") || diffState.hasAny("filter")) {
             const filter = (this.state.filter || "").toLowerCase();
             const filteredColumns = this.props.allColumns
                 .map(col => col.name)
-                .filter(name => !filter || name.toLowerCase().includes(filter) && !this.props.currentColumns.includes(name));
+                .filter(name => (!filter || name.toLowerCase().includes(filter)) && !this.props.currentColumns.includes(name));
             this.setState({ filteredColumns, selectedIndex: 0 });
         }
     }
