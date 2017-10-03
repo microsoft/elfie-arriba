@@ -20,6 +20,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         public const byte Newline = (byte)'\n';
         public const byte Space = (byte)' ';
         public const byte Colon = (byte)':';
+        public const byte Semicolon = (byte)';';
         public const byte a = (byte)'a';
         public const byte z = (byte)'z';
         public const byte A = (byte)'A';

@@ -55,16 +55,12 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
     /// </summary>
     public abstract class BaseTabularReader : ITabularReader
     {
-        private Stream _reader;
+        private BufferedRowReader _reader;
 
         protected List<string> _columnHeadingsList;
         protected Dictionary<string, int> _columnHeadings;
 
-        private byte[] _buffer;
-        private int _nextRowIndexInBlock;
-        private String8Set _currentBlock;
-        private String8Set _currentRow;
-        private PartialArray<int> _rowPositionArray;
+        private String8Set _currentRowColumns;
         private PartialArray<int> _cellPositionArray;
 
         private String8TabularValue[] _valueBoxes;
@@ -85,14 +81,11 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         /// <param name="hasHeaderRow">True to read the first row as column names, False not to pre-read anything</param>
         public BaseTabularReader(Stream stream, bool hasHeaderRow = true)
         {
-            _reader = stream;
+            _reader = new BufferedRowReader(stream, SplitRows);
 
             _columnHeadingsList = new List<string>();
             _columnHeadings = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
-            _buffer = new byte[64 * 1024];
-            _nextRowIndexInBlock = 0;
-            _rowPositionArray = new PartialArray<int>(64, false);
             _cellPositionArray = new PartialArray<int>(1024, false);
 
             // Read the heading row and record heading positions
@@ -100,7 +93,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             {
                 if (!NextRow()) throw new IOException("Reader didn't find any rows when trying to read a header row.");
 
-                for (int i = 0; i < _currentRow.Count; ++i)
+                for (int i = 0; i < _currentRowColumns.Count; ++i)
                 {
                     string columnName = this.Current(i).ToString();
                     _columnHeadingsList.Add(columnName);
@@ -112,8 +105,10 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             }
         }
 
+        // Break a row from the file into contiguous ranges for each logical cell
         protected abstract String8Set SplitCells(String8 row, PartialArray<int> cellPositionArray);
 
+        // Break a block from the file into contiguous ranges for each logical row
         protected abstract String8Set SplitRows(String8 block, PartialArray<int> rowPositionArray);
 
         /// <summary>
@@ -139,7 +134,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             if (_columnHeadings.TryGetValue(columnNameOrIndex, out columnIndex)) return true;
 
             // See if the column is a parsable integer index
-            if (int.TryParse(columnNameOrIndex, out columnIndex) && columnIndex >= 0 && _columnHeadings.Count > columnIndex) return true;
+            if (int.TryParse(columnNameOrIndex, out columnIndex) && columnIndex >= 0) return true;
 
             // Not found, so set to -1
             columnIndex = -1;
@@ -153,7 +148,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         /// <returns>String8Set with the cells for the current row.</returns>
         public ITabularValue Current(int index)
         {
-            _valueBoxes[index].SetValue(_currentRow[index]);
+            _valueBoxes[index].SetValue(_currentRowColumns[index]);
             return _valueBoxes[index];
         }
 
@@ -168,7 +163,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         /// </summary>
         public long BytesRead
         {
-            get { return _reader.Position; }
+            get { return _reader.BytesRead; }
         }
 
         /// <summary>
@@ -177,7 +172,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         /// </summary>
         public int CurrentRowColumns
         {
-            get { return _currentRow.Count; }
+            get { return _currentRowColumns.Count; }
         }
 
         /// <summary>
@@ -187,37 +182,18 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         /// <returns>True if another row exists, False if the TSV is out of content</returns>
         public virtual bool NextRow()
         {
-            // If we're on the last row, ask for more (we don't read the last row in case it was only partially read into the buffer)
-            if (_nextRowIndexInBlock >= _currentBlock.Count - 1)
-            {
-                NextBlock();
-            }
-
-            // If there are no more rows, return false
-            if (_nextRowIndexInBlock >= _currentBlock.Count) return false;
-
-            // Get the next (complete) row from the current block
-            String8 currentLine = _currentBlock[_nextRowIndexInBlock];
-
-            // Strip leading UTF8 BOM, if found, on first row
-            if (this.RowCountRead == 0)
-            {
-                if (currentLine.Length >= 3 && currentLine[0] == 0xEF && currentLine[1] == 0xBB && currentLine[2] == 0xBF)
-                {
-                    currentLine = currentLine.Substring(3);
-                }
-            }
+            String8 row = _reader.NextRow();
+            if (row.IsEmpty()) return false;
 
             // Split the line into cells
-            _currentRow = SplitCells(currentLine, _cellPositionArray);
+            _currentRowColumns = SplitCells(row, _cellPositionArray);
 
             this.RowCountRead++;
-            _nextRowIndexInBlock++;
 
             // Allocate a set of reusable String8TabularValues to avoid per-cell-value allocation or boxing.
-            if (_valueBoxes == null || _valueBoxes.Length < _currentRow.Count)
+            if (_valueBoxes == null || _valueBoxes.Length < _currentRowColumns.Count)
             {
-                _valueBoxes = new String8TabularValue[_currentRow.Count];
+                _valueBoxes = new String8TabularValue[_currentRowColumns.Count];
 
                 for (int i = 0; i < _valueBoxes.Length; ++i)
                 {
@@ -226,71 +202,6 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             }
 
             return true;
-        }
-
-        /// <summary>
-        ///  NextBlock is called by NextRow before reading the last row in _currentBlock.
-        ///  Since the file is read in blocks, the last row is usually incomplete.
-        ///  
-        ///  If there's more file content, NextBlock should copy the last row to the start
-        ///  of the buffer, read more content, and reset _currentBlock to the new split rows
-        ///  and _nextRowIndexInBlock to zero (telling NextRow to read that row next).
-        ///  
-        ///  If there's no more file, the last row is complete. NextBlock must return
-        ///  without changing _currentBlock or _nextRowIndexInBlock to tell NextRow it's safe
-        ///  to return to the user.
-        ///  
-        ///  NextRow will call NextBlock *again* after the last row. NextBlock must again
-        ///  not change anything to tell NextRow that there's nothing left.
-        ///  
-        ///  So, NextBlock must:
-        ///   - Copy the last row to the start of the buffer (if not already there)
-        ///   - Read more content to fill the buffer
-        ///   - Split the buffer into rows
-        ///   - Stop at end-of-file or when a full row was read
-        ///   - Double the buffer until one of these conditions is met
-        ///   
-        ///   - Reset nextRowInIndexBlock *only if* a row was shifted or read
-        /// </summary>
-        private void NextBlock()
-        {
-            int bufferLengthFilledStart = 0;
-
-            // Copy the last row to the start of the buffer (if not already there)
-            if (_currentBlock.Count > 1)
-            {
-                String8 lastRow = _currentBlock[_currentBlock.Count - 1];
-                lastRow.WriteTo(_buffer, 0);
-                bufferLengthFilledStart = lastRow.Length;
-
-                // Reset the next row to read (since we shifted a row)
-                _nextRowIndexInBlock = 0;
-            }
-
-            int bufferLengthFilled = bufferLengthFilledStart;
-
-            while (true)
-            {
-                // Read more content to fill the buffer
-                bufferLengthFilled += _reader.Read(_buffer, bufferLengthFilled, _buffer.Length - bufferLengthFilled);
-
-                // Split the buffer into rows
-                _currentBlock = SplitRows(new String8(_buffer, 0, bufferLengthFilled), _rowPositionArray);
-
-                // Stop at end-of-file (read didn't fill buffer)
-                if (bufferLengthFilled < _buffer.Length) break;
-
-                // Stop when a full row was read (split found at least two parts)
-                if (_currentBlock.Count > 1) break;
-
-                // Otherwise, double the buffer (until a full row or end of file)
-                byte[] newBuffer = new byte[_buffer.Length * 2];
-                _buffer.CopyTo(newBuffer, 0);
-                _buffer = newBuffer;
-            }
-
-            // If we read new content, reset the next row to read
-            if (bufferLengthFilled > bufferLengthFilledStart) _nextRowIndexInBlock = 0;
         }
 
         public void Dispose()

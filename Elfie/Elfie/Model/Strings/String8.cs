@@ -348,6 +348,33 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         }
 
         /// <summary>
+        ///  Return this string with all trailing 'c's removed.
+        /// </summary>
+        /// <param name="c">Character to trim</param>
+        /// <returns>String8 without any trailing copies of c</returns>
+        public String8 TrimEnd(byte c)
+        {
+            int index = _index + _length - 1;
+            for(; index >= _index; --index)
+            {
+                if (_buffer[index] != c) break;
+            }
+
+            return new String8(_buffer, _index, index - _index + 1);
+        }
+
+        /// <summary>
+        ///  Return whether this string ends with the given character.
+        /// </summary>
+        /// <param name="c">Character to check for</param>
+        /// <returns>True if string ends with character, false otherwise</returns>
+        public bool StartsWith(byte c)
+        {
+            if (_length == 0) return false;
+            return (_buffer[_index] == c);
+        }
+
+        /// <summary>
         ///  Return whether this string ends with the given character.
         /// </summary>
         /// <param name="c">Character to check for</param>
@@ -367,6 +394,18 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         public bool StartsWith(String8 other, bool ignoreCase = false)
         {
             return other.CompareAsPrefixTo(this, ignoreCase) == 0;
+        }
+
+        /// <summary>
+        ///  Return whether this string starts with the given other string.
+        /// </summary>
+        /// <param name="other">The potential prefix to this string</param>
+        /// <param name="ignoreCase">True for case insensitive comparison, False otherwise</param>
+        /// <returns></returns>
+        public bool EndsWith(String8 other, bool ignoreCase = false)
+        {
+            if (other.Length > this.Length) return false;
+            return other.CompareTo(this.Substring(this.Length - other.Length), ignoreCase) == 0;
         }
 
         /// <summary>
@@ -420,43 +459,139 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             return false;
         }
 
-        /// <summary>
-        ///  Convert a String8 with an integer to the numeric value.
-        /// </summary>
-        /// <param name="result">Integer value found, if there was a valid integer</param>
-        /// <returns>True if an integer was found, False otherwise.</returns>
-        public bool TryToInteger(out int result)
+        private static byte ParseDigit(byte digit, ref bool valid)
         {
-            result = -1;
-            if (IsEmpty()) return false;
-            if (_length > 11) return false;
+            byte value = (byte)(digit - UTF8.Zero);
+            valid &= value <= 9;
+            return value;
+        }
 
-            long value = 0;
-            int i = _index;
+        private ulong ParseWithCutoff(ulong cutoff, ref bool valid)
+        {
+            // Validate non-empty and not too long to convert
+            valid &= _length > 0;
+            valid &= _length < 20;
+
+            // Stop early if too long or short
+            if (!valid) return 0;
+
+            ulong value = 0;
+
+            // Convert the digits
+            // NOTE: Don't need to check digits valid, because even 19 255 digits won't overflow
             int end = _index + _length;
-
-            // Check for negative sign
-            bool isNegative = this._buffer[i] == UTF8.Dash;
-            if (isNegative) i++;
-
-            // Decode digits
-            for (; i < end; ++i)
+            for (int i = _index; i < end; ++i)
             {
-                byte digitValue = (byte)(this._buffer[i] - UTF8.Zero);
-                if (digitValue > 9) return false;
-
                 value *= 10;
-                value += digitValue;
+                value += ParseDigit(_buffer[i], ref valid);
             }
 
-            // Negate if negative sign was found
-            if (isNegative) value = -value;
+            // Validate under cutoff
+            valid &= value <= cutoff;
 
-            // Ensure within integer bounds
-            if (value > int.MaxValue || value < int.MinValue) return false;
+            // Always return zero when invalid
+            if (!valid) value = 0;
 
-            result = (int)value;
-            return true;
+            return value;
+        }
+
+        private long Negate(ulong value, ref bool valid)
+        {
+            // Validate value is non-zero
+            valid &= (value != 0);
+            if (!valid) return 0;
+
+            // Decrement to ensure in range, then cast
+            long inRange = (long)(value - 1);
+
+            // Negate and undo the decrement
+            return -inRange - 1;
+        }
+
+        /// <summary>
+        ///  Convert a String8 with a numeric value to the int representation, if in range.
+        /// </summary>
+        /// <param name="result">Numeric value found, if in range, otherwise zero</param>
+        /// <returns>True if valid, False otherwise</returns>
+        public bool TryToInteger(out int result)
+        {
+            bool valid = true;
+
+            if (this.StartsWith(UTF8.Dash))
+            {
+                // Negative: Parse after dash, negate safely, cast and return
+                result = (int)Negate(this.Substring(1).ParseWithCutoff(((ulong)int.MaxValue) + 1, ref valid), ref valid);
+            }
+            else
+            {
+                result = (int)ParseWithCutoff(int.MaxValue, ref valid);
+            }
+
+            return valid;
+        }
+
+        /// <summary>
+        ///  Convert a String8 with a numeric value to the uint representation, if in range.
+        /// </summary>
+        /// <param name="result">Numeric value found, if in range, otherwise zero</param>
+        /// <returns>True if valid, False otherwise</returns>
+        public bool TryToUInt(out uint result)
+        {
+            bool valid = true;
+            result = (uint)ParseWithCutoff(uint.MaxValue, ref valid);
+            return valid;
+        }
+
+        /// <summary>
+        ///  Convert a String8 with a numeric value to the long representation, if in range.
+        /// </summary>
+        /// <param name="result">Numeric value found, if in range, otherwise zero</param>
+        /// <returns>True if valid, False otherwise</returns>
+        public bool TryToLong(out long result)
+        {
+            bool valid = true;
+
+            if (this.StartsWith(UTF8.Dash))
+            {
+                // Negative: Parse after dash, negate safely, cast and return
+                result = Negate(this.Substring(1).ParseWithCutoff(((ulong)long.MaxValue) + 1, ref valid), ref valid);
+            }
+            else
+            {
+                // Positive: Parse and Convert normally
+                result = (long)ParseWithCutoff(long.MaxValue, ref valid);
+            }
+
+            return valid;
+        }
+
+        /// <summary>
+        ///  Convert a String8 with a numeric value to the ulong representation, if in range.
+        /// </summary>
+        /// <param name="result">Numeric value found, if in range, otherwise zero</param>
+        /// <returns>True if valid, False otherwise</returns>
+        public bool TryToULong(out ulong result)
+        {
+            bool valid = true;
+
+            if (_length < 20)
+            {
+                // Not max length: Parse normally
+                result = ParseWithCutoff(ulong.MaxValue, ref valid);
+            }
+            else
+            {
+                // Max Length: Parse all but last digit
+                result = 10 * this.Substring(0, this.Length - 1).ParseWithCutoff(ulong.MaxValue / 10, ref valid);
+
+                // Limit Last digit so sum is <= ulong.MaxValue
+                result += this.Substring(this.Length - 1).ParseWithCutoff(ulong.MaxValue - result, ref valid);
+
+                // Ensure overflows are reset to zero
+                if (!valid) result = 0;
+            }
+
+            return valid;
         }
 
         /// <summary>
@@ -587,6 +722,70 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             return false;
         }
 
+        /// <summary>
+        ///  Convert a String8 to a DateTime with specific indices.
+        /// </summary>
+        /// <param name="result">UTC DateTime converted, or DateTime.MinValue if invalid</param>
+        /// <param name="yearIndex">Index of four-digit year in string</param>
+        /// <param name="monthIndex">Index of two-digit month in string</param>
+        /// <param name="dayIndex">Index of two-digit day in string</param>
+        /// <returns>True if valid DateTime, False otherwise</returns>
+        public bool TryToDateTimeExact(out DateTime result, int yearIndex, int monthIndex, int dayIndex)
+        {
+            result = DateTime.MinValue;
+
+            uint year, month, day;
+
+            // Parse the date numbers
+            if (!this.Substring(yearIndex, 4).TryToUInt(out year)) return false;
+            if (!this.Substring(monthIndex, 2).TryToUInt(out month)) return false;
+            if (!this.Substring(dayIndex, 2).TryToUInt(out day)) return false;
+
+            // Validate the date number ranges (no month-specific day validation)
+            if (month < 1 || month > 12) return false;
+            if (day < 1 || day > 31) return false;
+
+            // Construct DateTime to avoid failures due to days being out of range (leap year and month length)
+            result = new DateTime((int)year, (int)month, 1, 0, 0, 0, DateTimeKind.Utc);
+            if (day > 1) result = result.AddDays(day - 1);
+
+            // Return false for invalid leap days
+            if (result.Month != month) return false;
+
+            return true;
+        }
+
+        /// <summary>
+        ///  Convert a String8 to a DateTime with specific indices.
+        /// </summary>
+        /// <param name="result">UTC DateTime converted, or DateTime.MinValue if invalid</param>
+        /// <param name="yearIndex">Index of four-digit year in string</param>
+        /// <param name="monthIndex">Index of two-digit month in string</param>
+        /// <param name="dayIndex">Index of two-digit day in string</param>
+        /// <returns>True if valid DateTime, False otherwise</returns>
+        public bool TryToDateTimeExact(out DateTime result, int yearIndex, int monthIndex, int dayIndex, int hourIndex, int minuteIndex, int secondIndex)
+        {
+            // Convert the Date first
+            if (!TryToDateTimeExact(out result, yearIndex, monthIndex, dayIndex)) return false;
+
+            uint hour, minute, second;
+
+            // Parse the time numbers
+            if (!this.Substring(11, 2).TryToUInt(out hour)) return false;
+            if (!this.Substring(14, 2).TryToUInt(out minute)) return false;
+            if (!this.Substring(17, 2).TryToUInt(out second)) return false;
+
+            // Validate the time number ranges
+            if (hour > 23) return false;
+            if (minute > 59) return false;
+            if (second > 59) return false;
+
+            // Add the time part
+            result = result.Add(new TimeSpan((int)hour, (int)minute, (int)second));
+
+            return true;
+        }
+
         private bool TryToDateTimeAsIso8601(out DateTime result)
         {
             result = DateTime.MinValue;
@@ -600,48 +799,17 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             if (_buffer[_index + 4] != UTF8.Dash) return false;
             if (_buffer[_index + 7] != UTF8.Dash) return false;
 
+            // If there's no time part, convert now that format is validated
+            if (!hasTimePart) return TryToDateTimeExact(out result, 0, 5, 8);
+
             // Validate time part separators and suffix
-            if (hasTimePart)
-            {
-                if (_buffer[_index + 10] != UTF8.T && _buffer[_index + 10] != UTF8.Space) return false;
-                if (_buffer[_index + 13] != UTF8.Colon) return false;
-                if (_buffer[_index + 16] != UTF8.Colon) return false;
-                if (_length == 20 && _buffer[_index + 19] != UTF8.Z) return false;
-            }
+            if (_buffer[_index + 10] != UTF8.T && _buffer[_index + 10] != UTF8.Space) return false;
+            if (_buffer[_index + 13] != UTF8.Colon) return false;
+            if (_buffer[_index + 16] != UTF8.Colon) return false;
+            if (_length == 20 && _buffer[_index + 19] != UTF8.Z) return false;
 
-            int year, month, day, hour = 0, minute = 0, second = 0;
-
-            // Parse the date numbers
-            if (!this.Substring(0, 4).TryToInteger(out year)) return false;
-            if (!this.Substring(5, 2).TryToInteger(out month)) return false;
-            if (!this.Substring(8, 2).TryToInteger(out day)) return false;
-
-            // Validate the date number ranges (no month-specific day validation)
-            if (year < 0) return false;
-            if (month < 1 || month > 12) return false;
-            if (day < 1 || day > 31) return false;
-
-            if (hasTimePart)
-            {
-                // Parse the time numbers
-                if (!this.Substring(11, 2).TryToInteger(out hour)) return false;
-                if (!this.Substring(14, 2).TryToInteger(out minute)) return false;
-                if (!this.Substring(17, 2).TryToInteger(out second)) return false;
-
-                // Validate the time number ranges
-                if (hour < 0 || hour > 23) return false;
-                if (minute < 0 || minute > 59) return false;
-                if (second < 0 || second > 59) return false;
-            }
-
-            // Construct DateTime to avoid failures due to days being out of range (leap year and month length)
-            result = new DateTime(year, month, 1, hour, minute, second, DateTimeKind.Utc);
-            if (day > 1) result = result.AddDays(day - 1);
-
-            // Return false for invalid leap days
-            if (result.Month != month) return false;
-
-            return true;
+            // Convert with time part
+            return TryToDateTimeExact(out result, 0, 5, 8, 11, 14, 17);
         }
 
         private bool TryToDateTimeAsUs(out DateTime result)
@@ -657,48 +825,17 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             if (_buffer[_index + 2] != UTF8.Slash) return false;
             if (_buffer[_index + 5] != UTF8.Slash) return false;
 
+            // If there's no time part, convert now that format is validated
+            if (!hasTimePart) return TryToDateTimeExact(out result, 6, 0, 3);
+
             // Validate time part separators and suffix
-            if (hasTimePart)
-            {
-                if (_buffer[_index + 10] != UTF8.Space) return false;
-                if (_buffer[_index + 13] != UTF8.Colon) return false;
-                if (_buffer[_index + 16] != UTF8.Colon) return false;
-                if (_length == 20 && _buffer[_index + 19] != UTF8.Z) return false;
-            }
+            if (_buffer[_index + 10] != UTF8.Space) return false;
+            if (_buffer[_index + 13] != UTF8.Colon) return false;
+            if (_buffer[_index + 16] != UTF8.Colon) return false;
+            if (_length == 20 && _buffer[_index + 19] != UTF8.Z) return false;
 
-            int year, month, day, hour = 0, minute = 0, second = 0;
-
-            // Parse the date numbers
-            if (!this.Substring(0, 2).TryToInteger(out month)) return false;
-            if (!this.Substring(3, 2).TryToInteger(out day)) return false;
-            if (!this.Substring(6, 4).TryToInteger(out year)) return false;
-
-            // Validate the date number ranges (no month-specific day validation)
-            if (year < 0) return false;
-            if (month < 1 || month > 12) return false;
-            if (day < 1 || day > 31) return false;
-
-            if (hasTimePart)
-            {
-                // Parse the time numbers
-                if (!this.Substring(11, 2).TryToInteger(out hour)) return false;
-                if (!this.Substring(14, 2).TryToInteger(out minute)) return false;
-                if (!this.Substring(17, 2).TryToInteger(out second)) return false;
-
-                // Validate the time number ranges
-                if (hour < 0 || hour > 23) return false;
-                if (minute < 0 || minute > 59) return false;
-                if (second < 0 || second > 59) return false;
-            }
-
-            // Construct DateTime to avoid failures due to days being out of range (leap year and month length)
-            result = new DateTime(year, month, 1, hour, minute, second, DateTimeKind.Utc);
-            if (day > 1) result = result.AddDays(day - 1);
-
-            // Return false for invalid leap days
-            if (result.Month != month) return false;
-
-            return true;
+            // Convert with time part
+            return TryToDateTimeExact(out result, 6, 0, 3, 11, 14, 17);
         }
         #endregion
 
@@ -925,6 +1062,17 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         #endregion
 
         #region Output
+        /// <summary>
+        ///  Move this String8 backwards in the byte array by the specified number of bytes.
+        ///  Used to un-escape values escaped with extra characters.
+        /// </summary>
+        /// <param name="byteCount">Number of byte to shift this string</param>
+        public void ShiftBack(int byteCount)
+        {
+            if (this._index < byteCount) throw new ArgumentOutOfRangeException("amount");
+            System.Buffer.BlockCopy(_buffer, _index, _buffer, _index - byteCount, _length);
+        }
+
         /// <summary>
         ///  Write this value to the target byte[] at the given index as UTF8.
         /// </summary>
