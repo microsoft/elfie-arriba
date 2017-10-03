@@ -1,10 +1,8 @@
 import "./Start.scss";
-import Help from "./Help";
 
 export default class extends React.Component {
     constructor(props) {
         super(props);
-        this.state = { showHelp: props.showHelp };
     }
     componentDidMount() {
         window.addEventListener("storage", this);
@@ -21,8 +19,6 @@ export default class extends React.Component {
         localStorage.updateJson(type, favs => favs.remove(fav));
     }
     render() {
-        if (this.state.showHelp) return <Help />;
-
         var itemGroup = (title, key, items, icon) => <div className="item-group" style={{ display: items.length ? '' : 'none' }}>
             <div className="h1">{title}</div>
             {items.map(item =>

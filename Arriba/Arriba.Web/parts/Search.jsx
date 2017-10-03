@@ -270,7 +270,7 @@ export default class extends EventedComponent {
                             onAddClause={(name, value) => this.props.queryChanged(`${this.props.query} AND [${name}]="${value}"`)} />
                     </div>
                 </SplitPane>
-                : <Start allBasics={this.props.allBasics} showHelp={this.props.params.help === "true"} queryChanged={this.props.queryChanged} />}
+                : <Start allBasics={this.props.allBasics} queryChanged={this.props.queryChanged} />}
             <DropShield
                 dropping={this.state.dropping}
                 droppingChanged={d => this.setState({ dropping: d })}

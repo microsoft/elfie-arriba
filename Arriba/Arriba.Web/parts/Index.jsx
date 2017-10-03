@@ -3,6 +3,7 @@ import "./Index.scss";
 import EventedComponent from "./EventedComponent";
 import Mru from "./Mru";
 import ErrorPage from "./ErrorPage";
+import Help from "./Help";
 import SearchHeader from "./SearchHeader";
 import Tabs from "./Tabs";
 import SearchBox from "./SearchBox";
@@ -38,7 +39,10 @@ class Index extends EventedComponent {
             debouncedQuery: query, // Required to trigger getCounts.
             currentTable: table,
             userSelectedTable: table,
-            mode: window.location.pathname.startsWith("/Grid.html") // false means Search, true means Grid.
+            mode:
+                window.location.pathname.startsWith("/help") ? "help" :
+                window.location.pathname.startsWith("/Grid.html") ? "grid" :
+                undefined // Implies "search".
         };
 
         this.events = {
@@ -119,12 +123,11 @@ class Index extends EventedComponent {
 
     render() {
         if (this.state.blockingErrorStatus != null) return <ErrorPage status={this.state.blockingErrorStatus} />;
-
-        const Page = this.state.mode ? Grid : Search;
+        const Page = { grid: Grid, help: Help }[this.state.mode] || Search;
         return <div className="viewport" onKeyDown={this.onKeyDown.bind(this)}>
             {this.state.error && <div className="errorBar">{this.state.error}</div>}
             <SearchHeader reset={() => {
-                this.setState({ mode: false, query: "", userSelectedTable: undefined });
+                this.setState({ mode: undefined, query: "", userSelectedTable: undefined });
                 this.refs.searchBox.focus();
             }}>
                 <Tabs
@@ -152,16 +155,16 @@ class Index extends EventedComponent {
             </SearchHeader>
             <div className="middle">
                 <div className="mode">
-                    <a title="Listing" className={!this.state.mode ? "selected" : undefined}
-                        onClick={e => this.setState({ mode: false }) }><i className="icon-details"></i></a>
-                    <a title="Grid" className={this.state.mode ? "selected" : undefined}
-                        onClick={e => this.setState({ mode: true }) }><i className="icon-view-all-albums"></i></a>
+                    <a title="Listing" className={this.state.mode === undefined ? "selected" : undefined}
+                        onClick={e => this.setState({ mode: undefined }) }><i className="icon-details"></i></a>
+                    <a title="Grid" className={this.state.mode === "grid" ? "selected" : undefined}
+                        onClick={e => this.setState({ mode: "grid" }) }><i className="icon-view-all-albums"></i></a>
                     <span className="mode-fill"></span>
                     <a title="Feedback" href={"mailto:" + encodeURIComponent(configuration.feedbackEmailAddresses) + "?subject=" + encodeURIComponent(configuration.toolName) + " Feedback"}>
                         <img src="/icons/feedback.svg" alt="feedback"/>
                     </a>
-                    <a title="Help" href="/?help=true">
-                        <img src="/icons/help.svg" alt="help"/>
+                    <a>
+                        <img src="/icons/help.svg" alt="help" title="Help" onClick={() => this.setState({ mode: this.state.mode === "help" ? undefined : "help" })}/>
                     </a>
                 </div>
                 <Page params={this.params}
