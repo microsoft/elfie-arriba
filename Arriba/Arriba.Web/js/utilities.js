@@ -121,13 +121,6 @@ Array.prototype.emptyToUndefined = function() {
     return this.length ? this : undefined;
 }
 
-Array.prototype.toObject = function(keyFunc) {
-    return this.reduce((o, item) => {
-        o[keyFunc(item)] = item;
-        return o;
-    }, {});
-}
-
 // Takes two arrays: A (this), B (other)
 // Returns three arrays: Only-A, Both, Only-B
 // Order is preserved, A takes precedent.

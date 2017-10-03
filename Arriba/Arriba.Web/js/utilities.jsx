@@ -49,6 +49,13 @@ Object.diff = function(a, b) {
     return makeSet([...allKeys.values()].filter(i => a[i] !== b[i]));
 };
 
+Array.prototype.toObject = function(keyFunc) {
+    return this.reduce((o, item) => {
+        o[keyFunc(item)] = item;
+        return o;
+    }, {});
+}
+
 Set.prototype.values = Set.prototype.values || function() { // For Edge/IE.
     var values = [];
     this.forEach(v => values.push(v));
