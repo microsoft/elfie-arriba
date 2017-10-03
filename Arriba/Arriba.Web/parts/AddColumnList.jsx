@@ -44,9 +44,6 @@ export default class extends EventedComponent {
         }
     }
     render() {
-        // Write an add column list (shown only once the '+' is clicked)
-        if (!this.props.showing) return null;
-
         return <div className="add-list" onKeyDown={this.handleKeyDown.bind(this)} >
             <input type="text" autoFocus placeholder="Filter Columns" value={this.state.filter} onChange={e => this.setState({ filter: e.target.value })} onKeyDown={this.handleKeyDown.bind(this)} />
             <div className="addColumnsList">

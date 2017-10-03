@@ -125,11 +125,10 @@ export default React.createClass({
                     return <ResultListingItem key={id} itemId={id} itemIndex={index++} data={row} columns={content.values.columns} onSelectionChanged={selectFunction} selected={selectedId === id } />;
                 })}
             </tbody>
-            <AddColumnList
-                showing={this.state.addColumnsShowing}
+            {this.state.addColumnsShowing && <AddColumnList
                 onAddColumn={this.onAddColumn}
                 allColumns={table.columns}
-                currentColumns={content.query.columns} />
+                currentColumns={content.query.columns} />}
         </table>;
     }
 });
