@@ -22,7 +22,7 @@
     flex-flow: column;
 
     input {
-        flex: 0 0;
+        flex: 0 0 auto; // Auto needed for IE.
         width: 100%;
         padding: 15px;
         border: 0;
