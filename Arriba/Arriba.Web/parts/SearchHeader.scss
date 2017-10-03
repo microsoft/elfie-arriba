@@ -11,18 +11,18 @@
     display: flex;
     flex-shrink: 0;
     align-items: center;
-    background-color: $medium;
+    background: linear-gradient(to right, $vdark 100px, $medium 600px);
 
     a.title {
         align-self: stretch;
 
         @include center-center;
         cursor: pointer;
-        padding: 12px;
-        font-size: 18pt;
+        padding: 4px 10px 0 15px;
+        font-size: 22px;
 
-        background-color: $vdark;
         color: white;
+        transition: background 100ms ease-in-out;
         &:hover {
             color: white; // Suppress global a:hover.
             background-color: lighten($vdark, 5%);
