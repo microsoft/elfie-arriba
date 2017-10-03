@@ -129,6 +129,13 @@ export default class extends EventedComponent {
         // Must write to userTableSettings (and not directly to currentTableSettings) so the URL can refect this.
         // Sample schema: { columns: ["Name", "IP"], sortColumn: "IP", sortOrder: "desc" }
         var userTableSettings = localStorage.getJson("table-" + this.props.currentTable, {});
+
+        // Bad table names are entering localStorage somehow. Temporary fix: filter out the invalid ones.
+        if (userTableSettings.columns) {
+            const names = table.columns.map(c => c.name);
+            userTableSettings.columns = userTableSettings.columns.filter(c => names.includes(c));
+        }
+
         this.setState({
             userTableSettings: userTableSettings,
             currentTableSettings: Object.merge(
