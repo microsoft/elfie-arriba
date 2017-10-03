@@ -73,7 +73,7 @@ export default class extends EventedComponent {
                     </div>
                 </span>
             </div>
-            <i className={"searchBoxIcon clickable " + star} onClick={e => this.toggleFavorite(e)}></i>
+            <i className={"searchBoxIcon clickable " + star} onClick={e => this.toggleFavorite(e)} title="Toggle Favorite"></i>
         </div>
     }
 }
