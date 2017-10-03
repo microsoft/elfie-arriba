@@ -49,6 +49,10 @@ Object.diff = function(a, b) {
     return makeSet([...allKeys.values()].filter(i => a[i] !== b[i]));
 };
 
+String.prototype.includes = String.prototype.includes || function() {
+     return String.prototype.indexOf.apply(this, arguments) !== -1;
+};
+
 Array.prototype.toObject = function(keyFunc) {
     return this.reduce((o, item) => {
         o[keyFunc(item)] = item;
