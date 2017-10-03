@@ -78,3 +78,16 @@ Blob.prototype.readAsText = function() {
         reader.readAsText(this);
     });
 };
+
+// Diagnostic helpers.
+window.ls = {
+    keys: () => {
+        return Object.keys(localStorage).filter(key => key.startsWith("table-"));
+    },
+    list: () => {
+        ls.keys().forEach(k => log(k, localStorage[k]));
+    },
+    reset: () => {
+        ls.keys().forEach(k => localStorage.removeItem(k));
+    }
+};
