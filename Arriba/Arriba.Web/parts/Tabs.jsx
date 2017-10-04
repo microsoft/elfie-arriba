@@ -27,8 +27,6 @@ export default class extends React.Component {
                 this.props.allBasics[t.tableName].canAdminister;
         });
 
-        tables = [...tables.filter(t => t.pinned), ...tables.filter(t => !t.pinned)];
-
         const overflowLimit = 5;
         const tabs = tables.map(t => <span
             key={t.tableName}
@@ -52,6 +50,13 @@ export default class extends React.Component {
                 }
             }} />}
         </span>);
+
+        // Promote pinned tab out of overflow if needed.
+        const pindex = tables.findIndex(t => t.pinned);
+        if (overflowLimit > 0 && pindex >= overflowLimit) {
+            const pinned = tabs.splice(pindex, 1);
+            tabs.splice(overflowLimit - 1, 0, pinned);
+        }
 
         return <div className="searchBoxAndTabs">
             <div className="tableTabs">
