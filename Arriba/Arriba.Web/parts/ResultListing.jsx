@@ -29,12 +29,6 @@ export default React.createClass({
         this.setState({ selectedIndex: rowElement.props.itemIndex, addColumnsShowing: false });
         this.props.onSelectionChanged(rowElement.props.itemId);
     },
-    handleAdd: function (e) {
-        if (e.target === this.refs.addButton) {
-            this.setState({ addColumnsShowing: !this.state.addColumnsShowing });
-        }
-        e.stopPropagation();
-    },
     onAddColumn: function (name) {
         if (name) {
             var columns = this.props.data.query.columns;
@@ -111,9 +105,11 @@ export default React.createClass({
                                 {i == content.values.columns.length - 1 && <img
                                     src="/icons/add.svg"
                                     className="icon-button add-column-button"
-                                    ref={"addButton"}
                                     title="Add Column"
-                                    onClick={this.handleAdd}/>}
+                                    onClick={e => {
+                                        e.stopPropagation();
+                                        this.setState({ addColumnsShowing: !this.state.addColumnsShowing })}
+                                    }/>}
                             </div>
                         </td>;
                     })}
