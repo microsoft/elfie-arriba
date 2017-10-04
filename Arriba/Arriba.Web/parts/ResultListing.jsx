@@ -118,7 +118,14 @@ export default React.createClass({
             <tbody>
                 {content.values.rows.map(function (row) {
                     var id = stripHighlight(row[idColumnIndex]);
-                    return <ResultListingItem key={id} itemId={id} itemIndex={index++} data={row} columns={content.values.columns} onSelectionChanged={selectFunction} selected={selectedId === id } />;
+                    return <ResultListingItem
+                        key={id}
+                        itemId={id}
+                        itemIndex={index++}
+                        data={row}
+                        columns={content.values.columns}
+                        onSelectionChanged={selectFunction}
+                        selected={selectedId === id } />;
                 })}
             </tbody>
             {this.state.addColumnsShowing && <AddColumnList
