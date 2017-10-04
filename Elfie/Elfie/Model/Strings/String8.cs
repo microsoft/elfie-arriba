@@ -790,9 +790,9 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         {
             result = DateTime.MinValue;
 
-            // Formats are [yyyy-MM-dd] (length 10) or [yyyy-MM-ddThh:mm:ssZ] (length 19/20)
+            // Formats are [yyyy-MM-dd] (length 10) or [yyyy-MM-ddThh:mm:ssZ] (length 19/20) or [yyyy-MM-ddThh:mm:ss.0000000]
             //              0123456789                  01234567890123456789
-            bool hasTimePart = (_length == 19 || _length == 20);
+            bool hasTimePart = (_length >= 19 && _length <= 27);
             if (_length != 10 && !hasTimePart) return false;
 
             // Validate date part separators
@@ -806,10 +806,22 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             if (_buffer[_index + 10] != UTF8.T && _buffer[_index + 10] != UTF8.Space) return false;
             if (_buffer[_index + 13] != UTF8.Colon) return false;
             if (_buffer[_index + 16] != UTF8.Colon) return false;
-            if (_length == 20 && _buffer[_index + 19] != UTF8.Z) return false;
+            if (_length >= 20 && _buffer[_index + 19] != UTF8.Z && _buffer[_index + 19] != UTF8.Period) return false;
 
             // Convert with time part
-            return TryToDateTimeExact(out result, 0, 5, 8, 11, 14, 17);
+            bool success = TryToDateTimeExact(out result, 0, 5, 8, 11, 14, 17);
+            
+            // Parse partial seconds
+            if(_length > 20)
+            {
+                uint partialSeconds;
+                if (!this.Substring(20).TryToUInt(out partialSeconds)) return false;
+
+                double asSecondPart = (double)partialSeconds / (double)(Math.Pow(10, _length - 20));
+                result = result.AddSeconds(asSecondPart);
+            }
+
+            return success;
         }
 
         private bool TryToDateTimeAsUs(out DateTime result)
