@@ -30,27 +30,6 @@ html, body, .viewport {
     flex-flow: column;
 }
 
-/* Make the middle area resize and full width.
-    - Make contents of it flow across.
-    - Ensure it's non-scrollable so the content will be scrollable
-*/
-.middle {
-    flex: 1 100%;
-    background: #F5F5F5;
-
-    display: flex;
-    flex-flow: row;
-
-    overflow: hidden;
-}
-
-/* Make the footer fixed height */
-.footer {
-    background: #999;
-    height: 32px;
-    min-height: 32px;
-}
-
 /* Make the center [between left and right] full width, contents share height */
 .center {
     flex: 1;

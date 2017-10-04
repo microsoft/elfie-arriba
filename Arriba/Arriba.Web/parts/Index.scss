@@ -1,6 +1,12 @@
 @import './configuration/theme';
 @import '../shared.scss';
 
+.clickable {
+    cursor: pointer;
+    user-select: none;
+    &:hover { color: inherit; };
+}
+
 .errorBar {
     background-color: hsl(10, 80%, 60%);
     color: white;
@@ -17,6 +23,29 @@
 
     font-size: 16pt;
     color: hsl(0, 0%, 80%);
+}
+
+.header {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    background: linear-gradient(to right, $vdark 100px, $medium 600px);
+
+    a.title {
+        align-self: stretch;
+
+        @include center-center;
+        cursor: pointer;
+        padding: 4px 10px 0 15px;
+        font-size: 22px;
+
+        color: white;
+        transition: background 100ms ease-in-out;
+        &:hover {
+            color: white; // Suppress global a:hover.
+            background-color: lighten($vdark, 5%);
+        }
+    }
 }
 
 .mode {
@@ -59,4 +88,12 @@
     a:hover {
         color: #999;
     }
+}
+
+.middle {
+    flex: 1 100%;
+    background: #F5F5F5;
+    display: flex;
+    flex-flow: row;
+    overflow: hidden;
 }

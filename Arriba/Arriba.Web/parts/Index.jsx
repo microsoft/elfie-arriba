@@ -4,7 +4,6 @@ import EventedComponent from "./EventedComponent";
 import Mru from "./Mru";
 import ErrorPage from "./ErrorPage";
 import Help from "./Help";
-import SearchHeader from "./SearchHeader";
 import Tabs from "./Tabs";
 import SearchBox from "./SearchBox";
 import Search from "./Search";
@@ -126,10 +125,11 @@ class Index extends EventedComponent {
         const Page = { grid: Grid, help: Help }[this.state.mode] || Search;
         return <div className="viewport" onKeyDown={this.onKeyDown.bind(this)}>
             {this.state.error && <div className="errorBar">{this.state.error}</div>}
-            <SearchHeader reset={() => {
-                this.setState({ mode: undefined, query: "", userSelectedTable: undefined });
-                this.refs.searchBox.focus();
-            }}>
+            <div className="header">
+                <a className="title font-light" onClick={() => {
+                    this.setState({ mode: undefined, query: "", userSelectedTable: undefined });
+                    this.refs.searchBox.focus();
+                }}>{configuration.toolName}</a>
                 <Tabs
                     allBasics={this.state.allBasics}
                     refreshAllBasics={() => this.refreshAllBasics()}
@@ -152,7 +152,7 @@ class Index extends EventedComponent {
                         loading={this.state.loading} />
 
                 </Tabs>
-            </SearchHeader>
+            </div>
             <div className="middle">
                 <div className="mode">
                     <a title="Listing" className={this.state.mode === undefined ? "selected" : undefined}
