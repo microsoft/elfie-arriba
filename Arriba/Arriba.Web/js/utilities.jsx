@@ -2,11 +2,7 @@
 // a) Not run in the global context (does not use script-loader).
 // b) Babel/JSX supported.
 
-import Promise from "promise-polyfill";
-
-if (!window.Promise) {
-    window.Promise = Promise;
-}
+import "./polyfill";
 
 window.xhr = (path, params, body) => {
     return new Promise((resolve, reject) => {
