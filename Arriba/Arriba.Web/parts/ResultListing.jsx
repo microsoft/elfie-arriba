@@ -1,16 +1,19 @@
-﻿import AddColumnList from "./AddColumnList";
 import "./ResultListing.scss";
+
+import EventedComponent from "./EventedComponent";
+﻿import AddColumnList from "./AddColumnList";
 import Delete from "./Delete"
 
 import createDOMPurify  from "DOMPurify";
 const DOMPurify = createDOMPurify(window);
 
 // ResultListing shows a table of items matching a query, with sortable columns
-export default React.createClass({
-    getInitialState: function () {
-        return { selectedIndex: -1, addColumnsShowing: false };
-    },
-    handleResort: function (columnNameClicked, e) {
+export default class extends EventedComponent {
+    constructor(props) {
+        super(props);
+        this.state = { selectedIndex: -1, addColumnsShowing: false };
+    }
+    handleResort(columnNameClicked, e) {
         // If a column heading was clicked, re-sort the table
         var sortOrder = "asc";
 
@@ -23,13 +26,13 @@ export default React.createClass({
         this.props.onResort(columnNameClicked, sortOrder);
 
         e.stopPropagation();
-    },
-    handleSelect: function (e) {
+    }
+    handleSelect(e) {
         var rowElement = e;
         this.setState({ selectedIndex: rowElement.props.itemIndex, addColumnsShowing: false });
         this.props.onSelectionChanged(rowElement.props.itemId);
-    },
-    onAddColumn: function (name) {
+    }
+    onAddColumn(name) {
         if (name) {
             var columns = this.props.data.query.columns;
             columns.push(name);
@@ -38,8 +41,8 @@ export default React.createClass({
         } else {
             this.setState({ addColumnsShowing: false });
         }
-    },
-    selectByRelativeIndex: function (i) {
+    }
+    selectByRelativeIndex(i) {
         // Figure out the current row count
         var count = 0;
         if (this.props.data) count = this.props.data.values.rows.length;
@@ -59,8 +62,8 @@ export default React.createClass({
         var row = this.props.data.values.rows[newSelectedIndex];
         this.setState({ selectedIndex: newSelectedIndex });
         this.props.onSelectionChanged(stripHighlight(row[idColumnIndex]));
-    },
-    render: function () {
+    }
+    render() {
         var content = this.props.data;
 
         if (!this.props.allBasics || !content) return null;
@@ -75,7 +78,7 @@ export default React.createClass({
 
         // Write a row for each item
         var index = 0;
-        var selectFunction = this.handleSelect;
+        var selectFunction = this.handleSelect.bind(this);
         var selectedId = this.props.selectedId;
 
         return <table className="resultTable" tabIndex="2">
@@ -129,12 +132,12 @@ export default React.createClass({
                 })}
             </tbody>
             {this.state.addColumnsShowing && <AddColumnList
-                onAddColumn={this.onAddColumn}
+                onAddColumn={this.onAddColumn.bind(this)}
                 allColumns={table.columns}
                 currentColumns={content.query.columns} />}
         </table>;
     }
-});
+}
 
 class ResultListingItem extends React.Component {
     render() {
