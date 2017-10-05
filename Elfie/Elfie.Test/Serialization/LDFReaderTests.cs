@@ -13,12 +13,13 @@ changetype: add
 cn: Scott Louvau
 whenCreated: 19990410024913.0Z
 whenChanged: 20170922025542.0Z
-pwdLastSet: 131505223204018920
+pwdLastSet:131505223204018920
 objectSid:: AQUAAAAAAAUVAAAAFdoFDGWeMwFVdzMB9AEAAA==
 distinguishedName: 
  CN=Scott Louvau,OU=UserAccounts,DC=domain,DC=com
 memberOf: 
  CN=Interesting Group,OU=Distribution Lists,DC=domain,DC=com
+-
 memberOf: 
  CN=Another Group,OU=Distribution Lists,DC=domain,DC=com
 memberOf: 

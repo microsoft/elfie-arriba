@@ -1079,10 +1079,12 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         ///  Used to un-escape values escaped with extra characters.
         /// </summary>
         /// <param name="byteCount">Number of byte to shift this string</param>
-        public void ShiftBack(int byteCount)
+        /// <returns>A String8 reference to this String8 value in the new shifted position</returns>
+        public String8 ShiftBack(int byteCount)
         {
-            if (this._index < byteCount) throw new ArgumentOutOfRangeException("amount");
+            if (byteCount <= 0 || this._index < byteCount) throw new ArgumentOutOfRangeException("byteCount");
             System.Buffer.BlockCopy(_buffer, _index, _buffer, _index - byteCount, _length);
+            return new String8(_buffer, _index - byteCount, _length);
         }
 
         /// <summary>

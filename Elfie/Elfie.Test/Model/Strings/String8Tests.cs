@@ -12,6 +12,7 @@ using Microsoft.CodeAnalysis.Elfie.Extensions;
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Diagnostics;
+using Microsoft.CodeAnalysis.Elfie.Model.Structures;
 
 namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
 {
@@ -230,6 +231,36 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
             Assert.IsTrue(collections8.StartsWith(collections8.Substring(0, 3)));
             Assert.IsFalse(collections8.StartsWith(collectionsCasing8));
             Assert.IsTrue(collections8.StartsWith(collectionsCasing8, true));
+        }
+
+        [TestMethod]
+        public void String8_ShiftBack()
+        {
+            String8Block block = new String8Block();
+
+            // Goal: Split on semi-colon, collapse semi-colon and spaces in-place
+            String8 shiftable = "One; Two;Three; Four".TestConvert();
+            int totalShift = 0;
+
+            String8Set parts = shiftable.Split(UTF8.Semicolon, new PartialArray<int>(5, false));
+            for(int i = 0; i < parts.Count; ++i)
+            {
+                String8 part = parts[i];
+
+                totalShift++;
+                if (part.StartsWith(UTF8.Space))
+                {
+                    part = part.Substring(1);
+                    totalShift++;
+                }
+
+                String8 beforeShift = block.GetCopy(part);
+                String8 shifted = part.ShiftBack(totalShift);
+                Assert.AreEqual(beforeShift, shifted);
+            }
+
+            String8 result = shiftable.Substring(0, shiftable.Length - totalShift);
+            Assert.AreNotEqual("OneTwoThreeFour", result.ToString());
         }
 
         [TestMethod]

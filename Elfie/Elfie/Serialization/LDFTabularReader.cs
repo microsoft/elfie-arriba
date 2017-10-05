@@ -11,7 +11,9 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
     ///  LdfTabularReader is a tabular reader for the LDF or LDIF format, which
     ///  Active Directory tools like LDIFDE produce.
     ///  
-    ///  See https://en.wikipedia.org/wiki/LDAP_Data_Interchange_Format.
+    ///  See:
+    ///  https://en.wikipedia.org/wiki/LDAP_Data_Interchange_Format.
+    ///  http://www.ietf.org/rfc/rfc2425.txt
     ///  
     ///  This implementation internally decodes:
     ///     'objectSid', if seen, into an SDDL formatted SID.
@@ -53,6 +55,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             _columnNames = new List<string>();
 
             _currentRowBlock = new String8Block();
+            _lineArray = new PartialArray<int>(1024, false);
 
             ReadColumns(stream);
 
@@ -66,59 +69,31 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         #region ReadColumns
         private void ReadColumns(Stream stream)
         {
-            byte[] buffer = new byte[64 * 1024];
-            _lineArray = new PartialArray<int>(1024, false);
+            // Make a reader to split the input on newlines
+            BufferedRowReader reader = new BufferedRowReader(stream, (block, array) => block.Split(UTF8.Newline, array));
 
-            // Allocate a block to hold copies of unique column names
-            _columnNamesBlock = new String8Block();
-
-            // Walk the whole LDF by line looking for every unique column name found
-            int lengthRead = stream.Read(buffer, 0, buffer.Length);
-
-            while (true)
+            // Scan the lines for column names (something before a colon)
+            while(true)
             {
-                // Read a block from the file
-                String8 block = new String8(buffer, 0, lengthRead);
+                String8 line = reader.NextRow();
+                if (line.IsEmpty()) break;
 
-                // Split the block into lines
-                _blockLines = block.Split(UTF8.Newline, _lineArray);
-
-                // Read and track all column names down to the second-to-last line
-                for (int i = 0; i < _blockLines.Count - 1; ++i)
-                {
-                    ReadColumnLine(_blockLines[i]);
-                }
-
-                String8 lastLine = _blockLines[_blockLines.Count - 1];
-
-                // If we ran out of file, read the last line and stop
-                if (lengthRead < buffer.Length)
-                {
-                    ReadColumnLine(lastLine);
-                    break;
-                }
-
-                // If this was one big line, double the buffer to read more
-                if (_blockLines.Count == 1)
-                {
-                    byte[] newBuffer = new byte[buffer.Length * 2];
-                    System.Buffer.BlockCopy(buffer, 0, newBuffer, 0, buffer.Length);
-                    buffer = newBuffer;
-                }
-
-                // Save the last line and read another block
-                lengthRead = lastLine.WriteTo(buffer, 0);
-                lengthRead += stream.Read(buffer, lengthRead, buffer.Length - lengthRead);
+                ReadColumnLine(line);
             }
 
+            // Reset the stream for the second read
             stream.Seek(0, SeekOrigin.Begin);
         }
 
         private void ReadColumnLine(String8 line)
         {
-            // Skip empty, continuation, and comment lines
-            if (line.Length == 0 || line[0] == UTF8.CR || line[0] == UTF8.Space || line[0] == UTF8.Pound) return;
+            // Skip empty lines
+            if (line.Length == 0) return;
 
+            // Skip record separator, continuation lines, comments, and grouping lines
+            byte first = line[0];
+            if (first == UTF8.CR || first == UTF8.Space || first == UTF8.Pound || first == UTF8.Dash) return;
+ 
             // Find the column name part of the line
             String8 columnName = line.BeforeFirst(UTF8.Colon);
 
@@ -198,8 +173,8 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             {
                 String8 line = _blockLines[_nextLineIndex];
 
-                // Skip comment lines
-                if (line.StartsWith(UTF8.Pound)) continue;
+                // Skip comment lines and grouping lines
+                if (line.StartsWith(UTF8.Pound) || line.StartsWith(UTF8.Dash)) continue;
 
                 // Trim trailing CR, if found
                 if (line.EndsWith(UTF8.CR)) line = line.Substring(0, line.Length - 1);
@@ -219,9 +194,10 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
                     // Set or Append the value just completed
                     SetColumnValue(currentPropertyName, currentPropertyValue, currentIsBase64);
 
-                    // Split the property name and value [value is after colon and space]
+                    // Split the property name and value [value is after colon and optional space]
                     currentPropertyName = line.BeforeFirst(UTF8.Colon);
-                    currentPropertyValue = line.Substring(currentPropertyName.Length + 2);
+                    currentPropertyValue = line.Substring(currentPropertyName.Length + 1);
+                    if (currentPropertyValue.StartsWith(UTF8.Space)) currentPropertyValue = currentPropertyValue.Substring(1);
 
                     // Determine if the value is encoded
                     currentIsBase64 = (line[currentPropertyName.Length + 1] == UTF8.Colon);
