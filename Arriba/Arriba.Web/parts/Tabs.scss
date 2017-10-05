@@ -36,7 +36,6 @@
 
         &.locked {
             pointer-events: none;
-            span.delete { pointer-events: auto; }
         }
 
         &.current, &.current:hover {
