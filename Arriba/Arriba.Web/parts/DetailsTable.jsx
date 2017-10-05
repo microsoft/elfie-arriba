@@ -30,7 +30,7 @@ export default React.createClass({
 
                 var showAddClause = (this.props.onAddClause);
                 if (showAddClause && rawValue.length < 100) commands.push(<span className="icon-zoom icon-column-heading" onClick={this.onAddClause} title="Add Clause to Query" data={name} />);
-            
+
                 if (commands) {
                     var width =  (22 * commands.length) + "px";
                     commandCell = <td style={{ minWidth: width, width: width }}>{commands}</td>;
@@ -47,7 +47,7 @@ export default React.createClass({
         }
 
         return (
-            <table className="detailsTable">
+            <table className="legacyTable detailsTable">
                 <tbody>
                     {details}
                 </tbody>

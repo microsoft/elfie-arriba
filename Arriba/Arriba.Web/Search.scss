@@ -98,41 +98,35 @@ textarea {
     margin-left: 1.5em;
 }
 
-/* Make table backgrounds white and harmonize boreders */
-table {
+table:focus { outline: 0; }
+
+table.legacyTable {
     border-collapse: collapse;
     background: white;
-    &:focus { outline: 0; }
+
+    td, th {
+        padding: 4px 6px;
+        border: 1px solid #CCCCCC;
+        vertical-align: top;
+        text-align: left;
+    }
+
+    thead th, thead td {
+        color: #777777;
+        background-color: #EEEEEE;
+    }
 }
 
-/* Give table cells decent padding, silver borders, and put text at the top */
-table td, table th {
-    padding: 4px 6px;
-    border: 1px solid #CCCCCC;
-    vertical-align: top;
-    text-align: left;
-}
-
-/* Make the first row (headings) grey on light grey */
-table thead th, table thead td {
-    color: #777777;
-    background-color: #EEEEEE;
-}
-
-/* Make a 'smallTable' option */
-.smallTable {
+table.smallTable {
     font-size: 80%;
 
-    /* Smalltable heading rows are borderless, narrowly padded, black on surrounding background */
     thead td {
         border: none;
         padding: 0px 6px;
-
         background-color: transparent;
         color: black;
     }
 
-    /* Smalltable cells are much more narrowly padded */
     td {
         padding: 1px 4px;
     }

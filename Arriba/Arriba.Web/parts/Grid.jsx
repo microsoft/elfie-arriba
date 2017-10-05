@@ -496,7 +496,7 @@ export default class extends EventedComponent {
 
             mainContent = (
                 <div className="grid">
-                    <table className={this.state.showPortionOf}>
+                    <table className={"legacyTable " + this.state.showPortionOf}>
                         <thead>
                             <tr>
                                 <GridFunctionCell key="AC"
