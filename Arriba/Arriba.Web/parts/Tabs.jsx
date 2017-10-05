@@ -61,12 +61,16 @@ export default class extends React.Component {
         return <div className="searchBoxAndTabs">
             <div className="tableTabs">
                 {tabs.slice(0, overflowLimit)}
-                {tabs.length > overflowLimit && <span key="overflow" className="tableTab" style={{ position: "relative" }} onClick={e => this.setState({ showOverflow: !this.state.showOverflow })}>
-                    ⋯
-                    {this.state.showOverflow && <AnchoredPopup className="tabs-overflow" bottom="-5px" left="0">
-                        {tabs.slice(overflowLimit)}
-                    </AnchoredPopup>}
-                </span>}
+                {tabs.length > overflowLimit &&
+                    <span key="overflow" ref="overflow"
+                        className="tableTab" style={{ position: "relative" }}
+                        onClick={() => this.refs.popup.show()}>
+                        ⋯
+                        <AnchoredPopup ref="popup" className="tabs-overflow" bottom="-5px" left="0">
+                            {tabs.slice(overflowLimit)}
+                        </AnchoredPopup>
+                    </span>
+                }
                 <span className="tableTabs-fill"></span>
                 {parsedQuery && <a title="Explanation" href="#" onMouseOver={e => this.setState({ showExplanation: true })} onMouseOut={e => this.setState({ showExplanation: false })}>
                     <img src="/icons/info.svg" alt="rss"/>
