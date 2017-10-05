@@ -12,8 +12,8 @@ $bg: hsl(0, 0, 99%);
     overflow: hidden;
 }
 
-@mixin small-caps {
-    font-size: 10px;
+@mixin small-caps($fs: 10px) {
+    font-size: $fs;
     font-weight: bold;
     text-transform: uppercase;
 }

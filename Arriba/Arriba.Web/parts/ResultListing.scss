@@ -7,9 +7,9 @@
     border-spacing: 0;
 
     td {
+        border-style: solid;
         border-color: $border-color;
-        border-width: 0 $border-width $border-width 0;
-        &:first-child { border-left-width: $border-width; }
+        border-width: 0 0 $border-width 0;
     }
 }
 
@@ -19,11 +19,16 @@
 
     // Manually create the effect for border-collapse to enable frozen headers.
     // Otherwise the borders won't stick to the frozen headers.
-    @include border-collapse(#ccc);
+    @include border-collapse(hsl(0, 0%, 90%));
 
-    // Special-casing td so items (ex: AddCol) can be attached to it.
     thead td {
-        overflow: visible; // Undo.
+        cursor: pointer;
+        background: $bg; // For frozen headers.
+        border-color: $medium;
+        padding: 16px 6px 4px 6px;
+
+        color: hsl(0, 0%, 25%);
+        @include small-caps(11px);
 
         & > .th-inner {
             display: flex;
@@ -38,29 +43,28 @@
                 margin-left: 5px;
             }
         }
+
+        transition: background 100ms ease-in-out;
+        &:hover { background-color: lighten($light, 43%); }
     }
 
-    /* Show that table rows are all clickable (to open details) */
-    tr {
+    :not(thead) tr {
         cursor: pointer;
 
-        &:hover { background-color: lighten($light, 40%); }
+        transition: background 100ms ease-in-out;
+        &:hover { background-color: lighten($light, 43%); }
 
-        &.selected {
-            color: white;
-            background-color: $light;
+        &.selected td {
+            background-color: lighten($light, 43%);
+            border-color: $medium;
         }
     }
 
-    /* Make listing table slightly more padded, ellipse on overflow */
     td {
-        padding: 6px;
+        padding: 8px;
+        padding-left: 5px;
         max-width: 400px; // Acts like min-width.
         @include ellipsis;
-
-        &:last-child {
-            border-right-width: 0;
-        }
     }
 }
 
@@ -69,6 +73,6 @@
     padding: 5px;
     border-radius: 3px;
     &:hover {
-        background-color: hsl(0, 0%, 100%);
+        background-color: $bg;
     }
 }

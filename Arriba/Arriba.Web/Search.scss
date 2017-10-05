@@ -67,8 +67,7 @@ html, body, .viewport {
 /* Set default font, font-size, and background (light grey) */
 body {
     font-family: "Segoe UI", "Segoe WP", Tahoma, Arial, sans-serif;
-    font-size: 14px;
-    background: #f5f5f5;
+    font-size: 13px;
     color: #444444;
 }
 
@@ -199,7 +198,6 @@ a:visited:hover {
 
 /* Make the details panel white, padded */
 .details {
-    background-color: white;
     padding: 12px;
 
     /* Make commands float on the right side */
@@ -234,6 +232,10 @@ a:visited:hover {
     }
 }
 
+table.detailsTable {
+    background: transparent;
+}
+
 /* Space the detail links from the text slightly */
 .detailLink {
     margin-left: 4px;
@@ -257,4 +259,8 @@ a:visited:hover {
 .offsetParent {
     position: relative;
     height: 100%;
+}
+
+.searchPage .infiniteScroll {
+    padding-left: 15px;
 }

@@ -37,7 +37,7 @@ export default React.createClass({
     render: function () {
         return (
             // .offsetParent for ResultListing > AddColumnList.
-            <div ref="scrollContainer" className="scrollable offsetParent" onScroll={this.handleScroll}>
+            <div ref="scrollContainer" className="scrollable infiniteScroll offsetParent" onScroll={this.handleScroll}>
                 {this.props.children}
             </div>
         );

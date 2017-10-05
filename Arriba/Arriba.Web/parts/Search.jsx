@@ -249,7 +249,7 @@ export default class extends EventedComponent {
         const table = this.props.allBasics && this.props.currentTable && this.props.allBasics[this.props.currentTable] || undefined;
         const CustomDetailsView = (configuration.customDetailsProviders && configuration.customDetailsProviders[this.props.currentTable]) || ResultDetails;
 
-        return <div className="center" onDragEnter={e => {
+        return <div className="center searchPage" onDragEnter={e => {
                 // Consider disabling pointer events for perf.
                 if (!this.state.dropping) this.setState({ dropping: true, file: undefined })
             }}>
