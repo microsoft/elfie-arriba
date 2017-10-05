@@ -44,7 +44,7 @@ export default class extends EventedComponent {
         }
     }
     render() {
-        return <div className="add-list" onKeyDown={this.handleKeyDown.bind(this)} >
+        return <div className="add-list" onClick={this.props.onClick} onKeyDown={this.handleKeyDown.bind(this)} >
             <input type="text" autoFocus placeholder="Filter Columns" value={this.state.filter} onChange={e => this.setState({ filter: e.target.value })} onKeyDown={this.handleKeyDown.bind(this)} />
             <div className="addColumnsList">
                 {this.state.filteredColumns.map((name, i) => <div

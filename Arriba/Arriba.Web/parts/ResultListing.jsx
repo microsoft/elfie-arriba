@@ -12,6 +12,7 @@ export default class extends EventedComponent {
     constructor(props) {
         super(props);
         this.state = { selectedIndex: -1, addColumnsShowing: false };
+        this.events = { "click": e => this.setState({ addColumnsShowing: false }) };
     }
     handleResort(columnNameClicked, e) {
         // If a column heading was clicked, re-sort the table
@@ -134,7 +135,8 @@ export default class extends EventedComponent {
             {this.state.addColumnsShowing && <AddColumnList
                 onAddColumn={this.onAddColumn.bind(this)}
                 allColumns={table.columns}
-                currentColumns={content.query.columns} />}
+                currentColumns={content.query.columns}
+                onClick={e => e.stopPropagation() /* Prevent clicks originating inside from dismissing the list */} />}
         </table>;
     }
 }
