@@ -62,13 +62,13 @@
     /* Make the currently selected mode grey on light grey (match main panel background) */
     .selected {
         color: #666666;
-        background: #F5F5F5;
+        background: $bg;
     }
 
     /* Make the currently selected mode light up on hover but keep the matching background */
     .selected:hover {
         color: #222222;
-        background: #F5F5F5;
+        background: $bg;
     }
 
     .mode-fill { flex: 1; }
@@ -92,7 +92,7 @@
 
 .middle {
     flex: 1 100%;
-    background: #F5F5F5;
+    background: $bg;
     display: flex;
     flex-flow: row;
     overflow: hidden;

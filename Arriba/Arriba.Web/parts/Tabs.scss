@@ -9,7 +9,7 @@
 
     .explanation {
         border-top: 1px dashed hsl(0, 0, 85%);
-        background: hsl(0, 0, 97%);
+        background: $bg;
         padding: 10px;
         color: $vdark;
         font-family: monospace;
@@ -39,7 +39,7 @@
         }
 
         &.current, &.current:hover {
-            background: hsl(0, 0, 97%);
+            background: $bg;
             border-bottom-color: transparent;
         }
 

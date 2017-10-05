@@ -1,10 +1,12 @@
+@import './shared.scss';
+
 .input { // Coordinate styles between input and rail.
     font-size: 16pt;
     padding: 8px;
 }
 
 .searchBox {
-    background: hsl(0, 0, 97%);
+    background: $bg;
     flex: 1;
     display: flex;
     align-items: center;
