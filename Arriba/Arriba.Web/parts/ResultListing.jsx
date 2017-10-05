@@ -82,7 +82,7 @@ export default class extends EventedComponent {
         var selectFunction = this.handleSelect.bind(this);
         var selectedId = this.props.selectedId;
 
-        return <table className="resultTable" tabIndex="2">
+        return <table className="resultListing" tabIndex="2">
             <thead>
                 <tr>
                     {content.values.columns.map((column, i) => {
