@@ -1,4 +1,6 @@
 import "./Index.scss";
+import SvgPage from "../icons/page.svg";
+import SvgGrid from "../icons/grid.svg";
 
 import EventedComponent from "./EventedComponent";
 import Mru from "./Mru";
@@ -156,9 +158,9 @@ class Index extends EventedComponent {
             <div className="middle">
                 <div className="mode">
                     <a title="Listing" className={this.state.mode === undefined ? "selected" : undefined}
-                        onClick={e => this.setState({ mode: undefined }) }><i className="icon-details"></i></a>
+                        onClick={e => this.setState({ mode: undefined }) }><SvgPage /></a>
                     <a title="Grid" className={this.state.mode === "grid" ? "selected" : undefined}
-                        onClick={e => this.setState({ mode: "grid" }) }><i className="icon-view-all-albums"></i></a>
+                        onClick={e => this.setState({ mode: "grid" }) }><SvgGrid /></a>
                     <span className="mode-fill"></span>
                     <a title="Feedback" href={"mailto:" + encodeURIComponent(configuration.feedbackEmailAddresses) + "?subject=" + encodeURIComponent(configuration.toolName) + " Feedback"}>
                         <img src="/icons/feedback.svg" alt="feedback"/>
