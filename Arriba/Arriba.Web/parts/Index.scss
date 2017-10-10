@@ -30,6 +30,8 @@
     flex-shrink: 0;
     align-items: center;
     background: linear-gradient(to right, $vdark 100px, $medium 600px);
+    box-shadow: 0 0 5px 1px rgba(0,0,0,0.2);
+    z-index: 1;
 
     a.title {
         align-self: stretch;
