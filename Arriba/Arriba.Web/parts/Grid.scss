@@ -10,7 +10,7 @@
     }
 
     /* Make Grid cells animated and unpadded */
-    td {
+    table td { // Extra qualifiers to increase priority over .legacyTable
         padding: 0px;
     }
 
