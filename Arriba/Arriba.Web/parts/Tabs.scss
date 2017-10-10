@@ -85,7 +85,7 @@
 
     a {
         @include center-center;
-        margin: 2px 0 2px 4px;
+        margin: 0 0 1px 4px; // Margin bottom to force pixel alignment for Edge.
         padding: 4px;
 
         &:hover { background-color: hsla(0, 0, 0%, 0.1); }
