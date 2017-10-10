@@ -2,11 +2,7 @@
 // a) Not run in the global context (does not use script-loader).
 // b) Babel/JSX supported.
 
-import Promise from "promise-polyfill";
-
-if (!window.Promise) {
-    window.Promise = Promise;
-}
+import "./polyfill";
 
 window.xhr = (path, params, body) => {
     return new Promise((resolve, reject) => {
@@ -49,6 +45,17 @@ Object.diff = function(a, b) {
     return makeSet([...allKeys.values()].filter(i => a[i] !== b[i]));
 };
 
+String.prototype.includes = String.prototype.includes || function() {
+     return String.prototype.indexOf.apply(this, arguments) !== -1;
+};
+
+Array.prototype.toObject = function(keyFunc) {
+    return this.reduce((o, item) => {
+        o[keyFunc(item)] = item;
+        return o;
+    }, {});
+}
+
 Set.prototype.values = Set.prototype.values || function() { // For Edge/IE.
     var values = [];
     this.forEach(v => values.push(v));
@@ -66,4 +73,17 @@ Blob.prototype.readAsText = function() {
         reader.onerror = reject;
         reader.readAsText(this);
     });
+};
+
+// Diagnostic helpers.
+window.ls = {
+    keys: () => {
+        return Object.keys(localStorage).filter(key => key.startsWith("table-"));
+    },
+    list: () => {
+        ls.keys().forEach(k => log(k, localStorage[k]));
+    },
+    reset: () => {
+        ls.keys().forEach(k => localStorage.removeItem(k));
+    }
 };

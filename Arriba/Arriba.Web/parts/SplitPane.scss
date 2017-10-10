@@ -1,3 +1,4 @@
+@import './configuration/theme';
 
 /* Make the panes split on width via flex layout */
 .splitpane {
@@ -18,7 +19,7 @@
     /* Make the resizer take the full container space, grey, on top of other content */
     .resizer {
         box-sizing: border-box;
-        background: #ccc; // Matches .resultTable td border color.
+        background: $medium; // Matches .resultTable td border color.
         z-index: 1;
         background-clip: padding-box;
 

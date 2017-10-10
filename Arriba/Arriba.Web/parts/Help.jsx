@@ -1,6 +1,6 @@
 import "./Help.scss";
 
-export default class Help extends React.Component {
+export default class extends React.Component {
     render() {
         return <div className="helpContent">
             <div className="features">
@@ -13,7 +13,7 @@ export default class Help extends React.Component {
             </div>
             <div className="syntaxIntro">
                 <h2>Syntax</h2>
-                <table className="syntaxTable">
+                <table className="legacyTable syntaxTable">
                     <thead>
                         <tr>
                             <th style={{ width: "25%" }}>Rule</th>
@@ -40,7 +40,7 @@ export default class Help extends React.Component {
                         <tr>
                             <td>Use any operators from Web, SQL, or C# syntax.</td>
                             <td>
-                                <table className="syntaxTable">
+                                <table className="legacyTable syntaxTable">
                                     <tbody>
                                         <tr>
                                             <td>&amp;&amp;</td>

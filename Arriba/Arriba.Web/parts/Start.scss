@@ -63,7 +63,7 @@ $line: 1px solid $line-color;
             position: absolute;
             right: 0;
             bottom: -7px;
-            background: #f5f5f5; // To cover up the line. Matches page background.
+            background: $bg; // To cover up the line.
             padding-left: 10px;
             margin-bottom: 0px;
             color: hsl(0, 0%, 60%);

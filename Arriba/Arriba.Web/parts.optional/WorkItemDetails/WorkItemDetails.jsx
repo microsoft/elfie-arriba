@@ -7,27 +7,22 @@ import DetailsField from "../../parts/DetailsField";
 import DetailsTable from "../../parts/DetailsTable";
 
 // WorkItemDetails shows details for a TFS Work Item
-export default React.createClass({
-    getInitialState: function() {
-        return { allTableShown: true };
-    },
-    handleClose: function () {
-        this.props.onClose();
-    },
-    toggle: function() {
-        this.setState({ allTableShown: !this.state.allTableShown });
-    },
-    render: function () {
+export default class extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = { allTableShown: true };
+    }
+    render() {
         if (!this.props.itemId) return null;
         if (!this.props.data) return null;
 
-        var allTableToggle = <span className="icon-chevron-down-bold clickable" onClick={this.toggle} />;
+        var allTableToggle = <span className="icon-chevron-down-bold clickable" onClick={() => this.setState({ allTableShown: !this.state.allTableShown })} />;
         var detailsTable = null;
 
         if (this.state.allTableShown) {
-            allTableToggle = <span className="icon-chevron-up-bold clickable" onClick={this.toggle} />;
-            detailsTable = (<DetailsTable 
-                                data={this.props.data} 
+            allTableToggle = <span className="icon-chevron-up-bold clickable" onClick={() => this.setState({ allTableShown: !this.state.allTableShown })} />;
+            detailsTable = (<DetailsTable
+                                data={this.props.data}
                                 table={this.props.table}
                                 query={this.props.query}
                                 onAddClause={this.props.onAddClause}
@@ -45,11 +40,11 @@ export default React.createClass({
         return (
             <div className="details">
                 <div className="commands">
-                    <span className="icon icon-cancel" onClick={this.handleClose} />
+                    <span className="icon icon-cancel" onClick={this.props.onClose} />
                 </div>
                 <div className="detailHeader">
                     <div className="detailTitle font-light">{this.props.itemId} - <DetailsField value={this.props.data["Title"]} columnName="Title" inline="true" /></div>
-                    
+
                     <div className="overviewBoxes">
                         <div className="box">
                             <DetailsField value={this.props.data["State"]} columnName="State" label="Currently" bold="true" />
@@ -59,7 +54,7 @@ export default React.createClass({
                                 <DetailsField value={this.props.data["Iteration Path"]} columnName="Iteration Path" label="Iteration " bold="true" />
                             </div>
 
-                            <br />                            
+                            <br />
                             <RelativeDateTime value={this.props.data["Created Date"]} columnName="Created Date" bold="true" />
                             <div className="indent">
                                 <MailToLink value={this.props.data["Created By"]} columnName="Created By" table={this.props.table} itemId={this.props.itemId} />
@@ -76,7 +71,7 @@ export default React.createClass({
                             </div>
 
                             <LinkSet label="Links" data={this.props.data["Links"]} table={this.props.table} />
-                            
+
                             <LinkSet label="Attachments" data={this.props.data["Attachments"]} />
                         </div>
                     </div>
@@ -91,5 +86,4 @@ export default React.createClass({
             </div>
         );
     }
-});
-
+}

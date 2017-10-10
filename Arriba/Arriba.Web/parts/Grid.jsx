@@ -1,4 +1,5 @@
-﻿import "../Search.scss";
+import "../Search.scss";
+﻿import "./Grid.scss";
 import "!script-loader!../js/utilities.js";
 
 import EventedComponent from "./EventedComponent";
@@ -286,7 +287,7 @@ var GridValueCell = React.createClass({
 });
 
 // GridMain wraps the overall grid UI
-export default class Grid extends EventedComponent {
+export default class extends EventedComponent {
     constructor(props) {
         super(props);
         this.state = {
@@ -495,7 +496,7 @@ export default class Grid extends EventedComponent {
 
             mainContent = (
                 <div className="grid">
-                    <table className={this.state.showPortionOf}>
+                    <table className={"legacyTable " + this.state.showPortionOf}>
                         <thead>
                             <tr>
                                 <GridFunctionCell key="AC"

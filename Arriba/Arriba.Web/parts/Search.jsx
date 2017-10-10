@@ -12,7 +12,11 @@ import SplitPane from "./SplitPane";
 import Start from "./Start";
 
 import ResultDetails from "./ResultDetails";
+import AddColumnList from "./AddColumnList";
 import ResultListing from "./ResultListing";
+
+import createDOMPurify  from "DOMPurify";
+const DOMPurify = createDOMPurify(window); // Consider lazy instantiation.
 
 window.configuration = require("../configuration/Configuration.jsx").default;
 
@@ -25,7 +29,7 @@ const arrayToObject = (array, prefix) => {
 }
 
 // SearchMain wraps the overall search UI
-export default class Search extends EventedComponent {
+export default class extends EventedComponent {
     constructor(props) {
         super(props);
 
@@ -38,7 +42,6 @@ export default class Search extends EventedComponent {
         };
 
         this.events = {
-            "beforeunload": e => this.mru.push(),
             "storage": e => { if (e.key.startsWith("table-")) this.getTableSettings() },
             "keydown": e => this.onKeyDown(e),
         };
@@ -126,6 +129,13 @@ export default class Search extends EventedComponent {
         // Must write to userTableSettings (and not directly to currentTableSettings) so the URL can refect this.
         // Sample schema: { columns: ["Name", "IP"], sortColumn: "IP", sortOrder: "desc" }
         var userTableSettings = localStorage.getJson("table-" + this.props.currentTable, {});
+
+        // Bad table names are entering localStorage somehow. Temporary fix: filter out the invalid ones.
+        if (userTableSettings.columns) {
+            const names = table.columns.map(c => c.name);
+            userTableSettings.columns = userTableSettings.columns.filter(c => names.includes(c));
+        }
+
         this.setState({
             userTableSettings: userTableSettings,
             currentTableSettings: Object.merge(
@@ -181,7 +191,14 @@ export default class Search extends EventedComponent {
             configuration.url + "/table/" + this.props.currentTable,
             data => {
                 if (data.content.values) {
-                    this.setState({ selectedItemData: arribaRowToObject(data.content.values, 0) });
+                    const dictionary = arribaRowToObject(data.content.values, 0);
+                    table.columnsLookup = table.columnsLookup || table.columns.toObject(c => c.name);
+                    for (const key in dictionary) {
+                        if (dictionary[key] && table.columnsLookup[key].type === "Html") { // Make case insensitive in future.
+                            dictionary[key] = DOMPurify.sanitize(dictionary[key]);
+                        }
+                    }
+                    this.setState({ selectedItemData: dictionary });
                 } else {
                     if (!this.props.query) {
                         this.setState({ selectedItemData: null, error: "Item '" + this.state.userSelectedId + "' not found." })
@@ -229,10 +246,10 @@ export default class Search extends EventedComponent {
         return `${location.protocol}//${location.host + "/" + buildUrlParameters(parameters)}`;
     }
     render() {
-        var table = this.props.allBasics && this.props.currentTable && this.props.allBasics[this.props.currentTable] || undefined;
-        var customDetailsView = (configuration.customDetailsProviders && configuration.customDetailsProviders[this.props.currentTable]) || ResultDetails;
+        const table = this.props.allBasics && this.props.currentTable && this.props.allBasics[this.props.currentTable] || undefined;
+        const CustomDetailsView = (configuration.customDetailsProviders && configuration.customDetailsProviders[this.props.currentTable]) || ResultDetails;
 
-        return <div className="center" onDragEnter={e => {
+        return <div className="center searchPage" onDragEnter={e => {
                 // Consider disabling pointer events for perf.
                 if (!this.state.dropping) this.setState({ dropping: true, file: undefined })
             }}>
@@ -251,17 +268,16 @@ export default class Search extends EventedComponent {
                             onSetColumns={this.onSetColumns.bind(this)} />
                     </InfiniteScroll>
                     <div className="scrollable">
-                        {React.createElement(customDetailsView, {
-                            itemId: this.state.userSelectedId,
-                            table: this.props.currentTable,
-                            query: this.props.query,
-                            data: this.state.selectedItemData,
-                            onClose: () => this.setState({ userSelectedId: undefined }),
-                            onAddClause: (name, value) => this.props.queryChanged(`${this.props.query} AND [${name}]="${value}"`)
-                        })}
+                        <CustomDetailsView
+                            itemId={this.state.userSelectedId}
+                            table={this.props.currentTable}
+                            query={this.props.query}
+                            data={this.state.selectedItemData}
+                            onClose={() => this.setState({ userSelectedId: undefined })}
+                            onAddClause={(name, value) => this.props.queryChanged(`${this.props.query} AND [${name}]="${value}"`)} />
                     </div>
                 </SplitPane>
-                : <Start allBasics={this.props.allBasics} showHelp={this.props.params.help === "true"} queryChanged={this.props.queryChanged} />}
+                : <Start allBasics={this.props.allBasics} queryChanged={this.props.queryChanged} />}
             <DropShield
                 dropping={this.state.dropping}
                 droppingChanged={d => this.setState({ dropping: d })}

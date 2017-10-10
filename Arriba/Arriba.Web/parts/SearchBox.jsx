@@ -2,7 +2,7 @@ import "./SearchBox.scss";
 import EventedComponent from "./EventedComponent";
 import Suggestions from "./Suggestions";
 
-export default class SearchBox extends EventedComponent {
+export default class extends EventedComponent {
     constructor(props) {
         super(props);
         this.state = {};
@@ -73,7 +73,7 @@ export default class SearchBox extends EventedComponent {
                     </div>
                 </span>
             </div>
-            <i className={"searchBoxIcon clickable " + star} onClick={e => this.toggleFavorite(e)}></i>
+            <i className={"searchBoxIcon clickable " + star} onClick={e => this.toggleFavorite(e)} title="Toggle Favorite"></i>
         </div>
     }
 }

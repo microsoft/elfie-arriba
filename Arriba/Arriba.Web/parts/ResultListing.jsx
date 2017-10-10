@@ -1,13 +1,20 @@
-﻿import AddColumnList from "./AddColumnList";
 import "./ResultListing.scss";
+
+import EventedComponent from "./EventedComponent";
+﻿import AddColumnList from "./AddColumnList";
 import Delete from "./Delete"
 
+import createDOMPurify  from "DOMPurify";
+const DOMPurify = createDOMPurify(window);
+
 // ResultListing shows a table of items matching a query, with sortable columns
-export default React.createClass({
-    getInitialState: function () {
-        return { selectedIndex: -1, addColumnsShowing: false };
-    },
-    handleResort: function (columnNameClicked, e) {
+export default class extends EventedComponent {
+    constructor(props) {
+        super(props);
+        this.state = { selectedIndex: -1, addColumnsShowing: false };
+        this.events = { "click": e => this.setState({ addColumnsShowing: false }) };
+    }
+    handleResort(columnNameClicked, e) {
         // If a column heading was clicked, re-sort the table
         var sortOrder = "asc";
 
@@ -20,19 +27,13 @@ export default React.createClass({
         this.props.onResort(columnNameClicked, sortOrder);
 
         e.stopPropagation();
-    },
-    handleSelect: function (e) {
+    }
+    handleSelect(e) {
         var rowElement = e;
         this.setState({ selectedIndex: rowElement.props.itemIndex, addColumnsShowing: false });
         this.props.onSelectionChanged(rowElement.props.itemId);
-    },
-    handleAdd: function (e) {
-        if (e.target === this.refs.addButton) {
-            this.setState({ addColumnsShowing: !this.state.addColumnsShowing });
-        }
-        e.stopPropagation();
-    },
-    onAddColumn: function (name) {
+    }
+    onAddColumn(name) {
         if (name) {
             var columns = this.props.data.query.columns;
             columns.push(name);
@@ -41,8 +42,8 @@ export default React.createClass({
         } else {
             this.setState({ addColumnsShowing: false });
         }
-    },
-    selectByRelativeIndex: function (i) {
+    }
+    selectByRelativeIndex(i) {
         // Figure out the current row count
         var count = 0;
         if (this.props.data) count = this.props.data.values.rows.length;
@@ -62,8 +63,8 @@ export default React.createClass({
         var row = this.props.data.values.rows[newSelectedIndex];
         this.setState({ selectedIndex: newSelectedIndex });
         this.props.onSelectionChanged(stripHighlight(row[idColumnIndex]));
-    },
-    render: function () {
+    }
+    render() {
         var content = this.props.data;
 
         if (!this.props.allBasics || !content) return null;
@@ -78,10 +79,10 @@ export default React.createClass({
 
         // Write a row for each item
         var index = 0;
-        var selectFunction = this.handleSelect;
+        var selectFunction = this.handleSelect.bind(this);
         var selectedId = this.props.selectedId;
 
-        return <table className="resultTable" tabIndex="2">
+        return <table className="resultListing" tabIndex="2">
             <thead>
                 <tr>
                     {content.values.columns.map((column, i) => {
@@ -95,7 +96,7 @@ export default React.createClass({
                                 <span className="th-title">{column.name}{sort}</span>
                                 {column.name !== idColumn && <a
                                     href={"Grid.html" + buildUrlParameters({ q: content.query.where, t: content.query.tableName, R1: column.name + ">" })}
-                                    className="grid-icon"
+                                    className="icon-button"
                                     title={"Grid By " + column.name }>
                                     <img src="/icons/grid.svg"/>
                                 </a>}
@@ -105,13 +106,14 @@ export default React.createClass({
                                         this.props.onSetColumns(this.props.data.query.columns.filter(name => name !== column.name));
                                         e.stopPropagation();
                                     }} />}
-                                {i == content.values.columns.length - 1 && <div ref={"addButton"} className="add-column-button icon-add icon-column-heading" title="Add Column" onClick={this.handleAdd}>
-                                    <AddColumnList
-                                        showing={this.state.addColumnsShowing}
-                                        onAddColumn={this.onAddColumn}
-                                        allColumns={table.columns}
-                                        currentColumns={content.query.columns} />
-                                </div>}
+                                {i == content.values.columns.length - 1 && <img
+                                    src="/icons/add.svg"
+                                    className="icon-button add-column-button"
+                                    title="Add Column"
+                                    onClick={e => {
+                                        e.stopPropagation();
+                                        this.setState({ addColumnsShowing: !this.state.addColumnsShowing })}
+                                    }/>}
                             </div>
                         </td>;
                     })}
@@ -120,12 +122,24 @@ export default React.createClass({
             <tbody>
                 {content.values.rows.map(function (row) {
                     var id = stripHighlight(row[idColumnIndex]);
-                    return <ResultListingItem key={id} itemId={id} itemIndex={index++} data={row} onSelectionChanged={selectFunction} selected={selectedId === id } />;
+                    return <ResultListingItem
+                        key={id}
+                        itemId={id}
+                        itemIndex={index++}
+                        data={row}
+                        columns={content.values.columns}
+                        onSelectionChanged={selectFunction}
+                        selected={selectedId === id } />;
                 })}
             </tbody>
+            {this.state.addColumnsShowing && <AddColumnList
+                onAddColumn={this.onAddColumn.bind(this)}
+                allColumns={table.columns}
+                currentColumns={content.query.columns}
+                onClick={e => e.stopPropagation() /* Prevent clicks originating inside from dismissing the list */} />}
         </table>;
     }
-});
+}
 
 class ResultListingItem extends React.Component {
     render() {
@@ -134,6 +148,10 @@ class ResultListingItem extends React.Component {
             {this.props.data.map((item, i) => {
                 if (item.length > 200) { // Cap cell contents length for browser layout perf.
                     item = item.substr(0, 200) + "…";
+                }
+                const type = this.props.columns[i].type;
+                if (type === "Html") { // Make case insensitive.
+                    item = DOMPurify.sanitize(item);
                 }
                 return <td key={`${this.props.itemId}_${i}`} title={stripHighlight(item)} dangerouslySetInnerHTML={highlight(item)} />
             })}

@@ -1,7 +1,7 @@
 import "./Suggestions.scss";
 import EventedComponent from "./EventedComponent";
 
-export default class Suggestions extends EventedComponent {
+export default class extends EventedComponent {
     constructor(props) {
         super(props);
         this.cache = {};

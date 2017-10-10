@@ -5,10 +5,11 @@
     flex: 1;
     font-size: 12px;
     position: relative;
+    margin: 8px;
 
     .explanation {
         border-top: 1px dashed hsl(0, 0, 85%);
-        background: hsl(0, 0, 97%);
+        background: $bg;
         padding: 10px;
         color: $vdark;
         font-family: monospace;
@@ -23,10 +24,11 @@
     span.tableTab {
         display: flex;
         align-items: center;
-        padding: 3px 10px;
+        padding: 2px 10px;
         background: hsl(0, 0, 94%);
         border-bottom: 1px solid hsl(0, 0, 85%);
         cursor: pointer;
+        user-select: none;
 
         & > *:not(:last-child) {
             margin-right: 5px;
@@ -34,28 +36,50 @@
 
         &.locked {
             pointer-events: none;
-            span.delete { pointer-events: auto; }
-        }
-
-        &:not(:first-child) {
-            border-left: 1px solid hsl(0, 0, 85%);
         }
 
         &.current, &.current:hover {
-            background: hsl(0, 0, 97%);
+            background: $bg;
             border-bottom-color: transparent;
         }
 
         &:hover { background-color: hsl(0, 0, 88%); }
 
-        svg.delete {
-            margin-right: -6px;
+        .pinned {
+            margin-left: -3px;
+            margin-right: 3px;
+            padding: 3px;
+            border-radius: 3px;
+            &:hover {
+                background-color: hsl(0, 0%, 88%);
+            }
         }
 
-        .pinned {
-            position: relative;
-            left: -1px;
-            top: 1px;
+        & > span, & > b { // Assumed to be text
+            margin-bottom: 1px; // Optical.
+        }
+
+        svg.delete {
+            margin-top: 1px; // Optical.
+            margin-right: -6px;
+        }
+    }
+
+    & > span.tableTab:not(:first-child) { // Only non-overflow tabs.
+        border-left: 1px solid hsl(0, 0, 85%);
+    }
+
+    .tabs-overflow {
+        box-shadow: 0 3px 8px 0 rgba(0,0,0,0.2), 0 0 0 1px rgba(0,0,0,0.08);
+        z-index: 1;
+
+        span.tableTab {
+            padding: 10px 15px;
+
+            :first-child {
+                flex-grow: 1;
+                margin-right: 15px;
+            }
         }
     }
 
