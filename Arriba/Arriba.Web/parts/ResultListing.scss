@@ -46,13 +46,20 @@
                 }
             }
 
+            .columnCommand {
+                visibility: hidden;
+            }
+
             .add-column-button {
                 margin-left: 5px;
             }
         }
 
         transition: background 100ms ease-in-out;
-        &:hover { background-color: lighten($light, 43%); }
+        &:hover {
+            background-color: lighten($light, 43%);
+            .columnCommand { visibility: visible; }
+        }
     }
 
     :not(thead) tr {
