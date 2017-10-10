@@ -133,7 +133,8 @@ table.smallTable {
 
 /* Highlight query matching text with yellow background highlight */
 .h {
-    background: #ffeb0a;
+    background: hsl(55, 100%, 70%);
+    border-radius: 2px;
 }
 
 /* Use the Segoe UI Symbol fonts with standing size and spacing */
