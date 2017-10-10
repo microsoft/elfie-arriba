@@ -39,6 +39,13 @@
                 @include ellipsis;
             }
 
+            svg.delete {
+                &:hover {
+                    background-color: white;
+                    path { fill: hsl(0, 0%, 40%);; }
+                }
+            }
+
             .add-column-button {
                 margin-left: 5px;
             }
