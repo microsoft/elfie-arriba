@@ -20,6 +20,7 @@
         color: #666666;
         font-weight: 600;
         background: transparent; // Override user agent.
+        height: 47px; // Force an even height so SVGs align.
     }
 
     .searchBoxIcon {

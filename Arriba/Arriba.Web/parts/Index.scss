@@ -79,16 +79,13 @@
     a {
         width: 100%;
         height: 50px;
-
-        font-size: 22px;
-        color: #EEEEEE;
-        text-decoration: none;
         @include center-center;
-    }
 
-    /* Make the mode links turn darker grey on hover */
-    a:hover {
-        color: #999;
+        transition: background 100ms ease-in-out;
+        &:hover { background: lighten($dark, 5%); }
+
+        &                   > svg path { fill: $bg; }
+        &.selected          > svg path { fill: $vdark; }
     }
 }
 

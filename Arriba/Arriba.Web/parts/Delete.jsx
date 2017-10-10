@@ -2,8 +2,8 @@ import "./Delete.scss";
 
 export default class extends React.Component {
     render() {
-        const {title, ...others} = this.props;
-        return <svg className="delete" width="9" height="9" viewBox="0 0 9 9" {...others}>
+        const {title, className, ...others} = this.props;
+        return <svg className={"delete " + className} width="9" height="9" viewBox="0 0 9 9" {...others}>
             <g>
                 <title>{title}</title>
                 <path

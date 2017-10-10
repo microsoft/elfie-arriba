@@ -96,12 +96,13 @@ export default class extends EventedComponent {
                                 <span className="th-title">{column.name}{sort}</span>
                                 {column.name !== idColumn && <a
                                     href={"Grid.html" + buildUrlParameters({ q: content.query.where, t: content.query.tableName, R1: column.name + ">" })}
-                                    className="icon-button"
+                                    className="icon-button columnCommand"
                                     title={"Grid By " + column.name }>
                                     <img src="/icons/grid-mini.svg"/>
                                 </a>}
                                 {column.name !== idColumn && <Delete key={"remove_" + column.name}
                                     title="Remove Column"
+                                    className="columnCommand"
                                     onClick={e => {
                                         this.props.onSetColumns(this.props.data.query.columns.filter(name => name !== column.name));
                                         e.stopPropagation();
