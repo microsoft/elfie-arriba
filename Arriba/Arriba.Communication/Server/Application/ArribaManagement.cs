@@ -49,6 +49,7 @@ namespace Arriba.Server.Application
 
             // DELETE /table/foo 
             this.Delete("/table/:tableName", this.ValidateOwnerAccess, this.Drop);
+            this.Get("/table/:tableName/delete", this.ValidateOwnerAccess, this.Drop);
 
             // POST /table/foo?action=delete
             this.Get(new RouteSpecification("/table/:tableName", new UrlParameter("action", "delete")), this.ValidateWriteAccess, this.DeleteRows);

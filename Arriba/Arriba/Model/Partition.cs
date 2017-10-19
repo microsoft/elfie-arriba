@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -12,7 +11,6 @@ using Arriba.Model.Expressions;
 using Arriba.Model.Query;
 using Arriba.Serialization;
 using Arriba.Structures;
-using System.Collections.Concurrent;
 
 namespace Arriba.Model
 {

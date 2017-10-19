@@ -28,6 +28,9 @@ namespace Xsv
      Write the row to the output where the column matches the value.
      Omit the output to count results only.
 
+    Xsv distinct <input> <columnIdentifier> <output|cout|"""">
+     Write each distinct value seen in the column in input to the output.
+
     Xsv first <input> <output> <rowCount>
      Copy the first <rowCount> rows from input to output.
 
@@ -98,6 +101,11 @@ namespace Xsv
                             if (args.Length < 4) throw new UsageException("first requires an input, output, and row count.");
                             Trace.WriteLine(String.Format("Getting first {2} rows from \"{0}\" into \"{1}\"...", args[1], args[2], args[3]));
                             Copy(args[1], args[2], int.Parse(args[3]));
+                            break;
+                        case "distinct":
+                            if (args.Length < 4) throw new UsageException("distinct requires an input, output, and column identifier.");
+                            Trace.WriteLine(String.Format("Writing Distinct values for {2} from \"{0}\" into \"{1}\"...", args[1], args[2], args[3]));
+                            Distinct(args[1], args[2], args[3]);
                             break;
                         case "append":
                             if (args.Length < 3) throw new UsageException("append requires an input and output");
@@ -488,6 +496,36 @@ namespace Xsv
                                 writer.Write(reader.Current(i).ToString8());
                             }
 
+                            writer.NextRow();
+                        }
+                    }
+
+                    WriteSizeSummary(reader, writer);
+                }
+            }
+        }
+
+        private static void Distinct(string inputFilePath, string outputFilePath, string columnIdentifier)
+        {
+            String8Block block = new String8Block();
+            HashSet<String8> distinctValues = new HashSet<String8>();
+
+            using (ITabularReader reader = TabularFactory.BuildReader(inputFilePath))
+            {
+                int columnIndex = reader.ColumnIndex(columnIdentifier);
+
+                using (ITabularWriter writer = TabularFactory.BuildWriter(outputFilePath))
+                {
+                    writer.SetColumns(new string[] { reader.Columns[columnIndex] });
+
+                    while (reader.NextRow())
+                    {
+                        String8 value = reader.Current(columnIndex).ToString8();
+
+                        if (!distinctValues.Contains(value))
+                        {
+                            distinctValues.Add(block.GetCopy(value));
+                            writer.Write(value);
                             writer.NextRow();
                         }
                     }

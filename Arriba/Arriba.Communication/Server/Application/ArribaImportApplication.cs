@@ -60,7 +60,7 @@ namespace Arriba.Server.Application
             using (CsvReader reader = new CsvReader(ctx.Request.InputStream, config))
             {
                 // Read the CSV fragment into a DataBlock
-                DataBlock block = reader.ReadAsDataBlockBatch(10000).FirstOrDefault();
+                DataBlock block = reader.ReadAsDataBlockBatch(10000, true).FirstOrDefault();
 
                 if (block == null) return ArribaResponse.BadRequest("No result content found.");
 

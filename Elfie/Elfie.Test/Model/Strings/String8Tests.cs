@@ -12,6 +12,7 @@ using Microsoft.CodeAnalysis.Elfie.Extensions;
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Diagnostics;
+using Microsoft.CodeAnalysis.Elfie.Model.Structures;
 
 namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
 {
@@ -233,6 +234,36 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
         }
 
         [TestMethod]
+        public void String8_ShiftBack()
+        {
+            String8Block block = new String8Block();
+
+            // Goal: Split on semi-colon, collapse semi-colon and spaces in-place
+            String8 shiftable = "One; Two;Three; Four".TestConvert();
+            int totalShift = 0;
+
+            String8Set parts = shiftable.Split(UTF8.Semicolon, new PartialArray<int>(5, false));
+            for(int i = 0; i < parts.Count; ++i)
+            {
+                String8 part = parts[i];
+
+                totalShift++;
+                if (part.StartsWith(UTF8.Space))
+                {
+                    part = part.Substring(1);
+                    totalShift++;
+                }
+
+                String8 beforeShift = block.GetCopy(part);
+                String8 shifted = part.ShiftBack(totalShift);
+                Assert.AreEqual(beforeShift, shifted);
+            }
+
+            String8 result = shiftable.Substring(0, shiftable.Length - totalShift);
+            Assert.AreNotEqual("OneTwoThreeFour", result.ToString());
+        }
+
+        [TestMethod]
         public void String8_Prefix()
         {
             String8 full = "One.Two.Three".TestConvert();
@@ -364,6 +395,9 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
             Assert.AreEqual(new DateTime(2017, 02, 15, 11, 33, 54, DateTimeKind.Utc), TryToDateTime("2017-02-15 11:33:54Z"));
             Assert.AreEqual(new DateTime(1, 2, 3, 4, 5, 6, DateTimeKind.Utc), TryToDateTime("0001-02-03T04:05:06Z"));
             Assert.AreEqual(new DateTime(1, 2, 3, 4, 5, 6, DateTimeKind.Utc), TryToDateTime("0001-02-03T04:05:06"));
+            Assert.AreEqual(new DateTime(1, 2, 3, 4, 5, 6, DateTimeKind.Utc), TryToDateTime("0001-02-03T04:05:06.00"));
+            Assert.AreEqual(new DateTime(1, 2, 3, 4, 5, 6, DateTimeKind.Utc), TryToDateTime("0001-02-03T04:05:06.00000"));
+            Assert.AreEqual(new DateTime(1, 2, 3, 4, 5, 6, 789, DateTimeKind.Utc), TryToDateTime("0001-02-03T04:05:06.789"));
 
             // Valid, US format
             Assert.AreEqual(new DateTime(2017, 02, 15, 0, 0, 0, DateTimeKind.Utc), TryToDateTime("02/15/2017"));
