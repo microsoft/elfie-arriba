@@ -43,7 +43,7 @@ export default class extends React.Component {
             {t.canAdminister && <Delete onClick={e => {
                 e.stopPropagation();
                 if (confirm(`Delete table "${t.tableName}"?`)) {
-                    xhr(`table/${tableResult.tableName}/delete`)
+                    xhr(`table/${t.tableName}/delete`)
                         .then(() => this.props.refreshAllBasics(() => {
                             this.props.userSelectedTableChanged()
                         }));

@@ -65,7 +65,8 @@ class Index extends EventedComponent {
             this.timer = this.timer || window.setTimeout(() => this.setState({ debouncedQuery: this.state.query }), 250);
         }
 
-        if (diffState.hasAny("debouncedQuery")) {
+        // Depends on allBasics because if a table is deleted, we don't want stale query results.
+        if (diffState.hasAny("allBasics", "debouncedQuery")) {
             this.getCounts();
         }
 
@@ -104,7 +105,7 @@ class Index extends EventedComponent {
         // On query, ask for the count from every table.
         this.timer = null;
 
-        if (!this.state.query) {
+        if (!this.state.query || !Object.keys(this.state.allBasics).length) {
             this.setState({ counts: undefined, loading: false });
             return;
         }
@@ -134,7 +135,7 @@ class Index extends EventedComponent {
                 }}>{configuration.toolName}</a>
                 <Tabs
                     allBasics={this.state.allBasics}
-                    refreshAllBasics={() => this.refreshAllBasics()}
+                    refreshAllBasics={this.refreshAllBasics.bind(this)}
 
                     query={this.state.query}
                     queryUrl={this.state.queryUrl}
