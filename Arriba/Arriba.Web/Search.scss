@@ -208,6 +208,15 @@ a:visited:hover {
         cursor: pointer;
     }
 
+    .commands-text {
+        @include small-caps(7pt);
+        border: 1px solid #0c6dce;
+        border-radius: 3px;
+        padding: 3px 4px;
+        position: relative;
+        top: -3px;
+    }
+
     /* Make the title large and share a line */
     .detailTitle {
         display: inline-block;
