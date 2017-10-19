@@ -1,7 +1,7 @@
 import "./Suggestions.scss";
 import EventedComponent from "./EventedComponent";
 
-export default class Suggestions extends EventedComponent {
+export default class extends EventedComponent {
     constructor(props) {
         super(props);
         this.cache = {};
@@ -51,8 +51,9 @@ export default class Suggestions extends EventedComponent {
             return;
         }
 
+        const t = this.props.userSelectedTable ? `t=${encodeURIComponent(this.props.userSelectedTable)}&` : ""
         this.lastRequest = jsonQuery(
-            configuration.url + "/suggest?q=" + encodeURIComponent(this.props.query),
+            configuration.url + `/suggest?${t}q=` + encodeURIComponent(this.props.query),
             data => {
                 this.props.completedChanged(data.content.complete);
                 this.suggestions = data.content;
@@ -94,6 +95,7 @@ export default class Suggestions extends EventedComponent {
         }
         if (e.key === "Escape") {
             this.clear();
+            e.stopPropagation(); // Prevent SelectedItem clear.
         }
     }
 

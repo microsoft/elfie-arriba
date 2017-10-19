@@ -1,0 +1,95 @@
+@import './shared.scss';
+
+.grid {
+    padding: 16px;
+
+    /* Make Grid text larger, semi-bold */
+    * {
+        font-size: 16px;
+        font-family: "Segoe UI Semibold", "Segoe UI", "Segoe WP", Tahoma, Arial, sans-serif;
+    }
+
+    /* Make Grid cells animated and unpadded */
+    table td { // Extra qualifiers to increase priority over .legacyTable
+        padding: 0px;
+    }
+
+    /* Make cell content padded, single-line, and standard width. [Not the cells themselves, so background bars are full size] */
+    table td div {
+        padding: 8px 8px;
+
+        @include ellipsis;
+
+        transition: all 0.15s ease-in;
+        transition-delay: 0s;
+
+        min-width: 150px;
+        max-width: 150px;
+    }
+
+    /* Ensure Grid cells don't grow wider than the values [excluding column and row headings] */
+    table tbody td.c {
+        width: 166px;
+    }
+
+    /* Row and Column heading cells have controls *outside* the div [to ensure they're clickable], so the cells need the padding, but less on the right */
+    td.grid-heading {
+        padding: 8px 2px 8px 8px;
+    }
+
+    /* Make Row and Column heading divs (with the text only) small enough that the controls don't wrap */
+    td.grid-heading div {
+        padding: 0px;
+
+        min-width: 125px;
+        max-width: 125px;
+
+        @include ellipsis;
+    }
+
+    /* Allow *Row* heading divs to be wider */
+    tr td.grid-heading:first-child div {
+        width: auto;
+        min-width: 150px;
+        max-width: 300px;
+    }
+
+    /* Allow *Column* headings to wrap */
+    thead td.grid-heading div {
+        min-width: 125px;
+        max-width: 125px;
+
+        white-space: normal;
+    }
+
+    /* Grid column headings are wider when being edited, less padded, not animated. */
+    table td.grid-heading.editing div {
+        min-width: 300px;
+        max-width: 300px;
+
+        transition: none;
+    }
+
+    /* Editing Textboxes are narrow enough not to wrap with icons and are not bumped right against icons or each other */
+    table .editing input {
+        width: 260px;
+        margin-left: 4px;
+        margin-bottom: 4px;
+    }
+
+    /* Make Grid values very dark blue */
+    table td a {
+        color: #1E3CA9;
+    }
+
+    /* Make Grid values lighten and underline on hover */
+    table td a:hover {
+        color: #3D56AF;
+        text-decoration: underline;
+    }
+
+    /* Put options panel a line below the Grid table */
+    .options {
+        padding-top: 24px;
+    }
+}

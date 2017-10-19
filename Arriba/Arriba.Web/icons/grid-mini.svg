@@ -1,0 +1,14 @@
+<svg width="9" height="9" viewBox="0 0 9 9" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<title>grid</title>
+<desc>Created using Figma</desc>
+<g id="Canvas" transform="translate(-1328 -152)">
+<g id="grid">
+<g id="Vector 11">
+<use xlink:href="#path0_stroke" transform="translate(1328.5 152.5)" fill="#999999"/>
+</g>
+</g>
+</g>
+<defs>
+<path id="path0_stroke" d="M 3 0L 3 -0.5L 2.5 -0.5L 2.5 0L 3 0ZM 8 0L 8.5 0L 8.5 -0.5L 8 -0.5L 8 0ZM 8 8L 8 8.5L 8.5 8.5L 8.5 8L 8 8ZM 0 8L -0.5 8L -0.5 8.5L 0 8.5L 0 8ZM 0 3L 0 2.5L -0.5 2.5L -0.5 3L 0 3ZM 3 0.5L 8 0.5L 8 -0.5L 3 -0.5L 3 0.5ZM 7.5 0L 7.5 3L 8.5 3L 8.5 0L 7.5 0ZM 7.5 3L 7.5 8L 8.5 8L 8.5 3L 7.5 3ZM 8 7.5L 3 7.5L 3 8.5L 8 8.5L 8 7.5ZM 3 7.5L 0 7.5L 0 8.5L 3 8.5L 3 7.5ZM 0.5 8L 0.5 3L -0.5 3L -0.5 8L 0.5 8ZM 0 3.5L 8 3.5L 8 2.5L 0 2.5L 0 3.5ZM 2.5 0L 2.5 8L 3.5 8L 3.5 0L 2.5 0Z"/>
+</defs>
+</svg>

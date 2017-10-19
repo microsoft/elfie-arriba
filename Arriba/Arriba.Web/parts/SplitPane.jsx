@@ -1,4 +1,6 @@
-﻿// Inspired by https://github.com/tomkp/react-split-pane [MIT License]
+import "./SplitPane.scss";
+
+// Inspired by https://github.com/tomkp/react-split-pane [MIT License]
 export default React.createClass({
     defaultProps: { isFirstVisible: true, isSecondVisible: true },
     onMouseUp: function () {

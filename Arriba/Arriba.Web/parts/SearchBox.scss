@@ -1,26 +1,26 @@
+@import './shared.scss';
+
 .input { // Coordinate styles between input and rail.
-    font-size: 16pt;
-    padding: 8px;
+    font-size: 20px;
+    padding: 10px 12px;
 }
 
 .searchBox {
-    background: hsl(0, 0, 97%);
+    background: $bg;
     flex: 1;
     display: flex;
     align-items: center;
     position: relative;
     padding-right: 4px;
 
-    // Needed to keep the rail above resultsListing floating headers in Edge.
-    // Apparently the first non absolute element about rail needs to be z-indexed to make it work.
-    z-index: 1;
-
     input { @extend .input;
         box-sizing: border-box;
         border: none;
         flex: 1;
         color: #666666;
+        font-weight: 600;
         background: transparent; // Override user agent.
+        height: 47px; // Force an even height so SVGs align.
     }
 
     .searchBoxIcon {
@@ -72,4 +72,3 @@
     display: flex;
     align-items: flex-start;
 }
-

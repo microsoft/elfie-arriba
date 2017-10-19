@@ -1,53 +1,84 @@
 import "./Tabs.scss";
+import AnchoredPopup from "./AnchoredPopup"
+import Delete from "./Delete"
 
-export default class Tabs extends React.Component {
+export default class extends React.Component {
     constructor(props) {
         super(props);
         this.state = {};
     }
     render() {
-        const succeeded =
-            this.props.listingDataContent &&
-            this.props.listingDataContent.details.succeeded;
-        const where =
-            this.props.listingDataContent &&
-            this.props.listingDataContent.query.where;
+        const parsedQuery =
+            this.props.counts &&
+            this.props.counts.parsedQuery;
 
-        const tables =
-            this.props.allCountData && 
-            this.props.allCountData.content && 
-            this.props.allCountData.content.resultsPerTable ||
-            Object.map(this.props.allBasics, (k, v) => ({ tableName: k, count: v.rowCount, succeeded: true, locked: true }));
-        tables.forEach(t => t.canAdminister =
-            this.props.allBasics &&
-            this.props.allBasics[t.tableName] &&
-            this.props.allBasics[t.tableName].canAdminister);
+        var tables =
+            this.props.counts &&
+                this.props.counts.resultsPerTable ||
+            Object.keys(this.props.allBasics).length &&
+                Object.map(this.props.allBasics, (k, v) => ({ tableName: k, count: v.rowCount, succeeded: true })) ||
+            [{ tableName: "Loading...", succeeded: false, locked: true }]; // Solely to prevent jumpy re-layout when allBasics comes in.
+
+        tables.forEach(t => {
+            t.pinned = t.tableName === this.props.userSelectedTable;
+            t.canAdminister =
+                this.props.allBasics &&
+                this.props.allBasics[t.tableName] &&
+                this.props.allBasics[t.tableName].canAdminister;
+        });
+
+        const overflowLimit = 5;
+        const tabs = tables.map(t => <span
+            key={t.tableName}
+            className={`tableTab ${this.props.currentTable === t.tableName ? "current" : ""} ${t.locked ? "locked" : ""}`}
+            onClick={e => this.props.userSelectedTableChanged(t.tableName)}>
+            {t.pinned && <img src="/icons/pinned.svg" alt="pinned" className="pinned" title="Unpin" onClick={e => {
+                e.stopPropagation();
+                this.props.userSelectedTableChanged(undefined);
+            }} />}
+            <span>{t.tableName}</span>
+            <b>{t.allowedToRead === false /* no lock icon if undefined */
+                ? <span className="icon-lock icon" />
+                : t.succeeded ? t.count.toLocaleString() : "‒"}</b>
+            {t.canAdminister && <Delete onClick={e => {
+                e.stopPropagation();
+                if (confirm(`Delete table "${t.tableName}"?`)) {
+                    xhr(`table/${tableResult.tableName}/delete`)
+                        .then(() => this.props.refreshAllBasics(() => {
+                            this.props.userSelectedTableChanged()
+                        }));
+                }
+            }} />}
+        </span>);
+
+        // Promote pinned tab out of overflow if needed.
+        const pindex = tables.findIndex(t => t.pinned);
+        if (overflowLimit > 0 && pindex >= overflowLimit) {
+            const pinned = tabs.splice(pindex, 1);
+            tabs.splice(overflowLimit - 1, 0, pinned);
+        }
 
         return <div className="searchBoxAndTabs">
             <div className="tableTabs">
-                {tables.map(t => <span
-                    key={t.tableName}
-                    className={`tableTab ${this.props.currentTable === t.tableName ? "current" : ""} ${t.locked ? "locked" : ""}`} 
-                    onClick={e => this.props.onSelectedTableChange(t.tableName)}>
-                    {t.tableName} <b>{t.allowedToRead === false /* no lock icon if undefined */
-                        ? <span className="icon-lock icon" />
-                        : t.succeeded ? t.count.toLocaleString() : "‒"}</b>
-                    {t.canAdminister && <span className="delete" onClick={e => {
-                        e.stopPropagation();
-                        xhr(`table/${tableResult.tableName}/delete`)
-                            .then(() => this.props.refreshAllBasics(() => {
-                                this.props.onSelectedTableChange()
-                            }));
-                    }}>✕</span>}
-                </span>)}
+                {tabs.slice(0, overflowLimit)}
+                {tabs.length > overflowLimit &&
+                    <span key="overflow" ref="overflow"
+                        className="tableTab" style={{ position: "relative" }}
+                        onClick={() => this.refs.popup.show()}>
+                        ⋯
+                        <AnchoredPopup ref="popup" className="tabs-overflow" bottom="-5px" left="0">
+                            {tabs.slice(overflowLimit)}
+                        </AnchoredPopup>
+                    </span>
+                }
                 <span className="tableTabs-fill"></span>
-                {where && <a title="Explanation" href="#" onMouseOver={e => this.setState({ showExplanation: true })} onMouseOut={e => this.setState({ showExplanation: false })}>
+                {parsedQuery && <a title="Explanation" href="#" onMouseOver={e => this.setState({ showExplanation: true })} onMouseOut={e => this.setState({ showExplanation: false })}>
                     <img src="/icons/info.svg" alt="rss"/>
                 </a>}
-                {this.props.queryUrl && succeeded && <a title="RSS Link" target="_blank" href={`${this.props.queryUrl}&fmt=rss&t=100&iURL=${encodeURIComponent(this.props.thisUrl + "&open=")}`}>
+                {this.props.queryUrl && <a title="RSS Link" target="_blank" href={`${this.props.queryUrl}&fmt=rss&t=100&iURL=${encodeURIComponent(this.props.thisUrl + "&open=")}`}>
                     <img src="/icons/rss.svg" alt="rss"/>
                 </a>}
-                {this.props.queryUrl && succeeded && <a title="Download CSV" target="_blank" href={`${this.props.queryUrl}&fmt=csv&t=50000`}>
+                {this.props.queryUrl && <a title="Download CSV" target="_blank" href={`${this.props.queryUrl}&fmt=csv&t=50000`}>
                     <img src="/icons/download.svg" alt="download"/>
                 </a>}
                 {this.props.query && <a title="Mail" href={
@@ -60,7 +91,7 @@ export default class Tabs extends React.Component {
             </div>
             {this.props.children}
             {this.state.showExplanation && <div className="explanation">
-                {where || "Explanation"}
+                {parsedQuery || "Explanation"}
             </div>}
         </div>
     }

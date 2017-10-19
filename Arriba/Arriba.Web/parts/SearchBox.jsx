@@ -2,10 +2,10 @@ import "./SearchBox.scss";
 import EventedComponent from "./EventedComponent";
 import Suggestions from "./Suggestions";
 
-export default class SearchBox extends EventedComponent {
+export default class extends EventedComponent {
     constructor(props) {
         super(props);
-        this.state = {};      
+        this.state = {};
         this.events = {
             "storage": e => {
                 if (!["favorites"].includes(e.key)) return;
@@ -19,10 +19,13 @@ export default class SearchBox extends EventedComponent {
     }
     componentDidMount() {
         super.componentDidMount();
-        this.refs.input.focus();
+        this.focus();
     }
     componentWillReceiveProps(nextProps) {
         if (this.props.query != nextProps.query) this.refs.peek.clearCache();
+    }
+    focus() {
+        this.refs.input.focus();
     }
     onInput(query) {
         // IE focus/blur spurriously triggers onInput(), this works around that.
@@ -38,7 +41,7 @@ export default class SearchBox extends EventedComponent {
             <div className={ "loading " + (this.props.loading ? "loading-active" : "") }></div>
             <input ref="input" type="text"
                 spellCheck="false"
-                placeholder="Search for..." 
+                placeholder="Search for..."
                 tabIndex="1"
                 value={this.props.query}
                 onClick={e => this.refs.suggestions.fetch()}
@@ -52,6 +55,7 @@ export default class SearchBox extends EventedComponent {
                             ref="suggestions"
                             query={this.props.query}
                             queryChanged={q => this.props.queryChanged(q)}
+                            userSelectedTable={this.props.userSelectedTable}
                             completedChanged={c => this.setState({ completed: c })}
                             selectedChanged={s => this.setState({ selected: s && s.category === "ColumnName" && s || undefined }) }
                             refocus={() => this.refs.input.focus()}
@@ -69,7 +73,7 @@ export default class SearchBox extends EventedComponent {
                     </div>
                 </span>
             </div>
-            <i className={"searchBoxIcon clickable " + star} onClick={e => this.toggleFavorite(e)}></i>
+            <i className={"searchBoxIcon clickable " + star} onClick={e => this.toggleFavorite(e)} title="Toggle Favorite"></i>
         </div>
     }
 }

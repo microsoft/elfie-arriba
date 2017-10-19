@@ -1,6 +1,6 @@
 ﻿// InfiniteScroll provides infinite scrolling support.
 /* Usage:
-    <InfiniteScroll page={this.state.page} hasMoreData={this.state.hasMoreData} loadMore={this.getResultsPage}>
+    <InfiniteScroll hasMoreData loadMore>
         {content}
     </InfiniteScroll>
 
@@ -29,14 +29,15 @@ export default React.createClass({
 
                 // Load the next page of items
                 if (this.props.hasMoreData) {
-                    this.props.loadMore(this.props.page + 1);
+                    this.props.loadMore();
                 }
             }
         }
     },
     render: function () {
         return (
-            <div ref="scrollContainer" className="scrollable" onScroll={this.handleScroll}>
+            // .offsetParent for ResultListing > AddColumnList.
+            <div ref="scrollContainer" className="scrollable infiniteScroll offsetParent" onScroll={this.handleScroll}>
                 {this.props.children}
             </div>
         );

@@ -1,0 +1,98 @@
+@import './configuration/theme';
+@import '../shared.scss';
+
+.clickable {
+    cursor: pointer;
+    user-select: none;
+    &:hover { color: inherit; };
+}
+
+.errorBar {
+    background-color: hsl(10, 80%, 60%);
+    color: white;
+
+    text-align: center;
+    font-size: 12px;
+    padding: 10px;
+}
+
+.body-error {
+    width: 100%;
+    height: 100%;
+    @include center-center;
+
+    font-size: 16pt;
+    color: hsl(0, 0%, 80%);
+}
+
+.header {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    background: linear-gradient(to right, $vdark 100px, $medium 600px);
+    box-shadow: 0 0 5px 1px rgba(0,0,0,0.2);
+    z-index: 1;
+
+    a.title {
+        align-self: stretch;
+
+        @include center-center;
+        cursor: pointer;
+        padding: 4px 10px 0 15px;
+        font-size: 22px;
+
+        color: white;
+        transition: background 100ms ease-in-out;
+        &:hover {
+            color: white; // Suppress global a:hover.
+            background-color: lighten($vdark, 5%);
+        }
+    }
+}
+
+.mode {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    flex: 0 0 auto;
+    color: white;
+    background-color: $dark;
+    width: 50px;
+
+    * { box-sizing: border-box; } // Eventually global.
+
+    /* Make the currently selected mode grey on light grey (match main panel background) */
+    .selected {
+        color: #666666;
+        background: $bg;
+    }
+
+    /* Make the currently selected mode light up on hover but keep the matching background */
+    .selected:hover {
+        color: #222222;
+        background: $bg;
+    }
+
+    .mode-fill { flex: 1; }
+
+    /* Make mode bar modes large icons */
+    a {
+        width: 100%;
+        height: 50px;
+        @include center-center;
+
+        transition: background 100ms ease-in-out;
+        &:hover { background: lighten($dark, 5%); }
+
+        &                   > svg path { fill: $bg; }
+        &.selected          > svg path { fill: $vdark; }
+    }
+}
+
+.middle {
+    flex: 1 100%;
+    background: $bg;
+    display: flex;
+    flex-flow: row;
+    overflow: hidden;
+}

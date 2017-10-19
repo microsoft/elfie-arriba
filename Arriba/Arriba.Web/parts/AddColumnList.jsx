@@ -1,74 +1,62 @@
-﻿// AddColumnList is the list of unselected columns which shows up in the listing when the '+' is clicked.
-export default React.createClass({
-    getInitialState: function () {
-        return { filter: null, filteredColumns: this.filterColumns(null), selectedIndex: 0 }
-    },
-    filterColumns: function (filter) {
-        if (!filter) filter = "";
-        filter = filter.toLowerCase();
+import "./AddColumnList.scss";
+import EventedComponent from "./EventedComponent";
 
-        var filteredColumns = [];
-        for (var i = 0; i < this.props.allColumns.length; ++i) {
-            var column = this.props.allColumns[i];
+// AddColumnList is the list of unselected columns which shows up in the listing when the '+' is clicked.
+export default class extends EventedComponent {
+    constructor(props) {
+        super(props);
+        this.state = { filteredColumns: [], selectedIndex: 0 };
+    }
+    componentDidMount() {
+        super.componentDidMount();
+        this.componentDidUpdate({}, {});
+    }
+    componentDidUpdate(prevProps, prevState) {
+        const diffProps = Object.diff(prevProps, this.props);
+        const diffState = Object.diff(prevState, this.state);
 
-            // Filter columns already added and those not starting with the filter
-            if (this.props.currentColumns.indexOf(column.name) !== -1) continue;
-            if (filter && column.name.toLowerCase().indexOf(filter) !== 0) continue;
-
-            filteredColumns.push(column.name);
+        if (diffProps.hasAny("allColumns", "currentColumns") || diffState.hasAny("filter")) {
+            const filter = (this.state.filter || "").toLowerCase();
+            const filteredColumns = this.props.allColumns
+                .map(col => col.name)
+                .filter(name => (!filter || name.toLowerCase().includes(filter)) && !this.props.currentColumns.includes(name));
+            this.setState({ filteredColumns, selectedIndex: 0 });
         }
-
-        return filteredColumns;
-    },
-    handleKeyDown: function (e) {
-        if (e.keyCode === 27) {
-            // ESC - Close AddColumnList
-            this.setState(this.getInitialState());
+    }
+    handleKeyDown(e) {
+        if (e.key === "Escape") {
+            this.setState({ filter: undefined });
             this.props.onAddColumn(null);
             e.stopPropagation();
-        } else if (e.keyCode === 13 || e.keyCode === 9) {
-            // ENTER/TAB - commit highlighted match
+        }
+        if (e.key === "Enter" || e.key === "Tab") {
             var currentColumn = this.state.filteredColumns[this.state.selectedIndex];
             if(currentColumn) this.props.onAddColumn(currentColumn);
             e.stopPropagation();
-        } else if (e.keyCode === 38) {
-            // Up Arrow - select previous
+        }
+        if (e.key === "ArrowUp") {
             this.setState({ selectedIndex: (this.state.selectedIndex <= 0 ? 0 : this.state.selectedIndex - 1) });
             e.stopPropagation();
-        } else if (e.keyCode === 40) {
-            // Down Arrow - select next
+        }
+        if (e.key === "ArrowDown") {
             this.setState({ selectedIndex: (this.state.selectedIndex >= this.state.filteredColumns.length ? this.state.filteredColumns.length - 1 : this.state.selectedIndex + 1) });
             e.stopPropagation();
         }
-    },
-    handleAddColumn: function (e) {
-        this.props.onAddColumn(e.target.getAttribute("data-name"));
-        e.stopPropagation();
-    },
-    handleFilterChanged: function (e) {
-        var newFilter = e.target.value;
-        var newFilteredColumns = this.filterColumns(newFilter);
-        this.setState({ filter: newFilter, filteredColumns: newFilteredColumns, selectedIndex: 0 });
-    },
-    render: function () {
-        // Write an add column list (shown only once the '+' is clicked)
-        if (!this.props.showing) return null;
-
-        var addFunction = this.handleAddColumn;
-        var addColumns = [];
-        for(var i = 0; i < this.state.filteredColumns.length; ++i) {
-            var name = this.state.filteredColumns[i];
-            var className = (i === this.state.selectedIndex ? "add-list-selected" : "");
-            addColumns.push(<div key={"add_" + name} data-name={name} onClick={addFunction} className={className}>{name}</div>);
-        }
-
-        return (
-            <div style={{position: "absolute"}}>
-                <div className="add-list" onKeyDown={this.handleKeyDown} >
-                    <input type="text" autoFocus placeholder="Filter" value={this.state.filter} onChange={this.handleFilterChanged} onKeyDown={this.handleKeyDown} />
-                    {addColumns}
-                </div>
-            </div>
-        );
     }
-});
+    render() {
+        return <div className="add-list" onClick={this.props.onClick} onKeyDown={this.handleKeyDown.bind(this)} >
+            <input type="text" autoFocus placeholder="Filter Columns" value={this.state.filter} onChange={e => this.setState({ filter: e.target.value })} onKeyDown={this.handleKeyDown.bind(this)} />
+            <div className="addColumnsList">
+                {this.state.filteredColumns.map((name, i) => <div
+                    key={"add_" + name}
+                    onClick={e => {
+                        this.props.onAddColumn(name);
+                        e.stopPropagation();
+                    }}
+                    className={(i === this.state.selectedIndex) && "add-list-selected"}>
+                    {name}
+                </div>)}
+            </div>
+        </div>;
+    }
+}
