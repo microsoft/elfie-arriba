@@ -166,7 +166,7 @@ namespace Arriba.Serialization.Csv
         }
 
 
-        public IEnumerable<DataBlock> ReadAsDataBlockBatch(int batchSize)
+        public IEnumerable<DataBlock> ReadAsDataBlockBatch(int batchSize, bool allowPartialFile = false)
         {
             // Create an array per column
             Value[][] columns = new Value[this.ColumnCount][];
@@ -176,8 +176,23 @@ namespace Arriba.Serialization.Csv
             }
 
             int blockRowIndex = 0;
-            foreach (var row in this.Rows)
+            IEnumerator<CsvRow> rows = this.Rows.GetEnumerator();
+
+            while(true)
             {
+                // Get the next row.Stop if invalid or end-of-file
+                CsvRow row;
+                try
+                {
+                    if (!rows.MoveNext()) break;
+                    row = rows.Current;
+                }
+                catch(CsvReaderException) when (allowPartialFile)
+                {
+                    // Invalid Row. Stop.
+                    break;
+                }
+
                 // Copy cell values into the column arrays
                 for (int columnIndex = 0; columnIndex < this.ColumnCount; ++columnIndex)
                 {
