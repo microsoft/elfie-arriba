@@ -34,8 +34,9 @@ namespace Xsv
     Xsv first <input> <output> <rowCount>
      Copy the first <rowCount> rows from input to output.
 
-    Xsv append <input> <outputToAppendTo>
-     Append the input rows to an existing output file.
+    Xsv append <inputFileOrFolder> <outputToAppendTo> <inputFileNamePattern?>
+     Append rows from input(s) to an existing output file.
+     Pass a folder path to merge all files in the folder, as long as columns are the same.
 
     Xsv rowId <input> <output> <firstId?>
      Add an incrementing integer ID column as the first column, starting with the provided value or 1.
@@ -90,7 +91,7 @@ namespace Xsv
                             Trace.WriteLine(String.Format("Copy \"{0}\" to \"{1}\"...", args[1], args[2]));
                             if (args.Length < 4)
                             {
-                                Copy(args[1], args[2]);
+                                Copy(args[1], args[2], (args.Length > 3 ? args[3] : string.Empty));
                             }
                             else
                             {
@@ -110,7 +111,7 @@ namespace Xsv
                         case "append":
                             if (args.Length < 3) throw new UsageException("append requires an input and output");
                             Trace.WriteLine(String.Format("Appending from \"{0}\" to \"{1}\"...", args[1], args[2]));
-                            Append(args[1], args[2]);
+                            Append(args[1], args[2], (args.Length > 3 ? args[3] : null));
                             break;
                         case "rowid":
                             if (args.Length < 3) throw new UsageException("rowid requires an input and output");
@@ -224,40 +225,79 @@ namespace Xsv
                 using (ITabularWriter writer = TabularFactory.BuildWriter(outputFilePath))
                 {
                     writer.SetColumns(columns);
-
-                    while (reader.NextRow())
-                    {
-                        for (int i = 0; i < columnIndices.Length; ++i)
-                        {
-                            writer.Write(reader.Current(columnIndices[i]).ToString8());
-                        }
-
-                        writer.NextRow();
-                    }
-
+                    CopyRows(reader, writer);
                     WriteSizeSummary(reader, writer);
                 }
             }
         }
 
-        private static void Append(string inputFilePath, string outputFilePath)
+        private static void Append(string inputFileOrFolderPath, string outputFilePath, string inputFileNamePattern = null)
         {
-            using (ITabularReader reader = TabularFactory.BuildReader(inputFilePath))
+            string[] inputFilePaths;
+
+            if (Directory.Exists(inputFileOrFolderPath))
             {
-                using (ITabularWriter writer = TabularFactory.AppendWriter(outputFilePath, reader.Columns))
+                if (String.IsNullOrEmpty(inputFileNamePattern)) inputFileNamePattern = "*.*";
+                inputFilePaths = Directory.GetFiles(inputFileOrFolderPath, inputFileNamePattern);
+            }
+            else
+            {
+                inputFilePaths = new string[] { inputFileOrFolderPath };
+            }
+
+            ITabularWriter writer = null;
+            string writerColumns = null;
+            try
+            {
+                foreach(string inputFilePath in inputFilePaths)
                 {
-                    while (reader.NextRow())
+                    using (ITabularReader reader = TabularFactory.BuildReader(inputFilePath))
                     {
-                        for (int i = 0; i < reader.CurrentRowColumns; ++i)
+                        // Build the writer, if this is the first file
+                        if (writer == null)
                         {
-                            writer.Write(reader.Current(i).ToString8());
+                            writer = TabularFactory.AppendWriter(outputFilePath, reader.Columns);
+                            writerColumns = String.Join(", ", reader.Columns);
                         }
 
-                        writer.NextRow();
-                    }
+                        // Validate columns match
+                        string sourceColumns = String.Join(", ", reader.Columns);
+                        if (string.Compare(writerColumns, sourceColumns, true) != 0)
+                        {
+                            throw new InvalidOperationException(string.Format("Can't append to \"{0}\" because the column names don't match.\r\nExpect: {1}\r\nActual: {2}", outputFilePath, writerColumns, sourceColumns));
+                        }
 
-                    WriteSizeSummary(reader, writer);
+                        // Copy the rows
+                        CopyRows(reader, writer);
+
+                        // Write a summary for this input file
+                        Trace.WriteLine($" {inputFilePath}, {reader.RowCountRead:n0} rows; {reader.BytesRead.SizeString()}");
+                    }
                 }
+
+                // Write a summary for the output file
+                WriteSizeSummary(null, writer);
+            }
+            finally
+            {
+                if(writer != null)
+                {
+                    writer.Dispose();
+                    writer = null;
+                }
+            }
+        }
+
+        private static void CopyRows(ITabularReader reader, ITabularWriter writer)
+        {
+            while (reader.NextRow())
+            {
+                for (int i = 0; i < reader.CurrentRowColumns; ++i)
+                {
+                    writer.Write(reader.Current(i).ToString8());
+                }
+
+                writer.NextRow();
             }
         }
 
