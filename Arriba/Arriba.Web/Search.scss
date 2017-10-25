@@ -133,7 +133,8 @@ table.smallTable {
 
 /* Highlight query matching text with yellow background highlight */
 .h {
-    background: #ffeb0a;
+    background: hsl(55, 100%, 70%);
+    border-radius: 2px;
 }
 
 /* Use the Segoe UI Symbol fonts with standing size and spacing */
@@ -189,11 +190,6 @@ a:visited:hover {
     text-decoration: none;
 }
 
-.smaller {
-    margin-top: 4px;
-    font-size: 70%;
-}
-
 /* --- Details UX --- */
 
 /* Make the details panel white, padded */
@@ -210,6 +206,15 @@ a:visited:hover {
     .commands * {
         margin: 0px 4px;
         cursor: pointer;
+    }
+
+    .commands-text {
+        @include small-caps(7pt);
+        border: 1px solid #0c6dce;
+        border-radius: 3px;
+        padding: 3px 4px;
+        position: relative;
+        top: -3px;
     }
 
     /* Make the title large and share a line */
