@@ -6,6 +6,8 @@ using System.IO;
 
 using Microsoft.CodeAnalysis.Elfie.Model.Structures;
 using Microsoft.CodeAnalysis.Elfie.Serialization;
+using System.Collections.Generic;
+using System.Collections;
 
 namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
 {
@@ -208,6 +210,44 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         {
             if (_addedValues != null) throw new NotSupportedException(Resources.ConvertToImmutableRequired);
             return _existingValues.TryGetRangeStartingWith(prefix, out matches);
+        }
+
+        public IEnumerator<String8> GetSetStartingWith(String8 prefix)
+        {
+            Range matches;
+            if (!TryGetRangeStartingWith(prefix, out matches)) matches = Range.Empty;
+            return new StringStoreEnumerator(this, matches);
+        }
+
+        private class StringStoreEnumerator : IEnumerator<String8>
+        {
+            private StringStore Store { get; set; }
+            private Range Range { get; set; }
+            private int Next { get; set; }
+
+            public String8 Current => this.Store[this.Next];
+            object IEnumerator.Current => this.Store[this.Next];
+
+            public StringStoreEnumerator(StringStore store, Range range)
+            {
+                this.Store = store;
+                this.Range = range;
+                Reset();
+            }
+
+            public bool MoveNext()
+            {
+                this.Next++;
+                return this.Next <= this.Range.End;
+            }
+
+            public void Reset()
+            {
+                this.Next = this.Range.Start - 1;
+            }
+
+            public void Dispose()
+            { }
         }
         #endregion
 
