@@ -91,7 +91,7 @@ namespace Xsv
                             Trace.WriteLine(String.Format("Copy \"{0}\" to \"{1}\"...", args[1], args[2]));
                             if (args.Length < 4)
                             {
-                                Copy(args[1], args[2], (args.Length > 3 ? args[3] : string.Empty));
+                                Copy(args[1], args[2], int.Parse((args.Length > 3 ? args[3] : "-1")));
                             }
                             else
                             {
