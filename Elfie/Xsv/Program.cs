@@ -60,6 +60,9 @@ namespace Xsv
     Xsv onlyLatest <inputFolder> <outputFile> <idColumnIdentifier>
      Copy the last row for each ID from the input folder to the output file, walking inputs alphabetically.
 
+    Xsv htmlInnerText <input> <output> <columnIdentifier>
+     Copy rows from input to output, converting HTML in the column with the inner text equivalent.
+
     Xsv sanitize <input> <output> <specFile> <hashKey>
      Sanitize (re-map identifying values) from input to output using specFile rules.
      Makes safe sample data from sensitive data by remapping values.
@@ -91,7 +94,7 @@ namespace Xsv
                             Trace.WriteLine(String.Format("Copy \"{0}\" to \"{1}\"...", args[1], args[2]));
                             if (args.Length < 4)
                             {
-                                Copy(args[1], args[2], int.Parse((args.Length > 3 ? args[3] : "-1")));
+                                Copy(args[1], args[2]);
                             }
                             else
                             {
@@ -143,7 +146,7 @@ namespace Xsv
                             OnlyIn(args[1], args[2], args[3], args[4]);
                             break;
                         case "onlylatest":
-                            if (args.Length < 4) throw new UsageException("onlyLatest requires a, input folder, output file, and column identifier");
+                            if (args.Length < 4) throw new UsageException("onlyLatest requires an input folder, output file, and column identifier");
                             Trace.WriteLine(String.Format("Copying latest rows by \"{2}\" from \"{0}\" into \"{1}\"...", args[1], args[2], args[3]));
                             OnlyLatest(args[1], args[2], args[3]);
                             break;
@@ -157,6 +160,11 @@ namespace Xsv
                             if (args.Length < 5) throw new UsageException("sanitize requires value, columnName, specFile, hashKey");
                             Trace.WriteLine(String.Format("Sanitizing \"{0}\" from column \"{1}\" using \"{2}\"...", args[1], args[2], args[3]));
                             Trace.WriteLine(new Xsv.Sanitize.Sanitizer(args[3], args[4]).Translate(args[1], args[2]));
+                            break;
+                        case "htmlinnertext":
+                            if (args.Length < 4) throw new UsageException("htmlInnerText requires an input file, output file, and column identifier");
+                            Trace.WriteLine(String.Format("Converting Html to Text in \"{2}\" from \"{0}\" into \"{1}\"...", args[1], args[2], args[3]));
+                            HtmlInnerText(args[1], args[2], args[3]);
                             break;
                         case "where":
                             if (args.Length < 3) throw new UsageException("where requires input, column, operator, value");
@@ -225,7 +233,17 @@ namespace Xsv
                 using (ITabularWriter writer = TabularFactory.BuildWriter(outputFilePath))
                 {
                     writer.SetColumns(columns);
-                    CopyRows(reader, writer);
+                    
+                    while(reader.NextRow())
+                    {
+                        for(int i = 0; i < columnIndices.Length; ++i)
+                        {
+                            writer.Write(reader.Current(columnIndices[i]).ToString8());
+                        }
+
+                        writer.NextRow();
+                    }
+
                     WriteSizeSummary(reader, writer);
                 }
             }
@@ -573,6 +591,70 @@ namespace Xsv
                     WriteSizeSummary(reader, writer);
                 }
             }
+        }
+
+        private static void HtmlInnerText(string inputFilePath, string outputFilePath, string columnIdentifier)
+        {
+            using (ITabularReader reader = TabularFactory.BuildReader(inputFilePath))
+            {
+                int columnIndexToEscape = reader.ColumnIndex(columnIdentifier);
+
+                using (ITabularWriter writer = TabularFactory.BuildWriter(outputFilePath))
+                {
+                    writer.SetColumns(reader.Columns);
+
+                    while (reader.NextRow())
+                    {
+                        for (int i = 0; i < reader.CurrentRowColumns; ++i)
+                        {
+                            if (i == columnIndexToEscape)
+                            {
+                                WriteHtmlEscaped(reader.Current(i).ToString8(), writer);
+                            }
+                            else
+                            {
+                                writer.Write(reader.Current(i).ToString8());
+                            }
+                        }
+
+                        writer.NextRow();
+                    }
+
+                    WriteSizeSummary(reader, writer);
+                }
+            }
+        }
+
+        public static void WriteHtmlEscaped(String8 value, ITabularWriter writer)
+        {
+            writer.WriteValueStart();
+
+            int writeFrom = 0;
+            while(true)
+            {
+                // Look for an Html Tag
+                int startOfTag = value.IndexOf((byte)'<', writeFrom);
+                if (startOfTag == -1) break;
+
+                // Write up to the tag
+                writer.WriteValuePart(value.Substring(writeFrom, startOfTag - writeFrom));
+
+                // Find the end of the tag
+                int endOfTag = value.IndexOf((byte)'>', startOfTag + 1);
+                if (endOfTag == -1)
+                {
+                    // Error: Unclosed tag, don't write anything else
+                    writeFrom = value.Length;
+                    break;
+                }
+
+                writeFrom = endOfTag + 1;
+            }
+
+            // Write the value after the last tag
+            writer.WriteValuePart(value.Substring(writeFrom));
+
+            writer.WriteValueEnd();
         }
 
         private static void Concatenate(string inputFilePath, string outputFilePath, String8 delimiter)
