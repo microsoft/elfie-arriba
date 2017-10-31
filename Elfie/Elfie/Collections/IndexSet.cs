@@ -22,6 +22,8 @@ namespace Microsoft.CodeAnalysis.Elfie.Collections
     /// </remarks>
     public class IndexSet
     {
+        public static bool NativeAccelerated = false;
+
         private ulong[] _bitVector;
 
         public IndexSet(int length)
@@ -51,27 +53,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Collections
             get { return this._bitVector.Length << 6; }
         }
 
-        public int Count
-        {
-            get { return IndexSetN.Count(this._bitVector); }
-        }
-
-        public void Page(ref Span<int> page, ref int fromIndex)
-        {
-            page.Length = IndexSetN.Page(this._bitVector, page.Array, ref fromIndex);
-        }
-
-        public IndexSet Where<T>(BooleanOperator bOp, T[] values, CompareOperator cOp, T value)
-        {
-            return Where(bOp, values, cOp, value, 0, values.Length);
-        }
-
-        public IndexSet Where<T>(BooleanOperator bOp, T[] values, CompareOperator cOp, T value, int offset, int length)
-        {
-            IndexSetN.Where(this._bitVector, (ElfieNative.Query.BooleanOperator)bOp, values, (ElfieNative.Query.CompareOperator)cOp, value, offset, length);
-            return this;
-        }
-
+        #region Unary Operations
         public IndexSet ClearAbove(int length)
         {
             if (length < 0 || length > this.Capacity) throw new ArgumentOutOfRangeException("length");
@@ -79,7 +61,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Collections
             // Clear bits over 'length' in the partially filled ulong, if any
             int lastIndex = length >> 6;
 
-            if((length & 63) != 0)
+            if ((length & 63) != 0)
             {
                 this._bitVector[lastIndex] &= ulong.MaxValue >> (64 - (length & 63));
                 lastIndex++;
@@ -90,7 +72,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Collections
             {
                 Array.Clear(this._bitVector, lastIndex, this._bitVector.Length - lastIndex);
             }
-            
+
             return this;
         }
 
@@ -132,7 +114,9 @@ namespace Microsoft.CodeAnalysis.Elfie.Collections
 
             return this;
         }
+        #endregion
 
+        #region Set Operations
         public IndexSet Set(IndexSet other)
         {
             if (this._bitVector.Length != other._bitVector.Length) throw new InvalidOperationException();
@@ -149,7 +133,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Collections
         {
             if (this._bitVector.Length != other._bitVector.Length) throw new InvalidOperationException();
 
-            for(int i = 0; i < this._bitVector.Length; ++i)
+            for (int i = 0; i < this._bitVector.Length; ++i)
             {
                 this._bitVector[i] &= other._bitVector[i];
             }
@@ -180,7 +164,9 @@ namespace Microsoft.CodeAnalysis.Elfie.Collections
 
             return this;
         }
+        #endregion
 
+        #region Object overrides
         public override bool Equals(object obj)
         {
             IndexSet other = obj as IndexSet;
@@ -204,5 +190,161 @@ namespace Microsoft.CodeAnalysis.Elfie.Collections
         {
             return $"{this.Count:n0}";
         }
+        #endregion
+
+        #region Native Accelerated Members
+        public int Count
+        {
+            get
+            {
+                if (NativeAccelerated)
+                {
+                    return IndexSetN.Count(this._bitVector);
+                }
+                else
+                {
+                    return CountManaged();
+                }
+            }
+        }
+
+        private int CountManaged()
+        {
+            // Count using the hamming weight algorithm [http://en.wikipedia.org/wiki/Hamming_weight]
+            const ulong m1 = 0x5555555555555555UL;
+            const ulong m2 = 0x3333333333333333UL;
+            const ulong m4 = 0x0f0f0f0f0f0f0f0fUL;
+            const ulong h1 = 0x0101010101010101UL;
+
+            ushort count = 0;
+
+            int length = _bitVector.Length;
+            for (int i = 0; i < length; ++i)
+            {
+                ulong x = _bitVector[i];
+
+                x -= (x >> 1) & m1;
+                x = (x & m2) + ((x >> 2) & m2);
+                x = (x + (x >> 4)) & m4;
+
+                count += (ushort)((x * h1) >> 56);
+            }
+
+            return count;
+        }
+
+        public void Page(ref Span<int> page, ref int fromIndex)
+        {
+            if (NativeAccelerated)
+            {
+                page.Length = IndexSetN.Page(this._bitVector, page.Array, ref fromIndex);
+            }
+            else
+            {
+                PageManaged(ref page, ref fromIndex);
+            }
+        }
+
+        private void PageManaged(ref Span<int> page, ref int fromIndex)
+        {
+            int count = 0;
+
+            // Starting at fromIndex, get the indices of all matches in the bit vector
+            for (; fromIndex < this.Capacity; ++fromIndex)
+            {
+                if (this[fromIndex])
+                {
+                    page[count++] = fromIndex;
+                    if (count == page.Capacity) break;
+                }
+            }
+
+            // Mark the next index to start from, or -1 if we checked every bit
+            if (fromIndex >= this.Capacity)
+            {
+                fromIndex = -1;
+            }
+            else
+            {
+                fromIndex++;
+            }
+
+            // Set the number of indices written
+            page.Length = count;
+        }
+
+        public IndexSet Where<T>(BooleanOperator bOp, T[] values, CompareOperator cOp, T value) where T : IComparable<T>
+        {
+            return Where(bOp, values, cOp, value, 0, values.Length);
+        }
+
+        public IndexSet Where<T>(BooleanOperator bOp, T[] values, CompareOperator cOp, T value, int offset, int length) where T : IComparable<T>
+        {
+            if (NativeAccelerated)
+            {
+                IndexSetN.Where(this._bitVector, (ElfieNative.Query.BooleanOperator)bOp, values, (ElfieNative.Query.CompareOperator)cOp, value, offset, length);
+            }
+            else
+            {
+                WhereManaged(bOp, values, cOp, value, offset, length);
+            }
+
+            return this;
+        }
+
+        private void WhereManaged<T>(BooleanOperator bOp, T[] values, CompareOperator cOp, T value, int offset, int length) where T : IComparable<T>
+        {
+            // Get the IComparable for value (so we only box one value)
+            IComparable<T> valueToCompare = (IComparable<T>)value;
+
+            int end = offset + length;
+            for(int index = offset; index < end; ++index)
+            {
+                // Compare (backwards)
+                int compareInverse = value.CompareTo(values[index]);
+
+                // Determine whether this row matches
+                bool isMatch = IsMatch(compareInverse, cOp);
+
+                // Set the bit vector bit accordingly
+                switch(bOp)
+                {
+                    case BooleanOperator.Set:
+                        this[index] = isMatch;
+                        break;
+                    case BooleanOperator.And:
+                        this[index] &= isMatch;
+                        break;
+                    case BooleanOperator.Or:
+                        this[index] |= isMatch;
+                        break;
+                    default:
+                        throw new NotImplementedException(bOp.ToString());
+                }
+            }
+        }
+
+        private bool IsMatch(int compareInverse, CompareOperator cOp)
+        {
+            switch(cOp)
+            {
+                case CompareOperator.Equals:
+                    return compareInverse == 0;
+                case CompareOperator.NotEquals:
+                    return compareInverse != 0;
+                case CompareOperator.GreaterThan:
+                    return compareInverse < 0;
+                case CompareOperator.GreaterThanOrEqual:
+                    return compareInverse <= 0;
+                case CompareOperator.LessThan:
+                    return compareInverse > 0;
+                case CompareOperator.LessThanOrEqual:
+                    return compareInverse >= 0;
+                default:
+                    throw new NotImplementedException(cOp.ToString());
+            }
+        }
+
+        #endregion
     }
 }
