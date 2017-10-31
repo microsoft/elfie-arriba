@@ -65,8 +65,6 @@
   <ItemGroup>
     <Compile Include="AllCodeText.cs" />
     <Compile Include="AssertStrings.cs" />
-    <Compile Include="Collections\IndexSetTests.cs" />
-    <Compile Include="Collections\SpanTests.cs" />
     <Compile Include="Extensions\BinaryReaderWriterExtensionsTests.cs" />
     <Compile Include="Extensions\BinarySerializableTests.cs" />
     <Compile Include="Extensions\IReadOnlyListExtensionsTests.cs" />

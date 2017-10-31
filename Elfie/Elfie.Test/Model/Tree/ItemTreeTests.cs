@@ -4,6 +4,8 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 
+using Elfie.Test;
+
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.CodeAnalysis.Elfie.Model.Tree;
 using Microsoft.CodeAnalysis.Elfie.Serialization;
