@@ -7,13 +7,10 @@ using System.IO;
 using System.Linq;
 using System.Text;
 
-using Elfie.Test;
-
 using Microsoft.CodeAnalysis.Elfie.Extensions;
 using Microsoft.CodeAnalysis.Elfie.Model;
 using Microsoft.CodeAnalysis.Elfie.Model.Structures;
 using Microsoft.CodeAnalysis.Elfie.Serialization;
-using Microsoft.CodeAnalysis.Elfie.Test.Extensions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Microsoft.CodeAnalysis.Elfie.Test.Model

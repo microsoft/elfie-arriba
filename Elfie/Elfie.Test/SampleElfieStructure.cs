@@ -3,8 +3,6 @@
 
 using System;
 
-using Elfie.Test;
-
 using Microsoft.CodeAnalysis.Elfie.Extensions;
 using Microsoft.CodeAnalysis.Elfie.Model;
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;

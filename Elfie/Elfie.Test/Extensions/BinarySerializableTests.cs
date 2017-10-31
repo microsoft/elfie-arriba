@@ -3,8 +3,6 @@
 
 using System.IO;
 
-using Elfie.Test;
-
 using Microsoft.CodeAnalysis.Elfie.Extensions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 

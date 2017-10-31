@@ -4,8 +4,6 @@
 using System;
 using System.Globalization;
 
-using Elfie.Test;
-
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.CodeAnalysis.Elfie.Serialization;
 using Microsoft.VisualStudio.TestTools.UnitTesting;

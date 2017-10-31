@@ -9,7 +9,7 @@ using Microsoft.CodeAnalysis.Elfie.Extensions;
 using Microsoft.CodeAnalysis.Elfie.Serialization;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Elfie.Test
+namespace Microsoft.CodeAnalysis.Elfie.Test
 {
     public static class Verify
     {

@@ -4,8 +4,6 @@
 using System;
 using System.Collections;
 
-using Elfie.Test;
-
 using Microsoft.CodeAnalysis.Elfie.Extensions;
 using Microsoft.CodeAnalysis.Elfie.Model.Map;
 using Microsoft.VisualStudio.TestTools.UnitTesting;

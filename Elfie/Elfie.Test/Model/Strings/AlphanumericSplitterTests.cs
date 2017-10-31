@@ -7,8 +7,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 
-using Elfie.Test;
-
 using Microsoft.CodeAnalysis.Elfie.Extensions;
 using Microsoft.CodeAnalysis.Elfie.Model.Index;
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
