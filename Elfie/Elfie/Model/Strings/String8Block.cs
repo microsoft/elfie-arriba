@@ -122,18 +122,18 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             if(_blocks.Count > 0)
             {
                 targetBlock = _blocks[_blocks.Count - 1];
-                if (targetBlock.Block == first._buffer && targetBlock.LengthUsed == first._index + first._length)
+                if (targetBlock.Block == first.Array && targetBlock.LengthUsed == first.Index + first.Length)
                 {
                     // If there's room to concatenate in place, do that
                     if (targetBlock.Block.Length >= targetBlock.LengthUsed + delimiter.Length + second.Length)
                     {
                         targetBlock.LengthUsed += delimiter.WriteTo(targetBlock.Block, targetBlock.LengthUsed);
                         targetBlock.LengthUsed += second.WriteTo(targetBlock.Block, targetBlock.LengthUsed);
-                        return new String8(first._buffer, first._index, targetBlock.LengthUsed - first._index);
+                        return new String8(first.Array, first.Index, targetBlock.LengthUsed - first.Index);
                     }
 
                     // If not, "remove" first from the block to recycle the space
-                    if (first._index == 0)
+                    if (first.Index == 0)
                     {
                         // If first was alone, remove the whole block
                         _blocks.RemoveAt(_blocks.Count - 1);

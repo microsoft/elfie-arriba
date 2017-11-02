@@ -105,15 +105,7 @@ namespace Arriba.Structures
 
         private object TryAsIs()
         {
-            if (_value is ByteBlock)
-            {
-                return _value;
-            }
-            else if (_value is ValueTypeReference<ByteBlock>)
-            {
-                return ((ValueTypeReference<ByteBlock>)_value).Value;
-            }
-            else if (_value is DateTime)
+            if (_value is DateTime)
             {
                 return _value;
             }
@@ -274,6 +266,14 @@ namespace Arriba.Structures
             else if (_value is ValueTypeReference<string>)
             {
                 asString = (_value as ValueTypeReference<string>).Value;
+            }
+            else if (_value is ByteBlock)
+            {
+                asString = ((ByteBlock)_value).ToString();
+            }
+            else if (_value is ValueTypeReference<ByteBlock>)
+            {
+                asString = (_value as ValueTypeReference<ByteBlock>).Value.ToString();
             }
             else
             {

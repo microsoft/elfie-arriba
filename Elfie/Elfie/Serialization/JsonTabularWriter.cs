@@ -105,15 +105,15 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         {
             int nextWriteStartIndex = 0;
 
-            int end = value._index + value._length;
-            for (int i = value._index; i < end; ++i)
+            int end = value.Index + value.Length;
+            for (int i = value.Index; i < end; ++i)
             {
-                byte c = value._buffer[i];
+                byte c = value.Array[i];
                 bool isControl = c < 32;
 
                 if (isControl || c == UTF8.Backslash || c == UTF8.Quote)
                 {
-                    int inStringIndex = i - value._index;
+                    int inStringIndex = i - value.Index;
 
                     // Write everything before this escaped portion
                     value.Substring(nextWriteStartIndex, inStringIndex - nextWriteStartIndex).WriteTo(_stream);

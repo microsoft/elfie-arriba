@@ -80,14 +80,14 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         {
             // Look for quotes in string
             int nextWriteStartIndex = 0;
-            int end = value._index + value._length;
-            for (int i = value._index; i < end; ++i)
+            int end = value.Index + value.Length;
+            for (int i = value.Index; i < end; ++i)
             {
-                byte c = value._buffer[i];
+                byte c = value.Array[i];
                 if (c == UTF8.Quote)
                 {
                     // Write everything including quote
-                    int inStringIndex = i - value._index;
+                    int inStringIndex = i - value.Index;
                     value.Substring(nextWriteStartIndex, inStringIndex - nextWriteStartIndex).WriteTo(stream);
                     nextWriteStartIndex = inStringIndex;
 

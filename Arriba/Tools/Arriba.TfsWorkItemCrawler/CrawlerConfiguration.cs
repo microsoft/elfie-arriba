@@ -52,6 +52,11 @@ namespace Arriba.TfsWorkItemCrawler
         public List<string> Readers { get; set; }
 
         /// <summary>
+        ///  The set of columns to include. If set, only these columns will be crawled.
+        /// </summary>
+        public List<string> ColumnsToInclude { get; set; }
+
+        /// <summary>
         ///  The set of columns to exclude. All columns from the source
         ///  are added by default.
         /// </summary>
@@ -100,6 +105,7 @@ namespace Arriba.TfsWorkItemCrawler
             this.Owners = new List<string>();
             this.Writers = new List<string>();
             this.Readers = new List<string>();
+            this.ColumnsToInclude = new List<string>();
             this.ColumnsToExclude = new List<string>();
             this.ColumnMappings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         }
