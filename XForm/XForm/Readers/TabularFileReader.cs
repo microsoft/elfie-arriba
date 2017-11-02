@@ -28,11 +28,12 @@ namespace XForm.Sources
         {
             // Make a single item array to contain values (once)
             String8[] array = new String8[1];
+            DataBatch batch = DataBatch.All(array, 1);
 
             return () =>
             {
                 array[0] = _reader.Current(columnIndex).ToString8();
-                return DataBatch.All(array, 1);
+                return batch;
             };
         }
 

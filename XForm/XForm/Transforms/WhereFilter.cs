@@ -59,7 +59,7 @@ namespace XForm.Transforms
                     for (int i = filterColumnBatch.StartIndexInclusive; i < filterColumnBatch.EndIndexExclusive; ++i)
                     {
                         int realIndex = filterColumnBatch.Indices[i];
-                        if (_value.Equals(array[realIndex]))
+                        if (_value.CompareTo(array[realIndex]) == 0)
                         {
                             _currentIndices[_currentIndicesCount] = realIndex;
                             _currentIndicesCount++;
