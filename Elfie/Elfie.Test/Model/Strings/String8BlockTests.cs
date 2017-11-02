@@ -85,8 +85,8 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
 
             // Verify re-concatenating the last item re-uses memory and doesn't mess up previous item
             String8 oneTwoThree = block.Concatenate(oneTwo, delimiter, three);
-            Assert.AreEqual(oneTwo._buffer, oneTwoThree._buffer);
-            Assert.AreEqual(oneTwo._index, oneTwoThree._index);
+            Assert.AreEqual(oneTwo.Array, oneTwoThree.Array);
+            Assert.AreEqual(oneTwo.Index, oneTwoThree.Index);
 
             Assert.AreEqual("One; Two", oneTwo.ToString());
             Assert.AreEqual("One; Two; Three", oneTwoThree.ToString());
