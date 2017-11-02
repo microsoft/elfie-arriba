@@ -180,7 +180,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
                 if (line.EndsWith(UTF8.CR)) line = line.Substring(0, line.Length - 1);
 
                 // An empty line or out of lines for the row range
-                if (line.Length == 0 || line._index >= row._index + row._length) break;
+                if (line.Length == 0 || line.Index >= row.Index + row.Length) break;
 
                 // Look for a wrapped line
                 if (line[0] == UTF8.Space)
@@ -256,7 +256,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         private String8 DecodeSid(String8 sidBytes)
         {
             // Slightly Horrible
-            SecurityIdentifier sid = new SecurityIdentifier(sidBytes._buffer, sidBytes._index);
+            SecurityIdentifier sid = new SecurityIdentifier(sidBytes.Array, sidBytes.Index);
             return _currentRowBlock.GetCopy(sid.ToString());
         }
 

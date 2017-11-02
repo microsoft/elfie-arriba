@@ -55,6 +55,7 @@
     <Compile Include="Sanitize\SampleMappers.cs" />
     <Compile Include="Sanitize\SanitizerTests.cs" />
     <Compile Include="Where\WhereMatcherTests.cs" />
+    <Compile Include="XsvTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Elfie.Test\Elfie.Test.csproj">

@@ -70,6 +70,10 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\..\Elfie\Elfie\Elfie.csproj">
+      <Project>{d45f339f-847a-4f3a-88a0-afb883e9920e}</Project>
+      <Name>Elfie</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\Arriba.Client\Arriba.Client.csproj">
       <Project>{35e3e90c-f12e-4eb5-9161-a78ed5ca950f}</Project>
       <Name>Arriba.Client</Name>

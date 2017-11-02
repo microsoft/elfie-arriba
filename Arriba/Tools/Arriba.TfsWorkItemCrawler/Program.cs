@@ -62,7 +62,10 @@ namespace Arriba.TfsWorkItemCrawler
                     IItemProvider provider = ItemProviderUtilities.Build(config);
 
                     // Determine the list of columns to crawl
-                    List<ColumnDetails> columnsToAdd = new List<ColumnDetails>(provider.GetColumns().Where(cd => !config.ColumnsToExclude.Contains(cd.Name)));
+                    IEnumerable<ColumnDetails> columns = provider.GetColumns();
+                    if (config.ColumnsToInclude.Count > 0) columns = columns.Where(cd => config.ColumnsToInclude.Contains(cd.Name));
+                    if (config.ColumnsToExclude.Count > 0) columns = columns.Where(cd => !config.ColumnsToExclude.Contains(cd.Name));
+                    List<ColumnDetails> columnsToAdd = new List<ColumnDetails>(columns);
 
                     // Create the target table (if it doesn't already exist)
                     consumer.CreateTable(columnsToAdd, config.LoadPermissions());
