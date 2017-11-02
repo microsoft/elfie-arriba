@@ -34,7 +34,7 @@ namespace XForm.Writers
 
             _writer.SetColumns(_source.Columns.Select((cd) => cd.Name));
 
-            while (_source.Next(1))
+            while (_source.Next(100))
             {
                 for (int i = 0; i < getters.Length; ++i)
                 {

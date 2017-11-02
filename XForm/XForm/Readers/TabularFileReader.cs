@@ -11,9 +11,9 @@ namespace XForm.Sources
         private ITabularReader _reader;
         private List<ColumnDetails> _columns;
 
-        //private String8Block _block;
-        //private String8[][] _cells;
-        //private int _currentBatchCount;
+        private String8Block _block;
+        private String8[][] _cells;
+        private int _currentBatchCount;
 
         public TabularFileReader(ITabularReader reader)
         {
@@ -25,50 +25,55 @@ namespace XForm.Sources
                 this._columns.Add(new ColumnDetails(columnName, typeof(String8), false));
             }
 
-            //_block = new String8Block();
-            //_cells = new String8[this._columns.Count][];
-            //for(int i = 0; i < _cells.Length; ++i)
-            //{
-            //    _cells[i] = new String8[10];
-            //}
+            _block = new String8Block();
+            _cells = new String8[this._columns.Count][];
         }
 
         public IReadOnlyList<ColumnDetails> Columns => _columns;
 
         public Func<DataBatch> ColumnGetter(int columnIndex)
         {
-            String8[] array = new String8[1];
-
-            return () =>
-            {
-                array[0] = _reader.Current(columnIndex).ToString8();
-                return DataBatch.All(array, 1);
-            };
+            //String8[] array = new String8[1];
 
             //return () =>
             //{
-            //    return DataBatch.All(_cells[columnIndex], _currentBatchCount);
+            //    array[0] = _reader.Current(columnIndex).ToString8();
+            //    return DataBatch.All(array, 1);
             //};
+
+            return () =>
+            {
+                return DataBatch.All(_cells[columnIndex], _currentBatchCount);
+            };
         }
 
         public bool Next(int desiredCount)
         {
-            return _reader.NextRow();
-            //_block.Clear();
-            //_currentBatchCount = 0;
+            if (_cells[0] == null)
+            {
+                for (int i = 0; i < _cells.Length; ++i)
+                {
+                    _cells[i] = new String8[desiredCount];
+                }
+            }
 
-            //while(_reader.NextRow())
-            //{
-            //    for(int i = 0; i < _cells.Length; ++i)
-            //    {
-            //        _cells[i][_currentBatchCount] = _block.GetCopy(_reader.Current(i).ToString8());
-            //    }
+            //return _reader.NextRow();
 
-            //    _currentBatchCount++;
-            //    if (_currentBatchCount == 10) return true;
-            //}
+            _block.Clear();
+            _currentBatchCount = 0;
 
-            //return _currentBatchCount > 0;
+            while (_reader.NextRow())
+            {
+                for (int i = 0; i < _cells.Length; ++i)
+                {
+                    _cells[i][_currentBatchCount] = _block.GetCopy(_reader.Current(i).ToString8());
+                }
+
+                _currentBatchCount++;
+                if (_currentBatchCount == _cells[0].Length) return true;
+            }
+
+            return _currentBatchCount > 0;
         }
 
         public void Dispose()
