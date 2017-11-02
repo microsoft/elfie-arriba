@@ -199,7 +199,7 @@ namespace Arriba.Csv
                 }
 
                 Console.WriteLine();
-                Console.WriteLine("Added {0:n0} rows. Saving...", rowsImported);
+                Console.WriteLine("Imported {0:n0} rows; table has {1:n0} rows. Saving...", rowsImported, table.Count);
             }
 
             table.Save();
