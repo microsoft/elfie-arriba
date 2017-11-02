@@ -63,6 +63,9 @@ namespace XForm.Writers
             }
         }
 
+        public int RowCountWritten => _writer.RowCountWritten;
+        public long BytesWritten => _writer.BytesWritten;
+
         public void Dispose()
         {
             if(this._source != null)

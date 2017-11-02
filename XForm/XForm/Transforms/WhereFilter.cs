@@ -5,7 +5,7 @@ using XForm.Extensions;
 
 namespace XForm.Transforms
 {
-    public class WhereEqualsFilter<T> : IDataBatchSource where T : IEquatable<T>
+    public class WhereEqualsFilter<T> : IDataBatchSource where T : IComparable<T>
     {
         private IDataBatchSource _source;
         private T _value;
@@ -47,7 +47,7 @@ namespace XForm.Transforms
                     for (int i = filterColumnBatch.StartIndexInclusive; i < filterColumnBatch.EndIndexExclusive; ++i)
                     {
                         int realIndex = i;
-                        if (_value.Equals(array[realIndex]))
+                        if (_value.CompareTo(array[realIndex]) == 0)
                         {
                             _currentIndices[_currentIndicesCount] = realIndex;
                             _currentIndicesCount++;
