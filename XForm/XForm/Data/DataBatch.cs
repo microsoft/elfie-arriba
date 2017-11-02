@@ -31,6 +31,8 @@ namespace XForm.Data
         /// </summary>
         public int EndIndexExclusive { get; private set; }
 
+        public int Count => EndIndexExclusive - StartIndexInclusive;
+
         public static DataBatch All(Array array, int length)
         {
             if (length > array.Length) throw new ArgumentOutOfRangeException("length");

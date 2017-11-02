@@ -31,13 +31,15 @@ namespace XForm.Transforms
 
         public bool Next(int desiredCount)
         {
-            if (_currentIndices == null || _currentIndices.Length < desiredCount) _currentIndices = new int[desiredCount];
             _currentIndicesCount = 0;
 
             while(_source.Next(desiredCount))
             {
                 // Get a batch of rows from the filter column
                 DataBatch filterColumnBatch = _filterColumnGetter();
+
+                // Ensure we have room for the map indices
+                if (_currentIndices == null || _currentIndices.Length < filterColumnBatch.Count) _currentIndices = new int[filterColumnBatch.Count];
 
                 // Loop over and include indices for all matching files
                 T[] array = (T[])filterColumnBatch.Array;
