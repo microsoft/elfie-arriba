@@ -19,6 +19,8 @@ using Arriba.Structures;
 
 using Newtonsoft.Json;
 using Arriba.Model.Security;
+using Microsoft.CodeAnalysis.Elfie.Serialization;
+using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 
 namespace Arriba.Csv
 {
@@ -184,18 +186,15 @@ namespace Arriba.Csv
             options.AddMissingColumns = true;
             options.Mode = (mode == AddMode.Decorate ? AddOrUpdateMode.UpdateAndIgnoreAdds : AddOrUpdateMode.AddOrUpdate);
 
-            using (CsvReader reader = new CsvReader(csvFilePath))
+            using (ITabularReader reader = TabularFactory.BuildReader(csvFilePath))
             {
                 long rowsImported = 0;
+                if (columnNames == null) columnNames = new List<string>(reader.Columns);
 
-                foreach (DataBlock block in reader.ReadAsDataBlockBatch(BatchSize))
-                {
-                    DataBlock toInsert = block;
-                    if (columnNames != null) toInsert = toInsert.StripToColumns(columnNames);
-
-                    table.AddOrUpdate(toInsert, options);
-
-                    rowsImported += toInsert.RowCount;
+                foreach(DataBlock block in ReadAsDataBlockBatch(reader, columnNames))
+                { 
+                    table.AddOrUpdate(block, options);
+                    rowsImported += block.RowCount;
                     Console.Write(".");
                 }
 
@@ -206,6 +205,55 @@ namespace Arriba.Csv
             table.Save();
             w.Stop();
             Console.WriteLine("Done in {0}.", w.Elapsed.ToFriendlyString());
+        }
+
+        private static IEnumerable<DataBlock> ReadAsDataBlockBatch(ITabularReader reader, IList<string> columnNames)
+        {
+            // Build a DataBlock to hold a batch of rows
+            int columnCount = columnNames.Count;
+            DataBlock result = new DataBlock(columnNames, BatchSize);
+            Value[][] columnArrays = new Value[columnCount][];
+            for (int i = 0; i < columnCount; ++i)
+            {
+                columnArrays[i] = new Value[BatchSize];
+                for (int j = 0; j < BatchSize; ++j)
+                {
+                    columnArrays[i][j] = Value.Create(null);
+                }
+
+                result.SetColumn(i, columnArrays[i]);
+            }
+
+            // Look up indices of the columns
+            int[] columnIndices = new int[columnCount];
+            for (int i = 0; i < columnCount; ++i)
+            {
+                columnIndices[i] = reader.ColumnIndex(columnNames[i]);
+            }
+
+            // Fill blocks with rows as we go
+            int currentRowCount = 0;
+            String8Block block = new String8Block();
+            while (reader.NextRow())
+            {
+                for (int i = 0; i < columnCount; ++i)
+                {
+                    String8 cell = block.GetCopy(reader.Current(columnIndices[i]).ToString8());
+                    columnArrays[i][currentRowCount].Assign(new ByteBlock(cell.Array, cell.Index, cell.Length));
+                    //columnArrays[i][currentRowCount].Assign(cell.ToString());
+                }
+
+                currentRowCount++;
+
+                if (currentRowCount == BatchSize)
+                {
+                    yield return result;
+                    currentRowCount = 0;
+                    block.Clear();
+                }
+            }
+
+            if (currentRowCount > 0) yield return result;
         }
 
         private static void Query(string tableName, string columnsToSelect, string orderByColumn, int countToShow)

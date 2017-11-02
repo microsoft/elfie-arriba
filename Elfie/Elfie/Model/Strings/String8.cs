@@ -21,15 +21,15 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
     /// </summary>
     public struct String8 : IComparable<String8>, IComparable<string>, IBinarySerializable, IWriteableString
     {
-        internal byte[] _buffer;
-        internal int _index;
-        internal int _length;
+        public byte[] Array { get; private set; }
+        public int Index { get; private set; }
+        public int Length { get; private set; }
 
-        public String8(byte[] buffer, int index, int length)
+        public String8(byte[] array, int index, int length)
         {
-            _buffer = buffer;
-            _index = index;
-            _length = length;
+            Array = array;
+            Index = index;
+            Length = length;
         }
 
         public static String8 Empty = new String8(null, 0, 0);
@@ -175,22 +175,12 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
 
         #region Basic Properties
         /// <summary>
-        ///  Get the length in bytes of this String8 value. This is not the
-        ///  same as the character length of the string value if non-ASCII
-        ///  characters are part of the value.
-        /// </summary>
-        public int Length
-        {
-            get { return _length; }
-        }
-
-        /// <summary>
         ///  Returns whether this is an empty (length zero) String8
         /// </summary>
         /// <returns>True if empty string, False otherwise</returns>
         public bool IsEmpty()
         {
-            return _length == 0;
+            return Length == 0;
         }
 
         /// <summary>
@@ -200,9 +190,9 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         /// <returns>True if all ASCII, false otherwise</returns>
         public bool IsAscii()
         {
-            for (int i = 0; i < _length; ++i)
+            for (int i = 0; i < Length; ++i)
             {
-                if (_buffer[_index + i] >= 0x80) return false;
+                if (Array[Index + i] >= 0x80) return false;
             }
 
             return true;
@@ -217,7 +207,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         {
             get
             {
-                return _buffer[_index + index];
+                return Array[Index + index];
             }
         }
         #endregion
@@ -231,13 +221,13 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         public String8 Substring(int index)
         {
             // Verify index non-negative
-            if (index < 0 || index > _length) throw new ArgumentOutOfRangeException("index");
+            if (index < 0 || index > Length) throw new ArgumentOutOfRangeException("index");
 
             // If index is zero, return the same instance
             if (index == 0) return this;
 
             // Build a substring tied to the same buffer
-            return new String8(_buffer, _index + index, _length - index);
+            return new String8(Array, Index + index, Length - index);
         }
 
         /// <summary>
@@ -251,10 +241,10 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         {
             // Verify in bounds
             if (index < 0) throw new ArgumentOutOfRangeException("index");
-            if (length < 0 || index + length > _length) throw new ArgumentOutOfRangeException("length");
+            if (length < 0 || index + length > Length) throw new ArgumentOutOfRangeException("length");
 
             // Build a substring tied to the same buffer
-            return new String8(_buffer, _index + index, length);
+            return new String8(Array, Index + index, length);
         }
 
         /// <summary>
@@ -265,18 +255,18 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         /// <returns>Index of first occurrence of value or -1 if not found</returns>
         public int IndexOf(String8 value, int startIndex = 0)
         {
-            int length = value._length;
+            int length = value.Length;
 
-            int end = _index + _length - value._length + 1;
-            for (int start = _index + startIndex; start < end; ++start)
+            int end = Index + Length - value.Length + 1;
+            for (int start = Index + startIndex; start < end; ++start)
             {
                 int i = 0;
                 for (; i < length; ++i)
                 {
-                    if (_buffer[start + i] != value._buffer[value._index + i]) break;
+                    if (Array[start + i] != value.Array[value.Index + i]) break;
                 }
 
-                if (i == length) return start - _index;
+                if (i == length) return start - Index;
             }
 
             return -1;
@@ -290,10 +280,10 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         /// <returns>Index of first occurrence of character or -1 if not found</returns>
         public int IndexOf(byte c, int startIndex = 0)
         {
-            int end = _index + _length;
-            for (int i = _index + startIndex; i < end; ++i)
+            int end = Index + Length;
+            for (int i = Index + startIndex; i < end; ++i)
             {
-                if (_buffer[i] == c) return i - _index;
+                if (Array[i] == c) return i - Index;
             }
 
             return -1;
@@ -337,11 +327,11 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         /// <returns>Index of last occurrence of character or -1 if not found</returns>
         public int LastIndexOf(byte c, int startIndex = -1)
         {
-            if (startIndex == -1) startIndex = _length - 1;
+            if (startIndex == -1) startIndex = Length - 1;
 
             for (int i = startIndex; i >= 0; --i)
             {
-                if (_buffer[_index + i] == c) return i;
+                if (Array[Index + i] == c) return i;
             }
 
             return -1;
@@ -354,13 +344,13 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         /// <returns>String8 without any trailing copies of c</returns>
         public String8 TrimEnd(byte c)
         {
-            int index = _index + _length - 1;
-            for(; index >= _index; --index)
+            int index = Index + Length - 1;
+            for(; index >= Index; --index)
             {
-                if (_buffer[index] != c) break;
+                if (Array[index] != c) break;
             }
 
-            return new String8(_buffer, _index, index - _index + 1);
+            return new String8(Array, Index, index - Index + 1);
         }
 
         /// <summary>
@@ -370,8 +360,8 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         /// <returns>True if string ends with character, false otherwise</returns>
         public bool StartsWith(byte c)
         {
-            if (_length == 0) return false;
-            return (_buffer[_index] == c);
+            if (Length == 0) return false;
+            return (Array[Index] == c);
         }
 
         /// <summary>
@@ -381,8 +371,8 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         /// <returns>True if string ends with character, false otherwise</returns>
         public bool EndsWith(byte c)
         {
-            if (_length == 0) return false;
-            return (_buffer[_index + _length - 1] == c);
+            if (Length == 0) return false;
+            return (Array[Index + Length - 1] == c);
         }
 
         /// <summary>
@@ -415,15 +405,15 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         /// </summary>
         public void ToUpperInvariant()
         {
-            if (this._length <= 0) return;
+            if (this.Length <= 0) return;
 
-            int end = this._index + this._length;
-            for (int i = this._index; i < end; ++i)
+            int end = this.Index + this.Length;
+            for (int i = this.Index; i < end; ++i)
             {
-                byte c = this._buffer[i];
+                byte c = this.Array[i];
                 if ((byte)(c - UTF8.a) < UTF8.AlphabetLength)
                 {
-                    this._buffer[i] = (byte)(c - UTF8.ToUpperSubtract);
+                    this.Array[i] = (byte)(c - UTF8.ToUpperSubtract);
                 }
             }
         }
@@ -469,8 +459,8 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         private ulong ParseWithCutoff(ulong cutoff, ref bool valid)
         {
             // Validate non-empty and not too long to convert
-            valid &= _length > 0;
-            valid &= _length < 20;
+            valid &= Length > 0;
+            valid &= Length < 20;
 
             // Stop early if too long or short
             if (!valid) return 0;
@@ -479,11 +469,11 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
 
             // Convert the digits
             // NOTE: Don't need to check digits valid, because even 19 255 digits won't overflow
-            int end = _index + _length;
-            for (int i = _index; i < end; ++i)
+            int end = Index + Length;
+            for (int i = Index; i < end; ++i)
             {
                 value *= 10;
-                value += ParseDigit(_buffer[i], ref valid);
+                value += ParseDigit(Array[i], ref valid);
             }
 
             // Validate under cutoff
@@ -574,7 +564,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         {
             bool valid = true;
 
-            if (_length < 20)
+            if (Length < 20)
             {
                 // Not max length: Parse normally
                 result = ParseWithCutoff(ulong.MaxValue, ref valid);
@@ -792,32 +782,32 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
 
             // Formats are [yyyy-MM-dd] (length 10) or [yyyy-MM-ddThh:mm:ssZ] (length 19/20) or [yyyy-MM-ddThh:mm:ss.0000000]
             //              0123456789                  01234567890123456789
-            bool hasTimePart = (_length >= 19 && _length <= 27);
-            if (_length != 10 && !hasTimePart) return false;
+            bool hasTimePart = (Length >= 19 && Length <= 27);
+            if (Length != 10 && !hasTimePart) return false;
 
             // Validate date part separators
-            if (_buffer[_index + 4] != UTF8.Dash) return false;
-            if (_buffer[_index + 7] != UTF8.Dash) return false;
+            if (Array[Index + 4] != UTF8.Dash) return false;
+            if (Array[Index + 7] != UTF8.Dash) return false;
 
             // If there's no time part, convert now that format is validated
             if (!hasTimePart) return TryToDateTimeExact(out result, 0, 5, 8);
 
             // Validate time part separators and suffix
-            if (_buffer[_index + 10] != UTF8.T && _buffer[_index + 10] != UTF8.Space) return false;
-            if (_buffer[_index + 13] != UTF8.Colon) return false;
-            if (_buffer[_index + 16] != UTF8.Colon) return false;
-            if (_length >= 20 && _buffer[_index + 19] != UTF8.Z && _buffer[_index + 19] != UTF8.Period) return false;
+            if (Array[Index + 10] != UTF8.T && Array[Index + 10] != UTF8.Space) return false;
+            if (Array[Index + 13] != UTF8.Colon) return false;
+            if (Array[Index + 16] != UTF8.Colon) return false;
+            if (Length >= 20 && Array[Index + 19] != UTF8.Z && Array[Index + 19] != UTF8.Period) return false;
 
             // Convert with time part
             bool success = TryToDateTimeExact(out result, 0, 5, 8, 11, 14, 17);
             
             // Parse partial seconds
-            if(_length > 20)
+            if(Length > 20)
             {
                 uint partialSeconds;
                 if (!this.Substring(20).TryToUInt(out partialSeconds)) return false;
 
-                double asSecondPart = (double)partialSeconds / (double)(Math.Pow(10, _length - 20));
+                double asSecondPart = (double)partialSeconds / (double)(Math.Pow(10, Length - 20));
                 result = result.AddSeconds(asSecondPart);
             }
 
@@ -830,21 +820,21 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
 
             // Formats are [MM/dd/yyyy] (length 10) or [MM/dd/yyyy hh:mm:ss] (length 19/20)
             //              0123456789                  01234567890123456789
-            bool hasTimePart = (_length == 19 || _length == 20);
-            if (_length != 10 && !hasTimePart) return false;
+            bool hasTimePart = (Length == 19 || Length == 20);
+            if (Length != 10 && !hasTimePart) return false;
 
             // Validate date part separators
-            if (_buffer[_index + 2] != UTF8.Slash) return false;
-            if (_buffer[_index + 5] != UTF8.Slash) return false;
+            if (Array[Index + 2] != UTF8.Slash) return false;
+            if (Array[Index + 5] != UTF8.Slash) return false;
 
             // If there's no time part, convert now that format is validated
             if (!hasTimePart) return TryToDateTimeExact(out result, 6, 0, 3);
 
             // Validate time part separators and suffix
-            if (_buffer[_index + 10] != UTF8.Space) return false;
-            if (_buffer[_index + 13] != UTF8.Colon) return false;
-            if (_buffer[_index + 16] != UTF8.Colon) return false;
-            if (_length == 20 && _buffer[_index + 19] != UTF8.Z) return false;
+            if (Array[Index + 10] != UTF8.Space) return false;
+            if (Array[Index + 13] != UTF8.Colon) return false;
+            if (Array[Index + 16] != UTF8.Colon) return false;
+            if (Length == 20 && Array[Index + 19] != UTF8.Z) return false;
 
             // Convert with time part
             return TryToDateTimeExact(out result, 6, 0, 3, 11, 14, 17);
@@ -872,13 +862,13 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         /// <returns>Negative if this String8 sorts earlier, zero if equal, positive if this String8 sorts later</returns>
         public int CompareTo(string other, bool ignoreCase)
         {
-            int thisLength = _length;
+            int thisLength = Length;
             int otherLength = other.Length;
             int commonLength = Math.Min(thisLength, otherLength);
 
             for (int i = 0; i < commonLength; ++i)
             {
-                byte tC = _buffer[_index + i];
+                byte tC = Array[Index + i];
 
                 char oC = other[i];
                 if ((ushort)oC < 0x80)
@@ -936,7 +926,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         public int CompareTo(String8 other, bool ignoreCase)
         {
             // If String8s point to the same thing, return the same
-            if (other._index == _index && other._buffer == _buffer && other._length == _length) return 0;
+            if (other.Index == Index && other.Array == Array && other.Length == Length) return 0;
 
             // If one or the other is empty, the non-empty one is greater
             if (this.IsEmpty())
@@ -954,7 +944,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             if (cmp != 0) return cmp;
 
             // If all bytes are equal, the longer one is later
-            return _length.CompareTo(other._length);
+            return Length.CompareTo(other.Length);
         }
 
         /// <summary>
@@ -972,14 +962,14 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             if (other.IsEmpty()) return 1;
 
             // If String8s point to the same thing, return the same
-            if (other._index == _index && other._buffer == _buffer && other._length == _length) return 0;
+            if (other.Index == Index && other.Array == Array && other.Length == Length) return 0;
 
             // Next, compare up to the length both strings are
             int cmp = (ignoreCase ? CompareToCommonLengthOrdinalIgnoreCase(other) : CompareToCommonLength(other));
             if (cmp != 0) return cmp;
 
             // If all bytes are equal and this is not longer than 'other', this is a prefix
-            if (_length <= other._length) return 0;
+            if (Length <= other.Length) return 0;
 
             // Otherwise (other is shorter), this sorts after other
             return 1;
@@ -988,8 +978,8 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         private int CompareToCommonLength(String8 other)
         {
             // Otherwise, compare the common length
-            int thisLength = _length;
-            int otherLength = other._length;
+            int thisLength = Length;
+            int otherLength = other.Length;
             int commonLength = Math.Min(thisLength, otherLength);
 
             int i = 0;
@@ -997,23 +987,23 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             // Compare four-at-a-time while strings are long enough
             for (; i < commonLength - 3; i += 4)
             {
-                int c1 = _buffer[_index + i].CompareTo(other._buffer[other._index + i]);
+                int c1 = Array[Index + i].CompareTo(other.Array[other.Index + i]);
                 if (c1 != 0) return c1;
 
-                int c2 = _buffer[_index + i + 1].CompareTo(other._buffer[other._index + i + 1]);
+                int c2 = Array[Index + i + 1].CompareTo(other.Array[other.Index + i + 1]);
                 if (c2 != 0) return c2;
 
-                int c3 = _buffer[_index + i + 2].CompareTo(other._buffer[other._index + i + 2]);
+                int c3 = Array[Index + i + 2].CompareTo(other.Array[other.Index + i + 2]);
                 if (c3 != 0) return c3;
 
-                int c4 = _buffer[_index + i + 3].CompareTo(other._buffer[other._index + i + 3]);
+                int c4 = Array[Index + i + 3].CompareTo(other.Array[other.Index + i + 3]);
                 if (c4 != 0) return c4;
             }
 
             // Compare the end one-at-a-time
             for (; i < commonLength; ++i)
             {
-                int cmp = _buffer[_index + i].CompareTo(other._buffer[other._index + i]);
+                int cmp = Array[Index + i].CompareTo(other.Array[other.Index + i]);
                 if (cmp != 0) return cmp;
             }
 
@@ -1026,8 +1016,8 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             // does for non-ASCII. This will just be an ordinal comparison of those.
 
             // Otherwise, compare the common length
-            int thisLength = _length;
-            int otherLength = other._length;
+            int thisLength = Length;
+            int otherLength = other.Length;
             int commonLength = Math.Min(thisLength, otherLength);
 
             int i = 0;
@@ -1035,23 +1025,23 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             // Compare four-at-a-time while strings are long enough
             for (; i < commonLength - 3; i += 4)
             {
-                int c1 = CompareOrdinalIgnoreCase(_buffer[_index + i], other._buffer[other._index + i]);
+                int c1 = CompareOrdinalIgnoreCase(Array[Index + i], other.Array[other.Index + i]);
                 if (c1 != 0) return c1;
 
-                int c2 = CompareOrdinalIgnoreCase(_buffer[_index + i + 1], other._buffer[other._index + i + 1]);
+                int c2 = CompareOrdinalIgnoreCase(Array[Index + i + 1], other.Array[other.Index + i + 1]);
                 if (c2 != 0) return c2;
 
-                int c3 = CompareOrdinalIgnoreCase(_buffer[_index + i + 2], other._buffer[other._index + i + 2]);
+                int c3 = CompareOrdinalIgnoreCase(Array[Index + i + 2], other.Array[other.Index + i + 2]);
                 if (c3 != 0) return c3;
 
-                int c4 = CompareOrdinalIgnoreCase(_buffer[_index + i + 3], other._buffer[other._index + i + 3]);
+                int c4 = CompareOrdinalIgnoreCase(Array[Index + i + 3], other.Array[other.Index + i + 3]);
                 if (c4 != 0) return c4;
             }
 
             // Compare the end one-at-a-time
             for (; i < commonLength; ++i)
             {
-                int cmp = CompareOrdinalIgnoreCase(_buffer[_index + i], other._buffer[other._index + i]);
+                int cmp = CompareOrdinalIgnoreCase(Array[Index + i], other.Array[other.Index + i]);
                 if (cmp != 0) return cmp;
             }
 
@@ -1082,9 +1072,9 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         /// <returns>A String8 reference to this String8 value in the new shifted position</returns>
         public String8 ShiftBack(int byteCount)
         {
-            if (byteCount <= 0 || this._index < byteCount) throw new ArgumentOutOfRangeException("byteCount");
-            System.Buffer.BlockCopy(_buffer, _index, _buffer, _index - byteCount, _length);
-            return new String8(_buffer, _index - byteCount, _length);
+            if (byteCount <= 0 || this.Index < byteCount) throw new ArgumentOutOfRangeException("byteCount");
+            System.Buffer.BlockCopy(Array, Index, Array, Index - byteCount, Length);
+            return new String8(Array, Index - byteCount, Length);
         }
 
         /// <summary>
@@ -1095,10 +1085,10 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         /// <returns>Byte count written</returns>
         public int WriteTo(byte[] buffer, int index)
         {
-            if (_length <= 0) return 0;
-            if (index + _length > buffer.Length) throw new ArgumentException(String.Format(Resources.BufferTooSmall, index + _length, buffer.Length));
-            System.Buffer.BlockCopy(_buffer, _index, buffer, index, _length);
-            return _length;
+            if (Length <= 0) return 0;
+            if (index + Length > buffer.Length) throw new ArgumentException(String.Format(Resources.BufferTooSmall, index + Length, buffer.Length));
+            System.Buffer.BlockCopy(Array, Index, buffer, index, Length);
+            return Length;
         }
 
         /// <summary>
@@ -1108,26 +1098,26 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         /// <returns>Character count written</returns>
         public int WriteTo(TextWriter writer)
         {
-            if (_length <= 0) return 0;
+            if (Length <= 0) return 0;
 
-            int length = _length;
-            int end = _index + length;
+            int length = Length;
+            int end = Index + length;
 
-            for (int index = _index; index < end; ++index)
+            for (int index = Index; index < end; ++index)
             {
-                byte current = _buffer[index];
+                byte current = Array[index];
                 if (current < 0x80)
                 {
                     // Single Byte characters - write one-by-one
-                    writer.Write((char)_buffer[index]);
+                    writer.Write((char)Array[index]);
                 }
                 else
                 {
                     // Multi-byte - make the UTF8 decoder convert the rest
-                    string stringSuffix = Encoding.UTF8.GetString(_buffer, index, end - index);
+                    string stringSuffix = Encoding.UTF8.GetString(Array, index, end - index);
                     writer.Write(stringSuffix);
 
-                    length = (index - _index) + stringSuffix.Length;
+                    length = (index - Index) + stringSuffix.Length;
                     break;
                 }
             }
@@ -1142,10 +1132,10 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         /// <returns>Byte count written</returns>
         public int WriteTo(Stream stream)
         {
-            if (_length <= 0) return 0;
+            if (Length <= 0) return 0;
 
-            stream.Write(_buffer, _index, _length);
-            return _length;
+            stream.Write(Array, Index, Length);
+            return Length;
         }
         #endregion
 
@@ -1181,9 +1171,9 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             // Jenkins One-at-a-Time Hash. https://en.wikipedia.org/wiki/Jenkins_hash_function
             uint hash = 0;
 
-            for (int i = 0; i < _length; i++)
+            for (int i = 0; i < Length; i++)
             {
-                hash += _buffer[_index + i];
+                hash += Array[Index + i];
                 hash += (hash << 10);
                 hash ^= (hash >> 6);
             }
@@ -1198,22 +1188,22 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         public override string ToString()
         {
             if (this.IsEmpty()) return String.Empty;
-            return Encoding.UTF8.GetString(_buffer, _index, _length);
+            return Encoding.UTF8.GetString(Array, Index, Length);
         }
         #endregion
 
         #region IBinarySerializable
         public void WriteBinary(BinaryWriter w)
         {
-            w.Write(_length);
-            if (_length > 0) w.Write(_buffer, _index, _length);
+            w.Write(Length);
+            if (Length > 0) w.Write(Array, Index, Length);
         }
 
         public void ReadBinary(BinaryReader r)
         {
-            _length = r.ReadArrayLength(1);
-            if (_length > 0) _buffer = r.ReadBytes(_length);
-            _index = 0;
+            Length = r.ReadArrayLength(1);
+            if (Length > 0) Array = r.ReadBytes(Length);
+            Index = 0;
         }
         #endregion
     }

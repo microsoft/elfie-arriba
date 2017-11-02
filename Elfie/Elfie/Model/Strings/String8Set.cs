@@ -140,14 +140,14 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
 
             // Get the String8 array directly and loop from index to (index + length)
             // 3x faster than String8[index].
-            byte[] array = value._buffer;
-            int end = value._index + value._length;
-            for (int i = value._index; i < end; ++i)
+            byte[] array = value.Array;
+            int end = value.Index + value.Length;
+            for (int i = value.Index; i < end; ++i)
             {
                 if (array[i] == delimiter)
                 {
                     // Next start position is after this delimiter
-                    positions.Add(i - value._index + 1);
+                    positions.Add(i - value.Index + 1);
                 }
             }
 
@@ -212,9 +212,9 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             // The first part always begins at the start of the string
             positions.Add(0);
 
-            byte[] array = value._buffer;
-            int i = value._index;
-            int end = i + value._length;
+            byte[] array = value.Array;
+            int i = value.Index;
+            int end = i + value.Length;
 
             // Walk the string. Find and mark delimiters outside of quotes only
             while (i < end)
@@ -232,7 +232,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
                     // If a delimiter is found, add another split position
                     if (array[i] == delimiter)
                     {
-                        positions.Add(i - value._index + 1);
+                        positions.Add(i - value.Index + 1);
                     }
                 }
 
@@ -272,9 +272,9 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             // The first part always begins at the start of the (shifted) string
             positions.Add(0);
 
-            byte[] array = row._buffer;
-            int i = row._index;
-            int end = i + row._length;
+            byte[] array = row.Array;
+            int i = row.Index;
+            int end = i + row.Length;
 
             // We're shifting values in the string to overwrite quotes around cells
             // and doubled quotes. copyTo is where we've written to in the unescaped
@@ -297,7 +297,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
                         // If a delimiter is found, add another split position
                         if (array[i] == UTF8.Comma)
                         {
-                            positions.Add(copyTo - row._index + 1);
+                            positions.Add(copyTo - row.Index + 1);
                             i++; copyTo++;
                             break;
                         }
@@ -329,7 +329,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
                             if (array[i] == UTF8.Comma)
                             {
                                 // End of cell [comma]. Copy comma, end of cell.
-                                positions.Add(copyTo - row._index + 1);
+                                positions.Add(copyTo - row.Index + 1);
                                 array[copyTo] = array[i];
                                 i++; copyTo++;
                                 break;
@@ -350,7 +350,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             }
 
             // The last part always ends at the end of the (shifted) string
-            positions.Add(copyTo - row._index + 1);
+            positions.Add(copyTo - row.Index + 1);
 
             // Overwrite duplicate values left from shifting to make bugs clearer
             for (; copyTo < end; ++copyTo)
