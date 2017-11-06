@@ -14,13 +14,11 @@ namespace XForm
     {
         static void Main(string[] args)
         {
-            // Get this to work. What's up with Elfie BadImageFormatException?
-            // Copy from TSV to CSV
             String8Block block = new String8Block();
             using (new TraceWatch($"Copying from \"{args[0]}\" to \"{args[1]}\"..."))
             {
                 IDataBatchSource source = new TabularFileReader(TabularFactory.BuildReader(args[0]));
-                source = new WhereEqualsFilter<String8>(source, "OU", block.GetCopy("UserAccounts"));
+                source = new WhereEqualsFilter<String8>(source, "State", block.GetCopy("Active"));
                 //source = new WhereEqualsFilter<String8>(source, "Assigned To", block.GetCopy("Barry Markey"));
                 using (TabularFileWriter writer = new TabularFileWriter(source, TabularFactory.BuildWriter(args[1])))
                 {
