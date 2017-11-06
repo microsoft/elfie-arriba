@@ -3,10 +3,10 @@ using Microsoft.CodeAnalysis.Elfie.Extensions;
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.CodeAnalysis.Elfie.Serialization;
 using System;
+using System.Linq;
 using XForm.Aggregators;
 using XForm.Data;
 using XForm.Readers;
-using XForm.Sources;
 using XForm.Transforms;
 using XForm.Writers;
 
@@ -22,6 +22,9 @@ namespace XForm
             {
                 sample[i] = r.Next(1000);
             }
+
+            TimingComparisons(sample, 500);
+            
 
             ArrayReader table = new ArrayReader();
             table.AddColumn(new ColumnDetails("ID", typeof(int), false), sample, sample.Length);
@@ -45,6 +48,43 @@ namespace XForm
                     writer.Copy();
                     Console.WriteLine($"{writer.RowCountWritten:n0} rows, {writer.BytesWritten.SizeString()} writen.");
                 }
+            }
+        }
+
+        static void TimingComparisons(int[] array, int value)
+        {
+            using (new TraceWatch($"For Loop [==]"))
+            {
+                int count = 0;
+                for (int i = 0; i < array.Length; ++i)
+                {
+                    if (array[i] == 500) count++;
+                }
+
+                Console.WriteLine($"Done. {count:n0} found.");
+            }
+
+            using (new TraceWatch($"For Loop [.CompareTo]"))
+            {
+                int count = 0;
+                for (int i = 0; i < array.Length; ++i)
+                {
+                    if (value.CompareTo(array[i]) == 0) count++;
+                }
+
+                Console.WriteLine($"Done. {count:n0} found.");
+            }
+
+            using (new TraceWatch($"Linq Count [==]"))
+            {
+                int count = array.Where((i) => i == value).Count();
+                Console.WriteLine($"Done. {count:n0} found.");
+            }
+
+            using (new TraceWatch($"Linq Count [.CompareTo]"))
+            {
+                int count = array.Where((i) => i.CompareTo(value) == 0).Count();
+                Console.WriteLine($"Done. {count:n0} found.");
             }
         }
     }

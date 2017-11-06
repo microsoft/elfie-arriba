@@ -48,6 +48,7 @@
     <Compile Include="Data\ColumnDetails.cs" />
     <Compile Include="Data\DataBatch.cs" />
     <Compile Include="Data\IDataBatchSource.cs" />
+    <Compile Include="Data\IDataBatchTransform.cs" />
     <Compile Include="Extensions\IReadOnlyListExtensions.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

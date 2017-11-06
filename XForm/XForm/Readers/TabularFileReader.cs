@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using XForm.Data;
 
-namespace XForm.Sources
+namespace XForm.Readers
 {
     public class TabularFileReader : IDataBatchSource
     {
