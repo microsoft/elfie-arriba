@@ -16,26 +16,25 @@ namespace XForm
     {
         static void Main(string[] args)
         {
-            int[] sample = new int[16 * 1024 * 1024];
-            Random r = new Random(5);
-            for (int i = 0; i < sample.Length; ++i)
-            {
-                sample[i] = r.Next(1000);
-            }
+            //int[] sample = new int[16 * 1024 * 1024];
+            //Random r = new Random(5);
+            //for (int i = 0; i < sample.Length; ++i)
+            //{
+            //    sample[i] = r.Next(1000);
+            //}
 
-            TimingComparisons(sample, 500);
+            //TimingComparisons(sample, 500);
 
 
-            ArrayReader table = new ArrayReader();
-            table.AddColumn(new ColumnDetails("ID", typeof(int), false), DataBatch.All(sample, sample.Length));
+            //ArrayReader table = new ArrayReader();
+            //table.AddColumn(new ColumnDetails("ID", typeof(int), false), DataBatch.All(sample, sample.Length));
 
             String8Block block = new String8Block();
-
             IDataBatchSource source;
 
             source = new TabularFileReader(args[0]);
-            source = new WhereFilter(source, "State", CompareOperator.Equals, block.GetCopy("Active"));
-            source = new WhereFilter(source, "Assigned To", CompareOperator.Equals, block.GetCopy("Barry Markey"));
+            //source = new WhereFilter(source, "State", CompareOperator.Equals, block.GetCopy("Active"));
+            //source = new WhereFilter(source, "Assigned To", CompareOperator.Equals, block.GetCopy("Barry Markey"));
 
             //source = table;
             //source = new WhereFilter(source, "ID", CompareOperator.Equals, 500);
@@ -43,14 +42,15 @@ namespace XForm
             //source = new CountAggregator(source);
             //source = new TypeConverter(source, "Count", typeof(String8), String8.Empty, true);
 
-            using (TabularFileWriter writer = new TabularFileWriter(source, TabularFactory.BuildWriter(args[1])))
+            using(BinaryTableWriter writer = new BinaryTableWriter(source, args[1]))
+            //using (TabularFileWriter writer = new TabularFileWriter(source, TabularFactory.BuildWriter(args[1])))
             {
                 using (new TraceWatch($"Copying from \"{args[0]}\" to \"{args[1]}\"..."))
                 {
                     writer.Copy(10240);
                 }
 
-                Console.WriteLine($"{writer.RowCountWritten:n0} rows, {writer.BytesWritten.SizeString()} written.");
+                Console.WriteLine($"{writer.RowCountWritten:n0} rows written.");
             }
         }
 

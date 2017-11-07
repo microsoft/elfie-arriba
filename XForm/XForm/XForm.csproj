@@ -60,6 +60,7 @@
     <Compile Include="Readers\TabularFileReader.cs" />
     <Compile Include="Transforms\TypeConverter.cs" />
     <Compile Include="Transforms\WhereFilter.cs" />
+    <Compile Include="Writers\BinaryTableWriter.cs" />
     <Compile Include="Writers\TabularFileWriter.cs" />
   </ItemGroup>
   <ItemGroup>
