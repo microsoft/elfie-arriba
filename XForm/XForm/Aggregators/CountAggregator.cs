@@ -35,20 +35,20 @@ namespace XForm.Aggregators
             };
         }
 
-        public bool Next(int desiredCount)
+        public int Next(int desiredCount)
         {
-            if (_count != -1) return false;
+            if (_count != -1) return 0;
 
             _count = 0;
 
             Func<DataBatch> getter = _source.ColumnGetter(0);
-            while(_source.Next(desiredCount))
+            while(_source.Next(desiredCount) > 0)
             {
                 DataBatch batch = getter();
                 _count += batch.Count;
             }
 
-            return true;
+            return 1;
         }
 
         public void Dispose()

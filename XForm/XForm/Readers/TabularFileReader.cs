@@ -47,7 +47,7 @@ namespace XForm.Readers
             };
         }
 
-        public bool Next(int desiredCount)
+        public int Next(int desiredCount)
         {
             if (_cells[0] == null)
             {
@@ -70,10 +70,10 @@ namespace XForm.Readers
                 }
 
                 _currentBatchCount++;
-                if (_currentBatchCount == _cells[0].Length) return true;
+                if (_currentBatchCount == _cells[0].Length) break;
             }
 
-            return _currentBatchCount > 0;
+            return _currentBatchCount;
         }
 
         public void Dispose()

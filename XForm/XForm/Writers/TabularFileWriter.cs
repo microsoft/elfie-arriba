@@ -17,7 +17,7 @@ namespace XForm.Writers
             this._writer = writer;
         }
 
-        public void Copy(int rowLimit = -1)
+        public void Copy(int batchSize = 100)
         {
             int columnCount = _source.Columns.Count;
 
@@ -34,7 +34,7 @@ namespace XForm.Writers
 
             _writer.SetColumns(_source.Columns.Select((cd) => cd.Name));
 
-            while (_source.Next(100))
+            while (_source.Next(batchSize) > 0)
             {
                 for (int i = 0; i < getters.Length; ++i)
                 {
@@ -58,7 +58,6 @@ namespace XForm.Writers
                     }
 
                     _writer.NextRow();
-                    if (_writer.RowCountWritten == rowLimit) break;
                 }
             }
         }

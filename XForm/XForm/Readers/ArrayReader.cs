@@ -7,45 +7,51 @@ namespace XForm.Readers
     public class ArrayReader : IDataBatchSource
     {
         private List<ColumnDetails> _columns;
-        private List<Array> _arrays;
-        private List<int> _arrayLengths;
-        private bool _walked;
+        private List<DataBatch> _columnArrays;
+        private int _rowCount;
+
+        private int _nextIndex;
+        private int _nextLength;
+    
 
         public ArrayReader()
         {
             _columns = new List<ColumnDetails>();
-            _arrays = new List<Array>();
-            _arrayLengths = new List<int>();
+            _columnArrays = new List<DataBatch>();
         }
 
-        public void AddColumn(ColumnDetails details, Array array, int length)
+        public void AddColumn(ColumnDetails details, DataBatch fullColumn)
         {
+            if (_columns.Count == 0) _rowCount = fullColumn.Count;
+            if (fullColumn.Count != _rowCount) throw new ArgumentException($"All columns passed to ArrayReader must have the same row count. The Reader row count is {_rowCount:n0}; this column has {fullColumn.Count:n0} rows.");
+
             for(int i = 0; i < _columns.Count; ++i)
             {
                 if (_columns[i].Name.Equals(details.Name, StringComparison.OrdinalIgnoreCase)) throw new ArgumentException($"Can't add duplicate column. ArrayReader already has a column {details.Name}.");
             }
 
             _columns.Add(details);
-            _arrays.Add(array);
-            _arrayLengths.Add(length);
+            _columnArrays.Add(fullColumn);
         }
 
         public IReadOnlyList<ColumnDetails> Columns => this._columns;
 
         public Func<DataBatch> ColumnGetter(int columnIndex)
         {
-            return () => DataBatch.All(_arrays[columnIndex], _arrayLengths[columnIndex]);
+            return () => _columnArrays[columnIndex].Slice(_nextIndex, _nextIndex + _nextLength);
         }
 
-        public bool Next(int desiredCount)
+        public int Next(int desiredCount)
         {
-            if(!_walked)
-            {
-                _walked = true;
-                return true;
-            }
+            // Move to after the previous page returned
+            _nextIndex += _nextLength;
+            _nextLength = desiredCount;
 
-            return false;
+            // If there aren't enough items left, return only those left
+            if (_nextIndex + _nextLength > _rowCount) _nextLength = _rowCount - _nextIndex;
+
+            // Return true if there are any more rows
+            return _nextLength;
         }
 
         public void Dispose()

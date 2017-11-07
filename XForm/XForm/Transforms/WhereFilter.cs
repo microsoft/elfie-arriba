@@ -48,9 +48,9 @@ namespace XForm.Transforms
             };
         }
 
-        public bool Next(int desiredCount)
+        public int Next(int desiredCount)
         {
-            while(_source.Next(desiredCount))
+            while(_source.Next(desiredCount) > 0)
             {
                 // Get a batch of rows from the filter column
                 DataBatch filterColumnBatch = _filterColumnGetter();
@@ -59,10 +59,10 @@ namespace XForm.Transforms
                 _comparer(filterColumnBatch, _mapper);
 
                 // Stop if we got rows, otherwise get the next source batch
-                if (_mapper.Count > 0) return true;
+                if (_mapper.Count > 0) return _mapper.Count;
             }
 
-            return false;
+            return 0;
         }
 
         public void Dispose()

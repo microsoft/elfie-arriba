@@ -27,7 +27,7 @@ namespace XForm
             
 
             ArrayReader table = new ArrayReader();
-            table.AddColumn(new ColumnDetails("ID", typeof(int), false), sample, sample.Length);
+            table.AddColumn(new ColumnDetails("ID", typeof(int), false), DataBatch.All(sample, sample.Length));
 
             String8Block block = new String8Block();
 
@@ -38,6 +38,7 @@ namespace XForm
             //source = new WhereFilter(source, "State", CompareOperator.NotEquals, block.GetCopy("Active"));
             //source = new WhereFilter(source, "Assigned To", CompareOperator.Equals, block.GetCopy("Barry Markey"));
             source = new WhereFilter(source, "ID", CompareOperator.Equals, 500);
+            //source = new RowLimiter(source, 10000000);
             source = new CountAggregator(source);
             source = new TypeConverter(source, "Count", typeof(String8));
 
@@ -45,7 +46,7 @@ namespace XForm
             {
                 using (TabularFileWriter writer = new TabularFileWriter(source, TabularFactory.BuildWriter(args[1])))
                 {
-                    writer.Copy();
+                    writer.Copy(10240);
                     Console.WriteLine($"{writer.RowCountWritten:n0} rows, {writer.BytesWritten.SizeString()} writen.");
                 }
             }

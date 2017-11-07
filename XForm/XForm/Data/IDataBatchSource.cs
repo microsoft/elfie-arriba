@@ -14,8 +14,8 @@ namespace XForm.Data
         ///  Advance to the next batch of rows from this source.
         /// </summary>
         /// <param name="desiredCount">Desired Row count; fewer or more rows may be returned.</param>
-        /// <returns>True if a more rows are available, False if source is empty</returns>
-        bool Next(int desiredCount);
+        /// <returns>Row count returned, zero if no more rows available</returns>
+        int Next(int desiredCount);
 
         /// <summary>
         ///  Return a function which returns the DataBatch for the desired column

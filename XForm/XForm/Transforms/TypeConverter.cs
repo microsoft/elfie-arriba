@@ -62,7 +62,7 @@ namespace XForm.Transforms
             };
         }
 
-        public bool Next(int desiredCount)
+        public int Next(int desiredCount)
         {
             return _source.Next(desiredCount);
         }

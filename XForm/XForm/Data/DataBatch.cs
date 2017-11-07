@@ -62,28 +62,8 @@ namespace XForm.Data
         public DataBatch Slice(int startIndexInclusive, int endIndexExclusive)
         {
             if (startIndexInclusive < this.StartIndexInclusive) throw new ArgumentOutOfRangeException("startIndexInclusive");
-            if (endIndexExclusive > this.EndIndexExclusive) throw new ArgumentOutOfRangeException("endIndexExclusive");
+            if (endIndexExclusive < startIndexInclusive || endIndexExclusive > this.EndIndexExclusive) throw new ArgumentOutOfRangeException("endIndexExclusive");
             return new DataBatch() { Array = this.Array, Indices = this.Indices, StartIndexInclusive = startIndexInclusive, EndIndexExclusive = endIndexExclusive };
-        }
-
-        public DataBatch Page(int pageIndex, int pageCount)
-        {
-            if (pageCount < 1) throw new ArgumentOutOfRangeException("pageCount");
-            if (pageIndex < 0 || pageIndex >= pageCount) throw new ArgumentOutOfRangeException("pageIndex");
-
-            // Determine how many elements per page (rounded up)
-            int countPerPage = this.Count / pageCount;
-            if (countPerPage * pageCount < this.Count) countPerPage++;
-
-            // Find the start index of this page
-            int startIndex = this.StartIndexInclusive + (pageIndex * countPerPage);
-
-            // Find the end index; make the batch empty if we're out of rows
-            int endIndex = startIndex + countPerPage;
-            if (endIndex > this.EndIndexExclusive) endIndex = this.EndIndexExclusive;
-
-            // Return the batch page
-            return new DataBatch() { Array = this.Array, Indices = this.Indices, StartIndexInclusive = startIndex, EndIndexExclusive = endIndex };
         }
     }
 }
