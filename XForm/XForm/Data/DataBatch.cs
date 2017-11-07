@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 
 namespace XForm.Data
 {
@@ -33,16 +34,29 @@ namespace XForm.Data
 
         public int Count => EndIndexExclusive - StartIndexInclusive;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public int Index(int zeroSpaceIndex)
+        {
+            int realIndex = zeroSpaceIndex + this.StartIndexInclusive;
+            if (this.Indices != null) realIndex = this.Indices[realIndex];
+            return realIndex;
+        }
+
+        public static DataBatch All(Array array)
+        {
+            return All(array, array.Length);
+        }
+
         public static DataBatch All(Array array, int length)
         {
             if (length > array.Length) throw new ArgumentOutOfRangeException("length");
             return new DataBatch() { Array = array, Indices = null, StartIndexInclusive = 0, EndIndexExclusive = length };
         }
 
-        public DataBatch Map(int[] indices, int length)
+        public static DataBatch Map(Array array, int[] indices, int length)
         {
             if (length > indices.Length) throw new ArgumentOutOfRangeException("length");
-            return new DataBatch() { Array = this.Array, Indices = indices, StartIndexInclusive = 0, EndIndexExclusive = length };
+            return new DataBatch() { Array = array, Indices = indices, StartIndexInclusive = 0, EndIndexExclusive = length };
         }
 
         public DataBatch Slice(int startIndexInclusive, int endIndexExclusive)
@@ -58,9 +72,8 @@ namespace XForm.Data
             if (pageIndex < 0 || pageIndex >= pageCount) throw new ArgumentOutOfRangeException("pageIndex");
 
             // Determine how many elements per page (rounded up)
-            int length = (this.EndIndexExclusive - this.StartIndexInclusive);
-            int countPerPage = length / pageCount;
-            if (countPerPage * pageCount < length) countPerPage++;
+            int countPerPage = this.Count / pageCount;
+            if (countPerPage * pageCount < this.Count) countPerPage++;
 
             // Find the start index of this page
             int startIndex = this.StartIndexInclusive + (pageIndex * countPerPage);

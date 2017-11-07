@@ -15,13 +15,17 @@ namespace XForm.Extensions
                 if (columns[index].Name.Equals(columnName, StringComparison.InvariantCultureIgnoreCase)) return index;
             }
 
-            throw new ColumnNotFoundException($"Column \"{columnName}\" not found in source. Columns: \"{String.Join(", ", columns.Select((cd) => cd.Name))}.");
+            throw new ColumnNotFoundException(columnName, columns);
         }
     }
 
     [Serializable]
     public class ColumnNotFoundException : Exception
     {
+        public ColumnNotFoundException(string columnName, IEnumerable<ColumnDetails> columns)
+            : this($"Column \"{columnName}\" not found in source. Columns: \"{String.Join(", ", columns.Select((cd) => cd.Name))}.")
+        { }
+
         public ColumnNotFoundException() { }
         public ColumnNotFoundException(string message) : base(message) { }
         public ColumnNotFoundException(string message, Exception inner) : base(message, inner) { }

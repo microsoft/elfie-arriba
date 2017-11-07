@@ -48,11 +48,13 @@
     <Compile Include="Data\ColumnDetails.cs" />
     <Compile Include="Data\DataBatch.cs" />
     <Compile Include="Data\IDataBatchSource.cs" />
-    <Compile Include="Data\IDataBatchTransform.cs" />
+    <Compile Include="Data\Operator.cs" />
     <Compile Include="Extensions\IReadOnlyListExtensions.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Readers\ArrayReader.cs" />
+    <Compile Include="Transforms\Comparers.cs" />
+    <Compile Include="Transforms\RowRemapper.cs" />
     <Compile Include="Readers\TabularFileReader.cs" />
     <Compile Include="Transforms\TypeConverter.cs" />
     <Compile Include="Transforms\WhereFilter.cs" />

@@ -34,10 +34,10 @@ namespace XForm
             IDataBatchSource source;
             source = table;
             //source = new TabularFileReader(TabularFactory.BuildReader(args[0]));
-            //source = new WhereEqualsFilter<int>(source, "ID", 500);
-            //source = new WhereEqualsFilter<String8>(source, "State", block.GetCopy("Active"));
-            //source = new WhereEqualsFilter<String8>(source, "Assigned To", block.GetCopy("Barry Markey"));
-            source = new WhereEqualsFilter<int>(source, "ID", 500);
+            //source = new WhereFilter(source, "ID", CompareOperator.Equals, 500);
+            //source = new WhereFilter(source, "State", CompareOperator.NotEquals, block.GetCopy("Active"));
+            //source = new WhereFilter(source, "Assigned To", CompareOperator.Equals, block.GetCopy("Barry Markey"));
+            source = new WhereFilter(source, "ID", CompareOperator.Equals, 500);
             source = new CountAggregator(source);
             source = new TypeConverter(source, "Count", typeof(String8));
 
