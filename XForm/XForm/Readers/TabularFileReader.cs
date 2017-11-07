@@ -8,6 +8,8 @@ namespace XForm.Readers
 {
     public class TabularFileReader : IDataBatchSource
     {
+        private string _filePath;
+
         private ITabularReader _reader;
         private List<ColumnDetails> _columns;
 
@@ -15,15 +17,10 @@ namespace XForm.Readers
         private String8[][] _cells;
         private int _currentBatchCount;
 
-        public TabularFileReader(ITabularReader reader)
+        public TabularFileReader(string filePath)
         {
-            this._reader = reader;
-
-            this._columns = new List<ColumnDetails>();
-            foreach(string columnName in this._reader.Columns)
-            {
-                this._columns.Add(new ColumnDetails(columnName, typeof(String8), false));
-            }
+            this._filePath = filePath;
+            Reset();
 
             _block = new String8Block();
             _cells = new String8[this._columns.Count][];
@@ -45,6 +42,18 @@ namespace XForm.Readers
             {
                 return DataBatch.All(_cells[columnIndex], _currentBatchCount);
             };
+        }
+
+        public void Reset()
+        {
+            this._reader = TabularFactory.BuildReader(this._filePath);
+
+            this._columns = new List<ColumnDetails>();
+            foreach (string columnName in this._reader.Columns)
+            {
+                this._columns.Add(new ColumnDetails(columnName, typeof(String8), false));
+            }
+
         }
 
         public int Next(int desiredCount)

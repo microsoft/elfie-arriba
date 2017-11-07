@@ -23,6 +23,12 @@ namespace XForm.Transforms
             return _source.ColumnGetter(columnIndex);
         }
 
+        public void Reset()
+        {
+            _countSoFar = 0;
+            _source.Reset();
+        }
+
         public int Next(int desiredCount)
         {
             if (_countSoFar + desiredCount > _countLimit) desiredCount = _countLimit - _countSoFar;

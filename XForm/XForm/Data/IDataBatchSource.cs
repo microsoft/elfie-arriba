@@ -11,7 +11,12 @@ namespace XForm.Data
         IReadOnlyList<ColumnDetails> Columns { get; }
 
         /// <summary>
-        ///  Advance to the next batch of rows from this source.
+        ///  Go back to the first rows from this source again.
+        /// </summary>
+        void Reset();
+
+        /// <summary>
+        ///  Request the next batch of rows from the source of up to desiredCount rows.
         /// </summary>
         /// <param name="desiredCount">Desired Row count; fewer or more rows may be returned.</param>
         /// <returns>Row count returned, zero if no more rows available</returns>

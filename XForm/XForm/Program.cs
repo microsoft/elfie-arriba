@@ -33,7 +33,7 @@ namespace XForm
 
             IDataBatchSource source;
 
-            source = new TabularFileReader(TabularFactory.BuildReader(args[0]));
+            source = new TabularFileReader(args[0]);
             source = new WhereFilter(source, "State", CompareOperator.Equals, block.GetCopy("Active"));
             source = new WhereFilter(source, "Assigned To", CompareOperator.Equals, block.GetCopy("Barry Markey"));
 

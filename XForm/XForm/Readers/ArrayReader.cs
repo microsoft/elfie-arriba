@@ -12,7 +12,6 @@ namespace XForm.Readers
 
         private int _nextIndex;
         private int _nextLength;
-    
 
         public ArrayReader()
         {
@@ -39,6 +38,12 @@ namespace XForm.Readers
         public Func<DataBatch> ColumnGetter(int columnIndex)
         {
             return () => _columnArrays[columnIndex].Slice(_nextIndex, _nextIndex + _nextLength);
+        }
+
+        public void Reset()
+        {
+            _nextIndex = 0;
+            _nextLength = 0;
         }
 
         public int Next(int desiredCount)

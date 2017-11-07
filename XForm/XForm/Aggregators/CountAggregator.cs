@@ -35,12 +35,19 @@ namespace XForm.Aggregators
             };
         }
 
+        public void Reset()
+        {
+            _count = -1;
+            _source.Reset();
+        }
+
         public int Next(int desiredCount)
         {
+            // Return no more rows if this isn't the first call
             if (_count != -1) return 0;
 
+            // Accumulate count over all rows from source
             _count = 0;
-
             while(true)
             {
                 int batchCount = _source.Next(desiredCount);
@@ -48,6 +55,7 @@ namespace XForm.Aggregators
                 _count += batchCount;
             }
             
+            // Return that there's one row (the count)
             return 1;
         }
 

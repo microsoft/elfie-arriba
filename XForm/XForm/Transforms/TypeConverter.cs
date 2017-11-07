@@ -62,6 +62,11 @@ namespace XForm.Transforms
             };
         }
 
+        public void Reset()
+        {
+            _source.Reset();
+        }
+
         public int Next(int desiredCount)
         {
             return _source.Next(desiredCount);
