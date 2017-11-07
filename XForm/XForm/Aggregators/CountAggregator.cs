@@ -41,13 +41,13 @@ namespace XForm.Aggregators
 
             _count = 0;
 
-            Func<DataBatch> getter = _source.ColumnGetter(0);
-            while(_source.Next(desiredCount) > 0)
+            while(true)
             {
-                DataBatch batch = getter();
-                _count += batch.Count;
+                int batchCount = _source.Next(desiredCount);
+                if (batchCount == 0) break;
+                _count += batchCount;
             }
-
+            
             return 1;
         }
 
