@@ -27,9 +27,9 @@ namespace XForm.Data
             return new ColumnDetails(name, this.Type, this.Nullable);
         }
 
-        public ColumnDetails ChangeType(Type type, bool nullable)
+        public ColumnDetails ChangeType(Type type)
         {
-            return new ColumnDetails(this.Name, type, nullable);
+            return new ColumnDetails(this.Name, type, this.Nullable);
         }
     }
 }

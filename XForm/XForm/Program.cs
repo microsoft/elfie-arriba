@@ -41,7 +41,7 @@ namespace XForm
             //source = new WhereFilter(source, "ID", CompareOperator.Equals, 500);
             //source = new RowLimiter(source, 100);
             //source = new CountAggregator(source);
-            //source = new TypeConverter(source, "Count", typeof(String8));
+            //source = new TypeConverter(source, "Count", typeof(String8), String8.Empty, true);
 
             using (TabularFileWriter writer = new TabularFileWriter(source, TabularFactory.BuildWriter(args[1])))
             {

@@ -40,6 +40,8 @@ namespace XForm.Transforms
                 throw new NotImplementedException(type.Name);
             }
 
+            // TODO: Extensibility via app.config like Elfie Reader/Writers
+
             // Set (and cast) the value to compare against
             comparer.SetValue(value);
 
