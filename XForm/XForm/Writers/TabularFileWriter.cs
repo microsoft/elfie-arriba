@@ -1,69 +1,88 @@
 ﻿using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.CodeAnalysis.Elfie.Serialization;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using XForm.Data;
+using XForm.Transforms;
 
 namespace XForm.Writers
 {
-    public class TabularFileWriter : IDisposable
+    public class TabularFileWriter : IDataBatchSource
     {
+        private int _batchSize = 100;
+        private string _outputFilePath;
         private IDataBatchSource _source;
         private ITabularWriter _writer;
 
-        public TabularFileWriter(IDataBatchSource source, ITabularWriter writer)
+        private Func<DataBatch>[] _stringColumnGetters;
+
+        public TabularFileWriter(IDataBatchSource source, string outputFilePath)
         {
             this._source = source;
-            this._writer = writer;
+            this._outputFilePath = outputFilePath;
+            Initialize();
         }
 
-        public void Copy(int batchSize = 100)
+        public IReadOnlyList<ColumnDetails> Columns => _source.Columns;
+
+        public Func<DataBatch> ColumnGetter(int columnIndex)
         {
-            int columnCount = _source.Columns.Count;
-
-            // :/
-            Func<DataBatch>[] getters = new Func<DataBatch>[columnCount];
-            for (int i = 0; i < columnCount; ++i)
-            {
-                getters[i] = _source.ColumnGetter(i);
-            }
-
-            // :/
-            DataBatch[] columnBatches = new DataBatch[columnCount];
-            String8[][] columnArrays = new String8[columnCount][];
-
-            _writer.SetColumns(_source.Columns.Select((cd) => cd.Name));
-
-            while (_source.Next(batchSize) > 0)
-            {
-                for (int i = 0; i < getters.Length; ++i)
-                {
-                    columnBatches[i] = getters[i]();
-                    columnArrays[i] = (String8[])columnBatches[i].Array;
-                }
-
-                // Note: Invariant: All columns should have ranges of the same length
-                int length = columnBatches[0].EndIndexExclusive - columnBatches[0].StartIndexInclusive;
-
-                for (int rowIndex = 0; rowIndex < length; ++rowIndex)
-                {
-                    for(int colIndex = 0; colIndex < columnCount; ++colIndex)
-                    {
-                        // :/
-                        int arrayIndex = columnBatches[colIndex].StartIndexInclusive + rowIndex;
-                        if (columnBatches[colIndex].Indices != null) arrayIndex = columnBatches[colIndex].Indices[arrayIndex];
-                        String8 value = columnArrays[colIndex][arrayIndex];
-
-                        _writer.Write(value);
-                    }
-
-                    _writer.NextRow();
-                }
-            }
+            return _source.ColumnGetter(columnIndex);
         }
 
-        public int RowCountWritten => _writer.RowCountWritten;
-        public long BytesWritten => _writer.BytesWritten;
+        public void Reset()
+        {
+            _source.Reset();
+            Initialize();
+        }
+
+        private void Initialize()
+        {
+            this._stringColumnGetters = new Func<DataBatch>[_source.Columns.Count];
+            for (int i = 0; i < _source.Columns.Count; ++i)
+            {
+                Func<DataBatch> rawGetter = _source.ColumnGetter(i);
+                Func<DataBatch> stringGetter = rawGetter;
+
+                if (_source.Columns[i].Type != typeof(String8))
+                {
+                    Func<DataBatch, DataBatch> converter = TypeConverterFactory.Build(_source.Columns[i].Type, typeof(String8), String8.Empty, false);
+                    stringGetter = () => (converter(rawGetter()));
+                }
+
+                _stringColumnGetters[i] = stringGetter;
+            }
+
+            _writer = TabularFactory.BuildWriter(_outputFilePath);
+            _writer.SetColumns(_source.Columns.Select((cd) => cd.Name));
+        }
+
+        public int Next(int desiredCount)
+        {
+            // Or smaller batchsize?
+            int rowCount = _source.Next(desiredCount);
+            if (rowCount == 0) return 0;
+
+            DataBatch[] batches = new DataBatch[_stringColumnGetters.Length];
+            for (int i = 0; i < _stringColumnGetters.Length; ++i)
+            {
+                batches[i] = _stringColumnGetters[i]();
+            }
+
+            for (int rowIndex = 0; rowIndex < rowCount; ++rowIndex)
+            {
+                for(int colIndex = 0; colIndex < _stringColumnGetters.Length; ++colIndex)
+                {
+                    String8 value = ((String8[])batches[colIndex].Array)[batches[colIndex].Index(rowIndex)];
+                    _writer.Write(value);
+                }
+
+                _writer.NextRow();
+            }
+
+            return rowCount;
+        }
 
         public void Dispose()
         {
@@ -79,5 +98,7 @@ namespace XForm.Writers
                 this._writer = null;
             }
         }
+
+        
     }
 }

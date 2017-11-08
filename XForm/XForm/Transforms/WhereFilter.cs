@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using XForm.Data;
 using XForm.Extensions;
+using XForm.Query;
 
 namespace XForm.Transforms
 {
@@ -25,7 +26,7 @@ namespace XForm.Transforms
             this._filterColumnGetter = source.ColumnGetter(columnIndex);
 
             // Build a Comparer for the desired type and get the function for the desired compare operator
-            this._comparer = ComparerFactory.Build(filterColumn.Type, op, value);
+            this._comparer = ComparerFactory.Build(filterColumn.Type, op, TypeConverterFactory.ConvertSingle(value, filterColumn.Type));
 
             // Build a mapper to hold matching rows and remap source batches
             this._mapper = new RowRemapper();

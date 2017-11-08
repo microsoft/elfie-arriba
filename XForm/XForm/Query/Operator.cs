@@ -1,4 +1,4 @@
-﻿namespace XForm.Data
+﻿namespace XForm.Query
 {
     public enum CompareOperator : byte
     {

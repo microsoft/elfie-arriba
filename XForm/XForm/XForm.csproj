@@ -48,8 +48,10 @@
     <Compile Include="Data\ColumnDetails.cs" />
     <Compile Include="Data\DataBatch.cs" />
     <Compile Include="Data\IDataBatchSource.cs" />
-    <Compile Include="Data\Operator.cs" />
+    <Compile Include="Query\Operator.cs" />
     <Compile Include="Extensions\IReadOnlyListExtensions.cs" />
+    <Compile Include="Extensions\StringExtensions.cs" />
+    <Compile Include="Query\PipelineFactory.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Readers\ArrayReader.cs" />

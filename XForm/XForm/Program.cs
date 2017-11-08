@@ -1,14 +1,12 @@
 ﻿using Microsoft.CodeAnalysis.Elfie.Diagnostics;
-using Microsoft.CodeAnalysis.Elfie.Extensions;
-using Microsoft.CodeAnalysis.Elfie.Model.Strings;
-using Microsoft.CodeAnalysis.Elfie.Serialization;
 using System;
+using System.IO;
 using System.Linq;
 using XForm.Aggregators;
 using XForm.Data;
+using XForm.Query;
 using XForm.Readers;
 using XForm.Transforms;
-using XForm.Writers;
 
 namespace XForm
 {
@@ -16,44 +14,37 @@ namespace XForm
     {
         static void Main(string[] args)
         {
-            //int[] sample = new int[16 * 1024 * 1024];
-            //Random r = new Random(5);
-            //for (int i = 0; i < sample.Length; ++i)
-            //{
-            //    sample[i] = r.Next(1000);
-            //}
-
-            //TimingComparisons(sample, 500);
-
-
-            //ArrayReader table = new ArrayReader();
-            //table.AddColumn(new ColumnDetails("ID", typeof(int), false), DataBatch.All(sample, sample.Length));
-
-            String8Block block = new String8Block();
-            IDataBatchSource source;
-
-            source = new TabularFileReader(args[0]);
-            //source = new WhereFilter(source, "State", CompareOperator.Equals, block.GetCopy("Active"));
-            //source = new WhereFilter(source, "Assigned To", CompareOperator.Equals, block.GetCopy("Barry Markey"));
-
-            //source = table;
-            //source = new WhereFilter(source, "ID", CompareOperator.Equals, 500);
-            //source = new RowLimiter(source, 100);
-            //source = new CountAggregator(source);
-            //source = new TypeConverter(source, "Count", typeof(String8), String8.Empty, true);
-
-            using(BinaryTableWriter writer = new BinaryTableWriter(source, args[1]))
-            //using (TabularFileWriter writer = new TabularFileWriter(source, TabularFactory.BuildWriter(args[1])))
+            //TimingComparisons();
+            string query = File.ReadAllText(args[0]);
+            int rowsWritten = 0;
+            using (new TraceWatch(query))
             {
-                using (new TraceWatch($"Copying from \"{args[0]}\" to \"{args[1]}\"..."))
+                using (IDataBatchSource source = PipelineFactory.BuildPipeline(query))
                 {
-                    writer.Copy(10240);
+                    while (true)
+                    {
+                        int batchCount = source.Next(10240);
+                        if (batchCount == 0) break;
+                        rowsWritten += batchCount;
+                    }
                 }
-
-                Console.WriteLine($"{writer.RowCountWritten:n0} rows written.");
             }
+
+            Console.WriteLine($"Done. {rowsWritten:n0} rows written.");
         }
 
+        static void TimingComparisons()
+        {
+            int[] sample = new int[16 * 1024 * 1024];
+            Random r = new Random();
+            for (int i = 0; i < sample.Length; ++i)
+            {
+                sample[i] = r.Next(1000);
+            }
+
+            TimingComparisons(sample, 500);
+        }
+            
         static void TimingComparisons(int[] array, int value)
         {
             using (new TraceWatch($"For Loop [==]"))
@@ -87,6 +78,20 @@ namespace XForm
             using (new TraceWatch($"Linq Count [.CompareTo]"))
             {
                 int count = array.Where((i) => i.CompareTo(value) == 0).Count();
+                Console.WriteLine($"Done. {count:n0} found.");
+            }
+
+            using (new TraceWatch($"XForm Count"))
+            {
+                ArrayReader table = new ArrayReader();
+                table.AddColumn(new ColumnDetails("ID", typeof(int), false), DataBatch.All(array, array.Length));
+
+                IDataBatchSource source = table;
+                source = new WhereFilter(source, "ID", CompareOperator.Equals, value);
+                source = new CountAggregator(source);
+
+                source.Next(10240);
+                int count = (int)source.ColumnGetter(0)().Array.GetValue(0);
                 Console.WriteLine($"Done. {count:n0} found.");
             }
         }

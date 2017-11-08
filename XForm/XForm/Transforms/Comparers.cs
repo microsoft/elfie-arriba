@@ -1,6 +1,7 @@
 ﻿using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using System;
 using XForm.Data;
+using XForm.Query;
 
 namespace XForm.Transforms
 {
@@ -16,7 +17,7 @@ namespace XForm.Transforms
         void WhereGreaterThanOrEquals(DataBatch source, RowRemapper result);
     }
 
-    public class ComparerFactory
+    public static class ComparerFactory
     {
         public static Action<DataBatch, RowRemapper> Build(Type type, CompareOperator op, object value)
         {
