@@ -38,6 +38,7 @@ namespace XForm
                     if (source != null) throw new ArgumentException("'read' must be the first stage in a pipeline.");
                     if (configurationParts.Count < 2) throw new ArgumentException("'read' must be passed a file path.");
                     return new TabularFileReader(configurationParts[1]);
+                case "select":
                 case "columns":
                     return new ColumnSelector(source, configurationParts.Skip(1));
                 case "write":
@@ -47,6 +48,7 @@ namespace XForm
                     if (configurationParts.Count < 2) throw new ArgumentException("'limit' must be passed a row limit.");
                     return new RowLimiter(source, int.Parse(configurationParts[1]));
                 case "cast":
+                case "convert":
                     if (configurationParts.Count < 3) throw new ArgumentException("'cast' must be passed a column name and type.");
                     return new TypeConverter(source, configurationParts[1], ParseType(configurationParts[2]), (configurationParts.Count > 3 ? configurationParts[2] : null), (configurationParts.Count > 4 ? bool.Parse(configurationParts[3]) : true));
                 case "where":
