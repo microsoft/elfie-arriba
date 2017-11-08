@@ -5,16 +5,13 @@ using XForm.Extensions;
 
 namespace XForm.Transforms
 {
-    public class ColumnSelector : IDataBatchSource
+    public class ColumnSelector : DataBatchEnumeratorWrapper
     {
-        private IDataBatchSource _source;
         private List<ColumnDetails> _mappedColumns;
         private List<int> _columnInnerIndices;
 
-        public ColumnSelector(IDataBatchSource source, IEnumerable<string> columnNames)
+        public ColumnSelector(IDataBatchEnumerator source, IEnumerable<string> columnNames) : base(source)
         {
-            _source = source;
-
             _mappedColumns = new List<ColumnDetails>();
             _columnInnerIndices = new List<int>();
 
@@ -27,30 +24,11 @@ namespace XForm.Transforms
             }
         }
 
-        public IReadOnlyList<ColumnDetails> Columns => _mappedColumns;
+        public override IReadOnlyList<ColumnDetails> Columns => _mappedColumns;
 
-        public Func<DataBatch> ColumnGetter(int columnIndex)
+        public override Func<DataBatch> ColumnGetter(int columnIndex)
         {
             return _source.ColumnGetter(_columnInnerIndices[columnIndex]);
-        }
-
-        public void Reset()
-        {
-            _source.Reset();
-        }
-
-        public int Next(int desiredCount)
-        {
-            return _source.Next(desiredCount);
-        }
-
-        public void Dispose()
-        {
-            if (_source != null)
-            {
-                _source.Dispose();
-                _source = null;
-            }
         }
     }
 }

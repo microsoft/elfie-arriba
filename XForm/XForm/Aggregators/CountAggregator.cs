@@ -4,13 +4,13 @@ using XForm.Data;
 
 namespace XForm.Aggregators
 {
-    public class CountAggregator : IDataBatchSource
+    public class CountAggregator : IDataBatchEnumerator
     {
         private List<ColumnDetails> _column;
-        private IDataBatchSource _source;
+        private IDataBatchEnumerator _source;
         private int _count;
 
-        public CountAggregator(IDataBatchSource source)
+        public CountAggregator(IDataBatchEnumerator source)
         {
             _source = source;
 

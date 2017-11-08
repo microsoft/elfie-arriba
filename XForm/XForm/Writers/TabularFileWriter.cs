@@ -8,15 +8,15 @@ using XForm.Transforms;
 
 namespace XForm.Writers
 {
-    public class TabularFileWriter : IDataBatchSource
+    public class TabularFileWriter : IDataBatchEnumerator
     {
         private string _outputFilePath;
-        private IDataBatchSource _source;
+        private IDataBatchEnumerator _source;
         private ITabularWriter _writer;
 
         private Func<DataBatch>[] _stringColumnGetters;
 
-        public TabularFileWriter(IDataBatchSource source, string outputFilePath)
+        public TabularFileWriter(IDataBatchEnumerator source, string outputFilePath)
         {
             this._source = source;
             this._outputFilePath = outputFilePath;
@@ -97,7 +97,5 @@ namespace XForm.Writers
                 this._writer = null;
             }
         }
-
-        
     }
 }

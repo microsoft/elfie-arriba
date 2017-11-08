@@ -19,7 +19,7 @@ namespace XForm
             int rowsWritten = 0;
             using (new TraceWatch(query))
             {
-                using (IDataBatchSource source = PipelineFactory.BuildPipeline(query))
+                using (IDataBatchEnumerator source = PipelineFactory.BuildPipeline(query))
                 {
                     while (true)
                     {
@@ -86,7 +86,7 @@ namespace XForm
                 ArrayReader table = new ArrayReader();
                 table.AddColumn(new ColumnDetails("ID", typeof(int), false), DataBatch.All(array, array.Length));
 
-                IDataBatchSource source = table;
+                IDataBatchEnumerator source = table;
                 source = new WhereFilter(source, "ID", CompareOperator.Equals, value);
                 source = new CountAggregator(source);
 

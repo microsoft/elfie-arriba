@@ -1,26 +1,21 @@
 ﻿using System;
-using System.Collections.Generic;
 using XForm.Data;
 using XForm.Extensions;
 using XForm.Query;
 
 namespace XForm.Transforms
 {
-    public class WhereFilter : IDataBatchSource
+    public class WhereFilter : DataBatchEnumeratorWrapper
     {
-        private IDataBatchSource _source;
-
         private Func<DataBatch> _filterColumnGetter;
         private Action<DataBatch, RowRemapper> _comparer;
         private RowRemapper _mapper;
 
-        public WhereFilter(IDataBatchSource source, string columnName, CompareOperator op, object value)
+        public WhereFilter(IDataBatchEnumerator source, string columnName, CompareOperator op, object value) : base(source)
         {
-            this._source = source;
-
             // Find the column we're filtering on
             int columnIndex = source.Columns.IndexOfColumn(columnName);
-            ColumnDetails filterColumn = source.Columns[columnIndex];
+            ColumnDetails filterColumn = _source.Columns[columnIndex];
 
             // Cache the ColumnGetter
             this._filterColumnGetter = source.ColumnGetter(columnIndex);
@@ -32,9 +27,7 @@ namespace XForm.Transforms
             this._mapper = new RowRemapper();
         }
 
-        public IReadOnlyList<ColumnDetails> Columns => _source.Columns;
-
-        public Func<DataBatch> ColumnGetter(int columnIndex)
+        public override Func<DataBatch> ColumnGetter(int columnIndex)
         {
             // Keep a column-specific array for remapping indices
             int[] remapArray = null;
@@ -49,12 +42,7 @@ namespace XForm.Transforms
             };
         }
 
-        public void Reset()
-        {
-            _source.Reset();
-        }
-
-        public int Next(int desiredCount)
+        public override int Next(int desiredCount)
         {
             while(_source.Next(desiredCount) > 0)
             {
@@ -69,15 +57,6 @@ namespace XForm.Transforms
             }
 
             return 0;
-        }
-
-        public void Dispose()
-        {
-            if(_source != null)
-            {
-                _source.Dispose();
-                _source = null;
-            }
         }
     }
 }

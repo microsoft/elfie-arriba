@@ -1,35 +1,24 @@
-﻿using System;
-using System.Collections.Generic;
-using XForm.Data;
+﻿using XForm.Data;
 
 namespace XForm.Transforms
 {
-    public class RowLimiter : IDataBatchSource
+    public class RowLimiter : DataBatchEnumeratorWrapper
     {
-        private IDataBatchSource _source;
         private int _countLimit;
         private int _countSoFar;
 
-        public RowLimiter(IDataBatchSource source, int countLimit)
+        public RowLimiter(IDataBatchEnumerator source, int countLimit) : base(source)
         {
-            _source = source;
             _countLimit = countLimit;
         }
 
-        public IReadOnlyList<ColumnDetails> Columns => _source.Columns;
-
-        public Func<DataBatch> ColumnGetter(int columnIndex)
+        public override void Reset()
         {
-            return _source.ColumnGetter(columnIndex);
-        }
-
-        public void Reset()
-        {
+            base.Reset();
             _countSoFar = 0;
-            _source.Reset();
         }
 
-        public int Next(int desiredCount)
+        public override int Next(int desiredCount)
         {
             if (_countSoFar + desiredCount > _countLimit) desiredCount = _countLimit - _countSoFar;
 
@@ -37,15 +26,6 @@ namespace XForm.Transforms
             _countSoFar += sourceCount;
 
             return sourceCount;
-        }
-
-        public void Dispose()
-        {
-            if (_source != null)
-            {
-                _source.Dispose();
-                _source = null;
-            }
         }
     }
 }

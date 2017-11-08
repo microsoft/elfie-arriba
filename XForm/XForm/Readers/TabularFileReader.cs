@@ -6,7 +6,7 @@ using XForm.Data;
 
 namespace XForm.Readers
 {
-    public class TabularFileReader : IDataBatchSource
+    public class TabularFileReader : IDataBatchEnumerator
     {
         private string _filePath;
 

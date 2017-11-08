@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace XForm.Data
 {
-    public interface IDataBatchSource : IDisposable
+    public interface IDataBatchEnumerator : IDisposable
     {
         /// <summary>
         ///  Get the columns available from this source.
@@ -29,5 +29,21 @@ namespace XForm.Data
         /// <param name="columnIndex">Index of column to provide a getter for</param>
         /// <returns>Function which will return the DataBatch for columnName for the current row batch on each call</returns>
         Func<DataBatch> ColumnGetter(int columnIndex);
+    }
+
+    public interface IDataBatchList : IDataBatchEnumerator
+    {
+        /// <summary>
+        ///  Get the total row count of this list.
+        /// </summary>
+        int Count { get; }
+
+        /// <summary>
+        ///  Get a specific set of rows.
+        /// </summary>
+        /// <param name="indices">Indices of rows to get, zero based relative to the full set</param>
+        /// <param name="indexCount">Count of indices which are valid in indices array</param>
+        /// <returns>Number of rows retrieved</returns>
+        int Next(int[] indices, int indexCount);
     }
 }

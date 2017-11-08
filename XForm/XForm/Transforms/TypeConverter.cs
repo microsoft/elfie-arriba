@@ -5,16 +5,14 @@ using XForm.Extensions;
 
 namespace XForm.Transforms
 {
-    public class TypeConverter : IDataBatchSource
+    public class TypeConverter : DataBatchEnumeratorWrapper
     {
-        private IDataBatchSource _source;
         private int _sourceColumnIndex;
         private Func<DataBatch, DataBatch> _converter;
         private List<ColumnDetails> _columns;
 
-        public TypeConverter(IDataBatchSource source, string columnName, Type targetType, object defaultValue, bool strict)
+        public TypeConverter(IDataBatchEnumerator source, string columnName, Type targetType, object defaultValue, bool strict) : base(source)
         {
-            _source = source;
             _sourceColumnIndex = source.Columns.IndexOfColumn(columnName);
 
             ColumnDetails sourceColumn = source.Columns[_sourceColumnIndex];
@@ -27,9 +25,7 @@ namespace XForm.Transforms
             }
         }
 
-        public IReadOnlyList<ColumnDetails> Columns => _columns;
-
-        public Func<DataBatch> ColumnGetter(int columnIndex)
+        public override Func<DataBatch> ColumnGetter(int columnIndex)
         {
             // Pass through columns other than the one being converted
             if (columnIndex != _sourceColumnIndex) return _source.ColumnGetter(columnIndex);
@@ -39,25 +35,6 @@ namespace XForm.Transforms
 
             // Build the appropriate converter and conversion function
             return () => _converter(sourceGetter());
-        }
-
-        public void Reset()
-        {
-            _source.Reset();
-        }
-
-        public int Next(int desiredCount)
-        {
-            return _source.Next(desiredCount);
-        }
-
-        public void Dispose()
-        {
-            if (_source != null)
-            {
-                _source.Dispose();
-                _source = null;
-            }
         }
     }
 }

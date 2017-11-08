@@ -15,9 +15,9 @@ namespace XForm
 {
     public class PipelineFactory
     {
-        public static IDataBatchSource BuildPipeline(string configurationSet)
+        public static IDataBatchEnumerator BuildPipeline(string configurationSet)
         {
-            IDataBatchSource pipeline = null;
+            IDataBatchEnumerator pipeline = null;
 
             foreach (string configurationText in configurationSet.Split('\n'))
             {
@@ -27,7 +27,7 @@ namespace XForm
             return pipeline;
         }
 
-        public static IDataBatchSource BuildStage(IDataBatchSource source, string configurationText)
+        public static IDataBatchEnumerator BuildStage(IDataBatchEnumerator source, string configurationText)
         {
             List<string> configurationParts = SplitConfigurationLine(configurationText);
             string verb = configurationParts[0];

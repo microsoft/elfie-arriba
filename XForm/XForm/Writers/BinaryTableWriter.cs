@@ -65,13 +65,13 @@ namespace XForm.Writers
 
     public class BinaryTableWriter : IDisposable
     {
-        private IDataBatchSource _source;
+        private IDataBatchEnumerator _source;
         private string _tableRootPath;
 
         private Func<DataBatch>[] _getters;
         private IColumnWriter[] _writers;
 
-        public BinaryTableWriter(IDataBatchSource source, string tableRootPath)
+        public BinaryTableWriter(IDataBatchEnumerator source, string tableRootPath)
         {
             _source = source;
             _tableRootPath = tableRootPath;

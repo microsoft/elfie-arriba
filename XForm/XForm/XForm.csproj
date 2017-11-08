@@ -47,9 +47,10 @@
     <Compile Include="Aggregators\CountAggregator.cs" />
     <Compile Include="Data\ColumnDetails.cs" />
     <Compile Include="Data\DataBatch.cs" />
-    <Compile Include="Data\IDataBatchSource.cs" />
+    <Compile Include="Data\DataBatchEnumeratorWrapper.cs" />
+    <Compile Include="Data\IDataBatchEnumerator.cs" />
     <Compile Include="Query\Operator.cs" />
-    <Compile Include="Extensions\IReadOnlyListExtensions.cs" />
+    <Compile Include="Extensions\ColumnsExtensions.cs" />
     <Compile Include="Extensions\StringExtensions.cs" />
     <Compile Include="Query\PipelineFactory.cs" />
     <Compile Include="Program.cs" />

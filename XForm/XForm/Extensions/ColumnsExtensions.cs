@@ -6,7 +6,7 @@ using XForm.Data;
 
 namespace XForm.Extensions
 {
-    public static class IReadOnlyListExtensions
+    public static class ColumnsExtensions
     {
         public static int IndexOfColumn(this IReadOnlyList<ColumnDetails> columns, string columnName)
         {
