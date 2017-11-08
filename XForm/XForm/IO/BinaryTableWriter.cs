@@ -1,11 +1,9 @@
 ﻿using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using XForm.Data;
 
-namespace XForm.Writers
+namespace XForm.IO
 {
     public interface IColumnWriter : IDisposable
     {
@@ -63,17 +61,14 @@ namespace XForm.Writers
         }
     }
 
-    public class BinaryTableWriter : IDisposable
+    public class BinaryTableWriter : DataBatchEnumeratorWrapper
     {
-        private IDataBatchEnumerator _source;
         private string _tableRootPath;
-
         private Func<DataBatch>[] _getters;
         private IColumnWriter[] _writers;
 
-        public BinaryTableWriter(IDataBatchEnumerator source, string tableRootPath)
+        public BinaryTableWriter(IDataBatchEnumerator source, string tableRootPath) : base(source)
         {
-            _source = source;
             _tableRootPath = tableRootPath;
             Directory.CreateDirectory(tableRootPath);
 
@@ -81,39 +76,30 @@ namespace XForm.Writers
 
             _getters = new Func<DataBatch>[columnCount];
             _writers = new IColumnWriter[columnCount];
-
             for (int i = 0; i < columnCount; ++i)
             {
                 _getters[i] = source.ColumnGetter(i);
                 _writers[i] = new String8ColumnWriter(tableRootPath, source.Columns[i].Name);
             }
+
+            SchemaSerializer.Write(_tableRootPath, _source.Columns);
         }
 
-        public int RowCountWritten { get; private set; }
-
-        public void Copy(int batchSize = 10240)
+        public override int Next(int desiredCount)
         {
-            while (true)
-            {
-                int batchCount = _source.Next(batchSize);
-                if (batchCount == 0) break;
-                
-                for (int i = 0; i < _getters.Length; ++i)
-                {
-                    _writers[i].Write(_getters[i]());
-                }
+            int count = _source.Next(desiredCount);
 
-                RowCountWritten += batchCount;
+            for (int i = 0; i < _getters.Length; ++i)
+            {
+                _writers[i].Write(_getters[i]());
             }
+
+            return count;
         }
 
-        public void Dispose()
+        public override void Dispose()
         {
-            if(_source != null)
-            {
-                _source.Dispose();
-                _source = null;
-            }
+            base.Dispose();
 
             if(_writers != null)
             {

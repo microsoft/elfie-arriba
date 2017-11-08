@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using XForm.Data;
 
-namespace XForm.Readers
+namespace XForm.IO
 {
     public class ArrayReader : IDataBatchEnumerator
     {

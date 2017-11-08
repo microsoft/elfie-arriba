@@ -6,7 +6,7 @@ using System.Linq;
 using XForm.Data;
 using XForm.Transforms;
 
-namespace XForm.Writers
+namespace XForm.IO
 {
     public class TabularFileWriter : IDataBatchEnumerator
     {

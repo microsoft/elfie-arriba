@@ -5,7 +5,7 @@ using System.Linq;
 using XForm.Aggregators;
 using XForm.Data;
 using XForm.Query;
-using XForm.Readers;
+using XForm.IO;
 using XForm.Transforms;
 
 namespace XForm

@@ -45,27 +45,30 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Aggregators\CountAggregator.cs" />
+    <Compile Include="Data\Allocator.cs" />
     <Compile Include="Data\ColumnDetails.cs" />
     <Compile Include="Data\DataBatch.cs" />
     <Compile Include="Data\DataBatchEnumeratorWrapper.cs" />
     <Compile Include="Data\IDataBatchEnumerator.cs" />
+    <Compile Include="IO\SchemaSerializer.cs" />
     <Compile Include="Query\Operator.cs" />
     <Compile Include="Extensions\ColumnsExtensions.cs" />
     <Compile Include="Extensions\StringExtensions.cs" />
     <Compile Include="Query\PipelineFactory.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Readers\ArrayReader.cs" />
+    <Compile Include="IO\ArrayReader.cs" />
+    <Compile Include="IO\BinaryTableReader.cs" />
     <Compile Include="Transforms\ColumnSelector.cs" />
     <Compile Include="Transforms\Comparers.cs" />
     <Compile Include="Transforms\Converters.cs" />
     <Compile Include="Transforms\RowLimiter.cs" />
     <Compile Include="Transforms\RowRemapper.cs" />
-    <Compile Include="Readers\TabularFileReader.cs" />
+    <Compile Include="IO\TabularFileReader.cs" />
     <Compile Include="Transforms\TypeConverter.cs" />
     <Compile Include="Transforms\WhereFilter.cs" />
-    <Compile Include="Writers\BinaryTableWriter.cs" />
-    <Compile Include="Writers\TabularFileWriter.cs" />
+    <Compile Include="IO\BinaryTableWriter.cs" />
+    <Compile Include="IO\TabularFileWriter.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

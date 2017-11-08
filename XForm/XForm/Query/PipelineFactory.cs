@@ -5,11 +5,9 @@ using System.Linq;
 using System.Text;
 using XForm.Aggregators;
 using XForm.Data;
-using XForm.Extensions;
 using XForm.Query;
-using XForm.Readers;
+using XForm.IO;
 using XForm.Transforms;
-using XForm.Writers;
 
 namespace XForm
 {
@@ -37,13 +35,27 @@ namespace XForm
                 case "read":
                     if (source != null) throw new ArgumentException("'read' must be the first stage in a pipeline.");
                     if (configurationParts.Count < 2) throw new ArgumentException("'read' must be passed a file path.");
-                    return new TabularFileReader(configurationParts[1]);
+                    if (configurationParts[1].EndsWith("xform"))
+                    {
+                        return new BinaryTableReader(configurationParts[1]);
+                    }
+                    else
+                    {
+                        return new TabularFileReader(configurationParts[1]);
+                    }
                 case "select":
                 case "columns":
                     return new ColumnSelector(source, configurationParts.Skip(1));
                 case "write":
                     if (configurationParts.Count < 2) throw new ArgumentException("'write' must be passed a file path.");
-                    return new TabularFileWriter(source, configurationParts[1]);
+                    if (configurationParts[1].EndsWith("xform"))
+                    {
+                        return new BinaryTableWriter(source, configurationParts[1]);
+                    }
+                    else
+                    {
+                        return new TabularFileWriter(source, configurationParts[1]);
+                    }
                 case "limit":
                     if (configurationParts.Count < 2) throw new ArgumentException("'limit' must be passed a row limit.");
                     return new RowLimiter(source, int.Parse(configurationParts[1]));

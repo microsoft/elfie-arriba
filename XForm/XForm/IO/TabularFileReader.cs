@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using XForm.Data;
 
-namespace XForm.Readers
+namespace XForm.IO
 {
     public class TabularFileReader : IDataBatchEnumerator
     {
@@ -53,7 +53,6 @@ namespace XForm.Readers
             {
                 this._columns.Add(new ColumnDetails(columnName, typeof(String8), false));
             }
-
         }
 
         public int Next(int desiredCount)
