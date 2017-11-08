@@ -10,7 +10,6 @@ namespace XForm.Writers
 {
     public class TabularFileWriter : IDataBatchSource
     {
-        private int _batchSize = 100;
         private string _outputFilePath;
         private IDataBatchSource _source;
         private ITabularWriter _writer;

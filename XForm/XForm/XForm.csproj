@@ -55,6 +55,7 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Readers\ArrayReader.cs" />
+    <Compile Include="Transforms\ColumnSelector.cs" />
     <Compile Include="Transforms\Comparers.cs" />
     <Compile Include="Transforms\Converters.cs" />
     <Compile Include="Transforms\RowLimiter.cs" />

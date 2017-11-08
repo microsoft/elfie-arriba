@@ -1,6 +1,7 @@
 ﻿using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using XForm.Aggregators;
 using XForm.Data;
@@ -37,6 +38,8 @@ namespace XForm
                     if (source != null) throw new ArgumentException("'read' must be the first stage in a pipeline.");
                     if (configurationParts.Count < 2) throw new ArgumentException("'read' must be passed a file path.");
                     return new TabularFileReader(configurationParts[1]);
+                case "columns":
+                    return new ColumnSelector(source, configurationParts.Skip(1));
                 case "write":
                     if (configurationParts.Count < 2) throw new ArgumentException("'write' must be passed a file path.");
                     return new TabularFileWriter(source, configurationParts[1]);
