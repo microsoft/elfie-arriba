@@ -32,10 +32,13 @@ namespace XForm.Transforms
             // Keep a column-specific array for remapping indices
             int[] remapArray = null;
 
+            // Retrieve the column getter for this column
+            Func<DataBatch> getter = _source.ColumnGetter(columnIndex);
+
             return () =>
             {
                 // Get the batch from the source for this column
-                DataBatch batch = _source.ColumnGetter(columnIndex)();
+                DataBatch batch = getter();
 
                 // Remap the DataBatch indices for this column for the rows which matched the clause
                 return _mapper.Remap(batch, ref remapArray);

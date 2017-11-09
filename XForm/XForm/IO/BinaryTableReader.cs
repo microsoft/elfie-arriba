@@ -89,7 +89,7 @@ namespace XForm.IO
     {
         private string _tableRootPath;
         private List<ColumnDetails> _columns;
-        private List<IColumnReader> _readers;
+        private IColumnReader[] _readers;
         private DataBatch[] _batches;
         private int _rowCountRead;
 
@@ -97,6 +97,7 @@ namespace XForm.IO
         {
             _tableRootPath = tableRootPath;
             _columns = SchemaSerializer.Read(_tableRootPath);
+            
             _batches = new DataBatch[_columns.Count];
             Reset();
         }
@@ -105,6 +106,7 @@ namespace XForm.IO
 
         public Func<DataBatch> ColumnGetter(int columnIndex)
         {
+            _readers[columnIndex] = new String8ColumnReader(_tableRootPath, Columns[columnIndex].Name);
             return () => _batches[columnIndex];
         }
 
@@ -112,11 +114,14 @@ namespace XForm.IO
         {
             // TODO: Lame. Add seekability to avoid getting unread columns.
             int actualCount = -1;
-            for(int i = 0; i < _readers.Count; ++i)
+            for(int i = 0; i < _readers.Length; ++i)
             {
-                _batches[i] = _readers[i].Next(desiredCount);
-                if (actualCount == -1) actualCount = _batches[i].Count;
-                if (actualCount != _batches[i].Count) throw new IOException($"BinaryTable \"{_tableRootPath}\" did not read as many rows as expected from {Columns[i].Name}. After {_rowCountRead:n0} rows, got {_batches[i].Count:n0} rows but other columns had {actualCount:n0} rows.");
+                if (_readers[i] != null)
+                {
+                    _batches[i] = _readers[i].Next(desiredCount);
+                    if (actualCount == -1) actualCount = _batches[i].Count;
+                    if (actualCount != _batches[i].Count) throw new IOException($"BinaryTable \"{_tableRootPath}\" did not read as many rows as expected from {Columns[i].Name}. After {_rowCountRead:n0} rows, got {_batches[i].Count:n0} rows but other columns had {actualCount:n0} rows.");
+                }
             }
 
             _rowCountRead += actualCount;
@@ -126,12 +131,7 @@ namespace XForm.IO
         public void Reset()
         {
             _rowCountRead = 0;
-
-            _readers = new List<IColumnReader>();
-            foreach (ColumnDetails column in _columns)
-            {
-                _readers.Add(new String8ColumnReader(_tableRootPath, column.Name));
-            }
+            _readers = new IColumnReader[_columns.Count];
         }
 
         public void Dispose()
@@ -140,7 +140,7 @@ namespace XForm.IO
             {
                 foreach(IColumnReader reader in _readers)
                 {
-                    reader.Dispose();
+                    if(reader != null) reader.Dispose();
                 }
 
                 _readers = null;
