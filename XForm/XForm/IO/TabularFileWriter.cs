@@ -38,6 +38,9 @@ namespace XForm.IO
 
         private void Initialize()
         {
+            // If this is a reset, ensure the old writer is Disposed (and flushes output)
+            if (_writer != null) _writer.Dispose();
+
             this._stringColumnGetters = new Func<DataBatch>[_source.Columns.Count];
             for (int i = 0; i < _source.Columns.Count; ++i)
             {

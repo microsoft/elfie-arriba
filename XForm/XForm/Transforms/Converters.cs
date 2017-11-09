@@ -15,6 +15,7 @@ namespace XForm.Transforms
             if (targetType == typeof(String8))
             {
                 ToString8Converter converter = new ToString8Converter();
+                if (sourceType == typeof(string)) return converter.StringToString8;
                 if (sourceType == typeof(int)) return converter.IntegerToString8;
                 if (sourceType == typeof(DateTime)) return converter.DateTimeToString8;
                 if (sourceType == typeof(bool)) return converter.BooleanToString8;
@@ -76,6 +77,7 @@ namespace XForm.Transforms
     {
         private String8[] _stringArray;
         private byte[] _buffer;
+        private String8Block _block;
 
         private void ClearAndSize(int length, int bytesPerItem)
         {
@@ -121,6 +123,27 @@ namespace XForm.Transforms
             for (int i = 0; i < batch.Count; ++i)
             {
                 _stringArray[i] = String8.FromBoolean(sourceArray[batch.Index(i)]);
+            }
+
+            return DataBatch.All(_stringArray, batch.Count);
+        }
+
+        public DataBatch StringToString8(DataBatch batch)
+        {
+            ClearAndSize(batch.Count, 0);
+            if (_block == null)
+            {
+                _block = new String8Block();
+            }
+            else
+            {
+                _block.Clear();
+            }
+
+            string[] sourceArray = (string[])batch.Array;
+            for (int i = 0; i < batch.Count; ++i)
+            {
+                _stringArray[i] = _block.GetCopy(sourceArray[batch.Index(i)]);
             }
 
             return DataBatch.All(_stringArray, batch.Count);

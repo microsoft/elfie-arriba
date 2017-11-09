@@ -20,6 +20,7 @@ namespace XForm.Transforms
 
         public override int Next(int desiredCount)
         {
+            if (_countSoFar >= _countLimit) return 0;
             if (_countSoFar + desiredCount > _countLimit) desiredCount = _countLimit - _countSoFar;
 
             int sourceCount = _source.Next(desiredCount);

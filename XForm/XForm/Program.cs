@@ -1,36 +1,127 @@
 ﻿using Microsoft.CodeAnalysis.Elfie.Diagnostics;
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using XForm.Aggregators;
 using XForm.Data;
-using XForm.Query;
+using XForm.Extensions;
 using XForm.IO;
+using XForm.Query;
 using XForm.Transforms;
 
 namespace XForm
 {
     class Program
     {
-        static void Main(string[] args)
+        static int Main(string[] args)
         {
             //TimingComparisons();
-            string query = File.ReadAllText(args[0]);
+            try
+            {
+                if(args.Length > 0)
+                {
+                    return RunFileQuery(args[0]);
+                }
+                else
+                {
+                    return RunInteractive();
+                }
+            }
+            catch (ArgumentException ex) when (!Debugger.IsAttached)
+            {
+                Console.WriteLine($"Usage: {ex.ToString()}");
+                return -2;
+            }
+            catch (Exception ex) when (!Debugger.IsAttached)
+            {
+                Console.WriteLine($"Error: {ex.ToString()}");
+                return -1;
+            }
+        }
+
+        private static int RunFileQuery(string queryFilePath)
+        {
+            string query = File.ReadAllText(queryFilePath);
+
             int rowsWritten = 0;
             using (new TraceWatch(query))
             {
                 using (IDataBatchEnumerator source = PipelineFactory.BuildPipeline(query))
                 {
-                    while (true)
-                    {
-                        int batchCount = source.Next(10240);
-                        if (batchCount == 0) break;
-                        rowsWritten += batchCount;
-                    }
+                    rowsWritten = source.Run();
                 }
             }
 
             Console.WriteLine($"Done. {rowsWritten:n0} rows written.");
+            return rowsWritten;
+        }
+
+        private static int RunInteractive()
+        {
+            int lastCount = 0;
+            IDataBatchEnumerator pipeline = null;
+            List<IDataBatchEnumerator> stages = new List<IDataBatchEnumerator>();
+
+            try
+            {
+                while (true)
+                {
+                    Console.Write("> ");
+
+                    // Read the next query line
+                    string nextLine = Console.ReadLine();
+
+                    // Stop on exit commands
+                    if (String.IsNullOrEmpty(nextLine) || nextLine.Equals("quit", StringComparison.OrdinalIgnoreCase) || nextLine.Equals("exit", StringComparison.OrdinalIgnoreCase)) return 0;
+
+                    // Unwrap on "back"
+                    if (nextLine.Equals("back", StringComparison.OrdinalIgnoreCase))
+                    {
+                        IDataBatchEnumerator last = stages.LastOrDefault();
+                        if (last != null)
+                        {
+                            pipeline = last;
+                            stages.RemoveAt(stages.Count - 1);
+                        }
+                    }
+                    else
+                    {
+                        // Add the requested stage
+                        try
+                        {
+                            stages.Add(pipeline);
+                            pipeline = PipelineFactory.BuildStage(pipeline, nextLine);
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"Error: {ex.Message}");
+                            continue;
+                        }
+                    }
+
+                    // Get the first 10 results
+                    IDataBatchEnumerator resultToRun = pipeline;
+                    resultToRun = PipelineFactory.BuildStage(resultToRun, "limit 10");
+                    resultToRun = PipelineFactory.BuildStage(resultToRun, "write cout");
+                    resultToRun.Run();
+                    resultToRun.Reset();
+
+                    // Get the count
+                    resultToRun = pipeline;
+                    lastCount = resultToRun.Run();
+                    resultToRun.Reset();
+
+                    Console.WriteLine();
+                    Console.WriteLine($"{lastCount:n0} rows.");
+                    Console.WriteLine();
+                }
+            }
+            finally
+            {
+                if (pipeline != null) pipeline.Dispose();
+            }
         }
 
         static void TimingComparisons()

@@ -50,6 +50,7 @@
     <Compile Include="Data\DataBatch.cs" />
     <Compile Include="Data\DataBatchEnumeratorWrapper.cs" />
     <Compile Include="Data\IDataBatchEnumerator.cs" />
+    <Compile Include="Extensions\DataBatchEnumerableExtensions.cs" />
     <Compile Include="IO\SchemaSerializer.cs" />
     <Compile Include="Query\Operator.cs" />
     <Compile Include="Extensions\ColumnsExtensions.cs" />
@@ -65,6 +66,7 @@
     <Compile Include="Transforms\RowLimiter.cs" />
     <Compile Include="Transforms\RowRemapper.cs" />
     <Compile Include="IO\TabularFileReader.cs" />
+    <Compile Include="Transforms\SchemaTransformer.cs" />
     <Compile Include="Transforms\TypeConverter.cs" />
     <Compile Include="Transforms\WhereFilter.cs" />
     <Compile Include="IO\BinaryTableWriter.cs" />

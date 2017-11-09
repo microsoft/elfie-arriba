@@ -19,6 +19,7 @@ namespace XForm
 
             foreach (string configurationText in configurationSet.Split('\n'))
             {
+                if (string.IsNullOrEmpty(configurationText.Trim())) continue;
                 pipeline = BuildStage(pipeline, configurationText);
             }
 
@@ -34,7 +35,7 @@ namespace XForm
             {
                 case "read":
                     if (source != null) throw new ArgumentException("'read' must be the first stage in a pipeline.");
-                    if (configurationParts.Count < 2) throw new ArgumentException("'read' must be passed a file path.");
+                    if (configurationParts.Count != 2) throw new ArgumentException("Usage: 'read' [filePath]");
                     if (configurationParts[1].EndsWith("xform"))
                     {
                         return new BinaryTableReader(configurationParts[1]);
@@ -43,11 +44,14 @@ namespace XForm
                     {
                         return new TabularFileReader(configurationParts[1]);
                     }
+                case "schema":
+                    if (configurationParts.Count != 1) throw new ArgumentException("Usage: 'schema'");
+                    return new SchemaTransformer(source);
                 case "select":
                 case "columns":
                     return new ColumnSelector(source, configurationParts.Skip(1));
                 case "write":
-                    if (configurationParts.Count < 2) throw new ArgumentException("'write' must be passed a file path.");
+                    if (configurationParts.Count != 2) throw new ArgumentException("Usage 'write' [filePath]");
                     if (configurationParts[1].EndsWith("xform"))
                     {
                         return new BinaryTableWriter(source, configurationParts[1]);
@@ -57,14 +61,14 @@ namespace XForm
                         return new TabularFileWriter(source, configurationParts[1]);
                     }
                 case "limit":
-                    if (configurationParts.Count < 2) throw new ArgumentException("'limit' must be passed a row limit.");
+                    if (configurationParts.Count != 2) throw new ArgumentException("Usage: 'limit' [rowCount]");
                     return new RowLimiter(source, int.Parse(configurationParts[1]));
                 case "cast":
                 case "convert":
-                    if (configurationParts.Count < 3) throw new ArgumentException("'cast' must be passed a column name and type.");
+                    if (configurationParts.Count < 3 || configurationParts.Count > 5) throw new ArgumentException("Usage: 'cast' [columnName] [targetType] [default?] [strict?]");
                     return new TypeConverter(source, configurationParts[1], ParseType(configurationParts[2]), (configurationParts.Count > 3 ? configurationParts[2] : null), (configurationParts.Count > 4 ? bool.Parse(configurationParts[3]) : true));
                 case "where":
-                    if (configurationParts.Count < 4) throw new ArgumentException("'where' must be passed a column, operator, and value.");
+                    if (configurationParts.Count != 4) throw new ArgumentException("Usage: 'where' [columnName] [operator] [value]");
                     return new WhereFilter(source, configurationParts[1], ParseCompareOperator(configurationParts[2]), configurationParts[3]);
                 case "count":
                     return new CountAggregator(source);
