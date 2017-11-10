@@ -20,27 +20,8 @@ namespace XForm.IO
         {
             this._source = source;
             this._outputFilePath = outputFilePath;
-            Initialize();
-        }
 
-        public IReadOnlyList<ColumnDetails> Columns => _source.Columns;
-
-        public Func<DataBatch> ColumnGetter(int columnIndex)
-        {
-            return _source.ColumnGetter(columnIndex);
-        }
-
-        public void Reset()
-        {
-            _source.Reset();
-            Initialize();
-        }
-
-        private void Initialize()
-        {
-            // If this is a reset, ensure the old writer is Disposed (and flushes output)
-            if (_writer != null) _writer.Dispose();
-
+            // Subscribe to all columns and cache converters for them
             this._stringColumnGetters = new Func<DataBatch>[_source.Columns.Count];
             for (int i = 0; i < _source.Columns.Count; ++i)
             {
@@ -55,13 +36,36 @@ namespace XForm.IO
 
                 _stringColumnGetters[i] = stringGetter;
             }
+        }
 
-            _writer = TabularFactory.BuildWriter(_outputFilePath);
-            _writer.SetColumns(_source.Columns.Select((cd) => cd.Name));
+        public IReadOnlyList<ColumnDetails> Columns => _source.Columns;
+
+        public Func<DataBatch> ColumnGetter(int columnIndex)
+        {
+            return _source.ColumnGetter(columnIndex);
+        }
+
+        public void Reset()
+        {
+            _source.Reset();
+
+            // If this is a reset, ensure the old writer is Disposed (and flushes output)
+            if (_writer != null)
+            {
+                _writer.Dispose();
+                _writer = null;
+            }
         }
 
         public int Next(int desiredCount)
         {
+            // Build the writer only when we start getting rows
+            if(_writer == null)
+            {
+                _writer = TabularFactory.BuildWriter(_outputFilePath);
+                _writer.SetColumns(_source.Columns.Select((cd) => cd.Name));
+            }
+
             // Or smaller batchsize?
             int rowCount = _source.Next(desiredCount);
             if (rowCount == 0) return 0;

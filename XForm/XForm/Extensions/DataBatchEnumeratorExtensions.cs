@@ -2,7 +2,7 @@
 
 namespace XForm.Extensions
 {
-    public static class DataBatchEnumerableExtensions
+    public static class DataBatchEnumeratorExtensions
     {
         public static int Run(this IDataBatchEnumerator pipeline, int batchSize = 10240)
         {

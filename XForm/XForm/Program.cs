@@ -18,6 +18,8 @@ namespace XForm
         static int Main(string[] args)
         {
             //TimingComparisons();
+            //return 0;
+
             try
             {
                 if(args.Length > 0)
@@ -63,6 +65,7 @@ namespace XForm
             int lastCount = 0;
             IDataBatchEnumerator pipeline = null;
             List<IDataBatchEnumerator> stages = new List<IDataBatchEnumerator>();
+            List<string> commands = new List<string>();
 
             try
             {
@@ -72,33 +75,61 @@ namespace XForm
 
                     // Read the next query line
                     string nextLine = Console.ReadLine();
+                    List<string> arguments = PipelineFactory.SplitConfigurationLine(nextLine);
 
-                    // Stop on exit commands
-                    if (String.IsNullOrEmpty(nextLine) || nextLine.Equals("quit", StringComparison.OrdinalIgnoreCase) || nextLine.Equals("exit", StringComparison.OrdinalIgnoreCase)) return 0;
+                    string command = arguments[0].ToLowerInvariant();
+                    switch(command)
+                    {
+                        case "":
+                        case "quit":
+                        case "exit":
+                            // Stop on empty, "quit", or "exit"
+                            return lastCount;
 
-                    // Unwrap on "back"
-                    if (nextLine.Equals("back", StringComparison.OrdinalIgnoreCase))
-                    {
-                        IDataBatchEnumerator last = stages.LastOrDefault();
-                        if (last != null)
-                        {
-                            pipeline = last;
-                            stages.RemoveAt(stages.Count - 1);
-                        }
-                    }
-                    else
-                    {
-                        // Add the requested stage
-                        try
-                        {
-                            stages.Add(pipeline);
-                            pipeline = PipelineFactory.BuildStage(pipeline, nextLine);
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine($"Error: {ex.Message}");
-                            continue;
-                        }
+                            
+                        case "back":
+                        case "undo":
+                            // Unwrap on "back" or "undo"
+                            IDataBatchEnumerator last = stages.LastOrDefault();
+                            if (last != null)
+                            {
+                                pipeline = last;
+                                stages.RemoveAt(stages.Count - 1);
+                                commands.RemoveAt(commands.Count - 1);
+                            }
+
+                            break;
+                        case "save":
+                            if(arguments.Count != 2)
+                            {
+                                Console.WriteLine($"Error: Usage: save [scriptFilePath]");
+                                continue;
+                            }
+                            else
+                            {
+                                File.WriteAllLines(arguments[1], commands);
+                                Console.WriteLine($"Script saved to \"{arguments[1]}\".");
+                                continue;
+                            }
+                        default:
+                            try
+                            {
+                                // Save stages before the last one
+                                stages.Add(pipeline);
+
+                                // Build the new stage
+                                pipeline = PipelineFactory.BuildStage(pipeline, nextLine);
+
+                                // Save the current command set
+                                commands.Add(nextLine);
+
+                                break;
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine($"Error: {ex.Message}");
+                                continue;
+                            }
                     }
 
                     // Get the first 10 results
