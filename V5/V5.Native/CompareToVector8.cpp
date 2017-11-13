@@ -116,7 +116,7 @@ static void WhereN(unsigned __int8* set, int length, unsigned __int8 value, unsi
 }
 
 template<BooleanOperatorN bOp, SigningN signing>
-void CompareToVector::WhereB(CompareOperatorN cOp, unsigned __int8* set, int length, unsigned __int8 value, unsigned __int64* matchVector)
+void WhereB(CompareOperatorN cOp, unsigned __int8* set, int length, unsigned __int8 value, unsigned __int64* matchVector)
 {
 	switch (cOp)
 	{
@@ -142,7 +142,7 @@ void CompareToVector::WhereB(CompareOperatorN cOp, unsigned __int8* set, int len
 }
 
 template<SigningN signing>
-void CompareToVector::WhereS(CompareOperatorN cOp, BooleanOperatorN bOp, unsigned __int8* set, int length, unsigned __int8 value, unsigned __int64* matchVector)
+void WhereS(CompareOperatorN cOp, BooleanOperatorN bOp, unsigned __int8* set, int length, unsigned __int8 value, unsigned __int64* matchVector)
 {
 	switch (bOp)
 	{

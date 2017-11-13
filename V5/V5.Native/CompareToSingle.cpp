@@ -60,7 +60,7 @@ static void WhereSingle(T* set, int length, T value, unsigned __int64* matchVect
 }
 
 template<BooleanOperatorN bOp, typename T>
-void CompareToVector::WhereSingleB(CompareOperatorN cOp, T* set, int length, T value, unsigned __int64* matchVector)
+void WhereSingleB(CompareOperatorN cOp, T* set, int length, T value, unsigned __int64* matchVector)
 {
 	switch (cOp)
 	{
