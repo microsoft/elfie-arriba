@@ -7,6 +7,7 @@ namespace XForm.Transforms
 {
     public class WhereFilter : DataBatchEnumeratorWrapper
     {
+        private int _filterColumnIndex;
         private Func<DataBatch> _filterColumnGetter;
         private Action<DataBatch, RowRemapper> _comparer;
         private RowRemapper _mapper;
@@ -14,11 +15,11 @@ namespace XForm.Transforms
         public WhereFilter(IDataBatchEnumerator source, string columnName, CompareOperator op, object value) : base(source)
         {
             // Find the column we're filtering on
-            int columnIndex = source.Columns.IndexOfColumn(columnName);
-            ColumnDetails filterColumn = _source.Columns[columnIndex];
+            _filterColumnIndex = source.Columns.IndexOfColumn(columnName);
+            ColumnDetails filterColumn = _source.Columns[_filterColumnIndex];
 
             // Cache the ColumnGetter
-            this._filterColumnGetter = source.ColumnGetter(columnIndex);
+            this._filterColumnGetter = source.ColumnGetter(_filterColumnIndex);
 
             // Build a Comparer for the desired type and get the function for the desired compare operator
             this._comparer = ComparerFactory.Build(filterColumn.Type, op, TypeConverterFactory.ConvertSingle(value, filterColumn.Type));
@@ -33,7 +34,7 @@ namespace XForm.Transforms
             int[] remapArray = null;
 
             // Retrieve the column getter for this column
-            Func<DataBatch> getter = _source.ColumnGetter(columnIndex);
+            Func<DataBatch> getter = (columnIndex == _filterColumnIndex ? _filterColumnGetter : _source.ColumnGetter(columnIndex));
 
             return () =>
             {

@@ -39,7 +39,7 @@ namespace Elfie.Serialization
         /// <param name="asm">Assembly to read from, defaults to Xsv</param>
         public static void SaveStreamTo(string streamName, string filePath, Assembly asm = null)
         {
-            if (asm == null) asm = Assembly.GetExecutingAssembly();
+            if (asm == null) asm = Assembly.GetCallingAssembly();
 
             using (FileStream output = new FileStream(filePath, FileMode.Create))
             {
@@ -58,7 +58,7 @@ namespace Elfie.Serialization
         /// <param name="asm">Assembly to read from, defaults to Xsv</param>
         public static void SaveStreamFolderTo(string streamFolderName, string folderPath, Assembly asm = null)
         {
-            if (asm == null) asm = Assembly.GetExecutingAssembly();
+            if (asm == null) asm = Assembly.GetCallingAssembly();
 
             Directory.CreateDirectory(folderPath);
             foreach(string streamName in asm.GetManifestResourceNames())
