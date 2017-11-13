@@ -26,8 +26,8 @@ namespace XForm.IO
         {
             string columnFilePath = Path.Combine(tableRootPath, columnName);
 
-            _bytesReader = new FileStream(columnFilePath + ".V.s.bin", FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-            _positionsReader = new FileStream(columnFilePath + ".V.p.bin", FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            _bytesReader = new FileStream(Path.Combine(columnFilePath, "V.s.bin"), FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            _positionsReader = new FileStream(Path.Combine(columnFilePath, "Vp.i32.bin"), FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
         }
 
         public DataBatch Next(int desiredCount)

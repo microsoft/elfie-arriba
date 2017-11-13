@@ -22,9 +22,10 @@ namespace XForm.IO
         public String8ColumnWriter(string tableRootPath, string columnName)
         {
             string columnFilePath = Path.Combine(tableRootPath, columnName);
+            Directory.CreateDirectory(columnFilePath);
 
-            _bytesWriter = new FileStream(columnFilePath + ".V.s.bin", FileMode.Create, FileAccess.Write, FileShare.Delete);
-            _positionsWriter = new FileStream(columnFilePath + ".V.p.bin", FileMode.Create, FileAccess.Write, FileShare.Delete);
+            _bytesWriter = new FileStream(Path.Combine(columnFilePath, "V.s.bin"), FileMode.Create, FileAccess.Write, FileShare.Read | FileShare.Delete);
+            _positionsWriter = new FileStream(Path.Combine(columnFilePath, "Vp.i32.bin"), FileMode.Create, FileAccess.Write, FileShare.Read | FileShare.Delete);
         }
 
         public void Write(DataBatch batch)
