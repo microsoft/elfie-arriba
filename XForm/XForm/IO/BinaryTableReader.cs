@@ -124,6 +124,13 @@ namespace XForm.IO
                 }
             }
 
+            if(actualCount == -1)
+            {
+                _readers[0] = new String8ColumnReader(_tableRootPath, Columns[0].Name);
+                _batches[0] = _readers[0].Next(desiredCount);
+                actualCount = _batches[0].Count;
+            }
+
             _rowCountRead += actualCount;
             return actualCount;
         }

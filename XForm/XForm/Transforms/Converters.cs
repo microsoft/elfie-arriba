@@ -81,8 +81,8 @@ namespace XForm.Transforms
 
         private void ClearAndSize(int length, int bytesPerItem)
         {
-            if (_stringArray == null || _stringArray.Length < length) _stringArray = new String8[length];
-            if (bytesPerItem > 0 && (_buffer == null || _buffer.Length < length * bytesPerItem)) _buffer = new byte[length * bytesPerItem];
+            Allocator.AllocateToSize(ref _stringArray, length);
+            Allocator.AllocateToSize(ref _buffer, length * bytesPerItem);
         }
 
         public DataBatch IntegerToString8(DataBatch batch)
@@ -162,7 +162,7 @@ namespace XForm.Transforms
 
         public DataBatch ConvertOrDefault(DataBatch batch)
         {
-            if (_array == null || _array.Length < batch.Count) _array = new int[batch.Count];
+            Allocator.AllocateToSize(ref _array, batch.Count);
 
             String8[] sourceArray = (String8[])batch.Array;
             for (int i = 0; i < batch.Count; ++i)
@@ -175,7 +175,7 @@ namespace XForm.Transforms
 
         public DataBatch ConvertOrThrow(DataBatch batch)
         {
-            if (_array == null || _array.Length < batch.Count) _array = new int[batch.Count];
+            Allocator.AllocateToSize(ref _array, batch.Count);
 
             String8[] sourceArray = (String8[])batch.Array;
             for (int i = 0; i < batch.Count; ++i)
@@ -199,7 +199,7 @@ namespace XForm.Transforms
 
         public DataBatch ConvertOrDefault(DataBatch batch)
         {
-            if (_array == null || _array.Length < batch.Count) _array = new DateTime[batch.Count];
+            Allocator.AllocateToSize(ref _array, batch.Count);
 
             String8[] sourceArray = (String8[])batch.Array;
             for (int i = 0; i < batch.Count; ++i)
@@ -212,7 +212,7 @@ namespace XForm.Transforms
 
         public DataBatch ConvertOrThrow(DataBatch batch)
         {
-            if (_array == null || _array.Length < batch.Count) _array = new DateTime[batch.Count];
+            Allocator.AllocateToSize(ref _array, batch.Count);
 
             String8[] sourceArray = (String8[])batch.Array;
             for (int i = 0; i < batch.Count; ++i)
@@ -236,7 +236,7 @@ namespace XForm.Transforms
 
         public DataBatch ConvertOrDefault(DataBatch batch)
         {
-            if (_array == null || _array.Length < batch.Count) _array = new bool[batch.Count];
+            Allocator.AllocateToSize(ref _array, batch.Count);
 
             String8[] sourceArray = (String8[])batch.Array;
             for (int i = 0; i < batch.Count; ++i)
@@ -249,7 +249,7 @@ namespace XForm.Transforms
 
         public DataBatch ConvertOrThrow(DataBatch batch)
         {
-            if (_array == null || _array.Length < batch.Count) _array = new bool[batch.Count];
+            Allocator.AllocateToSize(ref _array, batch.Count);
 
             String8[] sourceArray = (String8[])batch.Array;
             for (int i = 0; i < batch.Count; ++i)

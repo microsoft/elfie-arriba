@@ -29,8 +29,8 @@ namespace XForm.IO
 
         public void Write(DataBatch batch)
         {
-            if (_positionsBuffer == null || _positionsBuffer.Length < batch.Count) _positionsBuffer = new int[batch.Count];
-            if (_positionBytesBuffer == null || _positionBytesBuffer.Length * 4 < batch.Count) _positionBytesBuffer = new byte[batch.Count * 4];
+            Allocator.AllocateToSize(ref _positionsBuffer, batch.Count);
+            Allocator.AllocateToSize(ref _positionBytesBuffer, batch.Count * 4);
 
             String8[] array = (String8[])batch.Array;
             for(int i = 0; i < batch.Count; ++i)

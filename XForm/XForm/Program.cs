@@ -1,4 +1,5 @@
 ﻿using Microsoft.CodeAnalysis.Elfie.Diagnostics;
+using Microsoft.CodeAnalysis.Elfie.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -76,11 +77,11 @@ namespace XForm
                     // Read the next query line
                     string nextLine = Console.ReadLine();
                     List<string> arguments = PipelineFactory.SplitConfigurationLine(nextLine);
+                    if (arguments.Count == 0) return lastCount;
 
                     string command = arguments[0].ToLowerInvariant();
                     switch(command)
                     {
-                        case "":
                         case "quit":
                         case "exit":
                             // Stop on empty, "quit", or "exit"
@@ -102,7 +103,7 @@ namespace XForm
                         case "save":
                             if(arguments.Count != 2)
                             {
-                                Console.WriteLine($"Error: Usage: save [scriptFilePath]");
+                                Console.WriteLine($"Usage: 'save' [scriptFilePath]");
                                 continue;
                             }
                             else
@@ -111,18 +112,25 @@ namespace XForm
                                 Console.WriteLine($"Script saved to \"{arguments[1]}\".");
                                 continue;
                             }
+                        case "run":
+                            if (arguments.Count != 2)
+                            {
+                                Console.WriteLine($"Usage: 'run' [scriptFilePath]");
+                                continue;
+                            }
+                            else
+                            {
+                                foreach(string line in File.ReadAllLines(arguments[1]))
+                                {
+                                    Console.WriteLine(line);
+                                    pipeline = AddStage(pipeline, stages, commands, line);
+                                }
+                                break;
+                            }
                         default:
                             try
                             {
-                                // Save stages before the last one
-                                stages.Add(pipeline);
-
-                                // Build the new stage
-                                pipeline = PipelineFactory.BuildStage(pipeline, nextLine);
-
-                                // Save the current command set
-                                commands.Add(nextLine);
-
+                                pipeline = AddStage(pipeline, stages, commands, nextLine);
                                 break;
                             }
                             catch (Exception ex)
@@ -132,20 +140,20 @@ namespace XForm
                             }
                     }
 
+                    Stopwatch w = Stopwatch.StartNew();
+
                     // Get the first 10 results
-                    IDataBatchEnumerator resultToRun = pipeline;
-                    resultToRun = PipelineFactory.BuildStage(resultToRun, "limit 10");
-                    resultToRun = PipelineFactory.BuildStage(resultToRun, "write cout");
-                    resultToRun.Run();
-                    resultToRun.Reset();
+                    IDataBatchEnumerator firstTenWrapper = pipeline;
+                    firstTenWrapper = PipelineFactory.BuildStage(firstTenWrapper, "limit 10");
+                    firstTenWrapper = PipelineFactory.BuildStage(firstTenWrapper, "write cout");
+                    lastCount = firstTenWrapper.Run();
 
                     // Get the count
-                    resultToRun = pipeline;
-                    lastCount = resultToRun.Run();
-                    resultToRun.Reset();
+                    lastCount += pipeline.Run();
+                    firstTenWrapper.Reset();
 
                     Console.WriteLine();
-                    Console.WriteLine($"{lastCount:n0} rows.");
+                    Console.WriteLine($"{lastCount:n0} rows in {w.Elapsed.ToFriendlyString()}.");
                     Console.WriteLine();
                 }
             }
@@ -153,6 +161,19 @@ namespace XForm
             {
                 if (pipeline != null) pipeline.Dispose();
             }
+        }
+
+        private static IDataBatchEnumerator AddStage(IDataBatchEnumerator pipeline, List<IDataBatchEnumerator> stages, List<string> commands, string nextLine)
+        {
+            // Save stages before the last one
+            stages.Add(pipeline);
+
+            // Build the new stage
+            pipeline = PipelineFactory.BuildStage(pipeline, nextLine);
+
+            // Save the current command set
+            commands.Add(nextLine);
+            return pipeline;
         }
 
         static void TimingComparisons()

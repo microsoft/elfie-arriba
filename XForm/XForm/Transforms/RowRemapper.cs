@@ -24,7 +24,7 @@ namespace XForm.Transforms
         public void ClearAndSize(int length)
         {
             // Ensure the row index array is large enough
-            if (MatchingRowIndices == null || MatchingRowIndices.Length < length) MatchingRowIndices = new int[length];
+            Allocator.AllocateToSize(ref MatchingRowIndices, length);
 
             // Mark the array empty
             Count = 0;
@@ -56,7 +56,7 @@ namespace XForm.Transforms
 
             // If we need to remap, translate the 0 to Count - 1 index to a real index in the source array.
             // [Add the StartIndex and look up in the Indices array].
-            if (remapArray == null || remapArray.Length < Count) remapArray = new int[Count];
+            Allocator.AllocateToSize(ref remapArray, Count);
             for (int i = 0; i < Count; ++i)
             {
                 remapArray[i] = source.Index(MatchingRowIndices[i]);

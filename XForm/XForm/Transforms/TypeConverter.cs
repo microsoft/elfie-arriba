@@ -25,6 +25,8 @@ namespace XForm.Transforms
             }
         }
 
+        public override IReadOnlyList<ColumnDetails> Columns => _columns;
+
         public override Func<DataBatch> ColumnGetter(int columnIndex)
         {
             // Pass through columns other than the one being converted
