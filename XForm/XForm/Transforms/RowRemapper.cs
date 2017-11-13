@@ -14,11 +14,11 @@ namespace XForm.Transforms
     {
         public int[] MatchingRowIndices;
         public int Count;
-        private Dictionary<Tuple<int[], int>, int[]> _cachedRemappings;
+        private Dictionary<ArraySelector, int[]> _cachedRemappings;
 
         public RowRemapper()
         {
-            _cachedRemappings = new Dictionary<Tuple<int[], int>, int[]>();
+            _cachedRemappings = new Dictionary<ArraySelector, int[]>();
         }
 
         public void ClearAndSize(int length)
@@ -45,9 +45,9 @@ namespace XForm.Transforms
             // For each column, we need to translate those indices to real indices on the source array.
 
             // If the source returned a full array, the row indices of the matches point to the right array elements.
-            if (source.Indices == null && source.StartIndexInclusive == 0) return DataBatch.Map(source.Array, MatchingRowIndices, Count);
+            if (source.Selector.Indices == null && source.Selector.StartIndexInclusive == 0) return DataBatch.Map(source.Array, MatchingRowIndices, Count);
 
-            Tuple<int[], int> sourceIndicesIdentity = Tuple.Create(source.Indices, source.StartIndexInclusive);
+            ArraySelector sourceIndicesIdentity = source.Selector;
 
             // If we've already remapped for this indices and start index, we can re-use it.
             // Many columns are likely to be mapped in the same one or two ways; this avoids redoing the remap work for every column
