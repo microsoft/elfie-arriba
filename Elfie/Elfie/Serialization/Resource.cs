@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 
-namespace Xsv
+namespace Elfie.Serialization
 {
     public static class Resource
     {
@@ -17,7 +17,7 @@ namespace Xsv
         /// <returns>Lines from file in stream</returns>
         public static string[] ReadAllStreamLines(string streamName, Assembly asm = null)
         {
-            if (asm == null) asm = Assembly.GetExecutingAssembly();
+            if (asm == null) asm = Assembly.GetCallingAssembly();
 
             List<string> lines = new List<string>();
             using (StreamReader reader = new StreamReader(asm.GetManifestResourceStream(streamName)))

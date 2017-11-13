@@ -13,6 +13,7 @@ using Microsoft.CodeAnalysis.Elfie.Serialization;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using Xsv.Sanitize;
+using Elfie.Serialization;
 
 namespace Xsv.Test
 {

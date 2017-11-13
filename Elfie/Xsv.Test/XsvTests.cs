@@ -3,12 +3,20 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
+using Xsv.Test.Model;
 
 namespace Xsv.Test
 {
     [TestClass]
     public class XsvTests
     {
+        [TestMethod]
+        public void Generate_WebRequestSample()
+        {
+            WebRequestGenerator generator = new WebRequestGenerator(new Random(5), new DateTime(2017, 11, 13, 13, 48, 31, DateTimeKind.Utc), 10);
+            generator.WriteTo(TabularFactory.BuildWriter("WebRequestSample.5.1000.csv"), 1000);
+        }
+
         [TestMethod]
         public void Xsv_HtmlInnerText()
         {
