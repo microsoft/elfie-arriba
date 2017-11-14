@@ -41,7 +41,7 @@ namespace XForm.IO
                     _getters[i] = () => converter(getter());
                 }
 
-                _writers[i] = new String8ColumnWriter(Path.Combine(tableRootPath, source.Columns[i].Name));
+                _writers[i] = TypeProviderFactory.TryGet(typeof(String8)).BinaryWriter(Path.Combine(tableRootPath, source.Columns[i].Name));
             }
 
             SchemaSerializer.Write(_tableRootPath, _source.Columns.Select((cd) => cd.ChangeType(typeof(String8))));

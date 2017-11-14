@@ -59,7 +59,7 @@ namespace XForm.Types
     internal class String8ColumnReader : IColumnReader
     {
         private FileStream _bytesReader;
-        private ArrayReader<int> _positionsReader;
+        private PrimitiveArrayReader<int> _positionsReader;
 
         private byte[] _bytesBuffer;
         private String8[] _resultArray;
@@ -67,7 +67,7 @@ namespace XForm.Types
         public String8ColumnReader(string columnPath)
         {
             _bytesReader = new FileStream(Path.Combine(columnPath, "V.s.bin"), FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-            _positionsReader = new ArrayReader<int>(new FileStream(Path.Combine(columnPath, "Vp.i32.bin"), FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+            _positionsReader = new PrimitiveArrayReader<int>(new FileStream(Path.Combine(columnPath, "Vp.i32.bin"), FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
         }
 
         public int Count => _positionsReader.Count;
@@ -130,23 +130,21 @@ namespace XForm.Types
     internal class String8ColumnWriter : IColumnWriter
     {
         private FileStream _bytesWriter;
-        private FileStream _positionsWriter;
+        private PrimitiveArrayWriter<int> _positionsWriter;
 
         private int[] _positionsBuffer;
-        private byte[] _positionBytesBuffer;
         private int _position;
 
         public String8ColumnWriter(string columnPath)
         {
             Directory.CreateDirectory(columnPath);
             _bytesWriter = new FileStream(Path.Combine(columnPath, "V.s.bin"), FileMode.Create, FileAccess.Write, FileShare.Read | FileShare.Delete);
-            _positionsWriter = new FileStream(Path.Combine(columnPath, "Vp.i32.bin"), FileMode.Create, FileAccess.Write, FileShare.Read | FileShare.Delete);
+            _positionsWriter = new PrimitiveArrayWriter<int>(new FileStream(Path.Combine(columnPath, "Vp.i32.bin"), FileMode.Create, FileAccess.Write, FileShare.Read | FileShare.Delete));
         }
 
         public void Append(DataBatch batch)
         {
             Allocator.AllocateToSize(ref _positionsBuffer, batch.Count);
-            Allocator.AllocateToSize(ref _positionBytesBuffer, batch.Count * 4);
 
             String8[] array = (String8[])batch.Array;
             for (int i = 0; i < batch.Count; ++i)
@@ -157,8 +155,7 @@ namespace XForm.Types
                 _positionsBuffer[i] = _position;
             }
 
-            Buffer.BlockCopy(_positionsBuffer, 0, _positionBytesBuffer, 0, 4 * batch.Count);
-            _positionsWriter.Write(_positionBytesBuffer, 0, 4 * batch.Count);
+            _positionsWriter.Append(DataBatch.All(_positionsBuffer, batch.Count));
         }
 
         public void Dispose()

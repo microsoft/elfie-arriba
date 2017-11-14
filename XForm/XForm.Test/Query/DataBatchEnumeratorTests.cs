@@ -2,7 +2,6 @@
 using Elfie.Test;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using XForm.Data;
@@ -14,6 +13,32 @@ namespace XForm.Test.Query
     public class DataBatchEnumeratorTests
     {
         private const string SampleFileName = "WebRequestSample.5.1000.csv";
+        private const string SampleTableFileName = "WebRequestSample.xform";
+        private const string ExpectedOutputFileName = @"C:\Download\WebRequestSample.Expected.csv";
+        private const string ActualOutputFileName = @"C:\Download\WebRequestSample.Actual.csv";
+
+        [TestMethod]
+        public void Scenario_EndToEnd()
+        {
+            PipelineFactory.BuildPipeline($@"
+                read {SampleFileName}
+                columns ID EventTime ServerPort HttpStatus ClientOs WasCachedResponse
+                write {ExpectedOutputFileName}
+                cast ID int
+                cast ServerPort int
+                cast HttpStatus int
+                cast EventTime DateTime
+                cast WasCachedResponse bool
+                write {SampleTableFileName}
+            ").RunAndDispose();
+
+            PipelineFactory.BuildPipeline($@"
+                read {SampleTableFileName}
+                write {ActualOutputFileName}
+            ").RunAndDispose();
+
+            Assert.AreEqual(File.ReadAllText(ExpectedOutputFileName), File.ReadAllText(ActualOutputFileName));
+        }
 
         [TestInitialize]
         public void WriteSampleFile()
