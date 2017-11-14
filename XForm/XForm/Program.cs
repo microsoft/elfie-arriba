@@ -226,7 +226,7 @@ namespace XForm
 
             using (new TraceWatch($"XForm Count"))
             {
-                ArrayReader table = new ArrayReader();
+                ArrayEnumerator table = new ArrayEnumerator();
                 table.AddColumn(new ColumnDetails("ID", typeof(int), false), DataBatch.All(array, array.Length));
 
                 IDataBatchEnumerator source = table;

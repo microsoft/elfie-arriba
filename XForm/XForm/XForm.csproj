@@ -59,7 +59,7 @@
     <Compile Include="Query\PipelineFactory.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="IO\ArrayReader.cs" />
+    <Compile Include="IO\ArrayEnumerator.cs" />
     <Compile Include="IO\BinaryTableReader.cs" />
     <Compile Include="Transforms\ColumnSelector.cs" />
     <Compile Include="Transforms\Comparers.cs" />

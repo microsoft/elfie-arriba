@@ -89,6 +89,7 @@ namespace XForm.IO
         public override int Next(int desiredCount)
         {
             int count = _source.Next(desiredCount);
+            if (count == 0) return 0;
 
             for (int i = 0; i < _getters.Length; ++i)
             {

@@ -4,7 +4,7 @@ using XForm.Data;
 
 namespace XForm.IO
 {
-    public class ArrayReader : IDataBatchEnumerator
+    public class ArrayEnumerator : IDataBatchEnumerator
     {
         private List<ColumnDetails> _columns;
         private List<DataBatch> _columnArrays;
@@ -13,7 +13,7 @@ namespace XForm.IO
         private int _nextIndex;
         private int _nextLength;
 
-        public ArrayReader()
+        public ArrayEnumerator()
         {
             _columns = new List<ColumnDetails>();
             _columnArrays = new List<DataBatch>();
