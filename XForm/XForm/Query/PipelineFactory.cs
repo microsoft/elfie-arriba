@@ -29,7 +29,7 @@ namespace XForm
         public static IDataBatchEnumerator BuildStage(IDataBatchEnumerator source, string configurationText)
         {
             List<string> configurationParts = SplitConfigurationLine(configurationText);
-            string verb = configurationParts[0];
+            string verb = configurationParts[0].ToLowerInvariant();
 
             switch(verb)
             {
@@ -50,6 +50,8 @@ namespace XForm
                 case "select":
                 case "columns":
                     return new ColumnSelector(source, configurationParts.Skip(1));
+                case "removecolumns":
+                    return new ColumnRemover(source, configurationParts.Skip(1));
                 case "write":
                     if (configurationParts.Count != 2) throw new ArgumentException("Usage 'write' [filePath]");
                     if (configurationParts[1].EndsWith("xform"))

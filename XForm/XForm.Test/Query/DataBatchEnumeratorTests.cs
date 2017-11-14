@@ -11,17 +11,16 @@ namespace XForm.Test.Query
     [TestClass]
     public class DataBatchEnumeratorTests
     {
+        private const string SampleFileName = "WebRequestSample.5.1000.csv";
         [TestInitialize]
         public void WriteSampleFile()
         {
-            Resource.SaveStreamTo("XForm.Test.WebRequestSample.5.1000.csv", "WebRequestSample.5.1000.csv");
+            Resource.SaveStreamTo($"XForm.Test.{SampleFileName}", SampleFileName);
         }
 
-        [TestMethod]
-        public void TabularFileReader_Errors()
+        private static IDataBatchEnumerator SampleReader()
         {
-            Verify.Exception<ArgumentException>(() => PipelineFactory.BuildStage(null, "read"), "Usage: 'read' [filePath]");
-            Verify.Exception<FileNotFoundException>(() => PipelineFactory.BuildStage(null, "read NotFound.csv"));
+            return PipelineFactory.BuildStage(null, $"read {SampleFileName}");
         }
 
         public static void DataSourceEnumerator_All(string configurationLine, int expectedRowCount, string[] requiredColumns = null)
@@ -33,7 +32,7 @@ namespace XForm.Test.Query
             DataBatchEnumeratorContractValidator innerValidator = null;
             try
             {
-                pipeline = PipelineFactory.BuildStage(null, "read \"WebRequestSample.5.1000.csv\"");
+                pipeline = SampleReader();
                 innerValidator = new DataBatchEnumeratorContractValidator(pipeline);
                 pipeline = PipelineFactory.BuildStage(innerValidator, configurationLine);
 
@@ -71,6 +70,15 @@ namespace XForm.Test.Query
             DataSourceEnumerator_All("count", 1);
             DataSourceEnumerator_All("where ServerPort = 80", 423, new string[] { "ServerPort" });
             DataSourceEnumerator_All("convert EventTime DateTime", 1000);
+            DataSourceEnumerator_All("removecolumns EventTime", 1000);
+        }
+
+        [TestMethod]
+        public void DataSourceEnumerator_Errors()
+        {
+            Verify.Exception<ArgumentException>(() => PipelineFactory.BuildStage(null, "read"), "Usage: 'read' [filePath]");
+            Verify.Exception<FileNotFoundException>(() => PipelineFactory.BuildStage(null, "read NotFound.csv"));
+            Verify.Exception<ColumnNotFoundException>(() => PipelineFactory.BuildStage(SampleReader(), "removeColumns NotFound"));
         }
     }
 }
