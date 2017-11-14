@@ -30,7 +30,7 @@ namespace XForm.IO
 
                 if (_source.Columns[i].Type != typeof(String8))
                 {
-                    Func<DataBatch, DataBatch> converter = TypeConverterFactory.Build(_source.Columns[i].Type, typeof(String8), String8.Empty, false);
+                    Func<DataBatch, DataBatch> converter = TypeConverterFactory.GetConverter(_source.Columns[i].Type, typeof(String8), String8.Empty, false);
                     stringGetter = () => (converter(rawGetter()));
                 }
 

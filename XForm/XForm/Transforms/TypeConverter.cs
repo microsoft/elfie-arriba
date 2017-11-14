@@ -16,7 +16,7 @@ namespace XForm.Transforms
             _sourceColumnIndex = source.Columns.IndexOfColumn(columnName);
 
             ColumnDetails sourceColumn = source.Columns[_sourceColumnIndex];
-            _converter = TypeConverterFactory.Build(sourceColumn.Type, targetType, defaultValue, strict);
+            _converter = TypeConverterFactory.GetConverter(sourceColumn.Type, targetType, defaultValue, strict);
 
             _columns = new List<ColumnDetails>();
             for(int i = 0; i < source.Columns.Count; ++i)
