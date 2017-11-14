@@ -97,7 +97,7 @@ namespace XForm
         public static string ParseConfigurationPart(string configurationText, ref int index)
         {
             // Ignore whitespace before the value
-            while (index < configurationText.Length && Char.IsWhiteSpace(configurationText[index])) index++;
+            while (index < configurationText.Length && (Char.IsWhiteSpace(configurationText[index]) || configurationText[index] == ',')) index++;
 
             // If this is the end of the text, return null
             if (index == configurationText.Length) return null;
@@ -134,7 +134,7 @@ namespace XForm
             {
                 // Unquoted value. Return value until next whitespace or end of string
                 int start = index;
-                while(index < configurationText.Length && !Char.IsWhiteSpace(configurationText[index])) index++;
+                while(index < configurationText.Length && !(Char.IsWhiteSpace(configurationText[index]) || configurationText[index] == ',')) index++;
                 return configurationText.Substring(start, index - start);
             }
         }

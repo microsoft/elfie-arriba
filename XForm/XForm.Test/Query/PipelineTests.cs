@@ -15,6 +15,7 @@ namespace XForm.Test.Query
             Assert.AreEqual(@"read|C:\Download\Sample.csv", string.Join("|", PipelineFactory.SplitConfigurationLine(@"read ""C:\Download\Sample.csv""")));
             Assert.AreEqual(@"read|C:\Download\Sample.csv", string.Join("|", PipelineFactory.SplitConfigurationLine(@"read ""C:\Download\Sample.csv"" ")));
             Assert.AreEqual(@"value|""Quoted""", string.Join("|", PipelineFactory.SplitConfigurationLine(@"value """"""Quoted""""""")));
+            Assert.AreEqual(@"columns|One|Two|Three", string.Join("|", PipelineFactory.SplitConfigurationLine(@"columns One,Two, Three")));
         }
     }
 }
