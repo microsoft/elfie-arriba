@@ -2,23 +2,63 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.InteropServices;
 using XForm.Data;
 
 namespace XForm.IO
 {
     public interface IColumnReader : IDisposable
     {
-        DataBatch Next(int desiredCount);
+        int Count { get; }
+        DataBatch Read(ArraySelector selector);
+    }
+
+    public class ArrayReader<T> : IColumnReader
+    {
+        private int _bytesPerItem;
+        private FileStream _stream;
+        private byte[] _bytesBuffer;
+        private T[] _array;
+
+        public ArrayReader(FileStream stream)
+        {
+            _stream = stream;
+            _bytesPerItem = (typeof(T) == typeof(bool) ? 1 : Marshal.SizeOf<T>());
+        }
+
+        public int Count => (int)(_stream.Length / _bytesPerItem);
+
+        public DataBatch Read(ArraySelector selector)
+        {
+            if (selector.Indices != null) throw new NotImplementedException();
+
+            int bytesToRead = _bytesPerItem * selector.Count;
+
+            Allocator.AllocateToSize(ref _bytesBuffer, bytesToRead);
+            Allocator.AllocateToSize(ref _array, selector.Count);
+
+            _stream.Seek(_bytesPerItem * selector.StartIndexInclusive, SeekOrigin.Begin);
+            _stream.Read(_bytesBuffer, 0, bytesToRead);
+            Buffer.BlockCopy(_bytesBuffer, 0, _array, 0, bytesToRead);
+
+            return DataBatch.All(_array, selector.Count);
+        }
+
+        public void Dispose()
+        {
+            if(_stream != null)
+            {
+                _stream.Dispose();
+                _stream = null;
+            }
+        }
     }
 
     public class String8ColumnReader : IColumnReader
     {
         private FileStream _bytesReader;
-        private FileStream _positionsReader;
+        private ArrayReader<int> _positionsReader;
 
-        private int[] _positionsBuffer;
-        private byte[] _positionBytesBuffer;
-        private int _position;
         private byte[] _bytesBuffer;
         private String8[] _resultArray;
 
@@ -27,46 +67,48 @@ namespace XForm.IO
             string columnFilePath = Path.Combine(tableRootPath, columnName);
 
             _bytesReader = new FileStream(Path.Combine(columnFilePath, "V.s.bin"), FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-            _positionsReader = new FileStream(Path.Combine(columnFilePath, "Vp.i32.bin"), FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            _positionsReader = new ArrayReader<int>(new FileStream(Path.Combine(columnFilePath, "Vp.i32.bin"), FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
         }
 
-        public DataBatch Next(int desiredCount)
+        public int Count => _positionsReader.Count;
+
+        public DataBatch Read(ArraySelector selector)
         {
-            int actualCount;
+            if (selector.Indices != null) throw new NotImplementedException();
 
-            // Read the int[] for positions
-            Allocator.AllocateToSize(ref _positionsBuffer, desiredCount);
-            Allocator.AllocateToSize(ref _positionBytesBuffer, desiredCount * 4);
-            actualCount = _positionsReader.Read(_positionBytesBuffer, 0, desiredCount * 4) / 4;
-            Buffer.BlockCopy(_positionBytesBuffer, 0, _positionsBuffer, 0, actualCount * 4);
+            // Read the end of the previous string
+            int start;
+            if(selector.StartIndexInclusive == 0)
+            {
+                start = 0;
+            }
+            else
+            {
+                start = ((int[])_positionsReader.Read(ArraySelector.All(Count).Slice(selector.StartIndexInclusive - 1, selector.StartIndexInclusive)).Array)[0];
+            }
 
-            // Return an empty batch if we're out of rows
-            if (actualCount == 0) return DataBatch.All(_resultArray, 0);
+            // Read the ends of this batch
+            int[] positions = (int[])_positionsReader.Read(selector).Array;
+            int end = positions[selector.Count - 1];
+            int lengthToRead = end - start;
 
-            // Determine how many bytes we need to read the desired strings
-            int lastValueEnd = _positionsBuffer[actualCount - 1];
-            int lengthToRead = lastValueEnd - _position;
             Allocator.AllocateToSize(ref _bytesBuffer, lengthToRead);
+            Allocator.AllocateToSize(ref _resultArray, selector.Count);
 
             // Read the raw string bytes
-            int byteArrayOffset = _position;
-            Array.Clear(_bytesBuffer, 0, _bytesBuffer.Length);
+            _bytesReader.Seek(start, SeekOrigin.Begin);
             _bytesReader.Read(_bytesBuffer, 0, lengthToRead);
 
             // Update the String8 array to point to them
-            Allocator.AllocateToSize(ref _resultArray, actualCount);
-
-            int previousStringEnd = _position;
-            for (int i = 0; i < actualCount; ++i)
+            int previousStringEnd = start;
+            for (int i = 0; i < selector.Count; ++i)
             {
-                int valueEnd = _positionsBuffer[i];
-                _resultArray[i] = new String8(_bytesBuffer, previousStringEnd - byteArrayOffset, valueEnd - previousStringEnd);
+                int valueEnd = positions[i];
+                _resultArray[i] = new String8(_bytesBuffer, previousStringEnd - start, valueEnd - previousStringEnd);
                 previousStringEnd = valueEnd;
             }
 
-            _position = previousStringEnd;
-
-            return DataBatch.All(_resultArray, actualCount);
+            return DataBatch.All(_resultArray, selector.Count);
         }
 
         public void Dispose()
@@ -90,15 +132,15 @@ namespace XForm.IO
         private string _tableRootPath;
         private List<ColumnDetails> _columns;
         private IColumnReader[] _readers;
-        private DataBatch[] _batches;
-        private int _rowCountRead;
+
+        private int _totalCount;
+        private int _currentRowIndex;
+        private int _currentBatchCount;
 
         public BinaryTableReader(string tableRootPath)
         {
             _tableRootPath = tableRootPath;
             _columns = SchemaSerializer.Read(_tableRootPath);
-            
-            _batches = new DataBatch[_columns.Count];
             Reset();
         }
 
@@ -106,39 +148,26 @@ namespace XForm.IO
 
         public Func<DataBatch> ColumnGetter(int columnIndex)
         {
-            _readers[columnIndex] = new String8ColumnReader(_tableRootPath, Columns[columnIndex].Name);
-            return () => _batches[columnIndex];
+            if(_readers[columnIndex] == null) _readers[columnIndex] = new String8ColumnReader(_tableRootPath, Columns[columnIndex].Name);
+            return () => _readers[columnIndex].Read(ArraySelector.All(_totalCount).Slice(_currentRowIndex, _currentRowIndex + _currentBatchCount));
         }
 
         public int Next(int desiredCount)
         {
-            // TODO: Lame. Add seekability to avoid getting unread columns.
-            int actualCount = -1;
-            for(int i = 0; i < _readers.Length; ++i)
-            {
-                if (_readers[i] != null)
-                {
-                    _batches[i] = _readers[i].Next(desiredCount);
-                    if (actualCount == -1) actualCount = _batches[i].Count;
-                    if (actualCount != _batches[i].Count) throw new IOException($"BinaryTable \"{_tableRootPath}\" did not read as many rows as expected from {Columns[i].Name}. After {_rowCountRead:n0} rows, got {_batches[i].Count:n0} rows but other columns had {actualCount:n0} rows.");
-                }
-            }
+            _currentRowIndex += _currentBatchCount;
+            _currentBatchCount = desiredCount;
+            if (_currentRowIndex + _currentBatchCount > _totalCount) _currentBatchCount = _totalCount - _currentRowIndex;
 
-            if(actualCount == -1)
-            {
-                _readers[0] = new String8ColumnReader(_tableRootPath, Columns[0].Name);
-                _batches[0] = _readers[0].Next(desiredCount);
-                actualCount = _batches[0].Count;
-            }
-
-            _rowCountRead += actualCount;
-            return actualCount;
+            return _currentBatchCount;
         }
 
         public void Reset()
         {
-            _rowCountRead = 0;
+            _currentRowIndex = 0;
             _readers = new IColumnReader[_columns.Count];
+
+            _readers[0] = new String8ColumnReader(_tableRootPath, Columns[0].Name);
+            _totalCount = _readers[0].Count;
         }
 
         public void Dispose()
