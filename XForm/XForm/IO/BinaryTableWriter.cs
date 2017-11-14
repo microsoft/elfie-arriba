@@ -1,6 +1,7 @@
 ﻿using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using System;
 using System.IO;
+using System.Linq;
 using XForm.Data;
 using XForm.Transforms;
 using XForm.Types;
@@ -40,7 +41,7 @@ namespace XForm.IO
                 _writers[i] = new String8ColumnWriter(Path.Combine(tableRootPath, source.Columns[i].Name));
             }
 
-            SchemaSerializer.Write(_tableRootPath, _source.Columns);
+            SchemaSerializer.Write(_tableRootPath, _source.Columns.Select((cd) => cd.ChangeType(typeof(String8))));
         }
 
         public override int Next(int desiredCount)
