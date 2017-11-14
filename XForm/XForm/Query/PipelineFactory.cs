@@ -13,20 +13,18 @@ namespace XForm
 {
     public class PipelineFactory
     {
-        public static IDataBatchEnumerator BuildPipeline(string configurationSet)
+        public static IDataBatchEnumerator BuildPipeline(string configurationSet, IDataBatchEnumerator pipeline = null)
         {
-            IDataBatchEnumerator pipeline = null;
-
             foreach (string configurationText in configurationSet.Split('\n'))
             {
                 if (string.IsNullOrEmpty(configurationText.Trim())) continue;
-                pipeline = BuildStage(pipeline, configurationText);
+                pipeline = BuildStage(configurationText, pipeline);
             }
 
             return pipeline;
         }
 
-        public static IDataBatchEnumerator BuildStage(IDataBatchEnumerator source, string configurationText)
+        public static IDataBatchEnumerator BuildStage(string configurationText, IDataBatchEnumerator source)
         {
             List<string> configurationParts = SplitConfigurationLine(configurationText);
             string verb = configurationParts[0].ToLowerInvariant();

@@ -52,6 +52,7 @@
     <Compile Include="Data\DataBatchEnumeratorWrapper.cs" />
     <Compile Include="Data\IDataBatchEnumerator.cs" />
     <Compile Include="Extensions\DataBatchEnumeratorExtensions.cs" />
+    <Compile Include="InteractiveRunner.cs" />
     <Compile Include="IO\SchemaSerializer.cs" />
     <Compile Include="Query\Operator.cs" />
     <Compile Include="Extensions\ColumnsExtensions.cs" />

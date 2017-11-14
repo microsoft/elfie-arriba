@@ -62,6 +62,7 @@ namespace XForm.IO
         {
             _tableRootPath = tableRootPath;
             _columns = SchemaSerializer.Read(_tableRootPath);
+            _readers = new IColumnReader[_columns.Count];
             Reset();
         }
 
@@ -90,7 +91,6 @@ namespace XForm.IO
         public void Reset()
         {
             _currentRowIndex = 0;
-            _readers = new IColumnReader[_columns.Count];
 
             // Get the first reader in order to get the row count
             Func<DataBatch> unused = ColumnGetter(0);

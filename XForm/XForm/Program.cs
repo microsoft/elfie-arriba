@@ -29,7 +29,8 @@ namespace XForm
                 }
                 else
                 {
-                    return RunInteractive();
+                    InteractiveRunner runner = new InteractiveRunner();
+                    return runner.Run();
                 }
             }
             catch (ArgumentException ex) when (!Debugger.IsAttached)
@@ -61,120 +62,7 @@ namespace XForm
             return rowsWritten;
         }
 
-        private static int RunInteractive()
-        {
-            int lastCount = 0;
-            IDataBatchEnumerator pipeline = null;
-            List<IDataBatchEnumerator> stages = new List<IDataBatchEnumerator>();
-            List<string> commands = new List<string>();
-
-            try
-            {
-                while (true)
-                {
-                    Console.Write("> ");
-
-                    // Read the next query line
-                    string nextLine = Console.ReadLine();
-                    List<string> arguments = PipelineFactory.SplitConfigurationLine(nextLine);
-                    if (arguments.Count == 0) return lastCount;
-
-                    string command = arguments[0].ToLowerInvariant();
-                    switch(command)
-                    {
-                        case "quit":
-                        case "exit":
-                            // Stop on empty, "quit", or "exit"
-                            return lastCount;
-
-                            
-                        case "back":
-                        case "undo":
-                            // Unwrap on "back" or "undo"
-                            IDataBatchEnumerator last = stages.LastOrDefault();
-                            if (last != null)
-                            {
-                                pipeline = last;
-                                stages.RemoveAt(stages.Count - 1);
-                                commands.RemoveAt(commands.Count - 1);
-                            }
-
-                            break;
-                        case "save":
-                            if(arguments.Count != 2)
-                            {
-                                Console.WriteLine($"Usage: 'save' [scriptFilePath]");
-                                continue;
-                            }
-                            else
-                            {
-                                File.WriteAllLines(arguments[1], commands);
-                                Console.WriteLine($"Script saved to \"{arguments[1]}\".");
-                                continue;
-                            }
-                        case "run":
-                            if (arguments.Count != 2)
-                            {
-                                Console.WriteLine($"Usage: 'run' [scriptFilePath]");
-                                continue;
-                            }
-                            else
-                            {
-                                foreach(string line in File.ReadAllLines(arguments[1]))
-                                {
-                                    Console.WriteLine(line);
-                                    pipeline = AddStage(pipeline, stages, commands, line);
-                                }
-                                break;
-                            }
-                        default:
-                            try
-                            {
-                                pipeline = AddStage(pipeline, stages, commands, nextLine);
-                                break;
-                            }
-                            catch (Exception ex)
-                            {
-                                Console.WriteLine($"Error: {ex.Message}");
-                                continue;
-                            }
-                    }
-
-                    Stopwatch w = Stopwatch.StartNew();
-
-                    // Get the first 10 results
-                    IDataBatchEnumerator firstTenWrapper = pipeline;
-                    firstTenWrapper = PipelineFactory.BuildStage(firstTenWrapper, "limit 10");
-                    firstTenWrapper = PipelineFactory.BuildStage(firstTenWrapper, "write cout");
-                    lastCount = firstTenWrapper.Run();
-
-                    // Get the count
-                    lastCount += pipeline.Run();
-                    firstTenWrapper.Reset();
-
-                    Console.WriteLine();
-                    Console.WriteLine($"{lastCount:n0} rows in {w.Elapsed.ToFriendlyString()}.");
-                    Console.WriteLine();
-                }
-            }
-            finally
-            {
-                if (pipeline != null) pipeline.Dispose();
-            }
-        }
-
-        private static IDataBatchEnumerator AddStage(IDataBatchEnumerator pipeline, List<IDataBatchEnumerator> stages, List<string> commands, string nextLine)
-        {
-            // Save stages before the last one
-            stages.Add(pipeline);
-
-            // Build the new stage
-            pipeline = PipelineFactory.BuildStage(pipeline, nextLine);
-
-            // Save the current command set
-            commands.Add(nextLine);
-            return pipeline;
-        }
+        
 
         static void TimingComparisons()
         {
