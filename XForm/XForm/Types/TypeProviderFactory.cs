@@ -8,12 +8,26 @@ namespace XForm.Types
         private static Dictionary<string, ITypeProvider> _providersByName;
         private static Dictionary<Type, ITypeProvider> _providersByType;
 
+        public static ITypeProvider Get(string typeName)
+        {
+            ITypeProvider provider = TryGet(typeName);
+            if (provider == null) throw new ArgumentException($"XForm doesn't have a registered Type Provider for type {typeName}.");
+            return provider;
+        }
+
         public static ITypeProvider TryGet(string typeName)
         {
             EnsureLoaded();
 
             ITypeProvider provider;
             if (!_providersByName.TryGetValue(typeName, out provider)) provider = null;
+            return provider;
+        }
+
+        public static ITypeProvider Get(Type type)
+        {
+            ITypeProvider provider = TryGet(type);
+            if (provider == null) throw new ArgumentException($"XForm doesn't have a registered Type Provider for type {type.Name}.");
             return provider;
         }
 
@@ -36,6 +50,8 @@ namespace XForm.Types
 
             // Add built-in type support
             Add(new String8TypeProvider());
+            Add(new PrimitiveTypeProvider<int>());
+            Add(new PrimitiveTypeProvider<bool>());
         }
 
         private static void Add(ITypeProvider provider)

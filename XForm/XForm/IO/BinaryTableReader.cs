@@ -32,7 +32,7 @@ namespace XForm.IO
             if (_readers[columnIndex] == null)
             {
                 ColumnDetails column = Columns[columnIndex];
-                _readers[columnIndex] = TypeProviderFactory.TryGet(column.Type).BinaryReader(Path.Combine(_tableRootPath, column.Name));
+                _readers[columnIndex] = TypeProviderFactory.Get(column.Type).BinaryReader(Path.Combine(_tableRootPath, column.Name));
             }
 
             return () => _readers[columnIndex].Read(ArraySelector.All(_totalCount).Slice(_currentRowIndex, _currentRowIndex + _currentBatchCount));

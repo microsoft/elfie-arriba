@@ -23,6 +23,7 @@ namespace XForm.Types
 
         public IColumnWriter BinaryWriter(string columnPath)
         {
+            Directory.CreateDirectory(columnPath);
             return new PrimitiveArrayWriter<T>(new FileStream(ValuesFilePath(columnPath), FileMode.Create, FileAccess.Write, FileShare.Read | FileShare.Delete));
         }
 

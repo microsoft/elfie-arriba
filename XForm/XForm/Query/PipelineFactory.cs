@@ -144,8 +144,10 @@ namespace XForm
             switch (typeString)
             {
                 case "int":
+                case "int32":
                     return typeof(int);
                 case "bool":
+                case "boolean":
                     return typeof(bool);
                 case "datetime":
                     return typeof(DateTime);

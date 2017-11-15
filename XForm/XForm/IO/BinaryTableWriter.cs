@@ -1,5 +1,6 @@
 ﻿using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using XForm.Data;
@@ -18,33 +19,45 @@ namespace XForm.IO
         public BinaryTableWriter(IDataBatchEnumerator source, string tableRootPath) : base(source)
         {
             _tableRootPath = tableRootPath;
+            Directory.Delete(tableRootPath, true);
             Directory.CreateDirectory(tableRootPath);
 
             int columnCount = source.Columns.Count;
 
+            List<ColumnDetails> columnSchemaToWrite = new List<ColumnDetails>();
+
             _innerGetters = new Func<DataBatch>[columnCount];
             _getters = new Func<DataBatch>[columnCount];
             _writers = new IColumnWriter[columnCount];
+
             for (int i = 0; i < columnCount; ++i)
             {
                 ColumnDetails column = source.Columns[i];
-                Func<DataBatch> getter = source.ColumnGetter(i);
-                _innerGetters[i] = getter;
 
-                if(column.Type == typeof(String8))
-                {
-                    _getters[i] = getter;
-                }
-                else
+                Func<DataBatch> directGetter = source.ColumnGetter(i);
+                Func<DataBatch> outputTypeGetter = directGetter;
+                IColumnWriter writer = null;
+                
+                // Build a direct writer for the column type, if available
+                ITypeProvider columnTypeProvider = TypeProviderFactory.TryGet(column.Type);
+                if(columnTypeProvider != null) writer = columnTypeProvider.BinaryWriter(Path.Combine(tableRootPath, source.Columns[i].Name));
+                
+                // If the column type doesn't have a provider or writer, convert to String8 and write that
+                if(writer == null)
                 {
                     Func<DataBatch, DataBatch> converter = TypeConverterFactory.GetConverter(column.Type, typeof(String8), null, false);
-                    _getters[i] = () => converter(getter());
+                    outputTypeGetter = () => converter(directGetter());
+                    writer = TypeProviderFactory.TryGet(typeof(String8)).BinaryWriter(Path.Combine(tableRootPath, source.Columns[i].Name));
+                    column = column.ChangeType(typeof(String8));
                 }
 
-                _writers[i] = TypeProviderFactory.TryGet(typeof(String8)).BinaryWriter(Path.Combine(tableRootPath, source.Columns[i].Name));
+                columnSchemaToWrite.Add(column);
+                _innerGetters[i] = directGetter;
+                _getters[i] = outputTypeGetter;
+                _writers[i] = writer;
             }
 
-            SchemaSerializer.Write(_tableRootPath, _source.Columns.Select((cd) => cd.ChangeType(typeof(String8))));
+            SchemaSerializer.Write(_tableRootPath, columnSchemaToWrite);
         }
 
         public override Func<DataBatch> ColumnGetter(int columnIndex)

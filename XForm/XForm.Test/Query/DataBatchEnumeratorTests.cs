@@ -12,10 +12,12 @@ namespace XForm.Test.Query
     [TestClass]
     public class DataBatchEnumeratorTests
     {
-        private const string SampleFileName = "WebRequestSample.5.1000.csv";
-        private const string SampleTableFileName = "WebRequestSample.xform";
-        private const string ExpectedOutputFileName = @"C:\Download\WebRequestSample.Expected.csv";
-        private const string ActualOutputFileName = @"C:\Download\WebRequestSample.Actual.csv";
+        private static string OutputRootFolderPath = @"C:\Download";
+
+        private static string SampleFileName = "WebRequestSample.5.1000.csv";
+        private static string SampleTableFileName = Path.Combine(OutputRootFolderPath, "WebRequestSample.xform");
+        private static string ExpectedOutputFileName = Path.Combine(OutputRootFolderPath, "WebRequestSample.Expected.csv");
+        private static string ActualOutputFileName = Path.Combine(OutputRootFolderPath, "WebRequestSample.Actual.csv");
 
         [TestMethod]
         public void Scenario_EndToEnd()
@@ -25,9 +27,9 @@ namespace XForm.Test.Query
                 columns ID EventTime ServerPort HttpStatus ClientOs WasCachedResponse
                 write {ExpectedOutputFileName}
                 cast ID int
-                cast ServerPort int
-                cast HttpStatus int
                 cast EventTime DateTime
+                cast ServerPort int
+                cast HttpStatus int                
                 cast WasCachedResponse bool
                 write {SampleTableFileName}
             ").RunAndDispose();
