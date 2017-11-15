@@ -52,6 +52,7 @@
     <Compile Include="Query\DataBatchEnumeratorContractValidator.cs" />
     <Compile Include="Query\DataBatchEnumeratorTests.cs" />
     <Compile Include="Query\PipelineTests.cs" />
+    <Compile Include="Query\SampleQuery.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

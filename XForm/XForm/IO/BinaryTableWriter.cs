@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using XForm.Data;
 using XForm.Transforms;
 using XForm.Types;
@@ -19,7 +18,7 @@ namespace XForm.IO
         public BinaryTableWriter(IDataBatchEnumerator source, string tableRootPath) : base(source)
         {
             _tableRootPath = tableRootPath;
-            Directory.Delete(tableRootPath, true);
+            DirectoryIO.DeleteAllContents(tableRootPath);
             Directory.CreateDirectory(tableRootPath);
 
             int columnCount = source.Columns.Count;

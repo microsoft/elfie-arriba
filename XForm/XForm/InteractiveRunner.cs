@@ -135,7 +135,8 @@ namespace XForm
 
         private void SaveScript(string path)
         {
-            Directory.CreateDirectory(Path.GetDirectoryName(path));
+            string folder = Path.GetDirectoryName(path);
+            if (!String.IsNullOrEmpty(folder)) Directory.CreateDirectory(folder);
             File.WriteAllLines(path, commands);
         }
 

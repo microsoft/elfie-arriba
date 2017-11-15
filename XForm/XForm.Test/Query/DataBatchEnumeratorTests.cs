@@ -14,10 +14,19 @@ namespace XForm.Test.Query
     {
         private static string OutputRootFolderPath = @"C:\Download";
 
-        private static string SampleFileName = "WebRequestSample.5.1000.csv";
+        public static string SampleFileName = "WebRequestSample.5.1000.csv";
         private static string SampleTableFileName = Path.Combine(OutputRootFolderPath, "WebRequestSample.xform");
         private static string ExpectedOutputFileName = Path.Combine(OutputRootFolderPath, "WebRequestSample.Expected.csv");
         private static string ActualOutputFileName = Path.Combine(OutputRootFolderPath, "WebRequestSample.Actual.csv");
+
+        [TestInitialize]
+        public static void WriteSampleFile()
+        {
+            if (!File.Exists(SampleFileName))
+            {
+                Resource.SaveStreamTo($"XForm.Test.{SampleFileName}", SampleFileName);
+            }
+        }
 
         [TestMethod]
         public void Scenario_EndToEnd()
@@ -40,12 +49,6 @@ namespace XForm.Test.Query
             ").RunAndDispose();
 
             Assert.AreEqual(File.ReadAllText(ExpectedOutputFileName), File.ReadAllText(ActualOutputFileName));
-        }
-
-        [TestInitialize]
-        public void WriteSampleFile()
-        {
-            Resource.SaveStreamTo($"XForm.Test.{SampleFileName}", SampleFileName);
         }
 
         private static IDataBatchEnumerator SampleReader()
