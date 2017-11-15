@@ -50,8 +50,18 @@ namespace XForm.Types
 
             // Add built-in type support
             Add(new String8TypeProvider());
-            Add(new PrimitiveTypeProvider<int>());
+            Add(new DateTimeTypeProvider());
+
             Add(new PrimitiveTypeProvider<bool>());
+
+            Add(new PrimitiveTypeProvider<sbyte>());
+            Add(new PrimitiveTypeProvider<byte>());
+            Add(new PrimitiveTypeProvider<short>());
+            Add(new PrimitiveTypeProvider<ushort>());
+            Add(new PrimitiveTypeProvider<int>());
+            Add(new PrimitiveTypeProvider<uint>());
+            Add(new PrimitiveTypeProvider<long>());
+            Add(new PrimitiveTypeProvider<ulong>());
         }
 
         private static void Add(ITypeProvider provider)

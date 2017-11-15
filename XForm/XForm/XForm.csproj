@@ -74,6 +74,9 @@
     <Compile Include="Transforms\WhereFilter.cs" />
     <Compile Include="IO\BinaryTableWriter.cs" />
     <Compile Include="IO\TabularFileWriter.cs" />
+    <Compile Include="Types\ConvertingReader.cs" />
+    <Compile Include="Types\ConvertingWriter.cs" />
+    <Compile Include="Types\DateTimeTypeProvider.cs" />
     <Compile Include="Types\ITypeProvider.cs" />
     <Compile Include="Types\PrimitiveTypeProvider.cs" />
     <Compile Include="Types\String8TypeProvider.cs" />

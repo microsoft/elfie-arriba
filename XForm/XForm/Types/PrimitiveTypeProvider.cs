@@ -40,7 +40,16 @@ namespace XForm.Types
         public static string BinaryFileTypePart()
         {
             if (typeof(T) == typeof(bool)) return "b8";
+
+            if (typeof(T) == typeof(sbyte)) return "i8";
+            if (typeof(T) == typeof(byte)) return "u8";
+            if (typeof(T) == typeof(short)) return "i16";
+            if (typeof(T) == typeof(ushort)) return "u16";
             if (typeof(T) == typeof(int)) return "i32";
+            if (typeof(T) == typeof(uint)) return "u32";
+            if (typeof(T) == typeof(long)) return "i64";
+            if (typeof(T) == typeof(ulong)) return "u64";
+
             throw new ArgumentException($"PrimitiveTypeProvider doesn't know how to read type {typeof(T).Name}.");
         }
     }
