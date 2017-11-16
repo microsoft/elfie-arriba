@@ -37,18 +37,23 @@ namespace XForm.Types
             {
                 if (targetType == typeof(int))
                 {
-                    String8ToIntegerConverter converter = new String8ToIntegerConverter(defaultValue);
-                    return converter.ConvertOrDefault;
+                    return new String8ToIntegerConverter(defaultValue).ConvertOrDefault;
                 }
                 else if (targetType == typeof(DateTime))
                 {
-                    String8ToDateTimeConverter converter = new String8ToDateTimeConverter(defaultValue);
-                    return converter.ConvertOrDefault;
+                    return new String8ToDateTimeConverter(defaultValue).ConvertOrDefault;
                 }
                 else if (targetType == typeof(bool))
                 {
-                    String8ToBooleanConverter converter = new String8ToBooleanConverter(defaultValue);
-                    return converter.ConvertOrDefault;
+                    return new String8ToBooleanConverter(defaultValue).ConvertOrDefault;
+                }
+                else if(targetType == typeof(long))
+                {
+                    return new String8ToLongConverter(defaultValue).ConvertOrDefault;
+                }
+                else if(targetType == typeof(ulong))
+                {
+                    return new String8ToULongConverter(defaultValue).ConvertOrDefault;
                 }
             }
 
@@ -317,6 +322,54 @@ namespace XForm.Types
             for (int i = 0; i < batch.Count; ++i)
             {
                 if (!sourceArray[batch.Index(i)].TryToBoolean(out _array[i])) _array[i] = _default;
+            }
+
+            return DataBatch.All(_array, batch.Count);
+        }
+    }
+
+    internal class String8ToLongConverter
+    {
+        private long[] _array;
+        private long _default;
+
+        public String8ToLongConverter(object defaultValue)
+        {
+            _default = (long)(defaultValue ?? default(long));
+        }
+
+        public DataBatch ConvertOrDefault(DataBatch batch)
+        {
+            Allocator.AllocateToSize(ref _array, batch.Count);
+
+            String8[] sourceArray = (String8[])batch.Array;
+            for (int i = 0; i < batch.Count; ++i)
+            {
+                if (!sourceArray[batch.Index(i)].TryToLong(out _array[i])) _array[i] = _default;
+            }
+
+            return DataBatch.All(_array, batch.Count);
+        }
+    }
+
+    internal class String8ToULongConverter
+    {
+        private ulong[] _array;
+        private ulong _default;
+
+        public String8ToULongConverter(object defaultValue)
+        {
+            _default = (ulong)(defaultValue ?? default(ulong));
+        }
+
+        public DataBatch ConvertOrDefault(DataBatch batch)
+        {
+            Allocator.AllocateToSize(ref _array, batch.Count);
+
+            String8[] sourceArray = (String8[])batch.Array;
+            for (int i = 0; i < batch.Count; ++i)
+            {
+                if (!sourceArray[batch.Index(i)].TryToULong(out _array[i])) _array[i] = _default;
             }
 
             return DataBatch.All(_array, batch.Count);

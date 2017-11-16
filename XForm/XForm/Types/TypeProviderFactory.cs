@@ -62,6 +62,8 @@ namespace XForm.Types
             Add(new PrimitiveTypeProvider<uint>());
             Add(new PrimitiveTypeProvider<long>());
             Add(new PrimitiveTypeProvider<ulong>());
+            Add(new PrimitiveTypeProvider<float>());
+            Add(new PrimitiveTypeProvider<double>());
         }
 
         private static void Add(ITypeProvider provider)

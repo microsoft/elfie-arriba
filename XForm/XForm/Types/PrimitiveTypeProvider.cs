@@ -49,6 +49,8 @@ namespace XForm.Types
             if (typeof(T) == typeof(uint)) return "u32";
             if (typeof(T) == typeof(long)) return "i64";
             if (typeof(T) == typeof(ulong)) return "u64";
+            if (typeof(T) == typeof(float)) return "f32";
+            if (typeof(T) == typeof(double)) return "f64";
 
             throw new ArgumentException($"PrimitiveTypeProvider doesn't know how to read type {typeof(T).Name}.");
         }
