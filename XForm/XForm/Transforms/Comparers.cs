@@ -1,5 +1,10 @@
-﻿using Microsoft.CodeAnalysis.Elfie.Model.Strings;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
+
+using Microsoft.CodeAnalysis.Elfie.Model.Strings;
+
 using XForm.Data;
 using XForm.Query;
 
@@ -27,12 +32,12 @@ namespace XForm.Transforms
             {
                 comparer = new DateTimeComparer();
             }
-            else if(type == typeof(int))
+            else if (type == typeof(int))
             {
                 comparer = new IntComparer();
             }
-            else if(type == typeof(String8))
-            {                
+            else if (type == typeof(String8))
+            {
                 comparer = new ComparableComparer<String8>();
             }
             else
@@ -47,7 +52,7 @@ namespace XForm.Transforms
             comparer.SetValue(value);
 
             // Return the function for the desired comparison operation
-            switch(op)
+            switch (op)
             {
                 case CompareOperator.Equals:
                     return comparer.WhereEquals;

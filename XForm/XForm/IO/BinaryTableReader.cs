@@ -1,6 +1,10 @@
-﻿using System;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Collections.Generic;
 using System.IO;
+
 using XForm.Data;
 using XForm.Types;
 
@@ -57,11 +61,11 @@ namespace XForm.IO
 
         public void Dispose()
         {
-            if(_readers != null)
+            if (_readers != null)
             {
-                foreach(IColumnReader reader in _readers)
+                foreach (IColumnReader reader in _readers)
                 {
-                    if(reader != null) reader.Dispose();
+                    if (reader != null) reader.Dispose();
                 }
 
                 _readers = null;

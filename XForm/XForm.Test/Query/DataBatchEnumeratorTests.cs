@@ -1,9 +1,15 @@
-﻿using Elfie.Serialization;
-using Elfie.Test;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.IO;
 using System.Linq;
+
+using Elfie.Serialization;
+using Elfie.Test;
+
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+
 using XForm.Data;
 using XForm.Extensions;
 
@@ -12,12 +18,12 @@ namespace XForm.Test.Query
     [TestClass]
     public class DataBatchEnumeratorTests
     {
-        private static string OutputRootFolderPath = @"C:\Download";
+        private static string s_outputRootFolderPath = @"C:\Download";
 
         public static string SampleFileName = "WebRequestSample.5.1000.csv";
-        private static string SampleTableFileName = Path.Combine(OutputRootFolderPath, "WebRequestSample.xform");
-        private static string ExpectedOutputFileName = Path.Combine(OutputRootFolderPath, "WebRequestSample.Expected.csv");
-        private static string ActualOutputFileName = Path.Combine(OutputRootFolderPath, "WebRequestSample.Actual.csv");
+        private static string s_sampleTableFileName = Path.Combine(s_outputRootFolderPath, "WebRequestSample.xform");
+        private static string s_expectedOutputFileName = Path.Combine(s_outputRootFolderPath, "WebRequestSample.Expected.csv");
+        private static string s_actualOutputFileName = Path.Combine(s_outputRootFolderPath, "WebRequestSample.Actual.csv");
 
         public static void WriteSampleFile()
         {
@@ -39,21 +45,21 @@ namespace XForm.Test.Query
             PipelineFactory.BuildPipeline($@"
                 read {SampleFileName}
                 columns ID EventTime ServerPort HttpStatus ClientOs WasCachedResponse
-                write {ExpectedOutputFileName}
+                write {s_expectedOutputFileName}
                 cast ID int
                 cast EventTime DateTime
                 cast ServerPort int
                 cast HttpStatus int                
                 cast WasCachedResponse bool
-                write {SampleTableFileName}
+                write {s_sampleTableFileName}
             ").RunAndDispose();
 
             PipelineFactory.BuildPipeline($@"
-                read {SampleTableFileName}
-                write {ActualOutputFileName}
+                read {s_sampleTableFileName}
+                write {s_actualOutputFileName}
             ").RunAndDispose();
 
-            Assert.AreEqual(File.ReadAllText(ExpectedOutputFileName), File.ReadAllText(ActualOutputFileName));
+            Assert.AreEqual(File.ReadAllText(s_expectedOutputFileName), File.ReadAllText(s_actualOutputFileName));
         }
 
         private static IDataBatchEnumerator SampleReader()

@@ -1,4 +1,8 @@
-﻿using System;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
+
 using XForm.Data;
 using XForm.Extensions;
 using XForm.Query;
@@ -19,13 +23,13 @@ namespace XForm.Transforms
             ColumnDetails filterColumn = _source.Columns[_filterColumnIndex];
 
             // Cache the ColumnGetter
-            this._filterColumnGetter = source.ColumnGetter(_filterColumnIndex);
+            _filterColumnGetter = source.ColumnGetter(_filterColumnIndex);
 
             // Build a Comparer for the desired type and get the function for the desired compare operator
-            this._comparer = ComparerFactory.Build(filterColumn.Type, op, TypeConverterFactory.ConvertSingle(value, filterColumn.Type));
+            _comparer = ComparerFactory.Build(filterColumn.Type, op, TypeConverterFactory.ConvertSingle(value, filterColumn.Type));
 
             // Build a mapper to hold matching rows and remap source batches
-            this._mapper = new RowRemapper();
+            _mapper = new RowRemapper();
         }
 
         public override Func<DataBatch> ColumnGetter(int columnIndex)
@@ -48,7 +52,7 @@ namespace XForm.Transforms
 
         public override int Next(int desiredCount)
         {
-            while(_source.Next(desiredCount) > 0)
+            while (_source.Next(desiredCount) > 0)
             {
                 // Get a batch of rows from the filter column
                 DataBatch filterColumnBatch = _filterColumnGetter();

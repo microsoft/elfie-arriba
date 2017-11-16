@@ -1,10 +1,15 @@
-﻿using Microsoft.CodeAnalysis.Elfie.Diagnostics;
-using Microsoft.CodeAnalysis.Elfie.Extensions;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+
+using Microsoft.CodeAnalysis.Elfie.Diagnostics;
+using Microsoft.CodeAnalysis.Elfie.Extensions;
+
 using XForm.Aggregators;
 using XForm.Data;
 using XForm.Extensions;
@@ -14,16 +19,16 @@ using XForm.Transforms;
 
 namespace XForm
 {
-    class Program
+    internal class Program
     {
-        static int Main(string[] args)
+        private static int Main(string[] args)
         {
             //TimingComparisons();
             //return 0;
 
             try
             {
-                if(args.Length > 0)
+                if (args.Length > 0)
                 {
                     return RunFileQuery(args[0]);
                 }
@@ -62,9 +67,9 @@ namespace XForm
             return rowsWritten;
         }
 
-        
 
-        static void TimingComparisons()
+
+        private static void TimingComparisons()
         {
             int[] sample = new int[16 * 1024 * 1024];
             Random r = new Random();
@@ -75,8 +80,8 @@ namespace XForm
 
             TimingComparisons(sample, 500);
         }
-            
-        static void TimingComparisons(int[] array, int value)
+
+        private static void TimingComparisons(int[] array, int value)
         {
             using (new TraceWatch($"For Loop [==]"))
             {

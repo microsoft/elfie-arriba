@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 
 namespace XForm.Data
 {
@@ -11,8 +14,8 @@ namespace XForm.Data
     {
         public string Name { get; private set; }
         public Type Type { get; private set; }
-        public bool Nullable { get; private set; }    
-        
+        public bool Nullable { get; private set; }
+
         // Default? Unique? AutoIncrement? Constraint? IsIdentity? IsMeasure?
 
         public ColumnDetails(string name, Type type, bool nullable)

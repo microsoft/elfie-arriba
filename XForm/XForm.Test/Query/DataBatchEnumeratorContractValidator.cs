@@ -1,6 +1,11 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Collections.Generic;
+
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+
 using XForm.Data;
 
 namespace XForm.Test.Query
@@ -17,7 +22,7 @@ namespace XForm.Test.Query
 
         public DataBatchEnumeratorContractValidator(IDataBatchEnumerator inner)
         {
-            this._inner = inner;
+            _inner = inner;
             this.ColumnGettersRequested = new List<string>();
         }
 
@@ -54,7 +59,7 @@ namespace XForm.Test.Query
         {
             DisposeCalled = true;
 
-            if(_inner != null)
+            if (_inner != null)
             {
                 _inner.Dispose();
                 _inner = null;

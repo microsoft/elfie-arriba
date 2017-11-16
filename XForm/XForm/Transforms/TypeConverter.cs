@@ -1,5 +1,9 @@
-﻿using System;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Collections.Generic;
+
 using XForm.Data;
 using XForm.Extensions;
 
@@ -22,7 +26,7 @@ namespace XForm.Transforms
             }
 
             _columns = new List<ColumnDetails>();
-            for(int i = 0; i < source.Columns.Count; ++i)
+            for (int i = 0; i < source.Columns.Count; ++i)
             {
                 _columns.Add((i == _sourceColumnIndex ? source.Columns[i].ChangeType(targetType) : source.Columns[i]));
             }

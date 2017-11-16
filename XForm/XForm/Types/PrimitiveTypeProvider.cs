@@ -1,6 +1,10 @@
-﻿using System;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.IO;
 using System.Runtime.InteropServices;
+
 using XForm.Data;
 
 namespace XForm.Types
@@ -29,6 +33,7 @@ namespace XForm.Types
 
         public Func<DataBatch, DataBatch> TryGetConverter(Type sourceType, Type targetType, object defaultValue)
         {
+            // TODO: Add primitive number conversions
             return null;
         }
 
@@ -113,13 +118,13 @@ namespace XForm.Types
         {
             Allocator.AllocateToSize(ref _bytesBuffer, _bytesPerItem * batch.Count);
 
-            if(batch.Selector.Indices == null)
+            if (batch.Selector.Indices == null)
             {
                 Buffer.BlockCopy(batch.Array, _bytesPerItem * batch.Selector.StartIndexInclusive, _bytesBuffer, 0, _bytesPerItem * batch.Count);
             }
             else
             {
-                for(int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < batch.Count; ++i)
                 {
                     int index = batch.Index(i);
                     Buffer.BlockCopy(batch.Array, _bytesPerItem * index, _bytesBuffer, i * _bytesPerItem, _bytesPerItem);

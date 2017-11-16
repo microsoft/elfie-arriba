@@ -1,4 +1,7 @@
-﻿using System.IO;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System.IO;
 
 namespace XForm.IO
 {
@@ -8,12 +11,12 @@ namespace XForm.IO
         {
             if (!Directory.Exists(directoryPath)) return;
 
-            foreach(string filePath in Directory.GetFiles(directoryPath))
+            foreach (string filePath in Directory.GetFiles(directoryPath))
             {
                 File.Delete(filePath);
             }
 
-            foreach(string subdirectoryPath in Directory.GetDirectories(directoryPath))
+            foreach (string subdirectoryPath in Directory.GetDirectories(directoryPath))
             {
                 Directory.Delete(subdirectoryPath, true);
             }

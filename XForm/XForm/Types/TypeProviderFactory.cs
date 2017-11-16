@@ -1,12 +1,15 @@
-﻿using System;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Collections.Generic;
 
 namespace XForm.Types
 {
     public static class TypeProviderFactory
     {
-        private static Dictionary<string, ITypeProvider> _providersByName;
-        private static Dictionary<Type, ITypeProvider> _providersByType;
+        private static Dictionary<string, ITypeProvider> s_providersByName;
+        private static Dictionary<Type, ITypeProvider> s_providersByType;
 
         public static ITypeProvider Get(string typeName)
         {
@@ -20,7 +23,7 @@ namespace XForm.Types
             EnsureLoaded();
 
             ITypeProvider provider;
-            if (!_providersByName.TryGetValue(typeName, out provider)) provider = null;
+            if (!s_providersByName.TryGetValue(typeName, out provider)) provider = null;
             return provider;
         }
 
@@ -36,17 +39,17 @@ namespace XForm.Types
             EnsureLoaded();
 
             ITypeProvider provider;
-            if (!_providersByType.TryGetValue(type, out provider)) provider = null;
+            if (!s_providersByType.TryGetValue(type, out provider)) provider = null;
             return provider;
         }
 
         private static void EnsureLoaded()
         {
-            if (_providersByName != null) return;
+            if (s_providersByName != null) return;
 
             // Initialize lookup Dictionaries
-            _providersByName = new Dictionary<string, ITypeProvider>(StringComparer.OrdinalIgnoreCase);
-            _providersByType = new Dictionary<Type, ITypeProvider>();
+            s_providersByName = new Dictionary<string, ITypeProvider>(StringComparer.OrdinalIgnoreCase);
+            s_providersByType = new Dictionary<Type, ITypeProvider>();
 
             // Add built-in type support
             Add(new String8TypeProvider());
@@ -68,8 +71,8 @@ namespace XForm.Types
 
         private static void Add(ITypeProvider provider)
         {
-            _providersByName.Add(provider.Name, provider);
-            _providersByType.Add(provider.Type, provider);
+            s_providersByName.Add(provider.Name, provider);
+            s_providersByType.Add(provider.Type, provider);
         }
     }
 }

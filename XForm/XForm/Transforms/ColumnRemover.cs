@@ -1,6 +1,10 @@
-﻿using System;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
+
 using XForm.Data;
 using XForm.Extensions;
 
@@ -18,7 +22,7 @@ namespace XForm.Transforms
 
             // Find the columns 
             HashSet<string> columnsToRemove = new HashSet<string>(columnNames, StringComparer.OrdinalIgnoreCase);
-            foreach(ColumnDetails column in _source.Columns)
+            foreach (ColumnDetails column in _source.Columns)
             {
                 if (columnsToRemove.Contains(column.Name))
                 {

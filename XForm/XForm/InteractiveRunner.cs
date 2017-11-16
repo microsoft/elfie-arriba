@@ -1,9 +1,14 @@
-﻿using Microsoft.CodeAnalysis.Elfie.Extensions;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+
+using Microsoft.CodeAnalysis.Elfie.Extensions;
+
 using XForm.Data;
 using XForm.Extensions;
 
@@ -11,18 +16,18 @@ namespace XForm
 {
     public class InteractiveRunner
     {
-        private static string commandCachePath;
-        private IDataBatchEnumerator pipeline;
-        private List<IDataBatchEnumerator> stages;
-        private List<string> commands;
+        private static string s_commandCachePath;
+        private IDataBatchEnumerator _pipeline;
+        private List<IDataBatchEnumerator> _stages;
+        private List<string> _commands;
 
         public InteractiveRunner()
         {
-            commandCachePath = Environment.ExpandEnvironmentVariables(@"%TEMP%\XForm.Last.xql");
+            s_commandCachePath = Environment.ExpandEnvironmentVariables(@"%TEMP%\XForm.Last.xql");
 
-            pipeline = null;
-            stages = new List<IDataBatchEnumerator>();
-            commands = new List<string>();
+            _pipeline = null;
+            _stages = new List<IDataBatchEnumerator>();
+            _commands = new List<string>();
         }
 
         public int Run()
@@ -52,12 +57,12 @@ namespace XForm
                         case "back":
                         case "undo":
                             // Unwrap on "back" or "undo"
-                            IDataBatchEnumerator last = stages.LastOrDefault();
+                            IDataBatchEnumerator last = _stages.LastOrDefault();
                             if (last != null)
                             {
-                                pipeline = last;
-                                stages.RemoveAt(stages.Count - 1);
-                                commands.RemoveAt(commands.Count - 1);
+                                _pipeline = last;
+                                _stages.RemoveAt(_stages.Count - 1);
+                                _commands.RemoveAt(_commands.Count - 1);
                             }
 
                             break;
@@ -85,12 +90,12 @@ namespace XForm
                                 break;
                             }
                         case "rerun":
-                            LoadScript(commandCachePath);
+                            LoadScript(s_commandCachePath);
                             break;
                         default:
                             try
                             {
-                                pipeline = AddStage(nextLine);
+                                _pipeline = AddStage(nextLine);
                                 break;
                             }
                             catch (Exception ex)
@@ -100,17 +105,17 @@ namespace XForm
                             }
                     }
 
-                    SaveScript(commandCachePath);
+                    SaveScript(s_commandCachePath);
                     Stopwatch w = Stopwatch.StartNew();
 
                     // Get the first 10 results
-                    IDataBatchEnumerator firstTenWrapper = pipeline;
+                    IDataBatchEnumerator firstTenWrapper = _pipeline;
                     firstTenWrapper = PipelineFactory.BuildStage("limit 10", firstTenWrapper);
                     firstTenWrapper = PipelineFactory.BuildStage("write cout", firstTenWrapper);
                     lastCount = firstTenWrapper.Run();
 
                     // Get the count
-                    lastCount += pipeline.Run();
+                    lastCount += _pipeline.Run();
                     firstTenWrapper.Reset();
 
                     Console.WriteLine();
@@ -120,7 +125,7 @@ namespace XForm
             }
             finally
             {
-                if (pipeline != null) pipeline.Dispose();
+                if (_pipeline != null) _pipeline.Dispose();
             }
         }
 
@@ -129,7 +134,7 @@ namespace XForm
             foreach (string line in File.ReadAllLines(path))
             {
                 Console.WriteLine(line);
-                pipeline = AddStage(line);
+                _pipeline = AddStage(line);
             }
         }
 
@@ -137,20 +142,20 @@ namespace XForm
         {
             string folder = Path.GetDirectoryName(path);
             if (!String.IsNullOrEmpty(folder)) Directory.CreateDirectory(folder);
-            File.WriteAllLines(path, commands);
+            File.WriteAllLines(path, _commands);
         }
 
         private IDataBatchEnumerator AddStage(string nextLine)
         {
             // Save stages before the last one
-            stages.Add(pipeline);
+            _stages.Add(_pipeline);
 
             // Build the new stage
-            pipeline = PipelineFactory.BuildStage(nextLine, pipeline);
+            _pipeline = PipelineFactory.BuildStage(nextLine, _pipeline);
 
             // Save the current command set
-            commands.Add(nextLine);
-            return pipeline;
+            _commands.Add(nextLine);
+            return _pipeline;
         }
     }
 }

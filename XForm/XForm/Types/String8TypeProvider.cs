@@ -1,6 +1,11 @@
-﻿using Microsoft.CodeAnalysis.Elfie.Model.Strings;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.IO;
+
+using Microsoft.CodeAnalysis.Elfie.Model.Strings;
+
 using XForm.Data;
 using XForm.IO;
 
@@ -47,11 +52,11 @@ namespace XForm.Types
                 {
                     return new String8ToBooleanConverter(defaultValue).ConvertOrDefault;
                 }
-                else if(targetType == typeof(long))
+                else if (targetType == typeof(long))
                 {
                     return new String8ToLongConverter(defaultValue).ConvertOrDefault;
                 }
-                else if(targetType == typeof(ulong))
+                else if (targetType == typeof(ulong))
                 {
                     return new String8ToULongConverter(defaultValue).ConvertOrDefault;
                 }

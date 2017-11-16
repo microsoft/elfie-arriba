@@ -1,8 +1,13 @@
-﻿using Microsoft.CodeAnalysis.Elfie.Model.Strings;
-using Microsoft.CodeAnalysis.Elfie.Serialization;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
+
+using Microsoft.CodeAnalysis.Elfie.Model.Strings;
+using Microsoft.CodeAnalysis.Elfie.Serialization;
+
 using XForm.Data;
 using XForm.Transforms;
 
@@ -18,11 +23,11 @@ namespace XForm.IO
 
         public TabularFileWriter(IDataBatchEnumerator source, string outputFilePath)
         {
-            this._source = source;
-            this._outputFilePath = outputFilePath;
+            _source = source;
+            _outputFilePath = outputFilePath;
 
             // Subscribe to all columns and cache converters for them
-            this._stringColumnGetters = new Func<DataBatch>[_source.Columns.Count];
+            _stringColumnGetters = new Func<DataBatch>[_source.Columns.Count];
             for (int i = 0; i < _source.Columns.Count; ++i)
             {
                 Func<DataBatch> rawGetter = _source.ColumnGetter(i);
@@ -60,7 +65,7 @@ namespace XForm.IO
         public int Next(int desiredCount)
         {
             // Build the writer only when we start getting rows
-            if(_writer == null)
+            if (_writer == null)
             {
                 _writer = TabularFactory.BuildWriter(_outputFilePath);
                 _writer.SetColumns(_source.Columns.Select((cd) => cd.Name));
@@ -78,7 +83,7 @@ namespace XForm.IO
 
             for (int rowIndex = 0; rowIndex < rowCount; ++rowIndex)
             {
-                for(int colIndex = 0; colIndex < _stringColumnGetters.Length; ++colIndex)
+                for (int colIndex = 0; colIndex < _stringColumnGetters.Length; ++colIndex)
                 {
                     String8 value = ((String8[])batches[colIndex].Array)[batches[colIndex].Index(rowIndex)];
                     _writer.Write(value);
@@ -92,16 +97,16 @@ namespace XForm.IO
 
         public void Dispose()
         {
-            if(this._source != null)
+            if (_source != null)
             {
-                this._source.Dispose();
-                this._source = null;
+                _source.Dispose();
+                _source = null;
             }
 
-            if(this._writer != null)
+            if (_writer != null)
             {
-                this._writer.Dispose();
-                this._writer = null;
+                _writer.Dispose();
+                _writer = null;
             }
         }
     }

@@ -1,5 +1,10 @@
-﻿using Microsoft.CodeAnalysis.Elfie.Model.Strings;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
+
+using Microsoft.CodeAnalysis.Elfie.Model.Strings;
+
 using XForm.Data;
 using XForm.Types;
 
@@ -16,7 +21,7 @@ namespace XForm.Transforms
 
             // See if the target type provides conversion
             ITypeProvider targetTypeProvider = TypeProviderFactory.TryGet(targetType);
-            if(targetTypeProvider != null)
+            if (targetTypeProvider != null)
             {
                 converter = targetTypeProvider.TryGetConverter(sourceType, targetType, defaultValue);
                 if (converter != null) return converter;
@@ -58,6 +63,4 @@ namespace XForm.Transforms
             return converter(DataBatch.All(new String8[] { value })).Array.GetValue(0);
         }
     }
-
-    
 }

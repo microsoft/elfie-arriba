@@ -1,7 +1,12 @@
-﻿using Microsoft.CodeAnalysis.Elfie.Model.Strings;
-using Microsoft.CodeAnalysis.Elfie.Serialization;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Collections.Generic;
+
+using Microsoft.CodeAnalysis.Elfie.Model.Strings;
+using Microsoft.CodeAnalysis.Elfie.Serialization;
+
 using XForm.Data;
 
 namespace XForm.IO
@@ -19,11 +24,11 @@ namespace XForm.IO
 
         public TabularFileReader(string filePath)
         {
-            this._filePath = filePath;
+            _filePath = filePath;
             Reset();
 
             _block = new String8Block();
-            _cells = new String8[this._columns.Count][];
+            _cells = new String8[_columns.Count][];
         }
 
         public IReadOnlyList<ColumnDetails> Columns => _columns;
@@ -46,12 +51,12 @@ namespace XForm.IO
 
         public void Reset()
         {
-            this._reader = TabularFactory.BuildReader(this._filePath);
+            _reader = TabularFactory.BuildReader(_filePath);
 
-            this._columns = new List<ColumnDetails>();
-            foreach (string columnName in this._reader.Columns)
+            _columns = new List<ColumnDetails>();
+            foreach (string columnName in _reader.Columns)
             {
-                this._columns.Add(new ColumnDetails(columnName, typeof(String8), false));
+                _columns.Add(new ColumnDetails(columnName, typeof(String8), false));
             }
         }
 
@@ -86,7 +91,7 @@ namespace XForm.IO
 
         public void Dispose()
         {
-            if(_reader != null)
+            if (_reader != null)
             {
                 _reader.Dispose();
                 _reader = null;

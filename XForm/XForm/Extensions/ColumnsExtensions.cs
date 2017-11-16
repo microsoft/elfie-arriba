@@ -1,7 +1,11 @@
-﻿using System;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
+
 using XForm.Data;
 
 namespace XForm.Extensions
@@ -10,7 +14,7 @@ namespace XForm.Extensions
     {
         public static int IndexOfColumn(this IReadOnlyList<ColumnDetails> columns, string columnName)
         {
-            for(int index = 0; index < columns.Count; ++index)
+            for (int index = 0; index < columns.Count; ++index)
             {
                 if (columns[index].Name.Equals(columnName, StringComparison.InvariantCultureIgnoreCase)) return index;
             }

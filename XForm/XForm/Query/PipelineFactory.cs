@@ -1,12 +1,17 @@
-﻿using Microsoft.CodeAnalysis.Elfie.Model.Strings;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+
+using Microsoft.CodeAnalysis.Elfie.Model.Strings;
+
 using XForm.Aggregators;
 using XForm.Data;
-using XForm.Query;
 using XForm.IO;
+using XForm.Query;
 using XForm.Transforms;
 using XForm.Types;
 
@@ -30,7 +35,7 @@ namespace XForm
             List<string> configurationParts = SplitConfigurationLine(xqlLine);
             string verb = configurationParts[0].ToLowerInvariant();
 
-            switch(verb)
+            switch (verb)
             {
                 case "read":
                     if (source != null) throw new ArgumentException("'read' must be the first stage in a pipeline.");
@@ -83,7 +88,7 @@ namespace XForm
             List<string> parts = new List<string>();
 
             int index = 0;
-            while(true)
+            while (true)
             {
                 string part = ParseConfigurationPart(configurationText, ref index);
                 if (part == null) break;
@@ -101,7 +106,7 @@ namespace XForm
             // If this is the end of the text, return null
             if (index == configurationText.Length) return null;
 
-            if(configurationText[index] == '"')
+            if (configurationText[index] == '"')
             {
                 // Quoted value. Read until an end quote, treating "" as an escaped quote.
                 StringBuilder value = new StringBuilder();
@@ -133,14 +138,14 @@ namespace XForm
             {
                 // Unquoted value. Return value until next whitespace or end of string
                 int start = index;
-                while(index < configurationText.Length && !(Char.IsWhiteSpace(configurationText[index]) || configurationText[index] == ',')) index++;
+                while (index < configurationText.Length && !(Char.IsWhiteSpace(configurationText[index]) || configurationText[index] == ',')) index++;
                 return configurationText.Substring(start, index - start);
             }
         }
 
         public static CompareOperator ParseCompareOperator(string op)
         {
-            switch(op)
+            switch (op)
             {
                 case "<":
                     return CompareOperator.LessThan;

@@ -1,7 +1,12 @@
-﻿using Microsoft.CodeAnalysis.Elfie.Model.Strings;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Collections.Generic;
 using System.IO;
+
+using Microsoft.CodeAnalysis.Elfie.Model.Strings;
+
 using XForm.Data;
 using XForm.Transforms;
 using XForm.Types;
@@ -36,13 +41,13 @@ namespace XForm.IO
                 Func<DataBatch> directGetter = source.ColumnGetter(i);
                 Func<DataBatch> outputTypeGetter = directGetter;
                 IColumnWriter writer = null;
-                
+
                 // Build a direct writer for the column type, if available
                 ITypeProvider columnTypeProvider = TypeProviderFactory.TryGet(column.Type);
-                if(columnTypeProvider != null) writer = columnTypeProvider.BinaryWriter(Path.Combine(tableRootPath, source.Columns[i].Name));
-                
+                if (columnTypeProvider != null) writer = columnTypeProvider.BinaryWriter(Path.Combine(tableRootPath, source.Columns[i].Name));
+
                 // If the column type doesn't have a provider or writer, convert to String8 and write that
-                if(writer == null)
+                if (writer == null)
                 {
                     Func<DataBatch, DataBatch> converter = TypeConverterFactory.GetConverter(column.Type, typeof(String8), null, false);
                     outputTypeGetter = () => converter(directGetter());
@@ -81,9 +86,9 @@ namespace XForm.IO
         {
             base.Dispose();
 
-            if(_writers != null)
+            if (_writers != null)
             {
-                foreach(IColumnWriter writer in _writers)
+                foreach (IColumnWriter writer in _writers)
                 {
                     writer.Dispose();
                 }

@@ -1,4 +1,8 @@
-﻿using System;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
+
 using XForm.Data;
 
 namespace XForm.Types
@@ -21,11 +25,11 @@ namespace XForm.Types
 
         public Func<DataBatch, DataBatch> TryGetConverter(Type sourceType, Type targetType, object defaultValue)
         {
-            if(sourceType == typeof(DateTime) && targetType == typeof(long))
+            if (sourceType == typeof(DateTime) && targetType == typeof(long))
             {
                 return new DateTimeConverter().DateTimeToLong;
             }
-            else if(sourceType == typeof(long) && targetType == typeof(DateTime))
+            else if (sourceType == typeof(long) && targetType == typeof(DateTime))
             {
                 return new DateTimeConverter().LongToDateTime;
             }
@@ -47,7 +51,7 @@ namespace XForm.Types
             Allocator.AllocateToSize(ref _longArray, batch.Count);
 
             DateTime[] sourceArray = (DateTime[])batch.Array;
-            for(int i = 0; i < batch.Count; ++i)
+            for (int i = 0; i < batch.Count; ++i)
             {
                 _longArray[i] = sourceArray[batch.Index(i)].ToUniversalTime().Ticks;
             }

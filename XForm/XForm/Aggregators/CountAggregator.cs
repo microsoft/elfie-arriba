@@ -1,5 +1,9 @@
-﻿using System;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Collections.Generic;
+
 using XForm.Data;
 
 namespace XForm.Aggregators
@@ -48,20 +52,20 @@ namespace XForm.Aggregators
 
             // Accumulate count over all rows from source
             _count = 0;
-            while(true)
+            while (true)
             {
                 int batchCount = _source.Next(desiredCount);
                 if (batchCount == 0) break;
                 _count += batchCount;
             }
-            
+
             // Return that there's one row (the count)
             return 1;
         }
 
         public void Dispose()
         {
-            if(_source != null)
+            if (_source != null)
             {
                 _source.Dispose();
                 _source = null;
