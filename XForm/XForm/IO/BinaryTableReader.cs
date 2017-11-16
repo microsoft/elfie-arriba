@@ -15,10 +15,10 @@ namespace XForm.IO
         private string _tableRootPath;
         private List<ColumnDetails> _columns;
         private IColumnReader[] _readers;
-
         private int _totalCount;
-        private ArraySelector _currentEnumerateSelector;
+        
         private ArraySelector _currentSelector;
+        private ArraySelector _currentEnumerateSelector;
 
         public BinaryTableReader(string tableRootPath)
         {
@@ -45,12 +45,8 @@ namespace XForm.IO
 
         public int Next(int desiredCount)
         {
-            int nextStartIndex = _currentEnumerateSelector.EndIndexExclusive;
-            int nextEndIndex = Math.Min(nextStartIndex + desiredCount, _totalCount);
-
-            _currentEnumerateSelector = ArraySelector.All(_totalCount).Slice(nextStartIndex, nextEndIndex);
+            _currentEnumerateSelector = _currentEnumerateSelector.NextPage(_totalCount, desiredCount);
             _currentSelector = _currentEnumerateSelector;
-
             return _currentEnumerateSelector.Count;
         }
 

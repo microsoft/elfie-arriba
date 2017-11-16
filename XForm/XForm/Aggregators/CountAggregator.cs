@@ -29,7 +29,6 @@ namespace XForm.Aggregators
         public Func<DataBatch> ColumnGetter(int columnIndex)
         {
             if (columnIndex != 0) throw new ArgumentOutOfRangeException("columnIndex");
-
             int[] result = new int[1];
 
             return () =>
@@ -50,13 +49,21 @@ namespace XForm.Aggregators
             // Return no more rows if this isn't the first call
             if (_count != -1) return 0;
 
-            // Accumulate count over all rows from source
-            _count = 0;
-            while (true)
+            // If this is a List, just get the count
+            if (_source is IDataBatchList)
             {
-                int batchCount = _source.Next(desiredCount);
-                if (batchCount == 0) break;
-                _count += batchCount;
+                _count = ((IDataBatchList)_source).Count;
+            }
+            else
+            {
+                // Accumulate count over all rows from source
+                _count = 0;
+                while (true)
+                {
+                    int batchCount = _source.Next(desiredCount);
+                    if (batchCount == 0) break;
+                    _count += batchCount;
+                }
             }
 
             // Return that there's one row (the count)

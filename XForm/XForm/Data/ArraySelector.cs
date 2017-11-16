@@ -44,6 +44,13 @@ namespace XForm.Data
             return new ArraySelector() { Indices = this.Indices, StartIndexInclusive = startIndexInclusive, EndIndexExclusive = endIndexExclusive };
         }
 
+        public ArraySelector NextPage(int totalCount, int desiredCount)
+        {
+            int startIndex = this.EndIndexExclusive;
+            int endIndex = Math.Min(startIndex + desiredCount, totalCount);
+            return new ArraySelector() { Indices = this.Indices, StartIndexInclusive = startIndex, EndIndexExclusive = endIndex };
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int Index(int zeroSpaceIndex)
         {
