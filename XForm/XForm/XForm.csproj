@@ -51,6 +51,7 @@
     <Compile Include="Data\DataBatch.cs" />
     <Compile Include="Data\DataBatchEnumeratorWrapper.cs" />
     <Compile Include="Data\IDataBatchEnumerator.cs" />
+    <Compile Include="Data\MemoryCacher.cs" />
     <Compile Include="Extensions\DataBatchEnumeratorExtensions.cs" />
     <Compile Include="InteractiveRunner.cs" />
     <Compile Include="IO\DirectoryIO.cs" />
@@ -63,10 +64,12 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="IO\ArrayEnumerator.cs" />
     <Compile Include="IO\BinaryTableReader.cs" />
+    <Compile Include="Query\PipelineStageBuilders.cs" />
     <Compile Include="Transforms\ColumnRemover.cs" />
     <Compile Include="Transforms\ColumnSelector.cs" />
     <Compile Include="Transforms\Comparers.cs" />
     <Compile Include="Transforms\Converters.cs" />
+    <Compile Include="Transforms\Join.cs" />
     <Compile Include="Transforms\RowLimiter.cs" />
     <Compile Include="Transforms\RowRemapper.cs" />
     <Compile Include="IO\TabularFileReader.cs" />
@@ -75,6 +78,7 @@
     <Compile Include="Transforms\WhereFilter.cs" />
     <Compile Include="IO\BinaryTableWriter.cs" />
     <Compile Include="IO\TabularFileWriter.cs" />
+    <Compile Include="Types\ByteProvider.cs" />
     <Compile Include="Types\ConvertingReader.cs" />
     <Compile Include="Types\ConvertingWriter.cs" />
     <Compile Include="Types\DateTimeTypeProvider.cs" />

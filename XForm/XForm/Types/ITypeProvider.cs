@@ -26,6 +26,6 @@ namespace XForm.Types
         IColumnReader BinaryReader(string columnPath);
         IColumnWriter BinaryWriter(string columnPath);
 
-        Func<DataBatch, DataBatch> TryGetConverter(Type sourceType, Type targetType, object defaultValue);
+        Func<DataBatch, DataBatch> TryGetConverter(Type sourceType, Type targetType, object defaultValue, bool strict);
     }
 }

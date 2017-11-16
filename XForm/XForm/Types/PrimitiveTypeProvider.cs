@@ -31,7 +31,7 @@ namespace XForm.Types
             return new PrimitiveArrayWriter<T>(new FileStream(ValuesFilePath(columnPath), FileMode.Create, FileAccess.Write, FileShare.Read | FileShare.Delete));
         }
 
-        public Func<DataBatch, DataBatch> TryGetConverter(Type sourceType, Type targetType, object defaultValue)
+        public Func<DataBatch, DataBatch> TryGetConverter(Type sourceType, Type targetType, object defaultValue, bool strict)
         {
             // TODO: Add primitive number conversions
             return null;
@@ -47,7 +47,6 @@ namespace XForm.Types
             if (typeof(T) == typeof(bool)) return "b8";
 
             if (typeof(T) == typeof(sbyte)) return "i8";
-            if (typeof(T) == typeof(byte)) return "u8";
             if (typeof(T) == typeof(short)) return "i16";
             if (typeof(T) == typeof(ushort)) return "u16";
             if (typeof(T) == typeof(int)) return "i32";

@@ -54,11 +54,11 @@ namespace XForm.Types
             // Add built-in type support
             Add(new String8TypeProvider());
             Add(new DateTimeTypeProvider());
+            Add(new ByteTypeProvider());
 
             Add(new PrimitiveTypeProvider<bool>());
 
             Add(new PrimitiveTypeProvider<sbyte>());
-            Add(new PrimitiveTypeProvider<byte>());
             Add(new PrimitiveTypeProvider<short>());
             Add(new PrimitiveTypeProvider<ushort>());
             Add(new PrimitiveTypeProvider<int>());
@@ -71,8 +71,8 @@ namespace XForm.Types
 
         private static void Add(ITypeProvider provider)
         {
-            s_providersByName.Add(provider.Name, provider);
-            s_providersByType.Add(provider.Type, provider);
+            s_providersByName[provider.Name] = provider;
+            s_providersByType[provider.Type] = provider;
         }
     }
 }

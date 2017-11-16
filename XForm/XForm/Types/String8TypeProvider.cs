@@ -7,7 +7,6 @@ using System.IO;
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 
 using XForm.Data;
-using XForm.IO;
 
 namespace XForm.Types
 {
@@ -27,7 +26,7 @@ namespace XForm.Types
             return new String8ColumnWriter(columnPath);
         }
 
-        public Func<DataBatch, DataBatch> TryGetConverter(Type sourceType, Type targetType, object defaultValue)
+        public Func<DataBatch, DataBatch> TryGetConverter(Type sourceType, Type targetType, object defaultValue, bool strict)
         {
             // Build a converter for the set of types
             if (targetType == typeof(String8))
@@ -42,23 +41,33 @@ namespace XForm.Types
             {
                 if (targetType == typeof(int))
                 {
-                    return new String8ToIntegerConverter(defaultValue).ConvertOrDefault;
+                    var converter = new String8ToIntegerConverter(defaultValue);
+                    if (strict) return converter.ConvertOrThrow;
+                    return converter.ConvertOrDefault;
                 }
                 else if (targetType == typeof(DateTime))
                 {
-                    return new String8ToDateTimeConverter(defaultValue).ConvertOrDefault;
+                    var converter = new String8ToDateTimeConverter(defaultValue);
+                    if (strict) return converter.ConvertOrThrow;
+                    return converter.ConvertOrDefault;
                 }
                 else if (targetType == typeof(bool))
                 {
-                    return new String8ToBooleanConverter(defaultValue).ConvertOrDefault;
+                    var converter = new String8ToBooleanConverter(defaultValue);
+                    if (strict) return converter.ConvertOrThrow;
+                    return converter.ConvertOrDefault;
                 }
                 else if (targetType == typeof(long))
                 {
-                    return new String8ToLongConverter(defaultValue).ConvertOrDefault;
+                    var converter = new String8ToLongConverter(defaultValue);
+                    if (strict) return converter.ConvertOrThrow;
+                    return converter.ConvertOrDefault;
                 }
                 else if (targetType == typeof(ulong))
                 {
-                    return new String8ToULongConverter(defaultValue).ConvertOrDefault;
+                    var converter = new String8ToULongConverter(defaultValue);
+                    if (strict) return converter.ConvertOrThrow;
+                    return converter.ConvertOrDefault;
                 }
             }
 
@@ -68,15 +77,14 @@ namespace XForm.Types
 
     internal class String8ColumnReader : IColumnReader
     {
-        private FileStream _bytesReader;
+        private ByteReader _bytesReader;
         private PrimitiveArrayReader<int> _positionsReader;
 
-        private byte[] _bytesBuffer;
         private String8[] _resultArray;
 
         public String8ColumnReader(string columnPath)
         {
-            _bytesReader = new FileStream(Path.Combine(columnPath, "V.s.bin"), FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            _bytesReader = new ByteReader(new FileStream(Path.Combine(columnPath, "V.s.bin"), FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
             _positionsReader = new PrimitiveArrayReader<int>(new FileStream(Path.Combine(columnPath, "Vp.i32.bin"), FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
         }
 
@@ -102,19 +110,18 @@ namespace XForm.Types
             int end = positions[selector.Count - 1];
             int lengthToRead = end - start;
 
-            Allocator.AllocateToSize(ref _bytesBuffer, lengthToRead);
             Allocator.AllocateToSize(ref _resultArray, selector.Count);
 
             // Read the raw string bytes
-            _bytesReader.Seek(start, SeekOrigin.Begin);
-            _bytesReader.Read(_bytesBuffer, 0, lengthToRead);
+            DataBatch textBytes = _bytesReader.Read(ArraySelector.All(int.MaxValue).Slice(start, end));
+            byte[] textArray = (byte[])textBytes.Array;
 
             // Update the String8 array to point to them
             int previousStringEnd = start;
             for (int i = 0; i < selector.Count; ++i)
             {
                 int valueEnd = positions[i];
-                _resultArray[i] = new String8(_bytesBuffer, previousStringEnd - start, valueEnd - previousStringEnd);
+                _resultArray[i] = new String8(textArray, previousStringEnd - start, valueEnd - previousStringEnd);
                 previousStringEnd = valueEnd;
             }
 
@@ -283,6 +290,19 @@ namespace XForm.Types
 
             return DataBatch.All(_array, batch.Count);
         }
+
+        public DataBatch ConvertOrThrow(DataBatch batch)
+        {
+            Allocator.AllocateToSize(ref _array, batch.Count);
+
+            String8[] sourceArray = (String8[])batch.Array;
+            for (int i = 0; i < batch.Count; ++i)
+            {
+                if (!sourceArray[batch.Index(i)].TryToInteger(out _array[i])) throw new InvalidCastException($"Could not convert {sourceArray[batch.Index(i)]} to integer.");
+            }
+
+            return DataBatch.All(_array, batch.Count);
+        }
     }
 
     internal class String8ToDateTimeConverter
@@ -303,6 +323,19 @@ namespace XForm.Types
             for (int i = 0; i < batch.Count; ++i)
             {
                 if (!sourceArray[batch.Index(i)].TryToDateTime(out _array[i])) _array[i] = _default;
+            }
+
+            return DataBatch.All(_array, batch.Count);
+        }
+
+        public DataBatch ConvertOrThrow(DataBatch batch)
+        {
+            Allocator.AllocateToSize(ref _array, batch.Count);
+
+            String8[] sourceArray = (String8[])batch.Array;
+            for (int i = 0; i < batch.Count; ++i)
+            {
+                if (!sourceArray[batch.Index(i)].TryToDateTime(out _array[i])) throw new InvalidCastException($"Could not convert {sourceArray[batch.Index(i)]} to DateTime.");
             }
 
             return DataBatch.All(_array, batch.Count);
@@ -331,6 +364,19 @@ namespace XForm.Types
 
             return DataBatch.All(_array, batch.Count);
         }
+
+        public DataBatch ConvertOrThrow(DataBatch batch)
+        {
+            Allocator.AllocateToSize(ref _array, batch.Count);
+
+            String8[] sourceArray = (String8[])batch.Array;
+            for (int i = 0; i < batch.Count; ++i)
+            {
+                if (!sourceArray[batch.Index(i)].TryToBoolean(out _array[i])) throw new InvalidCastException($"Could not convert {sourceArray[batch.Index(i)]} to boolean.");
+            }
+
+            return DataBatch.All(_array, batch.Count);
+        }
     }
 
     internal class String8ToLongConverter
@@ -355,6 +401,19 @@ namespace XForm.Types
 
             return DataBatch.All(_array, batch.Count);
         }
+
+        public DataBatch ConvertOrThrow(DataBatch batch)
+        {
+            Allocator.AllocateToSize(ref _array, batch.Count);
+
+            String8[] sourceArray = (String8[])batch.Array;
+            for (int i = 0; i < batch.Count; ++i)
+            {
+                if (!sourceArray[batch.Index(i)].TryToLong(out _array[i])) throw new InvalidCastException($"Could not convert {sourceArray[batch.Index(i)]} to Long.");
+            }
+
+            return DataBatch.All(_array, batch.Count);
+        }
     }
 
     internal class String8ToULongConverter
@@ -375,6 +434,19 @@ namespace XForm.Types
             for (int i = 0; i < batch.Count; ++i)
             {
                 if (!sourceArray[batch.Index(i)].TryToULong(out _array[i])) _array[i] = _default;
+            }
+
+            return DataBatch.All(_array, batch.Count);
+        }
+
+        public DataBatch ConvertOrThrow(DataBatch batch)
+        {
+            Allocator.AllocateToSize(ref _array, batch.Count);
+
+            String8[] sourceArray = (String8[])batch.Array;
+            for (int i = 0; i < batch.Count; ++i)
+            {
+                if (!sourceArray[batch.Index(i)].TryToULong(out _array[i])) throw new InvalidCastException($"Could not convert {sourceArray[batch.Index(i)]} to ULong.");
             }
 
             return DataBatch.All(_array, batch.Count);

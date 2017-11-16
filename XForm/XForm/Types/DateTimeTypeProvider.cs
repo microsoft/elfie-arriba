@@ -15,15 +15,15 @@ namespace XForm.Types
 
         public IColumnReader BinaryReader(string columnPath)
         {
-            return new ConvertingReader(TypeProviderFactory.Get(typeof(long)).BinaryReader(columnPath), TryGetConverter(typeof(long), typeof(DateTime), null));
+            return new ConvertingReader(TypeProviderFactory.Get(typeof(long)).BinaryReader(columnPath), TryGetConverter(typeof(long), typeof(DateTime), null, true));
         }
 
         public IColumnWriter BinaryWriter(string columnPath)
         {
-            return new ConvertingWriter(TypeProviderFactory.Get(typeof(long)).BinaryWriter(columnPath), TryGetConverter(typeof(DateTime), typeof(long), null));
+            return new ConvertingWriter(TypeProviderFactory.Get(typeof(long)).BinaryWriter(columnPath), TryGetConverter(typeof(DateTime), typeof(long), null, true));
         }
 
-        public Func<DataBatch, DataBatch> TryGetConverter(Type sourceType, Type targetType, object defaultValue)
+        public Func<DataBatch, DataBatch> TryGetConverter(Type sourceType, Type targetType, object defaultValue, bool strict)
         {
             if (sourceType == typeof(DateTime) && targetType == typeof(long))
             {

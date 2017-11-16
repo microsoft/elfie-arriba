@@ -3,22 +3,42 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 
-using Microsoft.CodeAnalysis.Elfie.Model.Strings;
-
-using XForm.Aggregators;
 using XForm.Data;
-using XForm.IO;
 using XForm.Query;
-using XForm.Transforms;
-using XForm.Types;
 
 namespace XForm
 {
     public class PipelineFactory
     {
+        private static Dictionary<string, IPipelineStageBuilder> s_pipelineStageBuildersByName;
+
+        private static void EnsureLoaded()
+        {
+            if(s_pipelineStageBuildersByName != null) return;
+            s_pipelineStageBuildersByName = new Dictionary<string, IPipelineStageBuilder>(StringComparer.OrdinalIgnoreCase);
+
+            Add(new ReadCommandBuilder());
+            Add(new SchemaCommandBuilder());
+            Add(new ColumnsCommandBuilder());
+            Add(new RemoveColumnsCommandBuilder());
+            Add(new WriterCommandBuilder());
+            Add(new LimitCommandBuilder());
+            Add(new CountCommandBuilder());
+            Add(new TypeConverterCommandBuilder());
+            Add(new WhereCommandBuilder());
+            Add(new MemoryCacheBuilder());
+        }
+
+        private static void Add(IPipelineStageBuilder builder)
+        {
+            foreach(string verb in builder.Verbs)
+            {
+                s_pipelineStageBuildersByName[verb] = builder;
+            }
+        }
+
         public static IDataBatchEnumerator BuildPipeline(string xqlQuery, IDataBatchEnumerator pipeline = null)
         {
             foreach (string xqlLine in xqlQuery.Split('\n'))
@@ -32,55 +52,18 @@ namespace XForm
 
         public static IDataBatchEnumerator BuildStage(string xqlLine, IDataBatchEnumerator source)
         {
+            EnsureLoaded();
+
             List<string> configurationParts = SplitConfigurationLine(xqlLine);
             string verb = configurationParts[0].ToLowerInvariant();
 
-            switch (verb)
+            IPipelineStageBuilder builder;
+            if(!s_pipelineStageBuildersByName.TryGetValue(verb, out builder))
             {
-                case "read":
-                    if (source != null) throw new ArgumentException("'read' must be the first stage in a pipeline.");
-                    if (configurationParts.Count != 2) throw new ArgumentException("Usage: 'read' [filePath]");
-                    if (configurationParts[1].EndsWith("xform"))
-                    {
-                        return new BinaryTableReader(configurationParts[1]);
-                    }
-                    else
-                    {
-                        return new TabularFileReader(configurationParts[1]);
-                    }
-                case "schema":
-                    if (configurationParts.Count != 1) throw new ArgumentException("Usage: 'schema'");
-                    return new SchemaTransformer(source);
-                case "select":
-                case "columns":
-                    return new ColumnSelector(source, configurationParts.Skip(1));
-                case "removecolumns":
-                    return new ColumnRemover(source, configurationParts.Skip(1));
-                case "write":
-                    if (configurationParts.Count != 2) throw new ArgumentException("Usage 'write' [filePath]");
-                    if (configurationParts[1].EndsWith("xform"))
-                    {
-                        return new BinaryTableWriter(source, configurationParts[1]);
-                    }
-                    else
-                    {
-                        return new TabularFileWriter(source, configurationParts[1]);
-                    }
-                case "limit":
-                    if (configurationParts.Count != 2) throw new ArgumentException("Usage: 'limit' [rowCount]");
-                    return new RowLimiter(source, int.Parse(configurationParts[1]));
-                case "cast":
-                case "convert":
-                    if (configurationParts.Count < 3 || configurationParts.Count > 5) throw new ArgumentException("Usage: 'cast' [columnName] [targetType] [default?] [strict?]");
-                    return new TypeConverter(source, configurationParts[1], TypeProviderFactory.Get(configurationParts[2]).Type, (configurationParts.Count > 3 ? configurationParts[2] : null), (configurationParts.Count > 4 ? bool.Parse(configurationParts[3]) : true));
-                case "where":
-                    if (configurationParts.Count != 4) throw new ArgumentException("Usage: 'where' [columnName] [operator] [value]");
-                    return new WhereFilter(source, configurationParts[1], ParseCompareOperator(configurationParts[2]), configurationParts[3]);
-                case "count":
-                    return new CountAggregator(source);
-                default:
-                    throw new NotImplementedException($"XForm doesn't know how to create a stage for '{verb}'.");
+                throw new NotImplementedException($"XForm doesn't know how to create a stage for '{verb}'.");
             }
+
+            return builder.Build(source, configurationParts);
         }
 
         public static List<string> SplitConfigurationLine(string configurationText)
@@ -140,29 +123,6 @@ namespace XForm
                 int start = index;
                 while (index < configurationText.Length && !(Char.IsWhiteSpace(configurationText[index]) || configurationText[index] == ',')) index++;
                 return configurationText.Substring(start, index - start);
-            }
-        }
-
-        public static CompareOperator ParseCompareOperator(string op)
-        {
-            switch (op)
-            {
-                case "<":
-                    return CompareOperator.LessThan;
-                case "<=":
-                    return CompareOperator.LessThanOrEqual;
-                case ">":
-                    return CompareOperator.GreaterThan;
-                case ">=":
-                    return CompareOperator.GreaterThanOrEqual;
-                case "=":
-                case "==":
-                    return CompareOperator.Equals;
-                case "!=":
-                case "<>":
-                    return CompareOperator.NotEquals;
-                default:
-                    throw new NotImplementedException($"XForm doesn't know CompareOperator \"{op}\".");
             }
         }
     }

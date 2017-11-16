@@ -23,7 +23,7 @@ namespace XForm.Transforms
             ITypeProvider targetTypeProvider = TypeProviderFactory.TryGet(targetType);
             if (targetTypeProvider != null)
             {
-                converter = targetTypeProvider.TryGetConverter(sourceType, targetType, defaultValue);
+                converter = targetTypeProvider.TryGetConverter(sourceType, targetType, defaultValue, strict);
                 if (converter != null) return converter;
             }
 
@@ -31,7 +31,7 @@ namespace XForm.Transforms
             ITypeProvider sourceTypeProvider = TypeProviderFactory.TryGet(sourceType);
             if (sourceTypeProvider != null)
             {
-                converter = sourceTypeProvider.TryGetConverter(sourceType, targetType, defaultValue);
+                converter = sourceTypeProvider.TryGetConverter(sourceType, targetType, defaultValue, strict);
                 if (converter != null) return converter;
             }
 
