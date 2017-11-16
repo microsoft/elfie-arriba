@@ -46,11 +46,11 @@ namespace XForm.Test.Query
                 read {SampleFileName}
                 columns ID EventTime ServerPort HttpStatus ClientOs WasCachedResponse
                 write {s_expectedOutputFileName}
-                cast ID int
+                cast ID int32
                 cast EventTime DateTime
-                cast ServerPort int
-                cast HttpStatus int                
-                cast WasCachedResponse bool
+                cast ServerPort int32
+                cast HttpStatus int32           
+                cast WasCachedResponse boolean
                 write {s_sampleTableFileName}
             ").RunAndDispose();
 

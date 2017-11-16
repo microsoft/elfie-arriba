@@ -21,7 +21,7 @@ namespace XForm.Test.Query
             string xqlQuery = @"
                 read ""C:\Code\XForm\XForm\XForm.Test\WebRequestSample.5.1000.csv""
                 select ServerPort, ResponseBytes
-                cast ResponseBytes int
+                cast ResponseBytes int32
                 where ServerPort = 80
                 limit 1000
                 ";

@@ -44,9 +44,7 @@ namespace XForm.Data
         /// <summary>
         ///  Get a specific set of rows.
         /// </summary>
-        /// <param name="indices">Indices of rows to get, zero based relative to the full set</param>
-        /// <param name="indexCount">Count of indices which are valid in indices array</param>
-        /// <returns>Number of rows retrieved</returns>
-        int Next(int[] indices, int indexCount);
+        /// <param name="selector">ArraySelector indicating which specific rows to get</param>
+        void Get(ArraySelector selector);
     }
 }

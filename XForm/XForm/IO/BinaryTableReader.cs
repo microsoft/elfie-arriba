@@ -10,15 +10,15 @@ using XForm.Types;
 
 namespace XForm.IO
 {
-    public class BinaryTableReader : IDataBatchEnumerator
+    public class BinaryTableReader : IDataBatchList
     {
         private string _tableRootPath;
         private List<ColumnDetails> _columns;
         private IColumnReader[] _readers;
 
         private int _totalCount;
-        private int _currentRowIndex;
-        private int _currentBatchCount;
+        private ArraySelector _currentEnumerateSelector;
+        private ArraySelector _currentSelector;
 
         public BinaryTableReader(string tableRootPath)
         {
@@ -27,6 +27,8 @@ namespace XForm.IO
             _readers = new IColumnReader[_columns.Count];
             Reset();
         }
+
+        public int Count => _totalCount;
 
         public IReadOnlyList<ColumnDetails> Columns => _columns;
 
@@ -38,25 +40,33 @@ namespace XForm.IO
                 _readers[columnIndex] = TypeProviderFactory.Get(column.Type).BinaryReader(Path.Combine(_tableRootPath, column.Name));
             }
 
-            return () => _readers[columnIndex].Read(ArraySelector.All(_totalCount).Slice(_currentRowIndex, _currentRowIndex + _currentBatchCount));
+            return () => _readers[columnIndex].Read(_currentSelector);
         }
 
         public int Next(int desiredCount)
         {
-            _currentRowIndex += _currentBatchCount;
-            _currentBatchCount = desiredCount;
-            if (_currentRowIndex + _currentBatchCount > _totalCount) _currentBatchCount = _totalCount - _currentRowIndex;
+            int nextStartIndex = _currentEnumerateSelector.EndIndexExclusive;
+            int nextEndIndex = Math.Min(nextStartIndex + desiredCount, _totalCount);
 
-            return _currentBatchCount;
+            _currentEnumerateSelector = ArraySelector.All(_totalCount).Slice(nextStartIndex, nextEndIndex);
+            _currentSelector = _currentEnumerateSelector;
+
+            return _currentEnumerateSelector.Count;
+        }
+
+        public void Get(ArraySelector selector)
+        {
+            _currentSelector = selector;
         }
 
         public void Reset()
         {
-            _currentRowIndex = 0;
-
             // Get the first reader in order to get the row count
             Func<DataBatch> unused = ColumnGetter(0);
             _totalCount = _readers[0].Count;
+
+            // Mark our current position (nothing read yet)
+            _currentEnumerateSelector = ArraySelector.All(_totalCount).Slice(0, 0);
         }
 
         public void Dispose()
