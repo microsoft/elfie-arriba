@@ -8,6 +8,7 @@ using XForm.Data;
 using XForm.Query;
 using XForm.IO;
 using XForm.Transforms;
+using XForm.Types;
 
 namespace XForm
 {
@@ -66,7 +67,7 @@ namespace XForm
                 case "cast":
                 case "convert":
                     if (configurationParts.Count < 3 || configurationParts.Count > 5) throw new ArgumentException("Usage: 'cast' [columnName] [targetType] [default?] [strict?]");
-                    return new TypeConverter(source, configurationParts[1], ParseType(configurationParts[2]), (configurationParts.Count > 3 ? configurationParts[2] : null), (configurationParts.Count > 4 ? bool.Parse(configurationParts[3]) : true));
+                    return new TypeConverter(source, configurationParts[1], TypeProviderFactory.Get(configurationParts[2]).Type, (configurationParts.Count > 3 ? configurationParts[2] : null), (configurationParts.Count > 4 ? bool.Parse(configurationParts[3]) : true));
                 case "where":
                     if (configurationParts.Count != 4) throw new ArgumentException("Usage: 'where' [columnName] [operator] [value]");
                     return new WhereFilter(source, configurationParts[1], ParseCompareOperator(configurationParts[2]), configurationParts[3]);
@@ -134,27 +135,6 @@ namespace XForm
                 int start = index;
                 while(index < configurationText.Length && !(Char.IsWhiteSpace(configurationText[index]) || configurationText[index] == ',')) index++;
                 return configurationText.Substring(start, index - start);
-            }
-        }
-
-        public static Type ParseType(string typeString)
-        {
-            typeString = typeString.ToLowerInvariant();
-
-            switch (typeString)
-            {
-                case "int":
-                case "int32":
-                    return typeof(int);
-                case "bool":
-                case "boolean":
-                    return typeof(bool);
-                case "datetime":
-                    return typeof(DateTime);
-                case "string8":
-                    return typeof(String8);
-                default:
-                    throw new NotImplementedException($"XForm doesn't know type \"{typeString}\".");
             }
         }
 

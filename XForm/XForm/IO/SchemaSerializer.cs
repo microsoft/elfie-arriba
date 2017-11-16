@@ -3,6 +3,7 @@ using Microsoft.CodeAnalysis.Elfie.Serialization;
 using System.Collections.Generic;
 using System.IO;
 using XForm.Data;
+using XForm.Types;
 
 namespace XForm.IO
 {
@@ -39,7 +40,7 @@ namespace XForm.IO
 
                 while (reader.NextRow())
                 {
-                    columns.Add(new ColumnDetails(reader.Current(nameIndex).ToString(), PipelineFactory.ParseType(reader.Current(typeIndex).ToString()), reader.Current(2).ToBoolean()));
+                    columns.Add(new ColumnDetails(reader.Current(nameIndex).ToString(), TypeProviderFactory.Get(reader.Current(typeIndex).ToString()).Type, reader.Current(2).ToBoolean()));
                 }
             }
 

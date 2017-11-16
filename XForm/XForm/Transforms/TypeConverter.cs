@@ -16,7 +16,10 @@ namespace XForm.Transforms
             _sourceColumnIndex = source.Columns.IndexOfColumn(columnName);
 
             ColumnDetails sourceColumn = source.Columns[_sourceColumnIndex];
-            _converter = TypeConverterFactory.GetConverter(sourceColumn.Type, targetType, defaultValue, strict);
+            if (!sourceColumn.Type.Equals(targetType))
+            {
+                _converter = TypeConverterFactory.GetConverter(sourceColumn.Type, targetType, defaultValue, strict);
+            }
 
             _columns = new List<ColumnDetails>();
             for(int i = 0; i < source.Columns.Count; ++i)
@@ -35,7 +38,10 @@ namespace XForm.Transforms
             // Cache the function to get the source data
             Func<DataBatch> sourceGetter = _source.ColumnGetter(columnIndex);
 
-            // Build the appropriate converter and conversion function
+            // Return the getter alone if the type was already right
+            if (_converter == null) return sourceGetter;
+
+            // Return the converter if conversion was needed
             return () => _converter(sourceGetter());
         }
     }

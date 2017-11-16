@@ -19,13 +19,18 @@ namespace XForm.Test.Query
         private static string ExpectedOutputFileName = Path.Combine(OutputRootFolderPath, "WebRequestSample.Expected.csv");
         private static string ActualOutputFileName = Path.Combine(OutputRootFolderPath, "WebRequestSample.Actual.csv");
 
-        [TestInitialize]
         public static void WriteSampleFile()
         {
             if (!File.Exists(SampleFileName))
             {
                 Resource.SaveStreamTo($"XForm.Test.{SampleFileName}", SampleFileName);
             }
+        }
+
+        [TestInitialize]
+        public void EnsureSampleFileExists()
+        {
+            WriteSampleFile();
         }
 
         [TestMethod]
@@ -121,6 +126,11 @@ namespace XForm.Test.Query
             Verify.Exception<ArgumentException>(() => PipelineFactory.BuildStage("read", null), "Usage: 'read' [filePath]");
             Verify.Exception<FileNotFoundException>(() => PipelineFactory.BuildStage("read NotFound.csv", null));
             Verify.Exception<ColumnNotFoundException>(() => PipelineFactory.BuildStage("removeColumns NotFound", SampleReader()));
+
+            // Verify casting a type to itself doesn't error
+            PipelineFactory.BuildPipeline(@"
+                cast EventTime DateTime
+                cast EventTime DateTime", SampleReader()).RunAndDispose();
         }
     }
 }
