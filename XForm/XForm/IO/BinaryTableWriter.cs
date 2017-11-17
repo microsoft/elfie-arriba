@@ -32,7 +32,6 @@ namespace XForm.IO
 
             _innerGetters = new Func<DataBatch>[columnCount];
             _getters = new Func<DataBatch>[columnCount];
-            _writers = new IColumnWriter[columnCount];
 
             for (int i = 0; i < columnCount; ++i)
             {
@@ -40,28 +39,51 @@ namespace XForm.IO
 
                 Func<DataBatch> directGetter = source.ColumnGetter(i);
                 Func<DataBatch> outputTypeGetter = directGetter;
-                IColumnWriter writer = null;
 
                 // Build a direct writer for the column type, if available
                 ITypeProvider columnTypeProvider = TypeProviderFactory.TryGet(column.Type);
-                if (columnTypeProvider != null) writer = columnTypeProvider.BinaryWriter(Path.Combine(tableRootPath, source.Columns[i].Name));
 
                 // If the column type doesn't have a provider or writer, convert to String8 and write that
-                if (writer == null)
+                if (columnTypeProvider == null)
                 {
                     Func<DataBatch, DataBatch> converter = TypeConverterFactory.GetConverter(column.Type, typeof(String8), null, false);
                     outputTypeGetter = () => converter(directGetter());
-                    writer = TypeProviderFactory.TryGet(typeof(String8)).BinaryWriter(Path.Combine(tableRootPath, source.Columns[i].Name));
                     column = column.ChangeType(typeof(String8));
                 }
 
                 columnSchemaToWrite.Add(column);
                 _innerGetters[i] = directGetter;
                 _getters[i] = outputTypeGetter;
-                _writers[i] = writer;
             }
 
             SchemaSerializer.Write(_tableRootPath, columnSchemaToWrite);
+        }
+
+        private void BuildWriters()
+        {
+            int columnCount = _source.Columns.Count;
+            _writers = new IColumnWriter[columnCount];
+
+            for (int i = 0; i < columnCount; ++i)
+            {
+                ColumnDetails column = _source.Columns[i];
+
+                IColumnWriter writer = null;
+
+                // Build a direct writer for the column type, if available
+                ITypeProvider columnTypeProvider = TypeProviderFactory.TryGet(column.Type);
+                if (columnTypeProvider != null) writer = columnTypeProvider.BinaryWriter(Path.Combine(_tableRootPath, _source.Columns[i].Name));
+
+                // If the column type doesn't have a provider or writer, convert to String8 and write that
+                if (writer == null)
+                {
+                    Func<DataBatch, DataBatch> converter = TypeConverterFactory.GetConverter(column.Type, typeof(String8), null, false);
+                    writer = TypeProviderFactory.TryGet(typeof(String8)).BinaryWriter(Path.Combine(_tableRootPath, _source.Columns[i].Name));
+                    column = column.ChangeType(typeof(String8));
+                }
+
+                _writers[i] = writer;
+            }
         }
 
         public override Func<DataBatch> ColumnGetter(int columnIndex)
@@ -71,8 +93,15 @@ namespace XForm.IO
 
         public override int Next(int desiredCount)
         {
+            if (_writers == null) BuildWriters();
+
             int count = _source.Next(desiredCount);
-            if (count == 0) return 0;
+            if (count == 0)
+            {
+                // Ensure Writers flush
+                DisposeWriters();
+                return 0;
+            }
 
             for (int i = 0; i < _getters.Length; ++i)
             {
@@ -82,10 +111,14 @@ namespace XForm.IO
             return count;
         }
 
-        public override void Dispose()
+        public override void Reset()
         {
-            base.Dispose();
+            _source.Reset();
+            DisposeWriters();
+        }
 
+        private void DisposeWriters()
+        {
             if (_writers != null)
             {
                 foreach (IColumnWriter writer in _writers)
@@ -95,6 +128,12 @@ namespace XForm.IO
 
                 _writers = null;
             }
+        }
+
+        public override void Dispose()
+        {
+            base.Dispose();
+            DisposeWriters();
         }
     }
 }
