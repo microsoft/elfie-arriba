@@ -63,40 +63,34 @@ namespace XForm.Types
     public class PrimitiveArrayReader<T> : IColumnReader
     {
         private int _bytesPerItem;
-        private FileStream _stream;
-        private byte[] _bytesBuffer;
+        private ByteReader _byteReader;
         private T[] _array;
 
         public PrimitiveArrayReader(FileStream stream)
         {
-            _stream = stream;
+            _byteReader = new ByteReader(stream);
             _bytesPerItem = (typeof(T) == typeof(bool) ? 1 : Marshal.SizeOf<T>());
         }
 
-        public int Count => (int)(_stream.Length / _bytesPerItem);
+        public int Count => (int)(_byteReader.Count / _bytesPerItem);
 
         public DataBatch Read(ArraySelector selector)
         {
             if (selector.Indices != null) throw new NotImplementedException();
 
-            int bytesToRead = _bytesPerItem * selector.Count;
-
-            Allocator.AllocateToSize(ref _bytesBuffer, bytesToRead);
+            DataBatch byteBatch = _byteReader.Read(ArraySelector.All(int.MaxValue).Slice(_bytesPerItem * selector.StartIndexInclusive, _bytesPerItem * selector.EndIndexExclusive));
             Allocator.AllocateToSize(ref _array, selector.Count);
-
-            _stream.Seek(_bytesPerItem * selector.StartIndexInclusive, SeekOrigin.Begin);
-            _stream.Read(_bytesBuffer, 0, bytesToRead);
-            Buffer.BlockCopy(_bytesBuffer, 0, _array, 0, bytesToRead);
+            Buffer.BlockCopy(byteBatch.Array, 0, _array, 0, _bytesPerItem * selector.Count);
 
             return DataBatch.All(_array, selector.Count);
         }
 
         public void Dispose()
         {
-            if (_stream != null)
+            if (_byteReader != null)
             {
-                _stream.Dispose();
-                _stream = null;
+                _byteReader.Dispose();
+                _byteReader = null;
             }
         }
     }
