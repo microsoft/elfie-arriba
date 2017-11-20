@@ -320,6 +320,30 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         }
 
         /// <summary>
+        ///  Split this String8 on the first occurrence of splitter.
+        /// </summary>
+        /// <param name="splitter">UTF-8 byte to split on</param>
+        /// <param name="beforeSplitter">Value before first splitter, or String8.Empty if no splitter</param>
+        /// <param name="afterSplitter">Value after first splitter, or String8.Empty if no splitter</param>
+        /// <returns>True if splitter found, False if no splitters found</returns>
+        public bool SplitOnFirst(byte splitter, out String8 beforeSplitter, out String8 afterSplitter)
+        {
+            int index = this.IndexOf(splitter);
+            if (index >= 0)
+            {
+                beforeSplitter = this.Substring(0, index);
+                afterSplitter = this.Substring(index + 1);
+                return true;
+            }
+            else
+            {
+                beforeSplitter = String8.Empty;
+                afterSplitter = String8.Empty;
+                return false;
+            }
+        }
+
+        /// <summary>
         ///  Return the last index at which the passed character appears in this string.
         /// </summary>
         /// <param name="c">Character to find</param>
