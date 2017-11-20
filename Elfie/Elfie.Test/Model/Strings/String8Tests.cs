@@ -371,12 +371,12 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
         [TestMethod]
         public void String8_FromInteger()
         {
-            byte[] buffer = new byte[11];
+            byte[] buffer = new byte[20];
             Assert.AreEqual("0", String8.FromInteger(0, buffer).ToString());
-            Assert.AreEqual("00", String8.FromInteger(0, buffer, 0, 2).ToString());
+            Assert.AreEqual("00", String8.FromInteger(0, buffer, 1, 2).ToString());
             Assert.AreEqual("9", String8.FromInteger(9, buffer).ToString());
             Assert.AreEqual("-1", String8.FromInteger(-1, buffer).ToString());
-            Assert.AreEqual("-10", String8.FromInteger(-10, buffer).ToString());
+            Assert.AreEqual("-10", String8.FromInteger(-10, buffer, 1).ToString());
             Assert.AreEqual("99", String8.FromInteger(99, buffer).ToString());
             Assert.AreEqual("0099", String8.FromInteger(99, buffer, 0, 4).ToString());
             Assert.AreEqual("100", String8.FromInteger(100, buffer).ToString());

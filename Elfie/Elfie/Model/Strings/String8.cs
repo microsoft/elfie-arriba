@@ -643,8 +643,6 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         {
             bool isNegative = value < 0;
             long valueLeft = value;
-
-            // Convert as positive value
             if (isNegative) valueLeft = -valueLeft;
 
             // Determine how many digits in value
@@ -665,17 +663,22 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             if (buffer.Length + index < requiredLength) throw new ArgumentException("String8.FromInteger requires an 11 byte buffer for integer conversion.");
 
             // Write minus sign if negative
-            if (isNegative) buffer[index++] = (byte)'-';
+            int digitStartIndex = index;
+            if (isNegative)
+            {
+                buffer[index] = (byte)'-';
+                digitStartIndex++;
+            }
 
             // Write digits right to left
-            for (int j = index + digits - 1; j >= index; --j)
+            for (int j = digitStartIndex + digits - 1; j >= digitStartIndex; --j)
             {
                 long digit = valueLeft % 10;
                 buffer[j] = (byte)(UTF8.Zero + (byte)digit);
                 valueLeft /= 10;
             }
 
-            return new String8(buffer, 0, index + digits);
+            return new String8(buffer, index, requiredLength);
         }
 
         /// <summary>
