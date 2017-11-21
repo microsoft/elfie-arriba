@@ -5,6 +5,8 @@ using System;
 using System.IO;
 
 using XForm.Data;
+using XForm.Query;
+using XForm.Transforms;
 
 namespace XForm.Types
 {
@@ -23,6 +25,11 @@ namespace XForm.Types
         {
             Directory.CreateDirectory(columnPath);
             return new ByteWriter(new FileStream(Path.Combine(columnPath, "V.u8.bin"), FileMode.Create, FileAccess.Write, FileShare.Read | FileShare.Delete));
+        }
+
+        public Action<DataBatch, RowRemapper> TryGetComparer(CompareOperator op, object value)
+        {
+            return new ComparableComparer<byte>().TryBuild(op, value);
         }
 
         public Func<DataBatch, DataBatch> TryGetConverter(Type sourceType, Type targetType, object defaultValue, bool strict)

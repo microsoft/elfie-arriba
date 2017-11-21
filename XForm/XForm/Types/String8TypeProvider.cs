@@ -7,6 +7,8 @@ using System.IO;
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 
 using XForm.Data;
+using XForm.Query;
+using XForm.Transforms;
 
 namespace XForm.Types
 {
@@ -24,6 +26,11 @@ namespace XForm.Types
         public IColumnWriter BinaryWriter(string columnPath)
         {
             return new String8ColumnWriter(columnPath);
+        }
+
+        public Action<DataBatch, RowRemapper> TryGetComparer(CompareOperator op, object value)
+        {
+            return new ComparableComparer<String8>().TryBuild(op, value);
         }
 
         public Func<DataBatch, DataBatch> TryGetConverter(Type sourceType, Type targetType, object defaultValue, bool strict)

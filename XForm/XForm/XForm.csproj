@@ -70,9 +70,9 @@
     <Compile Include="Query\PipelineParser.cs" />
     <Compile Include="Commands\RemoveColumns.cs" />
     <Compile Include="Commands\SelectColumns.cs" />
-    <Compile Include="Types\Comparers.cs" />
-    <Compile Include="Types\TypeConverterFactory.cs" />
+    <Compile Include="Types\ComparableComparer.cs" />
     <Compile Include="Types\IDataBatchComparer.cs" />
+    <Compile Include="Types\TypeConverterFactory.cs" />
     <Compile Include="Commands\Join.cs" />
     <Compile Include="Commands\Limit.cs" />
     <Compile Include="Data\RowRemapper.cs" />

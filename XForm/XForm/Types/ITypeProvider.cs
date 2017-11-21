@@ -4,6 +4,8 @@
 using System;
 
 using XForm.Data;
+using XForm.Query;
+using XForm.Transforms;
 
 namespace XForm.Types
 {
@@ -27,5 +29,7 @@ namespace XForm.Types
         IColumnWriter BinaryWriter(string columnPath);
 
         Func<DataBatch, DataBatch> TryGetConverter(Type sourceType, Type targetType, object defaultValue, bool strict);
+
+        Action<DataBatch, RowRemapper> TryGetComparer(CompareOperator op, object value);
     }
 }

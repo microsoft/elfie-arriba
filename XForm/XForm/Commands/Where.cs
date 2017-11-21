@@ -44,7 +44,7 @@ namespace XForm.Commands
             _filterColumnGetter = source.ColumnGetter(_filterColumnIndex);
 
             // Build a Comparer for the desired type and get the function for the desired compare operator
-            _comparer = ComparerFactory.Build(filterColumn.Type, op, TypeConverterFactory.ConvertSingle(value, filterColumn.Type));
+            _comparer = TypeProviderFactory.Get(filterColumn.Type).TryGetComparer(op, TypeConverterFactory.ConvertSingle(value, filterColumn.Type));
 
             // Build a mapper to hold matching rows and remap source batches
             _mapper = new RowRemapper();

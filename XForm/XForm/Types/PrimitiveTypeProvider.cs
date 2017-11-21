@@ -6,10 +6,12 @@ using System.IO;
 using System.Runtime.InteropServices;
 
 using XForm.Data;
+using XForm.Query;
+using XForm.Transforms;
 
 namespace XForm.Types
 {
-    public class PrimitiveTypeProvider<T> : ITypeProvider
+    public class PrimitiveTypeProvider<T> : ITypeProvider where T : IComparable<T>
     {
         public string Name => typeof(T).Name;
 
@@ -35,6 +37,12 @@ namespace XForm.Types
         {
             // TODO: Add primitive number conversions
             return null;
+        }
+
+        public Action<DataBatch, RowRemapper> TryGetComparer(CompareOperator op, object value)
+        {
+            if (typeof(T) == typeof(int)) return new IntComparer().TryBuild(op, value);
+            return new ComparableComparer<T>().TryBuild(op, value);
         }
 
         public static string ValuesFilePath(string columnPath)
@@ -133,6 +141,83 @@ namespace XForm.Types
             {
                 _stream.Dispose();
                 _stream = null;
+            }
+        }
+    }
+
+    internal class IntComparer : IDataBatchComparer
+    {
+        public Type Type => typeof(int);
+        public int Value;
+
+        public void SetValue(object value)
+        {
+            Value = (int)value;
+        }
+
+        public void WhereEquals(DataBatch source, RowRemapper result)
+        {
+            result.ClearAndSize(source.Count);
+            int[] sourceArray = (int[])source.Array;
+            for (int i = 0; i < source.Count; ++i)
+            {
+                int realIndex = source.Index(i);
+                if (Value == sourceArray[realIndex]) result.Add(i);
+            }
+        }
+
+        public void WhereNotEquals(DataBatch source, RowRemapper result)
+        {
+            result.ClearAndSize(source.Count);
+            int[] sourceArray = (int[])source.Array;
+            for (int i = 0; i < source.Count; ++i)
+            {
+                int realIndex = source.Index(i);
+                if (Value != sourceArray[realIndex]) result.Add(i);
+            }
+        }
+
+        public void WhereLessThan(DataBatch source, RowRemapper result)
+        {
+            result.ClearAndSize(source.Count);
+            int[] sourceArray = (int[])source.Array;
+            for (int i = 0; i < source.Count; ++i)
+            {
+                int realIndex = source.Index(i);
+                if (Value > sourceArray[realIndex]) result.Add(i);
+            }
+        }
+
+        public void WhereLessThanOrEquals(DataBatch source, RowRemapper result)
+        {
+            result.ClearAndSize(source.Count);
+            int[] sourceArray = (int[])source.Array;
+            for (int i = 0; i < source.Count; ++i)
+            {
+                int realIndex = source.Index(i);
+                if (Value >= sourceArray[realIndex]) result.Add(i);
+            }
+        }
+
+        public void WhereGreaterThan(DataBatch source, RowRemapper result)
+        {
+            result.ClearAndSize(source.Count);
+            int[] sourceArray = (int[])source.Array;
+            for (int i = 0; i < source.Count; ++i)
+            {
+                int realIndex = source.Index(i);
+                if (Value < sourceArray[realIndex]) result.Add(i);
+            }
+        }
+
+        public void WhereGreaterThanOrEquals(DataBatch source, RowRemapper result)
+        {
+            result.ClearAndSize(source.Count);
+            int[] sourceArray = (int[])source.Array;
+            for (int i = 0; i < source.Count; ++i)
+            {
+                int realIndex = source.Index(i);
+                if (Value <= sourceArray[realIndex]) result.Add(i);
             }
         }
     }
