@@ -129,7 +129,7 @@ namespace XForm.Test.Query
         [TestMethod]
         public void DataSourceEnumerator_Errors()
         {
-            Verify.Exception<ArgumentException>(() => PipelineFactory.BuildStage("read", null), "Usage: 'read' [filePath]");
+            Verify.Exception<ArgumentException>(() => PipelineFactory.BuildStage("read", null), "Usage: 'read' [tableNameOrFilePath]");
             Verify.Exception<FileNotFoundException>(() => PipelineFactory.BuildStage("read NotFound.csv", null));
             Verify.Exception<ColumnNotFoundException>(() => PipelineFactory.BuildStage("removeColumns NotFound", SampleReader()));
 

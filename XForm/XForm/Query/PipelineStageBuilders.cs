@@ -3,37 +3,298 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-
+using System.Text;
 using XForm.Aggregators;
 using XForm.Data;
+using XForm.Extensions;
 using XForm.IO;
 using XForm.Transforms;
 using XForm.Types;
 
 namespace XForm.Query
 {
+    public class PipelineScanner
+    {
+        private List<string> _queryLines;
+        private List<string> _currentLineParts;
+        private int _currentLineIndex;
+        private int _currentPartIndex;
+
+        public PipelineScanner(string xqlQuery)
+        {
+            _queryLines = new List<string>();
+
+            foreach(string queryLine in xqlQuery.Split('\n'))
+            {
+                string cleanedLine = queryLine.TrimEnd('\r').Trim();
+                if (!String.IsNullOrEmpty(cleanedLine)) _queryLines.Add(cleanedLine);
+            }
+            _currentLineIndex = -1;
+        }
+
+        public string CurrentPart => _currentLineParts[_currentPartIndex];
+        public string CurrentLine => _queryLines[_currentLineIndex];
+        public bool IsLastPart => _currentPartIndex >= _currentLineParts.Count - 1;
+
+        public bool NextLine()
+        {
+            _currentLineIndex++;
+            if (_currentLineIndex >= _queryLines.Count) return false;
+
+            _currentLineParts = SplitLine(_queryLines[_currentLineIndex]);
+            _currentPartIndex = -1;
+            return true;
+        }
+
+        public void NextPart()
+        {
+            _currentPartIndex++;
+            if (_currentPartIndex >= _currentLineParts.Count) throw new ArgumentException("No more arguments in query line.");
+        }
+
+        private static List<string> SplitLine(string xqlQueryLine)
+        {
+            List<string> parts = new List<string>();
+
+            int index = 0;
+            while (true)
+            {
+                string part = SplitLinePart(xqlQueryLine, ref index);
+                if (part == null) break;
+                parts.Add(part);
+            }
+
+            return parts;
+        }
+
+        private static string SplitLinePart(string configurationText, ref int index)
+        {
+            // Ignore whitespace before the value
+            while (index < configurationText.Length && (Char.IsWhiteSpace(configurationText[index]) || configurationText[index] == ',')) index++;
+
+            // If this is the end of the text, return null
+            if (index == configurationText.Length) return null;
+
+            if (configurationText[index] == '"')
+            {
+                // Quoted value. Read until an end quote, treating "" as an escaped quote.
+                StringBuilder value = new StringBuilder();
+
+                index++;
+                while (index < configurationText.Length)
+                {
+                    int nextQuote = configurationText.IndexOf('"', index);
+                    if (nextQuote == -1) break;
+
+                    if (configurationText.Length > (nextQuote + 1) && configurationText[nextQuote + 1] == '"')
+                    {
+                        // Escaped Quote - append the value so far including one quote and keep searching for the end
+                        value.Append(configurationText, index, nextQuote - index + 1);
+                        index = nextQuote + 2;
+                    }
+                    else
+                    {
+                        // Closing Quote. Append the value without the quote and return it
+                        value.Append(configurationText, index, nextQuote - index);
+                        index = nextQuote + 1;
+                        return value.ToString();
+                    }
+                }
+
+                throw new ArgumentException($"Unclosed Quote in query line: \"{configurationText}\"");
+            }
+            else
+            {
+                // Unquoted value. Return value until next whitespace or end of string
+                int start = index;
+                while (index < configurationText.Length && !(Char.IsWhiteSpace(configurationText[index]) || configurationText[index] == ',')) index++;
+                return configurationText.Substring(start, index - start);
+            }
+        }
+    }
+
+    public class PipelineParser
+    {
+        private PipelineScanner _scanner;
+        private IPipelineStageBuilder _currentLineBuilder;
+
+        private static Dictionary<string, IPipelineStageBuilder> s_pipelineStageBuildersByName;
+
+        private PipelineParser(string xqlQuery)
+        {
+            EnsureLoaded();
+            _scanner = new PipelineScanner(xqlQuery);
+        }
+
+        private static void EnsureLoaded()
+        {
+            if (s_pipelineStageBuildersByName != null) return;
+            s_pipelineStageBuildersByName = new Dictionary<string, IPipelineStageBuilder>(StringComparer.OrdinalIgnoreCase);
+
+            Add(new ReadCommandBuilder());
+            Add(new SchemaCommandBuilder());
+            Add(new ColumnsCommandBuilder());
+            Add(new RemoveColumnsCommandBuilder());
+            Add(new WriterCommandBuilder());
+            Add(new LimitCommandBuilder());
+            Add(new CountCommandBuilder());
+            Add(new TypeConverterCommandBuilder());
+            Add(new WhereCommandBuilder());
+            Add(new MemoryCacheBuilder());
+        }
+
+        private static void Add(IPipelineStageBuilder builder)
+        {
+            foreach (string verb in builder.Verbs)
+            {
+                s_pipelineStageBuildersByName[verb] = builder;
+            }
+        }
+        
+        public static IDataBatchEnumerator BuildPipeline(IDataBatchEnumerator source, string xqlQuery)
+        {
+            PipelineParser parser = new PipelineParser(xqlQuery);
+            return parser.NextPipeline(source);
+        }
+
+        public static IDataBatchEnumerator BuildStage(IDataBatchEnumerator source, string xqlQueryLine)
+        {
+            PipelineParser parser = new PipelineParser(xqlQueryLine);
+            parser._scanner.NextLine();
+            return parser.NextStage(source);
+        }
+
+        public IDataBatchEnumerator NextPipeline(IDataBatchEnumerator source)
+        {
+            IDataBatchEnumerator pipeline = source;
+
+            while (_scanner.NextLine())
+            {
+                pipeline = NextStage(pipeline);
+            }
+
+            return pipeline;
+        }
+
+        public IDataBatchEnumerator NextStage(IDataBatchEnumerator source)
+        {
+            NextOrThrow();
+            if (!s_pipelineStageBuildersByName.TryGetValue(_scanner.CurrentPart, out _currentLineBuilder)) Throw("was not a known verb.");
+            IDataBatchEnumerator stage = _currentLineBuilder.Build(source, this);
+            if (!_scanner.IsLastPart) Throw("was after all expected arguments.");
+            return stage;
+        }
+
+        public Type NextType()
+        {
+            NextOrThrow();
+            ITypeProvider provider = TypeProviderFactory.TryGet(_scanner.CurrentPart);
+            if (provider == null) Throw("was not a supported type.");
+            return provider.Type;
+        }
+
+        public string NextColumnName(IDataBatchEnumerator currentSource)
+        {
+            NextOrThrow();
+            ColumnDetails current = currentSource.Columns[currentSource.Columns.IndexOfColumn(_scanner.CurrentPart)];
+            return current.Name;
+        }
+
+        public string NextTableName()
+        {
+            NextOrThrow();
+            return _scanner.CurrentPart;
+        }
+
+        public bool NextBoolean()
+        {
+            NextOrThrow();
+            bool value;
+            if (!bool.TryParse(_scanner.CurrentPart, out value)) Throw("was not a valid boolean.");
+            return value;
+        }
+
+        public int NextInteger()
+        {
+            NextOrThrow();
+            int value;
+            if (!int.TryParse(_scanner.CurrentPart, out value)) Throw("was not a valid integer.");
+            return value;
+        }
+
+        public object NextLiteralValue()
+        {
+            NextOrThrow();
+            object value = _scanner.CurrentPart;
+            return value;
+        }
+
+        public CompareOperator NextCompareOperator()
+        {
+            NextOrThrow();
+            return _scanner.CurrentPart.ParseCompareOperator();
+        }
+
+        private void NextOrThrow()
+        {
+            if (_scanner.IsLastPart) throw new ArgumentException(_currentLineBuilder.Usage);
+            _scanner.NextPart();
+        }
+
+        private void Throw(string badArgumentMessage)
+        {
+            StringBuilder message = new StringBuilder();
+            if (_currentLineBuilder != null) message.AppendLine(_currentLineBuilder.Usage);
+            message.AppendLine($"{_scanner.CurrentPart} {badArgumentMessage}");
+
+            throw new ArgumentException(message.ToString());
+        }
+
+        public bool IsLastLinePart => _scanner.IsLastPart;
+    }
+
     public interface IPipelineStageBuilder
     {
         IEnumerable<string> Verbs { get; }
-        IDataBatchEnumerator Build(IDataBatchEnumerator source, List<string> configurationParts);
+        string Usage { get; }
+        IDataBatchEnumerator Build(IDataBatchEnumerator source, PipelineParser parser);
     }
 
     internal class ReadCommandBuilder : IPipelineStageBuilder
     {
         public IEnumerable<string> Verbs => new string[] { "read" };
+        public string Usage => "'read' [tableNameOrFilePath]";
 
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, List<string> configurationParts)
+        public IDataBatchEnumerator Build(IDataBatchEnumerator source, PipelineParser parser)
         {
             if (source != null) throw new ArgumentException($"'read' must be the first stage in a pipeline.");
-            if (configurationParts.Count != 2) throw new ArgumentException($"Usage: 'read' [filePath]");
-            if (configurationParts[1].EndsWith("xform"))
+            string filePath = parser.NextTableName();
+            if (filePath.EndsWith("xform"))
             {
-                return new BinaryTableReader(configurationParts[1]);
+                return new BinaryTableReader(filePath);
             }
             else
             {
-                return new TabularFileReader(configurationParts[1]);
+                return new TabularFileReader(filePath);
+            }
+        }
+    }
+
+    internal class WriterCommandBuilder : IPipelineStageBuilder
+    {
+        public IEnumerable<string> Verbs => new string[] { "write" };
+        public string Usage => "'write' [tableNameOrFilePath]";
+
+        public IDataBatchEnumerator Build(IDataBatchEnumerator source, PipelineParser parser)
+        {
+            string filePath = parser.NextTableName();
+            if (filePath.EndsWith("xform"))
+            {
+                return new BinaryTableWriter(source, filePath);
+            }
+            else
+            {
+                return new TabularFileWriter(source, filePath);
             }
         }
     }
@@ -41,109 +302,113 @@ namespace XForm.Query
     internal class SchemaCommandBuilder : IPipelineStageBuilder
     {
         public IEnumerable<string> Verbs => new string[] { "schema" };
+        public string Usage => "'schema'";
 
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, List<string> configurationParts)
+        public IDataBatchEnumerator Build(IDataBatchEnumerator source, PipelineParser parser)
         {
-            if (configurationParts.Count != 1) throw new ArgumentException("Usage: 'schema'");
             return new SchemaTransformer(source);
-        }
-    }
-
-    internal class ColumnsCommandBuilder : IPipelineStageBuilder
-    {
-        public IEnumerable<string> Verbs => new string[] { "columns", "select" };
-
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, List<string> configurationParts)
-        {
-            return new ColumnSelector(source, configurationParts.Skip(1));
-        }
-    }
-
-    internal class RemoveColumnsCommandBuilder : IPipelineStageBuilder
-    {
-        public IEnumerable<string> Verbs => new string[] { "removecolumns" };
-
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, List<string> configurationParts)
-        {
-            return new ColumnRemover(source, configurationParts.Skip(1));
-        }
-    }
-
-    internal class WriterCommandBuilder : IPipelineStageBuilder
-    {
-        public IEnumerable<string> Verbs => new string[] { "write" };
-
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, List<string> configurationParts)
-        {
-            if (configurationParts.Count != 2) throw new ArgumentException("Usage 'write' [filePath]");
-            if (configurationParts[1].EndsWith("xform"))
-            {
-                return new BinaryTableWriter(source, configurationParts[1]);
-            }
-            else
-            {
-                return new TabularFileWriter(source, configurationParts[1]);
-            }
-        }
-    }
-
-    internal class LimitCommandBuilder : IPipelineStageBuilder
-    {
-        public IEnumerable<string> Verbs => new string[] { "limit", "top"};
-
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, List<string> configurationParts)
-        {
-            int limit;
-            if (configurationParts.Count != 2 || !int.TryParse(configurationParts[1], out limit)) throw new ArgumentException("Usage: 'limit' [rowCount]");
-            return new RowLimiter(source, limit);
         }
     }
 
     internal class CountCommandBuilder : IPipelineStageBuilder
     {
         public IEnumerable<string> Verbs => new string[] { "count" };
+        public string Usage => "'count'";
 
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, List<string> configurationParts)
+        public IDataBatchEnumerator Build(IDataBatchEnumerator source, PipelineParser parser)
         {
-            if (configurationParts.Count != 1) throw new ArgumentException("Usage: 'count'");
             return new CountAggregator(source);
-        }
-    }
-
-    internal class TypeConverterCommandBuilder : IPipelineStageBuilder
-    {
-        public IEnumerable<string> Verbs => new string[] { "cast", "convert" };
-
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, List<string> configurationParts)
-        {
-            if (configurationParts.Count < 3 || configurationParts.Count > 5) throw new ArgumentException("Usage: 'cast' [columnName] [targetType] [default?] [strict?]");
-            return new TypeConverter(source, configurationParts[1], TypeProviderFactory.Get(configurationParts[2]).Type, (configurationParts.Count > 3 ? configurationParts[2] : null), (configurationParts.Count > 4 ? bool.Parse(configurationParts[3]) : true));
-        }
-    }
-
-    internal class WhereCommandBuilder : IPipelineStageBuilder
-    {
-        public IEnumerable<string> Verbs => new string[] { "where" };
-
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, List<string> configurationParts)
-        {
-            if (configurationParts.Count != 4) throw new ArgumentException("Usage: 'where' [columnName] [operator] [value]");
-            return new WhereFilter(source, configurationParts[1], configurationParts[2].ParseCompareOperator(), configurationParts[3]);
         }
     }
 
     internal class MemoryCacheBuilder : IPipelineStageBuilder
     {
         public IEnumerable<string> Verbs => new string[] { "cache" };
+        public string Usage => "'cache'";
 
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, List<string> configurationParts)
+        public IDataBatchEnumerator Build(IDataBatchEnumerator source, PipelineParser parser)
         {
-            if (configurationParts.Count != 1) throw new ArgumentException("Usage: 'cache'");
-
             IDataBatchList sourceList = source as IDataBatchList;
             if (sourceList == null) throw new ArgumentException("'cache' can only be used on IDataBatchList sources.");
 
             return new MemoryCacher(sourceList);
+        }
+    }
+
+    internal class LimitCommandBuilder : IPipelineStageBuilder
+    {
+        public IEnumerable<string> Verbs => new string[] { "limit", "top" };
+        public string Usage => "'limit' [RowCount]";
+
+        public IDataBatchEnumerator Build(IDataBatchEnumerator source, PipelineParser parser)
+        {
+            int limit = parser.NextInteger();
+            return new RowLimiter(source, limit);
+        }
+    }
+
+    internal class ColumnsCommandBuilder : IPipelineStageBuilder
+    {
+        public IEnumerable<string> Verbs => new string[] { "columns", "select" };
+        public string Usage => "'columns' [ColumnName], [ColumnName], ...";
+
+        public IDataBatchEnumerator Build(IDataBatchEnumerator source, PipelineParser parser)
+        {
+            List<string> columnNames = new List<string>();
+            while(!parser.IsLastLinePart)
+            {
+                columnNames.Add(parser.NextColumnName(source));
+            }
+
+            return new ColumnSelector(source, columnNames);
+        }
+    }
+
+    internal class RemoveColumnsCommandBuilder : IPipelineStageBuilder
+    {
+        public IEnumerable<string> Verbs => new string[] { "removecolumns" };
+        public string Usage => "'removeColumns' [ColumnName], [ColumnName], ...";
+
+        public IDataBatchEnumerator Build(IDataBatchEnumerator source, PipelineParser parser)
+        {
+            List<string> columnNames = new List<string>();
+            while (!parser.IsLastLinePart)
+            {
+                columnNames.Add(parser.NextColumnName(source));
+            }
+
+            return new ColumnRemover(source, columnNames);
+        }
+    }
+
+    internal class TypeConverterCommandBuilder : IPipelineStageBuilder
+    {
+        public IEnumerable<string> Verbs => new string[] { "cast", "convert" };
+        public string Usage => "'cast' [columnName] [targetType] [default?] [strict?]";
+
+        public IDataBatchEnumerator Build(IDataBatchEnumerator source, PipelineParser parser)
+        {
+            return new TypeConverter(source, 
+                parser.NextColumnName(source), 
+                parser.NextType(), 
+                (parser.IsLastLinePart ? null : parser.NextLiteralValue()), 
+                (parser.IsLastLinePart ? false : parser.NextBoolean())
+            );
+        }
+    }
+
+    internal class WhereCommandBuilder : IPipelineStageBuilder
+    {
+        public IEnumerable<string> Verbs => new string[] { "where" };
+        public string Usage => "'where' [columnName] [operator] [value]";
+
+        public IDataBatchEnumerator Build(IDataBatchEnumerator source, PipelineParser parser)
+        {
+            return new WhereFilter(source, 
+                parser.NextColumnName(source),
+                parser.NextCompareOperator(),
+                parser.NextLiteralValue()
+            );
         }
     }
 }

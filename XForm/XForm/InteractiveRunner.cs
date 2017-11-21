@@ -11,6 +11,7 @@ using Microsoft.CodeAnalysis.Elfie.Extensions;
 
 using XForm.Data;
 using XForm.Extensions;
+using XForm.Query;
 
 namespace XForm
 {
@@ -42,10 +43,12 @@ namespace XForm
 
                     // Read the next query line
                     string nextLine = Console.ReadLine();
-                    List<string> arguments = PipelineFactory.SplitConfigurationLine(nextLine);
-                    if (arguments.Count == 0) return lastCount;
+                    PipelineScanner scanner = new PipelineScanner(nextLine);
+                    scanner.NextLine();
+                    if (scanner.IsLastPart) return lastCount;
 
-                    string command = arguments[0].ToLowerInvariant();
+                    scanner.NextPart();
+                    string command = scanner.CurrentPart.ToLowerInvariant();
                     switch (command)
                     {
                         case "quit":
@@ -67,28 +70,14 @@ namespace XForm
 
                             break;
                         case "save":
-                            if (arguments.Count != 2)
-                            {
-                                Console.WriteLine($"Usage: 'save' [scriptFilePath]");
-                                continue;
-                            }
-                            else
-                            {
-                                SaveScript(arguments[1]);
-                                Console.WriteLine($"Script saved to \"{arguments[1]}\".");
-                                continue;
-                            }
+                            scanner.NextPart();
+                            SaveScript(scanner.CurrentPart);
+                            Console.WriteLine($"Script saved to \"{scanner.CurrentPart}\".");
+                            continue;
                         case "run":
-                            if (arguments.Count != 2)
-                            {
-                                Console.WriteLine($"Usage: 'run' [scriptFilePath]");
-                                continue;
-                            }
-                            else
-                            {
-                                LoadScript(arguments[1]);
-                                break;
-                            }
+                            scanner.NextPart();
+                            LoadScript(scanner.CurrentPart);
+                            break;
                         case "rerun":
                             LoadScript(s_commandCachePath);
                             break;

@@ -2,6 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Collections.Generic;
+using XForm.Query;
 
 namespace XForm.Test.Query
 {
@@ -11,14 +13,28 @@ namespace XForm.Test.Query
         [TestMethod]
         public void ConfigurationLineParsing()
         {
-            Assert.AreEqual("", string.Join("|", PipelineFactory.SplitConfigurationLine("")));
-            Assert.AreEqual("Simple", string.Join("|", PipelineFactory.SplitConfigurationLine("Simple")));
-            Assert.AreEqual("Simple", string.Join("|", PipelineFactory.SplitConfigurationLine("  Simple ")));
-            Assert.AreEqual("Simple|settings", string.Join("|", PipelineFactory.SplitConfigurationLine(" Simple   settings")));
-            Assert.AreEqual(@"read|C:\Download\Sample.csv", string.Join("|", PipelineFactory.SplitConfigurationLine(@"read ""C:\Download\Sample.csv""")));
-            Assert.AreEqual(@"read|C:\Download\Sample.csv", string.Join("|", PipelineFactory.SplitConfigurationLine(@"read ""C:\Download\Sample.csv"" ")));
-            Assert.AreEqual(@"value|""Quoted""", string.Join("|", PipelineFactory.SplitConfigurationLine(@"value """"""Quoted""""""")));
-            Assert.AreEqual(@"columns|One|Two|Three", string.Join("|", PipelineFactory.SplitConfigurationLine(@"columns One,Two, Three")));
+            Assert.AreEqual("Simple", TestSplitAndJoin("Simple"));
+            Assert.AreEqual("Simple", TestSplitAndJoin("  Simple "));
+            Assert.AreEqual("Simple|settings", TestSplitAndJoin(" Simple   settings"));
+            Assert.AreEqual(@"read|C:\Download\Sample.csv",TestSplitAndJoin(@"read ""C:\Download\Sample.csv"""));
+            Assert.AreEqual(@"read|C:\Download\Sample.csv", TestSplitAndJoin(@"read ""C:\Download\Sample.csv"" "));
+            Assert.AreEqual(@"value|""Quoted""", TestSplitAndJoin(@"value """"""Quoted"""""""));
+            Assert.AreEqual(@"columns|One|Two|Three", TestSplitAndJoin(@"columns One,Two, Three"));
+        }
+
+        private static string TestSplitAndJoin(string xqlLine)
+        {
+            PipelineScanner scanner = new PipelineScanner(xqlLine);
+            scanner.NextLine();
+
+            List<string> parts = new List<string>();
+            while(!scanner.IsLastPart)
+            {
+                scanner.NextPart();
+                parts.Add(scanner.CurrentPart);
+            }
+
+            return string.Join("|", parts);
         }
     }
 }
