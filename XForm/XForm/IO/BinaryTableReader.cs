@@ -6,10 +6,31 @@ using System.Collections.Generic;
 using System.IO;
 
 using XForm.Data;
+using XForm.Query;
 using XForm.Types;
 
 namespace XForm.IO
 {
+    internal class ReadCommandBuilder : IPipelineStageBuilder
+    {
+        public IEnumerable<string> Verbs => new string[] { "read" };
+        public string Usage => "'read' [tableNameOrFilePath]";
+
+        public IDataBatchEnumerator Build(IDataBatchEnumerator source, PipelineParser parser)
+        {
+            if (source != null) throw new ArgumentException($"'read' must be the first stage in a pipeline.");
+            string filePath = parser.NextTableName();
+            if (filePath.EndsWith("xform"))
+            {
+                return new BinaryTableReader(filePath);
+            }
+            else
+            {
+                return new TabularFileReader(filePath);
+            }
+        }
+    }
+
     public class BinaryTableReader : IDataBatchList
     {
         private string _tableRootPath;

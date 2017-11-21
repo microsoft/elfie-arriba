@@ -8,11 +8,30 @@ using System.IO;
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 
 using XForm.Data;
-using XForm.Transforms;
+using XForm.Query;
 using XForm.Types;
 
 namespace XForm.IO
 {
+    internal class WriteCommandBuilder : IPipelineStageBuilder
+    {
+        public IEnumerable<string> Verbs => new string[] { "write" };
+        public string Usage => "'write' [tableNameOrFilePath]";
+
+        public IDataBatchEnumerator Build(IDataBatchEnumerator source, PipelineParser parser)
+        {
+            string filePath = parser.NextTableName();
+            if (filePath.EndsWith("xform"))
+            {
+                return new BinaryTableWriter(source, filePath);
+            }
+            else
+            {
+                return new TabularFileWriter(source, filePath);
+            }
+        }
+    }
+
     public class BinaryTableWriter : DataBatchEnumeratorWrapper
     {
         private string _tableRootPath;

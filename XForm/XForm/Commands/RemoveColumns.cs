@@ -7,15 +7,33 @@ using System.Linq;
 
 using XForm.Data;
 using XForm.Extensions;
+using XForm.Query;
 
-namespace XForm.Transforms
+namespace XForm.Commands
 {
-    public class ColumnRemover : DataBatchEnumeratorWrapper
+    internal class RemoveColumnsCommandBuilder : IPipelineStageBuilder
+    {
+        public IEnumerable<string> Verbs => new string[] { "removecolumns" };
+        public string Usage => "'removeColumns' [ColumnName], [ColumnName], ...";
+
+        public IDataBatchEnumerator Build(IDataBatchEnumerator source, PipelineParser parser)
+        {
+            List<string> columnNames = new List<string>();
+            while (!parser.IsLastLinePart)
+            {
+                columnNames.Add(parser.NextColumnName(source));
+            }
+
+            return new RemoveColumns(source, columnNames);
+        }
+    }
+
+    public class RemoveColumns : DataBatchEnumeratorWrapper
     {
         private List<ColumnDetails> _mappedColumns;
         private List<int> _columnInnerIndices;
 
-        public ColumnRemover(IDataBatchEnumerator source, IEnumerable<string> columnNames) : base(source)
+        public RemoveColumns(IDataBatchEnumerator source, IEnumerable<string> columnNames) : base(source)
         {
             _mappedColumns = new List<ColumnDetails>();
             _columnInnerIndices = new List<int>();

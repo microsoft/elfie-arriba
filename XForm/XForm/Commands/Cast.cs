@@ -6,16 +6,34 @@ using System.Collections.Generic;
 
 using XForm.Data;
 using XForm.Extensions;
+using XForm.Query;
+using XForm.Types;
 
-namespace XForm.Transforms
+namespace XForm.Commands
 {
-    public class TypeConverter : DataBatchEnumeratorWrapper
+    internal class CastCommandBuilder : IPipelineStageBuilder
+    {
+        public IEnumerable<string> Verbs => new string[] { "cast", "convert" };
+        public string Usage => "'cast' [columnName] [targetType] [default?] [strict?]";
+
+        public IDataBatchEnumerator Build(IDataBatchEnumerator source, PipelineParser parser)
+        {
+            return new Cast(source,
+                parser.NextColumnName(source),
+                parser.NextType(),
+                (parser.IsLastLinePart ? null : parser.NextLiteralValue()),
+                (parser.IsLastLinePart ? false : parser.NextBoolean())
+            );
+        }
+    }
+
+    public class Cast : DataBatchEnumeratorWrapper
     {
         private int _sourceColumnIndex;
         private Func<DataBatch, DataBatch> _converter;
         private List<ColumnDetails> _columns;
 
-        public TypeConverter(IDataBatchEnumerator source, string columnName, Type targetType, object defaultValue, bool strict) : base(source)
+        public Cast(IDataBatchEnumerator source, string columnName, Type targetType, object defaultValue, bool strict) : base(source)
         {
             _sourceColumnIndex = source.Columns.IndexOfColumn(columnName);
 

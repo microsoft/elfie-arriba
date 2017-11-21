@@ -6,9 +6,21 @@ using System.Collections.Generic;
 using System.Linq;
 
 using XForm.Data;
+using XForm.Query;
 
-namespace XForm.Transforms
+namespace XForm.Commands
 {
+    internal class SchemaCommandBuilder : IPipelineStageBuilder
+    {
+        public IEnumerable<string> Verbs => new string[] { "schema" };
+        public string Usage => "'schema'";
+
+        public IDataBatchEnumerator Build(IDataBatchEnumerator source, PipelineParser parser)
+        {
+            return new SchemaTransformer(source);
+        }
+    }
+
     /// <summary>
     ///  Return the Schema of a Source (Column Name, Type, Nullable).
     /// </summary>

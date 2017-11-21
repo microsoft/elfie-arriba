@@ -2,21 +2,39 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Collections.Generic;
 
 using XForm.Data;
 using XForm.Extensions;
 using XForm.Query;
+using XForm.Transforms;
+using XForm.Types;
 
-namespace XForm.Transforms
+namespace XForm.Commands
 {
-    public class WhereFilter : DataBatchEnumeratorWrapper
+    internal class WhereCommandBuilder : IPipelineStageBuilder
+    {
+        public IEnumerable<string> Verbs => new string[] { "where" };
+        public string Usage => "'where' [columnName] [operator] [value]";
+
+        public IDataBatchEnumerator Build(IDataBatchEnumerator source, PipelineParser parser)
+        {
+            return new Where(source,
+                parser.NextColumnName(source),
+                parser.NextCompareOperator(),
+                parser.NextLiteralValue()
+            );
+        }
+    }
+
+    public class Where : DataBatchEnumeratorWrapper
     {
         private int _filterColumnIndex;
         private Func<DataBatch> _filterColumnGetter;
         private Action<DataBatch, RowRemapper> _comparer;
         private RowRemapper _mapper;
 
-        public WhereFilter(IDataBatchEnumerator source, string columnName, CompareOperator op, object value) : base(source)
+        public Where(IDataBatchEnumerator source, string columnName, CompareOperator op, object value) : base(source)
         {
             // Find the column we're filtering on
             _filterColumnIndex = source.Columns.IndexOfColumn(columnName);

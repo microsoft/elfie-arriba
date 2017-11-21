@@ -1,16 +1,31 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using XForm.Data;
+using System.Collections.Generic;
 
-namespace XForm.Transforms
+using XForm.Data;
+using XForm.Query;
+
+namespace XForm.Commands
 {
-    public class RowLimiter : DataBatchEnumeratorWrapper
+    internal class LimitCommandBuilder : IPipelineStageBuilder
+    {
+        public IEnumerable<string> Verbs => new string[] { "limit", "top" };
+        public string Usage => "'limit' [RowCount]";
+
+        public IDataBatchEnumerator Build(IDataBatchEnumerator source, PipelineParser parser)
+        {
+            int limit = parser.NextInteger();
+            return new Limit(source, limit);
+        }
+    }
+
+    public class Limit : DataBatchEnumeratorWrapper
     {
         private int _countLimit;
         private int _countSoFar;
 
-        public RowLimiter(IDataBatchEnumerator source, int countLimit) : base(source)
+        public Limit(IDataBatchEnumerator source, int countLimit) : base(source)
         {
             _countLimit = countLimit;
         }

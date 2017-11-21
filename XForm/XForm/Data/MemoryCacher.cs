@@ -1,9 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
+
 using XForm.IO;
+using XForm.Query;
 
 namespace XForm.Data
 {
+    internal class MemoryCacheBuilder : IPipelineStageBuilder
+    {
+        public IEnumerable<string> Verbs => new string[] { "cache" };
+        public string Usage => "'cache'";
+
+        public IDataBatchEnumerator Build(IDataBatchEnumerator source, PipelineParser parser)
+        {
+            IDataBatchList sourceList = source as IDataBatchList;
+            if (sourceList == null) throw new ArgumentException("'cache' can only be used on IDataBatchList sources.");
+
+            return new MemoryCacher(sourceList);
+        }
+    }
+
     public class MemoryCacher : IDataBatchList
     {
         private IDataBatchList _source;

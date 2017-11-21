@@ -6,15 +6,33 @@ using System.Collections.Generic;
 
 using XForm.Data;
 using XForm.Extensions;
+using XForm.Query;
 
-namespace XForm.Transforms
+namespace XForm.Commands
 {
-    public class ColumnSelector : DataBatchEnumeratorWrapper
+    internal class SelectColumnsCommandBuilder : IPipelineStageBuilder
+    {
+        public IEnumerable<string> Verbs => new string[] { "columns", "select" };
+        public string Usage => "'columns' [ColumnName], [ColumnName], ...";
+
+        public IDataBatchEnumerator Build(IDataBatchEnumerator source, PipelineParser parser)
+        {
+            List<string> columnNames = new List<string>();
+            while (!parser.IsLastLinePart)
+            {
+                columnNames.Add(parser.NextColumnName(source));
+            }
+
+            return new SelectColumns(source, columnNames);
+        }
+    }
+
+    public class SelectColumns : DataBatchEnumeratorWrapper
     {
         private List<ColumnDetails> _mappedColumns;
         private List<int> _columnInnerIndices;
 
-        public ColumnSelector(IDataBatchEnumerator source, IEnumerable<string> columnNames) : base(source)
+        public SelectColumns(IDataBatchEnumerator source, IEnumerable<string> columnNames) : base(source)
         {
             _mappedColumns = new List<ColumnDetails>();
             _columnInnerIndices = new List<int>();

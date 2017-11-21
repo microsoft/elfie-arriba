@@ -5,9 +5,21 @@ using System;
 using System.Collections.Generic;
 
 using XForm.Data;
+using XForm.Query;
 
 namespace XForm.Aggregators
 {
+    internal class CountCommandBuilder : IPipelineStageBuilder
+    {
+        public IEnumerable<string> Verbs => new string[] { "count" };
+        public string Usage => "'count'";
+
+        public IDataBatchEnumerator Build(IDataBatchEnumerator source, PipelineParser parser)
+        {
+            return new CountAggregator(source);
+        }
+    }
+
     public class CountAggregator : IDataBatchEnumerator
     {
         private List<ColumnDetails> _column;

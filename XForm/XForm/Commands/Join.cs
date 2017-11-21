@@ -9,7 +9,7 @@
 //using XForm.Extensions;
 //using XForm.IO;
 
-//namespace XForm.Transforms
+//namespace XForm.Commands
 //{
 //    public class Join : IDataBatchEnumerator
 //    {
@@ -108,7 +108,7 @@
 
 //            while(_rawJoinSource.Next(10240) != 0)
 //            {
-                
+
 //            }
 //        }
 

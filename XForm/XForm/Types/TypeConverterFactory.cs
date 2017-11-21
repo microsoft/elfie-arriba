@@ -6,9 +6,8 @@ using System;
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 
 using XForm.Data;
-using XForm.Types;
 
-namespace XForm.Transforms
+namespace XForm.Types
 {
     public static class TypeConverterFactory
     {

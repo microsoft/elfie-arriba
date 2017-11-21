@@ -1,21 +1,19 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Microsoft.CodeAnalysis.Elfie.Diagnostics;
+
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 
-using Microsoft.CodeAnalysis.Elfie.Diagnostics;
-using Microsoft.CodeAnalysis.Elfie.Extensions;
-
 using XForm.Aggregators;
+using XForm.Commands;
 using XForm.Data;
 using XForm.Extensions;
 using XForm.IO;
 using XForm.Query;
-using XForm.Transforms;
 
 namespace XForm
 {
@@ -123,7 +121,7 @@ namespace XForm
                 table.AddColumn(new ColumnDetails("ID", typeof(int), false), DataBatch.All(array, array.Length));
 
                 IDataBatchEnumerator source = table;
-                source = new WhereFilter(source, "ID", CompareOperator.Equals, value);
+                source = new Where(source, "ID", CompareOperator.Equals, value);
                 source = new CountAggregator(source);
 
                 source.Next(10240);
