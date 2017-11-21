@@ -12,6 +12,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using XForm.Data;
 using XForm.Extensions;
+using XForm.Query;
 
 namespace XForm.Test.Query
 {
@@ -20,31 +21,31 @@ namespace XForm.Test.Query
     {
         private static string s_outputRootFolderPath = @"C:\Download";
 
-        public static string SampleFileName = "WebRequestSample.5.1000.csv";
+        public static string WebRequestSample = "WebRequestSample.5.1000.csv";
+        public static string WebServerSample = "WebServerSample.csv";
+
         private static string s_sampleTableFileName = Path.Combine(s_outputRootFolderPath, "WebRequestSample.xform");
         private static string s_expectedOutputFileName = Path.Combine(s_outputRootFolderPath, "WebRequestSample.Expected.csv");
         private static string s_actualOutputFileName = Path.Combine(s_outputRootFolderPath, "WebRequestSample.Actual.csv");
 
-        public static void WriteSampleFile()
+        public static void WriteSamples()
         {
-            if (!File.Exists(SampleFileName))
-            {
-                Resource.SaveStreamTo($"XForm.Test.{SampleFileName}", SampleFileName);
-            }
+            if (!File.Exists(WebRequestSample)) Resource.SaveStreamTo($"XForm.Test.{WebRequestSample}", WebRequestSample);
+            if (!File.Exists(WebServerSample)) Resource.SaveStreamTo($"XForm.Test.{WebServerSample}", WebServerSample);
         }
 
         [TestInitialize]
-        public void EnsureSampleFileExists()
+        public void EnsureSamplesExist()
         {
-            WriteSampleFile();
+            WriteSamples();
         }
 
         [TestMethod]
         public void Scenario_EndToEnd()
         {
-            PipelineFactory.BuildPipeline($@"
-                read {SampleFileName}
-                columns ID EventTime ServerPort HttpStatus ClientOs WasCachedResponse
+            PipelineParser.BuildPipeline($@"
+                read {WebRequestSample}
+                columns ID EventTime ServerName ServerPort HttpStatus ClientOs WasCachedResponse
                 write {s_expectedOutputFileName}
                 cast ID int32
                 cast EventTime DateTime
@@ -54,7 +55,7 @@ namespace XForm.Test.Query
                 write {s_sampleTableFileName}
             ").RunAndDispose();
 
-            PipelineFactory.BuildPipeline($@"
+            PipelineParser.BuildPipeline($@"
                 read {s_sampleTableFileName}
                 write {s_actualOutputFileName}
             ").RunAndDispose();
@@ -62,9 +63,35 @@ namespace XForm.Test.Query
             Assert.AreEqual(File.ReadAllText(s_expectedOutputFileName), File.ReadAllText(s_actualOutputFileName));
         }
 
+        [TestMethod]
+        public void Join()
+        {
+            // Build binary format tables for the join
+            PipelineParser.BuildPipeline($@"
+                read {WebServerSample}
+                write {WebServerSample}.xform
+                where ServerRam >= 4096
+                write {WebServerSample}.Big.xform
+            ").RunAndDispose();
+
+            // Join. Verify no exceptions. Verify all rows match.
+            Assert.AreEqual(1000, PipelineParser.BuildPipeline($@"
+                read {WebRequestSample}
+                columns ID EventTime ServerName
+                join ServerName {WebServerSample}.xform ServerName Server.
+            ").RunAndDispose());
+
+            // Join to partial set. Verify no exceptions. Verify only some rows match.
+            Assert.AreEqual(613, PipelineParser.BuildPipeline($@"
+                read {WebRequestSample}
+                columns ID EventTime ServerName
+                join ServerName {WebServerSample}.Big.xform ServerName Server.
+            ").RunAndDispose());
+        }
+
         private static IDataBatchEnumerator SampleReader()
         {
-            return PipelineFactory.BuildStage($"read {SampleFileName}", null);
+            return PipelineParser.BuildStage($"read {WebRequestSample}", null);
         }
 
         private static string[] SampleColumns()
@@ -86,7 +113,7 @@ namespace XForm.Test.Query
             {
                 pipeline = SampleReader();
                 innerValidator = new DataBatchEnumeratorContractValidator(pipeline);
-                pipeline = PipelineFactory.BuildStage(configurationLine, innerValidator);
+                pipeline = PipelineParser.BuildStage(configurationLine, innerValidator);
 
                 // Run without requesting any columns. Validate.
                 Assert.AreEqual(requiredColumnCount, innerValidator.ColumnGettersRequested.Count);
@@ -96,7 +123,7 @@ namespace XForm.Test.Query
 
                 // Reset; Request all columns. Validate.
                 pipeline.Reset();
-                pipeline = PipelineFactory.BuildStage("write \"Sample.output.csv\"", pipeline);
+                pipeline = PipelineParser.BuildStage("write \"Sample.output.csv\"", pipeline);
                 actualRowCount = pipeline.Run();
             }
             finally
@@ -121,7 +148,7 @@ namespace XForm.Test.Query
             DataSourceEnumerator_All("limit 10", 10);
             DataSourceEnumerator_All("count", 1);
             DataSourceEnumerator_All("where ServerPort = 80", 423, new string[] { "ServerPort" });
-            DataSourceEnumerator_All("convert EventTime DateTime", 1000);
+            DataSourceEnumerator_All("cast EventTime DateTime", 1000);
             DataSourceEnumerator_All("removecolumns EventTime", 1000);
             DataSourceEnumerator_All("write WebRequestSample.xform", 1000, SampleColumns());
         }
@@ -129,12 +156,12 @@ namespace XForm.Test.Query
         [TestMethod]
         public void DataSourceEnumerator_Errors()
         {
-            Verify.Exception<ArgumentException>(() => PipelineFactory.BuildStage("read", null), "Usage: 'read' [tableNameOrFilePath]");
-            Verify.Exception<FileNotFoundException>(() => PipelineFactory.BuildStage("read NotFound.csv", null));
-            Verify.Exception<ColumnNotFoundException>(() => PipelineFactory.BuildStage("removeColumns NotFound", SampleReader()));
+            Verify.Exception<ArgumentException>(() => PipelineParser.BuildStage("read", null), "Usage: 'read' [tableNameOrFilePath]");
+            Verify.Exception<FileNotFoundException>(() => PipelineParser.BuildStage("read NotFound.csv", null));
+            Verify.Exception<ColumnNotFoundException>(() => PipelineParser.BuildStage("removeColumns NotFound", SampleReader()));
 
             // Verify casting a type to itself doesn't error
-            PipelineFactory.BuildPipeline(@"
+            PipelineParser.BuildPipeline(@"
                 cast EventTime DateTime
                 cast EventTime DateTime", SampleReader()).RunAndDispose();
         }

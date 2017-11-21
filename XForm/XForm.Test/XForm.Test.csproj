@@ -57,6 +57,7 @@
   <ItemGroup>
     <None Include="packages.config" />
     <EmbeddedResource Include="WebRequestSample.5.1000.csv" />
+    <EmbeddedResource Include="WebServerSample.csv" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Elfie\Elfie.Test\Elfie.Test.csproj">

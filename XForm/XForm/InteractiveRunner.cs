@@ -99,8 +99,8 @@ namespace XForm
 
                     // Get the first 10 results
                     IDataBatchEnumerator firstTenWrapper = _pipeline;
-                    firstTenWrapper = PipelineFactory.BuildStage("limit 10", firstTenWrapper);
-                    firstTenWrapper = PipelineFactory.BuildStage("write cout", firstTenWrapper);
+                    firstTenWrapper = PipelineParser.BuildStage("limit 10", firstTenWrapper);
+                    firstTenWrapper = PipelineParser.BuildStage("write cout", firstTenWrapper);
                     lastCount = firstTenWrapper.Run();
 
                     // Get the count
@@ -140,7 +140,7 @@ namespace XForm
             _stages.Add(_pipeline);
 
             // Build the new stage
-            _pipeline = PipelineFactory.BuildStage(nextLine, _pipeline);
+            _pipeline = PipelineParser.BuildStage(nextLine, _pipeline);
 
             // Save the current command set
             _commands.Add(nextLine);

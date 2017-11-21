@@ -55,7 +55,7 @@ namespace XForm
             int rowsWritten = 0;
             using (new TraceWatch(query))
             {
-                using (IDataBatchEnumerator source = PipelineFactory.BuildPipeline(query))
+                using (IDataBatchEnumerator source = PipelineParser.BuildPipeline(query))
                 {
                     rowsWritten = source.Run();
                 }

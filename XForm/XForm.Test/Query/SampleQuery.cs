@@ -7,6 +7,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using XForm.Data;
 using XForm.Extensions;
+using XForm.Query;
 
 namespace XForm.Test.Query
 {
@@ -16,7 +17,7 @@ namespace XForm.Test.Query
         [TestMethod]
         public void Sample()
         {
-            DataBatchEnumeratorTests.WriteSampleFile();
+            DataBatchEnumeratorTests.WriteSamples();
 
             string xqlQuery = @"
                 read ""C:\Code\XForm\XForm\XForm.Test\WebRequestSample.5.1000.csv""
@@ -30,7 +31,7 @@ namespace XForm.Test.Query
             int maxResponseBytes = -1;
 
             // Build a Pipeline for the query. Wrap in a using statement to Dispose it when done.
-            using (IDataBatchEnumerator pipeline = PipelineFactory.BuildPipeline(xqlQuery))
+            using (IDataBatchEnumerator pipeline = PipelineParser.BuildPipeline(xqlQuery))
             {
                 // Identify the columns you're consuming by requesting and caching the getter functions for them.
                 //  You must request the getters before the first call to Next().

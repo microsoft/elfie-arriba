@@ -66,7 +66,9 @@ namespace XForm.Data
 
         public static DataBatch Select(Array array, int length, ArraySelector selector)
         {
-            if (selector.EndIndexExclusive > array.Length || selector.EndIndexExclusive > length) throw new ArgumentOutOfRangeException("selector");
+            if (selector.Indices == null && (selector.EndIndexExclusive > array.Length || selector.EndIndexExclusive > length)) throw new ArgumentOutOfRangeException("selector");
+            if (selector.Indices != null && (selector.EndIndexExclusive > selector.Indices.Length)) throw new ArgumentOutOfRangeException("selector");
+
             return new DataBatch() { Array = array, Selector = selector };
         }
 

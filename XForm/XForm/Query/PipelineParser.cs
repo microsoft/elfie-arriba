@@ -145,13 +145,13 @@ namespace XForm.Query
             }
         }
 
-        public static IDataBatchEnumerator BuildPipeline(IDataBatchEnumerator source, string xqlQuery)
+        public static IDataBatchEnumerator BuildPipeline(string xqlQuery, IDataBatchEnumerator source = null)
         {
             PipelineParser parser = new PipelineParser(xqlQuery);
             return parser.NextPipeline(source);
         }
 
-        public static IDataBatchEnumerator BuildStage(IDataBatchEnumerator source, string xqlQueryLine)
+        public static IDataBatchEnumerator BuildStage(string xqlQueryLine, IDataBatchEnumerator source)
         {
             PipelineParser parser = new PipelineParser(xqlQueryLine);
             parser._scanner.NextLine();

@@ -100,6 +100,7 @@ namespace XForm.Types
         public DataBatch Read(ArraySelector selector)
         {
             if (selector.Indices != null) throw new NotImplementedException();
+            if (selector.Count == 0) return DataBatch.All(_resultArray, 0);
 
             // Read the end of the previous string
             int start;

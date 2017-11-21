@@ -1,137 +1,187 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+﻿// Copyright(c) Microsoft.All rights reserved.
+// Licensed under the MIT license.See LICENSE file in the project root for full license information.
 
-//// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+using Microsoft.CodeAnalysis.Elfie.Model.Strings;
+using System;
+using System.Collections.Generic;
 
-//using Microsoft.CodeAnalysis.Elfie.Model.Strings;
-//using System;
-//using System.Collections.Generic;
+using XForm.Data;
+using XForm.Extensions;
+using XForm.IO;
+using XForm.Query;
+using XForm.Transforms;
 
-//using XForm.Data;
-//using XForm.Extensions;
-//using XForm.IO;
+namespace XForm.Commands
+{
+    internal class JoinBuilder : IPipelineStageBuilder
+    {
+        public IEnumerable<string> Verbs => new string[] { "join" };
+        public string Usage => "'join' [FromColumnName] [ToBinarySource] [ToColumn] [JoinedInColumnPrefix]";
 
-//namespace XForm.Commands
-//{
-//    public class Join : IDataBatchEnumerator
-//    {
-//        private IDataBatchEnumerator _source;
+        public IDataBatchEnumerator Build(IDataBatchEnumerator source, PipelineParser parser)
+        {
+            string sourceColumnName = parser.NextColumnName(source);
+            IDataBatchEnumerator joinToSource = new BinaryTableReader(parser.NextTableName());
+            string joinToColumn = parser.NextColumnName(joinToSource);
 
-//        private IDataBatchEnumerator _rawJoinSource;
-//        private Func<DataBatch> _joinToColumnGetter;
+            return new Join(
+                source,
+                sourceColumnName,
+                joinToSource,
+                joinToColumn,
+                (string)parser.NextLiteralValue());
+        }
+    }
 
-//        private ArrayEnumerator _cachedJoinSource;
-//        private Dictionary<String8, int> _joinDictionary;
+    public class Join : IDataBatchEnumerator
+    {
+        private IDataBatchEnumerator _source;
+        private MemoryCacher _cachedJoinSource;
 
-//        private List<ColumnDetails> _columns;
-//        private List<int> _mappedColumnIndices;
+        private int _joinFromColumnIndex;
+        private Func<DataBatch> _joinFromColumnGetter;
+        private Func<DataBatch> _joinToColumnGetter;
+        private Dictionary<String8, int> _joinDictionary;
 
-//        private RowRemapper _mapper;
-//        private int _joinFromColumnIndex;
-//        private Func<DataBatch> _joinFromColumnGetter;
-//        private int[] _currentJoinRowIndices;
+        private List<ColumnDetails> _columns;
+        private List<int> _mappedColumnIndices;
 
-//        public Join(IDataBatchEnumerator source, string joinFromColumn, IDataBatchEnumerator joinToSource, string joinToColumn, IEnumerable<string> addColumns)
-//        {
-//            _source = source;
-//            _rawJoinSource = joinToSource;
+        private RowRemapper _sourceJoinedRowsFilter;
+        private int[] _currentJoinRowIndices;
+        private int _currentJoinCount;
 
-//            // Request the Join From Column Getter
-//            _joinFromColumnIndex = source.Columns.IndexOfColumn(joinFromColumn);
-//            _joinFromColumnGetter = source.ColumnGetter(_joinFromColumnIndex);
+        public Join(IDataBatchEnumerator source, string joinFromColumn, IDataBatchEnumerator joinToSource, string joinToColumn, string joinSidePrefix)
+        {
+            _source = source;
 
-//            // Request the Join To Column Getter
-//            _joinToColumnGetter = joinToSource.ColumnGetter(joinToSource.Columns.IndexOfColumn(joinToColumn));
+            IDataBatchList joinSourceList = joinToSource as IDataBatchList;
+            _cachedJoinSource = new MemoryCacher(joinSourceList);
 
-//            // All of the main source columns are passed through
-//            _columns = new List<ColumnDetails>(source.Columns);
+            // Request the JoinFromColumn Getter
+            _joinFromColumnIndex = source.Columns.IndexOfColumn(joinFromColumn);
+            _joinFromColumnGetter = source.ColumnGetter(_joinFromColumnIndex);
 
-//            // Find and map the columns coming from the join
-//            _mappedColumnIndices = new List<int>();
-//            foreach(string columnName in addColumns)
-//            {
-//                int columnIndex = joinToSource.Columns.IndexOfColumn(columnName);
-//                _columns.Add(joinToSource.Columns[columnIndex]);
-//                _mappedColumnIndices.Add(columnIndex);
-//            }
+            // Request the JoinToColumn Getter
+            _joinToColumnGetter = _cachedJoinSource.ColumnGetter(_cachedJoinSource.Columns.IndexOfColumn(joinToColumn));
 
-//            // Build a mapper to hold matching rows and remap source batches
-//            _mapper = new RowRemapper();
-//        }
+            // All of the main source columns are passed through
+            _columns = new List<ColumnDetails>(source.Columns);
 
-//        public IReadOnlyList<ColumnDetails> Columns => _columns;
+            // Find and map the columns coming from the join
+            _mappedColumnIndices = new List<int>();
+            for(int i = 0; i < _cachedJoinSource.Columns.Count; ++i)
+            {
+                ColumnDetails column = _cachedJoinSource.Columns[i];
+                _columns.Add(column.Rename(joinSidePrefix + column.Name));
+                _mappedColumnIndices.Add(i);
+            }
 
-//        public Func<DataBatch> ColumnGetter(int columnIndex)
-//        {
-//            // Return shared getter for join column, if that was requested
-//            if (columnIndex == _joinFromColumnIndex) return _joinFromColumnGetter;
+            _sourceJoinedRowsFilter = new RowRemapper();
+        }
 
-//            // The first columns are from the source
-//            if (columnIndex < _source.Columns.Count) return _source.ColumnGetter(columnIndex);
+        public IReadOnlyList<ColumnDetails> Columns => _columns;
 
-//            int joinColumnIndex = _mappedColumnIndices[columnIndex - _source.Columns.Count];
+        public Func<DataBatch> ColumnGetter(int columnIndex)
+        {
+            // If this is one of the joined in columns, return the rows which matched from the join
+            if(columnIndex >= _source.Columns.Count)
+            {
+                // Otherwise, return the join column (we'll seek to the matching rows on each Next)
+                int joinColumnIndex = _mappedColumnIndices[columnIndex - _source.Columns.Count];
+                return _cachedJoinSource.ColumnGetter(joinColumnIndex);
+            }
 
-//            return () =>
-//            {
+            // Otherwise, get the source getter
+            Func<DataBatch> sourceGetter = (columnIndex == _joinFromColumnIndex ? _joinFromColumnGetter : _source.ColumnGetter(columnIndex));
 
-//            }
-//        }
+            // Cache an array to remap rows which joined
+            int[] remapArray = null;
 
-//        public int Next(int desiredCount)
-//        {
-//            // If this is the first call, fully cache the JoinToSource and build a lookup Dictionary
-//            if(_joinDictionary == null)
-//            {
-//                _joinDictionary = new Dictionary<String8, int>();
-//                _cachedJoinSource = new ArrayEnumerator();
+            return () =>
+            {
+                // Get the source values for this batch
+                DataBatch batch = sourceGetter();
 
-//            }
+                // Remap to just the rows which joined
+                return _sourceJoinedRowsFilter.Remap(batch, ref remapArray);
+            };
+        }
 
-//            // Get the next rows from the source
-//            int count = _source.Next(desiredCount);
-//            DataBatch joinFromValues = _joinFromColumnGetter();
-//            String8[] array = (String8[])joinFromValues.Array;
+        public int Next(int desiredCount)
+        {
+            // If this is the first call, fully cache the JoinToSource and build a lookup Dictionary
+            if (_joinDictionary == null) BuildJoinDictionary();
 
-//            // Find the matching row index for each value
-//            Allocator.AllocateToSize(ref _currentJoinRowIndices, count);
-//            for (int i = 0; i < count; ++i)
-//            {
-//                String8 joinFromValue = array[joinFromValues.Index(i)];
-//                _currentJoinRowIndices[i] = _joinDictionary[joinFromValue];
-//            }
+            while (true)
+            {
+                // Get the next rows from the source
+                int count = _source.Next(desiredCount);
+                if (count == 0) return 0;
 
-//            return count;
-//        }
+                DataBatch joinFromValues = _joinFromColumnGetter();
+                String8[] array = (String8[])joinFromValues.Array;
 
-//        private void CacheJoinToTable()
-//        {
-//            _joinDictionary = new Dictionary<String8, int>();
-//            _cachedJoinSource = new ArrayEnumerator();
+                // Find the matching row index for each value
+                Allocator.AllocateToSize(ref _currentJoinRowIndices, count);
+                _sourceJoinedRowsFilter.ClearAndSize(count);
 
-//            while(_rawJoinSource.Next(10240) != 0)
-//            {
+                int joinedCount = 0;
+                for (int i = 0; i < count; ++i)
+                {
+                    String8 joinFromValue = array[joinFromValues.Index(i)];
 
-//            }
-//        }
+                    int matchIndex;
+                    if (_joinDictionary.TryGetValue(joinFromValue, out matchIndex))
+                    {
+                        _currentJoinRowIndices[joinedCount] = matchIndex;
+                        joinedCount++;
+                        _sourceJoinedRowsFilter.Add(i);
+                    }
+                }
 
-//        public void Reset()
-//        {
-//            _source.Reset();
-//        }
+                _currentJoinCount = joinedCount;
+                if (_currentJoinCount > 0) break;
+            }
 
-//        public void Dispose()
-//        {
-//            if (_source != null)
-//            {
-//                _source.Dispose();
-//                _source = null;
-//            }
+            // 'Seek' those particular rows in the JoinToSource
+            _cachedJoinSource.Get(ArraySelector.Map(_currentJoinRowIndices, _currentJoinCount));
 
-//            if(_rawJoinSource != null)
-//            {
-//                _rawJoinSource.Dispose();
-//                _rawJoinSource = null;
-//            }
-//        }
-//    }
-//}
+            return _currentJoinCount;
+        }
+
+        private void BuildJoinDictionary()
+        {
+            _joinDictionary = new Dictionary<String8, int>();
+            
+            int joinToTotalCount = _cachedJoinSource.Next(int.MaxValue);
+            DataBatch allJoinToValues = _joinToColumnGetter();
+            String8[] array = (String8[])allJoinToValues.Array;
+
+            for(int i = 0; i < joinToTotalCount; ++i)
+            {
+                String8 value = array[allJoinToValues.Index(i)];
+                _joinDictionary[value] = i;
+            }
+        }
+
+        public void Reset()
+        {
+            _source.Reset();
+        }
+
+        public void Dispose()
+        {
+            if (_source != null)
+            {
+                _source.Dispose();
+                _source = null;
+            }
+
+            if (_cachedJoinSource != null)
+            {
+                _cachedJoinSource.Dispose();
+                _cachedJoinSource = null;
+            }
+        }
+    }
+}
