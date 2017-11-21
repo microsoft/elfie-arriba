@@ -7,12 +7,6 @@ using XForm.Types;
 
 namespace XForm.Query
 {
-    public interface IPipelineStageBuilder
-    {
-        IEnumerable<string> Verbs { get; }
-        string Usage { get; }
-        IDataBatchEnumerator Build(IDataBatchEnumerator source, PipelineParser parser);
-    }
 
     public class PipelineScanner
     {
@@ -36,8 +30,8 @@ namespace XForm.Query
 
         public string CurrentPart => _currentLineParts[_currentPartIndex];
         public string CurrentLine => _queryLines[_currentLineIndex];
-        public bool IsLastPart => _currentPartIndex >= _currentLineParts.Count - 1;
-
+        public bool IsLastPart => (_currentLineParts == null || _currentPartIndex >= _currentLineParts.Count - 1);
+        
         public bool NextLine()
         {
             _currentLineIndex++;
@@ -134,16 +128,10 @@ namespace XForm.Query
             if (s_pipelineStageBuildersByName != null) return;
             s_pipelineStageBuildersByName = new Dictionary<string, IPipelineStageBuilder>(StringComparer.OrdinalIgnoreCase);
 
-            Add(new ReadCommandBuilder());
-            Add(new SchemaCommandBuilder());
-            Add(new ColumnsCommandBuilder());
-            Add(new RemoveColumnsCommandBuilder());
-            Add(new WriterCommandBuilder());
-            Add(new LimitCommandBuilder());
-            Add(new CountCommandBuilder());
-            Add(new TypeConverterCommandBuilder());
-            Add(new WhereCommandBuilder());
-            Add(new MemoryCacheBuilder());
+            foreach(IPipelineStageBuilder builder in InterfaceLoader.BuildAll<IPipelineStageBuilder>())
+            {
+                Add(builder);
+            }
         }
 
         private static void Add(IPipelineStageBuilder builder)
@@ -182,9 +170,14 @@ namespace XForm.Query
         public IDataBatchEnumerator NextStage(IDataBatchEnumerator source)
         {
             NextOrThrow();
-            if (!s_pipelineStageBuildersByName.TryGetValue(_scanner.CurrentPart, out _currentLineBuilder)) Throw("was not a known verb.");
+            if (!s_pipelineStageBuildersByName.TryGetValue(_scanner.CurrentPart, out _currentLineBuilder)) Throw($"was not a known verb.\r\nVerbs:\r\n{string.Join("\r\n", s_pipelineStageBuildersByName.Keys)}");
             IDataBatchEnumerator stage = _currentLineBuilder.Build(source, this);
-            if (!_scanner.IsLastPart) Throw("was after all expected arguments.");
+
+            if (!_scanner.IsLastPart)
+            {
+                _scanner.NextPart();
+                Throw("was after all expected arguments.");
+            }
             return stage;
         }
 
@@ -248,7 +241,7 @@ namespace XForm.Query
         {
             StringBuilder message = new StringBuilder();
             if (_currentLineBuilder != null) message.AppendLine(_currentLineBuilder.Usage);
-            message.AppendLine($"{_scanner.CurrentPart} {badArgumentMessage}");
+            message.AppendLine($"\"{_scanner.CurrentPart}\" {badArgumentMessage}");
 
             throw new ArgumentException(message.ToString());
         }

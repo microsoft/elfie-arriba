@@ -7,21 +7,10 @@ using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 
 using XForm.Data;
 using XForm.Query;
+using System.Collections.Generic;
 
 namespace XForm.Transforms
 {
-    public interface IDataBatchComparer
-    {
-        void SetValue(object value);
-
-        void WhereEquals(DataBatch source, RowRemapper result);
-        void WhereNotEquals(DataBatch source, RowRemapper result);
-        void WhereLessThan(DataBatch source, RowRemapper result);
-        void WhereLessThanOrEquals(DataBatch source, RowRemapper result);
-        void WhereGreaterThan(DataBatch source, RowRemapper result);
-        void WhereGreaterThanOrEquals(DataBatch source, RowRemapper result);
-    }
-
     public static class ComparerFactory
     {
         public static Action<DataBatch, RowRemapper> Build(Type type, CompareOperator op, object value)
@@ -79,6 +68,7 @@ namespace XForm.Transforms
     /// <typeparam name="T"></typeparam>
     internal class ComparableComparer<T> : IDataBatchComparer where T : IComparable<T>
     {
+        public Type Type => typeof(T);
         public T Value;
 
         public void SetValue(object value)
@@ -155,6 +145,7 @@ namespace XForm.Transforms
 
     internal class DateTimeComparer : IDataBatchComparer
     {
+        public Type Type => typeof(DateTime);
         public DateTime Value;
 
         public void SetValue(object value)
@@ -231,6 +222,7 @@ namespace XForm.Transforms
 
     internal class IntComparer : IDataBatchComparer
     {
+        public Type Type => typeof(int);
         public int Value;
 
         public void SetValue(object value)

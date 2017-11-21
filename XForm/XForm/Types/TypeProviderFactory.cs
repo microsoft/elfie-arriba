@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using XForm.Extensions;
 
 namespace XForm.Types
 {
@@ -51,11 +52,7 @@ namespace XForm.Types
             s_providersByName = new Dictionary<string, ITypeProvider>(StringComparer.OrdinalIgnoreCase);
             s_providersByType = new Dictionary<Type, ITypeProvider>();
 
-            // Add built-in type support
-            Add(new String8TypeProvider());
-            Add(new DateTimeTypeProvider());
-            Add(new ByteTypeProvider());
-
+            // Add providers for primitive types
             Add(new PrimitiveTypeProvider<bool>());
 
             Add(new PrimitiveTypeProvider<sbyte>());
@@ -67,6 +64,12 @@ namespace XForm.Types
             Add(new PrimitiveTypeProvider<ulong>());
             Add(new PrimitiveTypeProvider<float>());
             Add(new PrimitiveTypeProvider<double>());
+
+            // Add configured type providers
+            foreach (ITypeProvider provider in InterfaceLoader.BuildAll<ITypeProvider>())
+            {
+                Add(provider);
+            }
         }
 
         private static void Add(ITypeProvider provider)

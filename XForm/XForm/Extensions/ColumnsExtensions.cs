@@ -27,7 +27,7 @@ namespace XForm.Extensions
     public class ColumnNotFoundException : Exception
     {
         public ColumnNotFoundException(string columnName, IEnumerable<ColumnDetails> columns)
-            : this($"Column \"{columnName}\" not found in source. Columns: \"{String.Join(", ", columns.Select((cd) => cd.Name))}.")
+            : this($"Column \"{columnName}\" not found in source. Columns:\r\n{String.Join("\r\n", columns.Select((cd) => cd.Name))}")
         { }
 
         public ColumnNotFoundException() { }
