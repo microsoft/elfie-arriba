@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Collections.Generic;
 
 using XForm.IO;
@@ -46,7 +49,7 @@ namespace XForm.Data
             // Track column indices requested from the source (only those will be cached)
             // and re-return the same getter if requested multiple times.
             int columnIndexInCache = _requestedColumnSourceIndices.IndexOf(columnIndex);
-            if(columnIndexInCache == -1)
+            if (columnIndexInCache == -1)
             {
                 columnIndexInCache = _requestedColumnSourceIndices.Count;
                 _requestedColumnSourceIndices.Add(columnIndex);
@@ -64,7 +67,7 @@ namespace XForm.Data
         public int Next(int desiredCount)
         {
             // Build the cache only on the first 'Next' call
-            if(!_cacheBuilt)
+            if (!_cacheBuilt)
             {
                 BuildCache();
                 _cacheBuilt = true;
@@ -77,7 +80,7 @@ namespace XForm.Data
         {
             // Request getters for all columns to cache
             Func<DataBatch>[] cachedColumnGetters = new Func<DataBatch>[_requestedColumnSourceIndices.Count];
-            for(int i = 0; i < _requestedColumnSourceIndices.Count; ++i)
+            for (int i = 0; i < _requestedColumnSourceIndices.Count; ++i)
             {
                 cachedColumnGetters[i] = _source.ColumnGetter(_requestedColumnSourceIndices[i]);
             }
@@ -86,7 +89,7 @@ namespace XForm.Data
             _source.Next(_source.Count);
 
             // Get each Array and associate with the ArrayEnumerator
-            for(int i = 0; i < _requestedColumnSourceIndices.Count; ++i)
+            for (int i = 0; i < _requestedColumnSourceIndices.Count; ++i)
             {
                 _cache.AddColumn(_source.Columns[_requestedColumnSourceIndices[i]], cachedColumnGetters[i]());
             }
@@ -104,7 +107,7 @@ namespace XForm.Data
 
         public void Dispose()
         {
-            if(_source != null)
+            if (_source != null)
             {
                 _source.Dispose();
                 _source = null;

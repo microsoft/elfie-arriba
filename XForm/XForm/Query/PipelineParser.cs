@@ -1,13 +1,16 @@
-﻿using System;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Collections.Generic;
 using System.Text;
+
 using XForm.Data;
 using XForm.Extensions;
 using XForm.Types;
 
 namespace XForm.Query
 {
-
     public class PipelineScanner
     {
         private List<string> _queryLines;
@@ -31,7 +34,7 @@ namespace XForm.Query
         public string CurrentPart => _currentLineParts[_currentPartIndex];
         public string CurrentLine => _queryLines[_currentLineIndex];
         public bool IsLastPart => (_currentLineParts == null || _currentPartIndex >= _currentLineParts.Count - 1);
-        
+
         public bool NextLine()
         {
             _currentLineIndex++;
@@ -128,7 +131,7 @@ namespace XForm.Query
             if (s_pipelineStageBuildersByName != null) return;
             s_pipelineStageBuildersByName = new Dictionary<string, IPipelineStageBuilder>(StringComparer.OrdinalIgnoreCase);
 
-            foreach(IPipelineStageBuilder builder in InterfaceLoader.BuildAll<IPipelineStageBuilder>())
+            foreach (IPipelineStageBuilder builder in InterfaceLoader.BuildAll<IPipelineStageBuilder>())
             {
                 Add(builder);
             }

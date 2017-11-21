@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Diagnostics;
@@ -23,7 +26,7 @@ namespace XForm.Extensions
         public static T Build<T>(string typeName, string assemblyName)
         {
             Assembly assembly = Assembly.Load(assemblyName);
-            if(assembly == null)
+            if (assembly == null)
             {
                 Trace.WriteLine($"ProviderLoader could not build requested type \"{typeName}\" from \"{assemblyName}\". Assembly was not found or could not be loaded.");
                 return default(T);
@@ -50,7 +53,7 @@ namespace XForm.Extensions
         {
             if (assembly == null) assembly = Assembly.GetCallingAssembly();
 
-            foreach(Type type in assembly.GetTypes().Where((type) => typeof(T).IsAssignableFrom(type) && !type.IsAbstract && !type.ContainsGenericParameters))
+            foreach (Type type in assembly.GetTypes().Where((type) => typeof(T).IsAssignableFrom(type) && !type.IsAbstract && !type.ContainsGenericParameters))
             {
                 yield return (T)Build<T>(type);
             }
@@ -79,12 +82,12 @@ namespace XForm.Extensions
 
         public static IEnumerable<T> BuildAll<T>()
         {
-            foreach(T value in BuildAllInAssembly<T>(Assembly.GetCallingAssembly()))
+            foreach (T value in BuildAllInAssembly<T>(Assembly.GetCallingAssembly()))
             {
                 yield return value;
             }
 
-            foreach(T value in BuildAllFromConfig<T>())
+            foreach (T value in BuildAllFromConfig<T>())
             {
                 yield return value;
             }

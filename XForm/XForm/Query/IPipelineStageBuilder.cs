@@ -1,4 +1,8 @@
-﻿using System.Collections.Generic;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System.Collections.Generic;
+
 using XForm.Data;
 
 namespace XForm.Query
@@ -28,5 +32,4 @@ namespace XForm.Query
         /// <returns>IDataSourceEnumerator for the new stage</returns>
         IDataBatchEnumerator Build(IDataBatchEnumerator source, PipelineParser parser);
     }
-
 }

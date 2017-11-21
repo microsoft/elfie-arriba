@@ -37,7 +37,7 @@ namespace XForm.IO
         private List<ColumnDetails> _columns;
         private IColumnReader[] _readers;
         private int _totalCount;
-        
+
         private ArraySelector _currentSelector;
         private ArraySelector _currentEnumerateSelector;
 

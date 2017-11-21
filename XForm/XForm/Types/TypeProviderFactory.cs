@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+
 using XForm.Extensions;
 
 namespace XForm.Types

@@ -1,12 +1,12 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using Microsoft.CodeAnalysis.Elfie.Diagnostics;
-
 using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+
+using Microsoft.CodeAnalysis.Elfie.Diagnostics;
 
 using XForm.Aggregators;
 using XForm.Commands;
