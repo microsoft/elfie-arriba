@@ -98,6 +98,13 @@ namespace XForm
             DateTime lastTableVersionBeforeCutoff = LatestVersionBeforeCutoff(LocationType.Table, tableName, AsOfDateTime, null);
             innerContext.NewestDependency = innerContext.NewestDependency.BiggestOf(lastTableVersionBeforeCutoff);
 
+            string previousXql = "";
+            if (lastTableVersionBeforeCutoff > DateTime.MinValue)
+            {
+                string previousTablePath = FullPath(LocationType.Table, tableName, CrawlType.Full, lastTableVersionBeforeCutoff);
+                previousXql = File.ReadAllText(Path.Combine(previousTablePath, "Config.xql"));
+            }
+
             string tablePath;
             string xql;
             IDataBatchEnumerator builder;
@@ -106,9 +113,6 @@ namespace XForm
             {
                 // If there's a query to build it, record the lastWriteTime of the query
                 xql = File.ReadAllText(source);
-
-                // TODO: Should probably rebuild based on XQL content, not as-of date. Weird when building old historical things?
-                innerContext.NewestDependency = innerContext.NewestDependency.BiggestOf(File.GetLastWriteTimeUtc(source));
 
                 // Compute how to build this output (recursively checking the AsOfDateTimes of referenced sources)
                 builder = PipelineParser.BuildPipeline(xql, null, innerContext);
@@ -133,10 +137,11 @@ namespace XForm
             tablePath = FullPath(LocationType.Table, tableName, CrawlType.Full, innerContext.NewestDependency);
 
             // If the output isn't up-to-date, build an updated one
-            if (innerContext.NewestDependency - lastTableVersionBeforeCutoff > TimeSpan.FromSeconds(1))
+            if (innerContext.NewestDependency - lastTableVersionBeforeCutoff > TimeSpan.FromSeconds(1) || xql != previousXql)
             {
                 Trace.WriteLine($"COMPUTE: {tableName}");
                 new BinaryTableWriter(builder, tablePath).RunAndDispose();
+                File.WriteAllText(Path.Combine(tablePath, "Config.xql"), xql);
             }
 
             // Report the newest dependency in this chain to the components above
