@@ -31,7 +31,20 @@ namespace XForm.Test.Query
         public static void WriteSamples()
         {
             if (!File.Exists(WebRequestSample)) Resource.SaveStreamTo($"XForm.Test.{WebRequestSample}", WebRequestSample);
+            if (!Directory.Exists($"{WebRequestSample}.xform"))
+            {
+                PipelineParser.BuildPipeline($@"
+                    read {WebRequestSample}
+                    write {WebRequestSample}.xform").RunAndDispose();
+            }
+
             if (!File.Exists(WebServerSample)) Resource.SaveStreamTo($"XForm.Test.{WebServerSample}", WebServerSample);
+            if (!Directory.Exists($"{WebServerSample}.xform"))
+            {
+                PipelineParser.BuildPipeline($@"
+                    read {WebServerSample}
+                    write {WebServerSample}.xform").RunAndDispose();
+            }
         }
 
         [TestInitialize]
@@ -40,17 +53,51 @@ namespace XForm.Test.Query
             WriteSamples();
         }
 
+        private static IDataBatchEnumerator s_cachedSample;
+
+        private static IDataBatchEnumerator SampleReader()
+        {
+            if (s_cachedSample == null)
+            {
+                //s_cachedSample = PipelineParser.BuildPipeline($"read {WebRequestSample}");
+
+                // Read the binary form and cache it in memory
+                s_cachedSample = PipelineParser.BuildPipeline($@"
+                    read {WebRequestSample}.xform
+                    cache");
+
+                // Force all columns to be cached so it can be Disposed safely
+                // [The cacher can't get additional columns after the first Next call]
+                for (int i = 0; i < s_cachedSample.Columns.Count; ++i)
+                {
+                    s_cachedSample.ColumnGetter(i);
+                }
+            }
+
+            s_cachedSample.Reset();
+            return s_cachedSample;
+        }
+
+        private static string[] SampleColumns()
+        {
+            using (IDataBatchEnumerator sample = SampleReader())
+            {
+                return sample.Columns.Select((cd) => cd.Name).ToArray();
+            }
+        }
+
         [TestMethod]
         public void Scenario_EndToEnd()
         {
             PipelineParser.BuildPipeline($@"
                 read {WebRequestSample}
                 columns ID EventTime ServerName ServerPort HttpStatus ClientOs WasCachedResponse
+                renameColumns ServerPort PortNumber, HttpStatus HttpResponseStatus
                 write {s_expectedOutputFileName}
                 cast ID int32
                 cast EventTime DateTime
-                cast ServerPort int32
-                cast HttpStatus int32           
+                cast PortNumber int32
+                cast HttpResponseStatus int32           
                 cast WasCachedResponse boolean
                 write {s_sampleTableFileName}
             ").RunAndDispose();
@@ -68,8 +115,7 @@ namespace XForm.Test.Query
         {
             // Build binary format tables for the join
             PipelineParser.BuildPipeline($@"
-                read {WebServerSample}
-                write {WebServerSample}.xform
+                read {WebServerSample}.xform
                 where ServerRam >= 4096
                 write {WebServerSample}.Big.xform
             ").RunAndDispose();
@@ -87,19 +133,6 @@ namespace XForm.Test.Query
                 columns ID EventTime ServerName
                 join ServerName {WebServerSample}.Big.xform ServerName Server.
             ").RunAndDispose());
-        }
-
-        private static IDataBatchEnumerator SampleReader()
-        {
-            return PipelineParser.BuildStage($"read {WebRequestSample}", null);
-        }
-
-        private static string[] SampleColumns()
-        {
-            using (IDataBatchEnumerator sample = SampleReader())
-            {
-                return sample.Columns.Select((cd) => cd.Name).ToArray();
-            }
         }
 
         public static void DataSourceEnumerator_All(string configurationLine, int expectedRowCount, string[] requiredColumns = null)
@@ -150,7 +183,7 @@ namespace XForm.Test.Query
             DataSourceEnumerator_All("where ServerPort = 80", 423, new string[] { "ServerPort" });
             DataSourceEnumerator_All("cast EventTime DateTime", 1000);
             DataSourceEnumerator_All("removecolumns EventTime", 1000);
-            DataSourceEnumerator_All("write WebRequestSample.xform", 1000, SampleColumns());
+            DataSourceEnumerator_All("renamecolumns ServerPort PortNumber, HttpStatus HttpResult", 1000);
         }
 
         [TestMethod]

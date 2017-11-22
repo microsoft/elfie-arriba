@@ -83,7 +83,7 @@ namespace XForm.IO
                 }
 
                 _currentBatchCount++;
-                if (_currentBatchCount == _cells[0].Length) break;
+                if (_currentBatchCount == desiredCount) break;
             }
 
             return _currentBatchCount;

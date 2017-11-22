@@ -36,7 +36,7 @@ namespace XForm.Data
         {
             _source = source;
             _columns = source.Columns;
-            _cache = new ArrayEnumerator();
+            _cache = new ArrayEnumerator(_source.Count);
             _requestedColumnSourceIndices = new List<int>();
         }
 

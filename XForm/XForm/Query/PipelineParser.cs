@@ -221,6 +221,12 @@ namespace XForm.Query
             return value;
         }
 
+        public string NextString()
+        {
+            NextOrThrow();
+            return _scanner.CurrentPart;
+        }
+
         public object NextLiteralValue()
         {
             NextOrThrow();

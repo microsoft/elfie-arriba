@@ -17,17 +17,17 @@ namespace XForm.IO
         private ArraySelector _currentSelector;
         private ArraySelector _currentEnumerateSelector;
 
-        public ArrayEnumerator()
+        public ArrayEnumerator(int rowCount)
         {
             _columns = new List<ColumnDetails>();
             _columnArrays = new List<DataBatch>();
+            _rowCount = rowCount;
             Reset();
         }
 
         public void AddColumn(ColumnDetails details, DataBatch fullColumn)
         {
-            if (_columns.Count == 0) _rowCount = fullColumn.Count;
-            if (fullColumn.Count != _rowCount) throw new ArgumentException($"All columns passed to ArrayReader must have the same row count. The Reader row count is {_rowCount:n0}; this column has {fullColumn.Count:n0} rows.");
+            if (fullColumn.Count != _rowCount) throw new ArgumentException($"All columns passed to ArrayReader must have the configured row count. The configured row count is {_rowCount:n0}; this column has {fullColumn.Count:n0} rows.");
 
             for (int i = 0; i < _columns.Count; ++i)
             {
@@ -46,6 +46,7 @@ namespace XForm.IO
         {
             return () =>
             {
+                if (columnIndex < 0 || columnIndex >= _columnArrays.Count) throw new IndexOutOfRangeException("columnIndex");
                 DataBatch raw = _columnArrays[columnIndex];
                 if (raw.Selector.Indices != null) throw new NotImplementedException();
                 return DataBatch.Select(raw.Array, raw.Count, _currentSelector);

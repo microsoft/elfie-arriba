@@ -46,6 +46,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Aggregators\CountAggregator.cs" />
+    <Compile Include="Commands\RenameColumns.cs" />
     <Compile Include="Data\Allocator.cs" />
     <Compile Include="Data\ArraySelector.cs" />
     <Compile Include="Data\ColumnDetails.cs" />
