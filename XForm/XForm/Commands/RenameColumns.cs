@@ -34,7 +34,7 @@ namespace XForm.Commands
         {
             _mappedColumns = new List<ColumnDetails>();
 
-            foreach(ColumnDetails column in _source.Columns)
+            foreach (ColumnDetails column in _source.Columns)
             {
                 ColumnDetails mapped = column;
                 string newName;

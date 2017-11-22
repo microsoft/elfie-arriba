@@ -19,7 +19,7 @@ namespace XForm.IO
         public IDataBatchEnumerator Build(IDataBatchEnumerator source, PipelineParser parser)
         {
             if (source != null) throw new ArgumentException($"'read' must be the first stage in a pipeline.");
-            return parser.NextTableSource();                       
+            return parser.NextTableSource();
         }
     }
 

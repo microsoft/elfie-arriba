@@ -203,7 +203,7 @@ namespace XForm.Query
         public Type NextType()
         {
             ITypeProvider provider = null;
-            ParseNextOrThrow(() => (provider = TypeProviderFactory.TryGet(_scanner.CurrentPart)) != null, "type", TypeProviderFactory.SupportedTypes); 
+            ParseNextOrThrow(() => (provider = TypeProviderFactory.TryGet(_scanner.CurrentPart)) != null, "type", TypeProviderFactory.SupportedTypes);
             return provider.Type;
         }
 
@@ -299,7 +299,7 @@ namespace XForm.Query
         public string InvalidValueCategory { get; private set; }
         public IEnumerable<string> ValidValues { get; private set; }
 
-        public UsageException(string usage, string invalidValue, string invalidValueCategory, IEnumerable<string> validValues) 
+        public UsageException(string usage, string invalidValue, string invalidValueCategory, IEnumerable<string> validValues)
             : base(BuildMessage(usage, invalidValue, invalidValueCategory, validValues))
         {
             Usage = usage;
@@ -313,11 +313,11 @@ namespace XForm.Query
             StringBuilder message = new StringBuilder();
             if (!String.IsNullOrEmpty(usage)) message.AppendLine($"Usage: {usage}");
 
-            if(String.IsNullOrEmpty(invalidValueCategory))
+            if (String.IsNullOrEmpty(invalidValueCategory))
             {
                 message.AppendLine($"Value \"{invalidValue}\" found when no more arguments were expected.");
             }
-            else if(String.IsNullOrEmpty(invalidValue))
+            else if (String.IsNullOrEmpty(invalidValue))
             {
                 message.AppendLine($"No argument found when {invalidValueCategory} was required.");
             }
@@ -326,7 +326,7 @@ namespace XForm.Query
                 message.AppendLine($"\"{invalidValue}\" was not a valid {invalidValueCategory}.");
             }
 
-            if(validValues != null)
+            if (validValues != null)
             {
                 message.AppendLine("Valid Options:");
                 foreach (string value in validValues)

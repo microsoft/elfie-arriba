@@ -1,7 +1,11 @@
-﻿using Microsoft.CodeAnalysis.Elfie.Model.Strings;
-using Microsoft.CodeAnalysis.Elfie.Serialization;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.IO;
+
+using Microsoft.CodeAnalysis.Elfie.Model.Strings;
+using Microsoft.CodeAnalysis.Elfie.Serialization;
 
 namespace XForm.IO
 {
@@ -42,7 +46,7 @@ namespace XForm.IO
 
         public void Dispose()
         {
-            if(_writer != null)
+            if (_writer != null)
             {
                 _writer.Dispose();
                 _writer = null;

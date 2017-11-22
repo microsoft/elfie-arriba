@@ -1,9 +1,13 @@
-﻿using System;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+
 using XForm.Data;
 using XForm.Extensions;
 using XForm.IO;
@@ -151,7 +155,7 @@ namespace XForm
                 // Recursively build dependencies and return a reader for the result table
                 builder = Build(tableName, context);
 
-                if(outputFormat.Equals("xform", StringComparison.OrdinalIgnoreCase))
+                if (outputFormat.Equals("xform", StringComparison.OrdinalIgnoreCase))
                 {
                     // If the binary format was requested, we've already created it
                     return ((BinaryTableReader)builder).TablePath;
@@ -180,7 +184,7 @@ namespace XForm
             }
             finally
             {
-                if(builder != null)
+                if (builder != null)
                 {
                     builder.Dispose();
                     builder = null;

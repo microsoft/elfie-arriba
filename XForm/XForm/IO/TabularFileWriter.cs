@@ -69,7 +69,7 @@ namespace XForm.IO
             if (_writer == null)
             {
                 string outputFolder = Path.GetDirectoryName(_outputFilePath);
-                if(!String.IsNullOrEmpty(outputFolder)) Directory.CreateDirectory(outputFolder);
+                if (!String.IsNullOrEmpty(outputFolder)) Directory.CreateDirectory(outputFolder);
                 _writer = TabularFactory.BuildWriter(_outputFilePath);
                 _writer.SetColumns(_source.Columns.Select((cd) => cd.Name));
             }

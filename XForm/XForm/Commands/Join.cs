@@ -1,9 +1,10 @@
-﻿// Copyright(c) Microsoft.All rights reserved.
-// Licensed under the MIT license.See LICENSE file in the project root for full license information.
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using System;
 using System.Collections.Generic;
+
+using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 
 using XForm.Data;
 using XForm.Extensions;
@@ -69,7 +70,7 @@ namespace XForm.Commands
 
             // Find and map the columns coming from the join
             _mappedColumnIndices = new List<int>();
-            for(int i = 0; i < _cachedJoinSource.Columns.Count; ++i)
+            for (int i = 0; i < _cachedJoinSource.Columns.Count; ++i)
             {
                 ColumnDetails column = _cachedJoinSource.Columns[i];
                 _columns.Add(column.Rename(joinSidePrefix + column.Name));
@@ -84,7 +85,7 @@ namespace XForm.Commands
         public Func<DataBatch> ColumnGetter(int columnIndex)
         {
             // If this is one of the joined in columns, return the rows which matched from the join
-            if(columnIndex >= _source.Columns.Count)
+            if (columnIndex >= _source.Columns.Count)
             {
                 // Otherwise, return the join column (we'll seek to the matching rows on each Next)
                 int joinColumnIndex = _mappedColumnIndices[columnIndex - _source.Columns.Count];
@@ -152,12 +153,12 @@ namespace XForm.Commands
         private void BuildJoinDictionary()
         {
             _joinDictionary = new Dictionary<String8, int>();
-            
+
             int joinToTotalCount = _cachedJoinSource.Next(int.MaxValue);
             DataBatch allJoinToValues = _joinToColumnGetter();
             String8[] array = (String8[])allJoinToValues.Array;
 
-            for(int i = 0; i < joinToTotalCount; ++i)
+            for (int i = 0; i < joinToTotalCount; ++i)
             {
                 String8 value = array[allJoinToValues.Index(i)];
                 _joinDictionary[value] = i;

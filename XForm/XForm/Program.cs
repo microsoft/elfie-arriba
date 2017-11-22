@@ -3,13 +3,14 @@
 
 using System;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 
 using Microsoft.CodeAnalysis.Elfie.Diagnostics;
+
 using XForm.Data;
 using XForm.Extensions;
 using XForm.Query;
-using System.Globalization;
 
 namespace XForm
 {
@@ -35,8 +36,8 @@ namespace XForm
                         if (args.Length < 3) throw new UsageException("'add' [SourceFileOrDirectory] [AsSourceName] [Full|Incremental?] [AsOfDateTimeUtc?]");
 
                         return new WorkflowRunner(Environment.CurrentDirectory, ParseDateTimeOrDefault(args, 4, DateTime.MinValue)).Add(
-                            args[1], 
-                            args[2], 
+                            args[1],
+                            args[2],
                             ParseCrawlTypeOrDefault(args, 3, CrawlType.Full));
                     case "build":
                         if (args.Length < 3) throw new UsageException("'build' [DesiredOutputName] [DesiredOutputFormat] [AsOfDateTimeUtc?]");
