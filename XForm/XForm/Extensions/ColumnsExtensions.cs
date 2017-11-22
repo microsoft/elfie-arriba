@@ -7,6 +7,7 @@ using System.Linq;
 using System.Runtime.Serialization;
 
 using XForm.Data;
+using XForm.Query;
 
 namespace XForm.Extensions
 {
@@ -14,20 +15,33 @@ namespace XForm.Extensions
     {
         public static int IndexOfColumn(this IReadOnlyList<ColumnDetails> columns, string columnName)
         {
-            for (int index = 0; index < columns.Count; ++index)
+            int index;
+            if (TryGetIndexOfColumn(columns, columnName, out index)) return index;
+
+            throw new ColumnNotFoundException(columnName, columns.Select((cd) => cd.Name));
+        }
+
+        public static bool TryGetIndexOfColumn(this IReadOnlyList<ColumnDetails> columns, string columnName, out int index)
+        {
+            index = -1;
+
+            for (int i = 0; i < columns.Count; ++i)
             {
-                if (columns[index].Name.Equals(columnName, StringComparison.InvariantCultureIgnoreCase)) return index;
+                if (columns[i].Name.Equals(columnName, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    index = i;
+                    return true;
+                }
             }
 
-            throw new ColumnNotFoundException(columnName, columns);
+            return false;
         }
     }
 
     [Serializable]
-    public class ColumnNotFoundException : Exception
+    public class ColumnNotFoundException : UsageException
     {
-        public ColumnNotFoundException(string columnName, IEnumerable<ColumnDetails> columns)
-            : this($"Column \"{columnName}\" not found in source. Columns:\r\n{String.Join("\r\n", columns.Select((cd) => cd.Name))}")
+        public ColumnNotFoundException(string columnName, IEnumerable<string> validColumnNames) : base(null, columnName, "columnName", validColumnNames)
         { }
 
         public ColumnNotFoundException() { }

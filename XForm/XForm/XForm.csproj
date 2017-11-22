@@ -90,6 +90,7 @@
     <Compile Include="Types\PrimitiveTypeProvider.cs" />
     <Compile Include="Types\String8TypeProvider.cs" />
     <Compile Include="Types\TypeProviderFactory.cs" />
+    <Compile Include="WorkflowRunner.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

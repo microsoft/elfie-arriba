@@ -45,6 +45,15 @@ namespace XForm.Types
             return provider;
         }
 
+        public static IEnumerable<string> SupportedTypes
+        {
+            get
+            {
+                EnsureLoaded();
+                return s_providersByName.Keys;
+            }
+        }
+
         private static void EnsureLoaded()
         {
             if (s_providersByName != null) return;

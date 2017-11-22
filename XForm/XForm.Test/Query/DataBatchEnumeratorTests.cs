@@ -189,9 +189,9 @@ namespace XForm.Test.Query
         [TestMethod]
         public void DataSourceEnumerator_Errors()
         {
-            Verify.Exception<ArgumentException>(() => PipelineParser.BuildStage("read", null), "Usage: 'read' [tableNameOrFilePath]");
+            Verify.Exception<UsageException>(() => PipelineParser.BuildStage("read", null));
             Verify.Exception<FileNotFoundException>(() => PipelineParser.BuildStage("read NotFound.csv", null));
-            Verify.Exception<ColumnNotFoundException>(() => PipelineParser.BuildStage("removeColumns NotFound", SampleReader()));
+            Verify.Exception<UsageException>(() => PipelineParser.BuildStage("removeColumns NotFound", SampleReader()));
 
             // Verify casting a type to itself doesn't error
             PipelineParser.BuildPipeline(@"

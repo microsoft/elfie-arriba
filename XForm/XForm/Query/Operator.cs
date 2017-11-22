@@ -2,6 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Collections;
+using System.Collections.Generic;
 
 namespace XForm.Query
 {
@@ -24,27 +26,38 @@ namespace XForm.Query
 
     public static class OperatorExtensions
     {
-        public static CompareOperator ParseCompareOperator(this string op)
+        public static IEnumerable<string> ValidCompareOperators = new string[] { "<", "<=", ">", ">=", "=", "==", "!=", "<>" };
+
+        public static bool TryParseCompareOperator(this string op, out CompareOperator result)
         {
             switch (op)
             {
                 case "<":
-                    return CompareOperator.LessThan;
+                    result = CompareOperator.LessThan;
+                    break;
                 case "<=":
-                    return CompareOperator.LessThanOrEqual;
+                    result = CompareOperator.LessThanOrEqual;
+                    break;
                 case ">":
-                    return CompareOperator.GreaterThan;
+                    result = CompareOperator.GreaterThan;
+                    break;
                 case ">=":
-                    return CompareOperator.GreaterThanOrEqual;
+                    result = CompareOperator.GreaterThanOrEqual;
+                    break;
                 case "=":
                 case "==":
-                    return CompareOperator.Equals;
+                    result = CompareOperator.Equals;
+                    break;
                 case "!=":
                 case "<>":
-                    return CompareOperator.NotEquals;
+                    result = CompareOperator.NotEquals;
+                    break;
                 default:
-                    throw new NotImplementedException($"XForm doesn't know CompareOperator \"{op}\".");
+                    result = CompareOperator.Equals;
+                    return false;
             }
+
+            return true;
         }
     }
 }

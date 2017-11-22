@@ -3,6 +3,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.Serialization;
 using System.Text;
 
 using XForm.Data;
@@ -31,9 +33,10 @@ namespace XForm.Query
             _currentLineIndex = -1;
         }
 
-        public string CurrentPart => _currentLineParts[_currentPartIndex];
+        public string CurrentPart => (IsPastEnd ? null : _currentLineParts[_currentPartIndex]);
         public string CurrentLine => _queryLines[_currentLineIndex];
         public bool IsLastPart => (_currentLineParts == null || _currentPartIndex >= _currentLineParts.Count - 1);
+        public bool IsPastEnd => (_currentLineParts == null || _currentPartIndex >= _currentLineParts.Count);
 
         public bool NextLine()
         {
@@ -46,10 +49,10 @@ namespace XForm.Query
             return true;
         }
 
-        public void NextPart()
+        public bool NextPart()
         {
             _currentPartIndex++;
-            if (_currentPartIndex >= _currentLineParts.Count) throw new ArgumentException("No more arguments in query line.");
+            return _currentPartIndex < _currentLineParts.Count;
         }
 
         private static List<string> SplitLine(string xqlQueryLine)
@@ -137,6 +140,15 @@ namespace XForm.Query
             }
         }
 
+        public static IEnumerable<string> SupportedVerbs
+        {
+            get
+            {
+                EnsureLoaded();
+                return s_pipelineStageBuildersByName.Keys;
+            }
+        }
+
         private static void Add(IPipelineStageBuilder builder)
         {
             foreach (string verb in builder.Verbs)
@@ -172,89 +184,140 @@ namespace XForm.Query
 
         public IDataBatchEnumerator NextStage(IDataBatchEnumerator source)
         {
-            NextOrThrow();
-            if (!s_pipelineStageBuildersByName.TryGetValue(_scanner.CurrentPart, out _currentLineBuilder)) Throw($"was not a known verb.\r\nVerbs:\r\n{string.Join("\r\n", s_pipelineStageBuildersByName.Keys)}");
+            _currentLineBuilder = null;
+            ParseNextOrThrow(() => s_pipelineStageBuildersByName.TryGetValue(_scanner.CurrentPart, out _currentLineBuilder), "verb", SupportedVerbs);
             IDataBatchEnumerator stage = _currentLineBuilder.Build(source, this);
 
             if (!_scanner.IsLastPart)
             {
                 _scanner.NextPart();
-                Throw("was after all expected arguments.");
+                Throw(null);
             }
+
             return stage;
         }
 
         public Type NextType()
         {
-            NextOrThrow();
-            ITypeProvider provider = TypeProviderFactory.TryGet(_scanner.CurrentPart);
-            if (provider == null) Throw("was not a supported type.");
+            ITypeProvider provider = null;
+            ParseNextOrThrow(() => (provider = TypeProviderFactory.TryGet(_scanner.CurrentPart)) != null, "type", TypeProviderFactory.SupportedTypes); 
             return provider.Type;
         }
 
         public string NextColumnName(IDataBatchEnumerator currentSource)
         {
-            NextOrThrow();
-            ColumnDetails current = currentSource.Columns[currentSource.Columns.IndexOfColumn(_scanner.CurrentPart)];
-            return current.Name;
+            int columnIndex = -1;
+            ParseNextOrThrow(() => currentSource.Columns.TryGetIndexOfColumn(_scanner.CurrentPart, out columnIndex), "columnName", currentSource.Columns.Select((cd) => cd.Name));
+            return currentSource.Columns[columnIndex].Name;
         }
 
         public string NextTableName()
         {
-            NextOrThrow();
+            // TODO: Identify valid table names and return them
+            ParseNextOrThrow(() => true, "tableName", null);
             return _scanner.CurrentPart;
         }
 
         public bool NextBoolean()
         {
-            NextOrThrow();
-            bool value;
-            if (!bool.TryParse(_scanner.CurrentPart, out value)) Throw("was not a valid boolean.");
+            bool value = false;
+            ParseNextOrThrow(() => bool.TryParse(_scanner.CurrentPart, out value), "boolean", new string[] { "true", "false" });
             return value;
         }
 
         public int NextInteger()
         {
-            NextOrThrow();
-            int value;
-            if (!int.TryParse(_scanner.CurrentPart, out value)) Throw("was not a valid integer.");
+            int value = -1;
+            ParseNextOrThrow(() => int.TryParse(_scanner.CurrentPart, out value), "integer");
             return value;
         }
 
         public string NextString()
         {
-            NextOrThrow();
+            ParseNextOrThrow(() => true, "string");
             return _scanner.CurrentPart;
         }
 
         public object NextLiteralValue()
         {
-            NextOrThrow();
-            object value = _scanner.CurrentPart;
-            return value;
+            ParseNextOrThrow(() => true, "literal");
+            return (object)_scanner.CurrentPart;
         }
 
         public CompareOperator NextCompareOperator()
         {
-            NextOrThrow();
-            return _scanner.CurrentPart.ParseCompareOperator();
+            CompareOperator cOp = CompareOperator.Equals;
+            ParseNextOrThrow(() => _scanner.CurrentPart.TryParseCompareOperator(out cOp), "compareOperator", OperatorExtensions.ValidCompareOperators);
+            return cOp;
         }
 
-        private void NextOrThrow()
+        private void ParseNextOrThrow(Func<bool> parseMethod, string valueCategory, IEnumerable<string> validValues = null)
         {
-            if (_scanner.IsLastPart) throw new ArgumentException($"Usage: {_currentLineBuilder.Usage}");
-            _scanner.NextPart();
+            if (!_scanner.NextPart() || !parseMethod()) Throw(valueCategory, validValues);
         }
 
-        private void Throw(string badArgumentMessage)
+        private void Throw(string valueCategory, IEnumerable<string> validValues = null)
         {
-            StringBuilder message = new StringBuilder();
-            if (_currentLineBuilder != null) message.AppendLine(_currentLineBuilder.Usage);
-            message.AppendLine($"\"{_scanner.CurrentPart}\" {badArgumentMessage}");
-
-            throw new ArgumentException(message.ToString());
+            throw new UsageException(
+                    (_currentLineBuilder != null ? _currentLineBuilder.Usage : null),
+                    _scanner.CurrentPart,
+                    valueCategory,
+                    validValues);
         }
 
         public bool IsLastLinePart => _scanner.IsLastPart;
+    }
+
+    [Serializable]
+    public class UsageException : ArgumentException
+    {
+        public string Usage { get; private set; }
+        public string InvalidValue { get; private set; }
+        public string InvalidValueCategory { get; private set; }
+        public IEnumerable<string> ValidValues { get; private set; }
+
+        public UsageException(string usage, string invalidValue, string invalidValueCategory, IEnumerable<string> validValues) 
+            : base(BuildMessage(usage, invalidValue, invalidValueCategory, validValues))
+        {
+            Usage = usage;
+            InvalidValue = invalidValue;
+            InvalidValueCategory = InvalidValueCategory;
+            ValidValues = validValues;
+        }
+
+        private static string BuildMessage(string usage, string invalidValue, string invalidValueCategory, IEnumerable<string> validValues)
+        {
+            StringBuilder message = new StringBuilder();
+            if (!String.IsNullOrEmpty(usage)) message.AppendLine($"Usage: {usage}");
+
+            if(String.IsNullOrEmpty(invalidValueCategory))
+            {
+                message.AppendLine($"Value \"{invalidValue}\" found when no more arguments were expected.");
+            }
+            else if(String.IsNullOrEmpty(invalidValue))
+            {
+                message.AppendLine($"No argument found when {invalidValueCategory} was required.");
+            }
+            else
+            {
+                message.AppendLine($"\"{invalidValue}\" was not a valid {invalidValueCategory}.");
+            }
+
+            if(validValues != null)
+            {
+                message.AppendLine("Valid Options:");
+                foreach (string value in validValues)
+                {
+                    message.AppendLine(value);
+                }
+            }
+
+            return message.ToString();
+        }
+
+        public UsageException() { }
+        public UsageException(string message) : base(message) { }
+        public UsageException(string message, Exception inner) : base(message, inner) { }
+        protected UsageException(SerializationInfo info, StreamingContext context) : base(info, context) { }
     }
 }

@@ -87,7 +87,12 @@ namespace XForm
                                 _pipeline = AddStage(nextLine);
                                 break;
                             }
-                            catch (Exception ex)
+                            catch (UsageException ex)
+                            {
+                                Console.WriteLine(ex.Message);
+                                continue;
+                            }
+                            catch (Exception ex) when (!Debugger.IsAttached)
                             {
                                 Console.WriteLine($"Error: {ex.Message}");
                                 continue;

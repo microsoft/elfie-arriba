@@ -62,11 +62,11 @@ namespace XForm.IO
 
         public int Next(int desiredCount)
         {
-            if (_cells[0] == null)
+            if (_cells[0] == null || _cells[0].Length < desiredCount)
             {
                 for (int i = 0; i < _cells.Length; ++i)
                 {
-                    _cells[i] = new String8[desiredCount];
+                    Allocator.AllocateToSize(ref _cells[i], desiredCount);
                 }
             }
 

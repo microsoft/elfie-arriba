@@ -4,15 +4,10 @@
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 
 using Microsoft.CodeAnalysis.Elfie.Diagnostics;
-
-using XForm.Aggregators;
-using XForm.Commands;
 using XForm.Data;
 using XForm.Extensions;
-using XForm.IO;
 using XForm.Query;
 
 namespace XForm
@@ -33,7 +28,7 @@ namespace XForm
                     return runner.Run();
                 }
             }
-            catch (ArgumentException ex) when (!Debugger.IsAttached)
+            catch (UsageException ex) when (!Debugger.IsAttached)
             {
                 Console.WriteLine($"Usage: {ex.ToString()}");
                 return -2;
