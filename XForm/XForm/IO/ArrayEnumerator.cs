@@ -38,6 +38,11 @@ namespace XForm.IO
             _columnArrays.Add(fullColumn);
         }
 
+        public void AddColumn(string columnName, Array array)
+        {
+            AddColumn(new ColumnDetails(columnName, array.GetType().GetElementType(), false), DataBatch.All(array, _rowCount));
+        }
+
         public IReadOnlyList<ColumnDetails> Columns => _columns;
 
         public int Count => _rowCount;

@@ -21,9 +21,6 @@ namespace XForm
     {
         private static int Main(string[] args)
         {
-            //TimingComparisons();
-            //return 0;
-
             try
             {
                 if (args.Length > 0)
@@ -63,71 +60,6 @@ namespace XForm
 
             Console.WriteLine($"Done. {rowsWritten:n0} rows written.");
             return rowsWritten;
-        }
-
-
-
-        private static void TimingComparisons()
-        {
-            int[] sample = new int[16 * 1024 * 1024];
-            Random r = new Random();
-            for (int i = 0; i < sample.Length; ++i)
-            {
-                sample[i] = r.Next(1000);
-            }
-
-            TimingComparisons(sample, 500);
-        }
-
-        private static void TimingComparisons(int[] array, int value)
-        {
-            using (new TraceWatch($"For Loop [==]"))
-            {
-                int count = 0;
-                for (int i = 0; i < array.Length; ++i)
-                {
-                    if (array[i] == value) count++;
-                }
-
-                Console.WriteLine($"Done. {count:n0} found.");
-            }
-
-            using (new TraceWatch($"For Loop [.CompareTo]"))
-            {
-                int count = 0;
-                for (int i = 0; i < array.Length; ++i)
-                {
-                    if (value.CompareTo(array[i]) == 0) count++;
-                }
-
-                Console.WriteLine($"Done. {count:n0} found.");
-            }
-
-            using (new TraceWatch($"Linq Count [==]"))
-            {
-                int count = array.Where((i) => i == value).Count();
-                Console.WriteLine($"Done. {count:n0} found.");
-            }
-
-            using (new TraceWatch($"Linq Count [.CompareTo]"))
-            {
-                int count = array.Where((i) => i.CompareTo(value) == 0).Count();
-                Console.WriteLine($"Done. {count:n0} found.");
-            }
-
-            using (new TraceWatch($"XForm Count"))
-            {
-                ArrayEnumerator table = new ArrayEnumerator(array.Length);
-                table.AddColumn(new ColumnDetails("ID", typeof(int), false), DataBatch.All(array, array.Length));
-
-                IDataBatchEnumerator source = table;
-                source = new Where(source, "ID", CompareOperator.Equals, value);
-                source = new CountAggregator(source);
-
-                source.Next(10240);
-                int count = (int)source.ColumnGetter(0)().Array.GetValue(0);
-                Console.WriteLine($"Done. {count:n0} found.");
-            }
         }
     }
 }
