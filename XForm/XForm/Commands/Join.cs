@@ -21,7 +21,7 @@ namespace XForm.Commands
         public IDataBatchEnumerator Build(IDataBatchEnumerator source, PipelineParser parser)
         {
             string sourceColumnName = parser.NextColumnName(source);
-            IDataBatchEnumerator joinToSource = new BinaryTableReader(parser.NextTableName());
+            IDataBatchEnumerator joinToSource = parser.NextTableSource();
             string joinToColumn = parser.NextColumnName(joinToSource);
 
             return new Join(

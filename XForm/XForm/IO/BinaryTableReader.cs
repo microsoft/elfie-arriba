@@ -19,15 +19,7 @@ namespace XForm.IO
         public IDataBatchEnumerator Build(IDataBatchEnumerator source, PipelineParser parser)
         {
             if (source != null) throw new ArgumentException($"'read' must be the first stage in a pipeline.");
-            string filePath = parser.NextTableName();
-            if (filePath.EndsWith("xform"))
-            {
-                return new BinaryTableReader(filePath);
-            }
-            else
-            {
-                return new TabularFileReader(filePath);
-            }
+            return parser.NextTableSource();                       
         }
     }
 
@@ -48,6 +40,8 @@ namespace XForm.IO
             _readers = new IColumnReader[_columns.Count];
             Reset();
         }
+
+        public string TablePath => _tableRootPath;
 
         public int Count => _totalCount;
 

@@ -9,6 +9,7 @@ using System.Text;
 
 using XForm.Data;
 using XForm.Extensions;
+using XForm.IO;
 using XForm.Types;
 
 namespace XForm.Query
@@ -120,13 +121,15 @@ namespace XForm.Query
     {
         private PipelineScanner _scanner;
         private IPipelineStageBuilder _currentLineBuilder;
+        private WorkflowContext _workflow;
 
         private static Dictionary<string, IPipelineStageBuilder> s_pipelineStageBuildersByName;
 
-        private PipelineParser(string xqlQuery)
+        private PipelineParser(string xqlQuery, WorkflowContext workflow = null)
         {
             EnsureLoaded();
             _scanner = new PipelineScanner(xqlQuery);
+            _workflow = workflow;
         }
 
         private static void EnsureLoaded()
@@ -157,15 +160,15 @@ namespace XForm.Query
             }
         }
 
-        public static IDataBatchEnumerator BuildPipeline(string xqlQuery, IDataBatchEnumerator source = null)
+        public static IDataBatchEnumerator BuildPipeline(string xqlQuery, IDataBatchEnumerator source = null, WorkflowContext context = null)
         {
-            PipelineParser parser = new PipelineParser(xqlQuery);
+            PipelineParser parser = new PipelineParser(xqlQuery, context);
             return parser.NextPipeline(source);
         }
 
-        public static IDataBatchEnumerator BuildStage(string xqlQueryLine, IDataBatchEnumerator source)
+        public static IDataBatchEnumerator BuildStage(string xqlQueryLine, IDataBatchEnumerator source, WorkflowContext context = null)
         {
-            PipelineParser parser = new PipelineParser(xqlQueryLine);
+            PipelineParser parser = new PipelineParser(xqlQueryLine, context);
             parser._scanner.NextLine();
             return parser.NextStage(source);
         }
@@ -211,11 +214,31 @@ namespace XForm.Query
             return currentSource.Columns[columnIndex].Name;
         }
 
-        public string NextTableName()
+        public string NextOutputTableName()
         {
-            // TODO: Identify valid table names and return them
+            if (_workflow != null) throw new ArgumentException("'write' commands are not allowed in Database XQL queries. Each XQL file writes a binary table with the same name as the file.");
             ParseNextOrThrow(() => true, "tableName", null);
             return _scanner.CurrentPart;
+        }
+
+        public IDataBatchEnumerator NextTableSource()
+        {
+            if (_workflow != null)
+            {
+                ParseNextOrThrow(() => true, "tableName", _workflow.Runner.TableNames);
+                return _workflow.Runner.Build(_scanner.CurrentPart, _workflow);
+            }
+
+            ParseNextOrThrow(() => true, "tableName", null);
+            string filePath = _scanner.CurrentPart;
+            if (filePath.EndsWith("xform"))
+            {
+                return new BinaryTableReader(filePath);
+            }
+            else
+            {
+                return new TabularFileReader(filePath);
+            }
         }
 
         public bool NextBoolean()

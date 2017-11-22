@@ -20,7 +20,7 @@ namespace XForm.IO
 
         public IDataBatchEnumerator Build(IDataBatchEnumerator source, PipelineParser parser)
         {
-            string filePath = parser.NextTableName();
+            string filePath = parser.NextOutputTableName();
             if (filePath.EndsWith("xform"))
             {
                 return new BinaryTableWriter(source, filePath);

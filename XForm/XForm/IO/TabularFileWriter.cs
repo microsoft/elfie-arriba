@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
@@ -67,6 +68,8 @@ namespace XForm.IO
             // Build the writer only when we start getting rows
             if (_writer == null)
             {
+                string outputFolder = Path.GetDirectoryName(_outputFilePath);
+                if(!String.IsNullOrEmpty(outputFolder)) Directory.CreateDirectory(outputFolder);
                 _writer = TabularFactory.BuildWriter(_outputFilePath);
                 _writer.SetColumns(_source.Columns.Select((cd) => cd.Name));
             }
