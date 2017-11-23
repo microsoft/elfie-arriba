@@ -34,6 +34,7 @@ namespace XForm
     {
         public WorkflowRunner Runner { get; set; }
         public DateTime NewestDependency { get; set; }
+        public bool RebuiltSomething { get; set; }
     }
 
     public class WorkflowRunner
@@ -137,15 +138,17 @@ namespace XForm
             tablePath = FullPath(LocationType.Table, tableName, CrawlType.Full, innerContext.NewestDependency);
 
             // If the output isn't up-to-date, build an updated one
-            if (innerContext.NewestDependency - lastTableVersionBeforeCutoff > TimeSpan.FromSeconds(1) || xql != previousXql)
+            if (innerContext.NewestDependency - lastTableVersionBeforeCutoff > TimeSpan.FromSeconds(1) || xql != previousXql || innerContext.RebuiltSomething)
             {
-                Trace.WriteLine($"COMPUTE: {tableName}");
+                Trace.WriteLine($"COMPUTE: [{innerContext.NewestDependency.ToString(DateTimeFolderFormat)}] {tableName}");
                 new BinaryTableWriter(builder, tablePath).RunAndDispose();
                 File.WriteAllText(Path.Combine(tablePath, "Config.xql"), xql);
+                innerContext.RebuiltSomething = true;
             }
 
             // Report the newest dependency in this chain to the components above
             outerContext.NewestDependency = outerContext.NewestDependency.BiggestOf(innerContext.NewestDependency);
+            outerContext.RebuiltSomething |= innerContext.RebuiltSomething;
 
             return new BinaryTableReader(tablePath);
         }
@@ -160,32 +163,33 @@ namespace XForm
                 // Recursively build dependencies and return a reader for the result table
                 builder = Build(tableName, context);
 
-                if (outputFormat.Equals("xform", StringComparison.OrdinalIgnoreCase))
+                string outputPath;
+
+                if (String.IsNullOrEmpty(outputFormat) || outputFormat.Equals("xform", StringComparison.OrdinalIgnoreCase))
                 {
                     // If the binary format was requested, we've already created it
-                    return ((BinaryTableReader)builder).TablePath;
+                    outputPath = ((BinaryTableReader)builder).TablePath;
                 }
                 else
                 {
                     DateTime newestReport = LatestVersionBeforeCutoff(LocationType.Report, tableName, AsOfDateTime, null);
-                    string outputPath;
 
-                    if (newestReport < context.NewestDependency)
+                    if (newestReport < context.NewestDependency || context.RebuiltSomething)
                     {
                         // If the report needs to be rebuilt, make it and return the path
                         outputPath = Path.Combine(FullPath(LocationType.Report, tableName, CrawlType.Full, context.NewestDependency), $"Report.{outputFormat}");
                         new TabularFileWriter(builder, outputPath).Run();
-                        Trace.WriteLine($"Done. {outputPath} written.");
+                        context.RebuiltSomething = true;
                     }
                     else
                     {
                         // If the last report is already up-to-date, return the existing path
                         outputPath = Path.Combine(FullPath(LocationType.Report, tableName, CrawlType.Full, newestReport), $"Report.{outputFormat}");
-                        Trace.WriteLine($"Done. {outputPath} already up-to-date.");
                     }
-
-                    return outputPath;
                 }
+
+                Trace.WriteLine($"Done. \"{outputPath}\" {(context.RebuiltSomething ? "written" : "up-to-date")}.");
+                return outputPath;
             }
             finally
             {

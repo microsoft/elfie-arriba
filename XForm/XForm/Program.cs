@@ -40,11 +40,11 @@ namespace XForm
                             args[2],
                             ParseCrawlTypeOrDefault(args, 3, CrawlType.Full));
                     case "build":
-                        if (args.Length < 3) throw new UsageException("'build' [DesiredOutputName] [DesiredOutputFormat] [AsOfDateTimeUtc?]");
+                        if (args.Length < 2) throw new UsageException("'build' [DesiredOutputName] [DesiredOutputFormat?] [AsOfDateTimeUtc?]");
 
                         string outputPath = new WorkflowRunner(Environment.CurrentDirectory, ParseDateTimeOrDefault(args, 3, DateTime.UtcNow)).Build(
                             args[1],
-                            args[2]);
+                            (args.Length > 2 ? args[2] : "xform"));
 
                         return 0;
                     default:

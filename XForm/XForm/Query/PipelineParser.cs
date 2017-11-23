@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
@@ -231,7 +232,7 @@ namespace XForm.Query
 
             ParseNextOrThrow(() => true, "tableName", null);
             string filePath = _scanner.CurrentPart;
-            if (filePath.EndsWith("xform"))
+            if (filePath.EndsWith("xform") || Directory.Exists(filePath))
             {
                 return new BinaryTableReader(filePath);
             }
