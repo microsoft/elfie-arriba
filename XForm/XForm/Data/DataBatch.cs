@@ -79,6 +79,11 @@ namespace XForm.Data
             return new DataBatch() { Array = array, Selector = selector };
         }
 
+        public static DataBatch Single(Array array)
+        {
+            return new DataBatch() { Array = array, Selector = ArraySelector.Single };
+        }
+
         public DataBatch Slice(int startIndexInclusive, int endIndexExclusive)
         {
             return new DataBatch() { Array = this.Array, Selector = this.Selector.Slice(startIndexInclusive, endIndexExclusive) };
