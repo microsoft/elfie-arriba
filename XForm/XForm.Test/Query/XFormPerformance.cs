@@ -19,7 +19,7 @@ namespace XForm.Test.Query
         [TestInitialize]
         public void Initialize()
         {
-            array = new int[2 * 1024 * 1024];
+            array = new int[16 * 1024 * 1024];
             Random r = new Random();
             for (int i = 0; i < array.Length; ++i)
             {
@@ -62,6 +62,10 @@ namespace XForm.Test.Query
             IDataBatchEnumerator query = PipelineParser.BuildPipeline($@"
                 where ID = {value}
                 count", arrayTable);
+
+            // Run once to force pre-allocation of buffers
+            //query.Run();
+            //query.Reset();
 
             w = Stopwatch.StartNew();
             using (new TraceWatch($"XForm Count"))

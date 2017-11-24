@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 
 namespace XForm.Data
 {
-    public struct ArraySelector
+    public class ArraySelector
     {
         /// <summary>
         ///  The index in the array of the value for each row in the set.
@@ -24,6 +24,12 @@ namespace XForm.Data
         ///  The index in the indices array (if non-null) or the raw array to stop before.
         /// </summary>
         public int EndIndexExclusive { get; private set; }
+
+        /// <summary>
+        ///  IsSingleValue denotes whether this batch contains a single value for each logical row.
+        ///  SingleValue batches are used for constants or column rows which all happen to share one value.
+        /// </summary>
+        public bool IsSingleValue { get; private set; }
 
         public int Count => EndIndexExclusive - StartIndexInclusive;
 
@@ -54,6 +60,7 @@ namespace XForm.Data
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int Index(int zeroSpaceIndex)
         {
+            if (this.IsSingleValue) return 0;
             int realIndex = zeroSpaceIndex + this.StartIndexInclusive;
             if (this.Indices != null) realIndex = this.Indices[realIndex];
             return realIndex;

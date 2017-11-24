@@ -13,6 +13,13 @@ namespace XForm.Data
     public struct DataBatch
     {
         /// <summary>
+        ///  Optional array when DataBatch may contain null values indicating which
+        ///  are null. If the array itself is null, none of the values are null.
+        ///  Avoids using Nullable which keeps the values back-to-back for bulk serialization.
+        /// </summary>
+        public bool[] IsNull { get; private set; }
+
+        /// <summary>
         ///  Strongly typed array of raw values for one column for a set of rows.
         ///  Processors may not change the contents of this array.
         /// </summary>
