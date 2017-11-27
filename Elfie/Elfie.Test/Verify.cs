@@ -59,6 +59,28 @@ namespace Elfie.Test
             }
         }
 
+        public static void FilesEqual(string expectedPath, string actualPath)
+        {
+            string expectedRooted = Path.GetFullPath(expectedPath);
+            string actualRooted = Path.GetFullPath(actualPath);
+
+            string expected = File.ReadAllText(expectedRooted);
+            string actual = File.ReadAllText(actualRooted);
+
+            if (!expected.Equals(actual))
+            {
+                string message = $"Verify.FilesEqual failed; run windiff \"{expectedRooted}\" \"{actualRooted}\"";
+                if (expected.Length < 1024 && actual.Length < 1024)
+                {
+                    Assert.AreEqual(expected, actual, message);
+                }
+                else
+                {
+                    Assert.Fail(message);
+                }
+            }
+        }
+
         public static void PerformanceByOperation(long opsPerSecondGoal, Func<long> actionReturningOperationCount)
         {
             // Run scenario and measure runtime
