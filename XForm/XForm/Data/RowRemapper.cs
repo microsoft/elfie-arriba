@@ -49,14 +49,14 @@ namespace XForm.Transforms
             // For each column, we need to translate those indices to real indices on the source array.
 
             // If the source returned a full array, the row indices of the matches point to the right array elements.
-            if (source.Selector.Indices == null && source.Selector.StartIndexInclusive == 0) return DataBatch.Map(source.Array, MatchingRowIndices, Count);
+            if (source.Selector.Indices == null && source.Selector.StartIndexInclusive == 0) return source.Select(ArraySelector.Map(MatchingRowIndices, Count));
 
             ArraySelector sourceIndicesIdentity = source.Selector;
 
             // If we've already remapped for this indices and start index, we can re-use it.
             // Many columns are likely to be mapped in the same one or two ways; this avoids redoing the remap work for every column
             int[] cachedMapping;
-            if (_cachedRemappings.TryGetValue(sourceIndicesIdentity, out cachedMapping)) return DataBatch.Map(source.Array, cachedMapping, Count);
+            if (_cachedRemappings.TryGetValue(sourceIndicesIdentity, out cachedMapping)) return source.Select(ArraySelector.Map(cachedMapping, Count));
 
             // If we need to remap, translate the 0 to Count - 1 index to a real index in the source array.
             // [Add the StartIndex and look up in the Indices array].
@@ -71,7 +71,7 @@ namespace XForm.Transforms
 
             // Return a DataBatch with the remapped indices using the new array.
             // Note: Even if the source had an offset, the remap array was built starting at index zero, so it doesn't.
-            return DataBatch.Map(source.Array, remapArray, Count);
+            return source.Select(ArraySelector.Map(remapArray, Count));
         }
     }
 }

@@ -54,29 +54,13 @@ namespace XForm.Data
             return Selector.Index(logicalRowIndex);
         }
 
-        public static DataBatch All(Array array)
+        public static DataBatch All(Array array, int length = -1, bool[] isNullArray = null)
         {
-            return All(array, array.Length);
-        }
-
-        public static DataBatch All(Array array, int length)
-        {
+            if (length == -1) length = array.Length;
             if (length > array.Length) throw new ArgumentOutOfRangeException("length");
-            return new DataBatch() { Array = array, Selector = ArraySelector.All(length) };
-        }
+            if (isNullArray != null && length > isNullArray.Length) throw new ArgumentOutOfRangeException("length");
 
-        public static DataBatch Map(Array array, int[] indices, int length)
-        {
-            if (length > indices.Length) throw new ArgumentOutOfRangeException("length");
-            return new DataBatch() { Array = array, Selector = ArraySelector.Map(indices, length) };
-        }
-
-        public static DataBatch Select(Array array, int length, ArraySelector selector)
-        {
-            if (selector.Indices == null && (selector.EndIndexExclusive > array.Length || selector.EndIndexExclusive > length)) throw new ArgumentOutOfRangeException("selector");
-            if (selector.Indices != null && (selector.EndIndexExclusive > selector.Indices.Length)) throw new ArgumentOutOfRangeException("selector");
-
-            return new DataBatch() { Array = array, Selector = selector };
+            return new DataBatch() { Array = array, IsNull = isNullArray, Selector = ArraySelector.All(length) };
         }
 
         public static DataBatch Single(Array array)
@@ -84,9 +68,15 @@ namespace XForm.Data
             return new DataBatch() { Array = array, Selector = ArraySelector.Single };
         }
 
-        public DataBatch Slice(int startIndexInclusive, int endIndexExclusive)
+        public DataBatch Select(ArraySelector selector)
         {
-            return new DataBatch() { Array = this.Array, Selector = this.Selector.Slice(startIndexInclusive, endIndexExclusive) };
+            if (selector.Indices == null)
+            {
+                if (selector.Count > this.Array.Length) throw new ArgumentOutOfRangeException("selector.Count");
+                if (this.IsNull != null && selector.Count > this.IsNull.Length) throw new ArgumentOutOfRangeException("selector.Count");
+            }
+
+            return new DataBatch() { Array = this.Array, IsNull = this.IsNull, Selector = selector };
         }
     }
 }
