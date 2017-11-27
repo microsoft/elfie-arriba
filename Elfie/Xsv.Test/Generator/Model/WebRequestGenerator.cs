@@ -192,7 +192,7 @@ namespace Xsv.Test.Model
                 "DaysSinceJoined"
                 /*, "ErrorStack" */ });
 
-            for(int i = 0; i < count; ++i)
+            for (int i = 0; i < count; ++i)
             {
                 writer.Write(i);
 
@@ -206,7 +206,7 @@ namespace Xsv.Test.Model
                 writer.Write(block.GetCopy(request.UriStem));
                 //writer.Write(block.GetCopy(request.UriQuery));
                 writer.Write(request.HttpStatus);
-                writer.Write(request.RequestBytes ?? 0);
+                if (request.RequestBytes.HasValue) { writer.Write(request.RequestBytes.Value); } else { writer.Write(String8.Empty); }
                 writer.Write(request.ResponseBytes);
                 writer.Write((int)request.TimeTakenMs);
                 writer.Write(block.GetCopy(request.Protocol));
@@ -217,8 +217,8 @@ namespace Xsv.Test.Model
                 writer.Write(block.GetCopy(request.ClientOs));
                 writer.Write(block.GetCopy(request.DataCenter));
                 writer.Write(block.GetCopy(request.UserGuid.ToString()));
-                writer.Write(request.IsPremiumUser ?? false);
-                writer.Write(request.DaysSinceJoined ?? 0);
+                if (request.IsPremiumUser.HasValue) { writer.Write(request.IsPremiumUser.Value); } else { writer.Write(String8.Empty); }
+                if (request.DaysSinceJoined.HasValue) { writer.Write(request.DaysSinceJoined.Value); } else { writer.Write(String8.Empty); }
                 //writer.Write(request.ErrorStack);
 
                 writer.NextRow();
