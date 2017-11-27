@@ -15,7 +15,6 @@ namespace XForm.Types
     public class String8TypeProvider : ITypeProvider
     {
         public string Name => "String8";
-
         public Type Type => typeof(String8);
 
         public IColumnReader BinaryReader(string columnPath)
@@ -35,46 +34,38 @@ namespace XForm.Types
 
         public Func<DataBatch, DataBatch> TryGetConverter(Type sourceType, Type targetType, object defaultValue, bool strict)
         {
+            // TODO: Need to handle strict
+
             // Build a converter for the set of types
             if (targetType == typeof(String8))
             {
                 ToString8Converter converter = new ToString8Converter();
                 if (sourceType == typeof(string)) return converter.StringToString8;
-                if (sourceType == typeof(int)) return converter.IntegerToString8;
-                if (sourceType == typeof(DateTime)) return converter.DateTimeToString8;
-                if (sourceType == typeof(bool)) return converter.BooleanToString8;
+                if (sourceType == typeof(int)) return (batch) => converter.Convert<int>(batch, (value, buffer, index) => String8.FromInteger(value, buffer, index), 12);
+                if (sourceType == typeof(DateTime)) return (batch) => converter.Convert<DateTime>(batch, String8.FromDateTime, 20);
+                if (sourceType == typeof(bool)) return (batch) => converter.Convert<bool>(batch, (value, buffer, index) => String8.FromBoolean(value), 0);
             }
             else if (sourceType == typeof(String8))
             {
                 if (targetType == typeof(int))
                 {
-                    var converter = new String8ToIntegerConverter(defaultValue);
-                    if (strict) return converter.ConvertOrThrow;
-                    return converter.ConvertOrDefault;
+                    return new FromString8Converter<int>((String8 value, out int result) => value.TryToInteger(out result)).Convert;
                 }
                 else if (targetType == typeof(DateTime))
                 {
-                    var converter = new String8ToDateTimeConverter(defaultValue);
-                    if (strict) return converter.ConvertOrThrow;
-                    return converter.ConvertOrDefault;
+                    return new FromString8Converter<DateTime>((String8 value, out DateTime result) => value.TryToDateTime(out result)).Convert;
                 }
                 else if (targetType == typeof(bool))
                 {
-                    var converter = new String8ToBooleanConverter(defaultValue);
-                    if (strict) return converter.ConvertOrThrow;
-                    return converter.ConvertOrDefault;
+                    return new FromString8Converter<bool>((String8 value, out bool result) => value.TryToBoolean(out result)).Convert;
                 }
                 else if (targetType == typeof(long))
                 {
-                    var converter = new String8ToLongConverter(defaultValue);
-                    if (strict) return converter.ConvertOrThrow;
-                    return converter.ConvertOrDefault;
+                    return new FromString8Converter<long>((String8 value, out long result) => value.TryToLong(out result)).Convert;
                 }
                 else if (targetType == typeof(ulong))
                 {
-                    var converter = new String8ToULongConverter(defaultValue);
-                    if (strict) return converter.ConvertOrThrow;
-                    return converter.ConvertOrDefault;
+                    return new FromString8Converter<ulong>((String8 value, out ulong result) => value.TryToULong(out result)).Convert;
                 }
             }
 
@@ -201,62 +192,45 @@ namespace XForm.Types
 
     internal class ToString8Converter
     {
+        private bool[] _nullArray;
         private String8[] _stringArray;
         private byte[] _buffer;
         private String8Block _block;
 
-        private void ClearAndSize(int length, int bytesPerItem)
+        public DataBatch Convert<T>(DataBatch batch, Func<T, byte[], int, String8> converter, int bytesPerItem)
         {
-            Allocator.AllocateToSize(ref _stringArray, length);
-            Allocator.AllocateToSize(ref _buffer, length * bytesPerItem);
-        }
+            Allocator.AllocateToSize(ref _nullArray, batch.Count);
+            Allocator.AllocateToSize(ref _stringArray, batch.Count);
+            Allocator.AllocateToSize(ref _buffer, batch.Count * bytesPerItem);
 
-        public DataBatch IntegerToString8(DataBatch batch)
-        {
-            ClearAndSize(batch.Count, 12);
+            bool hasAnyNulls = false;
             int bufferBytesUsed = 0;
-
-            int[] sourceArray = (int[])batch.Array;
+            T[] sourceArray = (T[])batch.Array;
             for (int i = 0; i < batch.Count; ++i)
             {
-                _stringArray[i] = String8.FromInteger(sourceArray[batch.Index(i)], _buffer, bufferBytesUsed);
-                bufferBytesUsed += _stringArray[i].Length;
+                int index = batch.Index(i);
+                if (batch.IsNull != null && batch.IsNull[index])
+                {
+                    _stringArray[i] = String8.Empty;
+                    _nullArray[i] = true;
+                    hasAnyNulls = true;
+                }
+                else
+                {
+                    _stringArray[i] = converter(sourceArray[index], _buffer, bufferBytesUsed);
+                    bufferBytesUsed += _stringArray[i].Length;
+                    _nullArray[i] = false;
+                }
             }
 
-            return DataBatch.All(_stringArray, batch.Count);
-        }
-
-        public DataBatch DateTimeToString8(DataBatch batch)
-        {
-            ClearAndSize(batch.Count, 20);
-            int bufferBytesUsed = 0;
-
-            DateTime[] sourceArray = (DateTime[])batch.Array;
-            for (int i = 0; i < batch.Count; ++i)
-            {
-                _stringArray[i] = String8.FromDateTime(sourceArray[batch.Index(i)], _buffer, bufferBytesUsed);
-                bufferBytesUsed += _stringArray[i].Length;
-            }
-
-            return DataBatch.All(_stringArray, batch.Count);
-        }
-
-        public DataBatch BooleanToString8(DataBatch batch)
-        {
-            ClearAndSize(batch.Count, 0);
-
-            bool[] sourceArray = (bool[])batch.Array;
-            for (int i = 0; i < batch.Count; ++i)
-            {
-                _stringArray[i] = String8.FromBoolean(sourceArray[batch.Index(i)]);
-            }
-
-            return DataBatch.All(_stringArray, batch.Count);
+            return DataBatch.All(_stringArray, batch.Count, (hasAnyNulls ? _nullArray : null));
         }
 
         public DataBatch StringToString8(DataBatch batch)
         {
-            ClearAndSize(batch.Count, 0);
+            Allocator.AllocateToSize(ref _nullArray, batch.Count);
+            Allocator.AllocateToSize(ref _stringArray, batch.Count);
+
             if (_block == null)
             {
                 _block = new String8Block();
@@ -266,198 +240,56 @@ namespace XForm.Types
                 _block.Clear();
             }
 
+            bool hasAnyNulls = false;
             string[] sourceArray = (string[])batch.Array;
             for (int i = 0; i < batch.Count; ++i)
             {
-                _stringArray[i] = _block.GetCopy(sourceArray[batch.Index(i)]);
+                int index = batch.Index(i);
+                string value = sourceArray[index];
+
+                if (value == null || batch.IsNull != null && batch.IsNull[index])
+                {
+                    _stringArray[i] = String8.Empty;
+                    _nullArray[i] = true;
+                }
+                else
+                {
+                    _stringArray[i] = _block.GetCopy(sourceArray[batch.Index(i)]);
+                    _nullArray[i] = false;
+                }
             }
 
-            return DataBatch.All(_stringArray, batch.Count);
+            return DataBatch.All(_stringArray, batch.Count, (hasAnyNulls ? _nullArray : null));
         }
     }
 
-    internal class String8ToIntegerConverter
+    internal class FromString8Converter<T>
     {
-        private int[] _array;
-        private int _default;
+        public delegate bool TryConvert(String8 value, out T result);
 
-        public String8ToIntegerConverter(object defaultValue)
+        private bool[] _nullArray;
+        private T[] _array;
+        private TryConvert _converter;
+
+        public FromString8Converter(TryConvert converter)
         {
-            _default = (int)(defaultValue ?? default(int));
+            _converter = converter;
         }
 
-        public DataBatch ConvertOrDefault(DataBatch batch)
+        public DataBatch Convert(DataBatch batch)
         {
             Allocator.AllocateToSize(ref _array, batch.Count);
+            Allocator.AllocateToSize(ref _nullArray, batch.Count);
 
+            bool areAnyNull = false;
             String8[] sourceArray = (String8[])batch.Array;
             for (int i = 0; i < batch.Count; ++i)
             {
-                if (!sourceArray[batch.Index(i)].TryToInteger(out _array[i])) _array[i] = _default;
+                _nullArray[i] = !_converter(sourceArray[batch.Index(i)], out _array[i]);
+                areAnyNull |= _nullArray[i];
             }
 
-            return DataBatch.All(_array, batch.Count);
-        }
-
-        public DataBatch ConvertOrThrow(DataBatch batch)
-        {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-
-            String8[] sourceArray = (String8[])batch.Array;
-            for (int i = 0; i < batch.Count; ++i)
-            {
-                if (!sourceArray[batch.Index(i)].TryToInteger(out _array[i])) throw new InvalidCastException($"Could not convert {sourceArray[batch.Index(i)]} to integer.");
-            }
-
-            return DataBatch.All(_array, batch.Count);
-        }
-    }
-
-    internal class String8ToDateTimeConverter
-    {
-        private DateTime[] _array;
-        private DateTime _default;
-
-        public String8ToDateTimeConverter(object defaultValue)
-        {
-            _default = (DateTime)(defaultValue ?? default(DateTime));
-        }
-
-        public DataBatch ConvertOrDefault(DataBatch batch)
-        {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-
-            String8[] sourceArray = (String8[])batch.Array;
-            for (int i = 0; i < batch.Count; ++i)
-            {
-                if (!sourceArray[batch.Index(i)].TryToDateTime(out _array[i])) _array[i] = _default;
-            }
-
-            return DataBatch.All(_array, batch.Count);
-        }
-
-        public DataBatch ConvertOrThrow(DataBatch batch)
-        {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-
-            String8[] sourceArray = (String8[])batch.Array;
-            for (int i = 0; i < batch.Count; ++i)
-            {
-                if (!sourceArray[batch.Index(i)].TryToDateTime(out _array[i])) throw new InvalidCastException($"Could not convert {sourceArray[batch.Index(i)]} to DateTime.");
-            }
-
-            return DataBatch.All(_array, batch.Count);
-        }
-    }
-
-    internal class String8ToBooleanConverter
-    {
-        private bool[] _array;
-        private bool _default;
-
-        public String8ToBooleanConverter(object defaultValue)
-        {
-            _default = (bool)(defaultValue ?? default(bool));
-        }
-
-        public DataBatch ConvertOrDefault(DataBatch batch)
-        {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-
-            String8[] sourceArray = (String8[])batch.Array;
-            for (int i = 0; i < batch.Count; ++i)
-            {
-                if (!sourceArray[batch.Index(i)].TryToBoolean(out _array[i])) _array[i] = _default;
-            }
-
-            return DataBatch.All(_array, batch.Count);
-        }
-
-        public DataBatch ConvertOrThrow(DataBatch batch)
-        {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-
-            String8[] sourceArray = (String8[])batch.Array;
-            for (int i = 0; i < batch.Count; ++i)
-            {
-                if (!sourceArray[batch.Index(i)].TryToBoolean(out _array[i])) throw new InvalidCastException($"Could not convert {sourceArray[batch.Index(i)]} to boolean.");
-            }
-
-            return DataBatch.All(_array, batch.Count);
-        }
-    }
-
-    internal class String8ToLongConverter
-    {
-        private long[] _array;
-        private long _default;
-
-        public String8ToLongConverter(object defaultValue)
-        {
-            _default = (long)(defaultValue ?? default(long));
-        }
-
-        public DataBatch ConvertOrDefault(DataBatch batch)
-        {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-
-            String8[] sourceArray = (String8[])batch.Array;
-            for (int i = 0; i < batch.Count; ++i)
-            {
-                if (!sourceArray[batch.Index(i)].TryToLong(out _array[i])) _array[i] = _default;
-            }
-
-            return DataBatch.All(_array, batch.Count);
-        }
-
-        public DataBatch ConvertOrThrow(DataBatch batch)
-        {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-
-            String8[] sourceArray = (String8[])batch.Array;
-            for (int i = 0; i < batch.Count; ++i)
-            {
-                if (!sourceArray[batch.Index(i)].TryToLong(out _array[i])) throw new InvalidCastException($"Could not convert {sourceArray[batch.Index(i)]} to Long.");
-            }
-
-            return DataBatch.All(_array, batch.Count);
-        }
-    }
-
-    internal class String8ToULongConverter
-    {
-        private ulong[] _array;
-        private ulong _default;
-
-        public String8ToULongConverter(object defaultValue)
-        {
-            _default = (ulong)(defaultValue ?? default(ulong));
-        }
-
-        public DataBatch ConvertOrDefault(DataBatch batch)
-        {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-
-            String8[] sourceArray = (String8[])batch.Array;
-            for (int i = 0; i < batch.Count; ++i)
-            {
-                if (!sourceArray[batch.Index(i)].TryToULong(out _array[i])) _array[i] = _default;
-            }
-
-            return DataBatch.All(_array, batch.Count);
-        }
-
-        public DataBatch ConvertOrThrow(DataBatch batch)
-        {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-
-            String8[] sourceArray = (String8[])batch.Array;
-            for (int i = 0; i < batch.Count; ++i)
-            {
-                if (!sourceArray[batch.Index(i)].TryToULong(out _array[i])) throw new InvalidCastException($"Could not convert {sourceArray[batch.Index(i)]} to ULong.");
-            }
-
-            return DataBatch.All(_array, batch.Count);
+            return DataBatch.All(_array, batch.Count, (areAnyNull ? _nullArray : null));
         }
     }
 }

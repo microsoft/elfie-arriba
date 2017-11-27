@@ -59,7 +59,10 @@ namespace XForm.Types
             if (value == null) return null;
             if (targetType == typeof(String8)) return value;
             Func<DataBatch, DataBatch> converter = GetConverter(typeof(String8), targetType, null, true);
-            return converter(DataBatch.Single(new String8[] { value })).Array.GetValue(0);
+
+            DataBatch result = converter(DataBatch.Single(new String8[] { value }));
+            if (result.IsNull != null && result.IsNull[0] == true) throw new ArgumentException($"Could not convert \"{value}\" to {targetType.Name}.");
+            return result.Array.GetValue(0);
         }
     }
 }

@@ -33,7 +33,7 @@ namespace XForm.Data
 
         public int Count => EndIndexExclusive - StartIndexInclusive;
 
-        public static ArraySelector Single = new ArraySelector() { IsSingleValue = true };
+        public static ArraySelector Single = new ArraySelector() { IsSingleValue = true, StartIndexInclusive = 0, EndIndexExclusive = 1 };
 
         public static ArraySelector All(int length)
         {
