@@ -19,18 +19,18 @@ namespace XForm.Commands
         public IEnumerable<string> Verbs => new string[] { "join" };
         public string Usage => "'join' [FromColumnName] [ToBinarySource] [ToColumn] [JoinedInColumnPrefix]";
 
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, PipelineParser parser)
+        public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)
         {
-            string sourceColumnName = parser.NextColumnName(source);
-            IDataBatchEnumerator joinToSource = parser.NextTableSource();
-            string joinToColumn = parser.NextColumnName(joinToSource);
+            string sourceColumnName = context.Parser.NextColumnName(source);
+            IDataBatchEnumerator joinToSource = context.Parser.NextTableSource();
+            string joinToColumn = context.Parser.NextColumnName(joinToSource);
 
             return new Join(
                 source,
                 sourceColumnName,
                 joinToSource,
                 joinToColumn,
-                (string)parser.NextLiteralValue());
+                (string)context.Parser.NextLiteralValue());
         }
     }
 

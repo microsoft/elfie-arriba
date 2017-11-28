@@ -1,20 +1,29 @@
 ﻿using System;
 using System.Collections.Generic;
 using XForm.Data;
+using XForm.IO;
+using XForm.Query;
 
 namespace XForm
 {
     public class WorkflowContext
     {
         public IWorkflowRunner Runner { get; set; }
+        public ILogger Logger { get; set; }
+        public PipelineParser Parser { get; set; }
+
         public DateTime NewestDependency { get; set; }
         public bool RebuiltSomething { get; set; }
 
-        public WorkflowContext(IWorkflowRunner runner)
+        public WorkflowContext()
         {
-            this.Runner = runner;
             this.NewestDependency = DateTime.MinValue;
             this.RebuiltSomething = false;
+        }
+
+        public WorkflowContext(IWorkflowRunner runner) : this()
+        {
+            this.Runner = runner;
         }
     }
 

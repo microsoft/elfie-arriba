@@ -17,12 +17,12 @@ namespace XForm.Commands
         public IEnumerable<string> Verbs => new string[] { "where" };
         public string Usage => "'where' [columnName] [operator] [value]";
 
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, PipelineParser parser)
+        public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)
         {
             return new Where(source,
-                parser.NextColumnName(source),
-                parser.NextCompareOperator(),
-                parser.NextLiteralValue()
+                context.Parser.NextColumnName(source),
+                context.Parser.NextCompareOperator(),
+                context.Parser.NextLiteralValue()
             );
         }
     }

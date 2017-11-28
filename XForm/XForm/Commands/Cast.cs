@@ -16,13 +16,13 @@ namespace XForm.Commands
         public IEnumerable<string> Verbs => new string[] { "cast", "convert" };
         public string Usage => "'cast' [columnName] [targetType] [default?] [strict?]";
 
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, PipelineParser parser)
+        public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)
         {
             return new Cast(source,
-                parser.NextColumnName(source),
-                parser.NextType(),
-                (parser.HasAnotherPart ? parser.NextLiteralValue() : null),
-                (parser.HasAnotherPart ? parser.NextBoolean() : false)
+                context.Parser.NextColumnName(source),
+                context.Parser.NextType(),
+                (context.Parser.HasAnotherPart ? context.Parser.NextLiteralValue() : null),
+                (context.Parser.HasAnotherPart ? context.Parser.NextBoolean() : false)
             );
         }
     }

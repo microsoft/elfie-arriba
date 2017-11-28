@@ -128,11 +128,12 @@ namespace XForm.Query
 
         private static Dictionary<string, IPipelineStageBuilder> s_pipelineStageBuildersByName;
 
-        public PipelineParser(string xqlQuery, WorkflowContext workflow = null)
+        public PipelineParser(string xqlQuery, WorkflowContext workflow)
         {
             EnsureLoaded();
             _scanner = new PipelineScanner(xqlQuery);
             _workflow = workflow;
+            _workflow.Parser = this;
         }
 
         private static void EnsureLoaded()
@@ -165,13 +166,13 @@ namespace XForm.Query
 
         public static IDataBatchEnumerator BuildPipeline(string xqlQuery, IDataBatchEnumerator source = null, WorkflowContext context = null)
         {
-            PipelineParser parser = new PipelineParser(xqlQuery, context);
+            PipelineParser parser = new PipelineParser(xqlQuery, context ?? new WorkflowContext());
             return parser.NextPipeline(source);
         }
 
         public static IDataBatchEnumerator BuildStage(string xqlQueryLine, IDataBatchEnumerator source, WorkflowContext context = null)
         {
-            PipelineParser parser = new PipelineParser(xqlQueryLine, context);
+            PipelineParser parser = new PipelineParser(xqlQueryLine, context ?? new WorkflowContext());
             return parser.NextStage(source);
         }
 
@@ -202,7 +203,7 @@ namespace XForm.Query
         {
             _currentLineBuilder = null;
             ParseNextOrThrow(() => s_pipelineStageBuildersByName.TryGetValue(_scanner.CurrentPart, out _currentLineBuilder), "verb", SupportedVerbs);
-            IDataBatchEnumerator stage = _currentLineBuilder.Build(source, this);
+            IDataBatchEnumerator stage = _currentLineBuilder.Build(source, _workflow);
 
             // Verify all arguments are used
             if (_scanner.HasCurrentPart) Throw(null);
@@ -234,9 +235,9 @@ namespace XForm.Query
         public IDataBatchEnumerator NextTableSource()
         {
             string tableName = _scanner.CurrentPart;
-            ParseNextOrThrow(() => true, "tableName", (_workflow != null ? _workflow.Runner.SourceNames : null));
+            ParseNextOrThrow(() => true, "tableName", (_workflow.Runner != null ? _workflow.Runner.SourceNames : null));
 
-            if (_workflow != null)
+            if (_workflow.Runner != null)
             {
                 return _workflow.Runner.Build(tableName, _workflow);
             }

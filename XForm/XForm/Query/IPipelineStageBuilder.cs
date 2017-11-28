@@ -28,8 +28,8 @@ namespace XForm.Query
         ///  in order to read the arguments required for this stage.
         /// </summary>
         /// <param name="source">IDataSourceEnumerator so far in this pipeline</param>
-        /// <param name="parser">PipelineParser to use to read required arguments</param>
+        /// <param name="context">WorkflowContext to read arguments, get logger, and so on</param>
         /// <returns>IDataSourceEnumerator for the new stage</returns>
-        IDataBatchEnumerator Build(IDataBatchEnumerator source, PipelineParser parser);
+        IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context);
     }
 }

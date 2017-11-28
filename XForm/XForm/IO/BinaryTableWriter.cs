@@ -18,9 +18,9 @@ namespace XForm.IO
         public IEnumerable<string> Verbs => new string[] { "write" };
         public string Usage => "'write' [tableNameOrFilePath]";
 
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, PipelineParser parser)
+        public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)
         {
-            string filePath = parser.NextOutputTableName();
+            string filePath = context.Parser.NextOutputTableName();
             if (filePath.EndsWith("xform"))
             {
                 return new BinaryTableWriter(source, filePath);

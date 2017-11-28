@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using XForm.Data;
 using XForm.Extensions;
+using XForm.IO;
 using XForm.Query;
 
 namespace XForm.Test
@@ -17,11 +18,11 @@ namespace XForm.Test
         public IEnumerable<string> Verbs => new string[] { "assert" };
         public string Usage => "'assert' (none|all)\r\n  {subquery}\r\n  end";
 
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, PipelineParser parser)
+        public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)
         {
             return new AssertCommand(source,
-                parser.NextEnum<AssertType>(),
-                parser);
+                context.Parser.NextEnum<AssertType>(),
+                context.Parser);
         }
     }
 
@@ -39,6 +40,8 @@ namespace XForm.Test
             _type = type;
             _singlePageSource = new SinglePageEnumerator(source);
             _assertPipeline = parser.NextPipeline(_singlePageSource);
+
+            _assertPipeline = PipelineParser.BuildStage("write cout", _assertPipeline);
         }
 
         public override int Next(int desiredCount)

@@ -19,7 +19,12 @@ namespace XForm.IO
         AssertFailed
     }
 
-    public class Logger : IDisposable
+    public interface ILogger : IDisposable
+    {
+        void Write(MessageType type, string sourceComponent, string message);
+    }
+
+    public class Logger : ILogger
     {
         private String8Block _block;
         private ITabularWriter _writer;

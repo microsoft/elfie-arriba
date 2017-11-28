@@ -14,12 +14,12 @@ namespace XForm.Commands
         public IEnumerable<string> Verbs => new string[] { "renameColumns" };
         public string Usage => "'renameColumns' [ColumnName] [NewColumnName], [ColumnName] [NewColumnName], ...";
 
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, PipelineParser parser)
+        public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)
         {
             Dictionary<string, string> columnNameMappings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            while (parser.HasAnotherPart)
+            while (context.Parser.HasAnotherPart)
             {
-                columnNameMappings[parser.NextColumnName(source)] = parser.NextString();
+                columnNameMappings[context.Parser.NextColumnName(source)] = context.Parser.NextString();
             }
 
             return new RenameColumns(source, columnNameMappings);

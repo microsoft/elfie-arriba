@@ -15,12 +15,12 @@ namespace XForm.Commands
         public IEnumerable<string> Verbs => new string[] { "columns", "select" };
         public string Usage => "'columns' [ColumnName], [ColumnName], ...";
 
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, PipelineParser parser)
+        public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)
         {
             List<string> columnNames = new List<string>();
-            while (parser.HasAnotherPart)
+            while (context.Parser.HasAnotherPart)
             {
-                columnNames.Add(parser.NextColumnName(source));
+                columnNames.Add(context.Parser.NextColumnName(source));
             }
 
             return new SelectColumns(source, columnNames);

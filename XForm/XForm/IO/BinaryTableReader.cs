@@ -16,10 +16,10 @@ namespace XForm.IO
         public IEnumerable<string> Verbs => new string[] { "read" };
         public string Usage => "'read' [tableNameOrFilePath]";
 
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, PipelineParser parser)
+        public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)
         {
             if (source != null) throw new ArgumentException($"'read' must be the first stage in a pipeline.");
-            return parser.NextTableSource();
+            return context.Parser.NextTableSource();
         }
     }
 

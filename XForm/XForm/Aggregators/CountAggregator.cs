@@ -14,7 +14,7 @@ namespace XForm.Aggregators
         public IEnumerable<string> Verbs => new string[] { "count" };
         public string Usage => "'count'";
 
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, PipelineParser parser)
+        public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)
         {
             return new CountAggregator(source);
         }

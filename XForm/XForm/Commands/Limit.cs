@@ -13,9 +13,9 @@ namespace XForm.Commands
         public IEnumerable<string> Verbs => new string[] { "limit", "top" };
         public string Usage => "'limit' [RowCount]";
 
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, PipelineParser parser)
+        public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)
         {
-            int limit = parser.NextInteger();
+            int limit = context.Parser.NextInteger();
             return new Limit(source, limit);
         }
     }

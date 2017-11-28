@@ -15,7 +15,7 @@ namespace XForm.Commands
         public IEnumerable<string> Verbs => new string[] { "schema" };
         public string Usage => "'schema'";
 
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, PipelineParser parser)
+        public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)
         {
             return new SchemaTransformer(source);
         }
