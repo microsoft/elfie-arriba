@@ -7,8 +7,22 @@ using System.Runtime.CompilerServices;
 namespace XForm.Data
 {
     /// <summary>
-    ///  DataBatch represents the fundamental unit XForm operations apply to -
-    ///  a set of rows for a single column in a typed array.
+    ///  DataBatch is the fundamental unit XForm is built on.
+    ///  It represents a set of rows for a single column in a strongly typed array,
+    ///    which avoids casting, boxing, or copying individual values.    
+    ///  It provides indirection on the Array through ArraySelector, allowing filtering, 
+    ///    re-ordering, and lookups without copying the raw array.
+    ///  It provides null support around non-nullable types (which are faster to read and write)
+    ///    via an optional IsNull array.
+    ///    
+    ///  Usage:
+    ///     T[] realArray = (T[])batch.Array;                                                   // Array is of ColumnDetails.Type. Only one cast for the whole array.
+    ///     for(int i = 0; i &lt; batch.Count; ++i)                                             // Always loop from zero to batch.Count - 1.
+    ///     {
+    ///         int realIndex = batch.Index(i);                                                 // Index() is an inlined method which returns the real index of a row
+    ///         bool valueIsNull = (batch.IsNull != null &amp;&amp; batch.IsNull[realIndex]);   // IsNull, if provided, indicates whether the row is null
+    ///         T rowValue = realArray[realIndex];
+    ///     }
     /// </summary>
     public struct DataBatch
     {

@@ -6,6 +6,10 @@ using System.Collections.Generic;
 
 namespace XForm.Data
 {
+    /// <summary>
+    ///  IDataBatchEnumerator is the interface type all XForm Pipeline stages must implement.
+    ///  It represents tabular data enumerable in batches of rows.
+    /// </summary>
     public interface IDataBatchEnumerator : IDisposable
     {
         /// <summary>
@@ -34,6 +38,11 @@ namespace XForm.Data
         Func<DataBatch> ColumnGetter(int columnIndex);
     }
 
+    /// <summary>
+    ///  IDataBatchList is a seekable extension to IDataBatchEnumerator, exposed by
+    ///  sources and pipelines which are able to seek to specific rows in the set
+    ///  efficiently.
+    /// </summary>
     public interface IDataBatchList : IDataBatchEnumerator
     {
         /// <summary>

@@ -23,6 +23,10 @@ namespace XForm.Data
         }
     }
 
+    /// <summary>
+    ///  MemoryCacher builds a full in-memory cache of the requested columns for an IDataBatchSource.
+    ///  It's used to make operations which will need the full dataset, like joins, fast.
+    /// </summary>
     public class MemoryCacher : IDataBatchList
     {
         private IDataBatchList _source;

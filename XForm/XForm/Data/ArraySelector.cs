@@ -6,6 +6,19 @@ using System.Runtime.CompilerServices;
 
 namespace XForm.Data
 {
+    /// <summary>
+    ///  ArraySelectors describe the items in an associated DataBatch which each logical row
+    ///  corresponds to.
+    ///  
+    ///  Selectors can specify:
+    ///    - The whole array (StartIndexInclusive = 0, EndIndexExclusive = Length - 1)
+    ///    - An array slice (StartIndexInclusive = index, EndIndexExclusive = length)
+    ///    - A single constant value for all rows (IsSingleValue = true)
+    ///    - Indirect indices into an array (Indices != null)
+    ///  
+    ///  The ArraySelector design allows the pipeline to use the raw array of values read in
+    ///  without copying even as the rows are filtered, joined, sorted, and so on.
+    /// </summary>
     public class ArraySelector
     {
         /// <summary>
