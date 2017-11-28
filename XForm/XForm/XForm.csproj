@@ -74,6 +74,7 @@
     <Compile Include="Commands\SelectColumns.cs" />
     <Compile Include="Types\ComparableComparer.cs" />
     <Compile Include="Types\IDataBatchComparer.cs" />
+    <Compile Include="Types\Nullable.cs" />
     <Compile Include="Types\TypeConverterFactory.cs" />
     <Compile Include="Commands\Join.cs" />
     <Compile Include="Commands\Limit.cs" />

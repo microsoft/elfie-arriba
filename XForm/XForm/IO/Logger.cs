@@ -23,6 +23,7 @@ namespace XForm.IO
     {
         private String8Block _block;
         private ITabularWriter _writer;
+        public bool Failed { get; private set; }
 
         public Logger(string outputFilePath)
         {
@@ -35,6 +36,8 @@ namespace XForm.IO
 
         public void Write(MessageType type, string sourceComponent, string message)
         {
+            if (type == MessageType.AssertFailed) this.Failed = true;
+
             _writer.Write(DateTime.UtcNow);
             _writer.Write(_block.GetCopy(type.ToString()));
             _writer.Write(_block.GetCopy(sourceComponent));

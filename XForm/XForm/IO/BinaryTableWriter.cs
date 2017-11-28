@@ -86,20 +86,24 @@ namespace XForm.IO
             for (int i = 0; i < columnCount; ++i)
             {
                 ColumnDetails column = _source.Columns[i];
+                string columnPath = Path.Combine(_tableRootPath, _source.Columns[i].Name);
 
                 IColumnWriter writer = null;
 
                 // Build a direct writer for the column type, if available
                 ITypeProvider columnTypeProvider = TypeProviderFactory.TryGet(column.Type);
-                if (columnTypeProvider != null) writer = columnTypeProvider.BinaryWriter(Path.Combine(_tableRootPath, _source.Columns[i].Name));
+                if (columnTypeProvider != null) writer = columnTypeProvider.BinaryWriter(columnPath);
 
                 // If the column type doesn't have a provider or writer, convert to String8 and write that
                 if (writer == null)
                 {
                     Func<DataBatch, DataBatch> converter = TypeConverterFactory.GetConverter(column.Type, typeof(String8), null, false);
-                    writer = TypeProviderFactory.TryGet(typeof(String8)).BinaryWriter(Path.Combine(_tableRootPath, _source.Columns[i].Name));
+                    writer = TypeProviderFactory.TryGet(typeof(String8)).BinaryWriter(columnPath);
                     column = column.ChangeType(typeof(String8));
                 }
+
+                // Wrap with a NullableWriter to handle null persistence
+                writer = new NullableWriter(columnPath, writer);
 
                 _writers[i] = writer;
             }

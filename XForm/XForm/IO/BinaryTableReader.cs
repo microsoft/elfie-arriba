@@ -52,7 +52,13 @@ namespace XForm.IO
             if (_readers[columnIndex] == null)
             {
                 ColumnDetails column = Columns[columnIndex];
-                _readers[columnIndex] = TypeProviderFactory.Get(column.Type).BinaryReader(Path.Combine(_tableRootPath, column.Name));
+                string columnPath = Path.Combine(_tableRootPath, column.Name);
+
+                // Build the reader for the column type
+                IColumnReader reader = TypeProviderFactory.Get(column.Type).BinaryReader(columnPath);
+
+                // Wrap in a NullableReader to handle null recognition
+                _readers[columnIndex] = new NullableReader(columnPath, reader);
             }
 
             return () => _readers[columnIndex].Read(_currentSelector);

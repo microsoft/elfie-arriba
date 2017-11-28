@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
@@ -30,7 +31,8 @@ namespace XForm.Test.Query
 
         public static void WriteSamples()
         {
-            if (!File.Exists(WebRequestSample)) Resource.SaveStreamTo($"XForm.Test.{WebRequestSample}", WebRequestSample);
+            string fullSamplePath = Path.GetFullPath(WebRequestSample);
+            if (!File.Exists(fullSamplePath)) Resource.SaveStreamTo($"XForm.Test.{WebRequestSample}", fullSamplePath);
             if (!Directory.Exists($"{WebRequestSample}.xform"))
             {
                 PipelineParser.BuildPipeline($@"
@@ -107,7 +109,33 @@ namespace XForm.Test.Query
                 write {s_actualOutputFileName}
             ").RunAndDispose();
 
-            Assert.AreEqual(File.ReadAllText(s_expectedOutputFileName), File.ReadAllText(s_actualOutputFileName));
+            Verify.FilesEqual(s_expectedOutputFileName, s_actualOutputFileName);
+        }
+
+        [TestMethod]
+        public void NullableHandling()
+        {
+            // Cast columns with nulls (RequestBytes, IsPremiumUser, DaysSinceJoined) and without (ID, EventTime)
+            // Write the values pre-cast (nulls are empty string)
+            // Write an XForm table (nulls should be marked by Vn.b8.bin)
+            PipelineParser.BuildPipeline($@"
+                read {WebRequestSample}
+                columns ID EventTime UserName RequestBytes IsPremiumUser DaysSinceJoined
+                write {Path.Combine(s_outputRootFolderPath, "WebRequest.Nullable.Expected.tsv")}
+                cast RequestBytes int32
+                cast IsPremiumUser boolean           
+                cast DaysSinceJoined int32
+                cast ID int32
+                write {Path.Combine(s_outputRootFolderPath, "WebRequest.Nullable.Actual.xform")}
+            ").RunAndDispose();
+
+            // Read the table with nulls back and confirm they're recognized and converted back to empty string
+            PipelineParser.BuildPipeline($@"
+                read {Path.Combine(s_outputRootFolderPath, "WebRequest.Nullable.Actual.xform")}
+                write {Path.Combine(s_outputRootFolderPath, "WebRequest.Nullable.Actual.tsv")}
+            ").RunAndDispose();
+
+            Verify.FilesEqual(Path.Combine(s_outputRootFolderPath, "WebRequest.Nullable.Expected.tsv"), Path.Combine(s_outputRootFolderPath, "WebRequest.Nullable.Actual.tsv"));
         }
 
         [TestMethod]
