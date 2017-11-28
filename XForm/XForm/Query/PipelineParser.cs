@@ -41,7 +41,7 @@ namespace XForm.Query
 
         public bool HasCurrentPart => (HasCurrentLine && _currentPartIndex < _currentLineParts.Count);
         public string CurrentPart => (HasCurrentPart ? _currentLineParts[_currentPartIndex] : null);
-       
+
         public bool NextLine()
         {
             _currentLineIndex++;

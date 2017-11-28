@@ -1,5 +1,9 @@
-﻿using System;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.IO;
+
 using XForm.Data;
 
 namespace XForm.Types
@@ -38,7 +42,7 @@ namespace XForm.Types
             {
                 // Check whether any rows in the set are actually null; the source may contain nulls but the filtered rows might not
                 bool areAnyNulls = false;
-                for(int i = 0; i < batch.Count && !areAnyNulls; ++i)
+                for (int i = 0; i < batch.Count && !areAnyNulls; ++i)
                 {
                     areAnyNulls |= batch.IsNull[batch.Index(i)];
                 }
@@ -53,7 +57,7 @@ namespace XForm.Types
                 // Write false for every value so far
                 int previousCount = _rowCountSoFar - batch.Count;
                 Allocator.AllocateToSize(ref _falseArray, 1024);
-                for(int i = 0; i < previousCount; i += 1024)
+                for (int i = 0; i < previousCount; i += 1024)
                 {
                     int rowCount = Math.Min(1024, previousCount - i);
                     _nullWriter.Append(DataBatch.All(_falseArray, rowCount));
@@ -75,13 +79,13 @@ namespace XForm.Types
 
         public void Dispose()
         {
-            if(_valueWriter != null)
+            if (_valueWriter != null)
             {
                 _valueWriter.Dispose();
                 _valueWriter = null;
             }
 
-            if(_nullWriter != null)
+            if (_nullWriter != null)
             {
                 _nullWriter.Dispose();
                 _nullWriter = null;
@@ -105,7 +109,7 @@ namespace XForm.Types
             _valueReader = valueReader;
 
             string nullsPath = Path.Combine(_columnPath, "Vn.b8.bin");
-            if(File.Exists(nullsPath)) _nullReader = new PrimitiveArrayReader<bool>(new FileStream(nullsPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+            if (File.Exists(nullsPath)) _nullReader = new PrimitiveArrayReader<bool>(new FileStream(nullsPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
         }
 
         public int Count => _valueReader.Count;

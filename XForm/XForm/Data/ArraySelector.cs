@@ -102,7 +102,7 @@ namespace XForm.Data
 
             // Otherwise, we need to remap the indices in the inner array to ones in the real array
             Allocator.AllocateToSize(ref remapArray, inner.Count);
-            for(int i = 0; i < inner.Count; ++i)
+            for (int i = 0; i < inner.Count; ++i)
             {
                 remapArray[i] = Index(inner.Index(i));
             }

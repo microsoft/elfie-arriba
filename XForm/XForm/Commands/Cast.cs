@@ -21,8 +21,8 @@ namespace XForm.Commands
             return new Cast(source,
                 parser.NextColumnName(source),
                 parser.NextType(),
-                (parser.HasAnotherPart ? parser.NextLiteralValue() : null ),
-                (parser.HasAnotherPart ? parser.NextBoolean() : false )
+                (parser.HasAnotherPart ? parser.NextLiteralValue() : null),
+                (parser.HasAnotherPart ? parser.NextBoolean() : false)
             );
         }
     }
