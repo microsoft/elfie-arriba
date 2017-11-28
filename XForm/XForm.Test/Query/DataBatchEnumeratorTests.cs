@@ -126,7 +126,14 @@ namespace XForm.Test.Query
                 cast IsPremiumUser boolean           
                 cast DaysSinceJoined int32
                 cast ID int32
-                write {Path.Combine(s_outputRootFolderPath, "WebRequest.Nullable.Actual.xform")}
+                write {Path.Combine(s_outputRootFolderPath, "WebRequest.Nullable.Actual.xform")} 
+                where UserName != """"
+                assert none                    
+                    where DaysSinceJoined = null
+                    end
+                assert none
+                    where IsPremiumUser = null
+                    end
             ").RunAndDispose();
 
             // Read the table with nulls back and confirm they're recognized and converted back to empty string

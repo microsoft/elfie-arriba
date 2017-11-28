@@ -49,12 +49,14 @@ namespace XForm.IO
 
         public Func<DataBatch> ColumnGetter(int columnIndex)
         {
+            // Declare a remap array in case indices must be remapped
+            int[] remapArray = null;
+
             return () =>
             {
                 if (columnIndex < 0 || columnIndex >= _columnArrays.Count) throw new IndexOutOfRangeException("columnIndex");
                 DataBatch raw = _columnArrays[columnIndex];
-                if (raw.Selector.Indices != null) throw new NotImplementedException();
-                return DataBatch.All(raw.Array, raw.Count).Select(_currentSelector);
+                return DataBatch.All(raw.Array, raw.Count).Select(_currentSelector, ref remapArray);
             };
         }
 

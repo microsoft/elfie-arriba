@@ -33,11 +33,30 @@ namespace XForm.Data
 
         public int Count => EndIndexExclusive - StartIndexInclusive;
 
+        public ArraySelector()
+        { }
+
+        private ArraySelector(ArraySelector copyFrom)
+        {
+            this.Indices = copyFrom.Indices;
+            this.StartIndexInclusive = copyFrom.StartIndexInclusive;
+            this.EndIndexExclusive = copyFrom.EndIndexExclusive;
+            this.IsSingleValue = copyFrom.IsSingleValue;
+        }
+
+        /// <summary>
+        ///  Single is a static selector pointing to the first value of a one element array only
+        /// </summary>
         public static ArraySelector Single = new ArraySelector() { IsSingleValue = true, StartIndexInclusive = 0, EndIndexExclusive = 1 };
 
-        public static ArraySelector All(int length)
+        /// <summary>
+        ///  Build a selector for [0, count) in an array.
+        /// </summary>
+        /// <param name="count">Count of rows in array to include</param>
+        /// <returns>ArraySelector for [0, count)</returns>
+        public static ArraySelector All(int count)
         {
-            return new ArraySelector() { Indices = null, StartIndexInclusive = 0, EndIndexExclusive = length };
+            return new ArraySelector() { Indices = null, StartIndexInclusive = 0, EndIndexExclusive = count };
         }
 
         public static ArraySelector Map(int[] indices, int length)
@@ -50,6 +69,32 @@ namespace XForm.Data
             if (startIndexInclusive < this.StartIndexInclusive) throw new ArgumentOutOfRangeException("startIndexInclusive");
             if (endIndexExclusive < startIndexInclusive || endIndexExclusive > this.EndIndexExclusive) throw new ArgumentOutOfRangeException("endIndexExclusive");
             return new ArraySelector() { Indices = this.Indices, StartIndexInclusive = startIndexInclusive, EndIndexExclusive = endIndexExclusive };
+        }
+
+        public ArraySelector Select(ArraySelector inner, ref int[] remapArray)
+        {
+            // This selector could refer to a full array [0, Count), a slice [Start, End), or indirection indices.
+
+            // If this selector is not shifted or indirected, the inner selector can be used as-is
+            if (this.Indices == null && this.StartIndexInclusive == 0) return inner;
+
+            // If the inner selector specifies just an index and length, we can shift our index and length
+            if (inner.Indices == null)
+            {
+                ArraySelector newSelector = new ArraySelector(this);
+                newSelector.StartIndexInclusive += inner.StartIndexInclusive;
+                newSelector.EndIndexExclusive = newSelector.StartIndexInclusive + inner.Count;
+                return newSelector;
+            }
+
+            // Otherwise, we need to remap the indices in the inner array to ones in the real array
+            Allocator.AllocateToSize(ref remapArray, inner.Count);
+            for(int i = 0; i < inner.Count; ++i)
+            {
+                remapArray[i] = Index(inner.Index(i));
+            }
+
+            return new ArraySelector() { StartIndexInclusive = 0, EndIndexExclusive = inner.Count, Indices = remapArray };
         }
 
         public ArraySelector NextPage(int totalCount, int desiredCount)

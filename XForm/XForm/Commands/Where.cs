@@ -44,7 +44,19 @@ namespace XForm.Commands
             _filterColumnGetter = source.ColumnGetter(_filterColumnIndex);
 
             // Build a Comparer for the desired type and get the function for the desired compare operator
-            _comparer = TypeProviderFactory.Get(filterColumn.Type).TryGetComparer(op, TypeConverterFactory.ConvertSingle(value, filterColumn.Type));
+            object compareToValue = TypeConverterFactory.ConvertSingle(value, filterColumn.Type);
+
+            // Null comparison is generic
+            if (compareToValue == null)
+            {
+                if (op == CompareOperator.Equals) _comparer = WhereIsNull;
+                else if (op == CompareOperator.NotEquals) _comparer = WhereIsNotNull;
+                else throw new ArgumentException($"where \"{columnName}\" {op} null is invalid; only equals and not equals are supported against null.");
+            }
+            else
+            {
+                _comparer = TypeProviderFactory.Get(filterColumn.Type).TryGetComparer(op, compareToValue);
+            }
 
             // Build a mapper to hold matching rows and remap source batches
             _mapper = new RowRemapper();
@@ -83,6 +95,44 @@ namespace XForm.Commands
             }
 
             return 0;
+        }
+
+        private void WhereIsNull(DataBatch source, RowRemapper remapper)
+        {
+            remapper.ClearAndSize(source.Count);
+
+            // If nothing was null in the source batch, there are no matches
+            if (source.IsNull == null) return;
+
+            // Otherwise, add rows where the value was marked null
+            for (int i = 0; i < source.Count; ++i)
+            {
+                int index = source.Index(i);
+                if (source.IsNull[index]) remapper.Add(i);
+            }
+        }
+
+        private void WhereIsNotNull(DataBatch source, RowRemapper remapper)
+        {
+            remapper.ClearAndSize(source.Count);
+
+            // If nothing was null in the source batch, every row matches
+            if (source.IsNull == null)
+            {
+                for (int i = 0; i < source.Count; ++i)
+                {
+                    remapper.Add(i);
+                }
+
+                return;
+            }
+
+            // Otherwise, add rows where the value was marked null
+            for (int i = 0; i < source.Count; ++i)
+            {
+                int index = source.Index(i);
+                if (!source.IsNull[index]) remapper.Add(i);
+            }
         }
     }
 }

@@ -179,11 +179,15 @@ namespace XForm.Query
         {
             IDataBatchEnumerator pipeline = source;
 
+            // For nested pipelines, we should still be on the line for the stage which has a nested pipeline. Move forward.
+            if (_scanner.HasCurrentLine && !_scanner.HasCurrentPart) _scanner.NextLine();
+
             while (_scanner.HasCurrentLine)
             {
+                // If this line is 'end', this is the end of the inner pipeline. Leave it at the end of this line; the outer NextPipeline will skip to the next line.
                 if (_scanner.HasCurrentPart && _scanner.CurrentPart.Equals("end", StringComparison.OrdinalIgnoreCase))
                 {
-                    _scanner.NextLine();
+                    _scanner.NextPart();
                     break;
                 }
 

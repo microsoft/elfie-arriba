@@ -61,7 +61,14 @@ namespace XForm.Types
             Func<DataBatch, DataBatch> converter = GetConverter(typeof(String8), targetType, null, true);
 
             DataBatch result = converter(DataBatch.Single(new String8[] { value }));
-            if (result.IsNull != null && result.IsNull[0] == true) throw new ArgumentException($"Could not convert \"{value}\" to {targetType.Name}.");
+
+            // Verify the result was not null unless the input was "" or 'null'
+            if (result.IsNull != null && result.IsNull[0] == true)
+            {
+                if (value.IsEmpty() || value.CompareTo("null", true) == 0) return null;
+                throw new ArgumentException($"Could not convert \"{value}\" to {targetType.Name}.");
+            }
+
             return result.Array.GetValue(0);
         }
     }

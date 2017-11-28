@@ -69,7 +69,7 @@ namespace XForm.Types
             else
             {
                 // Write the actual true/false values for this page
-                _nullWriter.Append(DataBatch.All(batch.IsNull).Select(batch.Selector));
+                _nullWriter.Append(DataBatch.All(batch.IsNull).Reselect(batch.Selector));
             }
         }
 
@@ -122,7 +122,7 @@ namespace XForm.Types
             DataBatch nulls = _nullReader.Read(selector);
 
             // Return the values and null markers together
-            return DataBatch.All(values.Array, -1, (bool[])nulls.Array).Select(values.Selector);
+            return DataBatch.All(values.Array, -1, (bool[])nulls.Array).Reselect(values.Selector);
         }
 
         public void Dispose()
