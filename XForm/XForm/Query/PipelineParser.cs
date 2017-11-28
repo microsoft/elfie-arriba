@@ -33,20 +33,22 @@ namespace XForm.Query
             }
 
             _currentLineIndex = -1;
+            NextLine();
         }
 
-        public string CurrentPart => (IsPastEnd ? null : _currentLineParts[_currentPartIndex]);
-        public string CurrentLine => _queryLines[_currentLineIndex];
-        public bool IsLastPart => (_currentLineParts == null || _currentPartIndex >= _currentLineParts.Count - 1);
-        public bool IsPastEnd => (_currentLineParts == null || _currentPartIndex >= _currentLineParts.Count);
+        public bool HasCurrentLine => _currentLineIndex < _queryLines.Count;
+        public string CurrentLine => (HasCurrentLine ? _queryLines[_currentLineIndex] : null);
 
+        public bool HasCurrentPart => (HasCurrentLine && _currentPartIndex < _currentLineParts.Count);
+        public string CurrentPart => (HasCurrentPart ? _currentLineParts[_currentPartIndex] : null);
+       
         public bool NextLine()
         {
             _currentLineIndex++;
+            _currentPartIndex = 0;
             if (_currentLineIndex >= _queryLines.Count) return false;
 
             _currentLineParts = SplitLine(_queryLines[_currentLineIndex]);
-            _currentPartIndex = -1;
 
             return true;
         }
@@ -170,7 +172,6 @@ namespace XForm.Query
         public static IDataBatchEnumerator BuildStage(string xqlQueryLine, IDataBatchEnumerator source, WorkflowContext context = null)
         {
             PipelineParser parser = new PipelineParser(xqlQueryLine, context);
-            parser._scanner.NextLine();
             return parser.NextStage(source);
         }
 
@@ -178,9 +179,16 @@ namespace XForm.Query
         {
             IDataBatchEnumerator pipeline = source;
 
-            while (_scanner.NextLine())
+            while (_scanner.HasCurrentLine)
             {
+                if (_scanner.HasCurrentPart && _scanner.CurrentPart.Equals("end", StringComparison.OrdinalIgnoreCase))
+                {
+                    _scanner.NextLine();
+                    break;
+                }
+
                 pipeline = NextStage(pipeline);
+                _scanner.NextLine();
             }
 
             return pipeline;
@@ -192,11 +200,8 @@ namespace XForm.Query
             ParseNextOrThrow(() => s_pipelineStageBuildersByName.TryGetValue(_scanner.CurrentPart, out _currentLineBuilder), "verb", SupportedVerbs);
             IDataBatchEnumerator stage = _currentLineBuilder.Build(source, this);
 
-            if (!_scanner.IsLastPart)
-            {
-                _scanner.NextPart();
-                Throw(null);
-            }
+            // Verify all arguments are used
+            if (_scanner.HasCurrentPart) Throw(null);
 
             return stage;
         }
@@ -217,13 +222,16 @@ namespace XForm.Query
 
         public string NextOutputTableName()
         {
+            string tableName = _scanner.CurrentPart;
             if (_workflow != null) throw new ArgumentException("'write' commands are not allowed in Database XQL queries. Each XQL file writes a binary table with the same name as the file.");
             ParseNextOrThrow(() => true, "tableName", null);
-            return _scanner.CurrentPart;
+            return tableName;
         }
 
         public IDataBatchEnumerator NextTableSource()
         {
+            string tableName = _scanner.CurrentPart;
+
             if (_workflow != null)
             {
                 ParseNextOrThrow(() => true, "tableName", _workflow.Runner.TableNames);
@@ -231,14 +239,13 @@ namespace XForm.Query
             }
 
             ParseNextOrThrow(() => true, "tableName", null);
-            string filePath = _scanner.CurrentPart;
-            if (filePath.EndsWith("xform") || Directory.Exists(filePath))
+            if (tableName.EndsWith("xform") || Directory.Exists(tableName))
             {
-                return new BinaryTableReader(filePath);
+                return new BinaryTableReader(tableName);
             }
             else
             {
-                return new TabularFileReader(filePath);
+                return new TabularFileReader(tableName);
             }
         }
 
@@ -258,14 +265,23 @@ namespace XForm.Query
 
         public string NextString()
         {
+            string value = _scanner.CurrentPart;
             ParseNextOrThrow(() => true, "string");
-            return _scanner.CurrentPart;
+            return value;
         }
 
         public object NextLiteralValue()
         {
+            object value = (object)_scanner.CurrentPart;
             ParseNextOrThrow(() => true, "literal");
-            return (object)_scanner.CurrentPart;
+            return value;
+        }
+
+        public T NextEnum<T>() where T : struct
+        {
+            T value = default(T);
+            ParseNextOrThrow(() => Enum.TryParse<T>(_scanner.CurrentPart, true, out value), typeof(T).Name, Enum.GetNames(typeof(T)));
+            return value;
         }
 
         public CompareOperator NextCompareOperator()
@@ -277,7 +293,8 @@ namespace XForm.Query
 
         private void ParseNextOrThrow(Func<bool> parseMethod, string valueCategory, IEnumerable<string> validValues = null)
         {
-            if (!_scanner.NextPart() || !parseMethod()) Throw(valueCategory, validValues);
+            if (!_scanner.HasCurrentPart || !parseMethod()) Throw(valueCategory, validValues);
+            _scanner.NextPart();
         }
 
         private void Throw(string valueCategory, IEnumerable<string> validValues = null)
@@ -289,7 +306,7 @@ namespace XForm.Query
                     validValues);
         }
 
-        public bool IsLastLinePart => _scanner.IsLastPart;
+        public bool HasAnotherPart => _scanner.HasCurrentPart;
     }
 
     [Serializable]

@@ -17,7 +17,7 @@ namespace XForm.Commands
         public IDataBatchEnumerator Build(IDataBatchEnumerator source, PipelineParser parser)
         {
             Dictionary<string, string> columnNameMappings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            while (!parser.IsLastLinePart)
+            while (parser.HasAnotherPart)
             {
                 columnNameMappings[parser.NextColumnName(source)] = parser.NextString();
             }

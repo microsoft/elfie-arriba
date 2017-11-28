@@ -25,13 +25,12 @@ namespace XForm.Test.Query
         private static string TestSplitAndJoin(string xqlLine)
         {
             PipelineScanner scanner = new PipelineScanner(xqlLine);
-            scanner.NextLine();
 
             List<string> parts = new List<string>();
-            while(!scanner.IsLastPart)
+            while(scanner.HasCurrentPart)
             {
-                scanner.NextPart();
                 parts.Add(scanner.CurrentPart);
+                scanner.NextPart();
             }
 
             return string.Join("|", parts);

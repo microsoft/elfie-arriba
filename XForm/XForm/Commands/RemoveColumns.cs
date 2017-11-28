@@ -19,7 +19,7 @@ namespace XForm.Commands
         public IDataBatchEnumerator Build(IDataBatchEnumerator source, PipelineParser parser)
         {
             List<string> columnNames = new List<string>();
-            while (!parser.IsLastLinePart)
+            while (parser.HasAnotherPart)
             {
                 columnNames.Add(parser.NextColumnName(source));
             }

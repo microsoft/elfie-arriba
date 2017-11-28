@@ -44,10 +44,8 @@ namespace XForm
                     // Read the next query line
                     string nextLine = Console.ReadLine();
                     PipelineScanner scanner = new PipelineScanner(nextLine);
-                    scanner.NextLine();
-                    if (scanner.IsLastPart) return lastCount;
+                    if (!scanner.HasCurrentLine) return lastCount;
 
-                    scanner.NextPart();
                     string command = scanner.CurrentPart.ToLowerInvariant();
                     switch (command)
                     {
