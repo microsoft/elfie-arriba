@@ -22,7 +22,7 @@ namespace XForm
             {
                 if (args == null || args.Length == 0)
                 {
-                    InteractiveRunner runner = new InteractiveRunner();
+                    InteractiveRunner runner = new InteractiveRunner(new WorkflowRunner(Environment.CurrentDirectory, DateTime.UtcNow));
                     return runner.Run();
                 }
 

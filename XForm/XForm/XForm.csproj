@@ -94,6 +94,7 @@
     <Compile Include="Types\PrimitiveTypeProvider.cs" />
     <Compile Include="Types\String8TypeProvider.cs" />
     <Compile Include="Types\TypeProviderFactory.cs" />
+    <Compile Include="WorkflowContext.cs" />
     <Compile Include="WorkflowRunner.cs" />
   </ItemGroup>
   <ItemGroup>

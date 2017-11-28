@@ -30,14 +30,7 @@ namespace XForm
         Report
     }
 
-    public class WorkflowContext
-    {
-        public WorkflowRunner Runner { get; set; }
-        public DateTime NewestDependency { get; set; }
-        public bool RebuiltSomething { get; set; }
-    }
-
-    public class WorkflowRunner
+    public class WorkflowRunner : IWorkflowRunner
     {
         public const string DateTimeFolderFormat = "yyyy.MM.dd HH.mm.ssZ";
 
@@ -51,6 +44,7 @@ namespace XForm
         private string ReportPath { get; set; }
 
         private Dictionary<string, string> Tables { get; set; }
+        private Dictionary<string, string> Queries { get; set; }
 
         public WorkflowRunner(string rootPath, DateTime asOfDateTime)
         {
@@ -63,12 +57,13 @@ namespace XForm
             this.QueryPath = Path.Combine(rootPath, "Query");
             this.ReportPath = Path.Combine(rootPath, "Report");
 
-            IdentifyTables();
+            IdentifySources();
         }
 
-        private void IdentifyTables()
+        private void IdentifySources()
         {
             Tables = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            Queries = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
             // Add each source with a full crawl
             foreach (string sourceFolderPath in Directory.GetDirectories(SourcePath, "Full", SearchOption.AllDirectories))
@@ -83,17 +78,28 @@ namespace XForm
                 string pathUnderConfig = Path.ChangeExtension(configQueryPath, null).Substring(this.ConfigPath.Length + 1);
                 Tables[pathUnderConfig] = configQueryPath;
             }
+
+            // Add each known output query
+            foreach (string configQueryPath in Directory.GetFiles(QueryPath, "*.xql", SearchOption.AllDirectories))
+            {
+                string pathUnderConfig = Path.ChangeExtension(configQueryPath, null).Substring(this.QueryPath.Length + 1);
+                Queries[pathUnderConfig] = configQueryPath;
+            }
         }
 
-        public IEnumerable<string> TableNames => Tables.Keys;
+        public IEnumerable<string> SourceNames => Tables.Keys.Concat(Queries.Keys);
 
         public IDataBatchEnumerator Build(string tableName, WorkflowContext outerContext)
         {
+            // If this is a query, there won't be a cached table - just build a pipeline to make it
             string source;
-            if (!Tables.TryGetValue(tableName, out source)) throw new UsageException(null, tableName, "tableName", TableNames);
+            if (Queries.TryGetValue(tableName, out source)) return PipelineParser.BuildPipeline(File.ReadAllText(source), null, outerContext);
+
+            // If this isn't a query or table, throw
+            if (!Tables.TryGetValue(tableName, out source)) throw new UsageException(null, tableName, "tableName", SourceNames);
 
             // Create a context to track the newest dependency (query or input file) under this table
-            WorkflowContext innerContext = new WorkflowContext() { Runner = this, NewestDependency = DateTime.MinValue };
+            WorkflowContext innerContext = new WorkflowContext(this);
 
             // Look for the latest output already created (if any)
             DateTime lastTableVersionBeforeCutoff = LatestVersionBeforeCutoff(LocationType.Table, tableName, AsOfDateTime, null);
@@ -155,7 +161,7 @@ namespace XForm
 
         public string Build(string tableName, string outputFormat)
         {
-            WorkflowContext context = new WorkflowContext() { Runner = this, NewestDependency = DateTime.MinValue };
+            WorkflowContext context = new WorkflowContext(this);
             IDataBatchEnumerator builder = null;
 
             try
@@ -173,8 +179,9 @@ namespace XForm
                 else
                 {
                     DateTime newestReport = LatestVersionBeforeCutoff(LocationType.Report, tableName, AsOfDateTime, null);
+                    outputPath = Path.Combine(FullPath(LocationType.Report, tableName, CrawlType.Full, newestReport), $"Report.{outputFormat}");
 
-                    if (newestReport < context.NewestDependency || context.RebuiltSomething)
+                    if (newestReport < context.NewestDependency || context.RebuiltSomething || !File.Exists(outputPath))
                     {
                         // If the report needs to be rebuilt, make it and return the path
                         outputPath = Path.Combine(FullPath(LocationType.Report, tableName, CrawlType.Full, context.NewestDependency), $"Report.{outputFormat}");
@@ -290,6 +297,15 @@ namespace XForm
 
             Trace.WriteLine($"Done. Added \"{desiredFolderPath}\" to database.");
             return 0;
+        }
+
+        public void SaveXql(LocationType type, string tableName, string xql)
+        {
+            string outputPath = Path.Combine(PathForType(type), $"{tableName}.xql");
+            string directory = Path.GetDirectoryName(outputPath);
+            if (!String.IsNullOrEmpty(directory)) Directory.CreateDirectory(directory);
+            File.WriteAllText(outputPath, xql);
+            IdentifySources();
         }
     }
 }

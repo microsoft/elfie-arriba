@@ -128,7 +128,7 @@ namespace XForm.Query
 
         private static Dictionary<string, IPipelineStageBuilder> s_pipelineStageBuildersByName;
 
-        private PipelineParser(string xqlQuery, WorkflowContext workflow = null)
+        public PipelineParser(string xqlQuery, WorkflowContext workflow = null)
         {
             EnsureLoaded();
             _scanner = new PipelineScanner(xqlQuery);
@@ -227,7 +227,6 @@ namespace XForm.Query
         public string NextOutputTableName()
         {
             string tableName = _scanner.CurrentPart;
-            if (_workflow != null) throw new ArgumentException("'write' commands are not allowed in Database XQL queries. Each XQL file writes a binary table with the same name as the file.");
             ParseNextOrThrow(() => true, "tableName", null);
             return tableName;
         }
@@ -235,14 +234,13 @@ namespace XForm.Query
         public IDataBatchEnumerator NextTableSource()
         {
             string tableName = _scanner.CurrentPart;
+            ParseNextOrThrow(() => true, "tableName", (_workflow != null ? _workflow.Runner.SourceNames : null));
 
             if (_workflow != null)
             {
-                ParseNextOrThrow(() => true, "tableName", _workflow.Runner.TableNames);
-                return _workflow.Runner.Build(_scanner.CurrentPart, _workflow);
+                return _workflow.Runner.Build(tableName, _workflow);
             }
-
-            ParseNextOrThrow(() => true, "tableName", null);
+            
             if (tableName.EndsWith("xform") || Directory.Exists(tableName))
             {
                 return new BinaryTableReader(tableName);

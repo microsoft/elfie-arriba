@@ -12,23 +12,47 @@ using Microsoft.CodeAnalysis.Elfie.Extensions;
 using XForm.Data;
 using XForm.Extensions;
 using XForm.Query;
+using XForm.IO;
 
 namespace XForm
 {
-    public class InteractiveRunner
+    public class InteractiveRunner : IWorkflowRunner
     {
         private static string s_commandCachePath;
         private IDataBatchEnumerator _pipeline;
         private List<IDataBatchEnumerator> _stages;
         private List<string> _commands;
+        private WorkflowRunner _workflowRunner;
 
-        public InteractiveRunner()
+        public IEnumerable<string> SourceNames => _workflowRunner.SourceNames;
+
+        public InteractiveRunner(WorkflowRunner workflowRunner)
         {
             s_commandCachePath = Environment.ExpandEnvironmentVariables(@"%TEMP%\XForm.Last.xql");
 
             _pipeline = null;
             _stages = new List<IDataBatchEnumerator>();
             _commands = new List<string>();
+            _workflowRunner = workflowRunner;
+        }
+
+        public IDataBatchEnumerator Build(string sourceName, WorkflowContext context)
+        {
+            if(File.Exists(sourceName))
+            {
+                if (sourceName.EndsWith("xform") || Directory.Exists(sourceName))
+                {
+                    return new BinaryTableReader(sourceName);
+                }
+                else
+                {
+                    return new TabularFileReader(sourceName);
+                }
+            }
+            else
+            {
+                return _workflowRunner.Build(sourceName, context);
+            }
         }
 
         public int Run()
@@ -43,10 +67,10 @@ namespace XForm
 
                     // Read the next query line
                     string nextLine = Console.ReadLine();
-                    PipelineScanner scanner = new PipelineScanner(nextLine);
-                    if (!scanner.HasCurrentLine) return lastCount;
+                    PipelineParser parser = new PipelineParser(nextLine, new WorkflowContext(this));
+                    if (!parser.HasAnotherPart) return lastCount;
 
-                    string command = scanner.CurrentPart.ToLowerInvariant();
+                    string command = parser.NextString().ToLowerInvariant();
                     switch (command)
                     {
                         case "quit":
@@ -68,13 +92,19 @@ namespace XForm
 
                             break;
                         case "save":
-                            scanner.NextPart();
-                            SaveScript(scanner.CurrentPart);
-                            Console.WriteLine($"Script saved to \"{scanner.CurrentPart}\".");
-                            continue;
+                            string tableName = parser.NextOutputTableName();
+                            _workflowRunner.SaveXql(LocationType.Query, tableName, String.Join(Environment.NewLine, _commands));
+                            Console.WriteLine($"Query saved to \"{tableName}\".");
+
+                            
+                            _commands.Clear();
+                            _commands.Add($"read \"{tableName}\"");
+                            _pipeline = null;
+                            _pipeline = AddStage(_commands[0]);
+
+                            break;
                         case "run":
-                            scanner.NextPart();
-                            LoadScript(scanner.CurrentPart);
+                            LoadScript(parser.NextString());
                             break;
                         case "rerun":
                             LoadScript(s_commandCachePath);
@@ -143,7 +173,7 @@ namespace XForm
             _stages.Add(_pipeline);
 
             // Build the new stage
-            _pipeline = PipelineParser.BuildStage(nextLine, _pipeline);
+            _pipeline = PipelineParser.BuildStage(nextLine, _pipeline, new WorkflowContext(this));
 
             // Save the current command set
             _commands.Add(nextLine);

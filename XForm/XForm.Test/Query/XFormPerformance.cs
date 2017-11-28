@@ -29,7 +29,7 @@ namespace XForm.Test.Query
             value = 500;
         }
 
-        // ISSUE: Faster, but not always. Likely need more iterations to get a consistent result.
+        // ISSUE: Faster in Release only, and not enough iterations to be consistent.
         //[TestMethod]
         public void XFormVsLinqPerformance()
         {
@@ -64,8 +64,8 @@ namespace XForm.Test.Query
                 count", arrayTable);
 
             // Run once to force pre-allocation of buffers
-            //query.Run();
-            //query.Reset();
+            query.Run();
+            query.Reset();
 
             w = Stopwatch.StartNew();
             using (new TraceWatch($"XForm Count"))
