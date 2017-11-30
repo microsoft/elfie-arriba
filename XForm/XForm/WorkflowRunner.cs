@@ -101,11 +101,16 @@ namespace XForm
 
         public IDataBatchEnumerator Build(string tableName, WorkflowContext outerContext)
         {
+            return Build(tableName, outerContext, false);
+        }
+
+        public IDataBatchEnumerator Build(string tableName, WorkflowContext outerContext, bool deferred)
+        {
             // If this is a query, there won't be a cached table - just build a pipeline to make it
             string source;
             if (Queries.TryGetValue(tableName, out source)) return PipelineParser.BuildPipeline(File.ReadAllText(source), null, outerContext);
 
-            // If this isn't a query or table, throw
+            // If this isn't a config or table, throw
             if (!Tables.TryGetValue(tableName, out source)) throw new UsageException(null, tableName, "tableName", SourceNames);
 
             // Create a context to track the newest dependency (query or input file) under this table
@@ -153,9 +158,13 @@ namespace XForm
 
             tablePath = FullPath(LocationType.Table, tableName, CrawlType.Full, innerContext.NewestDependency);
 
-            // If the output isn't up-to-date, build an updated one
+            // If the output isn't up-to-date, ...
             if (innerContext.NewestDependency - lastTableVersionBeforeCutoff > TimeSpan.FromSeconds(1) || xql != previousXql || innerContext.RebuiltSomething)
             {
+                // If we're not running now, just return how to build it
+                if (deferred) return builder;
+
+                // Otherwise, build it now; we'll return the query to read the output
                 Trace.WriteLine($"COMPUTE: [{innerContext.NewestDependency.ToString(DateTimeFolderFormat)}] {tableName}");
                 new BinaryTableWriter(builder, tablePath).RunAndDispose();
                 File.WriteAllText(Path.Combine(tablePath, "Config.xql"), xql);
@@ -319,6 +328,24 @@ namespace XForm
             if (!String.IsNullOrEmpty(directory)) Directory.CreateDirectory(directory);
             File.WriteAllText(outputPath, xql);
             IdentifySources();
+        }
+    }
+
+    public class DeferredRunner : IWorkflowRunner
+    {
+        private WorkflowRunner _inner;
+
+        public DeferredRunner(WorkflowRunner inner)
+        {
+            this._inner = inner;
+        }
+
+        public IEnumerable<string> SourceNames => _inner.SourceNames;
+
+        public IDataBatchEnumerator Build(string tableName, WorkflowContext context)
+        {
+            // Ask the workflow runner to defer computing dependencies now
+            return _inner.Build(tableName, context, true);
         }
     }
 }

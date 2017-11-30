@@ -46,6 +46,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Aggregators\CountAggregator.cs" />
+    <Compile Include="BackgroundWebServer.cs" />
     <Compile Include="Commands\RenameColumns.cs" />
     <Compile Include="Data\Allocator.cs" />
     <Compile Include="Data\ArraySelector.cs" />
@@ -58,6 +59,7 @@
     <Compile Include="Extensions\DataBatchEnumeratorExtensions.cs" />
     <Compile Include="Extensions\IComparableExtensions.cs" />
     <Compile Include="Extensions\InterfaceLoader.cs" />
+    <Compile Include="HttpRunner.cs" />
     <Compile Include="InteractiveRunner.cs" />
     <Compile Include="IO\DirectoryIO.cs" />
     <Compile Include="IO\Logger.cs" />

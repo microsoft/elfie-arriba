@@ -26,7 +26,20 @@ namespace XForm.IO
         {
             _source = source;
             _outputFilePath = outputFilePath;
+            Initialize();
+        }
 
+        public TabularFileWriter(IDataBatchEnumerator source, ITabularWriter writer)
+        {
+            _source = source;
+            _writer = writer;
+            _writer.SetColumns(_source.Columns.Select((cd) => cd.Name));
+
+            Initialize();
+        }
+
+        private void Initialize()
+        {
             // Subscribe to all columns and cache converters for them
             _stringColumnGetters = new Func<DataBatch>[_source.Columns.Count];
             for (int i = 0; i < _source.Columns.Count; ++i)
@@ -68,6 +81,8 @@ namespace XForm.IO
             // Build the writer only when we start getting rows
             if (_writer == null)
             {
+                if (_outputFilePath == null) throw new InvalidOperationException("TabularFileWriter can't reset when passed an ITabularWriter instance");
+
                 string outputFolder = Path.GetDirectoryName(_outputFilePath);
                 if (!String.IsNullOrEmpty(outputFolder)) Directory.CreateDirectory(outputFolder);
                 _writer = TabularFactory.BuildWriter(_outputFilePath);

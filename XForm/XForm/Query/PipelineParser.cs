@@ -325,7 +325,7 @@ namespace XForm.Query
         {
             Usage = usage;
             InvalidValue = invalidValue;
-            InvalidValueCategory = InvalidValueCategory;
+            InvalidValueCategory = invalidValueCategory;
             ValidValues = validValues;
         }
 

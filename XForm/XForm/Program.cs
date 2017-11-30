@@ -47,6 +47,10 @@ namespace XForm
                             (args.Length > 2 ? args[2] : "xform"));
 
                         return 0;
+                    case "http":
+                        HttpRunner runner = new HttpRunner(new WorkflowRunner(Environment.CurrentDirectory, ParseDateTimeOrDefault(args, 1, DateTime.UtcNow)));
+                        runner.Run();
+                        return 0;
                     default:
                         throw new UsageException($"Unknown XForm mode '{command}'.");
                 }
