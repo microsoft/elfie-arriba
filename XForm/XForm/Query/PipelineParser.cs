@@ -326,6 +326,8 @@ namespace XForm.Query
             Usage = usage;
             InvalidValue = invalidValue;
             InvalidValueCategory = invalidValueCategory;
+
+            if (validValues != null) validValues = validValues.OrderBy((s) => s);
             ValidValues = validValues;
         }
 
@@ -350,7 +352,7 @@ namespace XForm.Query
             if (validValues != null)
             {
                 message.AppendLine("Valid Options:");
-                foreach (string value in validValues)
+                foreach (string value in validValues.OrderBy((s) => s))
                 {
                     message.AppendLine(value);
                 }
