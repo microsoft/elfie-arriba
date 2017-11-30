@@ -38,7 +38,7 @@ namespace XForm
 
         public IDataBatchEnumerator Build(string sourceName, WorkflowContext context)
         {
-            if(File.Exists(sourceName))
+            if (File.Exists(sourceName))
             {
                 if (sourceName.EndsWith("xform") || Directory.Exists(sourceName))
                 {
@@ -67,64 +67,70 @@ namespace XForm
 
                     // Read the next query line
                     string nextLine = Console.ReadLine();
-                    PipelineParser parser = new PipelineParser(nextLine, new WorkflowContext(this));
-                    if (!parser.HasAnotherPart) return lastCount;
-
-                    string command = parser.NextString().ToLowerInvariant();
-                    switch (command)
+                    PipelineParser parser = null;
+                    try
                     {
-                        case "quit":
-                        case "exit":
-                            // Stop on empty, "quit", or "exit"
-                            return lastCount;
+                        parser = new PipelineParser(nextLine, new WorkflowContext(this));
 
 
-                        case "back":
-                        case "undo":
-                            // Unwrap on "back" or "undo"
-                            IDataBatchEnumerator last = _stages.LastOrDefault();
-                            if (last != null)
-                            {
-                                _pipeline = last;
-                                _stages.RemoveAt(_stages.Count - 1);
-                                _commands.RemoveAt(_commands.Count - 1);
-                            }
+                        if (!parser.HasAnotherPart) return lastCount;
 
-                            break;
-                        case "save":
-                            string tableName = parser.NextOutputTableName();
-                            _workflowRunner.SaveXql(LocationType.Query, tableName, String.Join(Environment.NewLine, _commands));
-                            Console.WriteLine($"Query saved to \"{tableName}\".");
+                        string command = parser.NextString().ToLowerInvariant();
+                        switch (command)
+                        {
+                            case "quit":
+                            case "exit":
+                                // Stop on empty, "quit", or "exit"
+                                return lastCount;
 
-                            
-                            _commands.Clear();
-                            _commands.Add($"read \"{tableName}\"");
-                            _pipeline = null;
-                            _pipeline = AddStage(_commands[0]);
 
-                            break;
-                        case "run":
-                            LoadScript(parser.NextString());
-                            break;
-                        case "rerun":
-                            LoadScript(s_commandCachePath);
-                            break;
-                        default:
-                            try
-                            {
-                                _pipeline = AddStage(nextLine);
+                            case "back":
+                            case "undo":
+                                // Unwrap on "back" or "undo"
+                                IDataBatchEnumerator last = _stages.LastOrDefault();
+                                if (last != null)
+                                {
+                                    _pipeline = last;
+                                    _stages.RemoveAt(_stages.Count - 1);
+                                    _commands.RemoveAt(_commands.Count - 1);
+                                }
+
                                 break;
-                            }
-                            catch (UsageException ex)
-                            {
-                                Console.WriteLine(ex.Message);
-                                continue;
-                            }
-                            catch (Exception ex) when (!Debugger.IsAttached)
-                            {
-                                Console.WriteLine($"Error: {ex.Message}");
-                                continue;
-                            }
+                            case "save":
+                                string tableName = parser.NextOutputTableName();
+                                _workflowRunner.SaveXql(LocationType.Query, tableName, String.Join(Environment.NewLine, _commands));
+                                Console.WriteLine($"Query saved to \"{tableName}\".");
+
+
+                                _commands.Clear();
+                                _commands.Add($"read \"{tableName}\"");
+                                _pipeline = null;
+                                _pipeline = AddStage(_commands[0]);
+
+                                break;
+                            case "run":
+                                LoadScript(parser.NextString());
+                                break;
+                            case "rerun":
+                                LoadScript(s_commandCachePath);
+                                break;
+                            default:
+                                try
+                                {
+                                    _pipeline = AddStage(nextLine);
+                                    break;
+                                }
+                                catch (Exception ex) when (!Debugger.IsAttached)
+                                {
+                                    Console.WriteLine($"Error: {ex.Message}");
+                                    continue;
+                                }
+                        }
+                    }
+                    catch (ArgumentException ex)
+                    {
+                        Console.WriteLine(ex.Message);
+                        continue;
                     }
 
                     SaveScript(s_commandCachePath);

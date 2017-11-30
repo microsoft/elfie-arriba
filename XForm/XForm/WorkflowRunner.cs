@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Microsoft.CodeAnalysis.Elfie.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -66,24 +67,33 @@ namespace XForm
             Queries = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
             // Add each source with a full crawl
-            foreach (string sourceFolderPath in Directory.GetDirectories(SourcePath, "Full", SearchOption.AllDirectories))
+            if (Directory.Exists(SourcePath))
             {
-                string pathUnderSources = Path.GetDirectoryName(sourceFolderPath).Substring(this.SourcePath.Length + 1);
-                Tables[pathUnderSources] = sourceFolderPath;
+                foreach (string sourceFolderPath in Directory.GetDirectories(SourcePath, "Full", SearchOption.AllDirectories))
+                {
+                    string pathUnderSources = Path.GetDirectoryName(sourceFolderPath).Substring(this.SourcePath.Length + 1);
+                    Tables[pathUnderSources] = sourceFolderPath;
+                }
             }
 
             // Add each known config query
-            foreach (string configQueryPath in Directory.GetFiles(ConfigPath, "*.xql", SearchOption.AllDirectories))
+            if (Directory.Exists(ConfigPath))
             {
-                string pathUnderConfig = Path.ChangeExtension(configQueryPath, null).Substring(this.ConfigPath.Length + 1);
-                Tables[pathUnderConfig] = configQueryPath;
+                foreach (string configQueryPath in Directory.GetFiles(ConfigPath, "*.xql", SearchOption.AllDirectories))
+                {
+                    string pathUnderConfig = Path.ChangeExtension(configQueryPath, null).Substring(this.ConfigPath.Length + 1);
+                    Tables[pathUnderConfig] = configQueryPath;
+                }
             }
 
             // Add each known output query
-            foreach (string configQueryPath in Directory.GetFiles(QueryPath, "*.xql", SearchOption.AllDirectories))
+            if (Directory.Exists(QueryPath))
             {
-                string pathUnderConfig = Path.ChangeExtension(configQueryPath, null).Substring(this.QueryPath.Length + 1);
-                Queries[pathUnderConfig] = configQueryPath;
+                foreach (string queryPath in Directory.GetFiles(QueryPath, "*.xql", SearchOption.AllDirectories))
+                {
+                    string pathUnderConfig = Path.ChangeExtension(queryPath, null).Substring(this.QueryPath.Length + 1);
+                    Queries[pathUnderConfig] = queryPath;
+                }
             }
         }
 
@@ -166,6 +176,8 @@ namespace XForm
 
             try
             {
+                Stopwatch w = Stopwatch.StartNew();
+
                 // Recursively build dependencies and return a reader for the result table
                 builder = Build(tableName, context);
 
@@ -195,7 +207,8 @@ namespace XForm
                     }
                 }
 
-                Trace.WriteLine($"Done. \"{outputPath}\" {(context.RebuiltSomething ? "written" : "up-to-date")}.");
+                w.Stop();
+                Trace.WriteLine($"Done. \"{outputPath}\" {(context.RebuiltSomething ? "written" : "up-to-date")} in {w.Elapsed.ToFriendlyString()}.");
                 return outputPath;
             }
             finally
