@@ -18,6 +18,14 @@ namespace XForm.Test.Query
             Assert.AreEqual(null, GetSuggestions($"read {DataBatchEnumeratorTests.WebRequestSample}\r\n"));
             Assert.AreEqual(null, GetSuggestions($"read {DataBatchEnumeratorTests.WebRequestSample}\r\n "));
             Assert.AreEqual(Verbs, GetSuggestions($"read {DataBatchEnumeratorTests.WebRequestSample}\r\n_"));
+
+            Assert.AreEqual("!=|<|<=|<>|=|==|>|>=", GetSuggestions($@"
+                read {DataBatchEnumeratorTests.WebRequestSample}
+                where HttpStatus !"));
+
+            Assert.AreEqual("", GetSuggestions($@"
+                read {DataBatchEnumeratorTests.WebRequestSample}
+                where HttpStatus != "));
         }
 
         private static string GetSuggestions(string query)
@@ -32,6 +40,7 @@ namespace XForm.Test.Query
             }
             catch (UsageException ex)
             {
+                if (ex.ValidValues == null) return "";
                 return string.Join("|", ex.ValidValues);
             }
         }

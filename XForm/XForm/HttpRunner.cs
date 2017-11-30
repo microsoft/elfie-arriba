@@ -170,9 +170,12 @@ namespace XForm
                 writer.Write(block.GetCopy(ue.InvalidValueCategory));
 
                 String8 values = String8.Empty;
-                foreach (string value in ue.ValidValues)
+                if (ue.ValidValues != null)
                 {
-                    values = block.Concatenate(values, s_delimiter, block.GetCopy(value));
+                    foreach (string value in ue.ValidValues)
+                    {
+                        values = block.Concatenate(values, s_delimiter, block.GetCopy(value));
+                    }
                 }
                 writer.Write(values);
 
