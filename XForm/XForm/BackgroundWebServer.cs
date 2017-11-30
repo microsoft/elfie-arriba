@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -27,7 +30,7 @@ namespace XForm
             this.MethodsToServe = new Dictionary<string, Action<HttpListenerContext, HttpListenerResponse>>(StringComparer.OrdinalIgnoreCase);
             this.FilesToServe = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-            if(!String.IsNullOrEmpty(serveUnderRelativePath))
+            if (!String.IsNullOrEmpty(serveUnderRelativePath))
             {
                 Assembly entryAssembly = Assembly.GetEntryAssembly();
                 if (entryAssembly == null) entryAssembly = Assembly.GetCallingAssembly();
@@ -79,7 +82,7 @@ namespace XForm
                 {
                     HandleRequest(this.Listener.GetContext());
                 }
-                catch(HttpListenerException ex)
+                catch (HttpListenerException ex)
                 {
                     // Happens when connection to client lost before response sent
                     Trace.TraceWarning(String.Format("BackgroundWebServer: Lost Connection During Request. Retrying. Error: {0}", ex.ToString()));
@@ -147,7 +150,7 @@ namespace XForm
                 if (ReturnServedFolderFile(localPath, response)) return;
                 ReturnNotFound(response);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 // On unhandled exception, return error and rethrow
                 ReturnError(response);

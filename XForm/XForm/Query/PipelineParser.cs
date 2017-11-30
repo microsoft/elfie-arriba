@@ -241,7 +241,7 @@ namespace XForm.Query
             {
                 return _workflow.Runner.Build(tableName, _workflow);
             }
-            
+
             if (tableName.EndsWith("xform") || Directory.Exists(tableName))
             {
                 return new BinaryTableReader(tableName);

@@ -1,13 +1,14 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using Microsoft.CodeAnalysis.Elfie.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+
+using Microsoft.CodeAnalysis.Elfie.Extensions;
 
 using XForm.Data;
 using XForm.Extensions;
@@ -337,7 +338,7 @@ namespace XForm
 
         public DeferredRunner(WorkflowRunner inner)
         {
-            this._inner = inner;
+            _inner = inner;
         }
 
         public IEnumerable<string> SourceNames => _inner.SourceNames;

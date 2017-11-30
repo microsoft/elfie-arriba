@@ -11,8 +11,8 @@ using Microsoft.CodeAnalysis.Elfie.Extensions;
 
 using XForm.Data;
 using XForm.Extensions;
-using XForm.Query;
 using XForm.IO;
+using XForm.Query;
 
 namespace XForm
 {

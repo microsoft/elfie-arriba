@@ -1,8 +1,13 @@
-﻿using Microsoft.CodeAnalysis.Elfie.Model.Strings;
-using Microsoft.CodeAnalysis.Elfie.Serialization;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.IO;
 using System.Net;
+
+using Microsoft.CodeAnalysis.Elfie.Model.Strings;
+using Microsoft.CodeAnalysis.Elfie.Serialization;
+
 using XForm.Data;
 using XForm.Extensions;
 using XForm.IO;
@@ -13,7 +18,7 @@ namespace XForm
     public class HttpRunner
     {
         private WorkflowRunner _innerRunner;
-        private static String8 Delimiter = String8.Convert(";", new byte[1]);
+        private static String8 s_delimiter = String8.Convert(";", new byte[1]);
 
         public HttpRunner(WorkflowRunner runner)
         {
@@ -44,7 +49,7 @@ namespace XForm
                 {
                     string query = context.Request.QueryString["q"];
                     if (String.IsNullOrEmpty(query)) throw new ArgumentException("q");
-                
+
                     // Try building the query pipeline, using a *DeferredRunner* so dependencies aren't built right now
                     IDataBatchEnumerator pipeline = PipelineParser.BuildPipeline(query, null, new WorkflowContext() { Runner = new DeferredRunner(_innerRunner) });
                     writer.SetColumns(new string[] { "Valid" });
@@ -121,7 +126,7 @@ namespace XForm
             }
             finally
             {
-                if(pipeline != null)
+                if (pipeline != null)
                 {
                     pipeline.Dispose();
                     pipeline = null;
@@ -134,7 +139,7 @@ namespace XForm
             Stream toStream = response.OutputStream;
             toStream = new BufferedStream(toStream);
 
-            switch(format.ToLowerInvariant())
+            switch (format.ToLowerInvariant())
             {
                 case "json":
                     return new JsonTabularWriter(toStream);
@@ -152,7 +157,7 @@ namespace XForm
         private void WriteException(Exception ex, ITabularWriter writer)
         {
             String8Block block = new String8Block();
-            
+
             if (ex is UsageException)
             {
                 UsageException ue = ex as UsageException;
@@ -165,7 +170,7 @@ namespace XForm
                 String8 values = String8.Empty;
                 foreach (string value in ue.ValidValues)
                 {
-                    values = block.Concatenate(values, Delimiter, block.GetCopy(value));
+                    values = block.Concatenate(values, s_delimiter, block.GetCopy(value));
                 }
                 writer.Write(values);
 
