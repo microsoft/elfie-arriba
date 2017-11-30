@@ -47,8 +47,10 @@ namespace XForm
             {
                 try
                 {
-                    string query = context.Request.QueryString["q"];
-                    if (String.IsNullOrEmpty(query)) throw new ArgumentException("q");
+                    string query = Require(context, "q");
+
+                    // Get the pipeline to suggest verbs if there's an empty line at the end
+                    if (query.EndsWith("\n")) query = "_";
 
                     // Try building the query pipeline, using a *DeferredRunner* so dependencies aren't built right now
                     IDataBatchEnumerator pipeline = PipelineParser.BuildPipeline(query, null, new WorkflowContext() { Runner = new DeferredRunner(_innerRunner) });

@@ -54,6 +54,7 @@
     <Compile Include="Query\DataBatchEnumeratorTests.cs" />
     <Compile Include="Query\PipelineTests.cs" />
     <Compile Include="Query\SampleQuery.cs" />
+    <Compile Include="Query\SuggestTests.cs" />
     <Compile Include="Query\XFormPerformance.cs" />
   </ItemGroup>
   <ItemGroup>

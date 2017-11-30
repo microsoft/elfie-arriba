@@ -183,7 +183,7 @@ namespace XForm.Query
             // For nested pipelines, we should still be on the line for the stage which has a nested pipeline. Move forward.
             if (_scanner.HasCurrentLine && !_scanner.HasCurrentPart) _scanner.NextLine();
 
-            while (_scanner.HasCurrentLine)
+            do
             {
                 // If this line is 'end', this is the end of the inner pipeline. Leave it at the end of this line; the outer NextPipeline will skip to the next line.
                 if (_scanner.HasCurrentPart && _scanner.CurrentPart.Equals("end", StringComparison.OrdinalIgnoreCase))
@@ -194,7 +194,7 @@ namespace XForm.Query
 
                 pipeline = NextStage(pipeline);
                 _scanner.NextLine();
-            }
+            } while (_scanner.HasCurrentLine);
 
             return pipeline;
         }
