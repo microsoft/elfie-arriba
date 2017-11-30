@@ -206,7 +206,7 @@ namespace XForm
                     {
                         // If the report needs to be rebuilt, make it and return the path
                         outputPath = Path.Combine(FullPath(LocationType.Report, tableName, CrawlType.Full, context.NewestDependency), $"Report.{outputFormat}");
-                        new TabularFileWriter(builder, outputPath).Run();
+                        new TabularFileWriter(builder, outputPath).RunAndDispose();
                         context.RebuiltSomething = true;
                     }
                     else

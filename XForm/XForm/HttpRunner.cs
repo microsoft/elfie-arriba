@@ -26,6 +26,7 @@ namespace XForm
             {
                 server.AddResponder("suggest", Suggest);
                 server.AddResponder("run", Run);
+                server.AddResponder("download", Download);
 
                 server.Start();
                 Console.WriteLine("Http Server running; browse http://localhost:5073. Press enter to stop server.");
@@ -59,26 +60,58 @@ namespace XForm
 
         private void Run(HttpListenerContext context, HttpListenerResponse response)
         {
+            try
+            {
+                Run(
+                    Require(context, "q"),
+                    context.Request.QueryString["fmt"] ?? "json",
+                    ParseOrDefault(context.Request.QueryString["c"], 100),
+                    response);
+            }
+            catch (Exception ex)
+            {
+                using (ITabularWriter writer = new JsonTabularWriter(response.OutputStream))
+                {
+                    WriteException(ex, writer);
+                }
+            }
+        }
+
+        private void Download(HttpListenerContext context, HttpListenerResponse response)
+        {
+            try
+            {
+                Run(
+                    Require(context, "q"),
+                    Require(context, "fmt"),
+                    -1,
+                    response);
+            }
+            catch (Exception ex)
+            {
+                using (ITabularWriter writer = new JsonTabularWriter(response.OutputStream))
+                {
+                    WriteException(ex, writer);
+                }
+            }
+        }
+
+        private void Run(string query, string format, int rowCountLimit, HttpListenerResponse response)
+        {
             IDataBatchEnumerator pipeline = null;
 
             try
             {
-                string query = context.Request.QueryString["q"];
-                if (String.IsNullOrEmpty(query)) throw new ArgumentException("q");
-
-                int rowCount = ParseOrDefault(context.Request.QueryString["c"], 100);
-
                 // Build a Pipeline for the Query
                 pipeline = PipelineParser.BuildPipeline(query, null, new WorkflowContext() { Runner = _innerRunner });
 
                 // Restrict the row count if requested
-                if (rowCount >= 0)
+                if (rowCountLimit >= 0)
                 {
-                    pipeline = PipelineParser.BuildStage($"limit {rowCount}", pipeline);
+                    pipeline = PipelineParser.BuildStage($"limit {rowCountLimit}", pipeline);
                 }
 
                 // Build a writer for the desired format
-                string format = context.Request.QueryString["fmt"] ?? "json";
                 using (ITabularWriter writer = WriterForFormat(format, response))
                 {
                     // Run the query and return the output
@@ -86,33 +119,37 @@ namespace XForm
                     pipeline.RunAndDispose();
                 }
             }
-            catch(Exception ex)
+            finally
             {
-                using (JsonTabularWriter writer = new JsonTabularWriter(response.OutputStream))
+                if(pipeline != null)
                 {
-                    WriteException(ex, writer);
+                    pipeline.Dispose();
+                    pipeline = null;
                 }
             }
         }
 
         private ITabularWriter WriterForFormat(string format, HttpListenerResponse response)
         {
+            Stream toStream = response.OutputStream;
+            toStream = new BufferedStream(toStream);
+
             switch(format.ToLowerInvariant())
             {
                 case "json":
-                    return new JsonTabularWriter(response.OutputStream);
+                    return new JsonTabularWriter(toStream);
                 case "csv":
                     response.AddHeader("Content-Disposition", "attachment; filename=\"Result.csv\"");
-                    return new CsvWriter(response.OutputStream);
+                    return new CsvWriter(toStream);
                 case "tsv":
                     response.AddHeader("Content-Disposition", "attachment; filename=\"Result.tsv\"");
-                    return new TsvWriter(response.OutputStream);
+                    return new TsvWriter(toStream);
                 default:
                     throw new ArgumentException("fmt");
             }
         }
 
-        private void WriteException(Exception ex, JsonTabularWriter writer)
+        private void WriteException(Exception ex, ITabularWriter writer)
         {
             String8Block block = new String8Block();
             
@@ -141,6 +178,13 @@ namespace XForm
                 writer.Write(block.GetCopy(ex.Message));
                 writer.NextRow();
             }
+        }
+
+        private static string Require(HttpListenerContext context, string parameterName)
+        {
+            string value = context.Request.QueryString[parameterName];
+            if (value == null) throw new ArgumentException($"Request must include parameter \"{parameterName}\".");
+            return value;
         }
 
         private static int ParseOrDefault(string value, int defaultValue)
