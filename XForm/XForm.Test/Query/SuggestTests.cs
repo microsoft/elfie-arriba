@@ -26,6 +26,10 @@ namespace XForm.Test.Query
             Assert.AreEqual("", GetSuggestions($@"
                 read {DataBatchEnumeratorTests.WebRequestSample}
                 where HttpStatus != "));
+
+            Assert.AreEqual("", GetSuggestions($@"
+                read {DataBatchEnumeratorTests.WebRequestSample}
+                columns "));
         }
 
         private static string GetSuggestions(string query)

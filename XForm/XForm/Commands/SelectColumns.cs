@@ -18,10 +18,10 @@ namespace XForm.Commands
         public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)
         {
             List<string> columnNames = new List<string>();
-            while (context.Parser.HasAnotherPart)
+            do
             {
                 columnNames.Add(context.Parser.NextColumnName(source));
-            }
+            } while (context.Parser.HasAnotherPart);
 
             return new SelectColumns(source, columnNames);
         }

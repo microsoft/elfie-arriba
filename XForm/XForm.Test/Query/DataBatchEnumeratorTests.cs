@@ -129,7 +129,7 @@ namespace XForm.Test.Query
                 write {Path.Combine(s_outputRootFolderPath, "WebRequest.Nullable.Actual.xform")} 
                 where UserName != """"
                 assert none                    
-                    where DaysSinceJoined = null
+                    where DaysSinceJoined = 0
                     end
                 assert none
                     where IsPremiumUser = null

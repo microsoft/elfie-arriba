@@ -27,7 +27,7 @@ namespace XForm
 
         public void Run()
         {
-            using (BackgroundWebServer server = new BackgroundWebServer("", ""))
+            using (BackgroundWebServer server = new BackgroundWebServer("index.html", "Web"))
             {
                 server.AddResponder("suggest", Suggest);
                 server.AddResponder("run", Run);
@@ -50,7 +50,7 @@ namespace XForm
                     string query = Require(context, "q");
 
                     // Get the pipeline to suggest verbs if there's an empty line at the end
-                    if (query.EndsWith("\n")) query = "_";
+                    if (query.EndsWith("\n")) query = query + "_";
 
                     // Try building the query pipeline, using a *DeferredRunner* so dependencies aren't built right now
                     IDataBatchEnumerator pipeline = PipelineParser.BuildPipeline(query, null, new WorkflowContext() { Runner = new DeferredRunner(_innerRunner) });
