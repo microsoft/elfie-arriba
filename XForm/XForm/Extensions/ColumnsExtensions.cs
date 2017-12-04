@@ -41,7 +41,7 @@ namespace XForm.Extensions
     [Serializable]
     public class ColumnNotFoundException : UsageException
     {
-        public ColumnNotFoundException(string columnName, IEnumerable<string> validColumnNames) : base(null, columnName, "columnName", validColumnNames)
+        public ColumnNotFoundException(string columnName, IEnumerable<string> validColumnNames) : base(columnName, "columnName", validColumnNames)
         { }
 
         public ColumnNotFoundException() { }

@@ -57,7 +57,7 @@ namespace XForm
             }
             catch (UsageException ex) when (!Debugger.IsAttached)
             {
-                Console.WriteLine($"Usage: {ex.Message}");
+                Console.WriteLine(ex.Message);
                 return -2;
             }
             catch (Exception ex) when (!Debugger.IsAttached)

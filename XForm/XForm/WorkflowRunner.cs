@@ -112,7 +112,7 @@ namespace XForm
             if (Queries.TryGetValue(tableName, out source)) return PipelineParser.BuildPipeline(File.ReadAllText(source), null, outerContext);
 
             // If this isn't a config or table, throw
-            if (!Tables.TryGetValue(tableName, out source)) throw new UsageException(null, tableName, "tableName", SourceNames);
+            if (!Tables.TryGetValue(tableName, out source)) throw new UsageException(tableName, "tableName", SourceNames);
 
             // Create a context to track the newest dependency (query or input file) under this table
             WorkflowContext innerContext = new WorkflowContext(this);

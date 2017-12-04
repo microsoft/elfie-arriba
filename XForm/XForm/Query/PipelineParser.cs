@@ -121,6 +121,25 @@ namespace XForm.Query
                 return configurationText.Substring(start, index - start);
             }
         }
+
+        private static char[] EscapeRequiredCharacters = new char[] { '"', '\t', ' ', ',' };
+        public static string Escape(string value)
+        {
+            if (String.IsNullOrEmpty(value)) return "\"\"";
+            if (value.IndexOfAny(EscapeRequiredCharacters) == -1) return value;
+            return "\"" + value.Replace("\"", "\"\"") + "\"";
+        }
+
+        public static IEnumerable<string> Escape(IEnumerable<string> values)
+        {
+            if (values != null)
+            {
+                foreach (string value in values)
+                {
+                    yield return Escape(value);
+                }
+            }
+        }
     }
 
     public class PipelineParser
@@ -306,10 +325,11 @@ namespace XForm.Query
         private void Throw(string valueCategory, IEnumerable<string> validValues = null)
         {
             throw new UsageException(
+                    _scanner.CurrentLine,
                     (_currentLineBuilder != null ? _currentLineBuilder.Usage : null),
                     _scanner.CurrentPart,
                     valueCategory,
-                    validValues);
+                    PipelineScanner.Escape(validValues));
         }
 
         public bool HasAnotherPart => _scanner.HasCurrentPart;
@@ -318,14 +338,21 @@ namespace XForm.Query
     [Serializable]
     public class UsageException : ArgumentException
     {
+        public string TableName { get; set; }
+        public string QueryLine { get; private set; }
         public string Usage { get; private set; }
         public string InvalidValue { get; private set; }
         public string InvalidValueCategory { get; private set; }
         public IEnumerable<string> ValidValues { get; private set; }
 
-        public UsageException(string usage, string invalidValue, string invalidValueCategory, IEnumerable<string> validValues)
-            : base(BuildMessage(usage, invalidValue, invalidValueCategory, validValues))
+        public UsageException(string invalidValue, string invalidValueCategory, IEnumerable<string> validValues)
+        : this(null, null, invalidValue, invalidValueCategory, validValues)
+        { }
+
+        public UsageException(string queryLine, string usage, string invalidValue, string invalidValueCategory, IEnumerable<string> validValues)
+            : base(BuildMessage(queryLine, usage, invalidValue, invalidValueCategory, validValues))
         {
+            QueryLine = queryLine;
             Usage = usage;
             InvalidValue = invalidValue;
             InvalidValueCategory = invalidValueCategory;
@@ -334,9 +361,10 @@ namespace XForm.Query
             ValidValues = validValues;
         }
 
-        private static string BuildMessage(string usage, string invalidValue, string invalidValueCategory, IEnumerable<string> validValues)
+        private static string BuildMessage(string queryLine, string usage, string invalidValue, string invalidValueCategory, IEnumerable<string> validValues)
         {
             StringBuilder message = new StringBuilder();
+            if (!String.IsNullOrEmpty(queryLine)) message.AppendLine($"Line: {queryLine}");
             if (!String.IsNullOrEmpty(usage)) message.AppendLine($"Usage: {usage}");
 
             if (String.IsNullOrEmpty(invalidValueCategory))
