@@ -139,7 +139,7 @@ namespace XForm
         private ITabularWriter WriterForFormat(string format, HttpListenerResponse response)
         {
             Stream toStream = response.OutputStream;
-            toStream = new BufferedStream(toStream);
+            toStream = new BufferedStream(toStream, 64 * 1024);
 
             switch (format.ToLowerInvariant())
             {
