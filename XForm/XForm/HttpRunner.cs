@@ -42,6 +42,7 @@ namespace XForm
 
         private void Suggest(HttpListenerContext context, HttpListenerResponse response)
         {
+            bool isQueryValid = false;
             String8Block block = new String8Block();
             using (JsonTabularWriter writer = new JsonTabularWriter(response.OutputStream))
             {
@@ -49,18 +50,38 @@ namespace XForm
                 {
                     string query = Require(context, "q");
 
-                    // Get the pipeline to suggest verbs if there's an empty line at the end
-                    if (query.EndsWith("\n")) query = query + "_";
+                    // Use a *DeferredRunner* workflow context so dependencies don't re-run now
+                    WorkflowContext wfContext = new WorkflowContext() { Runner = new DeferredRunner(_innerRunner) };
+
+                    // Parse the query as-is to see if it's valid
+                    IDataBatchEnumerator pipeline = PipelineParser.BuildPipeline(query, null, wfContext);
+                    isQueryValid = true;
+
+                    // Parse the query with an extra argument on the last line to see what would be suggested
+                    query = query + " \"\"";
 
                     // Try building the query pipeline, using a *DeferredRunner* so dependencies aren't built right now
-                    IDataBatchEnumerator pipeline = PipelineParser.BuildPipeline(query, null, new WorkflowContext() { Runner = new DeferredRunner(_innerRunner) });
+                    pipeline = PipelineParser.BuildPipeline(query, null, wfContext);
+
+                    // If both are valid, just write that the query is valid
                     writer.SetColumns(new string[] { "Valid" });
                     writer.Write(true);
                     writer.NextRow();
                 }
                 catch (Exception ex)
                 {
-                    WriteException(ex, writer);
+                    UsageException ue = ex as UsageException;
+                    if (ue != null && isQueryValid && ue.InvalidValueCategory == null)
+                    {
+                        // If nothing else is allowed on the last line, return just that the base query is valid
+                        writer.SetColumns(new string[] { "Valid" });
+                        writer.Write(true);
+                        writer.NextRow();
+                    }
+                    else
+                    {
+                        WriteException(ex, writer, isQueryValid);
+                    }
                 }
             }
         }
@@ -156,7 +177,7 @@ namespace XForm
             }
         }
 
-        private void WriteException(Exception ex, ITabularWriter writer)
+        private void WriteException(Exception ex, ITabularWriter writer, bool isValid = false)
         {
             String8Block block = new String8Block();
 
@@ -165,7 +186,7 @@ namespace XForm
                 UsageException ue = ex as UsageException;
 
                 writer.SetColumns(new string[] { "Valid", "Usage", "ItemCategory", "Values" });
-                writer.Write(false);
+                writer.Write(isValid);
                 writer.Write(block.GetCopy(ue.Usage));
                 writer.Write(block.GetCopy(ue.InvalidValueCategory));
 

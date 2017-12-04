@@ -80,7 +80,7 @@ namespace XForm.Test.Query
             return s_cachedSample;
         }
 
-        private static string[] SampleColumns()
+        public static string[] SampleColumns()
         {
             using (IDataBatchEnumerator sample = SampleReader())
             {
@@ -129,7 +129,7 @@ namespace XForm.Test.Query
                 write {Path.Combine(s_outputRootFolderPath, "WebRequest.Nullable.Actual.xform")} 
                 where UserName != """"
                 assert none                    
-                    where DaysSinceJoined = 0
+                    where DaysSinceJoined = null
                     end
                 assert none
                     where IsPremiumUser = null

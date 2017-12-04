@@ -19036,13 +19036,13 @@ var Index = function (_React$Component) {
 
                             if (valid) {
                                 this.refresh();
+                            }
+
+                            if (!values) {
                                 return [];
                             }
 
-                            log(type);
-
                             var kind = monaco.languages.CompletionItemKind;
-
                             var suggestions = !values.length ? [] : values.split(";").map(function (s) {
                                 _newArrowCheck(this, _this4);
 
@@ -19090,7 +19090,7 @@ var Index = function (_React$Component) {
 
             var cols, rows;
             var results = this.state.results;
-            if (results) {
+            if (results && results.rows && results.colIndex) {
                 cols = Object.keys(results.colIndex);
                 rows = results.rows;
             }
@@ -19125,18 +19125,18 @@ var Index = function (_React$Component) {
                         _react2.default.createElement(
                             "tbody",
                             null,
-                            rows && rows.map(function (r) {
+                            cols && rows && rows.map(function (r, i) {
                                 _newArrowCheck(this, _this6);
 
                                 return _react2.default.createElement(
                                     "tr",
-                                    { key: r[0] },
-                                    r.map(function (c, i) {
+                                    { key: i },
+                                    r.map(function (c, ii) {
                                         _newArrowCheck(this, _this6);
 
                                         return _react2.default.createElement(
                                             "td",
-                                            { key: r[0] + i },
+                                            { key: i + "x" + ii },
                                             c
                                         );
                                     }.bind(this))

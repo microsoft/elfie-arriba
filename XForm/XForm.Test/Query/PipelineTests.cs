@@ -16,7 +16,8 @@ namespace XForm.Test.Query
             Assert.AreEqual("Simple", TestSplitAndJoin("Simple"));
             Assert.AreEqual("Simple", TestSplitAndJoin("  Simple "));
             Assert.AreEqual("Simple|settings", TestSplitAndJoin(" Simple   settings"));
-            Assert.AreEqual(@"read|C:\Download\Sample.csv",TestSplitAndJoin(@"read ""C:\Download\Sample.csv"""));
+            Assert.AreEqual(@"read|C:\Download\Sample.csv", TestSplitAndJoin(@"read ""C:\Download\Sample.csv"""));
+            Assert.AreEqual(@"read|C:\Download\Sample.csv", TestSplitAndJoin(@"read ""C:\Download\Sample.csv"));
             Assert.AreEqual(@"read|C:\Download\Sample.csv", TestSplitAndJoin(@"read ""C:\Download\Sample.csv"" "));
             Assert.AreEqual(@"value|""Quoted""", TestSplitAndJoin(@"value """"""Quoted"""""""));
             Assert.AreEqual(@"columns|One|Two|Three", TestSplitAndJoin(@"columns One,Two, Three"));

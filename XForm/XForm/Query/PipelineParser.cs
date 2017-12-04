@@ -108,7 +108,10 @@ namespace XForm.Query
                     }
                 }
 
-                throw new ArgumentException($"Unclosed Quote in query line: \"{configurationText}\"");
+                // If no closing quote, treat the value as going to the end of the line. This is so partially typed queries run.
+                value.Append(configurationText, index, configurationText.Length - index);
+                index = configurationText.Length;
+                return value.ToString();
             }
             else
             {

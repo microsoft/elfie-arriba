@@ -8,6 +8,8 @@ namespace XForm.Test.Query
     public class SuggestTests
     {
         private static string Verbs = string.Join("|", PipelineParser.SupportedVerbs.OrderBy((s) => s));
+        private static string Columns = string.Join("|", DataBatchEnumeratorTests.SampleColumns().OrderBy((s) => s));
+
         [TestMethod]
         public void Suggest_Basics()
         {
@@ -27,7 +29,7 @@ namespace XForm.Test.Query
                 read {DataBatchEnumeratorTests.WebRequestSample}
                 where HttpStatus != "));
 
-            Assert.AreEqual("", GetSuggestions($@"
+            Assert.AreEqual(Columns, GetSuggestions($@"
                 read {DataBatchEnumeratorTests.WebRequestSample}
                 columns "));
         }
