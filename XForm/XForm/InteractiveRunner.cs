@@ -23,17 +23,20 @@ namespace XForm
         private List<IDataBatchEnumerator> _stages;
         private List<string> _commands;
         private WorkflowRunner _workflowRunner;
+        private IStreamProvider _streamProvider;
 
         public IEnumerable<string> SourceNames => _workflowRunner.SourceNames;
 
-        public InteractiveRunner(WorkflowRunner workflowRunner)
+        public InteractiveRunner(WorkflowRunner workflowRunner, IStreamProvider streamProvider)
         {
             s_commandCachePath = Environment.ExpandEnvironmentVariables(@"%TEMP%\XForm.Last.xql");
 
             _pipeline = null;
             _stages = new List<IDataBatchEnumerator>();
             _commands = new List<string>();
+
             _workflowRunner = workflowRunner;
+            _streamProvider = streamProvider;
         }
 
         public IDataBatchEnumerator Build(string sourceName, WorkflowContext context)
@@ -70,7 +73,7 @@ namespace XForm
                     PipelineParser parser = null;
                     try
                     {
-                        parser = new PipelineParser(nextLine, new WorkflowContext(this));
+                        parser = new PipelineParser(nextLine, new WorkflowContext(this, _streamProvider));
 
 
                         if (!parser.HasAnotherPart) return lastCount;
@@ -179,7 +182,7 @@ namespace XForm
             _stages.Add(_pipeline);
 
             // Build the new stage
-            _pipeline = PipelineParser.BuildStage(nextLine, _pipeline, new WorkflowContext(this));
+            _pipeline = PipelineParser.BuildStage(nextLine, _pipeline, new WorkflowContext(this, _streamProvider));
 
             // Save the current command set
             _commands.Add(nextLine);

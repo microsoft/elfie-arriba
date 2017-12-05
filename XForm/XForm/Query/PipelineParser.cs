@@ -156,7 +156,6 @@ namespace XForm.Query
             EnsureLoaded();
             _scanner = new PipelineScanner(xqlQuery);
             _workflow = workflow;
-            _workflow.Parser = this;
         }
 
         private static void EnsureLoaded()
@@ -187,16 +186,36 @@ namespace XForm.Query
             }
         }
 
-        public static IDataBatchEnumerator BuildPipeline(string xqlQuery, IDataBatchEnumerator source = null, WorkflowContext context = null)
+        public static IDataBatchEnumerator BuildPipeline(string xqlQuery, IDataBatchEnumerator source = null, WorkflowContext outerContext = null)
         {
-            PipelineParser parser = new PipelineParser(xqlQuery, new WorkflowContext(context));
-            return parser.NextPipeline(source);
+            // Build an inner context to hold this copy of the parser
+            WorkflowContext innerContext = WorkflowContext.Push(outerContext);
+            PipelineParser parser = new PipelineParser(xqlQuery, innerContext);
+            innerContext.Parser = parser;
+
+            // Build the Pipeline
+            IDataBatchEnumerator result = parser.NextPipeline(source);
+
+            // Copy inner context results back out to the outer context
+            innerContext.Pop(outerContext);
+
+            return result;
         }
 
-        public static IDataBatchEnumerator BuildStage(string xqlQueryLine, IDataBatchEnumerator source, WorkflowContext context = null)
+        public static IDataBatchEnumerator BuildStage(string xqlQueryLine, IDataBatchEnumerator source, WorkflowContext outerContext = null)
         {
-            PipelineParser parser = new PipelineParser(xqlQueryLine, new WorkflowContext(context));
-            return parser.NextStage(source);
+            // Build an inner context to hold this copy of the parser
+            WorkflowContext innerContext = WorkflowContext.Push(outerContext);
+            PipelineParser parser = new PipelineParser(xqlQueryLine, innerContext);
+            innerContext.Parser = parser;
+
+            // Build the stage
+            IDataBatchEnumerator result = parser.NextStage(source);
+
+            // Copy the inner context results back to the outer context
+            innerContext.Pop(outerContext);
+
+            return result;
         }
 
         public IDataBatchEnumerator NextPipeline(IDataBatchEnumerator source)
@@ -266,10 +285,11 @@ namespace XForm.Query
 
             if (_workflow.Runner != null)
             {
-                return _workflow.Runner.Build(tableName, _workflow);
+                // If there's a WorkflowProvider, ask it to get the table. This will recurse.
+                IDataBatchEnumerator result = _workflow.Runner.Build(tableName, _workflow);
             }
 
-            if (tableName.EndsWith("xform") || Directory.Exists(tableName))
+            if (tableName.StartsWith("Table\\"))
             {
                 return new BinaryTableReader(tableName);
             }

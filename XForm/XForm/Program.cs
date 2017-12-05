@@ -11,6 +11,7 @@ using Microsoft.CodeAnalysis.Elfie.Diagnostics;
 using XForm.Data;
 using XForm.Extensions;
 using XForm.Query;
+using XForm.IO;
 
 namespace XForm
 {
@@ -20,9 +21,11 @@ namespace XForm
         {
             try
             {
+                LocalFileStreamProvider streamProvider = new LocalFileStreamProvider(Environment.CurrentDirectory);
+
                 if (args == null || args.Length == 0)
                 {
-                    InteractiveRunner runner = new InteractiveRunner(new WorkflowRunner(Environment.CurrentDirectory, DateTime.UtcNow));
+                    InteractiveRunner runner = new InteractiveRunner(new WorkflowRunner(streamProvider, DateTime.UtcNow), streamProvider);
                     return runner.Run();
                 }
 
@@ -35,20 +38,20 @@ namespace XForm
                     case "add":
                         if (args.Length < 3) throw new UsageException("'add' [SourceFileOrDirectory] [AsSourceName] [Full|Incremental?] [AsOfDateTimeUtc?]");
 
-                        return new WorkflowRunner(Environment.CurrentDirectory, ParseDateTimeOrDefault(args, 4, DateTime.MinValue)).Add(
+                        return new WorkflowRunner(streamProvider, ParseDateTimeOrDefault(args, 4, DateTime.MinValue)).Add(
                             args[1],
                             args[2],
                             ParseCrawlTypeOrDefault(args, 3, CrawlType.Full));
                     case "build":
                         if (args.Length < 2) throw new UsageException("'build' [DesiredOutputName] [DesiredOutputFormat?] [AsOfDateTimeUtc?]");
 
-                        string outputPath = new WorkflowRunner(Environment.CurrentDirectory, ParseDateTimeOrDefault(args, 3, DateTime.UtcNow)).Build(
+                        string outputPath = new WorkflowRunner(streamProvider, ParseDateTimeOrDefault(args, 3, DateTime.UtcNow)).Build(
                             args[1],
                             (args.Length > 2 ? args[2] : "xform"));
 
                         return 0;
                     case "http":
-                        HttpRunner runner = new HttpRunner(new WorkflowRunner(Environment.CurrentDirectory, ParseDateTimeOrDefault(args, 1, DateTime.UtcNow)));
+                        HttpRunner runner = new HttpRunner(new WorkflowRunner(streamProvider, ParseDateTimeOrDefault(args, 1, DateTime.UtcNow)));
                         runner.Run();
                         return 0;
                     default:

@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 
 using XForm.Data;
+using XForm.Extensions;
 using XForm.IO;
 using XForm.Query;
 
@@ -40,6 +41,20 @@ namespace XForm
                 this.StreamProvider = copyFrom.StreamProvider;
                 this.Logger = copyFrom.Logger;
                 this.Parser = copyFrom.Parser;
+            }
+        }
+
+        public static WorkflowContext Push(WorkflowContext outer)
+        {
+            return new WorkflowContext(outer);
+        }
+
+        public void Pop(WorkflowContext outer)
+        {
+            if (outer != null)
+            {
+                outer.NewestDependency = outer.NewestDependency.BiggestOf(this.NewestDependency);
+                outer.RebuiltSomething |= this.RebuiltSomething;
             }
         }
     }

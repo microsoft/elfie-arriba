@@ -17,88 +17,32 @@ using XForm.Query;
 
 namespace XForm
 {
-    public enum CrawlType
-    {
-        Full,
-        Incremental
-    }
 
-    public enum LocationType
-    {
-        Source,
-        Config,
-        Table,
-        Query,
-        Report
-    }
 
     public class WorkflowRunner : IWorkflowRunner
     {
-        public const string DateTimeFolderFormat = "yyyy.MM.dd HH.mm.ssZ";
-
+        public IStreamProvider StreamProvider { get; private set; }
         private DateTime AsOfDateTime { get; set; }
-        private string RootPath { get; set; }
 
-        private string SourcePath { get; set; }
-        private string ConfigPath { get; set; }
-        private string TablePath { get; set; }
-        private string QueryPath { get; set; }
-        private string ReportPath { get; set; }
+        private HashSet<string> Tables { get; set; }
+        private HashSet<string> Queries { get; set; }
 
-        private Dictionary<string, string> Tables { get; set; }
-        private Dictionary<string, string> Queries { get; set; }
-
-        public WorkflowRunner(string rootPath, DateTime asOfDateTime)
+        public WorkflowRunner(IStreamProvider streamProvider, DateTime asOfDateTime)
         {
+            this.StreamProvider = streamProvider;
             this.AsOfDateTime = asOfDateTime;
-
-            this.RootPath = Path.GetFullPath(rootPath);
-            this.SourcePath = Path.Combine(rootPath, "Source");
-            this.ConfigPath = Path.Combine(rootPath, "Config");
-            this.TablePath = Path.Combine(rootPath, "Table");
-            this.QueryPath = Path.Combine(rootPath, "Query");
-            this.ReportPath = Path.Combine(rootPath, "Report");
 
             IdentifySources();
         }
 
         private void IdentifySources()
         {
-            Tables = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            Queries = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-
-            // Add each source with a full crawl
-            if (Directory.Exists(SourcePath))
-            {
-                foreach (string sourceFolderPath in Directory.GetDirectories(SourcePath, "Full", SearchOption.AllDirectories))
-                {
-                    string pathUnderSources = Path.GetDirectoryName(sourceFolderPath).Substring(this.SourcePath.Length + 1);
-                    Tables[pathUnderSources] = sourceFolderPath;
-                }
-            }
-
-            // Add each known config query
-            if (Directory.Exists(ConfigPath))
-            {
-                foreach (string configQueryPath in Directory.GetFiles(ConfigPath, "*.xql", SearchOption.AllDirectories))
-                {
-                    string pathUnderConfig = Path.ChangeExtension(configQueryPath, null).Substring(this.ConfigPath.Length + 1);
-                    Tables[pathUnderConfig] = configQueryPath;
-                }
-            }
-
-            // Add each known output query
-            if (Directory.Exists(QueryPath))
-            {
-                foreach (string queryPath in Directory.GetFiles(QueryPath, "*.xql", SearchOption.AllDirectories))
-                {
-                    string pathUnderConfig = Path.ChangeExtension(queryPath, null).Substring(this.QueryPath.Length + 1);
-                    Queries[pathUnderConfig] = queryPath;
-                }
-            }
+            // TODO: Don't cache this full list in advance. The enumeration could be expensive for external locations.
+            Tables = new HashSet<string>(this.StreamProvider.Tables(), StringComparer.OrdinalIgnoreCase);
+            Queries = new HashSet<string>(this.StreamProvider.Queries(), StringComparer.OrdinalIgnoreCase);
         }
 
-        public IEnumerable<string> SourceNames => Tables.Keys.Concat(Queries.Keys);
+        public IEnumerable<string> SourceNames => Tables.Concat(Queries);
 
         public IDataBatchEnumerator Build(string tableName, WorkflowContext outerContext)
         {
@@ -108,80 +52,75 @@ namespace XForm
         public IDataBatchEnumerator Build(string tableName, WorkflowContext outerContext, bool deferred)
         {
             // If this is a query, there won't be a cached table - just build a pipeline to make it
-            string source;
-            if (Queries.TryGetValue(tableName, out source)) return PipelineParser.BuildPipeline(File.ReadAllText(source), null, outerContext);
+            StreamAttributes queryAttributes = StreamProvider.Attributes(StreamProvider.Path(LocationType.Query, tableName, ".xql"));
+            if (queryAttributes.Exists) return PipelineParser.BuildPipeline(StreamProvider.ReadAllText(queryAttributes.Path), null, outerContext);
 
-            // If this isn't a config or table, throw
-            if (!Tables.TryGetValue(tableName, out source)) throw new UsageException(tableName, "tableName", SourceNames);
+            // Find the config to build this, the latest source, and the latest output
+            StreamAttributes configAttributes = StreamProvider.Attributes(StreamProvider.Path(LocationType.Config, tableName, ".xql"));
+            StreamAttributes latestSourceAttributes = StreamProvider.LatestBeforeCutoff(LocationType.Source, tableName, AsOfDateTime);
+            StreamAttributes latestTableAttributes = StreamProvider.LatestBeforeCutoff(LocationType.Table, tableName, AsOfDateTime);
+            string latestTableQuery = (latestTableAttributes.Exists ? StreamProvider.ReadAllText(Path.Combine(latestTableAttributes.Path, "Config.xql")) : "");
+            
+            // If the Config doesn't exist and there's no source, throw
+            if (!configAttributes.Exists && !latestSourceAttributes.Exists) throw new UsageException(tableName, "tableName", SourceNames);
 
-            // Create a context to track the newest dependency (query or input file) under this table
-            WorkflowContext innerContext = new WorkflowContext(this);
+            // Create a context to track the version of this table we need (the latest dependency recursively found)
+            WorkflowContext innerContext = WorkflowContext.Push(outerContext);
+            innerContext.Runner = this;
+            innerContext.StreamProvider = StreamProvider;
+            innerContext.NewestDependency = latestTableAttributes.WhenModifiedUtc;
 
-            // Look for the latest output already created (if any)
-            DateTime lastTableVersionBeforeCutoff = LatestVersionBeforeCutoff(LocationType.Table, tableName, AsOfDateTime, null);
-            innerContext.NewestDependency = innerContext.NewestDependency.BiggestOf(lastTableVersionBeforeCutoff);
-
-            string previousXql = "";
-            if (lastTableVersionBeforeCutoff > DateTime.MinValue)
-            {
-                string previousTablePath = FullPath(LocationType.Table, tableName, CrawlType.Full, lastTableVersionBeforeCutoff);
-                previousXql = File.ReadAllText(Path.Combine(previousTablePath, "Config.xql"));
-            }
-
-            string tablePath;
+            // Determine the XQL to build the table and construct a builder which can do so
             string xql;
             IDataBatchEnumerator builder;
 
-            if (source.EndsWith(".xql", StringComparison.OrdinalIgnoreCase))
+            if (!configAttributes.Exists)
             {
-                // If there's a query to build it, record the lastWriteTime of the query
-                xql = File.ReadAllText(source);
-
-                // Compute how to build this output (recursively checking the AsOfDateTimes of referenced sources)
-                builder = PipelineParser.BuildPipeline(xql, null, innerContext);
-            }
-            else
-            {
-                // If not, the query is a simple conversion. Find the latest raw source file of this name before the cutoff
-                DateTime lastSourceVersionBeforeCutoff = LatestVersionBeforeCutoff(LocationType.Source, tableName, AsOfDateTime, null);
-                innerContext.NewestDependency = innerContext.NewestDependency.BiggestOf(lastSourceVersionBeforeCutoff);
+                // If there's no config, it's a simple conversion. Is the table up-to-date?
+                innerContext.NewestDependency = innerContext.NewestDependency.BiggestOf(latestSourceAttributes.WhenModifiedUtc);
 
                 // Find the input file itself
-                tablePath = FullPath(LocationType.Table, tableName, CrawlType.Full, innerContext.NewestDependency);
-                string sourceVersionPath = FullPath(LocationType.Source, tableName, CrawlType.Full, lastSourceVersionBeforeCutoff);
-                string[] files = Directory.GetFiles(sourceVersionPath);
-                if (files.Length > 1) throw new NotImplementedException("Need concatenating reader");
+                IEnumerable<StreamAttributes> sourceFiles = StreamProvider.Enumerate(latestSourceAttributes.Path, true);
+                if (sourceFiles.Count() > 1) throw new NotImplementedException("Need concatenating reader");
 
                 // Construct a pipeline to read the raw file only
-                xql = $"read \"{files[0]}\"";
+                xql = $"read \"{sourceFiles.First().Path}\"";
                 builder = PipelineParser.BuildPipeline(xql, null, null);
             }
+            else
+            { 
+                // If there is a config, the config is how to build it
+                xql = StreamProvider.ReadAllText(configAttributes.Path);
 
-            tablePath = FullPath(LocationType.Table, tableName, CrawlType.Full, innerContext.NewestDependency);
+                // Build a pipeline for the query, recursively creating dependencies
+                builder = PipelineParser.BuildPipeline(xql, null, innerContext);
+            }
 
-            // If the output isn't up-to-date, ...
-            if (innerContext.NewestDependency - lastTableVersionBeforeCutoff > TimeSpan.FromSeconds(1) || xql != previousXql || innerContext.RebuiltSomething)
+            // Get the path we're either reading or building
+            string tablePath = StreamProvider.Path(LocationType.Table, tableName, CrawlType.Full, innerContext.NewestDependency);
+
+            // If sources rebuilt, the query changed, or the latest output isn't up-to-date, rebuild it
+            if (innerContext.RebuiltSomething || xql != latestTableQuery || innerContext.NewestDependency - latestTableAttributes.WhenModifiedUtc > TimeSpan.FromSeconds(1))
             {
                 // If we're not running now, just return how to build it
                 if (deferred) return builder;
 
                 // Otherwise, build it now; we'll return the query to read the output
-                Trace.WriteLine($"COMPUTE: [{innerContext.NewestDependency.ToString(DateTimeFolderFormat)}] {tableName}");
+                Trace.WriteLine($"COMPUTE: [{innerContext.NewestDependency.ToString(StreamProviderExtensions.DateTimeFolderFormat)}] {tableName}");
                 new BinaryTableWriter(builder, tablePath).RunAndDispose();
-                File.WriteAllText(Path.Combine(tablePath, "Config.xql"), xql);
+                StreamProvider.WriteAllText(Path.Combine(tablePath, "Config.xql"), xql);
                 innerContext.RebuiltSomething = true;
             }
 
             // Report the newest dependency in this chain to the components above
-            outerContext.NewestDependency = outerContext.NewestDependency.BiggestOf(innerContext.NewestDependency);
-            outerContext.RebuiltSomething |= innerContext.RebuiltSomething;
+            innerContext.Pop(outerContext);
 
             return new BinaryTableReader(tablePath);
         }
 
         public string Build(string tableName, string outputFormat)
         {
-            WorkflowContext context = new WorkflowContext(this);
+            WorkflowContext context = new WorkflowContext(this, StreamProvider);
             IDataBatchEnumerator builder = null;
 
             try
@@ -200,20 +139,15 @@ namespace XForm
                 }
                 else
                 {
-                    DateTime newestReport = LatestVersionBeforeCutoff(LocationType.Report, tableName, AsOfDateTime, null);
-                    outputPath = Path.Combine(FullPath(LocationType.Report, tableName, CrawlType.Full, newestReport), $"Report.{outputFormat}");
+                    StreamAttributes attributes = StreamProvider.LatestBeforeCutoff(LocationType.Report, tableName, AsOfDateTime);
+                    outputPath = Path.Combine(StreamProvider.Path(LocationType.Report, tableName, CrawlType.Full, attributes.WhenModifiedUtc), $"Report.{outputFormat}");
 
-                    if (newestReport < context.NewestDependency || context.RebuiltSomething || !File.Exists(outputPath))
+                    if (attributes.WhenModifiedUtc < context.NewestDependency || context.RebuiltSomething || !StreamProvider.Attributes(outputPath).Exists)
                     {
                         // If the report needs to be rebuilt, make it and return the path
-                        outputPath = Path.Combine(FullPath(LocationType.Report, tableName, CrawlType.Full, context.NewestDependency), $"Report.{outputFormat}");
+                        outputPath = Path.Combine(StreamProvider.Path(LocationType.Report, tableName, CrawlType.Full, context.NewestDependency), $"Report.{outputFormat}");
                         new TabularFileWriter(builder, outputPath).RunAndDispose();
                         context.RebuiltSomething = true;
-                    }
-                    else
-                    {
-                        // If the last report is already up-to-date, return the existing path
-                        outputPath = Path.Combine(FullPath(LocationType.Report, tableName, CrawlType.Full, newestReport), $"Report.{outputFormat}");
                     }
                 }
 
@@ -231,89 +165,23 @@ namespace XForm
             }
         }
 
-        public DateTime LatestVersionBeforeCutoff(LocationType location, string tableName, DateTime asOfDateTime, Logger logger)
-        {
-            // TODO: Add incremental merging
-
-            // Find the last Full crawl which isn't after the cutoff
-            DateTime latestBeforeCutoff = DateTime.MinValue;
-
-            string sourceFolder = Path.Combine(PathForType(location), tableName, "Full");
-            if (!Directory.Exists(sourceFolder)) return latestBeforeCutoff;
-
-            foreach (string versionFolder in Directory.GetDirectories(sourceFolder))
-            {
-                DateTime versionAsOf;
-                if (!DateTime.TryParseExact(Path.GetFileName(versionFolder), DateTimeFolderFormat, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out versionAsOf))
-                {
-                    if (logger != null) logger.Write(MessageType.Warning, "WorkFlowRunner.LatestVersionBeforeCutoff", $"{versionFolder} is not a properly named DateTime version folder.");
-                    continue;
-                }
-
-                if (versionAsOf > latestBeforeCutoff && versionAsOf <= asOfDateTime)
-                {
-                    latestBeforeCutoff = versionAsOf;
-                }
-            }
-
-            if (logger != null) logger.Write(MessageType.Source, "WorkFlowRunner.LatestVersionBeforeCutoff", $"{location}.{tableName} => {latestBeforeCutoff}");
-            return latestBeforeCutoff;
-        }
-
-        private string FullPath(LocationType location, string tableName, CrawlType crawl, DateTime asOfDateTime)
-        {
-            return Path.Combine(PathForType(location), tableName, crawl.ToString(), asOfDateTime.ToString(DateTimeFolderFormat));
-        }
-
-        private string PathForType(LocationType type)
-        {
-            switch (type)
-            {
-                case LocationType.Source:
-                    return SourcePath;
-                case LocationType.Table:
-                    return TablePath;
-                case LocationType.Config:
-                    return ConfigPath;
-                case LocationType.Query:
-                    return QueryPath;
-                case LocationType.Report:
-                    return ReportPath;
-                default:
-                    throw new NotImplementedException(type.ToString());
-            }
-        }
-
-        public DateTime GetAsOfDate(string sourceFileOrFolderPath)
-        {
-            if (Directory.Exists(sourceFileOrFolderPath))
-            {
-                return Directory.GetFiles(sourceFileOrFolderPath, "*.*", SearchOption.AllDirectories).Max((path) => File.GetLastWriteTimeUtc(path));
-            }
-            else
-            {
-                return File.GetLastWriteTimeUtc(sourceFileOrFolderPath);
-            }
-        }
-
-        public int Add(string sourceFileOrFolderPath, string tableName, CrawlType type, DateTime asOfDateTime = default(DateTime))
+        public int Add(string sourceFileOrFolderPath, string tableName, CrawlType crawlType, DateTime asOfDateTime = default(DateTime))
         {
             // If the 'asOfDateTime' wasn't passed, use the File Write Time
-            if (asOfDateTime == default(DateTime)) asOfDateTime = GetAsOfDate(sourceFileOrFolderPath);
+            if (asOfDateTime == default(DateTime)) asOfDateTime = File.GetLastWriteTimeUtc(sourceFileOrFolderPath);
 
-            string desiredFolderPath = Path.Combine(SourcePath, tableName, type.ToString(), asOfDateTime.ToUniversalTime().ToString(DateTimeFolderFormat));
+            string desiredFolderPath = StreamProvider.Path(LocationType.Source, tableName, crawlType, asOfDateTime);
 
-            Directory.CreateDirectory(desiredFolderPath);
             if (Directory.Exists(sourceFileOrFolderPath))
             {
                 foreach (string filePath in Directory.GetFiles(sourceFileOrFolderPath, "*.*", SearchOption.AllDirectories))
                 {
-                    File.Copy(filePath, Path.Combine(desiredFolderPath, Path.GetFileName(filePath)));
+                    StreamProvider.Copy(File.OpenRead(filePath), Path.Combine(desiredFolderPath, Path.GetFileName(filePath)));
                 }
             }
             else
             {
-                File.Copy(sourceFileOrFolderPath, Path.Combine(desiredFolderPath, Path.GetFileName(sourceFileOrFolderPath)));
+                StreamProvider.Copy(File.OpenRead(sourceFileOrFolderPath), Path.Combine(desiredFolderPath, Path.GetFileName(sourceFileOrFolderPath)));
             }
 
             // TODO: Delete old copies if there are too many
@@ -324,11 +192,8 @@ namespace XForm
 
         public void SaveXql(LocationType type, string tableName, string xql)
         {
-            string outputPath = Path.Combine(PathForType(type), $"{tableName}.xql");
-            string directory = Path.GetDirectoryName(outputPath);
-            if (!String.IsNullOrEmpty(directory)) Directory.CreateDirectory(directory);
-            File.WriteAllText(outputPath, xql);
-            IdentifySources();
+            string queryPath = StreamProvider.Path(type, tableName, ".xql");
+            StreamProvider.WriteAllText(queryPath, xql);
         }
     }
 
