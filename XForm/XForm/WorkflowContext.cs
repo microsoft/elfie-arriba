@@ -13,6 +13,7 @@ namespace XForm
     public class WorkflowContext
     {
         public IWorkflowRunner Runner { get; set; }
+        public IStreamProvider StreamProvider { get; set; }
         public ILogger Logger { get; set; }
         public PipelineParser Parser { get; set; }
 
@@ -25,9 +26,10 @@ namespace XForm
             this.RebuiltSomething = false;
         }
 
-        public WorkflowContext(IWorkflowRunner runner) : this()
+        public WorkflowContext(IWorkflowRunner runner, IStreamProvider streamProvider) : this()
         {
             this.Runner = runner;
+            this.StreamProvider = streamProvider;
         }
 
         public WorkflowContext(WorkflowContext copyFrom) : this()
@@ -35,6 +37,7 @@ namespace XForm
             if (copyFrom != null)
             {
                 this.Runner = copyFrom.Runner;
+                this.StreamProvider = copyFrom.StreamProvider;
                 this.Logger = copyFrom.Logger;
                 this.Parser = copyFrom.Parser;
             }
