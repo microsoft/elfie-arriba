@@ -29,6 +29,16 @@ namespace XForm
         {
             this.Runner = runner;
         }
+
+        public WorkflowContext(WorkflowContext copyFrom) : this()
+        {
+            if (copyFrom != null)
+            {
+                this.Runner = copyFrom.Runner;
+                this.Logger = copyFrom.Logger;
+                this.Parser = copyFrom.Parser;
+            }
+        }
     }
 
     public interface IWorkflowRunner

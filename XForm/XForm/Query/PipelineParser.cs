@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
@@ -188,13 +189,13 @@ namespace XForm.Query
 
         public static IDataBatchEnumerator BuildPipeline(string xqlQuery, IDataBatchEnumerator source = null, WorkflowContext context = null)
         {
-            PipelineParser parser = new PipelineParser(xqlQuery, context ?? new WorkflowContext());
+            PipelineParser parser = new PipelineParser(xqlQuery, new WorkflowContext(context));
             return parser.NextPipeline(source);
         }
 
         public static IDataBatchEnumerator BuildStage(string xqlQueryLine, IDataBatchEnumerator source, WorkflowContext context = null)
         {
-            PipelineParser parser = new PipelineParser(xqlQueryLine, context ?? new WorkflowContext());
+            PipelineParser parser = new PipelineParser(xqlQueryLine, new WorkflowContext(context));
             return parser.NextStage(source);
         }
 
@@ -225,6 +226,10 @@ namespace XForm.Query
         {
             _currentLineBuilder = null;
             ParseNextOrThrow(() => s_pipelineStageBuildersByName.TryGetValue(_scanner.CurrentPart, out _currentLineBuilder), "verb", SupportedVerbs);
+
+            // Verify the Workflow Parser is this parser (need to use copy constructor on WorkflowContext when recursing to avoid resuming by parsing the wrong query)
+            Debug.Assert(_workflow.Parser == this);
+
             IDataBatchEnumerator stage = _currentLineBuilder.Build(source, _workflow);
 
             // Verify all arguments are used
