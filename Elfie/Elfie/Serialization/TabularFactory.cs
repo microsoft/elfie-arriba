@@ -13,26 +13,38 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
 {
     public static class TabularFactory
     {
-        private static Dictionary<string, Func<string, ITabularReader>> s_readers;
-        private static Dictionary<string, Func<string, ITabularWriter>> s_writers;
+        private static Dictionary<string, Func<string, ITabularReader>> s_PathToReader;
+        private static Dictionary<string, Func<string, ITabularWriter>> s_PathToWriter;
+        private static Dictionary<string, Func<Stream, ITabularReader>> s_StreamToReader;
+        private static Dictionary<string, Func<Stream, ITabularWriter>> s_StreamToWriter;
 
         private static void LoadReadersAndWriters()
         {
-            s_readers = new Dictionary<string, Func<string, ITabularReader>>(StringComparer.OrdinalIgnoreCase);
-            s_writers = new Dictionary<string, Func<string, ITabularWriter>>(StringComparer.OrdinalIgnoreCase);
+            // Only load if not already loaded
+            if (s_PathToReader != null) return;
 
-            s_readers["csv"] = (path) => new CsvReader(path);
-            s_readers["csvNH"] = (path) => new CsvReader(MapExtension(path, ".csv"), false);
-            s_readers["tsv"] = (path) => new TsvReader(path);
-            s_readers["tsvNH"] = (path) => new TsvReader(MapExtension(path, ".tsv"), false);
-            s_readers["iislog"] = (path) => new IISTabularReader(MapExtension(path, ".log"));
-            s_readers["ldf"] = (path) => new LdfTabularReader(path);
-            s_readers["ldif"] = (path) => new LdfTabularReader(path);
+            s_PathToReader = new Dictionary<string, Func<string, ITabularReader>>(StringComparer.OrdinalIgnoreCase);
+            s_PathToWriter = new Dictionary<string, Func<string, ITabularWriter>>(StringComparer.OrdinalIgnoreCase);
+            s_StreamToReader = new Dictionary<string, Func<Stream, ITabularReader>>(StringComparer.OrdinalIgnoreCase);
+            s_StreamToWriter = new Dictionary<string, Func<Stream, ITabularWriter>>(StringComparer.OrdinalIgnoreCase);
 
-            s_writers["cout"] = (path) => new ConsoleTabularWriter();
-            s_writers["csv"] = (path) => new CsvWriter(path, true);
-            s_writers["tsv"] = (path) => new TsvWriter(path, true);
-            s_writers["json"] = (path) => new JsonTabularWriter(path);
+            s_PathToReader["csv"] = (path) => new CsvReader(path);
+            s_PathToReader["csvNH"] = (path) => new CsvReader(MapExtension(path, ".csv"), false);
+            s_PathToReader["tsv"] = (path) => new TsvReader(path);
+            s_PathToReader["tsvNH"] = (path) => new TsvReader(MapExtension(path, ".tsv"), false);
+            s_PathToReader["iislog"] = (path) => new IISTabularReader(MapExtension(path, ".log"));
+            s_PathToReader["ldf"] = (path) => new LdfTabularReader(path);
+            s_PathToReader["ldif"] = (path) => new LdfTabularReader(path);
+
+            s_PathToWriter["cout"] = (path) => new ConsoleTabularWriter();
+            s_PathToWriter["csv"] = (path) => new CsvWriter(path, true);
+            s_PathToWriter["tsv"] = (path) => new TsvWriter(path, true);
+            s_PathToWriter["json"] = (path) => new JsonTabularWriter(path);
+
+            s_StreamToReader["csv"] = (stream) => new CsvReader(stream);
+            s_StreamToReader["tsv"] = (stream) => new TsvReader(stream);
+            s_StreamToWriter["csv"] = (stream) => new CsvWriter(stream);
+            s_StreamToWriter["tsv"] = (stream) => new TsvWriter(stream);
 
             // Register ITabularReader and ITabularWriter ctors from app.config
             foreach (string key in ConfigurationManager.AppSettings.AllKeys)
@@ -40,23 +52,25 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
                 if (key.StartsWith("ITabularReader", StringComparison.OrdinalIgnoreCase))
                 {
                     string[] settings = ConfigurationManager.AppSettings[key].Split(';');
-                    Func<string, ITabularReader> ctor = GetStringConstructorFunc<ITabularReader>(key, settings[1], settings[2]);
-                    if (ctor == null) continue;
+                    Func<string, ITabularReader> stringCtor = GetConstructorFunc<ITabularReader, string>(key, settings[1], settings[2]);
+                    Func<Stream, ITabularReader> streamCtor = GetConstructorFunc<ITabularReader, Stream>(key, settings[1], settings[2]);
 
                     foreach (string extension in settings[0].Split(','))
                     {
-                        s_readers[extension] = ctor;
+                        if (stringCtor != null) s_PathToReader[extension] = stringCtor;
+                        if (streamCtor != null) s_StreamToReader[extension] = streamCtor;
                     }
                 }
                 else if (key.StartsWith("ITabularWriter", StringComparison.OrdinalIgnoreCase))
                 {
                     string[] settings = ConfigurationManager.AppSettings[key].Split(';');
-                    Func<string, ITabularWriter> ctor = GetStringConstructorFunc<ITabularWriter>(key, settings[1], settings[2]);
-                    if (ctor == null) continue;
+                    Func<string, ITabularWriter> stringCtor = GetConstructorFunc<ITabularWriter, string>(key, settings[1], settings[2]);
+                    Func<Stream, ITabularWriter> streamCtor = GetConstructorFunc<ITabularWriter, Stream>(key, settings[1], settings[2]);
 
                     foreach (string extension in settings[0].Split(','))
                     {
-                        s_writers[extension] = ctor;
+                        if (stringCtor != null) s_PathToWriter[extension] = stringCtor;
+                        if (streamCtor != null) s_StreamToWriter[extension] = streamCtor;
                     }
                 }
             }
@@ -71,49 +85,71 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             return Path.ChangeExtension(filePath, toExtension);
         }
 
-        private static Func<string, T> GetStringConstructorFunc<T>(string keyName, string assemblyName, string typeName)
+        private static Func<U, T> GetConstructorFunc<T, U>(string keyName, string assemblyName, string typeName)
         {
             Assembly asm = Assembly.Load(assemblyName);
             Type readerType = asm.GetType(typeName);
             if (readerType == null)
             {
-                Trace.WriteLine(String.Format("TabularFactory could not add \"{0}\". Type \"{1}\" not found in assembly \"{2}\".", keyName, typeName, assemblyName));
+                Trace.WriteLine($"TabularFactory could not add \"{keyName}\". Type \"{typeName}\" not found in assembly \"{assemblyName}\".");
                 return null;
             }
 
-            ConstructorInfo ctor = readerType.GetConstructor(new Type[] { typeof(string) });
+            ConstructorInfo ctor = readerType.GetConstructor(new Type[] { typeof(U) });
             if (ctor == null)
             {
-                Trace.WriteLine(String.Format("TabularFactory could not add \"{0}\". No constructor taking only a string found on Type \"{1}\" in assembly \"{2}\".", keyName, typeName, assemblyName));
+                Trace.WriteLine($"TabularFactory could not add \"{keyName}\". No constructor taking only a \"{typeof(U).Name}\" found on Type \"{typeName}\" in assembly \"{assemblyName}\".");
                 return null;
             }
 
-            ParameterExpression stringParameter = Expression.Parameter(typeof(string), "filePath");
-            return Expression.Lambda<Func<string, T>>(Expression.New(ctor, stringParameter), stringParameter).Compile();
+            ParameterExpression parameter = Expression.Parameter(typeof(U), "source");
+            return Expression.Lambda<Func<U, T>>(Expression.New(ctor, parameter), parameter).Compile();
         }
 
         public static ITabularReader BuildReader(string filePath)
         {
-            if (s_readers == null) LoadReadersAndWriters();
+            LoadReadersAndWriters();
 
             string extension = Path.GetExtension(filePath).ToLowerInvariant().TrimStart('.');
             Func<string, ITabularReader> ctor;
-            if (s_readers.TryGetValue(extension, out ctor)) return ctor(filePath);
+            if (s_PathToReader.TryGetValue(extension, out ctor)) return ctor(filePath);
 
-            throw new NotSupportedException(String.Format("Xsv does know how to read \"{0}\". Known Extensions: [{1}]", extension, String.Join(", ", s_readers.Keys)));
+            throw new NotSupportedException(String.Format("Xsv does know how to read \"{0}\". Known Extensions: [{1}]", extension, String.Join(", ", s_PathToReader.Keys)));
+        }
+
+        public static ITabularReader BuildReader(Stream stream, string filePath)
+        {
+            LoadReadersAndWriters();
+
+            string extension = Path.GetExtension(filePath).ToLowerInvariant().TrimStart('.');
+            Func<Stream, ITabularReader> ctor;
+            if (s_StreamToReader.TryGetValue(extension, out ctor)) return ctor(stream);
+
+            throw new NotSupportedException(String.Format("Xsv does know how to read \"{0}\". Known Extensions: [{1}]", extension, String.Join(", ", s_StreamToReader.Keys)));
         }
 
         public static ITabularWriter BuildWriter(string filePath)
         {
-            if (s_writers == null) LoadReadersAndWriters();
+            LoadReadersAndWriters();
 
             string extension = Path.GetExtension(filePath).ToLowerInvariant().TrimStart('.');
             if (String.IsNullOrEmpty(extension)) extension = filePath;
 
             Func<string, ITabularWriter> ctor;
-            if (s_writers.TryGetValue(extension, out ctor)) return ctor(filePath);
+            if (s_PathToWriter.TryGetValue(extension, out ctor)) return ctor(filePath);
 
-            throw new NotSupportedException(String.Format("Xsv does not know how to write \"{0}\". Known Extensions: [{1}]", extension, String.Join(", ", s_writers.Keys)));
+            throw new NotSupportedException(String.Format("Xsv does not know how to write \"{0}\". Known Extensions: [{1}]", extension, String.Join(", ", s_PathToWriter.Keys)));
+        }
+
+        public static ITabularWriter BuildWriter(Stream stream, string filePath)
+        {
+            LoadReadersAndWriters();
+
+            string extension = Path.GetExtension(filePath).ToLowerInvariant().TrimStart('.');
+            Func<Stream, ITabularWriter> ctor;
+            if (s_StreamToWriter.TryGetValue(extension, out ctor)) return ctor(stream);
+
+            throw new NotSupportedException(String.Format("Xsv does know how to write \"{0}\". Known Extensions: [{1}]", extension, String.Join(", ", s_StreamToWriter.Keys)));
         }
 
         public static ITabularWriter AppendWriter(string filePath, IEnumerable<string> columnNames)
