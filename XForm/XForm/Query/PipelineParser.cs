@@ -286,10 +286,10 @@ namespace XForm.Query
             if (_workflow.Runner != null)
             {
                 // If there's a WorkflowProvider, ask it to get the table. This will recurse.
-                IDataBatchEnumerator result = _workflow.Runner.Build(tableName, _workflow);
+                return _workflow.Runner.Build(tableName, _workflow);
             }
 
-            if (tableName.StartsWith("Table\\"))
+            if (tableName.StartsWith("Table\\") || tableName.EndsWith(".xform"))
             {
                 return new BinaryTableReader(tableName);
             }

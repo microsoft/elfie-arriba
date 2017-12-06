@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 
@@ -17,8 +16,6 @@ using XForm.Query;
 
 namespace XForm
 {
-
-
     public class WorkflowRunner : IWorkflowRunner
     {
         public IStreamProvider StreamProvider { get; private set; }

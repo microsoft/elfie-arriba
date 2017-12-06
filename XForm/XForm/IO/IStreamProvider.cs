@@ -6,6 +6,17 @@ using System.IO;
 
 namespace XForm.IO
 {
+    public interface IStreamProvider
+    {
+        Stream OpenRead(string logicalPath);
+        Stream OpenWrite(string logicalPath);
+        Stream OpenAppend(string logicalPath);
+        StreamAttributes Attributes(string logicalPath);
+
+        IEnumerable<StreamAttributes> Enumerate(string underLogicalPath, bool recursive);
+        void Publish(string logicalTablePath);
+    }
+
     public enum CrawlType
     {
         Full,
@@ -34,17 +45,6 @@ namespace XForm.IO
         }
 
         public static StreamAttributes NotExists = new StreamAttributes() { Exists = false, WhenModifiedUtc = DateTime.MinValue };
-    }
-
-    public interface IStreamProvider
-    {
-        Stream OpenRead(string logicalPath);
-        Stream OpenWrite(string logicalPath);
-        Stream OpenAppend(string logicalPath);
-        StreamAttributes Attributes(string logicalPath);
-
-        IEnumerable<StreamAttributes> Enumerate(string underLogicalPath, bool recursive);
-        void Publish(string logicalTablePath);
     }
 
     public static class StreamProviderExtensions
@@ -231,7 +231,6 @@ namespace XForm.IO
         {
             return new StreamAttributes() { Exists = true, Path = info.FullName.Substring(RootPath.Length + 1), Length = info.Length, WhenModifiedUtc = info.LastWriteTimeUtc };
         }
-
 
         private StreamAttributes Convert(DirectoryInfo info)
         {
