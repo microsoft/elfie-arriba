@@ -5,6 +5,7 @@ using System;
 using System.IO;
 
 using XForm.Data;
+using XForm.IO;
 using XForm.Query;
 using XForm.Transforms;
 
@@ -16,15 +17,15 @@ namespace XForm.Types
 
         public Type Type => typeof(byte);
 
-        public IColumnReader BinaryReader(string columnPath)
+        public IColumnReader BinaryReader(IStreamProvider streamProvider, string columnPath)
         {
-            return new ByteReader(new FileStream(Path.Combine(columnPath, "V.u8.bin"), FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+            return new ByteReader(streamProvider.OpenRead(Path.Combine(columnPath, "V.u8.bin")));
         }
 
-        public IColumnWriter BinaryWriter(string columnPath)
+        public IColumnWriter BinaryWriter(IStreamProvider streamProvider, string columnPath)
         {
             Directory.CreateDirectory(columnPath);
-            return new ByteWriter(new FileStream(Path.Combine(columnPath, "V.u8.bin"), FileMode.Create, FileAccess.Write, FileShare.Read | FileShare.Delete));
+            return new ByteWriter(streamProvider.OpenWrite(Path.Combine(columnPath, "V.u8.bin")));
         }
 
         public Action<DataBatch, RowRemapper> TryGetComparer(CompareOperator op, object value)
@@ -41,10 +42,10 @@ namespace XForm.Types
 
     public class ByteReader : IColumnReader
     {
-        private FileStream _stream;
+        private Stream _stream;
         private byte[] _array;
 
-        public ByteReader(FileStream stream)
+        public ByteReader(Stream stream)
         {
             _stream = stream;
         }
@@ -75,10 +76,10 @@ namespace XForm.Types
 
     public class ByteWriter : IColumnWriter
     {
-        private FileStream _stream;
+        private Stream _stream;
         private byte[] _buffer;
 
-        public ByteWriter(FileStream stream)
+        public ByteWriter(Stream stream)
         {
             _stream = stream;
         }

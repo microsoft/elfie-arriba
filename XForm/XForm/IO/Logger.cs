@@ -30,10 +30,10 @@ namespace XForm.IO
         private ITabularWriter _writer;
         public bool Failed { get; private set; }
 
-        public Logger(string outputFilePath)
+        public Logger(IStreamProvider streamProvider, string outputFilePath)
         {
             string logFilePath = Path.Combine(outputFilePath, "Log.csv");
-            _writer = TabularFactory.BuildWriter(logFilePath);
+            _writer = TabularFactory.BuildWriter(streamProvider.OpenWrite(logFilePath), logFilePath);
             _writer.SetColumns(new string[] { "WhenUtc", "MessageType", "SourceComponent", "Message" });
 
             _block = new String8Block();

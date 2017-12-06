@@ -15,17 +15,23 @@ using XForm.IO;
 
 namespace XForm
 {
-    internal class Program
+    public class Program
     {
-        private static int Main(string[] args)
+        public static int Main(string[] args)
+        {
+            return Run(args, Environment.CurrentDirectory, DateTime.UtcNow);
+        }
+
+        public static int Run(string[] args, string rootDirectory, DateTime asOfDateTime)
         {
             try
             {
-                LocalFileStreamProvider streamProvider = new LocalFileStreamProvider(Environment.CurrentDirectory);
+                WorkflowContext context = new WorkflowContext();
+                context.StreamProvider = new LocalFileStreamProvider(rootDirectory);
 
                 if (args == null || args.Length == 0)
                 {
-                    InteractiveRunner runner = new InteractiveRunner(new WorkflowRunner(streamProvider, DateTime.UtcNow), streamProvider);
+                    InteractiveRunner runner = new InteractiveRunner(context);
                     return runner.Run();
                 }
 
@@ -34,24 +40,26 @@ namespace XForm
                 {
                     case "run":
                         if (args.Length < 2) throw new UsageException("'run' [QueryFilePath]");
-                        return RunFileQuery(args[1]);
+                        return RunFileQuery(args[1], context);
                     case "add":
                         if (args.Length < 3) throw new UsageException("'add' [SourceFileOrDirectory] [AsSourceName] [Full|Incremental?] [AsOfDateTimeUtc?]");
 
-                        return new WorkflowRunner(streamProvider, ParseDateTimeOrDefault(args, 4, DateTime.MinValue)).Add(
+                        return new WorkflowRunner(context, asOfDateTime).Add(
                             args[1],
                             args[2],
-                            ParseCrawlTypeOrDefault(args, 3, CrawlType.Full));
+                            ParseCrawlTypeOrDefault(args, 3, CrawlType.Full),
+                            ParseDateTimeOrDefault(args, 4, DateTime.MinValue));
                     case "build":
                         if (args.Length < 2) throw new UsageException("'build' [DesiredOutputName] [DesiredOutputFormat?] [AsOfDateTimeUtc?]");
 
-                        string outputPath = new WorkflowRunner(streamProvider, ParseDateTimeOrDefault(args, 3, DateTime.UtcNow)).Build(
+                        string outputPath = new WorkflowRunner(context, ParseDateTimeOrDefault(args, 3, asOfDateTime)).Build(
                             args[1],
                             (args.Length > 2 ? args[2] : "xform"));
 
                         return 0;
                     case "http":
-                        HttpRunner runner = new HttpRunner(new WorkflowRunner(streamProvider, ParseDateTimeOrDefault(args, 1, DateTime.UtcNow)));
+                        context.Runner = new WorkflowRunner(context, ParseDateTimeOrDefault(args, 1, asOfDateTime));
+                        HttpRunner runner = new HttpRunner(context);
                         runner.Run();
                         return 0;
                     default:
@@ -96,14 +104,14 @@ namespace XForm
             return result;
         }
 
-        private static int RunFileQuery(string queryFilePath)
+        private static int RunFileQuery(string queryFilePath, WorkflowContext context)
         {
             string query = File.ReadAllText(queryFilePath);
 
             int rowsWritten = 0;
             using (new TraceWatch(query))
             {
-                using (IDataBatchEnumerator source = PipelineParser.BuildPipeline(query))
+                using (IDataBatchEnumerator source = PipelineParser.BuildPipeline(query, null, context))
                 {
                     rowsWritten = source.Run();
                 }

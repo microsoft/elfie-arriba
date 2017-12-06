@@ -61,7 +61,7 @@ namespace XForm.Test.Query
 
             IDataBatchEnumerator query = PipelineParser.BuildPipeline($@"
                 where ID = {value}
-                count", arrayTable);
+                count", arrayTable, new WorkflowContext());
 
             // Run once to force pre-allocation of buffers
             query.Run();

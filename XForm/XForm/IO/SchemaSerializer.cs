@@ -16,10 +16,10 @@ namespace XForm.IO
     {
         private const string SchemaFileName = "Schema.csv";
 
-        public static void Write(string tableRootPath, IEnumerable<ColumnDetails> columns)
+        public static void Write(IStreamProvider streamProvider, string tableRootPath, IEnumerable<ColumnDetails> columns)
         {
             String8Block block = new String8Block();
-            using (ITabularWriter schemaWriter = TabularFactory.BuildWriter(Path.Combine(tableRootPath, SchemaFileName)))
+            using (ITabularWriter schemaWriter = TabularFactory.BuildWriter(streamProvider.OpenWrite(Path.Combine(tableRootPath, SchemaFileName)), SchemaFileName))
             {
                 schemaWriter.SetColumns(new string[] { "Name", "Type", "Nullable" });
 
@@ -33,11 +33,11 @@ namespace XForm.IO
             }
         }
 
-        public static List<ColumnDetails> Read(string tableRootPath)
+        public static List<ColumnDetails> Read(IStreamProvider streamProvider, string tableRootPath)
         {
             List<ColumnDetails> columns = new List<ColumnDetails>();
 
-            using (ITabularReader reader = TabularFactory.BuildReader(Path.Combine(tableRootPath, SchemaFileName)))
+            using (ITabularReader reader = TabularFactory.BuildReader(streamProvider.OpenRead(Path.Combine(tableRootPath, SchemaFileName)), SchemaFileName))
             {
                 int nameIndex = reader.ColumnIndex("Name");
                 int typeIndex = reader.ColumnIndex("Type");

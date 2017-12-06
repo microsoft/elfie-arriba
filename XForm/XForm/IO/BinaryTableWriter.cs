@@ -23,27 +23,29 @@ namespace XForm.IO
             string filePath = context.Parser.NextOutputTableName();
             if (filePath.EndsWith("xform"))
             {
-                return new BinaryTableWriter(source, filePath);
+                return new BinaryTableWriter(source, context.StreamProvider, filePath);
             }
             else
             {
-                return new TabularFileWriter(source, filePath);
+                return new TabularFileWriter(source, context.StreamProvider, filePath);
             }
         }
     }
 
     public class BinaryTableWriter : DataBatchEnumeratorWrapper
     {
+        private IStreamProvider _streamProvider;
         private string _tableRootPath;
+
         private Func<DataBatch>[] _innerGetters;
         private Func<DataBatch>[] _getters;
         private IColumnWriter[] _writers;
 
-        public BinaryTableWriter(IDataBatchEnumerator source, string tableRootPath) : base(source)
+        public BinaryTableWriter(IDataBatchEnumerator source, IStreamProvider streamProvider, string tableRootPath) : base(source)
         {
+            _streamProvider = streamProvider;
             _tableRootPath = tableRootPath;
-            DirectoryIO.DeleteAllContents(tableRootPath);
-            Directory.CreateDirectory(tableRootPath);
+            streamProvider.Delete(tableRootPath);
 
             int columnCount = source.Columns.Count;
 
@@ -75,7 +77,7 @@ namespace XForm.IO
                 _getters[i] = outputTypeGetter;
             }
 
-            SchemaSerializer.Write(_tableRootPath, columnSchemaToWrite);
+            SchemaSerializer.Write(_streamProvider, _tableRootPath, columnSchemaToWrite);
         }
 
         private void BuildWriters()
@@ -92,18 +94,18 @@ namespace XForm.IO
 
                 // Build a direct writer for the column type, if available
                 ITypeProvider columnTypeProvider = TypeProviderFactory.TryGet(column.Type);
-                if (columnTypeProvider != null) writer = columnTypeProvider.BinaryWriter(columnPath);
+                if (columnTypeProvider != null) writer = columnTypeProvider.BinaryWriter(_streamProvider, columnPath);
 
                 // If the column type doesn't have a provider or writer, convert to String8 and write that
                 if (writer == null)
                 {
                     Func<DataBatch, DataBatch> converter = TypeConverterFactory.GetConverter(column.Type, typeof(String8), null, false);
-                    writer = TypeProviderFactory.TryGet(typeof(String8)).BinaryWriter(columnPath);
+                    writer = TypeProviderFactory.TryGet(typeof(String8)).BinaryWriter(_streamProvider, columnPath);
                     column = column.ChangeType(typeof(String8));
                 }
 
                 // Wrap with a NullableWriter to handle null persistence
-                writer = new NullableWriter(columnPath, writer);
+                writer = new NullableWriter(_streamProvider, columnPath, writer);
 
                 _writers[i] = writer;
             }

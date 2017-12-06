@@ -13,6 +13,7 @@ namespace XForm.IO
 {
     public class TabularFileReader : IDataBatchEnumerator
     {
+        private IStreamProvider _streamProvider;
         private string _filePath;
 
         private ITabularReader _reader;
@@ -22,8 +23,9 @@ namespace XForm.IO
         private String8[][] _cells;
         private int _currentBatchCount;
 
-        public TabularFileReader(string filePath)
+        public TabularFileReader(IStreamProvider streamProvider, string filePath)
         {
+            _streamProvider = streamProvider;
             _filePath = filePath;
             Reset();
 
@@ -51,7 +53,7 @@ namespace XForm.IO
 
         public void Reset()
         {
-            _reader = TabularFactory.BuildReader(_filePath);
+            _reader = TabularFactory.BuildReader(_streamProvider.OpenRead(_filePath), _filePath);
 
             _columns = new List<ColumnDetails>();
             foreach (string columnName in _reader.Columns)

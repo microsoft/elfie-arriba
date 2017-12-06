@@ -17,12 +17,12 @@ namespace XForm
 {
     public class HttpRunner
     {
-        private WorkflowRunner _innerRunner;
+        private WorkflowContext _workflowContext;
         private static String8 s_delimiter = String8.Convert(";", new byte[1]);
 
-        public HttpRunner(WorkflowRunner runner)
+        public HttpRunner(WorkflowContext workflowContext)
         {
-            _innerRunner = runner;
+            _workflowContext = workflowContext;
         }
 
         public void Run()
@@ -51,7 +51,8 @@ namespace XForm
                     string query = Require(context, "q");
 
                     // Use a *DeferredRunner* workflow context so dependencies don't re-run now
-                    WorkflowContext wfContext = new WorkflowContext() { Runner = new DeferredRunner(_innerRunner) };
+                    WorkflowContext wfContext = new WorkflowContext(_workflowContext);
+                    if(_workflowContext.Runner is WorkflowRunner) wfContext.Runner = new DeferredRunner((WorkflowRunner)_workflowContext.Runner);
 
                     // Parse the query as-is to see if it's valid
                     IDataBatchEnumerator pipeline = PipelineParser.BuildPipeline(query, null, wfContext);
@@ -131,12 +132,12 @@ namespace XForm
             try
             {
                 // Build a Pipeline for the Query
-                pipeline = PipelineParser.BuildPipeline(query, null, new WorkflowContext() { Runner = _innerRunner });
+                pipeline = PipelineParser.BuildPipeline(query, null, _workflowContext);
 
                 // Restrict the row count if requested
                 if (rowCountLimit >= 0)
                 {
-                    pipeline = PipelineParser.BuildStage($"limit {rowCountLimit}", pipeline);
+                    pipeline = PipelineParser.BuildStage($"limit {rowCountLimit}", pipeline, _workflowContext);
                 }
 
                 // Build a writer for the desired format

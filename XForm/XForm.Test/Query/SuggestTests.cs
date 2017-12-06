@@ -1,5 +1,7 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.CodeAnalysis.Elfie.Model.Strings;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Linq;
+using XForm.Extensions;
 using XForm.Query;
 
 namespace XForm.Test.Query
@@ -8,29 +10,33 @@ namespace XForm.Test.Query
     public class SuggestTests
     {
         private static string Verbs = string.Join("|", PipelineParser.SupportedVerbs.OrderBy((s) => s));
-        private static string Columns = string.Join("|", DataBatchEnumeratorTests.SampleColumns().OrderBy((s) => s));
+        private static string Columns;
 
         [TestMethod]
         public void Suggest_Basics()
         {
-            DataBatchEnumeratorTests.WriteSamples();
+            SampleDatabase.EnsureBuilt();
+
+            Columns = string.Join("|", PipelineParser.BuildPipeline(@"
+            read WebRequest
+            schema", null, SampleDatabase.WorkflowContext).ToList<string>("Name").OrderBy((s) => s));
 
             Assert.AreEqual(Verbs, GetSuggestions(""));
-            Assert.AreEqual(null, GetSuggestions($"read {DataBatchEnumeratorTests.WebRequestSample}"));
-            Assert.AreEqual(null, GetSuggestions($"read {DataBatchEnumeratorTests.WebRequestSample}\r\n"));
-            Assert.AreEqual(null, GetSuggestions($"read {DataBatchEnumeratorTests.WebRequestSample}\r\n "));
-            Assert.AreEqual(Verbs, GetSuggestions($"read {DataBatchEnumeratorTests.WebRequestSample}\r\n_"));
+            Assert.AreEqual(null, GetSuggestions($"read WebRequest"));
+            Assert.AreEqual(null, GetSuggestions($"read WebRequest\r\n"));
+            Assert.AreEqual(null, GetSuggestions($"read WebRequest\r\n "));
+            Assert.AreEqual(Verbs, GetSuggestions($"read WebRequest\r\n_"));
 
             Assert.AreEqual("!=|<|<=|<>|=|==|>|>=", GetSuggestions($@"
-                read {DataBatchEnumeratorTests.WebRequestSample}
+                read WebRequest
                 where HttpStatus !"));
 
             Assert.AreEqual("", GetSuggestions($@"
-                read {DataBatchEnumeratorTests.WebRequestSample}
+                read WebRequest
                 where HttpStatus != "));
 
             Assert.AreEqual(Columns, GetSuggestions($@"
-                read {DataBatchEnumeratorTests.WebRequestSample}
+                read WebRequest
                 columns "));
         }
 
@@ -39,7 +45,7 @@ namespace XForm.Test.Query
             try
             {
                 // Try to parse the query
-                PipelineParser.BuildPipeline(query, null, null);
+                PipelineParser.BuildPipeline(query, null, SampleDatabase.WorkflowContext);
 
                 // If valid, no suggestions
                 return null;

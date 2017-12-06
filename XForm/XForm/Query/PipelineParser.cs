@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
@@ -39,6 +38,7 @@ namespace XForm.Query
 
         public bool HasCurrentLine => _currentLineIndex < _queryLines.Count;
         public string CurrentLine => (HasCurrentLine ? _queryLines[_currentLineIndex] : null);
+        public IList<string> CurrentLineParts => (HasCurrentLine ? _currentLineParts : null);
 
         public bool HasCurrentPart => (HasCurrentLine && _currentPartIndex < _currentLineParts.Count);
         public string CurrentPart => (HasCurrentPart ? _currentLineParts[_currentPartIndex] : null);
@@ -186,8 +186,11 @@ namespace XForm.Query
             }
         }
 
-        public static IDataBatchEnumerator BuildPipeline(string xqlQuery, IDataBatchEnumerator source = null, WorkflowContext outerContext = null)
+        public static IDataBatchEnumerator BuildPipeline(string xqlQuery, IDataBatchEnumerator source, WorkflowContext outerContext)
         {
+            if (outerContext == null) throw new ArgumentNullException("outerContext");
+            if (outerContext.StreamProvider == null) throw new ArgumentNullException("outerContext.StreamProvider");
+
             // Build an inner context to hold this copy of the parser
             WorkflowContext innerContext = WorkflowContext.Push(outerContext);
             PipelineParser parser = new PipelineParser(xqlQuery, innerContext);
@@ -202,8 +205,11 @@ namespace XForm.Query
             return result;
         }
 
-        public static IDataBatchEnumerator BuildStage(string xqlQueryLine, IDataBatchEnumerator source, WorkflowContext outerContext = null)
+        public static IDataBatchEnumerator BuildStage(string xqlQueryLine, IDataBatchEnumerator source, WorkflowContext outerContext)
         {
+            if (outerContext == null) throw new ArgumentNullException("outerContext");
+            if (outerContext.StreamProvider == null) throw new ArgumentNullException("outerContext.StreamProvider");
+
             // Build an inner context to hold this copy of the parser
             WorkflowContext innerContext = WorkflowContext.Push(outerContext);
             PipelineParser parser = new PipelineParser(xqlQueryLine, innerContext);
@@ -291,11 +297,11 @@ namespace XForm.Query
 
             if (tableName.StartsWith("Table\\") || tableName.EndsWith(".xform"))
             {
-                return new BinaryTableReader(tableName);
+                return new BinaryTableReader(_workflow.StreamProvider, tableName);
             }
             else
             {
-                return new TabularFileReader(tableName);
+                return new TabularFileReader(_workflow.StreamProvider, tableName);
             }
         }
 

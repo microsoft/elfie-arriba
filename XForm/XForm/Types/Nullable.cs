@@ -5,6 +5,7 @@ using System;
 using System.IO;
 
 using XForm.Data;
+using XForm.IO;
 
 namespace XForm.Types
 {
@@ -14,6 +15,7 @@ namespace XForm.Types
     /// </summary>
     public class NullableWriter : IColumnWriter
     {
+        private IStreamProvider _streamProvider;
         private int _rowCountSoFar;
         private string _columnPath;
         private IColumnWriter _valueWriter;
@@ -21,8 +23,9 @@ namespace XForm.Types
 
         private bool[] _falseArray;
 
-        public NullableWriter(string columnPath, IColumnWriter valueWriter)
+        public NullableWriter(IStreamProvider streamProvider, string columnPath, IColumnWriter valueWriter)
         {
+            _streamProvider = streamProvider;
             _columnPath = columnPath;
             _valueWriter = valueWriter;
         }
@@ -52,7 +55,7 @@ namespace XForm.Types
 
                 // Open a new file to write IsNull booleans
                 string nullsPath = Path.Combine(_columnPath, "Vn.b8.bin");
-                _nullWriter = new PrimitiveArrayWriter<bool>(new FileStream(nullsPath, FileMode.Create, FileAccess.Write, FileShare.Read | FileShare.Delete));
+                _nullWriter = new PrimitiveArrayWriter<bool>(_streamProvider.OpenWrite(nullsPath));
 
                 // Write false for every value so far
                 int previousCount = _rowCountSoFar - batch.Count;
@@ -99,17 +102,19 @@ namespace XForm.Types
     /// </summary>
     public class NullableReader : IColumnReader
     {
+        private IStreamProvider _streamProvider;
         private string _columnPath;
         private IColumnReader _valueReader;
         private PrimitiveArrayReader<bool> _nullReader;
 
-        public NullableReader(string columnPath, IColumnReader valueReader)
+        public NullableReader(IStreamProvider streamProvider, string columnPath, IColumnReader valueReader)
         {
+            _streamProvider = streamProvider;
             _columnPath = columnPath;
             _valueReader = valueReader;
 
             string nullsPath = Path.Combine(_columnPath, "Vn.b8.bin");
-            if (File.Exists(nullsPath)) _nullReader = new PrimitiveArrayReader<bool>(new FileStream(nullsPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+            if (File.Exists(nullsPath)) _nullReader = new PrimitiveArrayReader<bool>(streamProvider.OpenRead(nullsPath));
         }
 
         public int Count => _valueReader.Count;

@@ -9,6 +9,7 @@ using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using XForm.Data;
 using XForm.Query;
 using XForm.Transforms;
+using XForm.IO;
 
 namespace XForm.Types
 {
@@ -17,14 +18,14 @@ namespace XForm.Types
         public string Name => "String8";
         public Type Type => typeof(String8);
 
-        public IColumnReader BinaryReader(string columnPath)
+        public IColumnReader BinaryReader(IStreamProvider streamProvider, string columnPath)
         {
-            return new String8ColumnReader(columnPath);
+            return new String8ColumnReader(streamProvider, columnPath);
         }
 
-        public IColumnWriter BinaryWriter(string columnPath)
+        public IColumnWriter BinaryWriter(IStreamProvider streamProvider, string columnPath)
         {
-            return new String8ColumnWriter(columnPath);
+            return new String8ColumnWriter(streamProvider, columnPath);
         }
 
         public Action<DataBatch, RowRemapper> TryGetComparer(CompareOperator op, object value)
@@ -75,15 +76,17 @@ namespace XForm.Types
 
     internal class String8ColumnReader : IColumnReader
     {
+        private IStreamProvider _streamProvider;
         private ByteReader _bytesReader;
         private PrimitiveArrayReader<int> _positionsReader;
 
         private String8[] _resultArray;
 
-        public String8ColumnReader(string columnPath)
+        public String8ColumnReader(IStreamProvider streamProvider, string columnPath)
         {
-            _bytesReader = new ByteReader(new FileStream(Path.Combine(columnPath, "V.s.bin"), FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
-            _positionsReader = new PrimitiveArrayReader<int>(new FileStream(Path.Combine(columnPath, "Vp.i32.bin"), FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+            _streamProvider = streamProvider;
+            _bytesReader = new ByteReader(streamProvider.OpenRead(Path.Combine(columnPath, "V.s.bin")));
+            _positionsReader = new PrimitiveArrayReader<int>(streamProvider.OpenRead(Path.Combine(columnPath, "Vp.i32.bin")));
         }
 
         public int Count => _positionsReader.Count;
@@ -145,17 +148,18 @@ namespace XForm.Types
 
     internal class String8ColumnWriter : IColumnWriter
     {
-        private FileStream _bytesWriter;
+        private IStreamProvider _streamProvider;
+        private Stream _bytesWriter;
         private PrimitiveArrayWriter<int> _positionsWriter;
 
         private int[] _positionsBuffer;
         private int _position;
 
-        public String8ColumnWriter(string columnPath)
+        public String8ColumnWriter(IStreamProvider streamProvider, string columnPath)
         {
-            Directory.CreateDirectory(columnPath);
-            _bytesWriter = new FileStream(Path.Combine(columnPath, "V.s.bin"), FileMode.Create, FileAccess.Write, FileShare.Read | FileShare.Delete);
-            _positionsWriter = new PrimitiveArrayWriter<int>(new FileStream(Path.Combine(columnPath, "Vp.i32.bin"), FileMode.Create, FileAccess.Write, FileShare.Read | FileShare.Delete));
+            _streamProvider = streamProvider;
+            _bytesWriter = _streamProvider.OpenWrite(Path.Combine(columnPath, "V.s.bin"));
+            _positionsWriter = new PrimitiveArrayWriter<int>(streamProvider.OpenWrite(Path.Combine(columnPath, "Vp.i32.bin")));
         }
 
         public void Append(DataBatch batch)

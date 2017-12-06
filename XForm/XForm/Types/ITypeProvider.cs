@@ -4,6 +4,7 @@
 using System;
 
 using XForm.Data;
+using XForm.IO;
 using XForm.Query;
 using XForm.Transforms;
 
@@ -25,8 +26,8 @@ namespace XForm.Types
         string Name { get; }
         Type Type { get; }
 
-        IColumnReader BinaryReader(string columnPath);
-        IColumnWriter BinaryWriter(string columnPath);
+        IColumnReader BinaryReader(IStreamProvider streamProvider, string columnPath);
+        IColumnWriter BinaryWriter(IStreamProvider streamProvider, string columnPath);
 
         Func<DataBatch, DataBatch> TryGetConverter(Type sourceType, Type targetType, object defaultValue, bool strict);
 

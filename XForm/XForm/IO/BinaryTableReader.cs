@@ -25,7 +25,9 @@ namespace XForm.IO
 
     public class BinaryTableReader : IDataBatchList
     {
+        private IStreamProvider _streamProvider;
         private string _tableRootPath;
+
         private List<ColumnDetails> _columns;
         private IColumnReader[] _readers;
         private int _totalCount;
@@ -33,10 +35,11 @@ namespace XForm.IO
         private ArraySelector _currentSelector;
         private ArraySelector _currentEnumerateSelector;
 
-        public BinaryTableReader(string tableRootPath)
+        public BinaryTableReader(IStreamProvider streamProvider, string tableRootPath)
         {
+            _streamProvider = streamProvider;
             _tableRootPath = tableRootPath;
-            _columns = SchemaSerializer.Read(_tableRootPath);
+            _columns = SchemaSerializer.Read(streamProvider, _tableRootPath);
             _readers = new IColumnReader[_columns.Count];
             Reset();
         }
@@ -55,10 +58,10 @@ namespace XForm.IO
                 string columnPath = Path.Combine(_tableRootPath, column.Name);
 
                 // Build the reader for the column type
-                IColumnReader reader = TypeProviderFactory.Get(column.Type).BinaryReader(columnPath);
+                IColumnReader reader = TypeProviderFactory.Get(column.Type).BinaryReader(_streamProvider, columnPath);
 
                 // Wrap in a NullableReader to handle null recognition
-                _readers[columnIndex] = new NullableReader(columnPath, reader);
+                _readers[columnIndex] = new NullableReader(_streamProvider, columnPath, reader);
             }
 
             return () => _readers[columnIndex].Read(_currentSelector);

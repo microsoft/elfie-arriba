@@ -15,6 +15,7 @@ namespace XForm.IO
 
         IEnumerable<StreamAttributes> Enumerate(string underLogicalPath, bool recursive);
         void Publish(string logicalTablePath);
+        void Delete(string logicalPath);
     }
 
     public enum CrawlType
@@ -201,6 +202,11 @@ namespace XForm.IO
                     yield return Convert(folder);
                 }
             }
+        }
+
+        public void Delete(string logicalPath)
+        {
+            DirectoryIO.DeleteAllContents(PathCombineSandbox(logicalPath));
         }
 
         public Stream OpenAppend(string logicalPath)

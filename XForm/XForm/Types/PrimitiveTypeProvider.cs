@@ -6,6 +6,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 
 using XForm.Data;
+using XForm.IO;
 using XForm.Query;
 using XForm.Transforms;
 
@@ -22,15 +23,14 @@ namespace XForm.Types
             if (!typeof(T).IsPrimitive) throw new ArgumentException($"PrimitiveTypeProvider does not support non-primitive type {typeof(T).Name}");
         }
 
-        public IColumnReader BinaryReader(string columnPath)
+        public IColumnReader BinaryReader(IStreamProvider streamProvider, string columnPath)
         {
-            return new PrimitiveArrayReader<T>(new FileStream(ValuesFilePath(columnPath), FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+            return new PrimitiveArrayReader<T>(streamProvider.OpenRead(ValuesFilePath(columnPath)));
         }
 
-        public IColumnWriter BinaryWriter(string columnPath)
+        public IColumnWriter BinaryWriter(IStreamProvider streamProvider, string columnPath)
         {
-            Directory.CreateDirectory(columnPath);
-            return new PrimitiveArrayWriter<T>(new FileStream(ValuesFilePath(columnPath), FileMode.Create, FileAccess.Write, FileShare.Read | FileShare.Delete));
+            return new PrimitiveArrayWriter<T>(streamProvider.OpenWrite(ValuesFilePath(columnPath)));
         }
 
         public Func<DataBatch, DataBatch> TryGetConverter(Type sourceType, Type targetType, object defaultValue, bool strict)
@@ -74,7 +74,7 @@ namespace XForm.Types
         private ByteReader _byteReader;
         private T[] _array;
 
-        public PrimitiveArrayReader(FileStream stream)
+        public PrimitiveArrayReader(Stream stream)
         {
             _byteReader = new ByteReader(stream);
             _bytesPerItem = (typeof(T) == typeof(bool) ? 1 : Marshal.SizeOf<T>());
@@ -106,10 +106,10 @@ namespace XForm.Types
     public class PrimitiveArrayWriter<T> : IColumnWriter
     {
         private int _bytesPerItem;
-        private FileStream _stream;
+        private Stream _stream;
         private byte[] _bytesBuffer;
 
-        public PrimitiveArrayWriter(FileStream stream)
+        public PrimitiveArrayWriter(Stream stream)
         {
             _stream = stream;
             _bytesPerItem = (typeof(T) == typeof(bool) ? 1 : Marshal.SizeOf<T>());

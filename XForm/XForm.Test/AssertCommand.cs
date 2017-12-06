@@ -22,7 +22,7 @@ namespace XForm.Test
         {
             return new AssertCommand(source,
                 context.Parser.NextEnum<AssertType>(),
-                context.Parser);
+                context);
         }
     }
 
@@ -35,13 +35,13 @@ namespace XForm.Test
         private int _sourceRowsTotal;
         private int _assertRowsTotal;
 
-        public AssertCommand(IDataBatchEnumerator source, AssertType type, PipelineParser parser) : base(source)
+        public AssertCommand(IDataBatchEnumerator source, AssertType type, WorkflowContext context) : base(source)
         {
             _type = type;
             _singlePageSource = new SinglePageEnumerator(source);
-            _assertPipeline = parser.NextPipeline(_singlePageSource);
+            _assertPipeline = context.Parser.NextPipeline(_singlePageSource);
 
-            _assertPipeline = PipelineParser.BuildStage("write cout", _assertPipeline);
+            _assertPipeline = PipelineParser.BuildStage("write cout", _assertPipeline, context);
         }
 
         public override int Next(int desiredCount)

@@ -17,10 +17,10 @@ namespace XForm.Test.Query
         [TestMethod]
         public void Sample()
         {
-            DataBatchEnumeratorTests.WriteSamples();
+            SampleDatabase.EnsureBuilt();
 
             string xqlQuery = @"
-                read ""C:\Code\XForm\XForm\XForm.Test\WebRequestSample.5.1000.csv""
+                read WebRequest
                 select ServerPort, ResponseBytes
                 cast ResponseBytes int32
                 where ServerPort = 80
@@ -31,7 +31,7 @@ namespace XForm.Test.Query
             int maxResponseBytes = -1;
 
             // Build a Pipeline for the query. Wrap in a using statement to Dispose it when done.
-            using (IDataBatchEnumerator pipeline = PipelineParser.BuildPipeline(xqlQuery))
+            using (IDataBatchEnumerator pipeline = PipelineParser.BuildPipeline(xqlQuery, null, SampleDatabase.WorkflowContext))
             {
                 // Identify the columns you're consuming by requesting and caching the getter functions for them.
                 //  You must request the getters before the first call to Next().

@@ -46,9 +46,12 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssertCommand.cs" />
+    <Compile Include="DatabaseTests.cs" />
     <Compile Include="IO\StreamProviderTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Query\DataBatchEnumeratorContractValidator.cs" />
@@ -57,12 +60,14 @@
     <Compile Include="Query\SampleQuery.cs" />
     <Compile Include="Query\SuggestTests.cs" />
     <Compile Include="Query\XFormPerformance.cs" />
+    <Compile Include="SampleDatabase.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="Database.zip">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="packages.config" />
-    <EmbeddedResource Include="WebRequestSample.5.1000.csv" />
-    <EmbeddedResource Include="WebServerSample.csv" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Elfie\Elfie.Test\Elfie.Test.csproj">

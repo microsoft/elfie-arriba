@@ -4,6 +4,7 @@
 using System;
 
 using XForm.Data;
+using XForm.IO;
 using XForm.Query;
 using XForm.Transforms;
 
@@ -15,14 +16,14 @@ namespace XForm.Types
 
         public Type Type => typeof(DateTime);
 
-        public IColumnReader BinaryReader(string columnPath)
+        public IColumnReader BinaryReader(IStreamProvider streamProvider, string columnPath)
         {
-            return new ConvertingReader(TypeProviderFactory.Get(typeof(long)).BinaryReader(columnPath), TryGetConverter(typeof(long), typeof(DateTime), null, true));
+            return new ConvertingReader(TypeProviderFactory.Get(typeof(long)).BinaryReader(streamProvider, columnPath), TryGetConverter(typeof(long), typeof(DateTime), null, true));
         }
 
-        public IColumnWriter BinaryWriter(string columnPath)
+        public IColumnWriter BinaryWriter(IStreamProvider streamProvider, string columnPath)
         {
-            return new ConvertingWriter(TypeProviderFactory.Get(typeof(long)).BinaryWriter(columnPath), TryGetConverter(typeof(DateTime), typeof(long), null, true));
+            return new ConvertingWriter(TypeProviderFactory.Get(typeof(long)).BinaryWriter(streamProvider, columnPath), TryGetConverter(typeof(DateTime), typeof(long), null, true));
         }
 
         public Action<DataBatch, RowRemapper> TryGetComparer(CompareOperator op, object value)

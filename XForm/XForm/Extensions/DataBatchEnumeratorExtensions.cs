@@ -2,7 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
-
+using System.Collections.Generic;
+using System.Text;
 using XForm.Data;
 
 namespace XForm.Extensions
@@ -38,10 +39,32 @@ namespace XForm.Extensions
             {
                 pipeline.Next(batchSize);
 
-                DataBatch result = getter();
+                DataBatch batch = getter();
                 T[] array = (T[])(getter().Array);
-                return array[result.Index(0)];
+                return array[batch.Index(0)];
             }
+        }
+
+        public static List<T> ToList<T>(this IDataBatchEnumerator pipeline, string columnName)
+        {
+            List<T> result = new List<T>();
+
+            using (pipeline)
+            {
+                Func<DataBatch> getter = pipeline.ColumnGetter(pipeline.Columns.IndexOfColumn(columnName));
+
+                while(pipeline.Next(DefaultBatchSize) != 0)
+                {
+                    DataBatch batch = getter();
+                    T[] array = (T[])batch.Array;
+                    for(int i = 0; i < batch.Count; ++i)
+                    {
+                        result.Add(array[batch.Index(i)]);
+                    }
+                }
+            }
+
+            return result;
         }
     }
 }

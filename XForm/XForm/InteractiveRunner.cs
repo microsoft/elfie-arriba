@@ -19,24 +19,21 @@ namespace XForm
     public class InteractiveRunner : IWorkflowRunner
     {
         private static string s_commandCachePath;
+        private WorkflowContext _workflowContext;
         private IDataBatchEnumerator _pipeline;
         private List<IDataBatchEnumerator> _stages;
         private List<string> _commands;
-        private WorkflowRunner _workflowRunner;
-        private IStreamProvider _streamProvider;
 
-        public IEnumerable<string> SourceNames => _workflowRunner.SourceNames;
+        public IEnumerable<string> SourceNames => _workflowContext.Runner.SourceNames;
 
-        public InteractiveRunner(WorkflowRunner workflowRunner, IStreamProvider streamProvider)
+        public InteractiveRunner(WorkflowContext context)
         {
             s_commandCachePath = Environment.ExpandEnvironmentVariables(@"%TEMP%\XForm.Last.xql");
+            _workflowContext = context;
 
             _pipeline = null;
             _stages = new List<IDataBatchEnumerator>();
             _commands = new List<string>();
-
-            _workflowRunner = workflowRunner;
-            _streamProvider = streamProvider;
         }
 
         public IDataBatchEnumerator Build(string sourceName, WorkflowContext context)
@@ -45,16 +42,16 @@ namespace XForm
             {
                 if (sourceName.EndsWith("xform") || Directory.Exists(sourceName))
                 {
-                    return new BinaryTableReader(sourceName);
+                    return new BinaryTableReader(_workflowContext.StreamProvider, sourceName);
                 }
                 else
                 {
-                    return new TabularFileReader(sourceName);
+                    return new TabularFileReader(_workflowContext.StreamProvider, sourceName);
                 }
             }
             else
             {
-                return _workflowRunner.Build(sourceName, context);
+                return _workflowContext.Runner.Build(sourceName, context);
             }
         }
 
@@ -73,9 +70,7 @@ namespace XForm
                     PipelineParser parser = null;
                     try
                     {
-                        parser = new PipelineParser(nextLine, new WorkflowContext(this, _streamProvider));
-
-
+                        parser = new PipelineParser(nextLine, _workflowContext);
                         if (!parser.HasAnotherPart) return lastCount;
 
                         string command = parser.NextString().ToLowerInvariant();
@@ -101,7 +96,8 @@ namespace XForm
                                 break;
                             case "save":
                                 string tableName = parser.NextOutputTableName();
-                                _workflowRunner.SaveXql(LocationType.Query, tableName, String.Join(Environment.NewLine, _commands));
+                                string queryPath = _workflowContext.StreamProvider.Path(LocationType.Query, tableName, ".xql");
+                                _workflowContext.StreamProvider.WriteAllText(queryPath, String.Join(Environment.NewLine, _commands));
                                 Console.WriteLine($"Query saved to \"{tableName}\".");
 
 
@@ -141,8 +137,8 @@ namespace XForm
 
                     // Get the first 10 results
                     IDataBatchEnumerator firstTenWrapper = _pipeline;
-                    firstTenWrapper = PipelineParser.BuildStage("limit 10", firstTenWrapper);
-                    firstTenWrapper = PipelineParser.BuildStage("write cout", firstTenWrapper);
+                    firstTenWrapper = PipelineParser.BuildStage("limit 10", firstTenWrapper, _workflowContext);
+                    firstTenWrapper = PipelineParser.BuildStage("write cout", firstTenWrapper, _workflowContext);
                     lastCount = firstTenWrapper.Run();
 
                     // Get the count
@@ -182,7 +178,7 @@ namespace XForm
             _stages.Add(_pipeline);
 
             // Build the new stage
-            _pipeline = PipelineParser.BuildStage(nextLine, _pipeline, new WorkflowContext(this, _streamProvider));
+            _pipeline = PipelineParser.BuildStage(nextLine, _pipeline, _workflowContext);
 
             // Save the current command set
             _commands.Add(nextLine);
