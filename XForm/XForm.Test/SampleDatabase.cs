@@ -1,15 +1,19 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using XForm.Extensions;
 using XForm.IO;
 using XForm.Query;
 
 namespace XForm.Test
 {
-    public static class SampleDatabase
+    [TestClass]
+    public class SampleDatabase
     {
         private static string s_RootPath;
         private static WorkflowContext s_WorkflowContext;
@@ -71,6 +75,25 @@ namespace XForm.Test
         {
             int result = Program.Run(new PipelineScanner(xformCommand).CurrentLineParts.ToArray(), s_RootPath, DateTime.UtcNow);
             Assert.AreEqual(0, result, $"Error Code Returned for XForm {xformCommand}");
+        }
+
+        [TestMethod]
+        public void Database_Build()
+        {
+            SampleDatabase.Build();
+        }
+
+        [TestMethod]
+        public void Database_Sources()
+        {
+            // Validate sample sources. Don't validate the full list so that as test data is added this test isn't constantly failing.
+            List<string> sources = new List<string>(SampleDatabase.WorkflowContext.Runner.SourceNames);
+            Trace.Write(string.Join("\r\n", sources));
+            Assert.IsTrue(sources.Contains("WebRequest"), "WebRequest table should exist");
+            Assert.IsTrue(sources.Contains("WebRequest.Authenticated"), "WebRequest.Authenticated config should exist");
+            Assert.IsTrue(sources.Contains("WebRequest.Typed"), "WebRequest.Typed config should exist");
+            Assert.IsTrue(sources.Contains("WebRequest.BigServers"), "WebRequest.BigServers query should exist");
+            Assert.IsTrue(sources.Contains("WebServer"), "WebServer table should exist");
         }
     }
 }

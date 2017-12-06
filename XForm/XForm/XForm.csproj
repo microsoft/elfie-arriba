@@ -69,8 +69,10 @@
     <Compile Include="InteractiveRunner.cs" />
     <Compile Include="IO\DirectoryIO.cs" />
     <Compile Include="IO\IStreamProvider.cs" />
+    <Compile Include="IO\LocalFileStreamProvider.cs" />
     <Compile Include="IO\Logger.cs" />
     <Compile Include="IO\SchemaSerializer.cs" />
+    <Compile Include="Extensions\StreamProviderExtensions.cs" />
     <Compile Include="Query\IPipelineStageBuilder.cs" />
     <Compile Include="Query\Operator.cs" />
     <Compile Include="Extensions\ColumnsExtensions.cs" />
