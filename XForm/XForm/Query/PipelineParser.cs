@@ -16,6 +16,7 @@ namespace XForm.Query
 {
     public class PipelineScanner
     {
+        public string CurrentQuery { get; private set; }
         private List<string> _queryLines;
         private List<string> _currentLineParts;
         private int _currentLineIndex;
@@ -23,6 +24,7 @@ namespace XForm.Query
 
         public PipelineScanner(string xqlQuery)
         {
+            this.CurrentQuery = xqlQuery;
             _queryLines = new List<string>();
 
             foreach (string queryLine in xqlQuery.Split('\n'))
@@ -194,6 +196,7 @@ namespace XForm.Query
             // Build an inner context to hold this copy of the parser
             WorkflowContext innerContext = WorkflowContext.Push(outerContext);
             PipelineParser parser = new PipelineParser(xqlQuery, innerContext);
+            innerContext.CurrentQuery = xqlQuery;
             innerContext.Parser = parser;
 
             // Build the Pipeline
@@ -214,6 +217,7 @@ namespace XForm.Query
             // Build an inner context to hold this copy of the parser
             WorkflowContext innerContext = WorkflowContext.Push(outerContext);
             PipelineParser parser = new PipelineParser(xqlQueryLine, innerContext);
+            innerContext.CurrentQuery = xqlQueryLine;
             innerContext.Parser = parser;
 
             // Build the stage
@@ -353,6 +357,7 @@ namespace XForm.Query
         }
 
         public bool HasAnotherPart => _scanner.HasCurrentPart;
+        public string CurrentQuery => _scanner.CurrentQuery;
     }
 
     [Serializable]

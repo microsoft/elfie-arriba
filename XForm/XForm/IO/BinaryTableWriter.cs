@@ -8,6 +8,7 @@ using System.IO;
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 
 using XForm.Data;
+using XForm.Extensions;
 using XForm.Query;
 using XForm.Types;
 
@@ -23,7 +24,7 @@ namespace XForm.IO
             string filePath = context.Parser.NextOutputTableName();
             if (filePath.StartsWith("Table\\", StringComparison.OrdinalIgnoreCase) || filePath.EndsWith(".xform", StringComparison.OrdinalIgnoreCase))
             {
-                return new BinaryTableWriter(source, context.StreamProvider, filePath);
+                return new BinaryTableWriter(source, context, filePath);
             }
             else
             {
@@ -34,18 +35,18 @@ namespace XForm.IO
 
     public class BinaryTableWriter : DataBatchEnumeratorWrapper
     {
-        private IStreamProvider _streamProvider;
+        private WorkflowContext _workflowContext;
         private string _tableRootPath;
 
         private Func<DataBatch>[] _innerGetters;
         private Func<DataBatch>[] _getters;
         private IColumnWriter[] _writers;
 
-        public BinaryTableWriter(IDataBatchEnumerator source, IStreamProvider streamProvider, string tableRootPath) : base(source)
+        public BinaryTableWriter(IDataBatchEnumerator source, WorkflowContext workflowContext, string tableRootPath) : base(source)
         {
-            _streamProvider = streamProvider;
+            _workflowContext = workflowContext;
             _tableRootPath = tableRootPath;
-            streamProvider.Delete(tableRootPath);
+            workflowContext.StreamProvider.Delete(tableRootPath);
 
             int columnCount = source.Columns.Count;
 
@@ -77,7 +78,11 @@ namespace XForm.IO
                 _getters[i] = outputTypeGetter;
             }
 
-            SchemaSerializer.Write(_streamProvider, _tableRootPath, columnSchemaToWrite);
+            // Write the schema for the table to create
+            SchemaSerializer.Write(workflowContext.StreamProvider, _tableRootPath, columnSchemaToWrite);
+
+            // Write the query for the table
+            workflowContext.StreamProvider.WriteAllText(Path.Combine(_tableRootPath, "Config.xql"), workflowContext.CurrentQuery);
         }
 
         private void BuildWriters()
@@ -94,18 +99,18 @@ namespace XForm.IO
 
                 // Build a direct writer for the column type, if available
                 ITypeProvider columnTypeProvider = TypeProviderFactory.TryGet(column.Type);
-                if (columnTypeProvider != null) writer = columnTypeProvider.BinaryWriter(_streamProvider, columnPath);
+                if (columnTypeProvider != null) writer = columnTypeProvider.BinaryWriter(_workflowContext.StreamProvider, columnPath);
 
                 // If the column type doesn't have a provider or writer, convert to String8 and write that
                 if (writer == null)
                 {
                     Func<DataBatch, DataBatch> converter = TypeConverterFactory.GetConverter(column.Type, typeof(String8), null, false);
-                    writer = TypeProviderFactory.TryGet(typeof(String8)).BinaryWriter(_streamProvider, columnPath);
+                    writer = TypeProviderFactory.TryGet(typeof(String8)).BinaryWriter(_workflowContext.StreamProvider, columnPath);
                     column = column.ChangeType(typeof(String8));
                 }
 
                 // Wrap with a NullableWriter to handle null persistence
-                writer = new NullableWriter(_streamProvider, columnPath, writer);
+                writer = new NullableWriter(_workflowContext.StreamProvider, columnPath, writer);
 
                 _writers[i] = writer;
             }

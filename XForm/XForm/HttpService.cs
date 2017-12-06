@@ -42,47 +42,30 @@ namespace XForm
 
         private void Suggest(HttpListenerContext context, HttpListenerResponse response)
         {
-            bool isQueryValid = false;
-            String8Block block = new String8Block();
             using (JsonTabularWriter writer = new JsonTabularWriter(response.OutputStream))
             {
                 try
                 {
                     string query = Require(context, "q");
 
-                    // Use a *DeferredRunner* workflow context so dependencies don't re-run now
-                    WorkflowContext wfContext = new WorkflowContext(_workflowContext);
-                    if(_workflowContext.Runner is WorkflowRunner) wfContext.Runner = new DeferredRunner((WorkflowRunner)_workflowContext.Runner);
+                    QuerySuggester suggester = new QuerySuggester(_workflowContext);
+                    SuggestResult result = suggester.Suggest(query);
 
-                    // Parse the query as-is to see if it's valid
-                    IDataBatchEnumerator pipeline = PipelineParser.BuildPipeline(query, null, wfContext);
-                    isQueryValid = true;
-
-                    // Parse the query with an extra argument on the last line to see what would be suggested
-                    query = query + " \"\"";
-
-                    // Try building the query pipeline, using a *DeferredRunner* so dependencies aren't built right now
-                    pipeline = PipelineParser.BuildPipeline(query, null, wfContext);
-
-                    // If both are valid, just write that the query is valid
-                    writer.SetColumns(new string[] { "Valid" });
-                    writer.Write(true);
-                    writer.NextRow();
-                }
-                catch (Exception ex)
-                {
-                    UsageException ue = ex as UsageException;
-                    if (ue != null && isQueryValid && ue.InvalidValueCategory == null)
+                    // If the query is valid and there are no extra values valid next, just return valid
+                    if (result.IsValid == true && result.Usage == null)
                     {
-                        // If nothing else is allowed on the last line, return just that the base query is valid
                         writer.SetColumns(new string[] { "Valid" });
                         writer.Write(true);
                         writer.NextRow();
                     }
                     else
                     {
-                        WriteException(ex, writer, isQueryValid);
+                        WriteException(result.Usage, writer, result.IsValid);
                     }
+                }
+                catch (Exception ex)
+                {
+                    WriteException(ex, writer, false);
                 }
             }
         }

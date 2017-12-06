@@ -499,6 +499,75 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         }
 
         /// <summary>
+        ///  Convert a String8 with a numeric value to the byte representation, if in range.
+        /// </summary>
+        /// <param name="result">Numeric value found, if in range, otherwise zero</param>
+        /// <returns>True if valid, False otherwise</returns>
+        public bool TryToByte(out byte result)
+        {
+            bool valid = true;
+            result = (byte)ParseWithCutoff(byte.MaxValue, ref valid);
+            return valid;
+        }
+
+
+        /// <summary>
+        ///  Convert a String8 with a numeric value to the sbyte representation, if in range.
+        /// </summary>
+        /// <param name="result">Numeric value found, if in range, otherwise zero</param>
+        /// <returns>True if valid, False otherwise</returns>
+        public bool TryToSByte(out sbyte result)
+        {
+            bool valid = true;
+
+            if (this.StartsWith(UTF8.Dash))
+            {
+                // Negative: Parse after dash, negate safely, cast and return
+                result = (sbyte)Negate(this.Substring(1).ParseWithCutoff(-sbyte.MinValue, ref valid), ref valid);
+            }
+            else
+            {
+                result = (sbyte)ParseWithCutoff((int)sbyte.MaxValue, ref valid);
+            }
+
+            return valid;
+        }
+
+        /// <summary>
+        ///  Convert a String8 with a numeric value to the ushort representation, if in range.
+        /// </summary>
+        /// <param name="result">Numeric value found, if in range, otherwise zero</param>
+        /// <returns>True if valid, False otherwise</returns>
+        public bool TryToUShort(out ushort result)
+        {
+            bool valid = true;
+            result = (ushort)ParseWithCutoff(ushort.MaxValue, ref valid);
+            return valid;
+        }
+
+        /// <summary>
+        ///  Convert a String8 with a numeric value to the short representation, if in range.
+        /// </summary>
+        /// <param name="result">Numeric value found, if in range, otherwise zero</param>
+        /// <returns>True if valid, False otherwise</returns>
+        public bool TryToShort(out short result)
+        {
+            bool valid = true;
+
+            if (this.StartsWith(UTF8.Dash))
+            {
+                // Negative: Parse after dash, negate safely, cast and return
+                result = (short)Negate(this.Substring(1).ParseWithCutoff(-short.MinValue, ref valid), ref valid);
+            }
+            else
+            {
+                result = (short)ParseWithCutoff((int)short.MaxValue, ref valid);
+            }
+
+            return valid;
+        }
+
+        /// <summary>
         ///  Convert a String8 with a numeric value to the int representation, if in range.
         /// </summary>
         /// <param name="result">Numeric value found, if in range, otherwise zero</param>

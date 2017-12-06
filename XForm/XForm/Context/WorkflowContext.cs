@@ -41,6 +41,23 @@ namespace XForm
         public PipelineParser Parser { get; set; }
 
         /// <summary>
+        ///  CurrentTable is the current table name (Source, Config, or Query) being built
+        /// </summary>
+        public string CurrentTable { get; set; }
+
+        /// <summary>
+        ///  CurrentQuery is the XQL query the current table is built from
+        /// </summary>
+        public string CurrentQuery { get; set; }
+
+        /// <summary>
+        ///  RequestedAsOfDateTime is the moment in time for which reporting should be generated.
+        ///  The latest available inputs before this moment should be used.
+        ///  The report created is the exact right version from NewestDependency to (at least) RequestedAsOfDateTime.
+        /// </summary>
+        public DateTime RequestedAsOfDateTime { get; set; }
+
+        /// <summary>
         ///  NewestDependency tracks the most recent dependency reporting DateTime and is used by WorkflowRunners
         ///  to determine the reporting DateTime the output should be stamped with.
         /// </summary>
@@ -54,6 +71,7 @@ namespace XForm
 
         public WorkflowContext()
         {
+            this.RequestedAsOfDateTime = DateTime.UtcNow;
             this.NewestDependency = DateTime.MinValue;
             this.RebuiltSomething = false;
 
@@ -75,6 +93,9 @@ namespace XForm
                 this.StreamProvider = copyFrom.StreamProvider;
                 this.Logger = copyFrom.Logger;
                 this.Parser = copyFrom.Parser;
+                this.CurrentTable = copyFrom.CurrentTable;
+                this.CurrentQuery = copyFrom.CurrentQuery;
+                this.RequestedAsOfDateTime = copyFrom.RequestedAsOfDateTime;
             }
         }
 

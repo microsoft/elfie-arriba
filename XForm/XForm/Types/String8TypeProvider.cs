@@ -52,6 +52,10 @@ namespace XForm.Types
                 {
                     return new FromString8Converter<int>((String8 value, out int result) => value.TryToInteger(out result)).Convert;
                 }
+                else if(targetType == typeof(uint))
+                {
+                    return new FromString8Converter<uint>((String8 value, out uint result) => value.TryToUInt(out result)).Convert;
+                }
                 else if (targetType == typeof(DateTime))
                 {
                     return new FromString8Converter<DateTime>((String8 value, out DateTime result) => value.TryToDateTime(out result)).Convert;
@@ -67,6 +71,22 @@ namespace XForm.Types
                 else if (targetType == typeof(ulong))
                 {
                     return new FromString8Converter<ulong>((String8 value, out ulong result) => value.TryToULong(out result)).Convert;
+                }
+                else if(targetType == typeof(ushort))
+                {
+                    return new FromString8Converter<ushort>((String8 value, out ushort result) => value.TryToUShort(out result)).Convert;
+                }
+                else if (targetType == typeof(short))
+                {
+                    return new FromString8Converter<short>((String8 value, out short result) => value.TryToShort(out result)).Convert;
+                }
+                else if (targetType == typeof(byte))
+                {
+                    return new FromString8Converter<byte>((String8 value, out byte result) => value.TryToByte(out result)).Convert;
+                }
+                else if (targetType == typeof(sbyte))
+                {
+                    return new FromString8Converter<sbyte>((String8 value, out sbyte result) => value.TryToSByte(out result)).Convert;
                 }
             }
 

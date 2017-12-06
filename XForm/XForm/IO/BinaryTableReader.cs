@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 
 using XForm.Data;
+using XForm.Extensions;
 using XForm.Query;
 using XForm.Types;
 
@@ -25,12 +26,12 @@ namespace XForm.IO
 
     public class BinaryTableReader : IDataBatchList
     {
+        internal const string ConfigQueryPath = "Config.xql";
+
         private IStreamProvider _streamProvider;
-        private string _tableRootPath;
 
         private List<ColumnDetails> _columns;
         private IColumnReader[] _readers;
-        private int _totalCount;
 
         private ArraySelector _currentSelector;
         private ArraySelector _currentEnumerateSelector;
@@ -38,15 +39,18 @@ namespace XForm.IO
         public BinaryTableReader(IStreamProvider streamProvider, string tableRootPath)
         {
             _streamProvider = streamProvider;
-            _tableRootPath = tableRootPath;
-            _columns = SchemaSerializer.Read(streamProvider, _tableRootPath);
+
+            TablePath = tableRootPath;
+            Query = streamProvider.ReadAllText(Path.Combine(tableRootPath, ConfigQueryPath));
+
+            _columns = SchemaSerializer.Read(streamProvider, TablePath);
             _readers = new IColumnReader[_columns.Count];
             Reset();
         }
 
-        public string TablePath => _tableRootPath;
-
-        public int Count => _totalCount;
+        public string Query { get; private set; }
+        public string TablePath { get; private set; }
+        public int Count { get; private set; }
 
         public IReadOnlyList<ColumnDetails> Columns => _columns;
 
@@ -55,7 +59,7 @@ namespace XForm.IO
             if (_readers[columnIndex] == null)
             {
                 ColumnDetails column = Columns[columnIndex];
-                string columnPath = Path.Combine(_tableRootPath, column.Name);
+                string columnPath = Path.Combine(TablePath, column.Name);
 
                 // Build the reader for the column type
                 IColumnReader reader = TypeProviderFactory.Get(column.Type).BinaryReader(_streamProvider, columnPath);
@@ -69,7 +73,7 @@ namespace XForm.IO
 
         public int Next(int desiredCount)
         {
-            _currentEnumerateSelector = _currentEnumerateSelector.NextPage(_totalCount, desiredCount);
+            _currentEnumerateSelector = _currentEnumerateSelector.NextPage(Count, desiredCount);
             _currentSelector = _currentEnumerateSelector;
             return _currentEnumerateSelector.Count;
         }
@@ -83,10 +87,10 @@ namespace XForm.IO
         {
             // Get the first reader in order to get the row count
             Func<DataBatch> unused = ColumnGetter(0);
-            _totalCount = _readers[0].Count;
+            Count = _readers[0].Count;
 
             // Mark our current position (nothing read yet)
-            _currentEnumerateSelector = ArraySelector.All(_totalCount).Slice(0, 0);
+            _currentEnumerateSelector = ArraySelector.All(Count).Slice(0, 0);
         }
 
         public void Dispose()

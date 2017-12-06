@@ -27,7 +27,7 @@ namespace XForm.Test
 
                 s_WorkflowContext = new WorkflowContext();
                 s_WorkflowContext.StreamProvider = new LocalFileStreamProvider(s_RootPath);
-                s_WorkflowContext.Runner = new WorkflowRunner(s_WorkflowContext, DateTime.UtcNow);
+                s_WorkflowContext.Runner = new WorkflowRunner(s_WorkflowContext);
                 return s_WorkflowContext;
             }
         }
@@ -50,12 +50,6 @@ namespace XForm.Test
             {
                 Add(filePath);
             }
-
-            //// XForm run each query
-            //foreach (string filePath in Directory.GetFiles(Path.Combine(RootPath, "Query")))
-            //{
-            //    XForm($"build {Path.GetFileNameWithoutExtension(filePath)} csv");
-            //}
         }
 
         public static void Add(string filePath)
@@ -80,13 +74,16 @@ namespace XForm.Test
         [TestMethod]
         public void Database_Build()
         {
+            // Unpack the Database. Verify 'xform add' works for each source
             SampleDatabase.Build();
         }
 
         [TestMethod]
         public void Database_Sources()
         {
-            // Validate sample sources. Don't validate the full list so that as test data is added this test isn't constantly failing.
+            SampleDatabase.EnsureBuilt();
+
+            // Validate Database source list as returned by IWorkflowRunner.SourceNames. Don't validate the full list so that as test data is added this test isn't constantly failing.
             List<string> sources = new List<string>(SampleDatabase.WorkflowContext.Runner.SourceNames);
             Trace.Write(string.Join("\r\n", sources));
             Assert.IsTrue(sources.Contains("WebRequest"), "WebRequest table should exist");
@@ -94,6 +91,39 @@ namespace XForm.Test
             Assert.IsTrue(sources.Contains("WebRequest.Typed"), "WebRequest.Typed config should exist");
             Assert.IsTrue(sources.Contains("WebRequest.BigServers"), "WebRequest.BigServers query should exist");
             Assert.IsTrue(sources.Contains("WebServer"), "WebServer table should exist");
+        }
+
+        [TestMethod]
+        public void Database_RequestHistorical()
+        {
+            SampleDatabase.EnsureBuilt();
+
+            // Ask for WebRequest as of 2017-12-02 just before noon. The 2017-12-02 version should be latest
+            DateTime cutoff = new DateTime(2017, 12, 02, 11, 50, 00, DateTimeKind.Utc);
+            XForm($"build WebRequest xform \"{cutoff:yyyy-MM-dd hh:mm:ssZ}");
+
+            // Verify it has been created
+            DateTime versionFound = SampleDatabase.WorkflowContext.StreamProvider.LatestBeforeCutoff(LocationType.Table, "WebRequest", cutoff).WhenModifiedUtc;
+            Assert.AreEqual(new DateTime(2017, 12, 02, 00, 00, 00, DateTimeKind.Utc), versionFound);
+
+            // Ask for WebRequest.Authenticated. Verify a 2017-12-02 version is also built for it
+            XForm($"build WebRequest.Authenticated xform \"{cutoff:yyyy-MM-dd hh:mm:ssZ}");
+
+            // Verify it has been created
+            versionFound = SampleDatabase.WorkflowContext.StreamProvider.LatestBeforeCutoff(LocationType.Table, "WebRequest.Authenticated", cutoff).WhenModifiedUtc;
+            Assert.AreEqual(new DateTime(2017, 12, 02, 00, 00, 00, DateTimeKind.Utc), versionFound);
+        }
+
+        [TestMethod]
+        public void Database_RunAll()
+        {
+            SampleDatabase.EnsureBuilt();
+
+            // XForm build each source
+            foreach(string sourceName in SampleDatabase.WorkflowContext.Runner.SourceNames)
+            {
+                XForm($"build {PipelineScanner.Escape(sourceName)}");
+            }
         }
     }
 }

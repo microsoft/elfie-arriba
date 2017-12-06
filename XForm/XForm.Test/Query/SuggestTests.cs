@@ -10,51 +10,41 @@ namespace XForm.Test.Query
     public class SuggestTests
     {
         private static string Verbs = string.Join("|", PipelineParser.SupportedVerbs.OrderBy((s) => s));
-        private static string Columns;
+        private static string Sources = string.Join("|", SampleDatabase.WorkflowContext.Runner.SourceNames.OrderBy((s) => s));
+        private static string Columns = string.Join("|", PipelineParser.BuildPipeline(@"
+            read WebRequest
+            schema", null, SampleDatabase.WorkflowContext).ToList<string>("Name").OrderBy((s) => s));
 
         [TestMethod]
         public void Suggest_Basics()
         {
             SampleDatabase.EnsureBuilt();
+            QuerySuggester suggester = new QuerySuggester(SampleDatabase.WorkflowContext);
 
-            Columns = string.Join("|", PipelineParser.BuildPipeline(@"
-            read WebRequest
-            schema", null, SampleDatabase.WorkflowContext).ToList<string>("Name").OrderBy((s) => s));
+            Assert.AreEqual(Verbs, Values(suggester.Suggest("")));
+            Assert.AreEqual(Verbs, Values(suggester.Suggest("re")));
+            Assert.AreEqual(Sources, Values(suggester.Suggest("read")));
+            Assert.AreEqual("", Values(suggester.Suggest($"read WebRequest")));
+            Assert.AreEqual(Verbs, Values(suggester.Suggest($"read WebRequest\r\n")));
+            Assert.AreEqual(Verbs, Values(suggester.Suggest($"read WebRequest\r\n ")));
 
-            Assert.AreEqual(Verbs, GetSuggestions(""));
-            Assert.AreEqual(null, GetSuggestions($"read WebRequest"));
-            Assert.AreEqual(null, GetSuggestions($"read WebRequest\r\n"));
-            Assert.AreEqual(null, GetSuggestions($"read WebRequest\r\n "));
-            Assert.AreEqual(Verbs, GetSuggestions($"read WebRequest\r\n_"));
-
-            Assert.AreEqual("!=|<|<=|<>|=|==|>|>=", GetSuggestions($@"
+            Assert.AreEqual("!=|<|<=|<>|=|==|>|>=", Values(suggester.Suggest($@"
                 read WebRequest
-                where HttpStatus !"));
+                where HttpStatus !")));
 
-            Assert.AreEqual("", GetSuggestions($@"
+            Assert.AreEqual("", Values(suggester.Suggest($@"
                 read WebRequest
-                where HttpStatus != "));
+                where HttpStatus != ")));
 
-            Assert.AreEqual(Columns, GetSuggestions($@"
+            Assert.AreEqual(Columns, Values(suggester.Suggest($@"
                 read WebRequest
-                columns "));
+                columns ")));
         }
 
-        private static string GetSuggestions(string query)
+        private static string Values(SuggestResult result)
         {
-            try
-            {
-                // Try to parse the query
-                PipelineParser.BuildPipeline(query, null, SampleDatabase.WorkflowContext);
-
-                // If valid, no suggestions
-                return null;
-            }
-            catch (UsageException ex)
-            {
-                if (ex.ValidValues == null) return "";
-                return string.Join("|", ex.ValidValues);
-            }
+            if (result.Usage == null || result.Usage.ValidValues == null) return null;
+            return string.Join("|", result.Usage.ValidValues.OrderBy((s) => s));
         }
     }
 }

@@ -25,14 +25,17 @@ namespace XForm
         public static int Run(string[] args, string rootDirectory, DateTime asOfDateTime)
         {
             try
-            {
+            {                
                 WorkflowContext context = new WorkflowContext();
+                context.RequestedAsOfDateTime = asOfDateTime;
                 context.StreamProvider = new LocalFileStreamProvider(rootDirectory);
+
+                WorkflowRunner runner = new WorkflowRunner(context);
+                context.Runner = runner;
 
                 if (args == null || args.Length == 0)
                 {
-                    InteractiveRunner runner = new InteractiveRunner(context);
-                    return runner.Run();
+                    return new InteractiveRunner(context).Run();
                 }
 
                 string command = args[0].ToLowerInvariant();
@@ -44,23 +47,22 @@ namespace XForm
                     case "add":
                         if (args.Length < 3) throw new UsageException("'add' [SourceFileOrDirectory] [AsSourceName] [Full|Incremental?] [AsOfDateTimeUtc?]");
 
-                        return new WorkflowRunner(context, asOfDateTime).Add(
+                        return runner.Add(
                             args[1],
                             args[2],
                             ParseCrawlTypeOrDefault(args, 3, CrawlType.Full),
                             ParseDateTimeOrDefault(args, 4, DateTime.MinValue));
                     case "build":
                         if (args.Length < 2) throw new UsageException("'build' [DesiredOutputName] [DesiredOutputFormat?] [AsOfDateTimeUtc?]");
-
-                        string outputPath = new WorkflowRunner(context, ParseDateTimeOrDefault(args, 3, asOfDateTime)).Build(
+                        context.RequestedAsOfDateTime = ParseDateTimeOrDefault(args, 3, context.RequestedAsOfDateTime);
+                        string outputPath = runner.Build(
                             args[1],
+                            context,
                             (args.Length > 2 ? args[2] : "xform"));
 
                         return 0;
                     case "http":
-                        context.Runner = new WorkflowRunner(context, ParseDateTimeOrDefault(args, 1, asOfDateTime));
-                        HttpService runner = new HttpService(context);
-                        runner.Run();
+                        new HttpService(context).Run();
                         return 0;
                     default:
                         throw new UsageException($"Unknown XForm mode '{command}'.");
