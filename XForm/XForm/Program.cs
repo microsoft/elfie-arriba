@@ -59,7 +59,7 @@ namespace XForm
                         return 0;
                     case "http":
                         context.Runner = new WorkflowRunner(context, ParseDateTimeOrDefault(args, 1, asOfDateTime));
-                        HttpRunner runner = new HttpRunner(context);
+                        HttpService runner = new HttpService(context);
                         runner.Run();
                         return 0;
                     default:

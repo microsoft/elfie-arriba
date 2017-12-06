@@ -13,6 +13,7 @@ using XForm.Data;
 using XForm.Extensions;
 using XForm.IO;
 using XForm.Query;
+using XForm.Context;
 
 namespace XForm
 {
@@ -26,6 +27,11 @@ namespace XForm
 
         public IEnumerable<string> SourceNames => _workflowContext.Runner.SourceNames;
 
+        public IDataBatchEnumerator Build(string sourceName, WorkflowContext context)
+        {
+            return _workflowContext.Runner.Build(sourceName, context);
+        }
+
         public InteractiveRunner(WorkflowContext context)
         {
             s_commandCachePath = Environment.ExpandEnvironmentVariables(@"%TEMP%\XForm.Last.xql");
@@ -34,25 +40,6 @@ namespace XForm
             _pipeline = null;
             _stages = new List<IDataBatchEnumerator>();
             _commands = new List<string>();
-        }
-
-        public IDataBatchEnumerator Build(string sourceName, WorkflowContext context)
-        {
-            if (File.Exists(sourceName))
-            {
-                if (sourceName.EndsWith("xform") || Directory.Exists(sourceName))
-                {
-                    return new BinaryTableReader(_workflowContext.StreamProvider, sourceName);
-                }
-                else
-                {
-                    return new TabularFileReader(_workflowContext.StreamProvider, sourceName);
-                }
-            }
-            else
-            {
-                return _workflowContext.Runner.Build(sourceName, context);
-            }
         }
 
         public int Run()

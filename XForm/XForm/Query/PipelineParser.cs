@@ -10,7 +10,6 @@ using System.Text;
 
 using XForm.Data;
 using XForm.Extensions;
-using XForm.IO;
 using XForm.Types;
 
 namespace XForm.Query
@@ -190,6 +189,7 @@ namespace XForm.Query
         {
             if (outerContext == null) throw new ArgumentNullException("outerContext");
             if (outerContext.StreamProvider == null) throw new ArgumentNullException("outerContext.StreamProvider");
+            if (outerContext.Runner == null) throw new ArgumentNullException("outerContext.Runner");
 
             // Build an inner context to hold this copy of the parser
             WorkflowContext innerContext = WorkflowContext.Push(outerContext);
@@ -209,6 +209,7 @@ namespace XForm.Query
         {
             if (outerContext == null) throw new ArgumentNullException("outerContext");
             if (outerContext.StreamProvider == null) throw new ArgumentNullException("outerContext.StreamProvider");
+            if (outerContext.Runner == null) throw new ArgumentNullException("outerContext.Runner");
 
             // Build an inner context to hold this copy of the parser
             WorkflowContext innerContext = WorkflowContext.Push(outerContext);
@@ -287,22 +288,10 @@ namespace XForm.Query
         public IDataBatchEnumerator NextTableSource()
         {
             string tableName = _scanner.CurrentPart;
-            ParseNextOrThrow(() => true, "tableName", (_workflow.Runner != null ? _workflow.Runner.SourceNames : null));
+            ParseNextOrThrow(() => true, "tableName", _workflow.Runner.SourceNames);
 
-            if (_workflow.Runner != null)
-            {
-                // If there's a WorkflowProvider, ask it to get the table. This will recurse.
-                return _workflow.Runner.Build(tableName, _workflow);
-            }
-
-            if (tableName.StartsWith("Table\\") || tableName.EndsWith(".xform"))
-            {
-                return new BinaryTableReader(_workflow.StreamProvider, tableName);
-            }
-            else
-            {
-                return new TabularFileReader(_workflow.StreamProvider, tableName);
-            }
+            // If there's a WorkflowProvider, ask it to get the table. This will recurse.
+            return _workflow.Runner.Build(tableName, _workflow);
         }
 
         public bool NextBoolean()

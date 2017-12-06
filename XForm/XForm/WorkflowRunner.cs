@@ -13,6 +13,7 @@ using XForm.Data;
 using XForm.Extensions;
 using XForm.IO;
 using XForm.Query;
+using XForm.Context;
 
 namespace XForm
 {

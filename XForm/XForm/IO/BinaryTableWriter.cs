@@ -21,7 +21,7 @@ namespace XForm.IO
         public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)
         {
             string filePath = context.Parser.NextOutputTableName();
-            if (filePath.EndsWith("xform"))
+            if (filePath.StartsWith("Table\\", StringComparison.OrdinalIgnoreCase) || filePath.EndsWith(".xform", StringComparison.OrdinalIgnoreCase))
             {
                 return new BinaryTableWriter(source, context.StreamProvider, filePath);
             }

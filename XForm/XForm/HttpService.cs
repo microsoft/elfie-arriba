@@ -15,12 +15,12 @@ using XForm.Query;
 
 namespace XForm
 {
-    public class HttpRunner
+    public class HttpService
     {
         private WorkflowContext _workflowContext;
         private static String8 s_delimiter = String8.Convert(";", new byte[1]);
 
-        public HttpRunner(WorkflowContext workflowContext)
+        public HttpService(WorkflowContext workflowContext)
         {
             _workflowContext = workflowContext;
         }
