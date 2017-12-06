@@ -25,7 +25,7 @@ namespace XForm
         public static int Run(string[] args, string rootDirectory, DateTime asOfDateTime)
         {
             try
-            {                
+            {
                 WorkflowContext context = new WorkflowContext();
                 context.RequestedAsOfDateTime = asOfDateTime;
                 context.StreamProvider = new LocalFileStreamProvider(rootDirectory);

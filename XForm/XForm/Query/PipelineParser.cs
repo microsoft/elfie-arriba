@@ -16,7 +16,6 @@ namespace XForm.Query
 {
     public class PipelineScanner
     {
-        public string CurrentQuery { get; private set; }
         private List<string> _queryLines;
         private List<string> _currentLineParts;
         private int _currentLineIndex;
@@ -24,7 +23,6 @@ namespace XForm.Query
 
         public PipelineScanner(string xqlQuery)
         {
-            this.CurrentQuery = xqlQuery;
             _queryLines = new List<string>();
 
             foreach (string queryLine in xqlQuery.Split('\n'))
@@ -349,6 +347,7 @@ namespace XForm.Query
         private void Throw(string valueCategory, IEnumerable<string> validValues = null)
         {
             throw new UsageException(
+                    _workflow.CurrentTable,
                     _scanner.CurrentLine,
                     (_currentLineBuilder != null ? _currentLineBuilder.Usage : null),
                     _scanner.CurrentPart,
@@ -357,7 +356,6 @@ namespace XForm.Query
         }
 
         public bool HasAnotherPart => _scanner.HasCurrentPart;
-        public string CurrentQuery => _scanner.CurrentQuery;
     }
 
     [Serializable]
@@ -371,12 +369,13 @@ namespace XForm.Query
         public IEnumerable<string> ValidValues { get; private set; }
 
         public UsageException(string invalidValue, string invalidValueCategory, IEnumerable<string> validValues)
-        : this(null, null, invalidValue, invalidValueCategory, validValues)
+        : this(null, null, null, invalidValue, invalidValueCategory, validValues)
         { }
 
-        public UsageException(string queryLine, string usage, string invalidValue, string invalidValueCategory, IEnumerable<string> validValues)
-            : base(BuildMessage(queryLine, usage, invalidValue, invalidValueCategory, validValues))
+        public UsageException(string tableName, string queryLine, string usage, string invalidValue, string invalidValueCategory, IEnumerable<string> validValues)
+            : base(BuildMessage(tableName, queryLine, usage, invalidValue, invalidValueCategory, validValues))
         {
+            TableName = tableName;
             QueryLine = queryLine;
             Usage = usage;
             InvalidValue = invalidValue;
@@ -386,9 +385,10 @@ namespace XForm.Query
             ValidValues = validValues;
         }
 
-        private static string BuildMessage(string queryLine, string usage, string invalidValue, string invalidValueCategory, IEnumerable<string> validValues)
+        private static string BuildMessage(string tableName, string queryLine, string usage, string invalidValue, string invalidValueCategory, IEnumerable<string> validValues)
         {
             StringBuilder message = new StringBuilder();
+            if (!String.IsNullOrEmpty(tableName)) message.AppendLine($"Table: {tableName}");
             if (!String.IsNullOrEmpty(queryLine)) message.AppendLine($"Line: {queryLine}");
             if (!String.IsNullOrEmpty(usage)) message.AppendLine($"Usage: {usage}");
 

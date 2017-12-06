@@ -11,7 +11,7 @@ namespace XForm.Test.Query
     {
         private static string Verbs = string.Join("|", PipelineParser.SupportedVerbs.OrderBy((s) => s));
         private static string Sources = string.Join("|", SampleDatabase.WorkflowContext.Runner.SourceNames.OrderBy((s) => s));
-        private static string Columns = string.Join("|", PipelineParser.BuildPipeline(@"
+        private static string WebRequestColumns = string.Join("|", PipelineParser.BuildPipeline(@"
             read WebRequest
             schema", null, SampleDatabase.WorkflowContext).ToList<string>("Name").OrderBy((s) => s));
 
@@ -36,9 +36,28 @@ namespace XForm.Test.Query
                 read WebRequest
                 where HttpStatus != ")));
 
-            Assert.AreEqual(Columns, Values(suggester.Suggest($@"
+            Assert.AreEqual(WebRequestColumns, Values(suggester.Suggest($@"
                 read WebRequest
                 columns ")));
+        }
+
+        [TestMethod]
+        public void Suggest_FullErrorFidelity()
+        {
+            SampleDatabase.EnsureBuilt();
+            QuerySuggester suggester = new QuerySuggester(SampleDatabase.WorkflowContext);
+
+            SuggestResult result = suggester.Suggest(@"
+                read UsageError.WebRequest.MissingColumn");
+
+            Assert.AreEqual(false, result.IsValid);
+            Assert.AreEqual("UsageError.WebRequest.MissingColumn", result.Usage.TableName);
+            Assert.AreEqual("where BadColumnName != \"\"", result.Usage.QueryLine);
+            Assert.AreEqual("'where' [columnName] [operator] [value]", result.Usage.Usage);
+            Assert.AreEqual("BadColumnName", result.Usage.InvalidValue);
+            Assert.AreEqual("columnName", result.Usage.InvalidValueCategory);
+            Assert.AreEqual(WebRequestColumns, string.Join("|", result.Usage.ValidValues));
+            
         }
 
         private static string Values(SuggestResult result)

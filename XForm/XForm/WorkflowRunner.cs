@@ -74,6 +74,7 @@ namespace XForm
             innerContext.Runner = this;
             innerContext.StreamProvider = WorkflowContext.StreamProvider;
             innerContext.NewestDependency = latestTableAttributes.WhenModifiedUtc;
+            innerContext.CurrentTable = tableName;
 
             // Determine the XQL to build the table and construct a builder which can do so
             string xql;

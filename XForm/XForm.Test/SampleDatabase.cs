@@ -65,10 +65,10 @@ namespace XForm.Test
             Assert.IsTrue(File.Exists(expectedPath), $"XForm add didn't add to expected location {expectedPath}");
         }
 
-        public static void XForm(string xformCommand)
+        public static void XForm(string xformCommand, int expectedExitCode = 0)
         {
             int result = Program.Run(new PipelineScanner(xformCommand).CurrentLineParts.ToArray(), s_RootPath, DateTime.UtcNow);
-            Assert.AreEqual(0, result, $"Error Code Returned for XForm {xformCommand}");
+            Assert.AreEqual(expectedExitCode, result, $"Unexpected Exit Code for XForm {xformCommand}");
         }
 
         [TestMethod]
@@ -122,8 +122,15 @@ namespace XForm.Test
             // XForm build each source
             foreach(string sourceName in SampleDatabase.WorkflowContext.Runner.SourceNames)
             {
-                XForm($"build {PipelineScanner.Escape(sourceName)}");
+                XForm($"build {PipelineScanner.Escape(sourceName)}", ExpectedResult(sourceName));
             }
+        }
+
+        private static int ExpectedResult(string sourceName)
+        {
+            if (sourceName.StartsWith("UsageError.")) return -2;
+            if (sourceName.StartsWith("Error.")) return -1;
+            return 0;
         }
     }
 }
