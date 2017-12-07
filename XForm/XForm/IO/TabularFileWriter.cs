@@ -3,13 +3,13 @@
 
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.CodeAnalysis.Elfie.Serialization;
 
 using XForm.Data;
+using XForm.IO.StreamProvider;
 using XForm.Types;
 
 namespace XForm.IO

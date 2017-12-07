@@ -1,4 +1,6 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -6,8 +8,12 @@ using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+
 using XForm.Extensions;
 using XForm.IO;
+using XForm.IO.StreamProvider;
 using XForm.Query;
 
 namespace XForm.Test
@@ -123,7 +129,7 @@ namespace XForm.Test
             SampleDatabase.EnsureBuilt();
 
             // XForm build each source
-            foreach(string sourceName in SampleDatabase.WorkflowContext.Runner.SourceNames)
+            foreach (string sourceName in SampleDatabase.WorkflowContext.Runner.SourceNames)
             {
                 XForm($"build {PipelineScanner.Escape(sourceName)}", ExpectedResult(sourceName));
             }

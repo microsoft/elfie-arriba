@@ -8,6 +8,7 @@ using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.CodeAnalysis.Elfie.Serialization;
 
 using XForm.Data;
+using XForm.IO.StreamProvider;
 
 namespace XForm.IO
 {

@@ -1,5 +1,10 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System.Collections.Generic;
+
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+
 using XForm.Data;
 using XForm.Extensions;
 using XForm.Query;
@@ -97,7 +102,7 @@ namespace XForm.Test
             _actualCount += count;
 
             // When done, ensure the row count matches
-            if(count == 0)
+            if (count == 0)
             {
                 Assert.AreEqual(_expectedCount, _actualCount, $"\r\nassertCount {_expectedCount} failed\r\n{_debuggingContext}");
             }

@@ -7,9 +7,10 @@ using System.IO;
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 
 using XForm.Data;
+using XForm.IO;
+using XForm.IO.StreamProvider;
 using XForm.Query;
 using XForm.Transforms;
-using XForm.IO;
 
 namespace XForm.Types
 {
@@ -52,7 +53,7 @@ namespace XForm.Types
                 {
                     return new FromString8Converter<int>((String8 value, out int result) => value.TryToInteger(out result)).Convert;
                 }
-                else if(targetType == typeof(uint))
+                else if (targetType == typeof(uint))
                 {
                     return new FromString8Converter<uint>((String8 value, out uint result) => value.TryToUInt(out result)).Convert;
                 }
@@ -72,7 +73,7 @@ namespace XForm.Types
                 {
                     return new FromString8Converter<ulong>((String8 value, out ulong result) => value.TryToULong(out result)).Convert;
                 }
-                else if(targetType == typeof(ushort))
+                else if (targetType == typeof(ushort))
                 {
                     return new FromString8Converter<ushort>((String8 value, out ushort result) => value.TryToUShort(out result)).Convert;
                 }

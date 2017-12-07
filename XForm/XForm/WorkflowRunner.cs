@@ -9,11 +9,12 @@ using System.Linq;
 
 using Microsoft.CodeAnalysis.Elfie.Extensions;
 
+using XForm.Context;
 using XForm.Data;
 using XForm.Extensions;
 using XForm.IO;
+using XForm.IO.StreamProvider;
 using XForm.Query;
-using XForm.Context;
 
 namespace XForm
 {
@@ -31,7 +32,7 @@ namespace XForm
         {
             get
             {
-                if(Sources == null)
+                if (Sources == null)
                 {
                     Sources = new HashSet<string>(WorkflowContext.StreamProvider.Tables(), StringComparer.OrdinalIgnoreCase);
                     Sources.UnionWith(WorkflowContext.StreamProvider.Tables());
@@ -76,7 +77,7 @@ namespace XForm
                     latestTableQuery = reader.Query;
                 }
             }
-            
+
             // If the Config doesn't exist and there's no source, throw
             if (!configAttributes.Exists && !latestSourceAttributes.Exists) throw new UsageException(tableName, "tableName", SourceNames);
 
@@ -101,7 +102,7 @@ namespace XForm
                 builder = new TabularFileReader(WorkflowContext.StreamProvider, sourceFiles.First().Path);
             }
             else
-            { 
+            {
                 // If there is a config, the config is how to build it
                 xql = WorkflowContext.StreamProvider.ReadAllText(configAttributes.Path);
 

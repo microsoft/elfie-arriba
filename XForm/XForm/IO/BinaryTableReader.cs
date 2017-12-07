@@ -7,6 +7,7 @@ using System.IO;
 
 using XForm.Data;
 using XForm.Extensions;
+using XForm.IO.StreamProvider;
 using XForm.Query;
 using XForm.Types;
 

@@ -2,9 +2,11 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+
 using XForm.Context;
 using XForm.Extensions;
 using XForm.IO;
+using XForm.IO.StreamProvider;
 using XForm.Query;
 
 namespace XForm
@@ -113,6 +115,4 @@ namespace XForm
             }
         }
     }
-
-
 }

@@ -123,11 +123,11 @@ namespace XForm.Query
             }
         }
 
-        private static char[] EscapeRequiredCharacters = new char[] { '"', '\t', ' ', ',' };
+        private static char[] s_escapeRequiredCharacters = new char[] { '"', '\t', ' ', ',' };
         public static string Escape(string value)
         {
             if (String.IsNullOrEmpty(value)) return "\"\"";
-            if (value.IndexOfAny(EscapeRequiredCharacters) == -1) return value;
+            if (value.IndexOfAny(s_escapeRequiredCharacters) == -1) return value;
             return "\"" + value.Replace("\"", "\"\"") + "\"";
         }
 

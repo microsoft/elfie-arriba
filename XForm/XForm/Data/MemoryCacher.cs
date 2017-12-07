@@ -52,9 +52,9 @@ namespace XForm.Data
             _requestedColumnSourceIndices = new List<int>();
 
             // If requested to cache everything, self-request all columns
-            if(level == CacheLevel.All)
+            if (level == CacheLevel.All)
             {
-                for(int i = 0; i < _columns.Count; ++i)
+                for (int i = 0; i < _columns.Count; ++i)
                 {
                     ColumnGetter(i);
                 }

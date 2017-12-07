@@ -10,8 +10,8 @@ using Microsoft.CodeAnalysis.Elfie.Diagnostics;
 
 using XForm.Data;
 using XForm.Extensions;
+using XForm.IO.StreamProvider;
 using XForm.Query;
-using XForm.IO;
 
 namespace XForm
 {

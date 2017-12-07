@@ -1,8 +1,13 @@
-﻿using Microsoft.CodeAnalysis.Elfie.Diagnostics;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Diagnostics;
 using System.Linq;
+
+using Microsoft.CodeAnalysis.Elfie.Diagnostics;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+
 using XForm.Data;
 using XForm.Extensions;
 using XForm.IO;
@@ -13,20 +18,20 @@ namespace XForm.Test.Query
     [TestClass]
     public class XFormPerformance
     {
-        private int[] array;
-        private int value;
+        private int[] _array;
+        private int _value;
 
         [TestInitialize]
         public void Initialize()
         {
-            array = new int[16 * 1024 * 1024];
+            _array = new int[16 * 1024 * 1024];
             Random r = new Random();
-            for (int i = 0; i < array.Length; ++i)
+            for (int i = 0; i < _array.Length; ++i)
             {
-                array[i] = r.Next(1000);
+                _array[i] = r.Next(1000);
             }
 
-            value = 500;
+            _value = 500;
         }
 
         // ISSUE: Faster in Release only, and not enough iterations to be consistent.
@@ -39,9 +44,9 @@ namespace XForm.Test.Query
             using (new TraceWatch($"For Loop [==]"))
             {
                 int count = 0;
-                for (int i = 0; i < array.Length; ++i)
+                for (int i = 0; i < _array.Length; ++i)
                 {
-                    if (array[i] == value) count++;
+                    if (_array[i] == _value) count++;
                 }
 
                 expectedCount = count;
@@ -50,17 +55,17 @@ namespace XForm.Test.Query
             Stopwatch w = Stopwatch.StartNew();
             using (new TraceWatch($"Linq Count [==]"))
             {
-                int count = array.Where((i) => i == value).Count();
+                int count = _array.Where((i) => i == _value).Count();
                 Assert.AreEqual(expectedCount, count);
             }
             w.Stop();
             timeLimit = w.Elapsed;
 
-            ArrayEnumerator arrayTable = new ArrayEnumerator(array.Length);
-            arrayTable.AddColumn("ID", array);
+            ArrayEnumerator arrayTable = new ArrayEnumerator(_array.Length);
+            arrayTable.AddColumn("ID", _array);
 
             IDataBatchEnumerator query = PipelineParser.BuildPipeline($@"
-                where ID = {value}
+                where ID = {_value}
                 count", arrayTable, new WorkflowContext());
 
             // Run once to force pre-allocation of buffers

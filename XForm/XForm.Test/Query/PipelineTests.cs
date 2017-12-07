@@ -1,8 +1,10 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
+
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+
 using XForm.Query;
 
 namespace XForm.Test.Query
@@ -28,7 +30,7 @@ namespace XForm.Test.Query
             PipelineScanner scanner = new PipelineScanner(xqlLine);
 
             List<string> parts = new List<string>();
-            while(scanner.HasCurrentPart)
+            while (scanner.HasCurrentPart)
             {
                 parts.Add(scanner.CurrentPart);
                 scanner.NextPart();

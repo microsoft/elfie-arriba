@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+
 using XForm.Data;
 
 namespace XForm.Extensions
@@ -53,11 +54,11 @@ namespace XForm.Extensions
             {
                 Func<DataBatch> getter = pipeline.ColumnGetter(pipeline.Columns.IndexOfColumn(columnName));
 
-                while(pipeline.Next(DefaultBatchSize) != 0)
+                while (pipeline.Next(DefaultBatchSize) != 0)
                 {
                     DataBatch batch = getter();
                     T[] array = (T[])batch.Array;
-                    for(int i = 0; i < batch.Count; ++i)
+                    for (int i = 0; i < batch.Count; ++i)
                     {
                         result.Add(array[batch.Index(i)]);
                     }

@@ -1,9 +1,13 @@
-﻿using Microsoft.CodeAnalysis.Elfie.Extensions;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Collections.Generic;
 using System.IO;
 
-namespace XForm.IO
+using Microsoft.CodeAnalysis.Elfie.Extensions;
+
+namespace XForm.IO.StreamProvider
 {
     /// <summary>
     ///  IStreamProvider provides streams for components to read and write. 

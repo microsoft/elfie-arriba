@@ -68,8 +68,8 @@
     <Compile Include="HttpService.cs" />
     <Compile Include="InteractiveRunner.cs" />
     <Compile Include="IO\DirectoryIO.cs" />
-    <Compile Include="IO\IStreamProvider.cs" />
-    <Compile Include="IO\LocalFileStreamProvider.cs" />
+    <Compile Include="IO\StreamProvider\IStreamProvider.cs" />
+    <Compile Include="IO\StreamProvider\LocalFileStreamProvider.cs" />
     <Compile Include="IO\Logger.cs" />
     <Compile Include="IO\SchemaSerializer.cs" />
     <Compile Include="Extensions\StreamProviderExtensions.cs" />

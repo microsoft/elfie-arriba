@@ -9,11 +9,12 @@ using System.Linq;
 
 using Microsoft.CodeAnalysis.Elfie.Extensions;
 
+using XForm.Context;
 using XForm.Data;
 using XForm.Extensions;
 using XForm.IO;
+using XForm.IO.StreamProvider;
 using XForm.Query;
-using XForm.Context;
 
 namespace XForm
 {

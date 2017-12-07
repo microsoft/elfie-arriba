@@ -6,7 +6,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 
 using XForm.Data;
-using XForm.IO;
+using XForm.IO.StreamProvider;
 using XForm.Query;
 using XForm.Transforms;
 

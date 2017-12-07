@@ -7,6 +7,8 @@ using System.IO;
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.CodeAnalysis.Elfie.Serialization;
 
+using XForm.IO.StreamProvider;
+
 namespace XForm.IO
 {
     public enum MessageType
