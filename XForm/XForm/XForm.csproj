@@ -73,6 +73,7 @@
     <Compile Include="IO\Logger.cs" />
     <Compile Include="IO\SchemaSerializer.cs" />
     <Compile Include="Extensions\StreamProviderExtensions.cs" />
+    <Compile Include="IO\StreamProvider\MultipleSourceStreamProvider.cs" />
     <Compile Include="Query\IPipelineStageBuilder.cs" />
     <Compile Include="Query\Operator.cs" />
     <Compile Include="Extensions\ColumnsExtensions.cs" />

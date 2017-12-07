@@ -157,6 +157,9 @@ namespace XForm.IO
                 }
 
                 _writers = null;
+
+                // On Dispose, tell the StreamProvider to publish the table
+                _workflowContext.StreamProvider.Publish(_tableRootPath);
             }
         }
 

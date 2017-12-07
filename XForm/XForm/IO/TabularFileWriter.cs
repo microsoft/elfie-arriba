@@ -75,6 +75,9 @@ namespace XForm.IO
             {
                 _writer.Dispose();
                 _writer = null;
+
+                // On Dispose, tell the StreamProvider to publish the table
+                _streamProvider.Publish(_outputFilePath);
             }
         }
 

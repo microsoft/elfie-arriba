@@ -94,7 +94,7 @@ namespace XForm
                 innerContext.NewestDependency = innerContext.NewestDependency.BiggestOf(latestSourceAttributes.WhenModifiedUtc);
 
                 // Find the input file itself
-                IEnumerable<StreamAttributes> sourceFiles = WorkflowContext.StreamProvider.Enumerate(latestSourceAttributes.Path, true);
+                IEnumerable<StreamAttributes> sourceFiles = WorkflowContext.StreamProvider.Enumerate(latestSourceAttributes.Path, EnumerateTypes.File, true);
                 if (sourceFiles.Count() > 1) throw new NotImplementedException("Need concatenating reader");
 
                 // Construct a pipeline to read the raw file only

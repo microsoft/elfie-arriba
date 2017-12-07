@@ -40,7 +40,7 @@ namespace XForm.Extensions
             DateTime latestStreamVersion = DateTime.MinValue;
 
             string sourceFullPath = streamProvider.Path(type, tableName, CrawlType.Full);
-            foreach (StreamAttributes version in streamProvider.Enumerate(sourceFullPath, false))
+            foreach (StreamAttributes version in streamProvider.Enumerate(sourceFullPath, EnumerateTypes.Folder, false))
             {
                 DateTime versionAsOf;
                 if (!DateTime.TryParseExact(System.IO.Path.GetFileName(version.Path), DateTimeFolderFormat, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out versionAsOf))
@@ -64,7 +64,7 @@ namespace XForm.Extensions
             HashSet<string> tables = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             // Return all Configs as tables
-            foreach (StreamAttributes item in streamProvider.Enumerate("Config", true))
+            foreach (StreamAttributes item in streamProvider.Enumerate("Config", EnumerateTypes.File, true))
             {
                 if (item.Path.EndsWith(".xql", StringComparison.OrdinalIgnoreCase))
                 {
@@ -80,7 +80,7 @@ namespace XForm.Extensions
 
         private static void AddFullFolderContainers(this IStreamProvider streamProvider, string underPath, HashSet<string> results)
         {
-            foreach (StreamAttributes item in streamProvider.Enumerate(underPath, false))
+            foreach (StreamAttributes item in streamProvider.Enumerate(underPath, EnumerateTypes.Folder, false))
             {
                 if (item.Path.EndsWith("\\Full"))
                 {
@@ -97,7 +97,7 @@ namespace XForm.Extensions
         public static IEnumerable<string> Queries(this IStreamProvider streamProvider)
         {
             // Return all Queries
-            foreach (StreamAttributes item in streamProvider.Enumerate("Query", true))
+            foreach (StreamAttributes item in streamProvider.Enumerate("Query", EnumerateTypes.File, true))
             {
                 if (item.Path.EndsWith(".xql", StringComparison.OrdinalIgnoreCase))
                 {

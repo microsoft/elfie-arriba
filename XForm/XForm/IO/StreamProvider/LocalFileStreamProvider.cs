@@ -21,6 +21,8 @@ namespace XForm.IO.StreamProvider
             this.RootPath = Path.GetFullPath(rootPath);
         }
 
+        public string Description => RootPath;
+
         public StreamAttributes Attributes(string logicalPath)
         {
             string realPath = PathCombineSandbox(logicalPath);
@@ -28,7 +30,7 @@ namespace XForm.IO.StreamProvider
             return Convert(new FileInfo(realPath));
         }
 
-        public IEnumerable<StreamAttributes> Enumerate(string underLogicalPath, bool recursive)
+        public IEnumerable<StreamAttributes> Enumerate(string underLogicalPath, EnumerateTypes types, bool recursive)
         {
             SearchOption searchOption = (recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
             string underPath = PathCombineSandbox(underLogicalPath);
@@ -36,14 +38,20 @@ namespace XForm.IO.StreamProvider
             {
                 DirectoryInfo underDir = new DirectoryInfo(underPath);
 
-                foreach (FileInfo file in underDir.EnumerateFiles("*.*", searchOption))
+                if (types.HasFlag(EnumerateTypes.File))
                 {
-                    yield return Convert(file);
+                    foreach (FileInfo file in underDir.EnumerateFiles("*.*", searchOption))
+                    {
+                        yield return Convert(file);
+                    }
                 }
 
-                foreach (DirectoryInfo folder in underDir.EnumerateDirectories("*.*", searchOption))
+                if (types.HasFlag(EnumerateTypes.Folder))
                 {
-                    yield return Convert(folder);
+                    foreach (DirectoryInfo folder in underDir.EnumerateDirectories("*.*", searchOption))
+                    {
+                        yield return Convert(folder);
+                    }
                 }
             }
         }
@@ -67,6 +75,8 @@ namespace XForm.IO.StreamProvider
 
         public Stream OpenWrite(string logicalPath)
         {
+            if (logicalPath.Equals("cout", StringComparison.OrdinalIgnoreCase)) return Console.OpenStandardOutput();
+
             string physicalPath = PathCombineSandbox(logicalPath);
             EnsureFolderExists(physicalPath);
             return new FileStream(physicalPath, FileMode.Create, FileAccess.Write, FileShare.Read | FileShare.Delete);

@@ -16,14 +16,25 @@ namespace XForm.IO.StreamProvider
     /// </summary>
     public interface IStreamProvider
     {
+        string Description { get; }
+
         Stream OpenRead(string logicalPath);
         Stream OpenWrite(string logicalPath);
         Stream OpenAppend(string logicalPath);
         StreamAttributes Attributes(string logicalPath);
 
-        IEnumerable<StreamAttributes> Enumerate(string underLogicalPath, bool recursive);
+        IEnumerable<StreamAttributes> Enumerate(string underLogicalPath, EnumerateTypes types, bool recursive);
         void Publish(string logicalTablePath);
         void Delete(string logicalPath);
+    }
+
+    [Flags]
+    public enum EnumerateTypes
+    {
+        None = 0,
+        File = 1,
+        Folder = 2,
+        Both = 3
     }
 
     public enum CrawlType
