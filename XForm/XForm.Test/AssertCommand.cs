@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using XForm.Data;
 using XForm.Extensions;
-using XForm.IO;
 using XForm.Query;
 
 namespace XForm.Test
@@ -40,8 +39,6 @@ namespace XForm.Test
             _type = type;
             _singlePageSource = new SinglePageEnumerator(source);
             _assertPipeline = context.Parser.NextPipeline(_singlePageSource);
-
-            _assertPipeline = PipelineParser.BuildStage("write cout", _assertPipeline, context);
         }
 
         public override int Next(int desiredCount)
@@ -65,6 +62,72 @@ namespace XForm.Test
             }
 
             return count;
+        }
+    }
+
+    internal class AssertCountBuilder : IPipelineStageBuilder
+    {
+        public IEnumerable<string> Verbs => new string[] { "assertCount" };
+        public string Usage => "'assertCount' [rowCount]";
+
+        public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)
+        {
+            return new AssertCountCommand(source,
+                context.Parser.NextInteger(),
+                context);
+        }
+    }
+
+    public class AssertCountCommand : DataBatchEnumeratorWrapper
+    {
+        private int _actualCount;
+        private int _expectedCount;
+        private QueryDebuggingContext _debuggingContext;
+
+        public AssertCountCommand(IDataBatchEnumerator source, int count, WorkflowContext context) : base(source)
+        {
+            _expectedCount = count;
+            _debuggingContext = new QueryDebuggingContext(context);
+        }
+
+        public override int Next(int desiredCount)
+        {
+            // Get the next rows from the real source
+            int count = _source.Next(desiredCount);
+            _actualCount += count;
+
+            // When done, ensure the row count matches
+            if(count == 0)
+            {
+                Assert.AreEqual(_expectedCount, _actualCount, $"\r\nassertCount {_expectedCount} failed\r\n{_debuggingContext}");
+            }
+
+            return count;
+        }
+
+        public override void Reset()
+        {
+            base.Reset();
+            _actualCount = 0;
+        }
+    }
+
+    public class QueryDebuggingContext
+    {
+        public string TableName { get; private set; }
+        public string Query { get; private set; }
+        public int QueryLineNumber { get; private set; }
+
+        public QueryDebuggingContext(WorkflowContext context)
+        {
+            this.TableName = context.CurrentTable;
+            this.Query = context.CurrentQuery;
+            this.QueryLineNumber = context.Parser.CurrentLineNumber;
+        }
+
+        public override string ToString()
+        {
+            return $"Building {TableName}, line {QueryLineNumber}.\r\nTo Debug:\r\n{Query}";
         }
     }
 }

@@ -50,6 +50,9 @@ namespace XForm.Test
             {
                 Add(filePath);
             }
+
+            // Add the sample configs and queries
+            DirectoryIO.Copy(Path.Combine(Environment.CurrentDirectory, "SampleDatabase"), s_RootPath);
         }
 
         public static void Add(string filePath)
@@ -124,6 +127,20 @@ namespace XForm.Test
             {
                 XForm($"build {PipelineScanner.Escape(sourceName)}", ExpectedResult(sourceName));
             }
+
+            // When one fails, put it by itself in the test below to debug
+        }
+
+        [TestMethod]
+        public void Database_TryOne()
+        {
+            SampleDatabase.EnsureBuilt();
+
+            // To debug Main() error handling or argument parsing, run like this:
+            //XForm("build WebRequest.NullableHandling");
+
+            // To debug engine execution, run like this:
+            PipelineParser.BuildPipeline("read WebRequest.BigServers.Direct", null, SampleDatabase.WorkflowContext).RunAndDispose();
         }
 
         private static int ExpectedResult(string sourceName)

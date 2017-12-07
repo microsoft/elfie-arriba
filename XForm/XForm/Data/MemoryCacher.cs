@@ -9,6 +9,12 @@ using XForm.Query;
 
 namespace XForm.Data
 {
+    public enum CacheLevel
+    {
+        Used,
+        All
+    }
+
     internal class MemoryCacheBuilder : IPipelineStageBuilder
     {
         public IEnumerable<string> Verbs => new string[] { "cache" };
@@ -19,7 +25,9 @@ namespace XForm.Data
             IDataBatchList sourceList = source as IDataBatchList;
             if (sourceList == null) throw new ArgumentException("'cache' can only be used on IDataBatchList sources.");
 
-            return new MemoryCacher(sourceList);
+            CacheLevel level = CacheLevel.Used;
+            if (context.Parser.HasAnotherPart) level = context.Parser.NextEnum<CacheLevel>();
+            return new MemoryCacher(sourceList, level);
         }
     }
 
@@ -36,12 +44,21 @@ namespace XForm.Data
         private ArrayEnumerator _cache;
         private List<int> _requestedColumnSourceIndices;
 
-        public MemoryCacher(IDataBatchList source)
+        public MemoryCacher(IDataBatchList source, CacheLevel level)
         {
             _source = source;
             _columns = source.Columns;
             _cache = new ArrayEnumerator(_source.Count);
             _requestedColumnSourceIndices = new List<int>();
+
+            // If requested to cache everything, self-request all columns
+            if(level == CacheLevel.All)
+            {
+                for(int i = 0; i < _columns.Count; ++i)
+                {
+                    ColumnGetter(i);
+                }
+            }
         }
 
         public int Count => (_cache != null ? _cache.Count : _source.Count);

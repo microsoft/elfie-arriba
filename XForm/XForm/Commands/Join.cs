@@ -56,7 +56,7 @@ namespace XForm.Commands
             _source = source;
 
             IDataBatchList joinSourceList = joinToSource as IDataBatchList;
-            _cachedJoinSource = new MemoryCacher(joinSourceList);
+            _cachedJoinSource = new MemoryCacher(joinSourceList, CacheLevel.Used);
 
             // Request the JoinFromColumn Getter
             _joinFromColumnIndex = source.Columns.IndexOfColumn(joinFromColumn);

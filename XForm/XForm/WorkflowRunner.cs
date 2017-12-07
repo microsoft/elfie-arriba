@@ -49,9 +49,20 @@ namespace XForm
 
         public IDataBatchEnumerator Build(string tableName, WorkflowContext outerContext, bool deferred)
         {
+            // Create a context to track what we're building now
+            WorkflowContext innerContext = WorkflowContext.Push(outerContext);
+            innerContext.Runner = this;
+            innerContext.StreamProvider = WorkflowContext.StreamProvider;
+            innerContext.CurrentTable = tableName;
+
             // If this is a query, there won't be a cached table - just build a pipeline to make it
             StreamAttributes queryAttributes = WorkflowContext.StreamProvider.Attributes(WorkflowContext.StreamProvider.Path(LocationType.Query, tableName, ".xql"));
-            if (queryAttributes.Exists) return PipelineParser.BuildPipeline(WorkflowContext.StreamProvider.ReadAllText(queryAttributes.Path), null, outerContext);
+            if (queryAttributes.Exists)
+            {
+                IDataBatchEnumerator queryPipeline = PipelineParser.BuildPipeline(WorkflowContext.StreamProvider.ReadAllText(queryAttributes.Path), null, innerContext);
+                innerContext.Pop(outerContext);
+                return queryPipeline;
+            }
 
             // Find the config to build this, the latest source, and the latest output
             StreamAttributes configAttributes = WorkflowContext.StreamProvider.Attributes(WorkflowContext.StreamProvider.Path(LocationType.Config, tableName, ".xql"));
@@ -69,12 +80,8 @@ namespace XForm
             // If the Config doesn't exist and there's no source, throw
             if (!configAttributes.Exists && !latestSourceAttributes.Exists) throw new UsageException(tableName, "tableName", SourceNames);
 
-            // Create a context to track the version of this table we need (the latest dependency recursively found)
-            WorkflowContext innerContext = WorkflowContext.Push(outerContext);
-            innerContext.Runner = this;
-            innerContext.StreamProvider = WorkflowContext.StreamProvider;
+            // Set the dependency date to the latest table we've already built (if any)
             innerContext.NewestDependency = latestTableAttributes.WhenModifiedUtc;
-            innerContext.CurrentTable = tableName;
 
             // Determine the XQL to build the table and construct a builder which can do so
             string xql;

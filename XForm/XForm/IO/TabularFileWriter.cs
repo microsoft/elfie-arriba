@@ -84,7 +84,14 @@ namespace XForm.IO
             if (_writer == null)
             {
                 if (_outputFilePath == null) throw new InvalidOperationException("TabularFileWriter can't reset when passed an ITabularWriter instance");
-                _writer = TabularFactory.BuildWriter(_streamProvider.OpenWrite(_outputFilePath), _outputFilePath);
+                if (_outputFilePath.Equals("cout", StringComparison.OrdinalIgnoreCase))
+                {
+                    _writer = new ConsoleTabularWriter();
+                }
+                else
+                {
+                    _writer = TabularFactory.BuildWriter(_streamProvider.OpenWrite(_outputFilePath), _outputFilePath);
+                }
                 _writer.SetColumns(_source.Columns.Select((cd) => cd.Name));
             }
 

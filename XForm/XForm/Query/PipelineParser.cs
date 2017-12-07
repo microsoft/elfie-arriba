@@ -38,6 +38,7 @@ namespace XForm.Query
         public bool HasCurrentLine => _currentLineIndex < _queryLines.Count;
         public string CurrentLine => (HasCurrentLine ? _queryLines[_currentLineIndex] : null);
         public IList<string> CurrentLineParts => (HasCurrentLine ? _currentLineParts : null);
+        public int CurrentLineNumber => (HasCurrentLine ? _currentLineIndex + 1 : -1);
 
         public bool HasCurrentPart => (HasCurrentLine && _currentPartIndex < _currentLineParts.Count);
         public string CurrentPart => (HasCurrentPart ? _currentLineParts[_currentPartIndex] : null);
@@ -356,6 +357,7 @@ namespace XForm.Query
         }
 
         public bool HasAnotherPart => _scanner.HasCurrentPart;
+        public int CurrentLineNumber => _scanner.CurrentLineNumber;
     }
 
     [Serializable]

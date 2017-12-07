@@ -21,5 +21,21 @@ namespace XForm.IO
                 Directory.Delete(subdirectoryPath, true);
             }
         }
+
+        public static void Copy(string directoryPath, string destination)
+        {
+            if (!Directory.Exists(directoryPath)) return;
+            Directory.CreateDirectory(destination);
+
+            foreach (string filePath in Directory.GetFiles(directoryPath))
+            {
+                File.Copy(filePath, Path.Combine(destination, Path.GetFileName(filePath)));
+            }
+
+            foreach (string subdirectoryPath in Directory.GetDirectories(directoryPath))
+            {
+                Copy(subdirectoryPath, Path.Combine(destination, Path.GetFileName(subdirectoryPath)));
+            }
+        }
     }
 }
