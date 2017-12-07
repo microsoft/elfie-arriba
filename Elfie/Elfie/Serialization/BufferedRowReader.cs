@@ -18,6 +18,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         private Stream _stream;
         private Func<String8, PartialArray<int>, String8Set> _splitRows;
 
+        private bool _startOfStream;
         private byte[] _buffer;
         private PartialArray<int> _rowPositionArray;
         private int _nextRowIndexInBlock;
@@ -29,7 +30,15 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             _stream = stream;
             _splitRows = splitRows;
 
-            _buffer = new byte[Math.Min(stream.Length + 1, 64 * 1024)];
+            _startOfStream = true;
+
+            long length = 64 * 1024;
+            if(stream.CanSeek)
+            {
+                length = Math.Min(length, stream.Length + 1);
+            }
+
+            _buffer = new byte[length];
             _rowPositionArray = new PartialArray<int>(64, false);
         }
 
@@ -107,8 +116,9 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
                 String8 block = new String8(_buffer, 0, bufferLengthFilled);
 
                 // Strip leading UTF8 BOM, if found, on first block
-                if (_stream.Position == bufferLengthFilled)
+                if (_startOfStream)
                 {
+                    _startOfStream = false;
                     if (block.Length >= 3 && block[0] == 0xEF && block[1] == 0xBB && block[2] == 0xBF) block = block.Substring(3);
                 }
 
