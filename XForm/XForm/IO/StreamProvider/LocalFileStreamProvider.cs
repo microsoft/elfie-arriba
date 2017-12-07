@@ -26,8 +26,9 @@ namespace XForm.IO.StreamProvider
         public StreamAttributes Attributes(string logicalPath)
         {
             string realPath = PathCombineSandbox(logicalPath);
-            if (!File.Exists(realPath)) return new StreamAttributes() { Exists = false, Path = logicalPath };
-            return Convert(new FileInfo(realPath));
+            if (File.Exists(realPath)) return Convert(new FileInfo(realPath));
+            if (Directory.Exists(realPath)) return Convert(new DirectoryInfo(realPath));
+            return new StreamAttributes() { Exists = false, Path = logicalPath };
         }
 
         public IEnumerable<StreamAttributes> Enumerate(string underLogicalPath, EnumerateTypes types, bool recursive)

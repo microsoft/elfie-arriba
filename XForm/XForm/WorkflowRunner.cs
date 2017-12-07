@@ -20,7 +20,7 @@ namespace XForm
 {
     public class WorkflowRunner : IWorkflowRunner
     {
-        public WorkflowContext WorkflowContext { get; private set; }
+        private WorkflowContext WorkflowContext { get; set; }
         private HashSet<string> Sources { get; set; }
 
         public WorkflowRunner(WorkflowContext context)
@@ -35,7 +35,6 @@ namespace XForm
                 if (Sources == null)
                 {
                     Sources = new HashSet<string>(WorkflowContext.StreamProvider.Tables(), StringComparer.OrdinalIgnoreCase);
-                    Sources.UnionWith(WorkflowContext.StreamProvider.Tables());
                     Sources.UnionWith(WorkflowContext.StreamProvider.Queries());
                 }
 
@@ -53,22 +52,21 @@ namespace XForm
             // Create a context to track what we're building now
             WorkflowContext innerContext = WorkflowContext.Push(outerContext);
             innerContext.Runner = this;
-            innerContext.StreamProvider = WorkflowContext.StreamProvider;
             innerContext.CurrentTable = tableName;
 
             // If this is a query, there won't be a cached table - just build a pipeline to make it
-            StreamAttributes queryAttributes = WorkflowContext.StreamProvider.Attributes(WorkflowContext.StreamProvider.Path(LocationType.Query, tableName, ".xql"));
+            StreamAttributes queryAttributes = innerContext.StreamProvider.Attributes(innerContext.StreamProvider.Path(LocationType.Query, tableName, ".xql"));
             if (queryAttributes.Exists)
             {
-                IDataBatchEnumerator queryPipeline = PipelineParser.BuildPipeline(WorkflowContext.StreamProvider.ReadAllText(queryAttributes.Path), null, innerContext);
+                IDataBatchEnumerator queryPipeline = PipelineParser.BuildPipeline(innerContext.StreamProvider.ReadAllText(queryAttributes.Path), null, innerContext);
                 innerContext.Pop(outerContext);
                 return queryPipeline;
             }
 
             // Find the config to build this, the latest source, and the latest output
-            StreamAttributes configAttributes = WorkflowContext.StreamProvider.Attributes(WorkflowContext.StreamProvider.Path(LocationType.Config, tableName, ".xql"));
-            StreamAttributes latestSourceAttributes = WorkflowContext.StreamProvider.LatestBeforeCutoff(LocationType.Source, tableName, outerContext.RequestedAsOfDateTime);
-            StreamAttributes latestTableAttributes = WorkflowContext.StreamProvider.LatestBeforeCutoff(LocationType.Table, tableName, outerContext.RequestedAsOfDateTime);
+            StreamAttributes configAttributes = innerContext.StreamProvider.Attributes(innerContext.StreamProvider.Path(LocationType.Config, tableName, ".xql"));
+            StreamAttributes latestSourceAttributes = innerContext.StreamProvider.LatestBeforeCutoff(LocationType.Source, tableName, outerContext.RequestedAsOfDateTime);
+            StreamAttributes latestTableAttributes = innerContext.StreamProvider.LatestBeforeCutoff(LocationType.Table, tableName, outerContext.RequestedAsOfDateTime);
             string latestTableQuery = "";
             if (latestTableAttributes.Exists)
             {
@@ -79,7 +77,7 @@ namespace XForm
             }
 
             // If the Config doesn't exist and there's no source, throw
-            if (!configAttributes.Exists && !latestSourceAttributes.Exists) throw new UsageException(tableName, "tableName", SourceNames);
+            if (!configAttributes.Exists && !latestSourceAttributes.Exists) throw new UsageException(tableName, "tableName", outerContext.StreamProvider.SourceNames());
 
             // Set the dependency date to the latest table we've already built (if any)
             innerContext.NewestDependency = latestTableAttributes.WhenModifiedUtc;
@@ -94,24 +92,24 @@ namespace XForm
                 innerContext.NewestDependency = innerContext.NewestDependency.BiggestOf(latestSourceAttributes.WhenModifiedUtc);
 
                 // Find the input file itself
-                IEnumerable<StreamAttributes> sourceFiles = WorkflowContext.StreamProvider.Enumerate(latestSourceAttributes.Path, EnumerateTypes.File, true);
+                IEnumerable<StreamAttributes> sourceFiles = innerContext.StreamProvider.Enumerate(latestSourceAttributes.Path, EnumerateTypes.File, true);
                 if (sourceFiles.Count() > 1) throw new NotImplementedException("Need concatenating reader");
 
                 // Construct a pipeline to read the raw file only
                 xql = $"read {PipelineScanner.Escape(tableName)}";
-                builder = new TabularFileReader(WorkflowContext.StreamProvider, sourceFiles.First().Path);
+                builder = new TabularFileReader(innerContext.StreamProvider, sourceFiles.First().Path);
             }
             else
             {
                 // If there is a config, the config is how to build it
-                xql = WorkflowContext.StreamProvider.ReadAllText(configAttributes.Path);
+                xql = innerContext.StreamProvider.ReadAllText(configAttributes.Path);
 
                 // Build a pipeline for the query, recursively creating dependencies
                 builder = PipelineParser.BuildPipeline(xql, null, innerContext);
             }
 
             // Get the path we're either reading or building
-            string tablePath = WorkflowContext.StreamProvider.Path(LocationType.Table, tableName, CrawlType.Full, innerContext.NewestDependency);
+            string tablePath = innerContext.StreamProvider.Path(LocationType.Table, tableName, CrawlType.Full, innerContext.NewestDependency);
 
             // If sources rebuilt, the query changed, or the latest output isn't up-to-date, rebuild it
             if (innerContext.RebuiltSomething || xql != latestTableQuery || innerContext.NewestDependency - latestTableAttributes.WhenModifiedUtc > TimeSpan.FromSeconds(1))
@@ -129,94 +127,7 @@ namespace XForm
             // Report the newest dependency in this chain to the components above
             innerContext.Pop(outerContext);
 
-            return new BinaryTableReader(WorkflowContext.StreamProvider, tablePath);
-        }
-
-        public string Build(string tableName, WorkflowContext context, string outputFormat)
-        {
-            if (String.IsNullOrEmpty(outputFormat)) outputFormat = "xform";
-
-            IDataBatchEnumerator builder = null;
-
-            try
-            {
-                Stopwatch w = Stopwatch.StartNew();
-
-                // Recursively build dependencies and return a reader for the result table
-                builder = Build(tableName, context);
-
-                string outputPath;
-
-                if (outputFormat.Equals("xform", StringComparison.OrdinalIgnoreCase) && builder is BinaryTableReader)
-                {
-                    // If the binary format was requested and we already built it, return the path written
-                    outputPath = ((BinaryTableReader)builder).TablePath;
-                }
-                else
-                {
-                    StreamAttributes attributes = WorkflowContext.StreamProvider.LatestBeforeCutoff(LocationType.Report, tableName, context.RequestedAsOfDateTime);
-                    outputPath = Path.Combine(WorkflowContext.StreamProvider.Path(LocationType.Report, tableName, CrawlType.Full, attributes.WhenModifiedUtc), $"Report.{outputFormat}");
-
-                    if (attributes.WhenModifiedUtc < context.NewestDependency || context.RebuiltSomething || !WorkflowContext.StreamProvider.Attributes(outputPath).Exists)
-                    {
-                        // If the report needs to be rebuilt, make it and return the path
-                        outputPath = Path.Combine(WorkflowContext.StreamProvider.Path(LocationType.Report, tableName, CrawlType.Full, context.NewestDependency), $"Report.{outputFormat}");
-                        if (outputFormat.Equals("xform", StringComparison.OrdinalIgnoreCase))
-                        {
-                            new BinaryTableWriter(builder, WorkflowContext, outputPath).RunAndDispose();
-                        }
-                        else
-                        {
-                            new TabularFileWriter(builder, WorkflowContext.StreamProvider, outputPath).RunAndDispose();
-                        }
-
-                        context.RebuiltSomething = true;
-                    }
-                }
-
-                w.Stop();
-                Trace.WriteLine($"Done. \"{outputPath}\" {(context.RebuiltSomething ? "written" : "up-to-date")} in {w.Elapsed.ToFriendlyString()}.");
-                return outputPath;
-            }
-            finally
-            {
-                if (builder != null)
-                {
-                    builder.Dispose();
-                    builder = null;
-                }
-            }
-        }
-
-        public int Add(string sourceFileOrFolderPath, string tableName, CrawlType crawlType, DateTime asOfDateTime = default(DateTime))
-        {
-            // If the 'asOfDateTime' wasn't passed, use the File Write Time
-            if (asOfDateTime == default(DateTime)) asOfDateTime = File.GetLastWriteTimeUtc(sourceFileOrFolderPath);
-
-            string desiredFolderPath = WorkflowContext.StreamProvider.Path(LocationType.Source, tableName, crawlType, asOfDateTime);
-
-            if (Directory.Exists(sourceFileOrFolderPath))
-            {
-                foreach (string filePath in Directory.GetFiles(sourceFileOrFolderPath, "*.*", SearchOption.AllDirectories))
-                {
-                    WorkflowContext.StreamProvider.Copy(File.OpenRead(filePath), Path.Combine(desiredFolderPath, Path.GetFileName(filePath)));
-                }
-            }
-            else
-            {
-                WorkflowContext.StreamProvider.Copy(File.OpenRead(sourceFileOrFolderPath), Path.Combine(desiredFolderPath, Path.GetFileName(sourceFileOrFolderPath)));
-            }
-
-            // TODO: Delete old copies if there are too many
-
-            Trace.WriteLine($"Done. Added \"{desiredFolderPath}\" to database.");
-            return 0;
-        }
-
-        public void SaveXql(LocationType type, string tableName, string xql)
-        {
-            string queryPath = WorkflowContext.StreamProvider.Path(type, tableName, ".xql");
-            WorkflowContext.StreamProvider.WriteAllText(queryPath, xql);
+            return new BinaryTableReader(innerContext.StreamProvider, tablePath);
         }
     }
 
@@ -235,6 +146,66 @@ namespace XForm
         {
             // Ask the workflow runner to defer computing dependencies now
             return _inner.Build(tableName, context, true);
+        }
+    }
+
+    public static class ReportWriter
+    {
+        public static string Build(string tableName, WorkflowContext context, string outputFormat)
+        {
+            IDataBatchEnumerator builder = null;
+
+            try
+            {
+                Stopwatch w = Stopwatch.StartNew();
+
+                // Reset the dependency DateTime check
+                context.NewestDependency = DateTime.MinValue;
+
+                // Recursively build dependencies and return a reader for the result table
+                builder = context.Runner.Build(tableName, context);
+
+                string outputPath;
+
+                if ((String.IsNullOrEmpty(outputFormat) || outputFormat.Equals("xform", StringComparison.OrdinalIgnoreCase)) && builder is BinaryTableReader)
+                {
+                    // If the binary format was requested and we already built it, return the path written
+                    return ((BinaryTableReader)builder).TablePath;
+                }
+                else
+                {
+                    StreamAttributes attributes = context.StreamProvider.LatestBeforeCutoff(LocationType.Report, tableName, context.RequestedAsOfDateTime);
+                    outputPath = Path.Combine(context.StreamProvider.Path(LocationType.Report, tableName, CrawlType.Full, attributes.WhenModifiedUtc), $"Report.{outputFormat}");
+
+                    if (attributes.WhenModifiedUtc < context.NewestDependency || context.RebuiltSomething || !context.StreamProvider.Attributes(outputPath).Exists)
+                    {
+                        // If the report needs to be rebuilt, make it and return the path
+                        outputPath = Path.Combine(context.StreamProvider.Path(LocationType.Report, tableName, CrawlType.Full, context.NewestDependency), $"Report.{outputFormat}");
+                        if (outputFormat.Equals("xform", StringComparison.OrdinalIgnoreCase))
+                        {
+                            new BinaryTableWriter(builder, context, outputPath).RunAndDispose();
+                        }
+                        else
+                        {
+                            new TabularFileWriter(builder, context.StreamProvider, outputPath).RunAndDispose();
+                        }
+
+                        context.RebuiltSomething = true;
+                    }
+                }
+
+                w.Stop();
+                Trace.WriteLine($"Done. \"{outputPath}\" {(context.RebuiltSomething ? "written" : "up-to-date")} in {w.Elapsed.ToFriendlyString()}.");
+                return outputPath;
+            }
+            finally
+            {
+                if (builder != null)
+                {
+                    builder.Dispose();
+                    builder = null;
+                }
+            }
         }
     }
 }

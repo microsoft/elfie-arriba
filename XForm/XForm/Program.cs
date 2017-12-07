@@ -19,20 +19,18 @@ namespace XForm
     {
         public static int Main(string[] args)
         {
-            return Run(args, Environment.CurrentDirectory, DateTime.UtcNow);
+            WorkflowContext context = new WorkflowContext();
+            context.RequestedAsOfDateTime = DateTime.UtcNow;
+            context.StreamProvider = new LocalFileStreamProvider(Environment.CurrentDirectory);
+            context.Runner = new WorkflowRunner(context);
+
+            return Run(args, context);
         }
 
-        public static int Run(string[] args, string rootDirectory, DateTime asOfDateTime)
+        public static int Run(string[] args, WorkflowContext context)
         {
             try
             {
-                WorkflowContext context = new WorkflowContext();
-                context.RequestedAsOfDateTime = asOfDateTime;
-                context.StreamProvider = new LocalFileStreamProvider(rootDirectory);
-
-                WorkflowRunner runner = new WorkflowRunner(context);
-                context.Runner = runner;
-
                 if (args == null || args.Length == 0)
                 {
                     return new InteractiveRunner(context).Run();
@@ -47,15 +45,17 @@ namespace XForm
                     case "add":
                         if (args.Length < 3) throw new UsageException("'add' [SourceFileOrDirectory] [AsSourceName] [Full|Incremental?] [AsOfDateTimeUtc?]");
 
-                        return runner.Add(
+                        context.StreamProvider.Add(
                             args[1],
                             args[2],
                             ParseCrawlTypeOrDefault(args, 3, CrawlType.Full),
                             ParseDateTimeOrDefault(args, 4, DateTime.MinValue));
+
+                        return 0;
                     case "build":
                         if (args.Length < 2) throw new UsageException("'build' [DesiredOutputName] [DesiredOutputFormat?] [AsOfDateTimeUtc?]");
                         context.RequestedAsOfDateTime = ParseDateTimeOrDefault(args, 3, context.RequestedAsOfDateTime);
-                        string outputPath = runner.Build(
+                        string outputPath = ReportWriter.Build(
                             args[1],
                             context,
                             (args.Length > 2 ? args[2] : "xform"));

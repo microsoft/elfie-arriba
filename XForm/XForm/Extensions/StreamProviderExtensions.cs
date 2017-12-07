@@ -33,6 +33,26 @@ namespace XForm.Extensions
             return System.IO.Path.Combine(type.ToString(), tableName, crawlType.ToString(), version.ToUniversalTime().ToString(DateTimeFolderFormat));
         }
 
+        public static void Add(this IStreamProvider streamProvider, string sourceFileOrFolderPath, string tableName, CrawlType crawlType, DateTime asOfDateTime = default(DateTime))
+        {
+            // If the 'asOfDateTime' wasn't passed, use the File Write Time
+            if (asOfDateTime == default(DateTime)) asOfDateTime = File.GetLastWriteTimeUtc(sourceFileOrFolderPath);
+
+            string desiredFolderPath = streamProvider.Path(LocationType.Source, tableName, crawlType, asOfDateTime);
+
+            if (Directory.Exists(sourceFileOrFolderPath))
+            {
+                foreach (string filePath in Directory.GetFiles(sourceFileOrFolderPath, "*.*", SearchOption.AllDirectories))
+                {
+                    streamProvider.Copy(File.OpenRead(filePath), System.IO.Path.Combine(desiredFolderPath, System.IO.Path.GetFileName(filePath)));
+                }
+            }
+            else
+            {
+                streamProvider.Copy(File.OpenRead(sourceFileOrFolderPath), System.IO.Path.Combine(desiredFolderPath, System.IO.Path.GetFileName(sourceFileOrFolderPath)));
+            }
+        }
+
         public static StreamAttributes LatestBeforeCutoff(this IStreamProvider streamProvider, LocationType type, string tableName, DateTime asOfDateTime)
         {
             // Find the last Full crawl which isn't after the cutoff
@@ -104,6 +124,14 @@ namespace XForm.Extensions
                     yield return item.Path.RelativePath("Query\\", ".xql");
                 }
             }
+        }
+
+        public static IEnumerable<string> SourceNames(this IStreamProvider streamProvider)
+        {
+            HashSet<string> set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            set.UnionWith(streamProvider.Tables());
+            set.UnionWith(streamProvider.Queries());
+            return set;
         }
 
         public static string ReadAllText(this IStreamProvider streamProvider, string path)
