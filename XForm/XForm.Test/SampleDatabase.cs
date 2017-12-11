@@ -21,6 +21,7 @@ namespace XForm.Test
     [TestClass]
     public class SampleDatabase
     {
+        private static object s_locker = new object();
         private static string s_RootPath;
         private static WorkflowContext s_WorkflowContext;
 
@@ -40,7 +41,10 @@ namespace XForm.Test
 
         public static void EnsureBuilt()
         {
-            if (s_RootPath == null || !Directory.Exists(s_RootPath)) Build();
+            lock (s_locker)
+            {
+                if (s_RootPath == null || !Directory.Exists(s_RootPath)) Build();
+            }
         }
 
         public static void Build()
@@ -79,13 +83,6 @@ namespace XForm.Test
             if (context == null) context = SampleDatabase.WorkflowContext;
             int result = Program.Run(new PipelineScanner(xformCommand).CurrentLineParts.ToArray(), context);
             Assert.AreEqual(expectedExitCode, result, $"Unexpected Exit Code for XForm {xformCommand}");
-        }
-
-        [TestMethod]
-        public void Database_Build()
-        {
-            // Unpack the Database. Verify 'xform add' works for each source
-            SampleDatabase.Build();
         }
 
         [TestMethod]

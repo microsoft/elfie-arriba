@@ -24,7 +24,7 @@ namespace XForm.IO
 
         public static void Copy(string directoryPath, string destination)
         {
-            if (!Directory.Exists(directoryPath)) return;
+            if (!Directory.Exists(directoryPath)) throw new IOException($"{directoryPath} did not exist to copy from.");
             Directory.CreateDirectory(destination);
 
             foreach (string filePath in Directory.GetFiles(directoryPath))
