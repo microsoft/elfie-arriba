@@ -45,6 +45,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             s_StreamToReader["tsv"] = (stream) => new TsvReader(stream);
             s_StreamToWriter["csv"] = (stream) => new CsvWriter(stream);
             s_StreamToWriter["tsv"] = (stream) => new TsvWriter(stream);
+            s_StreamToWriter["json"] = (stream) => new JsonTabularWriter(stream);
 
             // Register ITabularReader and ITabularWriter ctors from app.config
             foreach (string key in ConfigurationManager.AppSettings.AllKeys)
