@@ -40,7 +40,7 @@ namespace XForm.IO.StreamProvider
     public enum CrawlType
     {
         Full,
-        Incremental
+        Inc
     }
 
     public enum LocationType

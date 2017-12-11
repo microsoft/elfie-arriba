@@ -119,7 +119,7 @@ namespace XForm.Types
         {
             Allocator.AllocateToSize(ref _bytesBuffer, _bytesPerItem * batch.Count);
 
-            if (batch.Selector.Indices == null)
+            if (batch.Selector.Indices == null && batch.Selector.IsSingleValue == false)
             {
                 Buffer.BlockCopy(batch.Array, _bytesPerItem * batch.Selector.StartIndexInclusive, _bytesBuffer, 0, _bytesPerItem * batch.Count);
             }

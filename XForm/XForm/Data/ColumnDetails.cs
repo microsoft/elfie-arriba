@@ -34,5 +34,20 @@ namespace XForm.Data
         {
             return new ColumnDetails(this.Name, type, this.Nullable);
         }
+
+        public override bool Equals(object obj)
+        {
+            ColumnDetails other = obj as ColumnDetails;
+            if (other == null) return false;
+
+            return this.Name.Equals(other.Name, StringComparison.OrdinalIgnoreCase)
+                && this.Type.Equals(other.Type)
+                && this.Nullable.Equals(other.Nullable);
+        }
+
+        public override int GetHashCode()
+        {
+            return this.Name.GetHashCode() ^ this.Type.GetHashCode() ^ this.Nullable.GetHashCode();
+        }
     }
 }

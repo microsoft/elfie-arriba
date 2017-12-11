@@ -26,6 +26,8 @@ namespace XForm.Data
     /// </summary>
     public struct DataBatch
     {
+        private static bool[] s_NullSingle;
+
         /// <summary>
         ///  Optional array when DataBatch may contain null values indicating which
         ///  are null. If the array itself is null, none of the values are null.
@@ -51,6 +53,12 @@ namespace XForm.Data
         ///  This may not be the full size of the array, but only this count should be accessed
         /// </summary>
         public int Count => Selector.Count;
+
+        static DataBatch()
+        {
+            s_NullSingle = new bool[1];
+            s_NullSingle[0] = true;
+        }
 
         /// <summary>
         ///  Return the real Array index for a "logical row index" from zero to Count - 1.
@@ -92,13 +100,23 @@ namespace XForm.Data
         }
 
         /// <summary>
+        ///  Build a DataBatch with only the value 'null' for the logical row count.
+        /// </summary>
+        /// <param name="count">Row Count to return 'null' for</param>
+        /// <returns>DataBatch with a null Array and a single value indicating null for everything</returns>
+        public static DataBatch Null(Array singleNullValueArray, int count)
+        {
+            return new DataBatch() { Array = singleNullValueArray, IsNull = s_NullSingle, Selector = ArraySelector.Single(count) };
+        }
+
+        /// <summary>
         ///  Build a DataBatch referring to the first element only in an array.
         /// </summary>
         /// <param name="array">Array to use first element from</param>
         /// <returns>DataBatch wrapping first array value as a Single</returns>
-        public static DataBatch Single(Array array)
+        public static DataBatch Single(Array array, int count)
         {
-            return new DataBatch() { Array = array, Selector = ArraySelector.Single };
+            return new DataBatch() { Array = array, Selector = ArraySelector.Single(count) };
         }
 
         /// <summary>

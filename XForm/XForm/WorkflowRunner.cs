@@ -91,13 +91,18 @@ namespace XForm
                 // If there's no config, it's a simple conversion. Is the table up-to-date?
                 innerContext.NewestDependency = innerContext.NewestDependency.BiggestOf(latestSourceAttributes.WhenModifiedUtc);
 
-                // Find the input file itself
+                // Find the input files
                 IEnumerable<StreamAttributes> sourceFiles = innerContext.StreamProvider.Enumerate(latestSourceAttributes.Path, EnumerateTypes.File, true);
-                if (sourceFiles.Count() > 1) throw new NotImplementedException("Need concatenating reader");
+                if (sourceFiles.Count() == 1)
+                {
+                    builder = new TabularFileReader(innerContext.StreamProvider, sourceFiles.First().Path);
+                }
+                else
+                {
+                    builder = new ConcatenatingReader(sourceFiles.Select((sourceFile) => new TabularFileReader(innerContext.StreamProvider, sourceFile.Path)));
+                }
 
-                // Construct a pipeline to read the raw file only
                 xql = $"read {PipelineScanner.Escape(tableName)}";
-                builder = new TabularFileReader(innerContext.StreamProvider, sourceFiles.First().Path);
             }
             else
             {

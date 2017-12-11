@@ -60,7 +60,7 @@ namespace XForm.Types
             if (targetType == typeof(String8)) return value;
             Func<DataBatch, DataBatch> converter = GetConverter(typeof(String8), targetType, null, true);
 
-            DataBatch result = converter(DataBatch.Single(new String8[] { value }));
+            DataBatch result = converter(DataBatch.Single(new String8[] { value }, 1));
 
             // Verify the result was not null unless the input was "" or 'null'
             if (result.IsNull != null && result.IsNull[0] == true)

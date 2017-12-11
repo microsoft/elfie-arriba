@@ -67,6 +67,7 @@
     <Compile Include="Extensions\InterfaceLoader.cs" />
     <Compile Include="HttpService.cs" />
     <Compile Include="InteractiveRunner.cs" />
+    <Compile Include="IO\ConcatenatingReader.cs" />
     <Compile Include="IO\DirectoryIO.cs" />
     <Compile Include="IO\StreamProvider\DeflateStreamProvider.cs" />
     <Compile Include="IO\StreamProvider\IStreamProvider.cs" />

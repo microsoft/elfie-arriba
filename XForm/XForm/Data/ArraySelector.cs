@@ -60,7 +60,10 @@ namespace XForm.Data
         /// <summary>
         ///  Single is a static selector pointing to the first value of a one element array only
         /// </summary>
-        public static ArraySelector Single = new ArraySelector() { IsSingleValue = true, StartIndexInclusive = 0, EndIndexExclusive = 1 };
+        public static ArraySelector Single(int count)
+        {
+            return new ArraySelector() { IsSingleValue = true, StartIndexInclusive = 0, EndIndexExclusive = count };
+        }
 
         /// <summary>
         ///  Build a selector for [0, count) in an array.

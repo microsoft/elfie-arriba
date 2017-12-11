@@ -15,7 +15,6 @@ using XForm.Extensions;
 using XForm.IO;
 using XForm.IO.StreamProvider;
 using XForm.Query;
-using System.Threading;
 
 namespace XForm.Test
 {
@@ -54,12 +53,17 @@ namespace XForm.Test
             DirectoryIO.DeleteAllContents(s_RootPath);
 
             // Unpack the sample database
-            ZipFile.ExtractToDirectory("Database.zip", s_RootPath);
+            ZipFile.ExtractToDirectory("SampleDatabase.zip", s_RootPath);
 
             // XForm add each source
             foreach (string filePath in Directory.GetFiles(Path.Combine(s_RootPath, "_Raw")))
             {
                 Add(filePath);
+            }
+
+            foreach (string folderPath in Directory.GetDirectories(Path.Combine(s_RootPath, "_Raw")))
+            {
+                Add(folderPath);
             }
 
             // Add the sample configs and queries
@@ -72,11 +76,12 @@ namespace XForm.Test
             string fileName = Path.GetFileName(filePath);
             string[] fileNameParts = fileName.Split('.');
             string tableName = fileNameParts[0];
-            DateTime asOfDateTime = DateTime.ParseExact(fileNameParts[1], "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal);
+            string sourceType = fileNameParts[1];
+            DateTime asOfDateTime = DateTime.ParseExact(fileNameParts[2], "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal);
 
-            XForm($@"add ""{filePath}"" ""{tableName}"" Full ""{asOfDateTime}""");
-            string expectedPath = Path.Combine(s_RootPath, "Source", tableName, "Full", asOfDateTime.ToString(StreamProviderExtensions.DateTimeFolderFormat), fileName);
-            Assert.IsTrue(File.Exists(expectedPath), $"XForm add didn't add to expected location {expectedPath}");
+            XForm($@"add ""{filePath}"" ""{tableName}"" {sourceType} ""{asOfDateTime}""");
+            string expectedPath = Path.Combine(s_RootPath, "Source", tableName, sourceType, asOfDateTime.ToString(StreamProviderExtensions.DateTimeFolderFormat));
+            Assert.IsTrue(Directory.Exists(expectedPath), $"XForm add didn't add to expected location {expectedPath}");
         }
 
         public static void XForm(string xformCommand, int expectedExitCode = 0, WorkflowContext context = null)
@@ -214,7 +219,7 @@ namespace XForm.Test
             //XForm("build WebRequest.NullableHandling");
 
             // To debug engine execution, run like this:
-            PipelineParser.BuildPipeline("read WebRequest.BigServers.Direct", null, SampleDatabase.WorkflowContext).RunAndDispose();
+            PipelineParser.BuildPipeline("read WebServer.Big", null, SampleDatabase.WorkflowContext).RunAndDispose();
         }
 
         private static int ExpectedResult(string sourceName)
