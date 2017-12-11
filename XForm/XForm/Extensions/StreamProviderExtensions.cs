@@ -53,13 +53,13 @@ namespace XForm.Extensions
             }
         }
 
-        public static StreamAttributes LatestBeforeCutoff(this IStreamProvider streamProvider, LocationType type, string tableName, DateTime asOfDateTime)
+        public static StreamAttributes LatestBeforeCutoff(this IStreamProvider streamProvider, LocationType type, string tableName, CrawlType crawlType, DateTime asOfDateTime)
         {
-            // Find the last Full crawl which isn't after the cutoff
+            // Find the last crawl which isn't after the cutoff
             StreamAttributes latestStream = StreamAttributes.NotExists;
             DateTime latestStreamVersion = DateTime.MinValue;
 
-            string sourceFullPath = streamProvider.Path(type, tableName, CrawlType.Full);
+            string sourceFullPath = streamProvider.Path(type, tableName, crawlType);
             foreach (StreamAttributes version in streamProvider.Enumerate(sourceFullPath, EnumerateTypes.Folder, false))
             {
                 DateTime versionAsOf;
@@ -77,6 +77,25 @@ namespace XForm.Extensions
             }
 
             return latestStream;
+        }
+
+        public static IEnumerable<StreamAttributes> IncrementalInRange(this IStreamProvider streamProvider, LocationType type, string tableName, DateTime startDateTime, DateTime asOfDateTime)
+        {
+            string sourceFullPath = streamProvider.Path(type, tableName, CrawlType.Inc);
+            foreach (StreamAttributes version in streamProvider.Enumerate(sourceFullPath, EnumerateTypes.Folder, false))
+            {
+                DateTime versionAsOf;
+                if (!DateTime.TryParseExact(System.IO.Path.GetFileName(version.Path), DateTimeFolderFormat, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out versionAsOf))
+                {
+                    continue;
+                }
+
+                // Track the latest version, modifying the WhenModifiedUtc to be the folder stamp and not the actual file time
+                if (versionAsOf > startDateTime && versionAsOf <= asOfDateTime)
+                {
+                    yield return version;
+                }
+            }
         }
 
         public static IEnumerable<string> Tables(this IStreamProvider streamProvider)

@@ -107,7 +107,8 @@ namespace XForm.Data
             }
 
             // Request all rows
-            _source.Next(_source.Count);
+            int rowsGotten = _source.Next(_source.Count);
+            if (rowsGotten != _source.Count) throw new NotImplementedException($"MemoryCacher unable to combine rows if they aren't all returned together. Requested {_source.Count}, got {rowsGotten}.");
 
             // Get each Array and associate with the ArrayEnumerator
             for (int i = 0; i < _requestedColumnSourceIndices.Count; ++i)

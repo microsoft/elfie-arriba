@@ -65,8 +65,8 @@ namespace XForm
 
             // Find the config to build this, the latest source, and the latest output
             StreamAttributes configAttributes = innerContext.StreamProvider.Attributes(innerContext.StreamProvider.Path(LocationType.Config, tableName, ".xql"));
-            StreamAttributes latestSourceAttributes = innerContext.StreamProvider.LatestBeforeCutoff(LocationType.Source, tableName, outerContext.RequestedAsOfDateTime);
-            StreamAttributes latestTableAttributes = innerContext.StreamProvider.LatestBeforeCutoff(LocationType.Table, tableName, outerContext.RequestedAsOfDateTime);
+            StreamAttributes latestSourceAttributes = innerContext.StreamProvider.LatestBeforeCutoff(LocationType.Source, tableName, CrawlType.Full, outerContext.RequestedAsOfDateTime);
+            StreamAttributes latestTableAttributes = innerContext.StreamProvider.LatestBeforeCutoff(LocationType.Table, tableName, CrawlType.Full, outerContext.RequestedAsOfDateTime);
             string latestTableQuery = "";
             if (latestTableAttributes.Exists)
             {
@@ -88,21 +88,11 @@ namespace XForm
 
             if (!configAttributes.Exists)
             {
-                // If there's no config, it's a simple conversion. Is the table up-to-date?
-                innerContext.NewestDependency = innerContext.NewestDependency.BiggestOf(latestSourceAttributes.WhenModifiedUtc);
-
-                // Find the input files
-                IEnumerable<StreamAttributes> sourceFiles = innerContext.StreamProvider.Enumerate(latestSourceAttributes.Path, EnumerateTypes.File, true);
-                if (sourceFiles.Count() == 1)
-                {
-                    builder = new TabularFileReader(innerContext.StreamProvider, sourceFiles.First().Path);
-                }
-                else
-                {
-                    builder = new ConcatenatingReader(sourceFiles.Select((sourceFile) => new TabularFileReader(innerContext.StreamProvider, sourceFile.Path)));
-                }
-
+                // If this is a simple source, just reading it is how to build it
                 xql = $"read {PipelineScanner.Escape(tableName)}";
+
+                // Build a reader concatenating all needed pieces
+                builder = ReadSource(tableName, innerContext);
             }
             else
             {
@@ -117,7 +107,7 @@ namespace XForm
             string tablePath = innerContext.StreamProvider.Path(LocationType.Table, tableName, CrawlType.Full, innerContext.NewestDependency);
 
             // If sources rebuilt, the query changed, or the latest output isn't up-to-date, rebuild it
-            if (innerContext.RebuiltSomething || xql != latestTableQuery || innerContext.NewestDependency - latestTableAttributes.WhenModifiedUtc > TimeSpan.FromSeconds(1))
+            if (innerContext.RebuiltSomething || xql != latestTableQuery || IsOutOfDate(latestTableAttributes.WhenModifiedUtc, innerContext.NewestDependency))
             {
                 // If we're not running now, just return how to build it
                 if (deferred) return builder;
@@ -133,6 +123,56 @@ namespace XForm
             innerContext.Pop(outerContext);
 
             return new BinaryTableReader(innerContext.StreamProvider, tablePath);
+        }
+
+        public IDataBatchEnumerator ReadSource(string tableName, WorkflowContext context)
+        {
+            List<IDataBatchEnumerator> sources = new List<IDataBatchEnumerator>();
+
+            // Find the latest source of this type
+            StreamAttributes latestFullSourceAttributes = context.StreamProvider.LatestBeforeCutoff(LocationType.Source, tableName, CrawlType.Full, context.RequestedAsOfDateTime);
+            if(!latestFullSourceAttributes.Exists) throw new UsageException(tableName, "tableName", context.StreamProvider.SourceNames());
+
+            // Find the latest already converted table
+            StreamAttributes latestBuiltTableAttributes = context.StreamProvider.LatestBeforeCutoff(LocationType.Table, tableName, CrawlType.Full, context.RequestedAsOfDateTime);
+
+            // Read the Table or the Full Crawl Source, whichever is newer
+            DateTime incrementalNeededAfterCutoff;
+            if (latestBuiltTableAttributes.Exists && !IsOutOfDate(latestBuiltTableAttributes.WhenModifiedUtc, latestFullSourceAttributes.WhenModifiedUtc))
+            {
+                // If the table is current, reuse it
+                sources.Add(new BinaryTableReader(context.StreamProvider, latestBuiltTableAttributes.Path));
+                incrementalNeededAfterCutoff = latestBuiltTableAttributes.WhenModifiedUtc;
+            }
+            else
+            { 
+                // Otherwise, build a new table from the latest source full crawl
+                sources.AddRange(context.StreamProvider.Enumerate(latestFullSourceAttributes.Path, EnumerateTypes.File, true).Select((sa) => new TabularFileReader(context.StreamProvider, sa.Path)));
+                incrementalNeededAfterCutoff = latestFullSourceAttributes.WhenModifiedUtc;
+            }
+
+            // Add incremental crawls between the full source and the reporting date
+            DateTime latestComponent = incrementalNeededAfterCutoff;
+
+            foreach (StreamAttributes incrementalCrawl in context.StreamProvider.IncrementalInRange(LocationType.Source, tableName, incrementalNeededAfterCutoff, context.RequestedAsOfDateTime))
+            {
+                sources.AddRange(context.StreamProvider.Enumerate(incrementalCrawl.Path, EnumerateTypes.File, true).Select((sa) => new TabularFileReader(context.StreamProvider, sa.Path)));
+                latestComponent = latestComponent.BiggestOf(incrementalCrawl.WhenModifiedUtc);
+            }
+
+            // Report the latest incorporated source back
+            context.NewestDependency = latestComponent;
+
+            // Return the source (if a single) or concatenated group (if multiple parts)
+            if (sources.Count == 1) return sources[0];
+            return new ConcatenatingReader(sources);
+        }
+
+        private bool IsOutOfDate(DateTime outputWhenModifiedUtc, DateTime inputsWhenModifiedUtc)
+        {
+            // An output is out of date when the inputs are at least one second newer.
+            // This "fuzzyness" is because input files can have partial second freshness but written tables don't.
+            return inputsWhenModifiedUtc - outputWhenModifiedUtc > TimeSpan.FromSeconds(1);
         }
     }
 
@@ -175,11 +215,11 @@ namespace XForm
                 if ((String.IsNullOrEmpty(outputFormat) || outputFormat.Equals("xform", StringComparison.OrdinalIgnoreCase)) && builder is BinaryTableReader)
                 {
                     // If the binary format was requested and we already built it, return the path written
-                    return ((BinaryTableReader)builder).TablePath;
+                    outputPath = ((BinaryTableReader)builder).TablePath;
                 }
                 else
                 {
-                    StreamAttributes attributes = context.StreamProvider.LatestBeforeCutoff(LocationType.Report, tableName, context.RequestedAsOfDateTime);
+                    StreamAttributes attributes = context.StreamProvider.LatestBeforeCutoff(LocationType.Report, tableName, CrawlType.Full, context.RequestedAsOfDateTime);
                     outputPath = Path.Combine(context.StreamProvider.Path(LocationType.Report, tableName, CrawlType.Full, attributes.WhenModifiedUtc), $"Report.{outputFormat}");
 
                     if (attributes.WhenModifiedUtc < context.NewestDependency || context.RebuiltSomething || !context.StreamProvider.Attributes(outputPath).Exists)

@@ -123,14 +123,14 @@ namespace XForm.Test
             XForm($"build WebRequest xform \"{cutoff:yyyy-MM-dd hh:mm:ssZ}");
 
             // Verify it has been created
-            DateTime versionFound = SampleDatabase.WorkflowContext.StreamProvider.LatestBeforeCutoff(LocationType.Table, "WebRequest", cutoff).WhenModifiedUtc;
+            DateTime versionFound = SampleDatabase.WorkflowContext.StreamProvider.LatestBeforeCutoff(LocationType.Table, "WebRequest", CrawlType.Full, cutoff).WhenModifiedUtc;
             Assert.AreEqual(new DateTime(2017, 12, 02, 00, 00, 00, DateTimeKind.Utc), versionFound);
 
             // Ask for WebRequest.Authenticated. Verify a 2017-12-02 version is also built for it
             XForm($"build WebRequest.Authenticated xform \"{cutoff:yyyy-MM-dd hh:mm:ssZ}");
 
             // Verify it has been created
-            versionFound = SampleDatabase.WorkflowContext.StreamProvider.LatestBeforeCutoff(LocationType.Table, "WebRequest.Authenticated", cutoff).WhenModifiedUtc;
+            versionFound = SampleDatabase.WorkflowContext.StreamProvider.LatestBeforeCutoff(LocationType.Table, "WebRequest.Authenticated", CrawlType.Full, cutoff).WhenModifiedUtc;
             Assert.AreEqual(new DateTime(2017, 12, 02, 00, 00, 00, DateTimeKind.Utc), versionFound);
         }
 
@@ -142,14 +142,14 @@ namespace XForm.Test
 
             // Build WebRequest.tsv. Verify it's a 2017-12-03 version. Verify the TSV is found
             XForm($"build WebRequest tsv");
-            latestReport = SampleDatabase.WorkflowContext.StreamProvider.LatestBeforeCutoff(LocationType.Report, "WebRequest", DateTime.UtcNow);
+            latestReport = SampleDatabase.WorkflowContext.StreamProvider.LatestBeforeCutoff(LocationType.Report, "WebRequest", CrawlType.Full, DateTime.UtcNow);
             Assert.AreEqual(new DateTime(2017, 12, 03, 00, 00, 00, DateTimeKind.Utc), latestReport.WhenModifiedUtc);
             Assert.IsTrue(SampleDatabase.WorkflowContext.StreamProvider.Attributes(Path.Combine(latestReport.Path, "Report.tsv")).Exists);
 
             // Ask for a 2017-12-02 report. Verify 2017-12-02 version is created
             DateTime cutoff = new DateTime(2017, 12, 02, 11, 50, 00, DateTimeKind.Utc);
             XForm($"build WebRequest tsv \"{cutoff:yyyy-MM-dd hh:mm:ssZ}");
-            latestReport = SampleDatabase.WorkflowContext.StreamProvider.LatestBeforeCutoff(LocationType.Report, "WebRequest", cutoff);
+            latestReport = SampleDatabase.WorkflowContext.StreamProvider.LatestBeforeCutoff(LocationType.Report, "WebRequest", CrawlType.Full, cutoff);
             Assert.AreEqual(new DateTime(2017, 12, 02, 00, 00, 00, DateTimeKind.Utc), latestReport.WhenModifiedUtc);
             Assert.IsTrue(SampleDatabase.WorkflowContext.StreamProvider.Attributes(Path.Combine(latestReport.Path, "Report.tsv")).Exists);
         }
@@ -194,6 +194,14 @@ namespace XForm.Test
             Assert.IsTrue(branchedStreamProvider.Attributes("Table\\WebRequest.Authenticated").Exists);
             Assert.AreEqual(webRequestAuthenticatedConfigNew, ((BinaryTableReader)branchedContext.Runner.Build("WebRequest.Authenticated", branchedContext)).Query);
             Assert.AreNotEqual(webRequestAuthenticatedConfigNew, ((BinaryTableReader)SampleDatabase.WorkflowContext.Runner.Build("WebRequest.Authenticated", SampleDatabase.WorkflowContext)).Query);
+        }
+
+        [TestMethod]
+        public void Database_IncrementalSources()
+        {
+            SampleDatabase.EnsureBuilt();
+
+            // Build WebServer as of 2017-11-25; should have 
         }
 
         [TestMethod]
