@@ -70,6 +70,8 @@ namespace XForm.Types
 
     public class PrimitiveArrayReader<T> : IColumnReader
     {
+        private const int ReadPageSize = 64 * 1024;
+
         private int _bytesPerItem;
         private ByteReader _byteReader;
         private T[] _array;
@@ -86,9 +88,20 @@ namespace XForm.Types
         {
             if (selector.Indices != null) throw new NotImplementedException();
 
-            DataBatch byteBatch = _byteReader.Read(ArraySelector.All(int.MaxValue).Slice(_bytesPerItem * selector.StartIndexInclusive, _bytesPerItem * selector.EndIndexExclusive));
+            // Allocate the result array
             Allocator.AllocateToSize(ref _array, selector.Count);
-            Buffer.BlockCopy(byteBatch.Array, 0, _array, 0, _bytesPerItem * selector.Count);
+
+            // Read items in pages of 64k
+            int byteStart = _bytesPerItem * selector.StartIndexInclusive;
+            int byteEnd = _bytesPerItem * selector.EndIndexExclusive;
+            int bytesRead = 0;
+            for (int currentByteIndex = byteStart; currentByteIndex < byteEnd; currentByteIndex += ReadPageSize)
+            {
+                int currentByteEnd = Math.Min(byteEnd, currentByteIndex + ReadPageSize);
+                DataBatch byteBatch = _byteReader.Read(ArraySelector.All(int.MaxValue).Slice(currentByteIndex, currentByteEnd));
+                Buffer.BlockCopy(byteBatch.Array, 0, _array, bytesRead, byteBatch.Count);
+                bytesRead += currentByteEnd - currentByteIndex;
+            }
 
             return DataBatch.All(_array, selector.Count);
         }
