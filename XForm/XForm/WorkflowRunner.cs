@@ -63,9 +63,7 @@ namespace XForm
                 return queryPipeline;
             }
 
-            // Find the config to build this, the latest source, and the latest output
-            StreamAttributes configAttributes = innerContext.StreamProvider.Attributes(innerContext.StreamProvider.Path(LocationType.Config, tableName, ".xql"));
-            StreamAttributes latestSourceAttributes = innerContext.StreamProvider.LatestBeforeCutoff(LocationType.Source, tableName, CrawlType.Full, outerContext.RequestedAsOfDateTime);
+            // Find the latest already built result, and associated query
             StreamAttributes latestTableAttributes = innerContext.StreamProvider.LatestBeforeCutoff(LocationType.Table, tableName, CrawlType.Full, outerContext.RequestedAsOfDateTime);
             string latestTableQuery = "";
             if (latestTableAttributes.Exists)
@@ -76,9 +74,6 @@ namespace XForm
                 }
             }
 
-            // If the Config doesn't exist and there's no source, throw
-            if (!configAttributes.Exists && !latestSourceAttributes.Exists) throw new UsageException(tableName, "tableName", outerContext.StreamProvider.SourceNames());
-
             // Set the dependency date to the latest table we've already built (if any)
             innerContext.NewestDependency = latestTableAttributes.WhenModifiedUtc;
 
@@ -86,6 +81,8 @@ namespace XForm
             string xql;
             IDataBatchEnumerator builder;
 
+            // Find the config to build the table
+            StreamAttributes configAttributes = innerContext.StreamProvider.Attributes(innerContext.StreamProvider.Path(LocationType.Config, tableName, ".xql"));
             if (!configAttributes.Exists)
             {
                 // If this is a simple source, just reading it is how to build it
@@ -131,7 +128,7 @@ namespace XForm
 
             // Find the latest source of this type
             StreamAttributes latestFullSourceAttributes = context.StreamProvider.LatestBeforeCutoff(LocationType.Source, tableName, CrawlType.Full, context.RequestedAsOfDateTime);
-            if(!latestFullSourceAttributes.Exists) throw new UsageException(tableName, "tableName", context.StreamProvider.SourceNames());
+            if (!latestFullSourceAttributes.Exists) throw new UsageException(tableName, "tableName", context.StreamProvider.SourceNames());
 
             // Find the latest already converted table
             StreamAttributes latestBuiltTableAttributes = context.StreamProvider.LatestBeforeCutoff(LocationType.Table, tableName, CrawlType.Full, context.RequestedAsOfDateTime);
@@ -145,7 +142,7 @@ namespace XForm
                 incrementalNeededAfterCutoff = latestBuiltTableAttributes.WhenModifiedUtc;
             }
             else
-            { 
+            {
                 // Otherwise, build a new table from the latest source full crawl
                 sources.AddRange(context.StreamProvider.Enumerate(latestFullSourceAttributes.Path, EnumerateTypes.File, true).Select((sa) => new TabularFileReader(context.StreamProvider, sa.Path)));
                 incrementalNeededAfterCutoff = latestFullSourceAttributes.WhenModifiedUtc;
