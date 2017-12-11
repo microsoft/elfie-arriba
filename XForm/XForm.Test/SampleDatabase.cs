@@ -15,6 +15,7 @@ using XForm.Extensions;
 using XForm.IO;
 using XForm.IO.StreamProvider;
 using XForm.Query;
+using System.Threading;
 
 namespace XForm.Test
 {
@@ -80,7 +81,14 @@ namespace XForm.Test
 
         public static void XForm(string xformCommand, int expectedExitCode = 0, WorkflowContext context = null)
         {
-            if (context == null) context = SampleDatabase.WorkflowContext;
+            if (context == null)
+            {
+                context = SampleDatabase.WorkflowContext;
+                
+                // Ensure the as-of DateTime is reset for each operation
+                context.RequestedAsOfDateTime = DateTime.UtcNow;
+            }
+
             int result = Program.Run(new PipelineScanner(xformCommand).CurrentLineParts.ToArray(), context);
             Assert.AreEqual(expectedExitCode, result, $"Unexpected Exit Code for XForm {xformCommand}");
         }
