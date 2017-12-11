@@ -66,7 +66,7 @@ namespace XForm.IO.StreamProvider
         {
             string physicalPath = PathCombineSandbox(logicalPath);
             EnsureFolderExists(physicalPath);
-            return new FileStream(physicalPath, FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read | FileShare.Delete);
+            return new BufferedStream(new FileStream(physicalPath, FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read | FileShare.Delete), 64 * 1024);
         }
 
         public Stream OpenRead(string logicalPath)
@@ -80,7 +80,7 @@ namespace XForm.IO.StreamProvider
 
             string physicalPath = PathCombineSandbox(logicalPath);
             EnsureFolderExists(physicalPath);
-            return new FileStream(physicalPath, FileMode.Create, FileAccess.Write, FileShare.Read | FileShare.Delete);
+            return new BufferedStream(new FileStream(physicalPath, FileMode.Create, FileAccess.Write, FileShare.Read | FileShare.Delete), 64 * 1024);
         }
 
         public void Publish(string logicalTablePath)
