@@ -10,10 +10,10 @@ using XForm.Query;
 namespace XForm.Test.Query
 {
     [TestClass]
-    public class PipelineTests
+    public class XqlParsingTests
     {
         [TestMethod]
-        public void ConfigurationLineParsing()
+        public void XqlSplitter_Basics()
         {
             Assert.AreEqual("Simple", TestSplitAndJoin("Simple"));
             Assert.AreEqual("Simple", TestSplitAndJoin("  Simple "));
@@ -22,18 +22,19 @@ namespace XForm.Test.Query
             Assert.AreEqual(@"read|C:\Download\Sample.csv", TestSplitAndJoin(@"read ""C:\Download\Sample.csv"));
             Assert.AreEqual(@"read|C:\Download\Sample.csv", TestSplitAndJoin(@"read ""C:\Download\Sample.csv"" "));
             Assert.AreEqual(@"value|""Quoted""", TestSplitAndJoin(@"value """"""Quoted"""""""));
+            Assert.AreEqual(@"Column [Name] Here", TestSplitAndJoin(@"[Column [Name]] Here]"));
             Assert.AreEqual(@"columns|One|Two|Three", TestSplitAndJoin(@"columns One,Two, Three"));
         }
 
         private static string TestSplitAndJoin(string xqlLine)
         {
-            PipelineScanner scanner = new PipelineScanner(xqlLine);
+            XqlScanner scanner = new XqlScanner(xqlLine);
 
             List<string> parts = new List<string>();
-            while (scanner.HasCurrentPart)
+            while(scanner.Current.Type != TokenType.End)
             {
-                parts.Add(scanner.CurrentPart);
-                scanner.NextPart();
+                parts.Add(scanner.Current.Value);
+                scanner.Next();
             }
 
             return string.Join("|", parts);

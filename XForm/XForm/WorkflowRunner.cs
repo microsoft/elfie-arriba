@@ -86,7 +86,7 @@ namespace XForm
             if (!configAttributes.Exists)
             {
                 // If this is a simple source, just reading it is how to build it
-                xql = $"read {PipelineScanner.Escape(tableName)}";
+                xql = $"read {XqlScanner.Escape(tableName, TokenType.Value)}";
 
                 // Build a reader concatenating all needed pieces
                 builder = ReadSource(tableName, innerContext);

@@ -57,7 +57,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Query\DataBatchEnumeratorContractValidator.cs" />
     <Compile Include="Query\DataBatchEnumeratorTests.cs" />
-    <Compile Include="Query\PipelineTests.cs" />
+    <Compile Include="Query\XqlParsingTests.cs" />
     <Compile Include="Query\SampleQuery.cs" />
     <Compile Include="Query\SuggestTests.cs" />
     <Compile Include="Query\XFormPerformance.cs" />

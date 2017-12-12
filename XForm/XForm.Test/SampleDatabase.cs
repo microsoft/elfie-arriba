@@ -95,7 +95,16 @@ namespace XForm.Test
                 context.RequestedAsOfDateTime = DateTime.UtcNow;
             }
 
-            int result = Program.Run(new PipelineScanner(xformCommand).CurrentLineParts.ToArray(), context);
+            List<string> args = new List<string>();
+            XqlScanner scanner = new XqlScanner(xformCommand);
+            while(scanner.Current.Type != TokenType.End)
+            {
+                if (scanner.Current.Type == TokenType.Newline) break;
+                args.Add(scanner.Current.Value);
+                scanner.Next();
+            }
+
+            int result = Program.Run(args.ToArray(), context);
             Assert.AreEqual(expectedExitCode, result, $"Unexpected Exit Code for XForm {xformCommand}");
         }
 
@@ -247,7 +256,7 @@ namespace XForm.Test
             // XForm build each source
             foreach (string sourceName in SampleDatabase.WorkflowContext.Runner.SourceNames)
             {
-                XForm($"build {PipelineScanner.Escape(sourceName)}", ExpectedResult(sourceName));
+                XForm($"build {XqlScanner.Escape(sourceName, TokenType.Value)}", ExpectedResult(sourceName));
             }
 
             // When one fails, put it by itself in the test below to debug

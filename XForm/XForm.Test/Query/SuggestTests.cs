@@ -57,7 +57,7 @@ namespace XForm.Test.Query
 
             Assert.AreEqual(false, result.IsValid);
             Assert.AreEqual("UsageError.WebRequest.MissingColumn", result.Usage.TableName);
-            Assert.AreEqual("where BadColumnName != \"\"", result.Usage.QueryLine);
+            Assert.AreEqual(2, result.Usage.QueryLineNumber);
             Assert.AreEqual("'where' [columnName] [operator] [value]", result.Usage.Usage);
             Assert.AreEqual("BadColumnName", result.Usage.InvalidValue);
             Assert.AreEqual("columnName", result.Usage.InvalidValueCategory);
