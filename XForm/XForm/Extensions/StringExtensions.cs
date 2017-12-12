@@ -39,5 +39,43 @@ namespace XForm.Extensions
 
             return fullPath.Substring(index, length);
         }
+
+        /// <summary>
+        ///  Parse a "friendly" TimeSpan value, like 7d, 24h, 5m, 30s.
+        /// </summary>
+        /// <param name="value">String value to parse as a "friendly" format TimeSpan</param>
+        /// <returns>TimeSpan equivalent to value</returns>
+        public static TimeSpan ParseTimeSpanFriendly(this string value)
+        {
+            if (String.IsNullOrEmpty(value)) throw new ArgumentException("value");
+
+            // Find the portion of the value which is the number part
+            int numberPrefixLength = 0;
+            for (; numberPrefixLength < value.Length; ++numberPrefixLength)
+            {
+                if (Char.IsLetter(value[numberPrefixLength])) break;
+            }
+
+            double numberPartValue = double.Parse(value.Substring(0, numberPrefixLength));
+            string suffix = value.Substring(numberPrefixLength);
+
+            switch (suffix.ToLowerInvariant())
+            {
+                case "s":
+                case "sec":
+                    return TimeSpan.FromSeconds(numberPartValue);
+                case "m":
+                case "min":
+                    return TimeSpan.FromMinutes(numberPartValue);
+                case "h":
+                case "hour":
+                    return TimeSpan.FromHours(numberPartValue);
+                case "d":
+                case "day":
+                    return TimeSpan.FromDays(numberPartValue);
+                default:
+                    throw new ArgumentException($"Unable to parse \"{value}\" as a friendly TimeSpan. Unit \"{suffix}\" was unknown. Expecting 's', 'm', 'h', 'd'.");
+            }
+        }
     }
 }

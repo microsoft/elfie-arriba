@@ -52,6 +52,7 @@
   <ItemGroup>
     <Compile Include="AssertCommand.cs" />
     <Compile Include="Data\AllocatorTests.cs" />
+    <Compile Include="Extensions\StringExtensionsTests.cs" />
     <Compile Include="IO\StreamProviderTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Query\DataBatchEnumeratorContractValidator.cs" />
