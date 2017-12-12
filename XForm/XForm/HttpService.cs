@@ -115,12 +115,12 @@ namespace XForm
             try
             {
                 // Build a Pipeline for the Query
-                pipeline = PipelineParser.BuildPipeline(query, null, _workflowContext);
+                pipeline = XqlParser.Parse(query, null, _workflowContext);
 
                 // Restrict the row count if requested
                 if (rowCountLimit >= 0)
                 {
-                    pipeline = PipelineParser.BuildStage($"limit {rowCountLimit}", pipeline, _workflowContext);
+                    pipeline = XqlParser.Parse($"limit {rowCountLimit}", pipeline, _workflowContext);
                 }
 
                 // Build a writer for the desired format

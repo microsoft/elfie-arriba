@@ -14,9 +14,9 @@ namespace XForm.Test.Query
     [TestClass]
     public class SuggestTests
     {
-        private static string s_verbs = string.Join("|", PipelineParser.SupportedVerbs.OrderBy((s) => s));
+        private static string s_verbs = string.Join("|", XqlParser.SupportedVerbs.OrderBy((s) => s));
         private static string s_sources = string.Join("|", SampleDatabase.WorkflowContext.Runner.SourceNames.OrderBy((s) => s));
-        private static string s_webRequestColumns = string.Join("|", PipelineParser.BuildPipeline(@"
+        private static string s_webRequestColumns = string.Join("|", XqlParser.Parse(@"
             read WebRequest
             schema", null, SampleDatabase.WorkflowContext).ToList<string>("Name").OrderBy((s) => s));
 

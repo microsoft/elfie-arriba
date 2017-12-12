@@ -64,7 +64,7 @@ namespace XForm.Test.Query
             ArrayEnumerator arrayTable = new ArrayEnumerator(_array.Length);
             arrayTable.AddColumn("ID", _array);
 
-            IDataBatchEnumerator query = PipelineParser.BuildPipeline($@"
+            IDataBatchEnumerator query = XqlParser.Parse($@"
                 where ID = {_value}
                 count", arrayTable, new WorkflowContext());
 

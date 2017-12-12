@@ -58,7 +58,7 @@ namespace XForm
             StreamAttributes queryAttributes = innerContext.StreamProvider.Attributes(innerContext.StreamProvider.Path(LocationType.Query, tableName, ".xql"));
             if (queryAttributes.Exists)
             {
-                IDataBatchEnumerator queryPipeline = PipelineParser.BuildPipeline(innerContext.StreamProvider.ReadAllText(queryAttributes.Path), null, innerContext);
+                IDataBatchEnumerator queryPipeline = XqlParser.Parse(innerContext.StreamProvider.ReadAllText(queryAttributes.Path), null, innerContext);
                 innerContext.Pop(outerContext);
                 return queryPipeline;
             }
@@ -97,7 +97,7 @@ namespace XForm
                 xql = innerContext.StreamProvider.ReadAllText(configAttributes.Path);
 
                 // Build a pipeline for the query, recursively creating dependencies
-                builder = PipelineParser.BuildPipeline(xql, null, innerContext);
+                builder = XqlParser.Parse(xql, null, innerContext);
             }
 
             // Get the path we're either reading or building

@@ -151,13 +151,13 @@ namespace XForm.Test
 
             // Asking for 2d from 2017-12-04 should get 2017-12-03 and 2017-12-02 crawls
             WorkflowContext historicalContext = new WorkflowContext(SampleDatabase.WorkflowContext) { RequestedAsOfDateTime = new DateTime(2017, 12, 04, 00, 00, 00, DateTimeKind.Utc) };
-            Assert.AreEqual(2000, PipelineParser.BuildPipeline("readRange 2d WebRequest", null, historicalContext).RunAndDispose());
+            Assert.AreEqual(2000, XqlParser.Parse("readRange 2d WebRequest", null, historicalContext).RunAndDispose());
 
             // Asking for 3d should get all three crawls
-            Assert.AreEqual(3000, PipelineParser.BuildPipeline("readRange 3d WebRequest", null, historicalContext).RunAndDispose());
+            Assert.AreEqual(3000, XqlParser.Parse("readRange 3d WebRequest", null, historicalContext).RunAndDispose());
 
             // Asking for 4d should error (no version for the range start)
-            Verify.Exception<UsageException>(() => PipelineParser.BuildPipeline("readRange 4d WebRequest", null, historicalContext).RunAndDispose());
+            Verify.Exception<UsageException>(() => XqlParser.Parse("readRange 4d WebRequest", null, historicalContext).RunAndDispose());
         }
 
         [TestMethod]
@@ -271,7 +271,7 @@ namespace XForm.Test
             //XForm("build WebRequest.NullableHandling");
 
             // To debug engine execution, run like this:
-            PipelineParser.BuildPipeline("read WebServer.Big", null, SampleDatabase.WorkflowContext).RunAndDispose();
+            XqlParser.Parse("read WebServer.Big", null, SampleDatabase.WorkflowContext).RunAndDispose();
         }
 
         private static int ExpectedResult(string sourceName)

@@ -14,7 +14,7 @@ using XForm.Types;
 
 namespace XForm.Query
 {
-    public class PipelineParser
+    public class XqlParser
     {
         private XqlScanner _scanner;
         private IPipelineStageBuilder _currentLineBuilder;
@@ -22,7 +22,7 @@ namespace XForm.Query
 
         private static Dictionary<string, IPipelineStageBuilder> s_pipelineStageBuildersByName;
 
-        public PipelineParser(string xqlQuery, WorkflowContext workflow)
+        public XqlParser(string xqlQuery, WorkflowContext workflow)
         {
             EnsureLoaded();
             _scanner = new XqlScanner(xqlQuery);
@@ -57,7 +57,7 @@ namespace XForm.Query
             }
         }
 
-        public static IDataBatchEnumerator BuildPipeline(string xqlQuery, IDataBatchEnumerator source, WorkflowContext outerContext)
+        public static IDataBatchEnumerator Parse(string xqlQuery, IDataBatchEnumerator source, WorkflowContext outerContext)
         {
             if (outerContext == null) throw new ArgumentNullException("outerContext");
             if (outerContext.StreamProvider == null) throw new ArgumentNullException("outerContext.StreamProvider");
@@ -65,7 +65,7 @@ namespace XForm.Query
 
             // Build an inner context to hold this copy of the parser
             WorkflowContext innerContext = WorkflowContext.Push(outerContext);
-            PipelineParser parser = new PipelineParser(xqlQuery, innerContext);
+            XqlParser parser = new XqlParser(xqlQuery, innerContext);
             innerContext.CurrentQuery = xqlQuery;
             innerContext.Parser = parser;
 
@@ -73,27 +73,6 @@ namespace XForm.Query
             IDataBatchEnumerator result = parser.NextPipeline(source);
 
             // Copy inner context results back out to the outer context
-            innerContext.Pop(outerContext);
-
-            return result;
-        }
-
-        public static IDataBatchEnumerator BuildStage(string xqlQueryLine, IDataBatchEnumerator source, WorkflowContext outerContext)
-        {
-            if (outerContext == null) throw new ArgumentNullException("outerContext");
-            if (outerContext.StreamProvider == null) throw new ArgumentNullException("outerContext.StreamProvider");
-            if (outerContext.Runner == null) throw new ArgumentNullException("outerContext.Runner");
-
-            // Build an inner context to hold this copy of the parser
-            WorkflowContext innerContext = WorkflowContext.Push(outerContext);
-            PipelineParser parser = new PipelineParser(xqlQueryLine, innerContext);
-            innerContext.CurrentQuery = xqlQueryLine;
-            innerContext.Parser = parser;
-
-            // Build the stage
-            IDataBatchEnumerator result = parser.NextStage(source);
-
-            // Copy the inner context results back to the outer context
             innerContext.Pop(outerContext);
 
             return result;

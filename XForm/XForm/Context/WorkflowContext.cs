@@ -40,7 +40,7 @@ namespace XForm
         ///  PipelineParser is the parser for the query for the current table being built.
         ///  It provides pipeline stages with arguments of specific types (column names, table names, integers, etc)
         /// </summary>
-        public PipelineParser Parser { get; set; }
+        public XqlParser Parser { get; set; }
 
         /// <summary>
         ///  CurrentTable is the current table name (Source, Config, or Query) being built

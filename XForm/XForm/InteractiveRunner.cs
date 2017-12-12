@@ -55,10 +55,10 @@ namespace XForm
 
                     // Read the next query line
                     string nextLine = Console.ReadLine();
-                    PipelineParser parser = null;
+                    XqlParser parser = null;
                     try
                     {
-                        parser = new PipelineParser(nextLine, _workflowContext);
+                        parser = new XqlParser(nextLine, _workflowContext);
                         if (!parser.HasAnotherPart) return lastCount;
 
                         string command = parser.NextString().ToLowerInvariant();
@@ -125,8 +125,8 @@ namespace XForm
 
                     // Get the first 10 results
                     IDataBatchEnumerator firstTenWrapper = _pipeline;
-                    firstTenWrapper = PipelineParser.BuildStage("limit 10", firstTenWrapper, _workflowContext);
-                    firstTenWrapper = PipelineParser.BuildStage("write cout", firstTenWrapper, _workflowContext);
+                    firstTenWrapper = XqlParser.Parse("limit 10", firstTenWrapper, _workflowContext);
+                    firstTenWrapper = XqlParser.Parse("write cout", firstTenWrapper, _workflowContext);
                     lastCount = firstTenWrapper.Run();
 
                     // Get the count
@@ -166,7 +166,7 @@ namespace XForm
             _stages.Add(_pipeline);
 
             // Build the new stage
-            _pipeline = PipelineParser.BuildStage(nextLine, _pipeline, _workflowContext);
+            _pipeline = XqlParser.Parse(nextLine, _pipeline, _workflowContext);
 
             // Save the current command set
             _commands.Add(nextLine);

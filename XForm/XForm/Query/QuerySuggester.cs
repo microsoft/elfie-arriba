@@ -32,14 +32,14 @@ namespace XForm.Query
             try
             {
                 // Parse the query as-is to see if it's valid
-                IDataBatchEnumerator pipeline = PipelineParser.BuildPipeline(partialXqlQuery, null, _workflowContext);
+                IDataBatchEnumerator pipeline = XqlParser.Parse(partialXqlQuery, null, _workflowContext);
                 result.IsValid = true;
 
                 // Parse the query with an extra argument on the last line to see what would be suggested
                 partialXqlQuery = partialXqlQuery + " \"\"";
 
                 // Try building the query pipeline, using a *DeferredRunner* so dependencies aren't built right now
-                pipeline = PipelineParser.BuildPipeline(partialXqlQuery, null, _workflowContext);
+                pipeline = XqlParser.Parse(partialXqlQuery, null, _workflowContext);
             }
             catch (UsageException ex)
             {
