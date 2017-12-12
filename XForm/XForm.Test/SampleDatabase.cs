@@ -212,6 +212,8 @@ namespace XForm.Test
             // Make a custom query in the branch. Verify the branched source has a copy with the new query, but it isn't published back
             string webRequestAuthenticatedConfigNew = @"
                 read WebRequest
+
+                # Slightly different query
                 where [UserName] != ""
                 where [UserName] != null";
 

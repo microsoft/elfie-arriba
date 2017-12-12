@@ -12,7 +12,8 @@ namespace XForm.Query
         Value,
         Newline,
         OpenParen,
-        CloseParen
+        CloseParen,
+        Comment
     }
 
     public class Token
@@ -28,7 +29,7 @@ namespace XForm.Query
     /// <summary>
     ///  Query: QueryLine+
     ///  QueryLine: Comment | Verb Argument+ Newline
-    ///  Comment: '-' ... Newline | '#' ... Newline
+    ///  Comment: '#' ... Newline
     ///  Argument: 
     ///  Scalar: ColumnName | Constant | Function
     ///  ColumnName: '[' Literal ']'
@@ -55,6 +56,7 @@ namespace XForm.Query
         public XqlScanner(string xqlQuery)
         {
             this.Text = xqlQuery;
+            Current = new Token() { Type = TokenType.Newline };
             LastNewlineIndex = -1;
             CurrentLineNumber = 1;
             Next();
@@ -62,12 +64,21 @@ namespace XForm.Query
 
         public bool Next()
         {
-            TokenType lastType = this.Current != null ? this.Current.Type : TokenType.Newline;
-            bool result = InnerNext();
+            TokenType lastType = this.Current.Type;
+            bool result = false;
 
-            if(lastType == TokenType.Newline)
+            while(this.Current.Type != TokenType.End)
             {
-                while (this.Current.Type == TokenType.Newline) result = InnerNext();
+                // Get the next token
+                result = InnerNext();
+
+                // Skip comments (always)
+                if (this.Current.Type == TokenType.Comment) continue;
+
+                // Merge together newlines
+                if (lastType == TokenType.Newline && this.Current.Type == TokenType.Newline) continue;
+
+                break;
             }
 
             return result;
@@ -93,6 +104,11 @@ namespace XForm.Query
                 this.CurrentLineNumber++;
                 this.LastNewlineIndex = CurrentIndex;
                 this.Current.Type = TokenType.Newline;
+            }
+            else if(next == '#')
+            {
+                ParseUntilNewline();
+                this.Current.Type = TokenType.Comment;
             }
             else if(next == '(')
             {
@@ -188,6 +204,19 @@ namespace XForm.Query
             {
                 char current = Text[CurrentIndex];
                 if (Char.IsWhiteSpace(current) || current == '(' || current == ')' || current == ',') break;
+                CurrentIndex++;
+            }
+
+            this.Current.Value = Text.Substring(startIndex, CurrentIndex - startIndex);
+        }
+
+        private void ParseUntilNewline()
+        {
+            int startIndex = CurrentIndex;
+            while (CurrentIndex < Text.Length)
+            {
+                char current = Text[CurrentIndex];
+                if (current == '\r' || current == '\n') break;
                 CurrentIndex++;
             }
 
