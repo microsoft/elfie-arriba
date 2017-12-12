@@ -75,13 +75,13 @@ namespace XForm.Test.Query
         [TestMethod]
         public void DataSourceEnumerator_EndToEnd()
         {
-            DataSourceEnumerator_All("columns ID EventTime ServerPort HttpStatus ClientOs WasCachedResponse", 1000);
+            DataSourceEnumerator_All("columns [ID] [EventTime] [ServerPort] [HttpStatus] [ClientOs] [WasCachedResponse]", 1000);
             DataSourceEnumerator_All("limit 10", 10);
             DataSourceEnumerator_All("count", 1);
-            DataSourceEnumerator_All("where ServerPort = 80", 423, new string[] { "ServerPort" });
-            DataSourceEnumerator_All("cast EventTime DateTime", 1000);
-            DataSourceEnumerator_All("removecolumns EventTime", 1000);
-            DataSourceEnumerator_All("renamecolumns ServerPort PortNumber, HttpStatus HttpResult", 1000);
+            DataSourceEnumerator_All("where [ServerPort] = 80", 423, new string[] { "ServerPort" });
+            DataSourceEnumerator_All("cast [EventTime] DateTime", 1000);
+            DataSourceEnumerator_All("removecolumns [EventTime]", 1000);
+            DataSourceEnumerator_All("renamecolumns [ServerPort] [PortNumber], [HttpStatus] [HttpResult]", 1000);
         }
 
         [TestMethod]
@@ -91,13 +91,13 @@ namespace XForm.Test.Query
             Verify.Exception<UsageException>(() => PipelineParser.BuildStage("read NotFound.csv", null, SampleDatabase.WorkflowContext));
             Verify.Exception<UsageException>(() => PipelineParser.BuildPipeline(@"
                 read WebRequest
-                removeColumns NotFound", null, SampleDatabase.WorkflowContext));
+                removeColumns [NotFound]", null, SampleDatabase.WorkflowContext));
 
             // Verify casting a type to itself doesn't error
             PipelineParser.BuildPipeline(@"
                 read WebRequest
-                cast EventTime DateTime
-                cast EventTime DateTime",
+                cast [EventTime] DateTime
+                cast [EventTime] DateTime",
                 null,
                 SampleDatabase.WorkflowContext).RunAndDispose();
         }

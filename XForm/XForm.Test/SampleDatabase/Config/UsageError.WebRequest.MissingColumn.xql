@@ -1,2 +1,2 @@
 read WebRequest
-where BadColumnName != ""
+where [BadColumnName] != ""

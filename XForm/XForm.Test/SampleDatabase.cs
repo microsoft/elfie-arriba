@@ -212,8 +212,8 @@ namespace XForm.Test
             // Make a custom query in the branch. Verify the branched source has a copy with the new query, but it isn't published back
             string webRequestAuthenticatedConfigNew = @"
                 read WebRequest
-                where UserName != ""
-                where UserName != null";
+                where [UserName] != ""
+                where [UserName] != null";
 
             branchedStreamProvider.WriteAllText("Config\\WebRequest.Authenticated.xql", webRequestAuthenticatedConfigNew);
             XForm("build WebRequest.Authenticated", 0, branchedContext);

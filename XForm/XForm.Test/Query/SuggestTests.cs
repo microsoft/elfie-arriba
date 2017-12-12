@@ -35,11 +35,11 @@ namespace XForm.Test.Query
 
             Assert.AreEqual("!=|<|<=|<>|=|==|>|>=", Values(suggester.Suggest($@"
                 read WebRequest
-                where HttpStatus !")));
+                where [HttpStatus] !")));
 
             Assert.AreEqual("", Values(suggester.Suggest($@"
                 read WebRequest
-                where HttpStatus != ")));
+                where [HttpStatus] != ")));
 
             Assert.AreEqual(s_webRequestColumns, Values(suggester.Suggest($@"
                 read WebRequest

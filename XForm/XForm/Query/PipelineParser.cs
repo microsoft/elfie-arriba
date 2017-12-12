@@ -148,7 +148,7 @@ namespace XForm.Query
         public string NextColumnName(IDataBatchEnumerator currentSource)
         {
             int columnIndex = -1;
-            ParseNextOrThrow(() => currentSource.Columns.TryGetIndexOfColumn(_scanner.Current.Value, out columnIndex), "columnName", currentSource.Columns.Select((cd) => cd.Name));
+            ParseNextOrThrow(() => _scanner.Current.Type == TokenType.ColumnName && currentSource.Columns.TryGetIndexOfColumn(_scanner.Current.Value, out columnIndex), "columnName", currentSource.Columns.Select((cd) => cd.Name));
             return currentSource.Columns[columnIndex].Name;
         }
 
