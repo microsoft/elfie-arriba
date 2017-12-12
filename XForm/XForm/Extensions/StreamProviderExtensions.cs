@@ -93,6 +93,7 @@ namespace XForm.Extensions
                 // Track the latest version, modifying the WhenModifiedUtc to be the folder stamp and not the actual file time
                 if (versionAsOf > startDateTime && versionAsOf <= asOfDateTime)
                 {
+                    version.WhenModifiedUtc = versionAsOf;
                     yield return version;
                 }
             }

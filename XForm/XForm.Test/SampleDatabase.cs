@@ -201,7 +201,25 @@ namespace XForm.Test
         {
             SampleDatabase.EnsureBuilt();
 
-            // Build WebServer as of 2017-11-25; should have 
+            WorkflowContext reportContext = new WorkflowContext(SampleDatabase.WorkflowContext);
+
+            // Build WebServer as of 2017-11-25; should have 86 original rows, verify built copy cached
+            reportContext.NewestDependency = DateTime.MinValue;
+            reportContext.RequestedAsOfDateTime = new DateTime(2017, 11, 25, 00, 00, 00, DateTimeKind.Utc);
+            Assert.AreEqual(86, SampleDatabase.WorkflowContext.Runner.Build("WebServer", reportContext).RunAndDispose());
+            Assert.AreEqual(new DateTime(2017, 11, 25, 00, 00, 00, DateTimeKind.Utc), SampleDatabase.WorkflowContext.StreamProvider.LatestBeforeCutoff(LocationType.Table, "WebServer", CrawlType.Full, DateTime.UtcNow).WhenModifiedUtc);
+
+            // Build WebServer as of 2017-11-27; should have 91 rows (one incremental added)
+            reportContext.NewestDependency = DateTime.MinValue;
+            reportContext.RequestedAsOfDateTime = new DateTime(2017, 11, 27, 00, 00, 00, DateTimeKind.Utc);
+            Assert.AreEqual(91, SampleDatabase.WorkflowContext.Runner.Build("WebServer", reportContext).RunAndDispose());
+            Assert.AreEqual(new DateTime(2017, 11, 27, 00, 00, 00, DateTimeKind.Utc), SampleDatabase.WorkflowContext.StreamProvider.LatestBeforeCutoff(LocationType.Table, "WebServer", CrawlType.Full, DateTime.UtcNow).WhenModifiedUtc);
+
+            // Build WebServer as of 2017-11-29; should have 96 rows (two incrementals added)
+            reportContext.NewestDependency = DateTime.MinValue;
+            reportContext.RequestedAsOfDateTime = new DateTime(2017, 11, 29, 00, 00, 00, DateTimeKind.Utc);
+            Assert.AreEqual(96, SampleDatabase.WorkflowContext.Runner.Build("WebServer", reportContext).RunAndDispose());
+            Assert.AreEqual(new DateTime(2017, 11, 29, 00, 00, 00, DateTimeKind.Utc), SampleDatabase.WorkflowContext.StreamProvider.LatestBeforeCutoff(LocationType.Table, "WebServer", CrawlType.Full, DateTime.UtcNow).WhenModifiedUtc);
         }
 
         [TestMethod]
