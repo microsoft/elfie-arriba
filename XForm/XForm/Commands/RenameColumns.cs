@@ -19,7 +19,7 @@ namespace XForm.Commands
             Dictionary<string, string> columnNameMappings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             while (context.Parser.HasAnotherPart)
             {
-                columnNameMappings[context.Parser.NextColumnName(source)] = context.Parser.NextString();
+                columnNameMappings[context.Parser.NextColumnName(source)] = context.Parser.NextOutputColumnName(source);
             }
 
             return new RenameColumns(source, columnNameMappings);

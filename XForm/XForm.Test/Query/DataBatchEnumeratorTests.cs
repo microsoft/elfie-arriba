@@ -93,6 +93,14 @@ namespace XForm.Test.Query
                 read WebRequest
                 removeColumns [NotFound]", null, SampleDatabase.WorkflowContext));
 
+            // Column name not in braces
+            Verify.Exception<UsageException>(() => XqlParser.Parse(@"
+                read WebRequest
+                where ""EventTime"" < ""2017-12-04""", null, SampleDatabase.WorkflowContext));
+
+            // String value in braces
+            Verify.Exception<UsageException>(() => XqlParser.Parse(@"read [WebRequest]", null, SampleDatabase.WorkflowContext));
+
             // Verify casting a type to itself doesn't error
             XqlParser.Parse(@"
                 read WebRequest

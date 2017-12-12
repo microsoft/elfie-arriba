@@ -104,7 +104,7 @@ namespace XForm.Query
         public IDataBatchEnumerator NextStage(IDataBatchEnumerator source)
         {
             _currentLineBuilder = null;
-            ParseNextOrThrow(() => s_pipelineStageBuildersByName.TryGetValue(_scanner.Current.Value, out _currentLineBuilder), "verb", SupportedVerbs);
+            ParseNextOrThrow(() => s_pipelineStageBuildersByName.TryGetValue(_scanner.Current.Value, out _currentLineBuilder), "verb", TokenType.Value, SupportedVerbs);
 
             // Verify the Workflow Parser is this parser (need to use copy constructor on WorkflowContext when recursing to avoid resuming by parsing the wrong query)
             Debug.Assert(_workflow.Parser == this);
@@ -120,28 +120,35 @@ namespace XForm.Query
         public Type NextType()
         {
             ITypeProvider provider = null;
-            ParseNextOrThrow(() => (provider = TypeProviderFactory.TryGet(_scanner.Current.Value)) != null, "type", TypeProviderFactory.SupportedTypes);
+            ParseNextOrThrow(() => (provider = TypeProviderFactory.TryGet(_scanner.Current.Value)) != null, "type", TokenType.Value, TypeProviderFactory.SupportedTypes);
             return provider.Type;
         }
 
         public string NextColumnName(IDataBatchEnumerator currentSource)
         {
             int columnIndex = -1;
-            ParseNextOrThrow(() => _scanner.Current.Type == TokenType.ColumnName && currentSource.Columns.TryGetIndexOfColumn(_scanner.Current.Value, out columnIndex), "columnName", currentSource.Columns.Select((cd) => cd.Name));
+            ParseNextOrThrow(() => currentSource.Columns.TryGetIndexOfColumn(_scanner.Current.Value, out columnIndex), "columnName", TokenType.ColumnName, currentSource.Columns.Select((cd) => cd.Name));
             return currentSource.Columns[columnIndex].Name;
+        }
+
+        public string NextOutputColumnName(IDataBatchEnumerator currentSource)
+        {
+            string value = _scanner.Current.Value;
+            ParseNextOrThrow(() => true, "columnName", TokenType.ColumnName);
+            return value;
         }
 
         public string NextOutputTableName()
         {
             string tableName = _scanner.Current.Value;
-            ParseNextOrThrow(() => true, "tableName", null);
+            ParseNextOrThrow(() => true, "tableName", TokenType.Value, null);
             return tableName;
         }
 
         public IDataBatchEnumerator NextTableSource()
         {
             string tableName = _scanner.Current.Value;
-            ParseNextOrThrow(() => true, "tableName", _workflow.Runner.SourceNames);
+            ParseNextOrThrow(() => _scanner.Current.Type == TokenType.Value, "tableName", TokenType.Value, _workflow.Runner.SourceNames);
 
             // If there's a WorkflowProvider, ask it to get the table. This will recurse.
             return _workflow.Runner.Build(tableName, _workflow);
@@ -150,55 +157,61 @@ namespace XForm.Query
         public bool NextBoolean()
         {
             bool value = false;
-            ParseNextOrThrow(() => bool.TryParse(_scanner.Current.Value, out value), "boolean", new string[] { "true", "false" });
+            ParseNextOrThrow(() => _scanner.Current.Type == TokenType.Value && bool.TryParse(_scanner.Current.Value, out value), "boolean", TokenType.Value, new string[] { "true", "false" });
             return value;
         }
 
         public int NextInteger()
         {
             int value = -1;
-            ParseNextOrThrow(() => int.TryParse(_scanner.Current.Value, out value), "integer");
+            ParseNextOrThrow(() => int.TryParse(_scanner.Current.Value, out value), "integer", TokenType.Value);
             return value;
         }
 
         public TimeSpan NextTimeSpan()
         {
             TimeSpan value = TimeSpan.Zero;
-            ParseNextOrThrow(() => _scanner.Current.Value.TryParseTimeSpanFriendly(out value), "TimeSpan [ex: '60s', '15m', '24h', '7d']");
+            ParseNextOrThrow(() => _scanner.Current.Value.TryParseTimeSpanFriendly(out value), "TimeSpan [ex: '60s', '15m', '24h', '7d']", TokenType.Value);
             return value;
         }
 
         public string NextString()
         {
             string value = _scanner.Current.Value;
-            ParseNextOrThrow(() => true, "string");
+            ParseNextOrThrow(() => true, "string", TokenType.Value);
             return value;
         }
 
         public object NextLiteralValue()
         {
             object value = (object)_scanner.Current.Value;
-            ParseNextOrThrow(() => true, "literal");
+            ParseNextOrThrow(() => true, "literal", TokenType.Value);
             return value;
         }
 
         public T NextEnum<T>() where T : struct
         {
             T value = default(T);
-            ParseNextOrThrow(() => Enum.TryParse<T>(_scanner.Current.Value, true, out value), typeof(T).Name, Enum.GetNames(typeof(T)));
+            ParseNextOrThrow(() => Enum.TryParse<T>(_scanner.Current.Value, true, out value), typeof(T).Name, TokenType.Value, Enum.GetNames(typeof(T)));
             return value;
         }
 
         public CompareOperator NextCompareOperator()
         {
             CompareOperator cOp = CompareOperator.Equals;
-            ParseNextOrThrow(() => _scanner.Current.Value.TryParseCompareOperator(out cOp), "compareOperator", OperatorExtensions.ValidCompareOperators);
+            ParseNextOrThrow(() => _scanner.Current.Value.TryParseCompareOperator(out cOp), "compareOperator", TokenType.Value, OperatorExtensions.ValidCompareOperators);
             return cOp;
         }
 
-        private void ParseNextOrThrow(Func<bool> parseMethod, string valueCategory, IEnumerable<string> validValues = null)
+        private void ParseNextOrThrow(Func<bool> parseMethod, string valueCategory, TokenType? requiredTokenType = null, IEnumerable<string> validValues = null)
         {
-            if (!HasAnotherPart || !parseMethod()) Throw(valueCategory, validValues);
+            if (!HasAnotherPart
+                || (requiredTokenType.HasValue && _scanner.Current.Type != requiredTokenType.Value)
+                || !parseMethod())
+            {
+                Throw(valueCategory, validValues);
+            }
+
             _scanner.Next();
         }
 
@@ -210,7 +223,7 @@ namespace XForm.Query
                     (_currentLineBuilder != null ? _currentLineBuilder.Usage : null),
                     _scanner.Current.Value,
                     valueCategory,
-                    XqlScanner.Escape(validValues, (valueCategory == "column" ? TokenType.ColumnName : TokenType.Value)));
+                    XqlScanner.Escape(validValues, (valueCategory == "columnName" ? TokenType.ColumnName : TokenType.Value)));
         }
 
         public bool HasAnotherPart => _scanner.Current.Type != TokenType.Newline && _scanner.Current.Type != TokenType.End;
