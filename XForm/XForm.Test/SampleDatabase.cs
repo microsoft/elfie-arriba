@@ -15,6 +15,7 @@ using XForm.Extensions;
 using XForm.IO;
 using XForm.IO.StreamProvider;
 using XForm.Query;
+using Elfie.Test;
 
 namespace XForm.Test
 {
@@ -132,6 +133,22 @@ namespace XForm.Test
             // Verify it has been created
             versionFound = SampleDatabase.WorkflowContext.StreamProvider.LatestBeforeCutoff(LocationType.Table, "WebRequest.Authenticated", CrawlType.Full, cutoff).WhenModifiedUtc;
             Assert.AreEqual(new DateTime(2017, 12, 02, 00, 00, 00, DateTimeKind.Utc), versionFound);
+        }
+
+        [TestMethod]
+        public void Database_ReadRange()
+        {
+            SampleDatabase.EnsureBuilt();
+
+            // Asking for 2d from 2017-12-04 should get 2017-12-03 and 2017-12-02 crawls
+            WorkflowContext historicalContext = new WorkflowContext(SampleDatabase.WorkflowContext) { RequestedAsOfDateTime = new DateTime(2017, 12, 04, 00, 00, 00, DateTimeKind.Utc) };
+            Assert.AreEqual(2000, PipelineParser.BuildPipeline("readRange 2d WebRequest", null, historicalContext).RunAndDispose());
+
+            // Asking for 3d should get all three crawls
+            Assert.AreEqual(3000, PipelineParser.BuildPipeline("readRange 3d WebRequest", null, historicalContext).RunAndDispose());
+
+            // Asking for 4d should error (no version for the range start)
+            Verify.Exception<UsageException>(() => PipelineParser.BuildPipeline("readRange 4d WebRequest", null, historicalContext).RunAndDispose());
         }
 
         [TestMethod]

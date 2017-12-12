@@ -13,18 +13,6 @@ using XForm.Types;
 
 namespace XForm.IO
 {
-    internal class ReadCommandBuilder : IPipelineStageBuilder
-    {
-        public IEnumerable<string> Verbs => new string[] { "read" };
-        public string Usage => "'read' [tableNameOrFilePath]";
-
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)
-        {
-            if (source != null) throw new ArgumentException($"'read' must be the first stage in a pipeline.");
-            return context.Parser.NextTableSource();
-        }
-    }
-
     public class BinaryTableReader : IDataBatchList
     {
         internal const string ConfigQueryPath = "Config.xql";

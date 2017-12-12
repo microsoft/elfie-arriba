@@ -151,7 +151,7 @@ namespace XForm
             // Add incremental crawls between the full source and the reporting date
             DateTime latestComponent = incrementalNeededAfterCutoff;
 
-            foreach (StreamAttributes incrementalCrawl in context.StreamProvider.IncrementalInRange(LocationType.Source, tableName, incrementalNeededAfterCutoff, context.RequestedAsOfDateTime))
+            foreach (StreamAttributes incrementalCrawl in context.StreamProvider.VersionsInRange(LocationType.Source, tableName, CrawlType.Inc, incrementalNeededAfterCutoff, context.RequestedAsOfDateTime))
             {
                 sources.AddRange(context.StreamProvider.Enumerate(incrementalCrawl.Path, EnumerateTypes.File, true).Select((sa) => new TabularFileReader(context.StreamProvider, sa.Path)));
                 latestComponent = latestComponent.BiggestOf(incrementalCrawl.WhenModifiedUtc);

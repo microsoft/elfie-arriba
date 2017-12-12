@@ -182,6 +182,13 @@ namespace XForm.Query
             return value;
         }
 
+        public TimeSpan NextTimeSpan()
+        {
+            TimeSpan value = TimeSpan.Zero;
+            ParseNextOrThrow(() => _scanner.CurrentPart.TryParseTimeSpanFriendly(out value), "TimeSpan [ex: '60s', '15m', '24h', '7d']");
+            return value;
+        }
+
         public string NextString()
         {
             string value = _scanner.CurrentPart;

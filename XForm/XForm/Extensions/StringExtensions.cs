@@ -47,7 +47,21 @@ namespace XForm.Extensions
         /// <returns>TimeSpan equivalent to value</returns>
         public static TimeSpan ParseTimeSpanFriendly(this string value)
         {
-            if (String.IsNullOrEmpty(value)) throw new ArgumentException("value");
+            TimeSpan result;
+            if (!TryParseTimeSpanFriendly(value, out result)) throw new ArgumentException("value");
+            return result;
+        }
+
+        /// <summary>
+        ///  Parse a "friendly" TimeSpan value, like 7d, 24h, 5m, 30s.
+        /// </summary>
+        /// <param name="value">String value to parse as a "friendly" format TimeSpan</param>
+        /// <param name="result">TimeSpan equivalent of value</param>
+        /// <returns>TimeSpan equivalent to value</returns>
+        public static bool TryParseTimeSpanFriendly(this string value, out TimeSpan result)
+        {
+            result = TimeSpan.Zero;
+            if (String.IsNullOrEmpty(value)) return false;
 
             // Find the portion of the value which is the number part
             int numberPrefixLength = 0;
@@ -63,19 +77,26 @@ namespace XForm.Extensions
             {
                 case "s":
                 case "sec":
-                    return TimeSpan.FromSeconds(numberPartValue);
+                    result = TimeSpan.FromSeconds(numberPartValue);
+                    break;
                 case "m":
                 case "min":
-                    return TimeSpan.FromMinutes(numberPartValue);
+                    result = TimeSpan.FromMinutes(numberPartValue);
+                    break;
                 case "h":
                 case "hour":
-                    return TimeSpan.FromHours(numberPartValue);
+                    result = TimeSpan.FromHours(numberPartValue);
+                    break;
                 case "d":
                 case "day":
-                    return TimeSpan.FromDays(numberPartValue);
+                    result = TimeSpan.FromDays(numberPartValue);
+                    break;
                 default:
-                    throw new ArgumentException($"Unable to parse \"{value}\" as a friendly TimeSpan. Unit \"{suffix}\" was unknown. Expecting 's', 'm', 'h', 'd'.");
+                    //throw new ArgumentException($"Unable to parse \"{value}\" as a friendly TimeSpan. Unit \"{suffix}\" was unknown. Expecting 's', 'm', 'h', 'd'.");
+                    return false;
             }
+
+            return true;
         }
     }
 }

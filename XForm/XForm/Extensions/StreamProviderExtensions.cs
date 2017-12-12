@@ -79,9 +79,9 @@ namespace XForm.Extensions
             return latestStream;
         }
 
-        public static IEnumerable<StreamAttributes> IncrementalInRange(this IStreamProvider streamProvider, LocationType type, string tableName, DateTime startDateTime, DateTime asOfDateTime)
+        public static IEnumerable<StreamAttributes> VersionsInRange(this IStreamProvider streamProvider, LocationType type, string tableName, CrawlType crawlType, DateTime startDateTime, DateTime asOfDateTime)
         {
-            string sourceFullPath = streamProvider.Path(type, tableName, CrawlType.Inc);
+            string sourceFullPath = streamProvider.Path(type, tableName, crawlType);
             foreach (StreamAttributes version in streamProvider.Enumerate(sourceFullPath, EnumerateTypes.Folder, false))
             {
                 DateTime versionAsOf;
