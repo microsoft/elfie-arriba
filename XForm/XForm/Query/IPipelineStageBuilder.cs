@@ -14,9 +14,9 @@ namespace XForm.Query
     public interface IPipelineStageBuilder
     {
         /// <summary>
-        ///  Set of command verbs which are built by this builder
+        ///  Verb at the beginning of an XQL line which this builder constructs the command for.
         /// </summary>
-        IEnumerable<string> Verbs { get; }
+        string Verb { get; }
 
         /// <summary>
         ///  Usage message to write out for this command if it isn't passed the right parameters

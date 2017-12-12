@@ -12,7 +12,7 @@ namespace XForm.Commands
 {
     internal class SelectColumnsCommandBuilder : IPipelineStageBuilder
     {
-        public IEnumerable<string> Verbs => new string[] { "columns", "select" };
+        public string Verb => "columns";
         public string Usage => "'columns' [ColumnName], [ColumnName], ...";
 
         public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)

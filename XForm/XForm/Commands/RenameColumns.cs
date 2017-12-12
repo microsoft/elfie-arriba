@@ -11,7 +11,7 @@ namespace XForm.Commands
 {
     internal class RenameColumnsCommandBuilder : IPipelineStageBuilder
     {
-        public IEnumerable<string> Verbs => new string[] { "renameColumns" };
+        public string Verb => "renameColumns";
         public string Usage => "'renameColumns' [ColumnName] [NewColumnName], [ColumnName] [NewColumnName], ...";
 
         public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)

@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
-using System.Collections.Generic;
 
 using XForm.Data;
 using XForm.Extensions;
@@ -14,7 +13,7 @@ namespace XForm.Commands
 {
     internal class WhereCommandBuilder : IPipelineStageBuilder
     {
-        public IEnumerable<string> Verbs => new string[] { "where" };
+        public string Verb => "where";
         public string Usage => "'where' [columnName] [operator] [value]";
 
         public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)

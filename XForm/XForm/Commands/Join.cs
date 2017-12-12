@@ -16,7 +16,7 @@ namespace XForm.Commands
 {
     internal class JoinBuilder : IPipelineStageBuilder
     {
-        public IEnumerable<string> Verbs => new string[] { "join" };
+        public string Verb => "join";
         public string Usage => "'join' [FromColumnName] [ToBinarySource] [ToColumn] [JoinedInColumnPrefix]";
 
         public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)

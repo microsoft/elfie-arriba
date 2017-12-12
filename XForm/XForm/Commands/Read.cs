@@ -10,7 +10,7 @@ namespace XForm.Commands
 {
     internal class ReadCommandBuilder : IPipelineStageBuilder
     {
-        public IEnumerable<string> Verbs => new string[] { "read" };
+        public string Verb => "read";
         public string Usage => "'read' [tableNameOrFilePath]";
 
         public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)
@@ -22,7 +22,7 @@ namespace XForm.Commands
 
     internal class ReadRangeCommandBuilder : IPipelineStageBuilder
     {
-        public IEnumerable<string> Verbs => new string[] { "readrange" };
+        public string Verb => "readrange";
         public string Usage => "'readRange' [relativeTime] [tableNameOrFilePath]";
 
         public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)

@@ -1,8 +1,6 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System.Collections.Generic;
-
 using XForm.Data;
 using XForm.Query;
 
@@ -10,7 +8,7 @@ namespace XForm.Commands
 {
     internal class LimitCommandBuilder : IPipelineStageBuilder
     {
-        public IEnumerable<string> Verbs => new string[] { "limit", "top" };
+        public string Verb => "limit";
         public string Usage => "'limit' [RowCount]";
 
         public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)

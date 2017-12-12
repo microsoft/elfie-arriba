@@ -16,7 +16,7 @@ namespace XForm.IO
 {
     internal class WriteCommandBuilder : IPipelineStageBuilder
     {
-        public IEnumerable<string> Verbs => new string[] { "write" };
+        public string Verb => "write";
         public string Usage => "'write' [tableNameOrFilePath]";
 
         public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)

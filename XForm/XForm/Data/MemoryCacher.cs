@@ -17,7 +17,7 @@ namespace XForm.Data
 
     internal class MemoryCacheBuilder : IPipelineStageBuilder
     {
-        public IEnumerable<string> Verbs => new string[] { "cache" };
+        public string Verb => "cache";
         public string Usage => "'cache'";
 
         public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)

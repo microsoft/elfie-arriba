@@ -12,7 +12,7 @@ namespace XForm.Commands
 {
     internal class SchemaCommandBuilder : IPipelineStageBuilder
     {
-        public IEnumerable<string> Verbs => new string[] { "schema" };
+        public string Verb => "schema";
         public string Usage => "'schema'";
 
         public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)

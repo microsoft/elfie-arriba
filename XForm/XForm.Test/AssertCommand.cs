@@ -1,8 +1,6 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System.Collections.Generic;
-
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using XForm.Data;
@@ -19,7 +17,7 @@ namespace XForm.Test
 
     internal class AssertBuilder : IPipelineStageBuilder
     {
-        public IEnumerable<string> Verbs => new string[] { "assert" };
+        public string Verb => "assert";
         public string Usage => "'assert' (none|all)\r\n  {subquery}\r\n  end";
 
         public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)
@@ -72,7 +70,7 @@ namespace XForm.Test
 
     internal class AssertCountBuilder : IPipelineStageBuilder
     {
-        public IEnumerable<string> Verbs => new string[] { "assertCount" };
+        public string Verb => "assertCount";
         public string Usage => "'assertCount' [rowCount]";
 
         public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)

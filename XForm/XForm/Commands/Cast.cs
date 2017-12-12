@@ -13,7 +13,7 @@ namespace XForm.Commands
 {
     internal class CastCommandBuilder : IPipelineStageBuilder
     {
-        public IEnumerable<string> Verbs => new string[] { "cast", "convert" };
+        public string Verb => "cast";
         public string Usage => "'cast' [columnName] [targetType] [default?] [strict?]";
 
         public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)

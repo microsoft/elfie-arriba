@@ -11,7 +11,7 @@ namespace XForm.Aggregators
 {
     internal class CountCommandBuilder : IPipelineStageBuilder
     {
-        public IEnumerable<string> Verbs => new string[] { "count" };
+        public string Verb => "count";
         public string Usage => "'count'";
 
         public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)

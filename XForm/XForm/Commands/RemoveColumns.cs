@@ -13,7 +13,7 @@ namespace XForm.Commands
 {
     internal class RemoveColumnsCommandBuilder : IPipelineStageBuilder
     {
-        public IEnumerable<string> Verbs => new string[] { "removecolumns" };
+        public string Verb => "removecolumns";
         public string Usage => "'removeColumns' [ColumnName], [ColumnName], ...";
 
         public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)

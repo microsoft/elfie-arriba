@@ -51,10 +51,7 @@ namespace XForm.Query
 
         private static void Add(IPipelineStageBuilder builder)
         {
-            foreach (string verb in builder.Verbs)
-            {
-                s_pipelineStageBuildersByName[verb] = builder;
-            }
+            s_pipelineStageBuildersByName[builder.Verb] = builder;
         }
 
         public static IDataBatchEnumerator Parse(string xqlQuery, IDataBatchEnumerator source, WorkflowContext outerContext)
