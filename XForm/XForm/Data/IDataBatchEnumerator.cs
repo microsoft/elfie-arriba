@@ -30,6 +30,11 @@ namespace XForm.Data
         int Next(int desiredCount);
 
         /// <summary>
+        ///  Return the row count in the current batch.
+        /// </summary>
+        int CurrentBatchRowCount { get; }
+
+        /// <summary>
         ///  Return a function which returns the DataBatch for the desired column
         ///  for the current batch of rows.
         /// </summary>

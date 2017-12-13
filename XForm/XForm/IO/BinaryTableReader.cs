@@ -42,6 +42,7 @@ namespace XForm.IO
         public int Count { get; private set; }
 
         public IReadOnlyList<ColumnDetails> Columns => _columns;
+        public int CurrentBatchRowCount { get; private set; }
 
         public Func<DataBatch> ColumnGetter(int columnIndex)
         {
@@ -64,7 +65,8 @@ namespace XForm.IO
         {
             _currentEnumerateSelector = _currentEnumerateSelector.NextPage(Count, desiredCount);
             _currentSelector = _currentEnumerateSelector;
-            return _currentEnumerateSelector.Count;
+            CurrentBatchRowCount = _currentEnumerateSelector.Count;
+            return CurrentBatchRowCount;
         }
 
         public void Get(ArraySelector selector)

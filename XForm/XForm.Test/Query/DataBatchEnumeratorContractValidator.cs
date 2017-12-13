@@ -18,7 +18,7 @@ namespace XForm.Test.Query
         public List<string> ColumnGettersRequested;
         public bool NextCalled;
         public bool DisposeCalled;
-        public int CurrentBatchRowCount;
+        public int CurrentBatchRowCount { get; private set; }
 
         public DataBatchEnumeratorContractValidator(IDataBatchEnumerator inner)
         {

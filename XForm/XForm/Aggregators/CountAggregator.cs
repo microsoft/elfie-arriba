@@ -38,6 +38,8 @@ namespace XForm.Aggregators
 
         public IReadOnlyList<ColumnDetails> Columns => _column;
 
+        public int CurrentBatchRowCount { get; private set; }
+
         public Func<DataBatch> ColumnGetter(int columnIndex)
         {
             if (columnIndex != 0) throw new ArgumentOutOfRangeException("columnIndex");
@@ -59,7 +61,11 @@ namespace XForm.Aggregators
         public int Next(int desiredCount)
         {
             // Return no more rows if this isn't the first call
-            if (_count != -1) return 0;
+            if (_count != -1)
+            {
+                CurrentBatchRowCount = 0;
+                return CurrentBatchRowCount;
+            }
 
             // If this is a List, just get the count
             if (_source is IDataBatchList)
@@ -79,7 +85,8 @@ namespace XForm.Aggregators
             }
 
             // Return that there's one row (the count)
-            return 1;
+            CurrentBatchRowCount = 1;
+            return CurrentBatchRowCount;
         }
 
         public void Dispose()

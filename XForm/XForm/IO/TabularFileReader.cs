@@ -22,7 +22,6 @@ namespace XForm.IO
 
         private String8Block _block;
         private String8[][] _cells;
-        private int _currentBatchCount;
 
         public TabularFileReader(IStreamProvider streamProvider, string filePath)
         {
@@ -35,6 +34,7 @@ namespace XForm.IO
         }
 
         public IReadOnlyList<ColumnDetails> Columns => _columns;
+        public int CurrentBatchRowCount { get; private set; }
 
         public Func<DataBatch> ColumnGetter(int columnIndex)
         {
@@ -48,7 +48,7 @@ namespace XForm.IO
 
             return () =>
             {
-                return DataBatch.All(_cells[columnIndex], _currentBatchCount);
+                return DataBatch.All(_cells[columnIndex], CurrentBatchRowCount);
             };
         }
 
@@ -76,20 +76,20 @@ namespace XForm.IO
             //return _reader.NextRow();
 
             _block.Clear();
-            _currentBatchCount = 0;
+            CurrentBatchRowCount = 0;
 
             while (_reader.NextRow())
             {
                 for (int i = 0; i < _cells.Length; ++i)
                 {
-                    _cells[i][_currentBatchCount] = _block.GetCopy(_reader.Current(i).ToString8());
+                    _cells[i][CurrentBatchRowCount] = _block.GetCopy(_reader.Current(i).ToString8());
                 }
 
-                _currentBatchCount++;
-                if (_currentBatchCount == desiredCount) break;
+                CurrentBatchRowCount++;
+                if (CurrentBatchRowCount == desiredCount) break;
             }
 
-            return _currentBatchCount;
+            return CurrentBatchRowCount;
         }
 
         public void Dispose()

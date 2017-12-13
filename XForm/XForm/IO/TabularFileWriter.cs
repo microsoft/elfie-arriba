@@ -60,6 +60,7 @@ namespace XForm.IO
         }
 
         public IReadOnlyList<ColumnDetails> Columns => _source.Columns;
+        public int CurrentBatchRowCount => _source.CurrentBatchRowCount;
 
         public Func<DataBatch> ColumnGetter(int columnIndex)
         {

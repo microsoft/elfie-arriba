@@ -25,6 +25,7 @@ namespace XForm.Data
         private ArraySelector _currentEnumerateSelector;
 
         public IReadOnlyList<ColumnDetails> Columns => _source.Columns;
+        public int CurrentBatchRowCount { get; private set; }
         public int Count => _currentPageCount;
 
         public SinglePageEnumerator(IDataBatchEnumerator source)

@@ -82,6 +82,8 @@ namespace XForm.Commands
 
         public IReadOnlyList<ColumnDetails> Columns => _columns;
 
+        public int CurrentBatchRowCount { get; private set; }
+
         public Func<DataBatch> ColumnGetter(int columnIndex)
         {
             // If this is one of the joined in columns, return the rows which matched from the join
@@ -117,7 +119,11 @@ namespace XForm.Commands
             {
                 // Get the next rows from the source
                 int count = _source.Next(desiredCount);
-                if (count == 0) return 0;
+                if (count == 0)
+                {
+                    CurrentBatchRowCount = 0;
+                    return 0;
+                }
 
                 DataBatch joinFromValues = _joinFromColumnGetter();
                 String8[] array = (String8[])joinFromValues.Array;
@@ -147,6 +153,7 @@ namespace XForm.Commands
             // 'Seek' those particular rows in the JoinToSource
             _cachedJoinSource.Get(ArraySelector.Map(_currentJoinRowIndices, _currentJoinCount));
 
+            CurrentBatchRowCount = _currentJoinCount;
             return _currentJoinCount;
         }
 

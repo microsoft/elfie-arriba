@@ -68,8 +68,10 @@
     <Compile Include="Extensions\IComparableExtensions.cs" />
     <Compile Include="Extensions\InterfaceLoader.cs" />
     <Compile Include="Functions\AsOfDate.cs" />
+    <Compile Include="Functions\Column.cs" />
+    <Compile Include="Functions\Constant.cs" />
     <Compile Include="Functions\FunctionFactory.cs" />
-    <Compile Include="Functions\IDataBatchFunction.cs" />
+    <Compile Include="Data\IDataBatchColumn.cs" />
     <Compile Include="Functions\IFunctionBuilder.cs" />
     <Compile Include="Functions\ToUpper.cs" />
     <Compile Include="HttpService.cs" />

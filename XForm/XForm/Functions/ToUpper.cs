@@ -9,33 +9,33 @@ namespace XForm.Functions
     {
         public string Name => "ToUpper";
 
-        public IDataBatchFunction Build(IDataBatchEnumerator source, WorkflowContext context)
+        public IDataBatchColumn Build(IDataBatchEnumerator source, WorkflowContext context)
         {
             return new ToUpper(source, context.Parser.NextColumnName(source));
         }
     }
 
-    public class ToUpper : IDataBatchFunction
+    public class ToUpper : IDataBatchColumn
     {
         private Func<DataBatch> _source;
-        public ColumnDetails ReturnType { get; private set; }
+        public ColumnDetails ColumnDetails { get; private set; }
 
         public ToUpper(IDataBatchEnumerator source, string sourceColumnName)
         {
             int sourceColumnIndex = source.Columns.IndexOfColumn(sourceColumnName);
-            ReturnType = source.Columns[sourceColumnIndex];
+            ColumnDetails = source.Columns[sourceColumnIndex];
 
-            if (ReturnType.Type != typeof(String8)) throw new ArgumentException($"ToUpper() requires a String8 argument.");
+            if (ColumnDetails.Type != typeof(String8)) throw new ArgumentException($"ToUpper() requires a String8 argument.");
             _source = source.ColumnGetter(source.Columns.IndexOfColumn(sourceColumnName));
         }
 
-        public Func<int, DataBatch> Getter()
+        public Func<DataBatch> Getter()
         {
             String8Block block = new String8Block();
             String8[] buffer = null;
             bool[] isNull = null;
 
-            return (rowCount) =>
+            return () =>
             {
                 block.Clear();
 

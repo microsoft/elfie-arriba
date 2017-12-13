@@ -152,7 +152,33 @@ namespace XForm.Query
             return _workflow.Runner.Build(tableName, _workflow);
         }
 
-        public IDataBatchFunction NextFunction(IDataBatchEnumerator source, WorkflowContext context)
+        public IDataBatchColumn NextColumn(IDataBatchEnumerator source, WorkflowContext context)
+        {
+            IDataBatchColumn result = null;
+
+            if(_scanner.Current.Type == TokenType.Value)
+            {
+                string value = _scanner.Current.Value;
+                result = new Constant(source, value, typeof(string));
+                _scanner.Next();
+            }
+            else if(_scanner.Current.Type == TokenType.FunctionName)
+            {
+                result = NextFunction(source, context);
+            }
+            else if(_scanner.Current.Type == TokenType.ColumnName)
+            {
+                result = new Column(source, context);
+            }
+            else
+            {
+                Throw("columnFunctionOrLiteral", source.Columns.Select((c) => c.Name).Concat(FunctionFactory.SupportedFunctions));
+            }
+
+            return result;
+        }
+
+        public IDataBatchColumn NextFunction(IDataBatchEnumerator source, WorkflowContext context)
         {
             string value = _scanner.Current.Value;
 
@@ -164,7 +190,7 @@ namespace XForm.Query
             ParseNextOrThrow(() => true, "(", TokenType.OpenParen);
 
             // Build the function (getting arguments for it)
-            IDataBatchFunction result = builder.Build(source, context);
+            IDataBatchColumn result = builder.Build(source, context);
 
             // Ensure we've parsed all arguments, and consume the close paren
             ParseNextOrThrow(() => true, ")", TokenType.CloseParen);

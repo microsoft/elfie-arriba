@@ -7,29 +7,31 @@ namespace XForm.Functions
     {
         public string Name => "AsOfDate";
 
-        public IDataBatchFunction Build(IDataBatchEnumerator source, WorkflowContext context)
+        public IDataBatchColumn Build(IDataBatchEnumerator source, WorkflowContext context)
         {
-            return new AsOfDate(context);
+            return new AsOfDate(source, context);
         }
     }
 
-    public class AsOfDate : IDataBatchFunction
+    public class AsOfDate : IDataBatchColumn
     {
-        private DateTime[] _value;
+        private IDataBatchEnumerator Source { get; set; }
+        private DateTime[] Value { get; set; }
+        public ColumnDetails ColumnDetails { get; private set; }
 
-        public ColumnDetails ReturnType { get; private set; }
-
-        public AsOfDate(WorkflowContext context)
+        public AsOfDate(IDataBatchEnumerator source, WorkflowContext context)
         {
-            _value = new DateTime[1];
-            _value[0] = context.RequestedAsOfDateTime;
+            Source = source;
 
-            ReturnType = new ColumnDetails("AsOfDate", typeof(DateTime), false);
+            Value = new DateTime[1];
+            Value[0] = context.RequestedAsOfDateTime;
+
+            ColumnDetails = new ColumnDetails("AsOfDate", typeof(DateTime), false);
         }
 
-        public Func<int, DataBatch> Getter()
+        public Func<DataBatch> Getter()
         {
-            return (rowCount) => DataBatch.Single(_value, rowCount);
+            return () => DataBatch.Single(Value, Source.CurrentBatchRowCount);
         }
     }
 }

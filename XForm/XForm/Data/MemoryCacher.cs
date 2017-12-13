@@ -65,6 +65,8 @@ namespace XForm.Data
 
         public IReadOnlyList<ColumnDetails> Columns => _columns;
 
+        public int CurrentBatchRowCount { get; private set; }
+
         public Func<DataBatch> ColumnGetter(int columnIndex)
         {
             // Track column indices requested from the source (only those will be cached)
@@ -94,7 +96,8 @@ namespace XForm.Data
                 _cacheBuilt = true;
             }
 
-            return _cache.Next(desiredCount);
+            CurrentBatchRowCount = _cache.Next(desiredCount);
+            return CurrentBatchRowCount;
         }
 
         private void BuildCache()

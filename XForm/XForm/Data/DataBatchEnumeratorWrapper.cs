@@ -17,6 +17,8 @@ namespace XForm.Data
 
         public virtual IReadOnlyList<ColumnDetails> Columns => _source.Columns;
 
+        public int CurrentBatchRowCount { get; private set; }
+
         public virtual Func<DataBatch> ColumnGetter(int columnIndex)
         {
             return _source.ColumnGetter(columnIndex);
@@ -24,7 +26,8 @@ namespace XForm.Data
 
         public virtual int Next(int desiredCount)
         {
-            return _source.Next(desiredCount);
+            CurrentBatchRowCount = _source.Next(desiredCount);
+            return CurrentBatchRowCount;
         }
 
         public virtual void Reset()

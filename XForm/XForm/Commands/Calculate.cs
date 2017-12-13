@@ -27,7 +27,7 @@ namespace XForm.Commands
     public class Calculate : DataBatchEnumeratorWrapper
     {
         private int _computedColumnIndex;
-        private IDataBatchFunction _function;
+        private IDataBatchColumn _function;
         private List<ColumnDetails> _columns;
         private int _currentCount;
 
@@ -39,11 +39,11 @@ namespace XForm.Commands
             // Determine whether we're replacing or adding a column
             if (source.Columns.TryGetIndexOfColumn(outputColumnName, out _computedColumnIndex))
             {
-                _columns[_computedColumnIndex] = _function.ReturnType.Rename(outputColumnName);
+                _columns[_computedColumnIndex] = _function.ColumnDetails.Rename(outputColumnName);
             }
             else
             {
-                _columns.Add(_function.ReturnType.Rename(outputColumnName));
+                _columns.Add(_function.ColumnDetails.Rename(outputColumnName));
                 _computedColumnIndex = source.Columns.Count;
             }
         }
@@ -56,8 +56,7 @@ namespace XForm.Commands
             if (columnIndex != _computedColumnIndex) return _source.ColumnGetter(columnIndex);
 
             // Otherwise, pass on the calculation
-            Func<int, DataBatch> getter = _function.Getter();
-            return () => getter(_currentCount);
+            return _function.Getter();
         }
 
         public override int Next(int desiredCount)

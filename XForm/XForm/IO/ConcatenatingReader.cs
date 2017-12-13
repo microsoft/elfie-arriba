@@ -15,7 +15,6 @@ namespace XForm.IO
         private IDataBatchEnumerator[] _sources;
         private List<ColumnDetails> _columns;
         private int _currentSourceIndex;
-        private int _currentBatchRowCount;
 
         public ConcatenatingReader(IEnumerable<IDataBatchEnumerator> sources)
         {
@@ -52,6 +51,7 @@ namespace XForm.IO
         }
 
         public IReadOnlyList<ColumnDetails> Columns => _columns;
+        public int CurrentBatchRowCount { get; private set; }
 
         public Func<DataBatch> ColumnGetter(int columnIndex)
         {
@@ -73,7 +73,7 @@ namespace XForm.IO
                 Func<DataBatch> getter = gettersPerSource[_currentSourceIndex];
 
                 // If this source didn't have the column, return all null
-                if (getter == null) return DataBatch.Null(nullArray, _currentBatchRowCount);
+                if (getter == null) return DataBatch.Null(nullArray, CurrentBatchRowCount);
 
                 // Otherwise, return the current batch
                 return getter();
@@ -85,10 +85,10 @@ namespace XForm.IO
             while(_currentSourceIndex < _sources.Length)
             {
                 // Try to get rows from the next source
-                _currentBatchRowCount = _sources[_currentSourceIndex].Next(desiredCount);
+                CurrentBatchRowCount = _sources[_currentSourceIndex].Next(desiredCount);
 
                 // If it had rows left, return them
-                if (_currentBatchRowCount > 0) return _currentBatchRowCount;
+                if (CurrentBatchRowCount > 0) return CurrentBatchRowCount;
 
                 // If not, try the next source
                 _currentSourceIndex++;
