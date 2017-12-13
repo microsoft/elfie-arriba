@@ -8,6 +8,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using XForm.Extensions;
 using XForm.Query;
+using XForm.Functions;
 
 namespace XForm.Test.Query
 {
@@ -16,9 +17,11 @@ namespace XForm.Test.Query
     {
         private static string s_verbs = string.Join("|", XqlParser.SupportedVerbs.OrderBy((s) => s));
         private static string s_sources = string.Join("|", SampleDatabase.WorkflowContext.Runner.SourceNames.OrderBy((s) => s));
-        private static string s_webRequestColumns = string.Join("|", XqlParser.Parse(@"
-            read WebRequest
-            schema", null, SampleDatabase.WorkflowContext).ToList<string>("Name").OrderBy((s) => s));
+        private static string s_columnNames = string.Join("|", XqlParser.Parse(@"read WebRequest", null, SampleDatabase.WorkflowContext).Columns.Select((cd) => cd.Name).OrderBy((s) => s));
+        private static string s_selectListOptions = string.Join("|", 
+            XqlParser.Parse(@"read WebRequest", null, SampleDatabase.WorkflowContext).Columns.Select((cd) => cd.Name)
+            .Concat(FunctionFactory.SupportedFunctions)
+            .OrderBy((s) => s));
 
         [TestMethod]
         public void Suggest_Basics()
@@ -41,7 +44,7 @@ namespace XForm.Test.Query
                 read WebRequest
                 where [HttpStatus] != ")));
 
-            Assert.AreEqual(s_webRequestColumns, Values(suggester.Suggest($@"
+            Assert.AreEqual(s_selectListOptions, Values(suggester.Suggest($@"
                 read WebRequest
                 columns ")));
         }
@@ -61,7 +64,7 @@ namespace XForm.Test.Query
             Assert.AreEqual("'where' [columnName] [operator] [value]", result.Usage.Usage);
             Assert.AreEqual("BadColumnName", result.Usage.InvalidValue);
             Assert.AreEqual("columnName", result.Usage.InvalidValueCategory);
-            Assert.AreEqual(s_webRequestColumns, string.Join("|", result.Usage.ValidValues));
+            Assert.AreEqual(s_columnNames, string.Join("|", result.Usage.ValidValues));
         }
 
         private static string Values(SuggestResult result)
