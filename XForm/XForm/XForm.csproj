@@ -75,6 +75,7 @@
     <Compile Include="Functions\FunctionFactory.cs" />
     <Compile Include="Data\IDataBatchColumn.cs" />
     <Compile Include="Functions\IFunctionBuilder.cs" />
+    <Compile Include="Functions\SimpleTransformFunction.cs" />
     <Compile Include="Functions\String\Trim.cs" />
     <Compile Include="Functions\String\ToUpper.cs" />
     <Compile Include="HttpService.cs" />
