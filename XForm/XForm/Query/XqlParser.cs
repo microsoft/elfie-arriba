@@ -19,8 +19,8 @@ namespace XForm.Query
     public class XqlParser
     {
         private XqlScanner _scanner;
-        private IPipelineStageBuilder _currentLineBuilder;
         private WorkflowContext _workflow;
+        private Stack<IUsage> _currentlyBuilding;
 
         private static Dictionary<string, IPipelineStageBuilder> s_pipelineStageBuildersByName;
 
@@ -29,6 +29,7 @@ namespace XForm.Query
             EnsureLoaded();
             _scanner = new XqlScanner(xqlQuery);
             _workflow = workflow;
+            _currentlyBuilding = new Stack<IUsage>();
         }
 
         private static void EnsureLoaded()
@@ -102,16 +103,18 @@ namespace XForm.Query
 
         public IDataBatchEnumerator NextStage(IDataBatchEnumerator source)
         {
-            _currentLineBuilder = null;
-            ParseNextOrThrow(() => s_pipelineStageBuildersByName.TryGetValue(_scanner.Current.Value, out _currentLineBuilder), "verb", TokenType.Value, SupportedVerbs);
+            IPipelineStageBuilder builder = null;
+            ParseNextOrThrow(() => s_pipelineStageBuildersByName.TryGetValue(_scanner.Current.Value, out builder), "verb", TokenType.Value, SupportedVerbs);
+            _currentlyBuilding.Push(builder);
 
             // Verify the Workflow Parser is this parser (need to use copy constructor on WorkflowContext when recursing to avoid resuming by parsing the wrong query)
             Debug.Assert(_workflow.Parser == this);
 
-            IDataBatchEnumerator stage = _currentLineBuilder.Build(source, _workflow);
+            IDataBatchEnumerator stage = builder.Build(source, _workflow);
 
             // Verify all arguments are used
             if (HasAnotherPart) Throw(null);
+            _currentlyBuilding.Pop();
 
             return stage;
         }
@@ -193,6 +196,7 @@ namespace XForm.Query
             // Get the builder for the function
             IFunctionBuilder builder = null;
             ParseNextOrThrow(() => FunctionFactory.TryGetBuilder(_scanner.Current.Value, out builder), "functionName", TokenType.FunctionName, FunctionFactory.SupportedFunctions);
+            _currentlyBuilding.Push(builder);
 
             // Parse the open paren
             ParseNextOrThrow(() => true, "(", TokenType.OpenParen);
@@ -202,6 +206,7 @@ namespace XForm.Query
 
             // Ensure we've parsed all arguments, and consume the close paren
             ParseNextOrThrow(() => true, ")", TokenType.CloseParen);
+            _currentlyBuilding.Pop();
 
             return result;
         }
@@ -272,7 +277,7 @@ namespace XForm.Query
             throw new UsageException(
                     _workflow.CurrentTable,
                     _scanner.Current.LineNumber,
-                    (_currentLineBuilder != null ? _currentLineBuilder.Usage : null),
+                    (_currentlyBuilding.Count > 0 ? _currentlyBuilding.Peek().Usage : null),
                     _scanner.Current.Value,
                     valueCategory,
                     XqlScanner.Escape(validValues, (valueCategory == "columnName" ? TokenType.ColumnName : TokenType.Value)));

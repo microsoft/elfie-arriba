@@ -7,6 +7,7 @@ namespace XForm.Functions
     internal class CastBuilder : IFunctionBuilder
     {
         public string Name => "Cast";
+        public string Usage => "Cast([ColumnFunctionOrLiteral], [TargetType], [DefaultValue?], [Strict?])";
 
         public IDataBatchColumn Build(IDataBatchEnumerator source, WorkflowContext context)
         {

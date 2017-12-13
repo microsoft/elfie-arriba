@@ -1,4 +1,5 @@
 ﻿using XForm.Data;
+using XForm.Query;
 
 namespace XForm.Functions
 {
@@ -6,7 +7,7 @@ namespace XForm.Functions
     ///  XForm contains named functions
     ///  Create an IPipelineStageBuilder and specify the verbs it supports to extend the language.
     /// </summary>
-    public interface IFunctionBuilder
+    public interface IFunctionBuilder : IUsage
     {
         /// <summary>
         ///  Function Name which this builder constructs.

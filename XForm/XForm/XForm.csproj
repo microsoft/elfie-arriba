@@ -89,6 +89,7 @@
     <Compile Include="Extensions\StreamProviderExtensions.cs" />
     <Compile Include="IO\StreamProvider\MultipleSourceStreamProvider.cs" />
     <Compile Include="Query\IPipelineStageBuilder.cs" />
+    <Compile Include="Query\IUsage.cs" />
     <Compile Include="Query\Operator.cs" />
     <Compile Include="Extensions\ColumnsExtensions.cs" />
     <Compile Include="Extensions\StringExtensions.cs" />

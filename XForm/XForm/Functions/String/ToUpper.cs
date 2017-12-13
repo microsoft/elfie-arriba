@@ -7,6 +7,7 @@ namespace XForm.Functions.String
     internal class ToUpperBuilder : IFunctionBuilder
     {
         public string Name => "ToUpper";
+        public string Usage => "ToUpper([String8])";
 
         public IDataBatchColumn Build(IDataBatchEnumerator source, WorkflowContext context)
         {
