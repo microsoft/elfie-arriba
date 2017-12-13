@@ -51,6 +51,7 @@
   <ItemGroup>
     <Compile Include="Aggregators\CountAggregator.cs" />
     <Compile Include="BackgroundWebServer.cs" />
+    <Compile Include="Commands\Calculate.cs" />
     <Compile Include="Commands\Read.cs" />
     <Compile Include="Commands\RenameColumns.cs" />
     <Compile Include="Context\IWorkflowRunner.cs" />
@@ -66,6 +67,11 @@
     <Compile Include="Extensions\DataBatchEnumeratorExtensions.cs" />
     <Compile Include="Extensions\IComparableExtensions.cs" />
     <Compile Include="Extensions\InterfaceLoader.cs" />
+    <Compile Include="Functions\AsOfDate.cs" />
+    <Compile Include="Functions\FunctionFactory.cs" />
+    <Compile Include="Functions\IDataBatchFunction.cs" />
+    <Compile Include="Functions\IFunctionBuilder.cs" />
+    <Compile Include="Functions\ToUpper.cs" />
     <Compile Include="HttpService.cs" />
     <Compile Include="InteractiveRunner.cs" />
     <Compile Include="IO\ConcatenatingReader.cs" />
@@ -131,5 +137,6 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

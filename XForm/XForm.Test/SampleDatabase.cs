@@ -109,6 +109,16 @@ namespace XForm.Test
         }
 
         [TestMethod]
+        public void Database_Function()
+        {
+            SampleDatabase.EnsureBuilt();
+
+            XqlParser.Parse(@"
+                read WebRequest
+                calculate [ClientOsUpper] ToUpper([ClientOs])", null, SampleDatabase.WorkflowContext).RunAndDispose();
+        }
+
+        [TestMethod]
         public void Database_Sources()
         {
             SampleDatabase.EnsureBuilt();

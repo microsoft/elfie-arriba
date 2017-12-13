@@ -10,6 +10,7 @@ using System.Text;
 
 using XForm.Data;
 using XForm.Extensions;
+using XForm.Functions;
 using XForm.Types;
 
 namespace XForm.Query
@@ -149,6 +150,26 @@ namespace XForm.Query
 
             // If there's a WorkflowProvider, ask it to get the table. This will recurse.
             return _workflow.Runner.Build(tableName, _workflow);
+        }
+
+        public IDataBatchFunction NextFunction(IDataBatchEnumerator source, WorkflowContext context)
+        {
+            string value = _scanner.Current.Value;
+
+            // Get the builder for the function
+            IFunctionBuilder builder = null;
+            ParseNextOrThrow(() => FunctionFactory.TryGetBuilder(_scanner.Current.Value, out builder), "functionName", TokenType.FunctionName, FunctionFactory.SupportedFunctions);
+
+            // Parse the open paren
+            ParseNextOrThrow(() => true, "(", TokenType.OpenParen);
+
+            // Build the function (getting arguments for it)
+            IDataBatchFunction result = builder.Build(source, context);
+
+            // Ensure we've parsed all arguments, and consume the close paren
+            ParseNextOrThrow(() => true, ")", TokenType.CloseParen);
+
+            return result;
         }
 
         public bool NextBoolean()

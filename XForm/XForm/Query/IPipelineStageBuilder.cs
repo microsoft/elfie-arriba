@@ -1,8 +1,6 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System.Collections.Generic;
-
 using XForm.Data;
 
 namespace XForm.Query
@@ -24,7 +22,7 @@ namespace XForm.Query
         string Usage { get; }
 
         /// <summary>
-        ///  Method to build the stage given a source and the parser. This code calls parser methods
+        ///  Method to build the stage given a source and context. This code calls parser methods
         ///  in order to read the arguments required for this stage.
         /// </summary>
         /// <param name="source">IDataSourceEnumerator so far in this pipeline</param>
