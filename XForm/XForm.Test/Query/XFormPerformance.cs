@@ -18,54 +18,44 @@ namespace XForm.Test.Query
     [TestClass]
     public class XFormPerformance
     {
-        private int[] _array;
-        private int _value;
-
-        [TestInitialize]
-        public void Initialize()
-        {
-            _array = new int[16 * 1024 * 1024];
-            Random r = new Random();
-            for (int i = 0; i < _array.Length; ++i)
-            {
-                _array[i] = r.Next(1000);
-            }
-
-            _value = 500;
-        }
-
         // ISSUE: Faster in Release only, and not enough iterations to be consistent.
         //[TestMethod]
         public void XFormVsLinqPerformance()
         {
-            int expectedCount = 0;
-            TimeSpan timeLimit;
+            int[] array = new int[16 * 1024 * 1024];
+            Random r = new Random();
+            for (int i = 0; i < array.Length; ++i)
+            {
+                array[i] = r.Next(1000);
+            }
 
+            int expectedCount = 0;
             using (new TraceWatch($"For Loop [==]"))
             {
                 int count = 0;
-                for (int i = 0; i < _array.Length; ++i)
+                for (int i = 0; i < array.Length; ++i)
                 {
-                    if (_array[i] == _value) count++;
+                    if (array[i] == 500) count++;
                 }
 
                 expectedCount = count;
             }
 
+            TimeSpan timeLimit;
             Stopwatch w = Stopwatch.StartNew();
             using (new TraceWatch($"Linq Count [==]"))
             {
-                int count = _array.Where((i) => i == _value).Count();
+                int count = array.Where((i) => i == 500).Count();
                 Assert.AreEqual(expectedCount, count);
             }
             w.Stop();
             timeLimit = w.Elapsed;
 
-            ArrayEnumerator arrayTable = new ArrayEnumerator(_array.Length);
-            arrayTable.AddColumn("ID", _array);
+            ArrayEnumerator arrayTable = new ArrayEnumerator(array.Length);
+            arrayTable.AddColumn("Value", array);
 
             IDataBatchEnumerator query = XqlParser.Parse($@"
-                where ID = {_value}
+                where [Value] = {500}
                 count", arrayTable, new WorkflowContext());
 
             // Run once to force pre-allocation of buffers
