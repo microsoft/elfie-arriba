@@ -71,6 +71,7 @@ namespace XForm.Test.Query
             NextCalled = true;
 
             CurrentBatchRowCount = _inner.Next(desiredCount);
+            Assert.AreEqual(CurrentBatchRowCount, _inner.CurrentBatchRowCount, $"Enumerator must return the same row count from Next {CurrentBatchRowCount:n0} that it saves in CurrentRowBatchCount {_inner.CurrentBatchRowCount:n0}.");
             return CurrentBatchRowCount;
         }
 

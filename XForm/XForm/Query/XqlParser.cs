@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -158,8 +159,8 @@ namespace XForm.Query
 
             if(_scanner.Current.Type == TokenType.Value)
             {
-                string value = _scanner.Current.Value;
-                result = new Constant(source, value, typeof(string));
+                String8 value = String8.Convert(_scanner.Current.Value, new byte[String8.GetLength(_scanner.Current.Value)]);
+                result = new Constant(source, value, typeof(String8));
                 _scanner.Next();
             }
             else if(_scanner.Current.Type == TokenType.FunctionName)
@@ -173,6 +174,13 @@ namespace XForm.Query
             else
             {
                 Throw("columnFunctionOrLiteral", source.Columns.Select((c) => c.Name).Concat(FunctionFactory.SupportedFunctions));
+            }
+
+            if(_scanner.Current.Value.Equals("as", StringComparison.OrdinalIgnoreCase))
+            {
+                _scanner.Next();
+                string columnName = NextOutputColumnName(source);
+                result = new Rename(result, columnName);
             }
 
             return result;
@@ -271,6 +279,7 @@ namespace XForm.Query
         }
 
         public bool HasAnotherPart => _scanner.Current.Type != TokenType.Newline && _scanner.Current.Type != TokenType.End;
+        public bool HasAnotherArgument => HasAnotherPart && _scanner.Current.Type != TokenType.CloseParen;
         public int CurrentLineNumber => _scanner.Current.LineNumber;
     }
 

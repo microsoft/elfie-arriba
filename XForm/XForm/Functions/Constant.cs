@@ -12,8 +12,9 @@ namespace XForm.Functions
         public Constant(IDataBatchEnumerator source, object value, Type type)
         {
             Source = source;
-            Allocator.AllocateArray(type, 1);
+            Value = Allocator.AllocateArray(type, 1);
             Value.SetValue(value, 0);
+            ColumnDetails = new ColumnDetails(string.Empty, type, false);
         }
 
         public Func<DataBatch> Getter()

@@ -1,9 +1,8 @@
 ﻿using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using System;
 using XForm.Data;
-using XForm.Extensions;
 
-namespace XForm.Functions
+namespace XForm.Functions.String
 {
     internal class ToUpperBuilder : IFunctionBuilder
     {
@@ -11,26 +10,26 @@ namespace XForm.Functions
 
         public IDataBatchColumn Build(IDataBatchEnumerator source, WorkflowContext context)
         {
-            return new ToUpper(source, context.Parser.NextColumnName(source));
+            return new ToUpper(context.Parser.NextColumn(source, context));
         }
     }
 
     public class ToUpper : IDataBatchColumn
     {
-        private Func<DataBatch> _source;
-        public ColumnDetails ColumnDetails { get; private set; }
+        private IDataBatchColumn _column;
 
-        public ToUpper(IDataBatchEnumerator source, string sourceColumnName)
+        public ToUpper(IDataBatchColumn column)
         {
-            int sourceColumnIndex = source.Columns.IndexOfColumn(sourceColumnName);
-            ColumnDetails = source.Columns[sourceColumnIndex];
-
-            if (ColumnDetails.Type != typeof(String8)) throw new ArgumentException($"ToUpper() requires a String8 argument.");
-            _source = source.ColumnGetter(source.Columns.IndexOfColumn(sourceColumnName));
+            _column = column;
+            if (_column.ColumnDetails.Type != typeof(String8)) throw new ArgumentException($"ToUpper() requires a String8 argument.");
         }
+
+        public ColumnDetails ColumnDetails => _column.ColumnDetails;
 
         public Func<DataBatch> Getter()
         {
+            Func<DataBatch> sourceGetter = _column.Getter();
+
             String8Block block = new String8Block();
             String8[] buffer = null;
             bool[] isNull = null;
@@ -39,7 +38,7 @@ namespace XForm.Functions
             {
                 block.Clear();
 
-                DataBatch batch = _source();
+                DataBatch batch = sourceGetter();
 
                 Allocator.AllocateToSize(ref buffer, batch.Count);
 

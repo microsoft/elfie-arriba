@@ -6,7 +6,6 @@ using System.Collections.Generic;
 
 using XForm.Data;
 using XForm.Extensions;
-using XForm.Functions;
 using XForm.Query;
 
 namespace XForm.Commands
@@ -20,30 +19,29 @@ namespace XForm.Commands
         {
             return new Calculate(source,
                 context.Parser.NextOutputColumnName(source),
-                context);
+                context.Parser.NextColumn(source, context));
         }
     }
 
     public class Calculate : DataBatchEnumeratorWrapper
     {
         private int _computedColumnIndex;
-        private IDataBatchColumn _function;
+        private IDataBatchColumn _calculatedColumn;
         private List<ColumnDetails> _columns;
-        private int _currentCount;
 
-        public Calculate(IDataBatchEnumerator source, string outputColumnName, WorkflowContext context) : base(source)
+        public Calculate(IDataBatchEnumerator source, string outputColumnName, IDataBatchColumn column) : base(source)
         {
-            _function = context.Parser.NextFunction(source, context);
+            _calculatedColumn = column;
             _columns = new List<ColumnDetails>(source.Columns);
 
             // Determine whether we're replacing or adding a column
             if (source.Columns.TryGetIndexOfColumn(outputColumnName, out _computedColumnIndex))
             {
-                _columns[_computedColumnIndex] = _function.ColumnDetails.Rename(outputColumnName);
+                _columns[_computedColumnIndex] = _calculatedColumn.ColumnDetails.Rename(outputColumnName);
             }
             else
             {
-                _columns.Add(_function.ColumnDetails.Rename(outputColumnName));
+                _columns.Add(_calculatedColumn.ColumnDetails.Rename(outputColumnName));
                 _computedColumnIndex = source.Columns.Count;
             }
         }
@@ -56,13 +54,7 @@ namespace XForm.Commands
             if (columnIndex != _computedColumnIndex) return _source.ColumnGetter(columnIndex);
 
             // Otherwise, pass on the calculation
-            return _function.Getter();
-        }
-
-        public override int Next(int desiredCount)
-        {
-            _currentCount = base.Next(desiredCount);
-            return _currentCount;
+            return _calculatedColumn.Getter();
         }
     }
 }

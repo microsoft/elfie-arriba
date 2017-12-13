@@ -3,7 +3,7 @@
 
 using System;
 using System.Collections.Generic;
-
+using System.Linq;
 using XForm.Data;
 using XForm.Extensions;
 using XForm.Query;
@@ -17,40 +17,34 @@ namespace XForm.Commands
 
         public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)
         {
-            List<string> columnNames = new List<string>();
+            List<IDataBatchColumn> columns = new List<IDataBatchColumn>();
             do
             {
-                columnNames.Add(context.Parser.NextColumnName(source));
+                IDataBatchColumn column = context.Parser.NextColumn(source, context);
+                columns.Add(column);
+                if (String.IsNullOrEmpty(column.ColumnDetails.Name)) throw new UsageException($"Column {columns.Count} passed to 'Column' wasn't assigned a name. Use 'AS [Name]' to assign names to every column selected.");
             } while (context.Parser.HasAnotherPart);
 
-            return new SelectColumns(source, columnNames);
+            return new SelectColumns(source, columns);
         }
     }
 
     public class SelectColumns : DataBatchEnumeratorWrapper
     {
-        private List<ColumnDetails> _mappedColumns;
-        private List<int> _columnInnerIndices;
+        private List<IDataBatchColumn> _columns;
+        private List<ColumnDetails> _details;
 
-        public SelectColumns(IDataBatchEnumerator source, IEnumerable<string> columnNames) : base(source)
+        public SelectColumns(IDataBatchEnumerator source, List<IDataBatchColumn> columns) : base(source)
         {
-            _mappedColumns = new List<ColumnDetails>();
-            _columnInnerIndices = new List<int>();
-
-            var sourceColumns = _source.Columns;
-            foreach (string columnName in columnNames)
-            {
-                int index = sourceColumns.IndexOfColumn(columnName);
-                _columnInnerIndices.Add(index);
-                _mappedColumns.Add(sourceColumns[index]);
-            }
+            _columns = columns;
+            _details = new List<ColumnDetails>(columns.Select((col) => col.ColumnDetails));
         }
 
-        public override IReadOnlyList<ColumnDetails> Columns => _mappedColumns;
+        public override IReadOnlyList<ColumnDetails> Columns => _details;
 
         public override Func<DataBatch> ColumnGetter(int columnIndex)
         {
-            return _source.ColumnGetter(_columnInnerIndices[columnIndex]);
+            return _columns[columnIndex].Getter();
         }
     }
 }
