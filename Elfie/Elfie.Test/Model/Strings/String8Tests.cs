@@ -185,6 +185,16 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
         }
 
         [TestMethod]
+        public void String8_Trim()
+        {
+            Assert.AreEqual(String8.Empty, String8.Empty.Trim());
+
+            String8 sample = " \t\r\nSample\t\n   ".TestConvert();
+            Assert.AreEqual("Sample", sample.Trim().ToString());
+            Assert.AreEqual("Sample", sample.Trim().Trim().ToString());
+        }
+
+        [TestMethod]
         public void String8_TrimEnd()
         {
             String8 sample = "Interesting   ".TestConvert();

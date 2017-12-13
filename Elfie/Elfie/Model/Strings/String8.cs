@@ -338,6 +338,33 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         }
 
         /// <summary>
+        ///  Return this string with leading and trailing whitespace removed
+        /// </summary>
+        /// <returns>String8 without surrounding whitespace</returns>
+        public String8 Trim()
+        {
+            int startIndex = Index;
+            for (; startIndex < Index + Length; ++startIndex)
+            {
+                if (!IsWhiteSpace(Array[startIndex])) break;
+            }
+
+            int endIndex = Index + Length - 1;
+            for(; endIndex > startIndex; --endIndex)
+            {
+                if (!IsWhiteSpace(Array[endIndex])) break;
+            }
+
+            return new String8(Array, startIndex, endIndex - startIndex + 1);
+        }
+
+        private static bool IsWhiteSpace(byte c)
+        {
+            // See System.Char.IsWhiteSpaceLatin1
+            return (c == UTF8.Space || (c >= 0x9 && c <= 0xd) || c == 0xA0 || c == 0x85);
+        }
+
+        /// <summary>
         ///  Return this string with all trailing 'c's removed.
         /// </summary>
         /// <param name="c">Character to trim</param>
