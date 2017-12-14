@@ -31,6 +31,8 @@ namespace XForm.Functions
 
         public static IDataBatchColumn Build(IDataBatchEnumerator source, IDataBatchColumn column, Func<T, U> function, Action beforeBatch = null)
         {
+            if (column.ColumnDetails.Type != typeof(T)) throw new ArgumentException($"Function required argument of type {typeof(T).Name}, but argument was {column.ColumnDetails.Type.Name} instead.");
+
             if (column is Constant)
             {
                 // If the input is a constant, only convert once
