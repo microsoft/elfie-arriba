@@ -33,14 +33,25 @@ namespace XForm.Functions
             {
                 DataBatch batch = sourceGetter();
 
+                // If a single value was returned, only convert it
+                if(batch.Selector.IsSingleValue)
+                {
+                    Allocator.AllocateToSize(ref buffer, 1);
+                    buffer[0] = Function(((T[])batch.Array)[0]);
+                    return DataBatch.Single(buffer, batch.Count);
+                }
+
+                // Allocate for results
                 Allocator.AllocateToSize(ref buffer, batch.Count);
 
+                // Allocate null array if needed
                 if (batch.IsNull != null)
                 {
                     Allocator.AllocateToSize(ref isNull, batch.Count);
                     Array.Clear(isNull, 0, batch.Count);
                 }
 
+                // Convert each non-null value
                 T[] array = (T[])batch.Array;
                 for (int i = 0; i < batch.Count; ++i)
                 {
