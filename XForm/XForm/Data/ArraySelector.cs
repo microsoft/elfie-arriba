@@ -84,12 +84,15 @@ namespace XForm.Data
         {
             if (startIndexInclusive < this.StartIndexInclusive) throw new ArgumentOutOfRangeException("startIndexInclusive");
             if (endIndexExclusive < startIndexInclusive || endIndexExclusive > this.EndIndexExclusive) throw new ArgumentOutOfRangeException("endIndexExclusive");
-            return new ArraySelector() { Indices = this.Indices, StartIndexInclusive = startIndexInclusive, EndIndexExclusive = endIndexExclusive };
+            return new ArraySelector(this) { StartIndexInclusive = startIndexInclusive, EndIndexExclusive = endIndexExclusive };
         }
 
         public ArraySelector Select(ArraySelector inner, ref int[] remapArray)
         {
             // This selector could refer to a full array [0, Count), a slice [Start, End), or indirection indices.
+
+            // If this is a single value, return the requested count of copies of it
+            if (this.IsSingleValue) return ArraySelector.Single(inner.Count);
 
             // If this selector is not shifted or indirected, the inner selector can be used as-is
             if (this.Indices == null && this.StartIndexInclusive == 0) return inner;
@@ -117,7 +120,7 @@ namespace XForm.Data
         {
             int startIndex = this.EndIndexExclusive;
             int endIndex = Math.Min(startIndex + desiredCount, totalCount);
-            return new ArraySelector() { Indices = this.Indices, StartIndexInclusive = startIndex, EndIndexExclusive = endIndex };
+            return new ArraySelector(this) { StartIndexInclusive = startIndex, EndIndexExclusive = endIndex };
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

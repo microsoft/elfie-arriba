@@ -7,6 +7,10 @@ namespace XForm.Functions
     ///  SimpleTransformFunction converts a Func&lt;T, U&gt; into a function in XForm.
     ///  It reads the source column, allocates result and null arrays, and passes non-null
     ///  values to the function.
+    ///  
+    ///  If your function requires an addition buffer for transformation (like a String8Block
+    ///  to hold changed copies of strings), you can declare it in a scope the Func can see
+    ///  and clear it in the 'beforeBatch' action. See XForm.Functions.String.ToUpper.
     /// </summary>
     /// <typeparam name="T">Type of the source column</typeparam>
     /// <typeparam name="U">Type output by the function</typeparam>
@@ -14,12 +18,14 @@ namespace XForm.Functions
     {
         private IDataBatchColumn Column { get; set; }
         private Func<T, U> Function { get; set; }
+        private Action BeforeBatch { get; set; }
         public ColumnDetails ColumnDetails { get; private set; }
 
-        public SimpleTransformFunction(IDataBatchColumn column, Func<T, U> function)
+        public SimpleTransformFunction(IDataBatchColumn column, Func<T, U> function, Action beforeBatch = null)
         {
             this.Column = column;
             this.Function = function;
+            this.BeforeBatch = beforeBatch;
             this.ColumnDetails = column.ColumnDetails.ChangeType(typeof(U));
         }
 
@@ -31,6 +37,7 @@ namespace XForm.Functions
 
             return () =>
             {
+                if (BeforeBatch != null) BeforeBatch();
                 DataBatch batch = sourceGetter();
 
                 // If a single value was returned, only convert it

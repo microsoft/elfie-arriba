@@ -10,7 +10,9 @@ namespace XForm.Functions.String
 
         public IDataBatchColumn Build(IDataBatchEnumerator source, WorkflowContext context)
         {
-            return new SimpleTransformFunction<String8, String8>(context.Parser.NextColumn(source, context), (string8) => string8.Trim());
+            return new SimpleTransformFunction<String8, String8>(
+                context.Parser.NextColumn(source, context), 
+                (string8) => string8.Trim());
         }
     }
 }

@@ -1,5 +1,4 @@
 ﻿using Microsoft.CodeAnalysis.Elfie.Model.Strings;
-using System;
 using XForm.Data;
 
 namespace XForm.Functions.String
@@ -11,64 +10,24 @@ namespace XForm.Functions.String
 
         public IDataBatchColumn Build(IDataBatchEnumerator source, WorkflowContext context)
         {
-            return new ToUpper(context.Parser.NextColumn(source, context));
-        }
-    }
-
-    public class ToUpper : IDataBatchColumn
-    {
-        private IDataBatchColumn _column;
-
-        public ToUpper(IDataBatchColumn column)
-        {
-            _column = column;
-            if (_column.ColumnDetails.Type != typeof(String8)) throw new ArgumentException($"ToUpper() requires a String8 argument.");
-        }
-
-        public ColumnDetails ColumnDetails => _column.ColumnDetails;
-
-        public Func<DataBatch> Getter()
-        {
-            Func<DataBatch> sourceGetter = _column.Getter();
-
+            // Create a String8Block to hold the uppercase copy of the values
             String8Block block = new String8Block();
-            String8[] buffer = null;
-            bool[] isNull = null;
 
-            return () =>
-            {
-                block.Clear();
-
-                DataBatch batch = sourceGetter();
-
-                Allocator.AllocateToSize(ref buffer, batch.Count);
-
-                if (batch.IsNull != null)
+            return new SimpleTransformFunction<String8, String8>(
+                context.Parser.NextColumn(source, context),
+                (string8) =>
                 {
-                    Allocator.AllocateToSize(ref isNull, batch.Count);
-                    Array.Clear(isNull, 0, batch.Count);
-                }
-
-                String8[] array = (String8[])batch.Array;
-                for (int i = 0; i < batch.Count; ++i)
+                    // Make a copy, make it uppercase, and return it
+                    String8 upper = block.GetCopy(string8);
+                    upper.ToUpperInvariant();
+                    return upper;
+                },
+                () =>
                 {
-                    int index = batch.Index(i);
-                    bool rowIsNull = batch.IsNull != null && batch.IsNull[index];
-
-                    if (rowIsNull)
-                    {
-                        buffer[i] = String8.Empty;
-                        isNull[i] = true;
-                    }
-                    else
-                    {
-                        buffer[i] = block.GetCopy(array[index]);
-                        buffer[i].ToUpperInvariant();
-                    }
+                    // Before each page, clear the String8Block to reuse the memory
+                    block.Clear();
                 }
-
-                return DataBatch.All(buffer, batch.Count, isNull);
-            };
+            );
         }
     }
 }
