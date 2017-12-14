@@ -15,77 +15,75 @@ namespace XForm.Types
     /// <typeparam name="T"></typeparam>
     internal class ComparableComparer<T> : IDataBatchComparer where T : IComparable<T>
     {
-        public Type Type => typeof(T);
-        public T Value;
-
-        public void SetValue(object value)
+        public void WhereEquals(DataBatch left, DataBatch right, RowRemapper result)
         {
-            Value = (T)value;
-        }
+            result.ClearAndSize(left.Count);
+            T[] leftArray = (T[])left.Array;
+            T[] rightArray = (T[])right.Array;
 
-        public void WhereEquals(DataBatch source, RowRemapper result)
-        {
-            result.ClearAndSize(source.Count);
-            T[] sourceArray = (T[])source.Array;
-            for (int i = 0; i < source.Count; ++i)
+            for (int i = 0; i < left.Count; ++i)
             {
-                int realIndex = source.Index(i);
-                if (Value.CompareTo(sourceArray[realIndex]) == 0) result.Add(i);
+                if (leftArray[left.Index(i)].CompareTo(rightArray[right.Index(i)]) == 0) result.Add(i);
             }
         }
 
-        public void WhereNotEquals(DataBatch source, RowRemapper result)
+        public void WhereNotEquals(DataBatch left, DataBatch right, RowRemapper result)
         {
-            result.ClearAndSize(source.Count);
-            T[] sourceArray = (T[])source.Array;
-            for (int i = 0; i < source.Count; ++i)
+            result.ClearAndSize(left.Count);
+            T[] leftArray = (T[])left.Array;
+            T[] rightArray = (T[])right.Array;
+
+            for (int i = 0; i < left.Count; ++i)
             {
-                int realIndex = source.Index(i);
-                if (Value.CompareTo(sourceArray[realIndex]) != 0) result.Add(i);
+                if (leftArray[left.Index(i)].CompareTo(rightArray[right.Index(i)]) != 0) result.Add(i);
             }
         }
 
-        public void WhereLessThan(DataBatch source, RowRemapper result)
+        public void WhereLessThan(DataBatch left, DataBatch right, RowRemapper result)
         {
-            result.ClearAndSize(source.Count);
-            T[] sourceArray = (T[])source.Array;
-            for (int i = 0; i < source.Count; ++i)
+            result.ClearAndSize(left.Count);
+            T[] leftArray = (T[])left.Array;
+            T[] rightArray = (T[])right.Array;
+
+            for (int i = 0; i < left.Count; ++i)
             {
-                int realIndex = source.Index(i);
-                if (Value.CompareTo(sourceArray[realIndex]) > 0) result.Add(i);
+                if (leftArray[left.Index(i)].CompareTo(rightArray[right.Index(i)]) < 0) result.Add(i);
             }
         }
 
-        public void WhereLessThanOrEquals(DataBatch source, RowRemapper result)
+        public void WhereLessThanOrEquals(DataBatch left, DataBatch right, RowRemapper result)
         {
-            result.ClearAndSize(source.Count);
-            T[] sourceArray = (T[])source.Array;
-            for (int i = 0; i < source.Count; ++i)
+            result.ClearAndSize(left.Count);
+            T[] leftArray = (T[])left.Array;
+            T[] rightArray = (T[])right.Array;
+
+            for (int i = 0; i < left.Count; ++i)
             {
-                int realIndex = source.Index(i);
-                if (Value.CompareTo(sourceArray[realIndex]) >= 0) result.Add(i);
+                if (leftArray[left.Index(i)].CompareTo(rightArray[right.Index(i)]) <= 0) result.Add(i);
             }
         }
 
-        public void WhereGreaterThan(DataBatch source, RowRemapper result)
+        public void WhereGreaterThan(DataBatch left, DataBatch right, RowRemapper result)
         {
-            result.ClearAndSize(source.Count);
-            T[] sourceArray = (T[])source.Array;
-            for (int i = 0; i < source.Count; ++i)
+            result.ClearAndSize(left.Count);
+            T[] leftArray = (T[])left.Array;
+            T[] rightArray = (T[])right.Array;
+
+            for (int i = 0; i < left.Count; ++i)
             {
-                int realIndex = source.Index(i);
-                if (Value.CompareTo(sourceArray[realIndex]) < 0) result.Add(i);
+                if (leftArray[left.Index(i)].CompareTo(rightArray[right.Index(i)]) > 0) result.Add(i);
             }
         }
 
-        public void WhereGreaterThanOrEquals(DataBatch source, RowRemapper result)
+        public void WhereGreaterThanOrEquals(DataBatch left, DataBatch right, RowRemapper result)
         {
-            result.ClearAndSize(source.Count);
-            T[] sourceArray = (T[])source.Array;
-            for (int i = 0; i < source.Count; ++i)
+            result.ClearAndSize(left.Count);
+            T[] leftArray = (T[])left.Array;
+            T[] rightArray = (T[])right.Array;
+
+            for (int i = 0; i < left.Count; ++i)
             {
-                int realIndex = source.Index(i);
-                if (Value.CompareTo(sourceArray[realIndex]) <= 0) result.Add(i);
+                if (leftArray[left.Index(i)].CompareTo(rightArray[right.Index(i)]) >= 0) result.Add(i);
             }
         }
     }

@@ -23,10 +23,12 @@ namespace XForm.Test.Query
         public void XFormVsLinqPerformance()
         {
             int[] array = new int[16 * 1024 * 1024];
+            //int[] array2 = new int[16 * 1024 * 1024];
             Random r = new Random();
             for (int i = 0; i < array.Length; ++i)
             {
                 array[i] = r.Next(1000);
+                //array2[i] = 500;
             }
 
             int expectedCount = 0;
@@ -53,9 +55,10 @@ namespace XForm.Test.Query
 
             ArrayEnumerator arrayTable = new ArrayEnumerator(array.Length);
             arrayTable.AddColumn("Value", array);
+            //arrayTable.AddColumn("Value2", array2);
 
             IDataBatchEnumerator query = XqlParser.Parse($@"
-                where [Value] = {500}
+                where [Value] = 500
                 count", arrayTable, new WorkflowContext());
 
             // Run once to force pre-allocation of buffers

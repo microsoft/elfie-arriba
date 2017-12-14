@@ -41,7 +41,6 @@ namespace XForm.Test.Query
             if (NextCalled) throw new AssertFailedException("Column Getters must all be requested before the first Next() call (so callees know what to retrieve).");
 
             string columnName = _inner.Columns[columnIndex].Name;
-            if (ColumnGettersRequested.Contains(columnName)) throw new AssertFailedException($"Column getters must only be requested once to avoid duplicate work. {columnName} getter re-requested.");
             ColumnGettersRequested.Add(columnName);
 
             Func<DataBatch> innerGetter = _inner.ColumnGetter(columnIndex);

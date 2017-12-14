@@ -28,9 +28,9 @@ namespace XForm.Types
             return new ByteWriter(streamProvider.OpenWrite(Path.Combine(columnPath, "V.u8.bin")));
         }
 
-        public Action<DataBatch, RowRemapper> TryGetComparer(CompareOperator op, object value)
+        public Action<DataBatch, DataBatch, RowRemapper> TryGetComparer(CompareOperator op)
         {
-            return new ComparableComparer<byte>().TryBuild(op, value);
+            return new ComparableComparer<byte>().TryBuild(op);
         }
 
         public Func<DataBatch, DataBatch> TryGetConverter(Type sourceType, Type targetType, object defaultValue, bool strict)

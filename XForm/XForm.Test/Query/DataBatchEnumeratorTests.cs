@@ -1,15 +1,12 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System.IO;
-
 using Elfie.Test;
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using XForm.Data;
 using XForm.Extensions;
-using XForm.IO;
 using XForm.Query;
 
 namespace XForm.Test.Query
@@ -92,11 +89,6 @@ namespace XForm.Test.Query
             Verify.Exception<UsageException>(() => XqlParser.Parse(@"
                 read WebRequest
                 removeColumns [NotFound]", null, SampleDatabase.WorkflowContext));
-
-            // Column name not in braces
-            Verify.Exception<UsageException>(() => XqlParser.Parse(@"
-                read WebRequest
-                where ""EventTime"" < ""2017-12-04""", null, SampleDatabase.WorkflowContext));
 
             // String value in braces
             Verify.Exception<UsageException>(() => XqlParser.Parse(@"read [WebRequest]", null, SampleDatabase.WorkflowContext));

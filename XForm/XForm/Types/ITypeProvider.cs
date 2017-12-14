@@ -31,6 +31,6 @@ namespace XForm.Types
 
         Func<DataBatch, DataBatch> TryGetConverter(Type sourceType, Type targetType, object defaultValue, bool strict);
 
-        Action<DataBatch, RowRemapper> TryGetComparer(CompareOperator op, object value);
+        Action<DataBatch, DataBatch, RowRemapper> TryGetComparer(CompareOperator op);
     }
 }

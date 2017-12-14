@@ -49,7 +49,7 @@ namespace XForm.Test.Query
                 where [HttpStatus] !")));
 
             // Value missing
-            Assert.AreEqual(null, Values(suggester.Suggest($@"
+            Assert.AreEqual(s_selectListOptions, Values(suggester.Suggest($@"
                 read WebRequest
                 where [HttpStatus] != ")));
 
@@ -91,7 +91,7 @@ namespace XForm.Test.Query
             Assert.AreEqual(false, result.IsValid);
             Assert.AreEqual("UsageError.WebRequest.MissingColumn", result.Context.TableName);
             Assert.AreEqual(2, result.Context.QueryLineNumber);
-            Assert.AreEqual("'where' [columnName] [operator] [value]", result.Context.Usage);
+            Assert.AreEqual("'where' [columnFunctionOrLiteral] [operator] [columnFunctionOrLiteral]", result.Context.Usage);
             Assert.AreEqual("BadColumnName", result.Context.InvalidValue);
             Assert.AreEqual("columnName", result.Context.InvalidValueCategory);
             Assert.AreEqual(s_columnNames, string.Join("|", result.Context.ValidValues));

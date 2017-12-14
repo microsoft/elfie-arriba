@@ -59,5 +59,34 @@ namespace XForm.Query
 
             return true;
         }
+
+        public static bool TryInvertCompareOperator(this CompareOperator op, out CompareOperator inverse)
+        {
+            switch(op)
+            {
+                case CompareOperator.Equals:
+                    inverse = CompareOperator.NotEquals;
+                    return true;
+                case CompareOperator.NotEquals:
+                    inverse = CompareOperator.Equals;
+                    return true;
+                case CompareOperator.LessThan:
+                    inverse = CompareOperator.GreaterThanOrEqual;
+                    return true;
+                case CompareOperator.LessThanOrEqual:
+                    inverse = CompareOperator.GreaterThan;
+                    return true;
+                case CompareOperator.GreaterThan:
+                    inverse = CompareOperator.LessThanOrEqual;
+                    return true;
+                case CompareOperator.GreaterThanOrEqual:
+                    inverse = CompareOperator.LessThan;
+                    return true;
+                default:
+                    // No operators yet which can't be inverted, but 'contains', and 'startsWith' can't be.
+                    inverse = op;
+                    return false;
+            }
+        }
     }
 }

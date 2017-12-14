@@ -11,23 +11,18 @@ namespace XForm.Types
 {
     public interface IDataBatchComparer
     {
-        void SetValue(object value);
-
-        void WhereEquals(DataBatch source, RowRemapper result);
-        void WhereNotEquals(DataBatch source, RowRemapper result);
-        void WhereLessThan(DataBatch source, RowRemapper result);
-        void WhereLessThanOrEquals(DataBatch source, RowRemapper result);
-        void WhereGreaterThan(DataBatch source, RowRemapper result);
-        void WhereGreaterThanOrEquals(DataBatch source, RowRemapper result);
+        void WhereEquals(DataBatch left, DataBatch right, RowRemapper result);
+        void WhereNotEquals(DataBatch left, DataBatch right, RowRemapper result);
+        void WhereLessThan(DataBatch left, DataBatch right, RowRemapper result);
+        void WhereLessThanOrEquals(DataBatch left, DataBatch right, RowRemapper result);
+        void WhereGreaterThan(DataBatch left, DataBatch right, RowRemapper result);
+        void WhereGreaterThanOrEquals(DataBatch left, DataBatch right, RowRemapper result);
     }
 
     public static class DataBatchComparerExtensions
     {
-        public static Action<DataBatch, RowRemapper> TryBuild(this IDataBatchComparer comparer, CompareOperator cOp, object value)
+        public static Action<DataBatch, DataBatch, RowRemapper> TryBuild(this IDataBatchComparer comparer, CompareOperator cOp)
         {
-            // Set (and cast) the value to compare against
-            comparer.SetValue(value);
-
             // Return the function for the desired comparison operation
             switch (cOp)
             {

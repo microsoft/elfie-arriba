@@ -9,7 +9,6 @@ namespace XForm.Functions
         private string ColumnName { get; set; }
         private int ColumnIndex { get; set; }
         private IDataBatchEnumerator Source { get; set; }
-        private Func<DataBatch> _cachedGetter;
 
         public ColumnDetails ColumnDetails => Source.Columns[ColumnIndex];
 
@@ -22,8 +21,7 @@ namespace XForm.Functions
 
         public Func<DataBatch> Getter()
         {
-            if (_cachedGetter == null) _cachedGetter = Source.ColumnGetter(ColumnIndex);
-            return _cachedGetter;
+            return Source.ColumnGetter(ColumnIndex);
         }
     }
 }

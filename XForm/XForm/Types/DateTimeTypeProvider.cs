@@ -26,9 +26,9 @@ namespace XForm.Types
             return new ConvertingWriter(TypeProviderFactory.Get(typeof(long)).BinaryWriter(streamProvider, columnPath), TryGetConverter(typeof(DateTime), typeof(long), null, true));
         }
 
-        public Action<DataBatch, RowRemapper> TryGetComparer(CompareOperator op, object value)
+        public Action<DataBatch, DataBatch, RowRemapper> TryGetComparer(CompareOperator op)
         {
-            return new DateTimeComparer().TryBuild(op, value);
+            return new ComparableComparer<DateTime>().TryBuild(op);
         }
 
         public Func<DataBatch, DataBatch> TryGetConverter(Type sourceType, Type targetType, object defaultValue, bool strict)
@@ -78,83 +78,6 @@ namespace XForm.Types
             }
 
             return DataBatch.All(_dateTimeArray, batch.Count);
-        }
-    }
-
-    internal class DateTimeComparer : IDataBatchComparer
-    {
-        public Type Type => typeof(DateTime);
-        public DateTime Value;
-
-        public void SetValue(object value)
-        {
-            Value = (DateTime)value;
-        }
-
-        public void WhereEquals(DataBatch source, RowRemapper result)
-        {
-            result.ClearAndSize(source.Count);
-            DateTime[] sourceArray = (DateTime[])source.Array;
-            for (int i = 0; i < source.Count; ++i)
-            {
-                int realIndex = source.Index(i);
-                if (Value == sourceArray[realIndex]) result.Add(i);
-            }
-        }
-
-        public void WhereNotEquals(DataBatch source, RowRemapper result)
-        {
-            result.ClearAndSize(source.Count);
-            DateTime[] sourceArray = (DateTime[])source.Array;
-            for (int i = 0; i < source.Count; ++i)
-            {
-                int realIndex = source.Index(i);
-                if (Value != sourceArray[realIndex]) result.Add(i);
-            }
-        }
-
-        public void WhereLessThan(DataBatch source, RowRemapper result)
-        {
-            result.ClearAndSize(source.Count);
-            DateTime[] sourceArray = (DateTime[])source.Array;
-            for (int i = 0; i < source.Count; ++i)
-            {
-                int realIndex = source.Index(i);
-                if (Value > sourceArray[realIndex]) result.Add(i);
-            }
-        }
-
-        public void WhereLessThanOrEquals(DataBatch source, RowRemapper result)
-        {
-            result.ClearAndSize(source.Count);
-            DateTime[] sourceArray = (DateTime[])source.Array;
-            for (int i = 0; i < source.Count; ++i)
-            {
-                int realIndex = source.Index(i);
-                if (Value >= sourceArray[realIndex]) result.Add(i);
-            }
-        }
-
-        public void WhereGreaterThan(DataBatch source, RowRemapper result)
-        {
-            result.ClearAndSize(source.Count);
-            DateTime[] sourceArray = (DateTime[])source.Array;
-            for (int i = 0; i < source.Count; ++i)
-            {
-                int realIndex = source.Index(i);
-                if (Value < sourceArray[realIndex]) result.Add(i);
-            }
-        }
-
-        public void WhereGreaterThanOrEquals(DataBatch source, RowRemapper result)
-        {
-            result.ClearAndSize(source.Count);
-            DateTime[] sourceArray = (DateTime[])source.Array;
-            for (int i = 0; i < source.Count; ++i)
-            {
-                int realIndex = source.Index(i);
-                if (Value <= sourceArray[realIndex]) result.Add(i);
-            }
         }
     }
 }
