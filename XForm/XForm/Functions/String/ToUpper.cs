@@ -13,7 +13,8 @@ namespace XForm.Functions.String
             // Create a String8Block to hold the uppercase copy of the values
             String8Block block = new String8Block();
 
-            return new SimpleTransformFunction<String8, String8>(
+            return SimpleTransformFunction<String8, String8>.Build(
+                source,
                 context.Parser.NextColumn(source, context),
                 (string8) =>
                 {

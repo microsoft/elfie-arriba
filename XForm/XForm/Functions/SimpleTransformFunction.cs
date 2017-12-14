@@ -21,12 +21,26 @@ namespace XForm.Functions
         private Action BeforeBatch { get; set; }
         public ColumnDetails ColumnDetails { get; private set; }
 
-        public SimpleTransformFunction(IDataBatchColumn column, Func<T, U> function, Action beforeBatch = null)
+        private SimpleTransformFunction(IDataBatchColumn column, Func<T, U> function, Action beforeBatch = null)
         {
             this.Column = column;
             this.Function = function;
             this.BeforeBatch = beforeBatch;
             this.ColumnDetails = column.ColumnDetails.ChangeType(typeof(U));
+        }
+
+        public static IDataBatchColumn Build(IDataBatchEnumerator source, IDataBatchColumn column, Func<T, U> function, Action beforeBatch = null)
+        {
+            if (column is Constant)
+            {
+                // If the input is a constant, only convert once
+                if (beforeBatch != null) beforeBatch();
+                return new Constant(source, function((T)((Constant)column).Value), typeof(U));
+            }
+            else
+            {
+                return new SimpleTransformFunction<T, U>(column, function, beforeBatch);
+            }
         }
 
         public Func<DataBatch> Getter()

@@ -11,7 +11,8 @@ namespace XForm.Functions
 
         public IDataBatchColumn Build(IDataBatchEnumerator source, WorkflowContext context)
         {
-            return new Cast(
+            return Cast.Build(
+                source,
                 context.Parser.NextColumn(source, context),
                 context.Parser.NextType(),
                 (context.Parser.HasAnotherArgument ? context.Parser.NextLiteralValue() : null),
@@ -25,11 +26,24 @@ namespace XForm.Functions
         private Func<DataBatch, DataBatch> Converter { get; set; }
         public ColumnDetails ColumnDetails { get; private set; }
 
-        public Cast(IDataBatchColumn column, Type targetType, object defaultValue, bool strict)
+        private Cast(IDataBatchColumn column, Type targetType, object defaultValue, bool strict)
         {
             Column = column;
             ColumnDetails = column.ColumnDetails.ChangeType(targetType);
             Converter = TypeConverterFactory.GetConverter(column.ColumnDetails.Type, targetType, defaultValue, strict);
+        }
+
+        public static IDataBatchColumn Build(IDataBatchEnumerator source, IDataBatchColumn column, Type targetType, object defaultValue, bool strict)
+        {
+            if(column is Constant)
+            {
+                // If the inner value is a constant, convert once and store the new constant
+                return new Constant(source, TypeConverterFactory.ConvertSingle(((Constant)column).Value, targetType), targetType);
+            }
+            else
+            {
+                return new Cast(column, targetType, defaultValue, strict);
+            }
         }
 
         public Func<DataBatch> Getter()
