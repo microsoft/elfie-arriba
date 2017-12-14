@@ -6,8 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Runtime.Serialization;
-using System.Text;
 
 using XForm.Data;
 using XForm.Extensions;
@@ -83,9 +81,9 @@ namespace XForm.Query
             IDataBatchEnumerator pipeline = source;
 
             // For nested pipelines, we should still be on the line for the stage which has a nested pipeline. Move forward.
-            if(_scanner.Current.Type == TokenType.Newline) _scanner.Next();
+            if (_scanner.Current.Type == TokenType.Newline) _scanner.Next();
 
-            while(_scanner.Current.Type != TokenType.End)
+            while (_scanner.Current.Type != TokenType.End)
             {
                 // If this line is 'end', this is the end of the inner pipeline. Leave it at the end of this line; the outer NextPipeline will skip to the next line.
                 if (_scanner.Current.Value.Equals("end", StringComparison.OrdinalIgnoreCase))
@@ -110,7 +108,16 @@ namespace XForm.Query
             // Verify the Workflow Parser is this parser (need to use copy constructor on WorkflowContext when recursing to avoid resuming by parsing the wrong query)
             Debug.Assert(_workflow.Parser == this);
 
-            IDataBatchEnumerator stage = builder.Build(source, _workflow);
+            IDataBatchEnumerator stage = null;
+
+            try
+            {
+                stage = builder.Build(source, _workflow);
+            }
+            catch(Exception ex)
+            {
+                Rethrow(ex);
+            }
 
             // Verify all arguments are used
             if (HasAnotherPart) Throw(null);
@@ -153,24 +160,32 @@ namespace XForm.Query
             ParseNextOrThrow(() => _scanner.Current.Type == TokenType.Value, "tableName", TokenType.Value, _workflow.Runner.SourceNames);
 
             // If there's a WorkflowProvider, ask it to get the table. This will recurse.
-            return _workflow.Runner.Build(tableName, _workflow);
+            try
+            {
+                return _workflow.Runner.Build(tableName, _workflow);
+            }
+            catch(Exception ex)
+            {
+                Rethrow(ex);
+                return null;
+            }
         }
 
         public IDataBatchColumn NextColumn(IDataBatchEnumerator source, WorkflowContext context)
         {
             IDataBatchColumn result = null;
 
-            if(_scanner.Current.Type == TokenType.Value)
+            if (_scanner.Current.Type == TokenType.Value)
             {
                 String8 value = String8.Convert(_scanner.Current.Value, new byte[String8.GetLength(_scanner.Current.Value)]);
                 result = new Constant(source, value, typeof(String8));
                 _scanner.Next();
             }
-            else if(_scanner.Current.Type == TokenType.FunctionName)
+            else if (_scanner.Current.Type == TokenType.FunctionName)
             {
                 result = NextFunction(source, context);
             }
-            else if(_scanner.Current.Type == TokenType.ColumnName)
+            else if (_scanner.Current.Type == TokenType.ColumnName)
             {
                 result = new Column(source, context);
             }
@@ -179,7 +194,7 @@ namespace XForm.Query
                 Throw("columnFunctionOrLiteral", source.Columns.Select((c) => c.Name).Concat(FunctionFactory.SupportedFunctions));
             }
 
-            if(_scanner.Current.Value.Equals("as", StringComparison.OrdinalIgnoreCase))
+            if (_scanner.Current.Value.Equals("as", StringComparison.OrdinalIgnoreCase))
             {
                 _scanner.Next();
                 string columnName = NextOutputColumnName(source);
@@ -202,13 +217,21 @@ namespace XForm.Query
             ParseNextOrThrow(() => true, "(", TokenType.OpenParen);
 
             // Build the function (getting arguments for it)
-            IDataBatchColumn result = builder.Build(source, context);
+            try
+            {
+                IDataBatchColumn result = builder.Build(source, context);
 
-            // Ensure we've parsed all arguments, and consume the close paren
-            ParseNextOrThrow(() => true, ")", TokenType.CloseParen);
-            _currentlyBuilding.Pop();
+                // Ensure we've parsed all arguments, and consume the close paren
+                ParseNextOrThrow(() => true, ")", TokenType.CloseParen);
+                _currentlyBuilding.Pop();
 
-            return result;
+                return result;
+            }
+            catch(Exception ex)
+            {
+                Rethrow(ex);
+                return null;
+            }
         }
 
         public bool NextBoolean()
@@ -272,84 +295,43 @@ namespace XForm.Query
             _scanner.Next();
         }
 
+        private ErrorContext BuildErrorContext()
+        {
+            ErrorContext context = new ErrorContext();
+            context.TableName = _workflow.CurrentTable;
+            context.QueryLineNumber = _scanner.Current.LineNumber;
+            context.Usage = (_currentlyBuilding.Count > 0 ? _currentlyBuilding.Peek().Usage : null);
+            context.InvalidValue = _scanner.Current.Value;
+
+            return context;
+        }
+
         private void Throw(string valueCategory, IEnumerable<string> validValues = null)
         {
-            throw new UsageException(
-                    _workflow.CurrentTable,
-                    _scanner.Current.LineNumber,
-                    (_currentlyBuilding.Count > 0 ? _currentlyBuilding.Peek().Usage : null),
-                    _scanner.Current.Value,
-                    valueCategory,
-                    XqlScanner.Escape(validValues, (valueCategory == "columnName" ? TokenType.ColumnName : TokenType.Value)));
+            ErrorContext context = BuildErrorContext().Merge(new ErrorContext(_scanner.Current.Value, valueCategory, validValues));
+            throw new UsageException(context);
+        }
+
+        private void Rethrow(Exception ex)
+        {
+            if(ex is UsageException)
+            {
+                throw new UsageException(BuildErrorContext().Merge(((UsageException)ex).Context), ex);
+            }
+            else if(ex is ArgumentException)
+            {
+                ErrorContext context = BuildErrorContext();
+                context.ErrorMessage = ex.Message;
+                throw new UsageException(context, ex);
+            }
+            else
+            {
+                throw ex;
+            }
         }
 
         public bool HasAnotherPart => _scanner.Current.Type != TokenType.Newline && _scanner.Current.Type != TokenType.End;
         public bool HasAnotherArgument => HasAnotherPart && _scanner.Current.Type != TokenType.CloseParen;
         public int CurrentLineNumber => _scanner.Current.LineNumber;
-    }
-
-    [Serializable]
-    public class UsageException : ArgumentException
-    {
-        public string TableName { get; set; }
-        public int QueryLineNumber { get; private set; }
-        public string Usage { get; private set; }
-        public string InvalidValue { get; private set; }
-        public string InvalidValueCategory { get; private set; }
-        public IEnumerable<string> ValidValues { get; private set; }
-
-        public UsageException(string invalidValue, string invalidValueCategory, IEnumerable<string> validValues)
-        : this(null, 0, null, invalidValue, invalidValueCategory, validValues)
-        { }
-
-        public UsageException(string tableName, int queryLineNumber, string usage, string invalidValue, string invalidValueCategory, IEnumerable<string> validValues)
-            : base(BuildMessage(tableName, queryLineNumber, usage, invalidValue, invalidValueCategory, validValues))
-        {
-            TableName = tableName;
-            QueryLineNumber = queryLineNumber;
-            Usage = usage;
-            InvalidValue = invalidValue;
-            InvalidValueCategory = invalidValueCategory;
-
-            if (validValues != null) validValues = validValues.OrderBy((s) => s);
-            ValidValues = validValues;
-        }
-
-        private static string BuildMessage(string tableName, int queryLineNumber, string usage, string invalidValue, string invalidValueCategory, IEnumerable<string> validValues)
-        {
-            StringBuilder message = new StringBuilder();
-            if (!String.IsNullOrEmpty(tableName)) message.AppendLine($"Table: {tableName}");
-            if (queryLineNumber > 0) message.AppendLine($"Line: {queryLineNumber}");
-            if (!String.IsNullOrEmpty(usage)) message.AppendLine($"Usage: {usage}");
-
-            if (String.IsNullOrEmpty(invalidValueCategory))
-            {
-                message.AppendLine($"Value \"{invalidValue}\" found when no more arguments were expected.");
-            }
-            else if (String.IsNullOrEmpty(invalidValue))
-            {
-                message.AppendLine($"No argument found when {invalidValueCategory} was required.");
-            }
-            else
-            {
-                message.AppendLine($"\"{invalidValue}\" was not a valid {invalidValueCategory}.");
-            }
-
-            if (validValues != null)
-            {
-                message.AppendLine("Valid Options:");
-                foreach (string value in validValues.OrderBy((s) => s))
-                {
-                    message.AppendLine(value);
-                }
-            }
-
-            return message.ToString();
-        }
-
-        public UsageException() { }
-        public UsageException(string message) : base(message) { }
-        public UsageException(string message, Exception inner) : base(message, inner) { }
-        protected UsageException(SerializationInfo info, StreamingContext context) : base(info, context) { }
     }
 }

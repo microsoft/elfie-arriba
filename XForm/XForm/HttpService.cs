@@ -52,7 +52,7 @@ namespace XForm
                     SuggestResult result = suggester.Suggest(query);
 
                     // If the query is valid and there are no extra values valid next, just return valid
-                    if (result.IsValid == true && result.Usage == null)
+                    if (result.IsValid == true && result.Context == null)
                     {
                         writer.SetColumns(new string[] { "Valid" });
                         writer.Write(true);
@@ -60,7 +60,7 @@ namespace XForm
                     }
                     else
                     {
-                        WriteException(result.Usage, writer, result.IsValid);
+                        WriteException(result, writer);
                     }
                 }
                 catch (Exception ex)
@@ -161,6 +161,28 @@ namespace XForm
             }
         }
 
+        private void WriteException(SuggestResult result, ITabularWriter writer)
+        {
+            String8Block block = new String8Block();
+
+            writer.SetColumns(new string[] { "Valid", "Usage", "ItemCategory", "Values" });
+            writer.Write(result.IsValid);
+            writer.Write(block.GetCopy(result.Context.Usage));
+            writer.Write(block.GetCopy(result.Context.InvalidValueCategory));
+
+            String8 values = String8.Empty;
+            if (result.Context.ValidValues != null)
+            {
+                foreach (string value in result.Context.ValidValues)
+                {
+                    values = block.Concatenate(values, s_delimiter, block.GetCopy(value));
+                }
+            }
+            writer.Write(values);
+
+            writer.NextRow();
+        }
+
         private void WriteException(Exception ex, ITabularWriter writer, bool isValid = false)
         {
             String8Block block = new String8Block();
@@ -171,13 +193,13 @@ namespace XForm
 
                 writer.SetColumns(new string[] { "Valid", "Usage", "ItemCategory", "Values" });
                 writer.Write(isValid);
-                writer.Write(block.GetCopy(ue.Usage));
-                writer.Write(block.GetCopy(ue.InvalidValueCategory));
+                writer.Write(block.GetCopy(ue.Context.Usage));
+                writer.Write(block.GetCopy(ue.Context.InvalidValueCategory));
 
                 String8 values = String8.Empty;
-                if (ue.ValidValues != null)
+                if (ue.Context.ValidValues != null)
                 {
-                    foreach (string value in ue.ValidValues)
+                    foreach (string value in ue.Context.ValidValues)
                     {
                         values = block.Concatenate(values, s_delimiter, block.GetCopy(value));
                     }

@@ -34,42 +34,46 @@ namespace XForm.Types
                 if (converter != null) return converter;
             }
 
-            throw new NotImplementedException($"No converter available from {sourceType.Name} to {targetType.Name}.");
+            throw new ArgumentException($"No converter available from {sourceType.Name} to {targetType.Name}.");
         }
 
         public static object ConvertSingle(object value, Type targetType)
         {
+            // Nulls are always converted to null
             if (value == null) return null;
-            if (value.GetType().Equals(targetType)) return value;
-            if (value is string) return ConvertSingle((string)value, targetType);
-            if (value is String8) return ConvertSingle((String8)value, targetType);
 
-            throw new NotImplementedException($"XForm doesn't know how to convert \"{value}\" (type {value.GetType().Name}) to {targetType.Name}.");
-        }
+            // If the type is already right, just return it
+            Type sourceType = value.GetType();
+            if (sourceType.Equals(targetType)) return value;
 
-        public static object ConvertSingle(string value, Type targetType)
-        {
-            if (value == null) return null;
-            if (targetType == typeof(string)) return value;
-            return ConvertSingle(String8.Convert(value, new byte[String8.GetLength(value)]), targetType);
-        }
+            // Until we have a StringTypeProvider, convert string to String8 for conversions
+            if(sourceType == typeof(string))
+            {
+                sourceType = typeof(String8);
+                value = String8.Convert((string)value, new byte[String8.GetLength((string)value)]);
 
-        public static object ConvertSingle(String8 value, Type targetType)
-        {
-            if (value == null) return null;
-            if (targetType == typeof(String8)) return value;
-            Func<DataBatch, DataBatch> converter = GetConverter(typeof(String8), targetType, null, true);
+                if (targetType == typeof(String8)) return value;
+            }
 
-            DataBatch result = converter(DataBatch.Single(new String8[] { value }, 1));
+            // Get the converter for the desired type combination
+            Func<DataBatch, DataBatch> converter = GetConverter(sourceType, targetType, null, true);
+
+            Array array = Allocator.AllocateArray(sourceType, 1);
+            array.SetValue(value, 0);
+
+            DataBatch result = converter(DataBatch.Single(array, 1));
 
             // Verify the result was not null unless the input was "" or 'null'
             if (result.IsNull != null && result.IsNull[0] == true)
             {
-                if (value.IsEmpty() || value.CompareTo("null", true) == 0) return null;
+                string stringValue = value.ToString();
+                if (stringValue != "" || String.Compare(stringValue, "null", true) == 0) return null;
                 throw new ArgumentException($"Could not convert \"{value}\" to {targetType.Name}.");
             }
 
             return result.Array.GetValue(0);
+
+            throw new ArgumentException($"No converter available for value \"{value}\" (type {value.GetType().Name}) to {targetType.Name}.");
         }
     }
 }

@@ -286,7 +286,7 @@ namespace XForm.Test
             //XForm("build WebRequest.NullableHandling");
 
             // To debug engine execution, run like this:
-            XqlParser.Parse("read WebServer.Big", null, SampleDatabase.WorkflowContext).RunAndDispose();
+            XqlParser.Parse("read WebRequest.NullableHandling", null, SampleDatabase.WorkflowContext).RunAndDispose();
         }
 
         private static int ExpectedResult(string sourceName)

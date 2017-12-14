@@ -22,7 +22,7 @@ namespace XForm.Commands
             {
                 IDataBatchColumn column = context.Parser.NextColumn(source, context);
                 columns.Add(column);
-                if (String.IsNullOrEmpty(column.ColumnDetails.Name)) throw new UsageException($"Column {columns.Count} passed to 'Column' wasn't assigned a name. Use 'AS [Name]' to assign names to every column selected.");
+                if (String.IsNullOrEmpty(column.ColumnDetails.Name)) throw new ArgumentException($"Column {columns.Count} passed to 'Column' wasn't assigned a name. Use 'AS [Name]' to assign names to every column selected.");
             } while (context.Parser.HasAnotherPart);
 
             return new SelectColumns(source, columns);

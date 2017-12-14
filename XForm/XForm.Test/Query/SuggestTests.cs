@@ -3,12 +3,11 @@
 
 using System.Linq;
 
-using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-using XForm.Extensions;
 using XForm.Query;
 using XForm.Functions;
+using XForm.Types;
 
 namespace XForm.Test.Query
 {
@@ -17,6 +16,7 @@ namespace XForm.Test.Query
     {
         private static string s_verbs = string.Join("|", XqlParser.SupportedVerbs.OrderBy((s) => s));
         private static string s_sources = string.Join("|", SampleDatabase.WorkflowContext.Runner.SourceNames.OrderBy((s) => s));
+        private static string s_types = string.Join("|", TypeProviderFactory.SupportedTypes.OrderBy((s) => s));
         private static string s_columnNames = string.Join("|", XqlParser.Parse(@"read WebRequest", null, SampleDatabase.WorkflowContext).Columns.Select((cd) => cd.Name).OrderBy((s) => s));
         private static string s_selectListOptions = string.Join("|", 
             XqlParser.Parse(@"read WebRequest", null, SampleDatabase.WorkflowContext).Columns.Select((cd) => cd.Name)
@@ -29,24 +29,54 @@ namespace XForm.Test.Query
             SampleDatabase.EnsureBuilt();
             QuerySuggester suggester = new QuerySuggester(SampleDatabase.WorkflowContext);
 
+            // Verbs
             Assert.AreEqual(s_verbs, Values(suggester.Suggest("")));
             Assert.AreEqual(s_verbs, Values(suggester.Suggest("re")));
+
+            // Tables
             Assert.AreEqual(s_sources, Values(suggester.Suggest("read")));
-            Assert.AreEqual("", Values(suggester.Suggest($"read WebRequest")));
+
+            // Valid
+            Assert.AreEqual(null, Values(suggester.Suggest($"read WebRequest")));
+
+            // Verbs (newline)
             Assert.AreEqual(s_verbs, Values(suggester.Suggest($"read WebRequest\r\n")));
             Assert.AreEqual(s_verbs, Values(suggester.Suggest($"read WebRequest\r\n ")));
 
+            // CompareOperator
             Assert.AreEqual("!=|<|<=|<>|=|==|>|>=", Values(suggester.Suggest($@"
                 read WebRequest
                 where [HttpStatus] !")));
 
-            Assert.AreEqual("", Values(suggester.Suggest($@"
+            // Value missing
+            Assert.AreEqual(null, Values(suggester.Suggest($@"
                 read WebRequest
                 where [HttpStatus] != ")));
 
+            // ColumnFunctionOrLiteral
             Assert.AreEqual(s_selectListOptions, Values(suggester.Suggest($@"
                 read WebRequest
                 columns ")));
+
+            // Function argument (type)
+            Assert.AreEqual(s_types, Values(suggester.Suggest($@"
+                read WebRequest
+                columns Trim(Cast(Cast(5, Int32), ")));
+
+            // Function argument (ColumnFunctionOrLiteral)
+            Assert.AreEqual(s_selectListOptions, Values(suggester.Suggest($@"
+                read WebRequest
+                columns Trim(")));
+
+            // Nested Function argument (ColumnFunctionOrLiteral)
+            Assert.AreEqual(s_selectListOptions, Values(suggester.Suggest($@"
+                read WebRequest
+                columns Cast(Trim(")));
+
+            // Correct nested function use
+            Assert.AreEqual(true, suggester.Suggest($@"
+                read WebRequest
+                columns Trim(Cast(Cast(5, Int32), String8)) AS [Fiver]").IsValid);
         }
 
         [TestMethod]
@@ -59,18 +89,18 @@ namespace XForm.Test.Query
                 read UsageError.WebRequest.MissingColumn");
 
             Assert.AreEqual(false, result.IsValid);
-            Assert.AreEqual("UsageError.WebRequest.MissingColumn", result.Usage.TableName);
-            Assert.AreEqual(2, result.Usage.QueryLineNumber);
-            Assert.AreEqual("'where' [columnName] [operator] [value]", result.Usage.Usage);
-            Assert.AreEqual("BadColumnName", result.Usage.InvalidValue);
-            Assert.AreEqual("columnName", result.Usage.InvalidValueCategory);
-            Assert.AreEqual(s_columnNames, string.Join("|", result.Usage.ValidValues));
+            Assert.AreEqual("UsageError.WebRequest.MissingColumn", result.Context.TableName);
+            Assert.AreEqual(2, result.Context.QueryLineNumber);
+            Assert.AreEqual("'where' [columnName] [operator] [value]", result.Context.Usage);
+            Assert.AreEqual("BadColumnName", result.Context.InvalidValue);
+            Assert.AreEqual("columnName", result.Context.InvalidValueCategory);
+            Assert.AreEqual(s_columnNames, string.Join("|", result.Context.ValidValues));
         }
 
         private static string Values(SuggestResult result)
         {
-            if (result.Usage == null || result.Usage.ValidValues == null) return null;
-            return string.Join("|", result.Usage.ValidValues.OrderBy((s) => s));
+            if (result.Context == null || result.Context.ValidValues == null) return null;
+            return string.Join("|", result.Context.ValidValues.OrderBy((s) => s));
         }
     }
 }

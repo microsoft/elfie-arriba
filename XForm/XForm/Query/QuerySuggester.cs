@@ -9,7 +9,7 @@ namespace XForm.Query
     {
         public string Query { get; set; }
         public bool IsValid { get; set; }
-        public UsageException Usage { get; set; }
+        public ErrorContext Context { get; set; }
     }
 
     public class QuerySuggester
@@ -43,7 +43,7 @@ namespace XForm.Query
             }
             catch (UsageException ex)
             {
-                result.Usage = ex;
+                result.Context = ex.Context;
             }
 
             return result;
