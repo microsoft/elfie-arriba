@@ -43,9 +43,9 @@ namespace XForm
             _commands = new List<string>();
         }
 
-        public int Run()
+        public long Run()
         {
-            int lastCount = 0;
+            long lastCount = 0;
 
             try
             {
@@ -55,10 +55,11 @@ namespace XForm
 
                     // Read the next query line
                     string nextLine = Console.ReadLine();
-                    XqlParser parser = null;
+
+                    Stopwatch w = Stopwatch.StartNew();
                     try
                     {
-                        parser = new XqlParser(nextLine, _workflowContext);
+                        XqlParser parser = new XqlParser(nextLine, _workflowContext);
                         if (!parser.HasAnotherPart) return lastCount;
 
                         string command = parser.NextString().ToLowerInvariant();
@@ -121,7 +122,6 @@ namespace XForm
                     }
 
                     SaveScript(s_commandCachePath);
-                    Stopwatch w = Stopwatch.StartNew();
 
                     // Get the first 10 results
                     IDataBatchEnumerator firstTenWrapper = _pipeline;
@@ -130,11 +130,12 @@ namespace XForm
                     lastCount = firstTenWrapper.Run();
 
                     // Get the count
-                    lastCount += _pipeline.Run();
+                    RunResult result = _pipeline.RunUntilTimeout(TimeSpan.FromSeconds(3));
+                    lastCount += result.RowCount;
                     firstTenWrapper.Reset();
 
                     Console.WriteLine();
-                    Console.WriteLine($"{lastCount:n0} rows in {w.Elapsed.ToFriendlyString()}.");
+                    Console.WriteLine($"{lastCount:n0} rows in {w.Elapsed.ToFriendlyString()}. {(result.IsComplete ? "" : "[incomplete]")}");
                     Console.WriteLine();
                 }
             }

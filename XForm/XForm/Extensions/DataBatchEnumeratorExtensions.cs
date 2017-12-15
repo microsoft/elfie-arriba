@@ -3,19 +3,28 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 
 using XForm.Data;
 
 namespace XForm.Extensions
 {
+    public struct RunResult
+    {
+        public long RowCount { get; set; }
+        public bool IsComplete { get; set; }
+        public TimeSpan Timeout { get; set; }
+        public TimeSpan Elapsed { get; set; }
+    }
+
     public static class DataBatchEnumeratorExtensions
     {
         public const int DefaultBatchSize = 10240;
 
-        public static int Run(this IDataBatchEnumerator pipeline, int batchSize = DefaultBatchSize)
+        public static long Run(this IDataBatchEnumerator pipeline, int batchSize = DefaultBatchSize)
         {
-            int rowsWritten = 0;
+            long rowsWritten = 0;
             while (true)
             {
                 int batchCount = pipeline.Next(batchSize);
@@ -25,12 +34,36 @@ namespace XForm.Extensions
             return rowsWritten;
         }
 
-        public static int RunAndDispose(this IDataBatchEnumerator pipeline, int batchSize = DefaultBatchSize)
+        public static long RunAndDispose(this IDataBatchEnumerator pipeline, int batchSize = DefaultBatchSize)
         {
             using (pipeline)
             {
                 return Run(pipeline, batchSize);
             }
+        }
+
+        public static RunResult RunUntilTimeout(this IDataBatchEnumerator pipeline, TimeSpan timeout, int batchSize = DefaultBatchSize)
+        {
+            RunResult result = new RunResult();
+            result.Timeout = timeout;
+
+            Stopwatch w = Stopwatch.StartNew();
+            while(true)
+            {
+                int batch = pipeline.Next(batchSize);
+                result.RowCount += batch;
+
+                if (batch == 0)
+                {
+                    result.IsComplete = true;
+                    break;
+                }
+
+                if (w.Elapsed > timeout) break;
+            }
+
+            result.Elapsed = w.Elapsed;
+            return result;
         }
 
         public static T RunAndGetSingleValue<T>(this IDataBatchEnumerator pipeline, int batchSize = DefaultBatchSize)

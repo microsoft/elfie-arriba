@@ -33,7 +33,7 @@ namespace XForm.Test.Query
         public static void DataSourceEnumerator_All(string configurationLine, int expectedRowCount, string[] requiredColumns = null)
         {
             int requiredColumnCount = (requiredColumns == null ? 0 : requiredColumns.Length);
-            int actualRowCount;
+            long actualRowCount;
 
             IDataBatchEnumerator pipeline = null;
             DataBatchEnumeratorContractValidator innerValidator = null;
