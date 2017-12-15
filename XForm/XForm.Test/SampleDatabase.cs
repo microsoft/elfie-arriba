@@ -115,8 +115,8 @@ namespace XForm.Test
 
             XqlParser.Parse(@"
                 read WebRequest
-                calculate [ClientOsUpper] Trim(ToUpper([ClientOs]))
-                calculate [Sample] ToUpper(Trim(""  Sample  ""))
+                set [ClientOsUpper] Trim(ToUpper([ClientOs]))
+                set [Sample] ToUpper(Trim(""  Sample  ""))
                 assert none
                     where [Sample] != ""SAMPLE""", null, SampleDatabase.WorkflowContext).RunAndDispose();
         }

@@ -51,9 +51,10 @@
   <ItemGroup>
     <Compile Include="Aggregators\CountAggregator.cs" />
     <Compile Include="BackgroundWebServer.cs" />
-    <Compile Include="Commands\Calculate.cs" />
+    <Compile Include="Commands\Cast.cs" />
+    <Compile Include="Commands\Rename.cs" />
+    <Compile Include="Commands\Set.cs" />
     <Compile Include="Commands\Read.cs" />
-    <Compile Include="Commands\RenameColumns.cs" />
     <Compile Include="Context\IWorkflowRunner.cs" />
     <Compile Include="Context\SingleFileRunner.cs" />
     <Compile Include="Data\Allocator.cs" />
@@ -101,8 +102,8 @@
     <Compile Include="IO\BinaryTableReader.cs" />
     <Compile Include="Query\UsageException.cs" />
     <Compile Include="Query\XqlParser.cs" />
-    <Compile Include="Commands\RemoveColumns.cs" />
-    <Compile Include="Commands\SelectColumns.cs" />
+    <Compile Include="Commands\Remove.cs" />
+    <Compile Include="Commands\Select.cs" />
     <Compile Include="Query\XqlScanner.cs" />
     <Compile Include="Query\QuerySuggester.cs" />
     <Compile Include="Types\Comparers\FloatComparer.cs" />
@@ -118,7 +119,6 @@
     <Compile Include="Data\RowRemapper.cs" />
     <Compile Include="IO\TabularFileReader.cs" />
     <Compile Include="Commands\Schema.cs" />
-    <Compile Include="Commands\Cast.cs" />
     <Compile Include="Commands\Where.cs" />
     <Compile Include="IO\BinaryTableWriter.cs" />
     <Compile Include="IO\TabularFileWriter.cs" />

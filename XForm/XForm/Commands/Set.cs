@@ -10,26 +10,26 @@ using XForm.Query;
 
 namespace XForm.Commands
 {
-    internal class CalculateCommandBuilder : IPipelineStageBuilder
+    internal class SetCommandBuilder : IPipelineStageBuilder
     {
-        public string Verb => "calculate";
-        public string Usage => "'calculate' [newColumnName] functionName([args])";
+        public string Verb => "set";
+        public string Usage => "'set' [newColumnName] [ColumnFunctionOrLiteral]";
 
         public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)
         {
-            return new Calculate(source,
+            return new Set(source,
                 context.Parser.NextOutputColumnName(source),
                 context.Parser.NextColumn(source, context));
         }
     }
 
-    public class Calculate : DataBatchEnumeratorWrapper
+    public class Set : DataBatchEnumeratorWrapper
     {
         private int _computedColumnIndex;
         private IDataBatchColumn _calculatedColumn;
         private List<ColumnDetails> _columns;
 
-        public Calculate(IDataBatchEnumerator source, string outputColumnName, IDataBatchColumn column) : base(source)
+        public Set(IDataBatchEnumerator source, string outputColumnName, IDataBatchColumn column) : base(source)
         {
             _calculatedColumn = column;
             _columns = new List<ColumnDetails>(source.Columns);

@@ -9,10 +9,10 @@ using XForm.Query;
 
 namespace XForm.Commands
 {
-    internal class RenameColumnsCommandBuilder : IPipelineStageBuilder
+    internal class RenameCommandBuilder : IPipelineStageBuilder
     {
-        public string Verb => "renameColumns";
-        public string Usage => "'renameColumns' [ColumnName] [NewColumnName], [ColumnName] [NewColumnName], ...";
+        public string Verb => "rename";
+        public string Usage => "'rename' [ColumnName] [NewColumnName], [ColumnName] [NewColumnName], ...";
 
         public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)
         {
@@ -22,15 +22,15 @@ namespace XForm.Commands
                 columnNameMappings[context.Parser.NextColumnName(source)] = context.Parser.NextOutputColumnName(source);
             }
 
-            return new RenameColumns(source, columnNameMappings);
+            return new Rename(source, columnNameMappings);
         }
     }
 
-    public class RenameColumns : DataBatchEnumeratorWrapper
+    public class Rename : DataBatchEnumeratorWrapper
     {
         private List<ColumnDetails> _mappedColumns;
 
-        public RenameColumns(IDataBatchEnumerator source, Dictionary<string, string> columnNameMappings) : base(source)
+        public Rename(IDataBatchEnumerator source, Dictionary<string, string> columnNameMappings) : base(source)
         {
             _mappedColumns = new List<ColumnDetails>();
 

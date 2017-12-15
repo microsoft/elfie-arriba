@@ -11,10 +11,10 @@ using XForm.Query;
 
 namespace XForm.Commands
 {
-    internal class RemoveColumnsCommandBuilder : IPipelineStageBuilder
+    internal class RemoveCommandBuilder : IPipelineStageBuilder
     {
-        public string Verb => "removecolumns";
-        public string Usage => "'removeColumns' [ColumnName], [ColumnName], ...";
+        public string Verb => "remove";
+        public string Usage => "'remove' [ColumnName], [ColumnName], ...";
 
         public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)
         {
@@ -24,16 +24,16 @@ namespace XForm.Commands
                 columnNames.Add(context.Parser.NextColumnName(source));
             }
 
-            return new RemoveColumns(source, columnNames);
+            return new Remove(source, columnNames);
         }
     }
 
-    public class RemoveColumns : DataBatchEnumeratorWrapper
+    public class Remove : DataBatchEnumeratorWrapper
     {
         private List<ColumnDetails> _mappedColumns;
         private List<int> _columnInnerIndices;
 
-        public RemoveColumns(IDataBatchEnumerator source, IEnumerable<string> columnNames) : base(source)
+        public Remove(IDataBatchEnumerator source, IEnumerable<string> columnNames) : base(source)
         {
             _mappedColumns = new List<ColumnDetails>();
             _columnInnerIndices = new List<int>();

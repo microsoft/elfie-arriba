@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using XForm.Data;
 using XForm.Extensions;
 using XForm.Query;
-using XForm.Types;
 
 namespace XForm.Commands
 {
@@ -19,10 +18,13 @@ namespace XForm.Commands
         public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)
         {
             return new Cast(source,
-                context.Parser.NextColumnName(source),
-                context.Parser.NextType(),
-                (context.Parser.HasAnotherPart ? context.Parser.NextLiteralValue() : null),
-                (context.Parser.HasAnotherPart ? context.Parser.NextBoolean() : false)
+                XForm.Functions.Cast.Build(
+                    source,
+                    context.Parser.NextColumn(source, context),
+                    context.Parser.NextType(),
+                    (context.Parser.HasAnotherPart ? context.Parser.NextLiteralValue() : null),
+                    (context.Parser.HasAnotherPart ? context.Parser.NextBoolean() : false)
+                )
             );
         }
     }
@@ -30,23 +32,18 @@ namespace XForm.Commands
     public class Cast : DataBatchEnumeratorWrapper
     {
         private int _sourceColumnIndex;
-        private Func<DataBatch, DataBatch> _converter;
+        private IDataBatchColumn _castedColumn;
         private List<ColumnDetails> _columns;
 
-        public Cast(IDataBatchEnumerator source, string columnName, Type targetType, object defaultValue, bool strict) : base(source)
+        public Cast(IDataBatchEnumerator source, IDataBatchColumn castedColumn) : base(source)
         {
-            _sourceColumnIndex = source.Columns.IndexOfColumn(columnName);
-
-            ColumnDetails sourceColumn = source.Columns[_sourceColumnIndex];
-            if (!sourceColumn.Type.Equals(targetType))
-            {
-                _converter = TypeConverterFactory.GetConverter(sourceColumn.Type, targetType, defaultValue, strict);
-            }
+            _sourceColumnIndex = source.Columns.IndexOfColumn(castedColumn.ColumnDetails.Name);
+            _castedColumn = castedColumn;
 
             _columns = new List<ColumnDetails>();
             for (int i = 0; i < source.Columns.Count; ++i)
             {
-                _columns.Add((i == _sourceColumnIndex ? source.Columns[i].ChangeType(targetType) : source.Columns[i]));
+                _columns.Add((i == _sourceColumnIndex ? castedColumn.ColumnDetails : source.Columns[i]));
             }
         }
 
@@ -57,14 +54,8 @@ namespace XForm.Commands
             // Pass through columns other than the one being converted
             if (columnIndex != _sourceColumnIndex) return _source.ColumnGetter(columnIndex);
 
-            // Cache the function to get the source data
-            Func<DataBatch> sourceGetter = _source.ColumnGetter(columnIndex);
-
-            // Return the getter alone if the type was already right
-            if (_converter == null) return sourceGetter;
-
-            // Return the converter if conversion was needed
-            return () => _converter(sourceGetter());
+            // Pass through the cast for conversions
+            return _castedColumn.Getter();
         }
     }
 }

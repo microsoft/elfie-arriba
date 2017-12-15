@@ -21,8 +21,7 @@ namespace XForm.Test.Query
 
             string xqlQuery = @"
                 read WebRequest
-                columns [ServerPort], [ResponseBytes]
-                cast [ResponseBytes] int32
+                select [ServerPort], Cast([ResponseBytes], Int32)
                 where [ServerPort] = 80
                 limit 1000
                 ";

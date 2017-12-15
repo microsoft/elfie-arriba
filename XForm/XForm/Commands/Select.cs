@@ -5,15 +5,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using XForm.Data;
-using XForm.Extensions;
 using XForm.Query;
 
 namespace XForm.Commands
 {
-    internal class SelectColumnsCommandBuilder : IPipelineStageBuilder
+    internal class SelectCommandBuilder : IPipelineStageBuilder
     {
-        public string Verb => "columns";
-        public string Usage => "'columns' [ColumnName], [ColumnName], ...";
+        public string Verb => "select";
+        public string Usage => "'select' [ColumnFunctionOrLiteral] (AS [Name])?, [ColumnFunctionOrLiteral], ...";
 
         public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)
         {
@@ -25,16 +24,16 @@ namespace XForm.Commands
                 if (String.IsNullOrEmpty(column.ColumnDetails.Name)) throw new ArgumentException($"Column {columns.Count} passed to 'Column' wasn't assigned a name. Use 'AS [Name]' to assign names to every column selected.");
             } while (context.Parser.HasAnotherPart);
 
-            return new SelectColumns(source, columns);
+            return new Select(source, columns);
         }
     }
 
-    public class SelectColumns : DataBatchEnumeratorWrapper
+    public class Select : DataBatchEnumeratorWrapper
     {
         private List<IDataBatchColumn> _columns;
         private List<ColumnDetails> _details;
 
-        public SelectColumns(IDataBatchEnumerator source, List<IDataBatchColumn> columns) : base(source)
+        public Select(IDataBatchEnumerator source, List<IDataBatchColumn> columns) : base(source)
         {
             _columns = columns;
             _details = new List<ColumnDetails>(columns.Select((col) => col.ColumnDetails));

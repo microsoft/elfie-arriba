@@ -35,6 +35,9 @@ namespace XForm.Functions
 
         public static IDataBatchColumn Build(IDataBatchEnumerator source, IDataBatchColumn column, Type targetType, object defaultValue, bool strict)
         {
+            // If the column is already the right type, just return it
+            if (column.ColumnDetails.Type == targetType) return column;
+
             if(column is Constant)
             {
                 // If the inner value is a constant, convert once and store the new constant

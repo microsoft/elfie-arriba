@@ -56,27 +56,27 @@ namespace XForm.Test.Query
             // ColumnFunctionOrLiteral
             Assert.AreEqual(s_selectListOptions, Values(suggester.Suggest($@"
                 read WebRequest
-                columns ")));
+                select ")));
 
             // Function argument (type)
             Assert.AreEqual(s_types, Values(suggester.Suggest($@"
                 read WebRequest
-                columns Trim(Cast(Cast(5, Int32), ")));
+                select Trim(Cast(Cast(5, Int32), ")));
 
             // Function argument (ColumnFunctionOrLiteral)
             Assert.AreEqual(s_selectListOptions, Values(suggester.Suggest($@"
                 read WebRequest
-                columns Trim(")));
+                select Trim(")));
 
             // Nested Function argument (ColumnFunctionOrLiteral)
             Assert.AreEqual(s_selectListOptions, Values(suggester.Suggest($@"
                 read WebRequest
-                columns Cast(Trim(")));
+                select Cast(Trim(")));
 
             // Correct nested function use
             Assert.AreEqual(true, suggester.Suggest($@"
                 read WebRequest
-                columns Trim(Cast(Cast(5, Int32), String8)) AS [Fiver]").IsValid);
+                select Trim(Cast(Cast(5, Int32), String8)) AS [Fiver]").IsValid);
         }
 
         [TestMethod]

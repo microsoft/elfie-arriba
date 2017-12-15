@@ -1,5 +1,5 @@
 read WebRequest
-columns [ID] [EventTime] [UserName] [RequestBytes] [IsPremiumUser] [DaysSinceJoined]
+select [ID] [EventTime] [UserName] [RequestBytes] [IsPremiumUser] [DaysSinceJoined]
 cast [RequestBytes] int32
 cast [IsPremiumUser] boolean           
 cast [DaysSinceJoined] int32
