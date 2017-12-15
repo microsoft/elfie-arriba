@@ -62,7 +62,6 @@
     <Compile Include="Data\ColumnDetails.cs" />
     <Compile Include="Data\DataBatch.cs" />
     <Compile Include="Data\DataBatchEnumeratorWrapper.cs" />
-    <Compile Include="Data\ICompletionEstimate.cs" />
     <Compile Include="Data\IDataBatchEnumerator.cs" />
     <Compile Include="Data\MemoryCacher.cs" />
     <Compile Include="Data\SinglePageEnumerator.cs" />
