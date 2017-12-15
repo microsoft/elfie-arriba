@@ -41,6 +41,16 @@ namespace XForm.Transforms
             MatchingRowIndices[Count++] = index;
         }
 
+        public void All(int count)
+        {
+            for(int i = 0; i < count; ++i)
+            {
+                MatchingRowIndices[i] = i;
+            }
+
+            Count = count;
+        }
+
         public DataBatch Remap(DataBatch source, ref int[] remapArray)
         {
             // See if we have the remapping cached already

@@ -9,6 +9,7 @@ using XForm.Data;
 using XForm.IO.StreamProvider;
 using XForm.Query;
 using XForm.Transforms;
+using XForm.Types.Comparers;
 
 namespace XForm.Types
 {
@@ -41,7 +42,11 @@ namespace XForm.Types
 
         public Action<DataBatch, DataBatch, RowRemapper> TryGetComparer(CompareOperator op)
         {
+            if (typeof(T) == typeof(byte)) return new ByteComparer().TryBuild(op);
             if (typeof(T) == typeof(int)) return new IntComparer().TryBuild(op);
+            if (typeof(T) == typeof(long)) return new LongComparer().TryBuild(op);
+            if (typeof(T) == typeof(float)) return new FloatComparer().TryBuild(op);
+
             return new ComparableComparer<T>().TryBuild(op);
         }
 
@@ -154,144 +159,6 @@ namespace XForm.Types
             {
                 _stream.Dispose();
                 _stream = null;
-            }
-        }
-    }
-
-    internal class IntComparer : IDataBatchComparer
-    {
-        // IntComparer demonstrates the performance possible if faster-to-evaluate cases are implemented specially per type.
-        public void WhereEquals(DataBatch left, DataBatch right, RowRemapper result)
-        {
-            result.ClearAndSize(left.Count);
-            int[] leftArray = (int[])left.Array;
-            int[] rightArray = (int[])right.Array;
-
-            if (left.IsNull != null || right.IsNull != null)
-            {
-                // Slowest Path: Null checks and look up indices on both sides. ~65ms for 16M
-                for (int i = 0; i < left.Count; ++i)
-                {
-                    int leftIndex = left.Index(i);
-                    int rightIndex = right.Index(i);
-                    if (left.IsNull != null && left.IsNull[leftIndex]) continue;
-                    if (right.IsNull != null && right.IsNull[rightIndex]) continue;
-                    if (leftArray[leftIndex] == rightArray[rightIndex]) result.Add(i);
-                }
-            }
-            else if (left.Selector.Indices != null || right.Selector.Indices != null)
-            {
-                // Slow Path: Look up indices on both sides. ~55ms for 16M
-                for (int i = 0; i < left.Count; ++i)
-                {
-                    if (leftArray[left.Index(i)] == rightArray[right.Index(i)]) result.Add(i);
-                }
-            }
-            else if (!right.Selector.IsSingleValue)
-            {
-                // Faster Path: Compare contiguous arrays. ~20ms for 16M
-                int leftIndexToRightIndex = right.Selector.StartIndexInclusive - left.Selector.StartIndexInclusive;
-                for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
-                {
-                    if (leftArray[i] == rightArray[i + leftIndexToRightIndex]) result.Add(i);
-                }
-            }
-            else if (!left.Selector.IsSingleValue)
-            {
-                // Fastest Path: Contiguous Array to constant. ~15ms for 16M
-                int rightValue = rightArray[0];
-                for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
-                {
-                    if (leftArray[i] == rightValue) result.Add(i);
-                }
-            }
-            else
-            {
-                // Single Static comparison. ~0.7ms for 16M [called every 10,240 rows]
-                if (leftArray[left.Selector.StartIndexInclusive] == rightArray[right.Selector.StartIndexInclusive])
-                {
-                    for (int i = 0; i < left.Count; ++i) result.Add(i);
-                }
-            }
-        }
-
-        public void WhereNotEquals(DataBatch left, DataBatch right, RowRemapper result)
-        {
-            result.ClearAndSize(left.Count);
-            int[] leftArray = (int[])left.Array;
-            int[] rightArray = (int[])right.Array;
-
-            for (int i = 0; i < left.Count; ++i)
-            {
-                int leftIndex = left.Index(i);
-                int rightIndex = right.Index(i);
-                if (left.IsNull != null && left.IsNull[leftIndex]) continue;
-                if (right.IsNull != null && right.IsNull[rightIndex]) continue;
-                if (leftArray[leftIndex] != rightArray[rightIndex]) result.Add(i);
-            }
-        }
-
-        public void WhereLessThan(DataBatch left, DataBatch right, RowRemapper result)
-        {
-            result.ClearAndSize(left.Count);
-            int[] leftArray = (int[])left.Array;
-            int[] rightArray = (int[])right.Array;
-
-            for (int i = 0; i < left.Count; ++i)
-            {
-                int leftIndex = left.Index(i);
-                int rightIndex = right.Index(i);
-                if (left.IsNull != null && left.IsNull[leftIndex]) continue;
-                if (right.IsNull != null && right.IsNull[rightIndex]) continue;
-                if (leftArray[leftIndex] < rightArray[rightIndex]) result.Add(i);
-            }
-        }
-
-        public void WhereLessThanOrEquals(DataBatch left, DataBatch right, RowRemapper result)
-        {
-            result.ClearAndSize(left.Count);
-            int[] leftArray = (int[])left.Array;
-            int[] rightArray = (int[])right.Array;
-
-            for (int i = 0; i < left.Count; ++i)
-            {
-                int leftIndex = left.Index(i);
-                int rightIndex = right.Index(i);
-                if (left.IsNull != null && left.IsNull[leftIndex]) continue;
-                if (right.IsNull != null && right.IsNull[rightIndex]) continue;
-                if (leftArray[leftIndex] <= rightArray[rightIndex]) result.Add(i);
-            }
-        }
-
-        public void WhereGreaterThan(DataBatch left, DataBatch right, RowRemapper result)
-        {
-            result.ClearAndSize(left.Count);
-            int[] leftArray = (int[])left.Array;
-            int[] rightArray = (int[])right.Array;
-
-            for (int i = 0; i < left.Count; ++i)
-            {
-                int leftIndex = left.Index(i);
-                int rightIndex = right.Index(i);
-                if (left.IsNull != null && left.IsNull[leftIndex]) continue;
-                if (right.IsNull != null && right.IsNull[rightIndex]) continue;
-                if (leftArray[leftIndex] > rightArray[rightIndex]) result.Add(i);
-            }
-        }
-
-        public void WhereGreaterThanOrEquals(DataBatch left, DataBatch right, RowRemapper result)
-        {
-            result.ClearAndSize(left.Count);
-            int[] leftArray = (int[])left.Array;
-            int[] rightArray = (int[])right.Array;
-
-            for (int i = 0; i < left.Count; ++i)
-            {
-                int leftIndex = left.Index(i);
-                int rightIndex = right.Index(i);
-                if (left.IsNull != null && left.IsNull[leftIndex]) continue;
-                if (right.IsNull != null && right.IsNull[rightIndex]) continue;
-                if (leftArray[leftIndex] >= rightArray[rightIndex]) result.Add(i);
             }
         }
     }

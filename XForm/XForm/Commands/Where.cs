@@ -133,11 +133,7 @@ namespace XForm.Commands
             // If nothing was null in the source batch, every row matches
             if (source.IsNull == null)
             {
-                for (int i = 0; i < source.Count; ++i)
-                {
-                    remapper.Add(i);
-                }
-
+                remapper.All(source.Count);
                 return;
             }
 
