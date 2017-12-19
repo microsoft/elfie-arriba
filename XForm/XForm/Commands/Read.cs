@@ -1,5 +1,9 @@
-﻿using System;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Collections.Generic;
+
 using XForm.Data;
 using XForm.Extensions;
 using XForm.IO;
@@ -37,7 +41,7 @@ namespace XForm.Commands
             string tableName = context.Parser.NextString();
 
             // Add rows *just before* each full source in range (the previous full crawl and all incremental ones)
-            foreach(StreamAttributes fullSource in context.StreamProvider.VersionsInRange(LocationType.Source, tableName, CrawlType.Full, rangeStart, context.RequestedAsOfDateTime))
+            foreach (StreamAttributes fullSource in context.StreamProvider.VersionsInRange(LocationType.Source, tableName, CrawlType.Full, rangeStart, context.RequestedAsOfDateTime))
             {
                 // Ask for the state just before this source
                 WorkflowContext historicalContext = new WorkflowContext(context);

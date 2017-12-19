@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -39,7 +42,7 @@ namespace XForm.Query
     /// </summary>
     public class XqlScanner
     {
-        private static HashSet<char> CharactersRequiringEscaping;
+        private static HashSet<char> s_charactersRequiringEscaping;
 
         private string Text { get; set; }
         private int CurrentIndex { get; set; }
@@ -50,7 +53,7 @@ namespace XForm.Query
 
         static XqlScanner()
         {
-            CharactersRequiringEscaping = new HashSet<char>(new char[] { ' ', '\t', '"', '[', ']', '(', ')', ',' });
+            s_charactersRequiringEscaping = new HashSet<char>(new char[] { ' ', '\t', '"', '[', ']', '(', ')', ',' });
         }
 
         public XqlScanner(string xqlQuery)
@@ -67,7 +70,7 @@ namespace XForm.Query
             TokenType lastType = this.Current.Type;
             bool result = false;
 
-            while(this.Current.Type != TokenType.End)
+            while (this.Current.Type != TokenType.End)
             {
                 // Get the next token
                 result = InnerNext();
@@ -90,14 +93,14 @@ namespace XForm.Query
             this.Current.Type = TokenType.End;
             this.Current.Value = "";
             this.Current.LineNumber = CurrentLineNumber;
-            
+
             ReadWhitespace();
 
             if (CurrentIndex >= Text.Length) return false;
             this.Current.CharInLine = this.CurrentIndex - this.LastNewlineIndex;
 
             char next = Text[CurrentIndex];
-            if(next == '\r' || next == '\n')
+            if (next == '\r' || next == '\n')
             {
                 CurrentIndex++;
                 if (next == '\r' || Peek() == '\n') CurrentIndex++;
@@ -105,17 +108,17 @@ namespace XForm.Query
                 this.LastNewlineIndex = CurrentIndex;
                 this.Current.Type = TokenType.Newline;
             }
-            else if(next == '#')
+            else if (next == '#')
             {
                 ParseUntilNewline();
                 this.Current.Type = TokenType.Comment;
             }
-            else if(next == '(')
+            else if (next == '(')
             {
                 CurrentIndex++;
                 this.Current.Type = TokenType.OpenParen;
             }
-            else if(next == ')')
+            else if (next == ')')
             {
                 CurrentIndex++;
                 this.Current.Type = TokenType.CloseParen;
@@ -225,13 +228,13 @@ namespace XForm.Query
 
         public static string Escape(string value, TokenType type)
         {
-            if(type == TokenType.ColumnName)
+            if (type == TokenType.ColumnName)
             {
                 if (String.IsNullOrEmpty(value)) return "[]";
                 if (!RequiresEscaping(value)) return value;
                 return "[" + value.Replace("]", "]]") + "]";
             }
-            else if(type == TokenType.Value)
+            else if (type == TokenType.Value)
             {
                 if (String.IsNullOrEmpty(value)) return "\"\"";
                 if (!RequiresEscaping(value)) return value;
@@ -260,7 +263,7 @@ namespace XForm.Query
 
             for (int i = 0; i < value.Length; ++i)
             {
-                if (CharactersRequiringEscaping.Contains(value[i])) return true;
+                if (s_charactersRequiringEscaping.Contains(value[i])) return true;
             }
 
             return false;

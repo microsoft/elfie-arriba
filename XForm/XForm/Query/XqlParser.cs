@@ -1,11 +1,12 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+
+using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 
 using XForm.Data;
 using XForm.Extensions;
@@ -114,7 +115,7 @@ namespace XForm.Query
             {
                 stage = builder.Build(source, _workflow);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Rethrow(ex);
             }
@@ -164,7 +165,7 @@ namespace XForm.Query
             {
                 return _workflow.Runner.Build(tableName, _workflow);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Rethrow(ex);
                 return null;
@@ -227,7 +228,7 @@ namespace XForm.Query
 
                 return result;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Rethrow(ex);
                 return null;
@@ -314,11 +315,11 @@ namespace XForm.Query
 
         private void Rethrow(Exception ex)
         {
-            if(ex is UsageException)
+            if (ex is UsageException)
             {
                 throw new UsageException(BuildErrorContext().Merge(((UsageException)ex).Context), ex);
             }
-            else if(ex is ArgumentException)
+            else if (ex is ArgumentException)
             {
                 ErrorContext context = BuildErrorContext();
                 context.ErrorMessage = ex.Message;

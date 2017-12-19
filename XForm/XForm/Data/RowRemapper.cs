@@ -43,7 +43,7 @@ namespace XForm.Transforms
 
         public void All(int count)
         {
-            for(int i = 0; i < count; ++i)
+            for (int i = 0; i < count; ++i)
             {
                 MatchingRowIndices[i] = i;
             }

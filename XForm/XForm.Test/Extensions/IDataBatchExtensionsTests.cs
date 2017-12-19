@@ -1,7 +1,12 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
+
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+
 using XForm.Data;
 using XForm.Extensions;
 using XForm.IO.StreamProvider;
@@ -16,7 +21,7 @@ namespace XForm.Test.Extensions
         {
             int arraySize = 1024;
             int pageSize = 100;
-            
+
             // Build an array of [0, n)
             int[] array = Enumerable.Range(0, arraySize).ToArray();
 
@@ -24,7 +29,7 @@ namespace XForm.Test.Extensions
             int totalCountSeen = 0;
 
             // Page over it in batches
-            foreach(List<int> page in XFormTable.FromArrays(arraySize).WithColumn("Value", array).ToList<int>("Value", pageSize))
+            foreach (List<int> page in XFormTable.FromArrays(arraySize).WithColumn("Value", array).ToList<int>("Value", pageSize))
             {
                 // Verify the desired count is returned each page (last one smaller)
                 int countExpected = Math.Min(pageSize, arraySize - totalCountSeen);
@@ -32,7 +37,7 @@ namespace XForm.Test.Extensions
                 totalCountSeen += page.Count;
 
                 // Verify the values are correct
-                for(int i = 0; i < page.Count; ++i)
+                for (int i = 0; i < page.Count; ++i)
                 {
                     Assert.AreEqual(nextExpectedValue, page[i]);
                     nextExpectedValue++;
@@ -57,7 +62,7 @@ namespace XForm.Test.Extensions
             // Load it and verify it's re-loaded and matches
             List<int> reloaded = XFormTable.Load("Enumerable_SaveAndLoad_Sample", context).ToList<int>("ID", 10240).First();
             Assert.AreEqual(array.Length, reloaded.Count);
-            for(int i = 0; i < array.Length; ++i)
+            for (int i = 0; i < array.Length; ++i)
             {
                 Assert.AreEqual(array[i], reloaded[i]);
             }

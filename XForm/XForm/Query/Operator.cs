@@ -62,7 +62,7 @@ namespace XForm.Query
 
         public static bool TryInvertCompareOperator(this CompareOperator op, out CompareOperator inverse)
         {
-            switch(op)
+            switch (op)
             {
                 case CompareOperator.Equals:
                     inverse = CompareOperator.NotEquals;

@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -48,7 +51,7 @@ namespace XForm.IO.StreamProvider
             StreamAttributes attributes = LocalProvider.Attributes(logicalPath);
 
             // Return remote metadata instead if the local doesn't exist and the remote does
-            if(!attributes.Exists)
+            if (!attributes.Exists)
             {
                 StreamAttributes remoteAttributes = RemoteProvider.Attributes(logicalPath);
                 if (remoteAttributes.Exists) attributes = remoteAttributes;
@@ -75,14 +78,14 @@ namespace XForm.IO.StreamProvider
             HashSet<string> pathsSeen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             // Return all local items first
-            foreach(StreamAttributes item in LocalProvider.Enumerate(underLogicalPath, types, recursive))
+            foreach (StreamAttributes item in LocalProvider.Enumerate(underLogicalPath, types, recursive))
             {
                 pathsSeen.Add(item.Path);
                 yield return item;
             }
 
             // Return remote items which we didn't already return seeing locally
-            foreach(StreamAttributes remoteItem in RemoteProvider.Enumerate(underLogicalPath, types, recursive))
+            foreach (StreamAttributes remoteItem in RemoteProvider.Enumerate(underLogicalPath, types, recursive))
             {
                 if (pathsSeen.Add(remoteItem.Path)) yield return remoteItem;
             }
@@ -97,9 +100,9 @@ namespace XForm.IO.StreamProvider
         public Stream OpenRead(string logicalPath)
         {
             // If configured to only use remote configuration, don't use the local copy for Config and Query
-            if(Configuration.UseRemoteConfiguration)
+            if (Configuration.UseRemoteConfiguration)
             {
-                if(logicalPath.StartsWith("Config\\", StringComparison.OrdinalIgnoreCase) || logicalPath.StartsWith("Query\\", StringComparison.OrdinalIgnoreCase))
+                if (logicalPath.StartsWith("Config\\", StringComparison.OrdinalIgnoreCase) || logicalPath.StartsWith("Query\\", StringComparison.OrdinalIgnoreCase))
                 {
                     return RemoteProvider.OpenRead(logicalPath);
                 }
@@ -143,11 +146,11 @@ namespace XForm.IO.StreamProvider
         {
             if (logicalTablePath.Equals("cout", StringComparison.OrdinalIgnoreCase)) return;
 
-            if(Configuration.ShouldPublish)
+            if (Configuration.ShouldPublish)
             {
                 Trace.WriteLine($"PUBLISH: {logicalTablePath}");
 
-                foreach(StreamAttributes item in LocalProvider.Enumerate(logicalTablePath, EnumerateTypes.File, true))
+                foreach (StreamAttributes item in LocalProvider.Enumerate(logicalTablePath, EnumerateTypes.File, true))
                 {
                     using (Stream target = RemoteProvider.OpenWrite(item.Path))
                     {
