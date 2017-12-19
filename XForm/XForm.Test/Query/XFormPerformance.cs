@@ -10,8 +10,6 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using XForm.Data;
 using XForm.Extensions;
-using XForm.IO;
-using XForm.Query;
 
 namespace XForm.Test.Query
 {
@@ -19,7 +17,7 @@ namespace XForm.Test.Query
     public class XFormPerformance
     {
         // ISSUE: Faster in Release only, and not enough iterations to be consistent.
-        [TestMethod]
+        //[TestMethod]
         public void XFormVsLinqPerformance()
         {
             int[] array = new int[16 * 1024 * 1024];
