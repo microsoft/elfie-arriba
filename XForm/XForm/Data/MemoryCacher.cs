@@ -41,14 +41,14 @@ namespace XForm.Data
         private IReadOnlyList<ColumnDetails> _columns;
 
         private bool _cacheBuilt;
-        private ArrayEnumerator _cache;
+        private ArrayTable _cache;
         private List<int> _requestedColumnSourceIndices;
 
         public MemoryCacher(IDataBatchList source, CacheLevel level)
         {
             _source = source;
             _columns = source.Columns;
-            _cache = new ArrayEnumerator(_source.Count);
+            _cache = new ArrayTable(_source.Count);
             _requestedColumnSourceIndices = new List<int>();
 
             // If requested to cache everything, self-request all columns
@@ -116,7 +116,7 @@ namespace XForm.Data
             // Get each Array and associate with the ArrayEnumerator
             for (int i = 0; i < _requestedColumnSourceIndices.Count; ++i)
             {
-                _cache.AddColumn(_source.Columns[_requestedColumnSourceIndices[i]], cachedColumnGetters[i]());
+                _cache.WithColumn(_source.Columns[_requestedColumnSourceIndices[i]], cachedColumnGetters[i]());
             }
 
             // Dispose the source as soon as the cache is built

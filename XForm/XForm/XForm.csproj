@@ -65,6 +65,7 @@
     <Compile Include="Data\IDataBatchEnumerator.cs" />
     <Compile Include="Data\MemoryCacher.cs" />
     <Compile Include="Data\SinglePageEnumerator.cs" />
+    <Compile Include="Data\XFormTable.cs" />
     <Compile Include="Extensions\DataBatchEnumeratorExtensions.cs" />
     <Compile Include="Extensions\IComparableExtensions.cs" />
     <Compile Include="Extensions\InterfaceLoader.cs" />
@@ -98,7 +99,7 @@
     <Compile Include="Extensions\StringExtensions.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="IO\ArrayEnumerator.cs" />
+    <Compile Include="IO\ArrayTable.cs" />
     <Compile Include="IO\BinaryTableReader.cs" />
     <Compile Include="Query\UsageException.cs" />
     <Compile Include="Query\XqlParser.cs" />

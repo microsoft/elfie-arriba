@@ -28,7 +28,7 @@ namespace XForm.Test.Query
             for (int i = 0; i < array.Length; ++i)
             {
                 array[i] = r.Next(1000);
-                //array2[i] = 500;
+                //array2[i] = 50;
             }
 
             int expectedCount = 0;
@@ -37,7 +37,7 @@ namespace XForm.Test.Query
                 int count = 0;
                 for (int i = 0; i < array.Length; ++i)
                 {
-                    if (array[i] == 500) count++;
+                    if (array[i] < 50) count++;
                 }
 
                 expectedCount = count;
@@ -47,28 +47,24 @@ namespace XForm.Test.Query
             Stopwatch w = Stopwatch.StartNew();
             using (new TraceWatch($"Linq Count [==]"))
             {
-                int count = array.Where((i) => i == 500).Count();
+                int count = array.Where((i) => i < 50).Count();
                 Assert.AreEqual(expectedCount, count);
             }
             w.Stop();
             timeLimit = w.Elapsed;
 
-            ArrayEnumerator arrayTable = new ArrayEnumerator(array.Length);
-            arrayTable.AddColumn("Value", array);
-            //arrayTable.AddColumn("Value2", array2);
-
-            IDataBatchEnumerator query = XqlParser.Parse($@"
-                where [Value] = 500
-                count", arrayTable, new WorkflowContext());
+            IDataBatchEnumerator query = XFormTable.FromArrays(array.Length)
+                .WithColumn("Value", array)
+                .Query("where [Value] < 50", new WorkflowContext());
 
             // Run once to force pre-allocation of buffers
-            query.Run();
+            query.RunWithoutDispose();
             query.Reset();
 
             w = Stopwatch.StartNew();
             using (new TraceWatch($"XForm Count"))
             {
-                int count = query.RunAndGetSingleValue<int>();
+                long count = query.Count();
 
                 w.Stop();
                 query.Dispose();

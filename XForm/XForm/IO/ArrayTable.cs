@@ -8,7 +8,7 @@ using XForm.Data;
 
 namespace XForm.IO
 {
-    public class ArrayEnumerator : IDataBatchList
+    public class ArrayTable : IDataBatchList
     {
         private List<ColumnDetails> _columns;
         private List<DataBatch> _columnArrays;
@@ -17,7 +17,7 @@ namespace XForm.IO
         private ArraySelector _currentSelector;
         private ArraySelector _currentEnumerateSelector;
 
-        public ArrayEnumerator(int rowCount)
+        public ArrayTable(int rowCount)
         {
             _columns = new List<ColumnDetails>();
             _columnArrays = new List<DataBatch>();
@@ -25,7 +25,7 @@ namespace XForm.IO
             Reset();
         }
 
-        public void AddColumn(ColumnDetails details, DataBatch fullColumn)
+        public ArrayTable WithColumn(ColumnDetails details, DataBatch fullColumn)
         {
             if (fullColumn.Count != _rowCount) throw new ArgumentException($"All columns passed to ArrayReader must have the configured row count. The configured row count is {_rowCount:n0}; this column has {fullColumn.Count:n0} rows.");
 
@@ -36,11 +36,12 @@ namespace XForm.IO
 
             _columns.Add(details);
             _columnArrays.Add(fullColumn);
+            return this;
         }
 
-        public void AddColumn(string columnName, Array array)
+        public ArrayTable WithColumn(string columnName, Array array)
         {
-            AddColumn(new ColumnDetails(columnName, array.GetType().GetElementType(), false), DataBatch.All(array, _rowCount));
+            return WithColumn(new ColumnDetails(columnName, array.GetType().GetElementType(), false), DataBatch.All(array, _rowCount));
         }
 
         public IReadOnlyList<ColumnDetails> Columns => _columns;

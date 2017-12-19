@@ -115,7 +115,7 @@ namespace XForm
             {
                 using (IDataBatchEnumerator source = XqlParser.Parse(query, null, context))
                 {
-                    rowsWritten = source.Run();
+                    rowsWritten = source.RunWithoutDispose();
                 }
             }
 

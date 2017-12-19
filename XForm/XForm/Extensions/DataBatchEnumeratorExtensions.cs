@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Text;
 
 using XForm.Data;
+using XForm.Query;
 
 namespace XForm.Extensions
 {
@@ -22,7 +23,12 @@ namespace XForm.Extensions
     {
         public const int DefaultBatchSize = 10240;
 
-        public static long Run(this IDataBatchEnumerator pipeline, int batchSize = DefaultBatchSize)
+        public static IDataBatchEnumerator Query(this IDataBatchEnumerator source, string xqlQuery, WorkflowContext context)
+        {
+            return XqlParser.Parse(xqlQuery, source, context);
+        }
+
+        public static long RunWithoutDispose(this IDataBatchEnumerator pipeline, int batchSize = DefaultBatchSize)
         {
             long rowsWritten = 0;
             while (true)
@@ -38,8 +44,13 @@ namespace XForm.Extensions
         {
             using (pipeline)
             {
-                return Run(pipeline, batchSize);
+                return RunWithoutDispose(pipeline, batchSize);
             }
+        }
+
+        public static long Count(this IDataBatchEnumerator pipeline, int batchSize = DefaultBatchSize)
+        {
+            return RunAndDispose(pipeline, batchSize);
         }
 
         public static RunResult RunUntilTimeout(this IDataBatchEnumerator pipeline, TimeSpan timeout, int batchSize = DefaultBatchSize)
@@ -66,7 +77,7 @@ namespace XForm.Extensions
             return result;
         }
 
-        public static T RunAndGetSingleValue<T>(this IDataBatchEnumerator pipeline, int batchSize = DefaultBatchSize)
+        public static T Single<T>(this IDataBatchEnumerator pipeline, int batchSize = DefaultBatchSize)
         {
             Func<DataBatch> getter = pipeline.ColumnGetter(0);
             using (pipeline)
@@ -79,9 +90,9 @@ namespace XForm.Extensions
             }
         }
 
-        public static List<T> ToList<T>(this IDataBatchEnumerator pipeline, string columnName)
+        public static IEnumerable<List<T>> ToList<T>(this IDataBatchEnumerator pipeline, string columnName, int batchSize = DefaultBatchSize)
         {
-            List<T> result = new List<T>();
+            List<T> result = new List<T>(batchSize);
 
             using (pipeline)
             {
@@ -95,10 +106,11 @@ namespace XForm.Extensions
                     {
                         result.Add(array[batch.Index(i)]);
                     }
+
+                    yield return result;
+                    result.Clear();
                 }
             }
-
-            return result;
         }
     }
 }
