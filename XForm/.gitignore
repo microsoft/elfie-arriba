@@ -1,2 +1,5 @@
 # Include Sample Database
 !XForm.Test/SampleDatabase.zip
+
+# Don't submit benchmark resultss
+*.Benchmarks.tsv

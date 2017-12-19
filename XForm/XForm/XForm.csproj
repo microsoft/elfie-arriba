@@ -38,6 +38,7 @@
     </StartupObject>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
@@ -92,6 +93,7 @@
     <Compile Include="IO\SchemaSerializer.cs" />
     <Compile Include="Extensions\StreamProviderExtensions.cs" />
     <Compile Include="IO\StreamProvider\MultipleSourceStreamProvider.cs" />
+    <Compile Include="PerformanceComparisons.cs" />
     <Compile Include="Query\IPipelineStageBuilder.cs" />
     <Compile Include="Query\IUsage.cs" />
     <Compile Include="Query\Operator.cs" />
@@ -107,6 +109,7 @@
     <Compile Include="Commands\Select.cs" />
     <Compile Include="Query\XqlScanner.cs" />
     <Compile Include="Query\QuerySuggester.cs" />
+    <Compile Include="Test\Benchmarker.cs" />
     <Compile Include="Types\Comparers\FloatComparer.cs" />
     <Compile Include="Types\Comparers\LongComparer.cs" />
     <Compile Include="Types\Comparers\ComparableComparer.cs" />

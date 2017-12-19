@@ -61,7 +61,6 @@
     <Compile Include="Query\XqlParsingTests.cs" />
     <Compile Include="Query\SampleQuery.cs" />
     <Compile Include="Query\SuggestTests.cs" />
-    <Compile Include="Query\XFormPerformance.cs" />
     <Compile Include="SampleDatabase.cs" />
   </ItemGroup>
   <ItemGroup>
