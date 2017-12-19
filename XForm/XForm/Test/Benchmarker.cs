@@ -1,9 +1,13 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
+
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace XForm.Test
 {
@@ -36,7 +40,7 @@ namespace XForm.Test
 
             // Get to the nearest folder which isn't a build output
             DirectoryInfo folder = new DirectoryInfo(Environment.CurrentDirectory);
-            while(folder.Name.Equals("Release") || folder.Name.Equals("Debug") || folder.Name.Equals("bin") || folder.Name.Equals("x64"))
+            while (folder.Name.Equals("Release") || folder.Name.Equals("Debug") || folder.Name.Equals("bin") || folder.Name.Equals("x64"))
             {
                 folder = folder.Parent;
             }
@@ -52,7 +56,7 @@ namespace XForm.Test
             _writer.WriteLine(message);
             Trace.WriteLine(message);
         }
-        
+
         private static string Pad(string value, int length)
         {
             if (value == null) return new string(' ', length);
@@ -74,7 +78,7 @@ namespace XForm.Test
                 _writer.Write($"\t{r.ToResultCount()}");
                 Trace.Write($"\t{r.ToResultCount()}");
 
-                if(r.Iterations == 1)
+                if (r.Iterations == 1)
                 {
                     _writer.Write($" ({r.Elapsed.TotalMilliseconds:n0}ms)");
                     Trace.Write($" ({r.Elapsed.TotalMilliseconds:n0}ms)");
@@ -94,7 +98,7 @@ namespace XForm.Test
         {
             WriteEntry(
                 BenchmarkResult.Measure(name, itemCount, () => method(0, itemCount), this.MeasureForMilliseconds),
-                BenchmarkResult.MeasureParallel(name, itemCount, method, 2, this.MeasureForMilliseconds),            
+                BenchmarkResult.MeasureParallel(name, itemCount, method, 2, this.MeasureForMilliseconds),
                 BenchmarkResult.MeasureParallel(name, itemCount, method, 4, this.MeasureForMilliseconds)
             );
         }
@@ -102,7 +106,7 @@ namespace XForm.Test
         public void AssertResultsEqual()
         {
             object expected = _results[0].Output;
-            for(int i = 1; i < _results.Count; ++i)
+            for (int i = 1; i < _results.Count; ++i)
             {
                 Assert.AreEqual(expected, _results[i].Output, $"{_results[i].Name} result {_results[i].Output} did not equal expected result {expected} from {_results[0].Output}");
             }
@@ -110,7 +114,7 @@ namespace XForm.Test
 
         public void Dispose()
         {
-            if(_writer != null)
+            if (_writer != null)
             {
                 _writer.WriteLine();
                 Trace.WriteLine("");
