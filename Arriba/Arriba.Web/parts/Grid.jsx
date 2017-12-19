@@ -360,6 +360,7 @@ export default class extends EventedComponent {
         // NOTE: When a column or row is changed, we lock the current table and clear the grid data.
         //  We lock the table because the rows/cols are cleared when the active table is changed and we don't want "top query" changes to lose the cols/rows you've picked
         //  We clear Grid data because after the change but before the query, the data is inconsistent with the cols/rows and we don't want React to draw it like that
+        const newState = {};
         if (type === "column") {
             var columns = this.state.cols.slice();
             var colLabels = this.state.colLabels.slice();
