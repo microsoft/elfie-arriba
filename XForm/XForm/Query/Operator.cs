@@ -1,8 +1,6 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System;
-using System.Collections;
 using System.Collections.Generic;
 
 namespace XForm.Query
@@ -19,7 +17,6 @@ namespace XForm.Query
 
     public enum BooleanOperator : byte
     {
-        Set = 0,
         And = 1,
         Or = 2
     }

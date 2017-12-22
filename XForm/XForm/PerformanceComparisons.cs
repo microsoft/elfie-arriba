@@ -13,20 +13,20 @@ namespace XForm
     public class PerformanceComparisons
     {
         private int _rowCount;
-        private int[] _values;
-        private int[] _thresholds;
+        private ushort[] _values;
+        private ushort[] _thresholds;
         private WorkflowContext _context;
 
         public PerformanceComparisons()
         {
             _rowCount = 10 * 1000 * 1000;
-            _values = new int[_rowCount];
-            _thresholds = new int[_rowCount];
+            _values = new ushort[_rowCount];
+            _thresholds = new ushort[_rowCount];
 
             Random r = new Random();
             for (int i = 0; i < _values.Length; ++i)
             {
-                _values[i] = r.Next(1000);
+                _values[i] = (ushort)r.Next(1000);
                 _thresholds[i] = 50;
             }
 
