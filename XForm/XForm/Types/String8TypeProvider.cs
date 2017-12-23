@@ -7,10 +7,10 @@ using System.IO;
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 
 using XForm.Data;
-using XForm.IO;
 using XForm.IO.StreamProvider;
 using XForm.Query;
 using XForm.Transforms;
+using XForm.Types.Comparers;
 
 namespace XForm.Types
 {

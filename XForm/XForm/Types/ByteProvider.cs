@@ -8,6 +8,7 @@ using XForm.Data;
 using XForm.IO.StreamProvider;
 using XForm.Query;
 using XForm.Transforms;
+using XForm.Types.Comparers;
 
 namespace XForm.Types
 {

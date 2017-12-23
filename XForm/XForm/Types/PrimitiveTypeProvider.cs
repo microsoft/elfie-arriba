@@ -42,10 +42,16 @@ namespace XForm.Types
 
         public Action<DataBatch, DataBatch, RowRemapper> TryGetComparer(CompareOperator op)
         {
+            if (typeof(T) == typeof(sbyte)) return new SbyteComparer().TryBuild(op);
             if (typeof(T) == typeof(byte)) return new ByteComparer().TryBuild(op);
+            if (typeof(T) == typeof(short)) return new ShortComparer().TryBuild(op);
+            if (typeof(T) == typeof(ushort)) return new UshortComparer().TryBuild(op);
             if (typeof(T) == typeof(int)) return new IntComparer().TryBuild(op);
+            if (typeof(T) == typeof(uint)) return new UintComparer().TryBuild(op);
             if (typeof(T) == typeof(long)) return new LongComparer().TryBuild(op);
+            if (typeof(T) == typeof(ulong)) return new UlongComparer().TryBuild(op);
             if (typeof(T) == typeof(float)) return new FloatComparer().TryBuild(op);
+            if (typeof(T) == typeof(double)) return new DoubleComparer().TryBuild(op);
 
             return new ComparableComparer<T>().TryBuild(op);
         }

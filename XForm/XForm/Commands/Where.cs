@@ -105,7 +105,8 @@ namespace XForm.Commands
                 _comparer(left, right, _mapper);
 
                 // Stop if we got rows, otherwise get the next source batch
-                if (_mapper.Count > 0) return _mapper.Count;
+                int count = _mapper.Count;
+                if (count > 0) return count;
             }
 
             return 0;
