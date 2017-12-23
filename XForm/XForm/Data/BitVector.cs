@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 
 namespace XForm.Data
 {
@@ -39,6 +40,18 @@ namespace XForm.Data
                     this._bitVector[index >> 6] &= ~(0x1UL << (index & 63));
                 }
             }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Set(int index)
+        {
+            this._bitVector[index >> 6] |= (0x1UL << (index & 63));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Clear(int index)
+        {
+            this._bitVector[index >> 6] &= ~(0x1UL << (index & 63));
         }
 
         public int Capacity

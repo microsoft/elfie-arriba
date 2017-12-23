@@ -29,13 +29,14 @@ namespace XForm.Test
     /// </summary>
     public class Benchmarker : IDisposable
     {
-        public int MeasureForMilliseconds = 500;
         public static string BenchmarkTsvName = "%ComputerName%.Benchmarks.tsv";
+        private int _measureForMilliseconds;
         private StreamWriter _writer;
         private List<BenchmarkResult> _results;
 
-        public Benchmarker(string groupName)
+        public Benchmarker(string groupName, int measureForMilliseconds = 500)
         {
+            this._measureForMilliseconds = measureForMilliseconds;
             _results = new List<BenchmarkResult>();
 
             // Get to the nearest folder which isn't a build output
@@ -91,15 +92,15 @@ namespace XForm.Test
 
         public void Measure(string name, int itemCount, Func<object> method)
         {
-            WriteEntry(BenchmarkResult.Measure(name, itemCount, method, this.MeasureForMilliseconds));
+            WriteEntry(BenchmarkResult.Measure(name, itemCount, method, this._measureForMilliseconds));
         }
 
         public void MeasureParallel(string name, int itemCount, Func<int, int, object> method)
         {
             WriteEntry(
-                BenchmarkResult.Measure(name, itemCount, () => method(0, itemCount), this.MeasureForMilliseconds),
-                BenchmarkResult.MeasureParallel(name, itemCount, method, 2, this.MeasureForMilliseconds),
-                BenchmarkResult.MeasureParallel(name, itemCount, method, 4, this.MeasureForMilliseconds)
+                BenchmarkResult.Measure(name, itemCount, () => method(0, itemCount), this._measureForMilliseconds),
+                BenchmarkResult.MeasureParallel(name, itemCount, method, 2, this._measureForMilliseconds),
+                BenchmarkResult.MeasureParallel(name, itemCount, method, 4, this._measureForMilliseconds)
             );
         }
 
