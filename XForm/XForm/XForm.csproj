@@ -52,6 +52,8 @@
     <Compile Include="Aggregators\CountAggregator.cs" />
     <Compile Include="BackgroundWebServer.cs" />
     <Compile Include="Commands\Cast.cs" />
+    <Compile Include="Commands\Replace.cs" />
+    <Compile Include="Commands\CosmosUnescape.cs" />
     <Compile Include="Commands\Rename.cs" />
     <Compile Include="Commands\Set.cs" />
     <Compile Include="Commands\Read.cs" />
