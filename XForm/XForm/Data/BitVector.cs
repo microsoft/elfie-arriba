@@ -19,6 +19,9 @@ namespace XForm.Data
     public class BitVector
     {
         private ulong[] _bitVector;
+        internal static Func<ulong[], int> s_nativeCount;
+        internal static PageSignature s_nativePage;
+        internal delegate int PageSignature(ulong[] vector, int[] indicesFound, ref int nextIndex);
 
         public BitVector(int length)
         {
@@ -63,6 +66,8 @@ namespace XForm.Data
         {
             get
             {
+                if (s_nativeCount != null) return s_nativeCount(this._bitVector);
+
                 // Count using the hamming weight algorithm [http://en.wikipedia.org/wiki/Hamming_weight]
                 const ulong m1 = 0x5555555555555555UL;
                 const ulong m2 = 0x3333333333333333UL;
@@ -89,6 +94,8 @@ namespace XForm.Data
 
         public int Page(int[] indicesFound, ref int fromIndex)
         {
+            if (s_nativePage != null) return s_nativePage(this._bitVector, indicesFound, ref fromIndex);
+
             int countFound = 0;
             int i;
             for (i = fromIndex; i < this.Capacity; ++i)

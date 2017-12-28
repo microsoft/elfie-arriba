@@ -35,13 +35,15 @@ namespace XForm
 
         public void Run()
         {
-            WhereIntUnderConstant();
-            WhereIntEqualsInt();
+            NativeAccelerator.Enable();
+            DoubleWhere();
+            //WhereIntUnderConstant();
+            //WhereIntEqualsInt();
         }
 
         public void WhereIntUnderConstant()
         {
-            using (Benchmarker b = new Benchmarker($"int[{_rowCount:n0}] | where [Value] < 50 | count"))
+            using (Benchmarker b = new Benchmarker($"int[{_rowCount:n0}] | where [Value] < 50 | count", 3000))
             {
                 b.Measure("For Count", _values.Length, () =>
                 {
@@ -90,6 +92,36 @@ namespace XForm
                     .WithColumn("Value", _values)
                     .WithColumn("Threshold", _thresholds)
                     .Query("where [Value] = [Threshold]", _context)
+                    .Count();
+                });
+
+                b.AssertResultsEqual();
+            }
+        }
+
+        public void DoubleWhere()
+        {
+            using (Benchmarker b = new Benchmarker($"int[{_rowCount:n0}] | where [Value] < 50 | where [Value] = 25 | count", 3000))
+            {
+                b.Measure("For Count", _values.Length, () =>
+                {
+                    int count = 0;
+                    for (int i = 0; i < _values.Length; ++i)
+                    {
+                        if (_values[i] < 50)
+                        {
+                            if (_values[i] == 25) count++;
+                        }
+                    }
+                    return count;
+                });
+
+                b.Measure("XForm Count", _values.Length, () =>
+                {
+                    return (int)XFormTable.FromArrays(_values.Length)
+                    .WithColumn("Value", _values)
+                    .Query("where [Value] < 50", _context)
+                    .Query("where [Value] = 25", _context)
                     .Count();
                 });
 
