@@ -51,7 +51,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssertCommand.cs" />
-    <Compile Include="Commands\ReplaceTests.cs" />
+    <Compile Include="Functions\ReplaceTests.cs" />
     <Compile Include="Commands\CosmosUnescapeTests.cs" />
     <Compile Include="Data\AllocatorTests.cs" />
     <Compile Include="Extensions\StringExtensionsTests.cs" />

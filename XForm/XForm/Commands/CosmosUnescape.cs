@@ -86,15 +86,7 @@ namespace XForm.Commands
             for (int i = 0; i < batch.Count; ++i)
             {
                 String8 originalValue = sourceArray[batch.Index(i)];
-
-                if (originalValue == null)
-                {
-                    transformedArray[i] = originalValue;
-                }
-                else
-                {
-                    transformedArray[i] = this.Unescape(originalValue, block);
-                }
+                transformedArray[i] = this.Unescape(originalValue, block);
             }
 
             return DataBatch.All(transformedArray, batch.Count);

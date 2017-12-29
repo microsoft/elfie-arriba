@@ -1,16 +1,12 @@
 ﻿using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using XForm.Commands;
 using XForm.Data;
 using XForm.Query;
 
-namespace XForm.Test.Data
+namespace XForm.Test.Commands
 {
     [TestClass]
     public class CosmosUnescapeTests
