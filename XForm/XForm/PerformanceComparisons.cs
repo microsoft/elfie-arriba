@@ -1,7 +1,9 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Microsoft.CodeAnalysis.Elfie.Serialization;
 using System;
+using System.IO;
 using System.Linq;
 
 using XForm.Data;
@@ -35,10 +37,11 @@ namespace XForm
 
         public void Run()
         {
-            NativeAccelerator.Enable();
+            //NativeAccelerator.Enable();
             //DoubleWhere();
-            WhereIntUnderConstant();
+            //WhereIntUnderConstant();
             //WhereIntEqualsInt();
+            TsvSplit();
         }
 
         public void WhereIntUnderConstant()
@@ -126,6 +129,68 @@ namespace XForm
                 });
 
                 b.AssertResultsEqual();
+            }
+        }
+
+        public void TsvSplit()
+        {
+            Stream tsvStream = new MemoryStream();
+            int rowCount = 1000 * 1000;
+            WriteSampleTsv(tsvStream, 5, 1000 * 1000);
+
+            // Read once first (try to get cached)
+
+            using (Benchmarker b = new Benchmarker($"Tsv Parse [{rowCount:n0}] | sum(Zip)", 3000))
+            {
+                b.Measure("ReadLine | Split", (int)tsvStream.Length, () =>
+                {
+                    tsvStream.Seek(0, SeekOrigin.Begin);
+                    int count = 0;
+                    StreamReader reader = new StreamReader(tsvStream);
+                    {
+                        // Header row
+                        reader.ReadLine();
+
+                        while (!reader.EndOfStream)
+                        {
+                            string line = reader.ReadLine();
+                            string[] cells = line.Split('\t');
+                            count++;
+                        }
+                    }
+                    return count;
+                });
+
+                b.Measure("Elfie TsvReader ", (int)tsvStream.Length, () =>
+                {
+                    tsvStream.Seek(0, SeekOrigin.Begin);
+                    int count = 0;
+                    ITabularReader reader = TabularFactory.BuildReader(tsvStream, "Unused.tsv");
+                    {
+                        while (reader.NextRow()) count++;
+                    }
+                    return count;
+                });
+
+                b.AssertResultsEqual();
+            }
+        }
+
+        private static void WriteSampleTsv(Stream stream, int seed, int rowCount)
+        {
+            DateTime start = new DateTime(2018, 01, 01, 0, 0, 0, DateTimeKind.Utc);
+
+            Random r = new Random(seed);
+            ITabularWriter writer = TabularFactory.BuildWriter(stream, "Unused.tsv");
+            {
+                writer.SetColumns(new string[] { "Zip", "LastScan", "IsArchived" });
+                for (int i = 0; i < rowCount; ++i)
+                {
+                    writer.Write(r.Next(10000, 99999));
+                    writer.Write(start.AddDays(-180.0 * r.NextDouble()));
+                    writer.Write(r.Next(100) < 50);
+                    writer.NextRow();
+                }
             }
         }
     }
