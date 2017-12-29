@@ -51,7 +51,7 @@ namespace XForm.Functions
             if (inputColumn is Constant)
             {
                 // If the inner value is a constant, convert once and store the new constant
-                return new Constant(source, ReplaceColumn.Replace((String8)((Constant)inputColumn).Value, find, replace, new String8Block()), typeof(String8));
+                return new Constant(source, ReplaceColumn.Replace((String8)((Constant)inputColumn).Value, find, replace, exactMatch, new String8Block()), typeof(String8));
             }
             else
             {
@@ -83,43 +83,57 @@ namespace XForm.Functions
             for (int i = 0; i < batch.Count; ++i)
             {
                 String8 originalValue = sourceArray[batch.Index(i)];
-                transformedArray[i] = ReplaceColumn.Replace(originalValue, FindText, ReplaceText, block);
+                transformedArray[i] = ReplaceColumn.Replace(originalValue, FindText, ReplaceText, ExactMatch, block);
             }
 
             return DataBatch.All(transformedArray, batch.Count);
         }
 
-        public static String8 Replace(String8 originalValue, String8 findString, String8 replaceString, String8Block block)
+        public static String8 Replace(String8 originalValue, String8 findText, String8 replaceText, bool exactMatch, String8Block block)
         {
+            String8 newValue = String8.Empty;
             int startIndex = -1;
             int currentIndex = 0;
-            String8 newValue = String8.Empty;
 
-            while (true)
+            if (exactMatch)
             {
-                // Find the start of the escaped string
-                startIndex = originalValue.IndexOf(findString, currentIndex);
-
-                if (startIndex >= 0)
+                if (originalValue == findText)
                 {
-                    // Append the string before the escape sequence
-                    newValue = block.Concatenate(newValue, String8.Empty, originalValue.Substring(currentIndex, startIndex - currentIndex));
-
-                    // Append the escaped string
-                    newValue = block.Concatenate(newValue, String8.Empty, replaceString);
-
-                    currentIndex = startIndex + findString.Length;
+                    newValue = replaceText;
                 }
                 else
                 {
-                    break;
+                    newValue = originalValue;
                 }
             }
-
-            // Copy the remaining string
-            if (currentIndex < originalValue.Length)
+            else
             {
-                newValue = block.Concatenate(newValue, String8.Empty, originalValue.Substring(currentIndex, originalValue.Length - currentIndex));
+                while (true)
+                {
+                    // Find the start of the escaped string
+                    startIndex = originalValue.IndexOf(findText, currentIndex);
+
+                    if (startIndex >= 0)
+                    {
+                        // Append the string before the escape sequence
+                        newValue = block.Concatenate(newValue, String8.Empty, originalValue.Substring(currentIndex, startIndex - currentIndex));
+
+                        // Append the escaped string
+                        newValue = block.Concatenate(newValue, String8.Empty, replaceText);
+
+                        currentIndex = startIndex + findText.Length;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+
+                // Copy the remaining string
+                if (currentIndex < originalValue.Length)
+                {
+                    newValue = block.Concatenate(newValue, String8.Empty, originalValue.Substring(currentIndex, originalValue.Length - currentIndex));
+                }
             }
 
             return newValue;

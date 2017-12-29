@@ -13,16 +13,19 @@ namespace XForm.Test.Functions
         [TestMethod]
         public void ReplaceFunction()
         {
-            List<Tuple<String8, String8, String8, String8>> testCases = new List<Tuple<String8, String8, String8, String8>>();
-            testCases.Add(Tuple.Create(String8.Empty, String8.Empty, "find".ToString8(), "replace".ToString8()));
-            testCases.Add(Tuple.Create("N/A".ToString8(), String8.Empty, "N/A".ToString8(), String8.Empty));
-            testCases.Add(Tuple.Create("N/A".ToString8(), "Not Applicable".ToString8(), "N/A".ToString8(), "Not Applicable".ToString8()));
-            testCases.Add(Tuple.Create("the quick brown fox".ToString8(), "the quick red fox".ToString8(), "brown".ToString8(), "red".ToString8()));
+            List<Tuple<String8, String8, String8, String8, bool>> testCases = new List<Tuple<String8, String8, String8, String8, bool>>();
+            testCases.Add(Tuple.Create(String8.Empty, String8.Empty, "find".ToString8(), "replace".ToString8(), false));
+            testCases.Add(Tuple.Create("N/A".ToString8(), String8.Empty, "N/A".ToString8(), String8.Empty, false));
+            testCases.Add(Tuple.Create("N/A".ToString8(), "Not Applicable".ToString8(), "N/A".ToString8(), "Not Applicable".ToString8(), false));
+            testCases.Add(Tuple.Create("the quick brown fox".ToString8(), "the quick red fox".ToString8(), "brown".ToString8(), "red".ToString8(), false));
+            testCases.Add(Tuple.Create("the quick brown fox".ToString8(), "the quick brown fox".ToString8(), "brown".ToString8(), "red".ToString8(), true));
+            testCases.Add(Tuple.Create("brown".ToString8(), "red".ToString8(), "brown".ToString8(), "red".ToString8(), true));
+            testCases.Add(Tuple.Create("the quick brown fox".ToString8(), "the slow gray cat".ToString8(), "the quick brown fox".ToString8(), "the slow gray cat".ToString8(), true));
 
             foreach (var testCase in testCases)
             {
                 Debug.WriteLine("Testing " + testCase.ToString());
-                Assert.AreEqual(testCase.Item2, ReplaceColumn.Replace(testCase.Item1, testCase.Item3, testCase.Item4, new String8Block()));
+                Assert.AreEqual(testCase.Item2, ReplaceColumn.Replace(testCase.Item1, testCase.Item3, testCase.Item4, testCase.Item5, new String8Block()));
             }
         }
     }
