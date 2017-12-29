@@ -2,6 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System;
 using XForm.Data;
 using XForm.Transforms;
 
@@ -13,6 +14,8 @@ namespace XForm.Types.Comparers
     /// </summary>
     internal class UshortComparer : IDataBatchComparer
     {
+        internal static Action<ushort[], ushort, int, int, ulong[]> s_WhereLessThanNative;
+
 		public void WhereEquals(DataBatch left, DataBatch right, RowRemapper result)
         {
             result.ClearAndSize(left.Count);
@@ -169,6 +172,13 @@ namespace XForm.Types.Comparers
                 // Fastest Path: Contiguous Array to constant. ~15ms for 16M
                 int zeroOffset = left.Selector.StartIndexInclusive;
                 ushort rightValue = rightArray[0];
+
+                if (s_WhereLessThanNative != null)
+                {
+                    s_WhereLessThanNative(leftArray, rightValue, left.Selector.StartIndexInclusive, left.Selector.Count, result.Vector.Array);
+                    return;
+                }
+
                 for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
                 {
                     if (leftArray[i] < rightValue) result.Add(i - zeroOffset);

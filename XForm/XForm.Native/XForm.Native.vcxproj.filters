@@ -30,12 +30,21 @@
     <ClInclude Include="BitVectorN.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Comparer16.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Operator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="BitVectorN.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Comparer16.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

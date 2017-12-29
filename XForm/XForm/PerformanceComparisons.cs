@@ -36,8 +36,8 @@ namespace XForm
         public void Run()
         {
             NativeAccelerator.Enable();
-            DoubleWhere();
-            //WhereIntUnderConstant();
+            //DoubleWhere();
+            WhereIntUnderConstant();
             //WhereIntEqualsInt();
         }
 

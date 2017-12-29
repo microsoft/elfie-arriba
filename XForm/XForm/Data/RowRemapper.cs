@@ -24,6 +24,8 @@ namespace XForm.Transforms
             _cachedRemappings = new Dictionary<ArraySelector, ArraySelector>();
         }
 
+        internal BitVector Vector => _matchVector;
+
         public void ClearAndSize(int length)
         {
             // Ensure the row index array is large enough

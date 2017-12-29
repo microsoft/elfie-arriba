@@ -29,6 +29,8 @@ namespace XForm.Data
             this._bitVector = new ulong[((length + 63) >> 6)];
         }
 
+        internal ulong[] Array => _bitVector;
+
         public bool this[int index]
         {
             get { return (this._bitVector[index >> 6] & (0x1UL << (index & 63))) != 0; }
@@ -129,7 +131,7 @@ namespace XForm.Data
             // Clear all fully empty vector parts
             if (lastIndex < this._bitVector.Length)
             {
-                Array.Clear(this._bitVector, lastIndex, this._bitVector.Length - lastIndex);
+                System.Array.Clear(this._bitVector, lastIndex, this._bitVector.Length - lastIndex);
             }
             
             return this;
