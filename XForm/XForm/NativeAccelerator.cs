@@ -40,6 +40,7 @@ namespace XForm
             BitVector.s_nativePage = GetMethod<BitVector.PageSignature>("XForm.Native.BitVectorN", "Page");
 
             UshortComparer.s_WhereNative = GetMethod<ComparerExtensions.Where<ushort>>("XForm.Native.Comparer", "Where");
+            ByteComparer.s_WhereNative = GetMethod<ComparerExtensions.Where<byte>>("XForm.Native.Comparer", "Where");
         }
     }
 }

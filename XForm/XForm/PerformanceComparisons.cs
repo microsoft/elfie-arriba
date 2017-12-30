@@ -1,13 +1,10 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.CodeAnalysis.Elfie.Serialization;
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using XForm.Data;
 using XForm.Extensions;
 using XForm.Test;
@@ -16,6 +13,8 @@ namespace XForm
 {
     public class PerformanceComparisons
     {
+        private const int DefaultMeasureMilliseconds = 2500;
+
         private int _rowCount;
         private ushort[] _values;
         private ushort[] _thresholds;
@@ -41,14 +40,15 @@ namespace XForm
         {
             NativeAccelerator.Enable();
             //DoubleWhere();
-            WhereIntUnderConstant();
-            //WhereIntEqualsInt();
+            WhereUShortUnderConstant();
+            WhereUShortEqualsUshort();
             //TsvSplit();
+            ByteEqualsConstant();
         }
 
-        public void WhereIntUnderConstant()
+        public void WhereUShortUnderConstant()
         {
-            using (Benchmarker b = new Benchmarker($"int[{_rowCount:n0}] | where [Value] <= 50 | count", 1000))
+            using (Benchmarker b = new Benchmarker($"ushort[{_rowCount:n0}] | where [Value] <= 50 | count", DefaultMeasureMilliseconds))
             {
                 b.Measure("For Count", _values.Length, () =>
                 {
@@ -77,9 +77,9 @@ namespace XForm
             }
         }
 
-        public void WhereIntEqualsInt()
+        public void WhereUShortEqualsUshort()
         {
-            using (Benchmarker b = new Benchmarker($"int[{_rowCount:n0}] | where [Value] = [Threshold] | count"))
+            using (Benchmarker b = new Benchmarker($"ushort[{_rowCount:n0}] | where [Value] = [Threshold] | count", DefaultMeasureMilliseconds))
             {
                 b.Measure("For Count", _values.Length, () =>
                 {
@@ -106,7 +106,7 @@ namespace XForm
 
         public void DoubleWhere()
         {
-            using (Benchmarker b = new Benchmarker($"int[{_rowCount:n0}] | where [Value] < 50 | where [Value] = 25 | count", 3000))
+            using (Benchmarker b = new Benchmarker($"ushort[{_rowCount:n0}] | where [Value] < 50 | where [Value] = 25 | count", DefaultMeasureMilliseconds))
             {
                 b.Measure("For Count", _values.Length, () =>
                 {
@@ -134,6 +134,36 @@ namespace XForm
             }
         }
 
+        public void ByteEqualsConstant()
+        {
+            byte[] bytes = new byte[1000 * 1000];
+            Random r = new Random(8);
+            r.NextBytes(bytes);
+
+            using (Benchmarker b = new Benchmarker($"byte[{bytes.Length:n0}] | where [Value] < 16 | count", DefaultMeasureMilliseconds))
+            {
+                b.Measure("For Count", bytes.Length, () =>
+                {
+                    int count = 0;
+                    for (int i = 0; i < bytes.Length; ++i)
+                    {
+                        if (bytes[i] < 16) count++;
+                    }
+                    return count;
+                });
+
+                b.Measure("XForm Count", bytes.Length, () =>
+                {
+                    return (int)XFormTable.FromArrays(bytes.Length)
+                    .WithColumn("Value", bytes)
+                    .Query("where [Value] < 16", _context)
+                    .Count();
+                });
+
+                b.AssertResultsEqual();
+            }
+        }
+
         public void TsvSplit()
         {
             Stream tsvStream = new MemoryStream();
@@ -152,7 +182,7 @@ namespace XForm
             BitVector allCells = new BitVector(allContent.Length);
             BitVector allRows = new BitVector(allContent.Length);
 
-            using (Benchmarker b = new Benchmarker($"Tsv Parse [{rowCount:n0}] | count", 2000))
+            using (Benchmarker b = new Benchmarker($"Tsv Parse [{rowCount:n0}] | count", DefaultMeasureMilliseconds))
             {
                 b.Measure("Read only", (int)tsvStream.Length, () =>
                 {

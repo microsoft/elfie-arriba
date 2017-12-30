@@ -8,6 +8,10 @@ namespace XForm
 		public ref class Comparer
 		{
 		public:
+			// AVX2 accelerated where comparing an array of bytes to a constant value
+			static void Where(array<Byte>^ left, Int32 index, Int32 length, Byte compareOperator, Byte right, Byte booleanOperator, array<UInt64>^ vector, Int32 vectorIndex);
+
+			// AVX2 accelerated where comparing an array of ushort (two bytes) to a constant value
 			static void Where(array<UInt16>^ left, Int32 index, Int32 length, Byte compareOperator, UInt16 right, Byte booleanOperator, array<UInt64>^ vector, Int32 vectorIndex);
 
 			template<typename T>

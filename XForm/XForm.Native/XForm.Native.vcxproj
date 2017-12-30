@@ -97,6 +97,7 @@
   <ItemGroup>
     <ClCompile Include="BitVectorN.cpp" />
     <ClCompile Include="Comparer16.cpp" />
+    <ClCompile Include="Comparer8.cpp" />
     <ClCompile Include="ComparerSingle.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
