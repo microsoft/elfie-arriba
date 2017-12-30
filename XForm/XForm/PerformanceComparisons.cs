@@ -1,11 +1,13 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.CodeAnalysis.Elfie.Serialization;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
-
+using System.Threading.Tasks;
 using XForm.Data;
 using XForm.Extensions;
 using XForm.Test;
@@ -37,7 +39,7 @@ namespace XForm
 
         public void Run()
         {
-            //NativeAccelerator.Enable();
+            NativeAccelerator.Enable();
             //DoubleWhere();
             //WhereIntUnderConstant();
             //WhereIntEqualsInt();
@@ -46,7 +48,7 @@ namespace XForm
 
         public void WhereIntUnderConstant()
         {
-            using (Benchmarker b = new Benchmarker($"int[{_rowCount:n0}] | where [Value] < 50 | count", 3000))
+            using (Benchmarker b = new Benchmarker($"int[{_rowCount:n0}] | where [Value] < 50 | count", 1000))
             {
                 b.Measure("For Count", _values.Length, () =>
                 {
@@ -135,13 +137,35 @@ namespace XForm
         public void TsvSplit()
         {
             Stream tsvStream = new MemoryStream();
+            //Stream tsvStream = new FileStream("Sample.tsv", FileMode.Create);
             int rowCount = 1000 * 1000;
             WriteSampleTsv(tsvStream, 5, 1000 * 1000);
 
-            // Read once first (try to get cached)
+            byte[] content = new byte[64 * 1024];
+            BitVector cells = new BitVector(content.Length);
+            BitVector rows = new BitVector(content.Length);
+            int[] rowEnds = new int[1024];
 
-            using (Benchmarker b = new Benchmarker($"Tsv Parse [{rowCount:n0}] | sum(Zip)", 3000))
+            byte[] allContent = new byte[tsvStream.Length];
+            tsvStream.Seek(0, SeekOrigin.Begin);
+            tsvStream.Read(allContent, 0, allContent.Length);
+            BitVector allCells = new BitVector(allContent.Length);
+            BitVector allRows = new BitVector(allContent.Length);
+
+            using (Benchmarker b = new Benchmarker($"Tsv Parse [{rowCount:n0}] | count", 2000))
             {
+                b.Measure("Read only", (int)tsvStream.Length, () =>
+                {
+                    tsvStream.Seek(0, SeekOrigin.Begin);
+                    while (true)
+                    {
+                        int lengthRead = tsvStream.Read(content, 0, content.Length);
+                        if (lengthRead == 0) break;
+                    }
+
+                    return rowCount;
+                });
+
                 b.Measure("ReadLine | Split", (int)tsvStream.Length, () =>
                 {
                     tsvStream.Seek(0, SeekOrigin.Begin);
@@ -154,14 +178,14 @@ namespace XForm
                         while (!reader.EndOfStream)
                         {
                             string line = reader.ReadLine();
-                            string[] cells = line.Split('\t');
+                            string[] cellSet = line.Split('\t');
                             count++;
                         }
                     }
                     return count;
                 });
 
-                b.Measure("Elfie TsvReader ", (int)tsvStream.Length, () =>
+                b.Measure("Elfie TsvReader", (int)tsvStream.Length, () =>
                 {
                     tsvStream.Seek(0, SeekOrigin.Begin);
                     int count = 0;
@@ -172,7 +196,33 @@ namespace XForm
                     return count;
                 });
 
-                b.AssertResultsEqual();
+
+                Func<byte[], int, int, ulong[], ulong[], int> splitTsvN = NativeAccelerator.GetMethod<Func<byte[], int, int, ulong[], ulong[], int>>("XForm.Native.String8N", "SplitTsv");
+                b.Measure("XForm Native Split", (int)tsvStream.Length, () =>
+                {
+                    tsvStream.Seek(0, SeekOrigin.Begin);
+
+                    int count = -1;
+                    while (true)
+                    {
+                        int lengthRead = tsvStream.Read(content, 0, content.Length);
+                        if (lengthRead == 0) break;
+                        if (lengthRead < content.Length) Array.Clear(content, lengthRead, content.Length - lengthRead);
+
+                        int lineCount = splitTsvN(content, 0, lengthRead, cells.Array, rows.Array);
+                        count += lineCount;
+
+                        int fromRow = 0;
+                        int countCopy = cells.Page(rowEnds, ref fromRow);
+                    }
+
+                    return count;
+                });
+
+                b.MeasureParallel("XForm Native Split Parallel", (int)tsvStream.Length, (index, length) =>
+                {
+                    return splitTsvN(allContent, index, length, allCells.Array, allRows.Array) - 1;
+                });
             }
         }
 
