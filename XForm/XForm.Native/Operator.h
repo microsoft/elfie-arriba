@@ -1,9 +1,11 @@
 #pragma once
 
+// WARNING: Values must stay in sync with XForm.Query.Operator
+
 public enum CompareOperatorN : char
 {
-	Equals = 0,
-	NotEquals = 1,
+	Equal = 0,
+	NotEqual = 1,
 	LessThan = 2,
 	LessThanOrEqual = 3,
 	GreaterThan = 4,

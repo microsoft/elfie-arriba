@@ -149,7 +149,6 @@
     <Compile Include="Query\QuerySuggester.cs" />
     <Compile Include="Test\Benchmarker.cs" />
     <Compile Include="Types\Comparers\ComparableComparer.cs" />
-    <Compile Include="Types\Comparers\ComparerGenerator.cs" />
     <Compile Include="Types\Comparers\DoubleComparer.cs" />
     <Compile Include="Types\Comparers\FloatComparer.cs" />
     <Compile Include="Types\Comparers\LongComparer.cs" />

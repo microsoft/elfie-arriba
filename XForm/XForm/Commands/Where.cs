@@ -61,8 +61,8 @@ namespace XForm.Commands
             // Null comparison is generic
             if ((right is Constant && ((Constant)right).IsNull) || (left is Constant && ((Constant)left).IsNull))
             {
-                if (op == CompareOperator.Equals) _comparer = WhereIsNull;
-                else if (op == CompareOperator.NotEquals) _comparer = WhereIsNotNull;
+                if (op == CompareOperator.Equal) _comparer = WhereIsNull;
+                else if (op == CompareOperator.NotEqual) _comparer = WhereIsNotNull;
                 else throw new ArgumentException($"Only equals and not equals operators are supported against null.");
             }
             else

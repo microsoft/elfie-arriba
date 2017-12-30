@@ -41,9 +41,9 @@ namespace XForm
         {
             NativeAccelerator.Enable();
             //DoubleWhere();
-            //WhereIntUnderConstant();
+            WhereIntUnderConstant();
             //WhereIntEqualsInt();
-            TsvSplit();
+            //TsvSplit();
         }
 
         public void WhereIntUnderConstant()

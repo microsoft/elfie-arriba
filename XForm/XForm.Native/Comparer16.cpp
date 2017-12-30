@@ -34,10 +34,10 @@ static void WhereSingle(T* set, int length, T value, unsigned __int64* matchVect
 			case CompareOperatorN::LessThanOrEqual:
 				if (set[i] <= value) result |= (0x1ULL << (i & 63));
 				break;
-			case CompareOperatorN::Equals:
+			case CompareOperatorN::Equal:
 				if (set[i] == value) result |= (0x1ULL << (i & 63));
 				break;
-			case CompareOperatorN::NotEquals:
+			case CompareOperatorN::NotEqual:
 				if (set[i] != value) result |= (0x1ULL << (i & 63));
 				break;
 			}
@@ -112,8 +112,8 @@ static void WhereN(unsigned __int16* set, int length, unsigned __int16 value, un
 			matchMask3 = _mm256_cmpgt_epi16(blockOfValue, block3);
 			matchMask4 = _mm256_cmpgt_epi16(blockOfValue, block4);
 			break;
-		case CompareOperatorN::Equals:
-		case CompareOperatorN::NotEquals:
+		case CompareOperatorN::Equal:
+		case CompareOperatorN::NotEqual:
 			matchMask1 = _mm256_cmpeq_epi16(block1, blockOfValue);
 			matchMask2 = _mm256_cmpeq_epi16(block2, blockOfValue);
 			matchMask3 = _mm256_cmpeq_epi16(block3, blockOfValue);
@@ -135,7 +135,7 @@ static void WhereN(unsigned __int16* set, int length, unsigned __int16 value, un
 		result = ((unsigned __int64)matchBits4_3) << 32 | matchBits2_1;
 
 		// Negate the result for operators we ran the opposites of
-		if (cOp == CompareOperatorN::LessThanOrEqual || cOp == CompareOperatorN::GreaterThanOrEqual || cOp == CompareOperatorN::NotEquals)
+		if (cOp == CompareOperatorN::LessThanOrEqual || cOp == CompareOperatorN::GreaterThanOrEqual || cOp == CompareOperatorN::NotEqual)
 		{
 			result = ~result;
 		}
@@ -162,11 +162,39 @@ namespace XForm
 {
 	namespace Native
 	{
-		void Comparer16::WhereLessThan(array<UInt16>^ left, UInt16 right, Int32 index, Int32 length, array<UInt64>^ vector)
+		void Comparer16::Where(array<UInt16>^ left, Int32 index, Int32 length, Byte compareOperator, UInt16 right, Byte booleanOperator, array<UInt64>^ vector, Int32 vectorIndex)
 		{
+			if (index < 0 || length < 0 || vectorIndex < 0) throw gcnew IndexOutOfRangeException();
+			if (index + length > left->Length) throw gcnew IndexOutOfRangeException();
+			if (vectorIndex + length > (vector->Length * 64)) throw gcnew IndexOutOfRangeException();
+			if ((vectorIndex & 63) != 0) throw gcnew ArgumentException("Offset Where must run on a multiple of 64 offset.");
+
 			pin_ptr<UInt16> pLeft = &left[index];
-			pin_ptr<UInt64> pVector = &vector[0];
-			WhereN<CompareOperatorN::LessThan, BooleanOperatorN::Or, SigningN::Unsigned>(pLeft, length, right, pVector);
+			pin_ptr<UInt64> pVector = &vector[vectorIndex >> 6];
+
+			switch ((CompareOperatorN)compareOperator)
+			{
+			case CompareOperatorN::Equal:
+				WhereN<CompareOperatorN::Equal, BooleanOperatorN::Or, SigningN::Unsigned>(pLeft, length, right, pVector);
+				break;
+			case CompareOperatorN::NotEqual:
+				WhereN<CompareOperatorN::NotEqual, BooleanOperatorN::Or, SigningN::Unsigned>(pLeft, length, right, pVector);
+				break;
+			case CompareOperatorN::LessThan:
+				WhereN<CompareOperatorN::LessThan, BooleanOperatorN::Or, SigningN::Unsigned>(pLeft, length, right, pVector);
+				break;
+			case CompareOperatorN::LessThanOrEqual:
+				WhereN<CompareOperatorN::LessThanOrEqual, BooleanOperatorN::Or, SigningN::Unsigned>(pLeft, length, right, pVector);
+				break;
+			case CompareOperatorN::GreaterThan:
+				WhereN<CompareOperatorN::GreaterThan, BooleanOperatorN::Or, SigningN::Unsigned>(pLeft, length, right, pVector);
+				break;
+			case CompareOperatorN::GreaterThanOrEqual:
+				WhereN<CompareOperatorN::GreaterThanOrEqual, BooleanOperatorN::Or, SigningN::Unsigned>(pLeft, length, right, pVector);
+				break;
+			default:
+				throw gcnew ArgumentException("compareOperator");
+			}
 		}
 	}
 }

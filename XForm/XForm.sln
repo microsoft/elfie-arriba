@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XForm.Test", "XForm.Test\XF
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "XForm.Native", "XForm.Native\XForm.Native.vcxproj", "{2940106F-71AA-48CA-8257-7FCEABAB098F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XForm.Generator", "XForm.Generator\XForm.Generator.csproj", "{DA405DCD-14B4-44E4-B84D-0A189A19D4AD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -83,6 +85,18 @@ Global
 		{2940106F-71AA-48CA-8257-7FCEABAB098F}.Release|x64.Build.0 = Release|x64
 		{2940106F-71AA-48CA-8257-7FCEABAB098F}.Release|x86.ActiveCfg = Release|Win32
 		{2940106F-71AA-48CA-8257-7FCEABAB098F}.Release|x86.Build.0 = Release|Win32
+		{DA405DCD-14B4-44E4-B84D-0A189A19D4AD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DA405DCD-14B4-44E4-B84D-0A189A19D4AD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DA405DCD-14B4-44E4-B84D-0A189A19D4AD}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{DA405DCD-14B4-44E4-B84D-0A189A19D4AD}.Debug|x64.Build.0 = Debug|Any CPU
+		{DA405DCD-14B4-44E4-B84D-0A189A19D4AD}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{DA405DCD-14B4-44E4-B84D-0A189A19D4AD}.Debug|x86.Build.0 = Debug|Any CPU
+		{DA405DCD-14B4-44E4-B84D-0A189A19D4AD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DA405DCD-14B4-44E4-B84D-0A189A19D4AD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DA405DCD-14B4-44E4-B84D-0A189A19D4AD}.Release|x64.ActiveCfg = Release|Any CPU
+		{DA405DCD-14B4-44E4-B84D-0A189A19D4AD}.Release|x64.Build.0 = Release|Any CPU
+		{DA405DCD-14B4-44E4-B84D-0A189A19D4AD}.Release|x86.ActiveCfg = Release|Any CPU
+		{DA405DCD-14B4-44E4-B84D-0A189A19D4AD}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

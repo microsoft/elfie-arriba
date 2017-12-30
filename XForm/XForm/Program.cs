@@ -67,9 +67,6 @@ namespace XForm
                     case "perf":
                         new PerformanceComparisons().Run();
                         return 0;
-                    case "comparergenerate":
-                        Types.Comparers.ComparerGenerator.GenerateAll();
-                        return 0;
                     default:
                         throw new UsageException($"Unknown XForm mode '{command}'.");
                 }

@@ -3,6 +3,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using XForm.Data;
+using XForm.Query;
 using XForm.Transforms;
 
 namespace XForm.Types.Comparers
@@ -13,7 +14,9 @@ namespace XForm.Types.Comparers
     /// </summary>
     internal class FloatComparer : IDataBatchComparer
     {
-		public void WhereEquals(DataBatch left, DataBatch right, RowRemapper result)
+        internal static ComparerExtensions.Where<float> s_WhereNative = null;
+
+		public void WhereEqual(DataBatch left, DataBatch right, RowRemapper result)
         {
             result.ClearAndSize(left.Count);
             float[] leftArray = (float[])left.Array;
@@ -55,6 +58,13 @@ namespace XForm.Types.Comparers
                 // Fastest Path: Contiguous Array to constant. ~15ms for 16M
                 int zeroOffset = left.Selector.StartIndexInclusive;
                 float rightValue = rightArray[0];
+
+                if (s_WhereNative != null)
+                {
+                    s_WhereNative(leftArray, left.Selector.StartIndexInclusive, left.Selector.Count, (byte)CompareOperator.Equal, rightValue, (byte)BooleanOperator.Or, result.Vector.Array, 0);
+                    return;
+                }
+
                 for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
                 {
                     if (leftArray[i] == rightValue) result.Add(i - zeroOffset);
@@ -70,7 +80,7 @@ namespace XForm.Types.Comparers
             }
         }
 
-		public void WhereNotEquals(DataBatch left, DataBatch right, RowRemapper result)
+		public void WhereNotEqual(DataBatch left, DataBatch right, RowRemapper result)
         {
             result.ClearAndSize(left.Count);
             float[] leftArray = (float[])left.Array;
@@ -112,6 +122,13 @@ namespace XForm.Types.Comparers
                 // Fastest Path: Contiguous Array to constant. ~15ms for 16M
                 int zeroOffset = left.Selector.StartIndexInclusive;
                 float rightValue = rightArray[0];
+
+                if (s_WhereNative != null)
+                {
+                    s_WhereNative(leftArray, left.Selector.StartIndexInclusive, left.Selector.Count, (byte)CompareOperator.NotEqual, rightValue, (byte)BooleanOperator.Or, result.Vector.Array, 0);
+                    return;
+                }
+
                 for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
                 {
                     if (leftArray[i] != rightValue) result.Add(i - zeroOffset);
@@ -169,6 +186,13 @@ namespace XForm.Types.Comparers
                 // Fastest Path: Contiguous Array to constant. ~15ms for 16M
                 int zeroOffset = left.Selector.StartIndexInclusive;
                 float rightValue = rightArray[0];
+
+                if (s_WhereNative != null)
+                {
+                    s_WhereNative(leftArray, left.Selector.StartIndexInclusive, left.Selector.Count, (byte)CompareOperator.LessThan, rightValue, (byte)BooleanOperator.Or, result.Vector.Array, 0);
+                    return;
+                }
+
                 for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
                 {
                     if (leftArray[i] < rightValue) result.Add(i - zeroOffset);
@@ -184,7 +208,7 @@ namespace XForm.Types.Comparers
             }
         }
 
-		public void WhereLessThanOrEquals(DataBatch left, DataBatch right, RowRemapper result)
+		public void WhereLessThanOrEqual(DataBatch left, DataBatch right, RowRemapper result)
         {
             result.ClearAndSize(left.Count);
             float[] leftArray = (float[])left.Array;
@@ -226,6 +250,13 @@ namespace XForm.Types.Comparers
                 // Fastest Path: Contiguous Array to constant. ~15ms for 16M
                 int zeroOffset = left.Selector.StartIndexInclusive;
                 float rightValue = rightArray[0];
+
+                if (s_WhereNative != null)
+                {
+                    s_WhereNative(leftArray, left.Selector.StartIndexInclusive, left.Selector.Count, (byte)CompareOperator.LessThanOrEqual, rightValue, (byte)BooleanOperator.Or, result.Vector.Array, 0);
+                    return;
+                }
+
                 for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
                 {
                     if (leftArray[i] <= rightValue) result.Add(i - zeroOffset);
@@ -283,6 +314,13 @@ namespace XForm.Types.Comparers
                 // Fastest Path: Contiguous Array to constant. ~15ms for 16M
                 int zeroOffset = left.Selector.StartIndexInclusive;
                 float rightValue = rightArray[0];
+
+                if (s_WhereNative != null)
+                {
+                    s_WhereNative(leftArray, left.Selector.StartIndexInclusive, left.Selector.Count, (byte)CompareOperator.GreaterThan, rightValue, (byte)BooleanOperator.Or, result.Vector.Array, 0);
+                    return;
+                }
+
                 for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
                 {
                     if (leftArray[i] > rightValue) result.Add(i - zeroOffset);
@@ -298,7 +336,7 @@ namespace XForm.Types.Comparers
             }
         }
 
-		public void WhereGreaterThanOrEquals(DataBatch left, DataBatch right, RowRemapper result)
+		public void WhereGreaterThanOrEqual(DataBatch left, DataBatch right, RowRemapper result)
         {
             result.ClearAndSize(left.Count);
             float[] leftArray = (float[])left.Array;
@@ -340,6 +378,13 @@ namespace XForm.Types.Comparers
                 // Fastest Path: Contiguous Array to constant. ~15ms for 16M
                 int zeroOffset = left.Selector.StartIndexInclusive;
                 float rightValue = rightArray[0];
+
+                if (s_WhereNative != null)
+                {
+                    s_WhereNative(leftArray, left.Selector.StartIndexInclusive, left.Selector.Count, (byte)CompareOperator.GreaterThanOrEqual, rightValue, (byte)BooleanOperator.Or, result.Vector.Array, 0);
+                    return;
+                }
+
                 for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
                 {
                     if (leftArray[i] >= rightValue) result.Add(i - zeroOffset);

@@ -6,7 +6,8 @@
 #pragma unmanaged
 static int SplitTsvN(unsigned __int8* content, int contentIndex, int contentEnd, unsigned __int64* cellVector, unsigned __int64* rowVector)
 {
-	// TODO: Want a design allowing seek to a column in each row. Ideally the rows would be an array pointing to the cell array index of the row end.
+	// TODO: Fill only one vector (cells) and return rowCount.
+	// Properly handle uneven last < 64 characters.
 
 	int rowCount = 0;
 

@@ -279,7 +279,7 @@ namespace XForm.Query
 
         public CompareOperator NextCompareOperator()
         {
-            CompareOperator cOp = CompareOperator.Equals;
+            CompareOperator cOp = CompareOperator.Equal;
             ParseNextOrThrow(() => _scanner.Current.Value.TryParseCompareOperator(out cOp), "compareOperator", TokenType.Value, OperatorExtensions.ValidCompareOperators);
             return cOp;
         }

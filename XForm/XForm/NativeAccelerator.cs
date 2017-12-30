@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using XForm.Data;
+using XForm.Types;
 using XForm.Types.Comparers;
 
 namespace XForm
@@ -38,7 +39,7 @@ namespace XForm
             BitVector.s_nativeCount = GetMethod<Func<ulong[], int>>("XForm.Native.BitVectorN", "Count");
             BitVector.s_nativePage = GetMethod<BitVector.PageSignature>("XForm.Native.BitVectorN", "Page");
 
-            UshortComparer.s_WhereLessThanNative = GetMethod<Action<ushort[], ushort, int, int, ulong[]>>("XForm.Native.Comparer16", "WhereLessThan");
+            UshortComparer.s_WhereNative = GetMethod<ComparerExtensions.Where<ushort>>("XForm.Native.Comparer16", "Where");
         }
     }
 }

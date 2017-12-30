@@ -5,10 +5,12 @@ using System.Collections.Generic;
 
 namespace XForm.Query
 {
+    // WARNING: Values must stay in sync with XFormNative.Operator
+
     public enum CompareOperator : byte
     {
-        Equals = 0,
-        NotEquals = 1,
+        Equal = 0,
+        NotEqual = 1,
         LessThan = 2,
         LessThanOrEqual = 3,
         GreaterThan = 4,
@@ -17,8 +19,8 @@ namespace XForm.Query
 
     public enum BooleanOperator : byte
     {
-        And = 1,
-        Or = 2
+        And = 0,
+        Or = 1
     }
 
     public static class OperatorExtensions
@@ -43,14 +45,14 @@ namespace XForm.Query
                     break;
                 case "=":
                 case "==":
-                    result = CompareOperator.Equals;
+                    result = CompareOperator.Equal;
                     break;
                 case "!=":
                 case "<>":
-                    result = CompareOperator.NotEquals;
+                    result = CompareOperator.NotEqual;
                     break;
                 default:
-                    result = CompareOperator.Equals;
+                    result = CompareOperator.Equal;
                     return false;
             }
 
@@ -61,11 +63,11 @@ namespace XForm.Query
         {
             switch (op)
             {
-                case CompareOperator.Equals:
-                    inverse = CompareOperator.NotEquals;
+                case CompareOperator.Equal:
+                    inverse = CompareOperator.NotEqual;
                     return true;
-                case CompareOperator.NotEquals:
-                    inverse = CompareOperator.Equals;
+                case CompareOperator.NotEqual:
+                    inverse = CompareOperator.Equal;
                     return true;
                 case CompareOperator.LessThan:
                     inverse = CompareOperator.GreaterThanOrEqual;
