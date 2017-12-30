@@ -30,13 +30,13 @@
     <ClInclude Include="BitVectorN.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Comparer16.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Operator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="String8N.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Comparer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -51,6 +51,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="String8N.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ComparerSingle.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

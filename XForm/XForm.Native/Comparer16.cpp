@@ -2,58 +2,10 @@
 #include <intrin.h>
 #include <nmmintrin.h>
 #include "Operator.h"
-#include "Comparer16.h"
+#include "ComparerSingle.cpp"
+#include "Comparer.h"
 
 #pragma unmanaged
-
-template<CompareOperatorN cOp, BooleanOperatorN bOp, typename T>
-static void WhereSingle(T* set, int length, T value, unsigned __int64* matchVector)
-{
-	int vectorLength = (length + 63) >> 6;
-	for (int vectorIndex = 0; vectorIndex < vectorLength; ++vectorIndex)
-	{
-		unsigned __int64 result = 0;
-
-		int i = vectorIndex << 6;
-		int end = (vectorIndex + 1) << 6;
-		if (length < end) end = length;
-
-		for (; i < end; ++i)
-		{
-			switch (cOp)
-			{
-			case CompareOperatorN::GreaterThan:
-				if (set[i] > value) result |= (0x1ULL << (i & 63));
-				break;
-			case CompareOperatorN::GreaterThanOrEqual:
-				if (set[i] >= value) result |= (0x1ULL << (i & 63));
-				break;
-			case CompareOperatorN::LessThan:
-				if (set[i] < value) result |= (0x1ULL << (i & 63));
-				break;
-			case CompareOperatorN::LessThanOrEqual:
-				if (set[i] <= value) result |= (0x1ULL << (i & 63));
-				break;
-			case CompareOperatorN::Equal:
-				if (set[i] == value) result |= (0x1ULL << (i & 63));
-				break;
-			case CompareOperatorN::NotEqual:
-				if (set[i] != value) result |= (0x1ULL << (i & 63));
-				break;
-			}
-		}
-
-		switch (bOp)
-		{
-		case BooleanOperatorN::And:
-			matchVector[vectorIndex] &= result;
-			break;
-		case BooleanOperatorN::Or:
-			matchVector[vectorIndex] |= result;
-			break;
-		}
-	}
-}
 
 template<CompareOperatorN cOp, BooleanOperatorN bOp, SigningN sign>
 static void WhereN(unsigned __int16* set, int length, unsigned __int16 value, unsigned __int64* matchVector)
@@ -153,7 +105,7 @@ static void WhereN(unsigned __int16* set, int length, unsigned __int16 value, un
 	}
 
 	// Match remaining values individually
-	if (length & 63) WhereSingle<cOp, bOp, unsigned __int16>(&set[i], length - i, value, &matchVector[i >> 6]);
+	if (length & 63) WhereSingle<cOp, unsigned __int16>(&set[i], length - i, value, bOp, &matchVector[i >> 6]);
 }
 
 #pragma managed
@@ -162,7 +114,7 @@ namespace XForm
 {
 	namespace Native
 	{
-		void Comparer16::Where(array<UInt16>^ left, Int32 index, Int32 length, Byte compareOperator, UInt16 right, Byte booleanOperator, array<UInt64>^ vector, Int32 vectorIndex)
+		void Comparer::Where(array<UInt16>^ left, Int32 index, Int32 length, Byte cOp, UInt16 right, Byte bOp, array<UInt64>^ vector, Int32 vectorIndex)
 		{
 			if (index < 0 || length < 0 || vectorIndex < 0) throw gcnew IndexOutOfRangeException();
 			if (index + length > left->Length) throw gcnew IndexOutOfRangeException();
@@ -172,7 +124,7 @@ namespace XForm
 			pin_ptr<UInt16> pLeft = &left[index];
 			pin_ptr<UInt64> pVector = &vector[vectorIndex >> 6];
 
-			switch ((CompareOperatorN)compareOperator)
+			switch ((CompareOperatorN)cOp)
 			{
 			case CompareOperatorN::Equal:
 				WhereN<CompareOperatorN::Equal, BooleanOperatorN::Or, SigningN::Unsigned>(pLeft, length, right, pVector);
@@ -193,7 +145,7 @@ namespace XForm
 				WhereN<CompareOperatorN::GreaterThanOrEqual, BooleanOperatorN::Or, SigningN::Unsigned>(pLeft, length, right, pVector);
 				break;
 			default:
-				throw gcnew ArgumentException("compareOperator");
+				throw gcnew ArgumentException("cOp");
 			}
 		}
 	}

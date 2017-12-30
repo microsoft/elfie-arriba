@@ -48,28 +48,28 @@ namespace XForm
 
         public void WhereIntUnderConstant()
         {
-            using (Benchmarker b = new Benchmarker($"int[{_rowCount:n0}] | where [Value] < 50 | count", 1000))
+            using (Benchmarker b = new Benchmarker($"int[{_rowCount:n0}] | where [Value] <= 50 | count", 1000))
             {
                 b.Measure("For Count", _values.Length, () =>
                 {
                     int count = 0;
                     for (int i = 0; i < _values.Length; ++i)
                     {
-                        if (_values[i] < 50) count++;
+                        if (_values[i] <= 50) count++;
                     }
                     return count;
                 });
 
                 b.Measure("Linq Count", _values.Length, () =>
                 {
-                    return _values.Where((i) => i < 50).Count();
+                    return _values.Where((i) => i <= 50).Count();
                 });
 
                 b.Measure("XForm Count", _values.Length, () =>
                 {
                     return (int)XFormTable.FromArrays(_values.Length)
                     .WithColumn("Value", _values)
-                    .Query("where [Value] < 50", _context)
+                    .Query("where [Value] <= 50", _context)
                     .Count();
                 });
 

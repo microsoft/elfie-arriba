@@ -87,7 +87,7 @@
   <ItemGroup>
     <ClInclude Include="Operator.h" />
     <ClInclude Include="BitVectorN.h" />
-    <ClInclude Include="Comparer16.h" />
+    <ClInclude Include="Comparer.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="String8N.h" />
@@ -97,6 +97,7 @@
   <ItemGroup>
     <ClCompile Include="BitVectorN.cpp" />
     <ClCompile Include="Comparer16.cpp" />
+    <ClCompile Include="ComparerSingle.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>

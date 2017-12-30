@@ -39,7 +39,7 @@ namespace XForm
             BitVector.s_nativeCount = GetMethod<Func<ulong[], int>>("XForm.Native.BitVectorN", "Count");
             BitVector.s_nativePage = GetMethod<BitVector.PageSignature>("XForm.Native.BitVectorN", "Page");
 
-            UshortComparer.s_WhereNative = GetMethod<ComparerExtensions.Where<ushort>>("XForm.Native.Comparer16", "Where");
+            UshortComparer.s_WhereNative = GetMethod<ComparerExtensions.Where<ushort>>("XForm.Native.Comparer", "Where");
         }
     }
 }
