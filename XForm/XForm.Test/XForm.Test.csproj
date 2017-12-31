@@ -93,6 +93,7 @@
     <Compile Include="Extensions\StringExtensionsTests.cs" />
     <Compile Include="IO\StreamProviderTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Query\ComparerTests.cs" />
     <Compile Include="Query\DataBatchEnumeratorContractValidator.cs" />
     <Compile Include="Query\DataBatchEnumeratorTests.cs" />
     <Compile Include="Query\XqlParsingTests.cs" />
@@ -136,6 +137,10 @@
     <ProjectReference Include="..\..\Elfie\Elfie\Elfie.csproj">
       <Project>{D45F339F-847A-4F3A-88A0-AFB883E9920E}</Project>
       <Name>Elfie</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\XForm.Native\XForm.Native.vcxproj">
+      <Project>{2940106f-71aa-48ca-8257-7fceabab098f}</Project>
+      <Name>XForm.Native</Name>
     </ProjectReference>
     <ProjectReference Include="..\XForm\XForm.csproj">
       <Project>{29eedfbf-d79c-4113-94f5-f3eba9ba7c47}</Project>
