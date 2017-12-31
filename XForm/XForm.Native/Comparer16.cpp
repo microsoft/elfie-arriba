@@ -272,7 +272,7 @@ namespace XForm
 			pin_ptr<UInt16> pLeft = &left[index];
 			pin_ptr<UInt64> pVector = &vector[vectorIndex >> 6];
 
-			WhereN((CompareOperatorN)cOp, BooleanOperatorN::Or, SigningN::Unsigned, pLeft, length, right, pVector);
+			WhereN((CompareOperatorN)cOp, (BooleanOperatorN)bOp, SigningN::Unsigned, pLeft, length, right, pVector);
 		}
 
 		void Comparer::Where(array<UInt16>^ left, Int32 leftIndex, Byte cOp, array<UInt16>^ right, Int32 rightIndex, Int32 length, Byte bOp, array<UInt64>^ vector, Int32 vectorIndex)
@@ -287,7 +287,7 @@ namespace XForm
 			pin_ptr<UInt16> pRight = &right[rightIndex];
 			pin_ptr<UInt64> pVector = &vector[vectorIndex >> 6];
 
-			WhereN((CompareOperatorN)cOp, BooleanOperatorN::Or, SigningN::Unsigned, pLeft, length, pRight, pVector);
+			WhereN((CompareOperatorN)cOp, (BooleanOperatorN)bOp, SigningN::Unsigned, pLeft, length, pRight, pVector);
 		}
 
 		void Comparer::Where(array<Int16>^ left, Int32 index, Int32 length, Byte cOp, Int16 right, Byte bOp, array<UInt64>^ vector, Int32 vectorIndex)
@@ -300,7 +300,22 @@ namespace XForm
 			pin_ptr<Int16> pLeft = &left[index];
 			pin_ptr<UInt64> pVector = &vector[vectorIndex >> 6];
 
-			WhereN((CompareOperatorN)cOp, BooleanOperatorN::Or, SigningN::Signed, (unsigned __int16*)pLeft, length, (unsigned __int16)right, pVector);
+			WhereN((CompareOperatorN)cOp, (BooleanOperatorN)bOp, SigningN::Signed, (unsigned __int16*)pLeft, length, (unsigned __int16)right, pVector);
+		}
+
+		void Comparer::Where(array<Int16>^ left, Int32 leftIndex, Byte cOp, array<Int16>^ right, Int32 rightIndex, Int32 length, Byte bOp, array<UInt64>^ vector, Int32 vectorIndex)
+		{
+			if (leftIndex < 0 || rightIndex < 0 || length < 0 || vectorIndex < 0) throw gcnew IndexOutOfRangeException();
+			if (leftIndex + length > left->Length) throw gcnew IndexOutOfRangeException("left");
+			if (rightIndex + length > right->Length) throw gcnew IndexOutOfRangeException("right");
+			if (vectorIndex + length >(vector->Length * 64)) throw gcnew IndexOutOfRangeException("vector");
+			if ((vectorIndex & 63) != 0) throw gcnew ArgumentException("Offset Where must run on a multiple of 64 offset.");
+
+			pin_ptr<Int16> pLeft = &left[leftIndex];
+			pin_ptr<Int16> pRight = &right[rightIndex];
+			pin_ptr<UInt64> pVector = &vector[vectorIndex >> 6];
+
+			WhereN((CompareOperatorN)cOp, (BooleanOperatorN)bOp, SigningN::Signed, (unsigned __int16*)pLeft, length, (unsigned __int16*)pRight, pVector);
 		}
 	}
 }
