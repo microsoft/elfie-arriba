@@ -41,7 +41,7 @@ namespace XForm
             NativeAccelerator.Enable();
             //DoubleWhere();
             WhereUShortUnderConstant();
-            //WhereUShortEqualsUshort();
+            WhereUShortEqualsUshort();
             //TsvSplit();
             //ByteEqualsConstant();
         }

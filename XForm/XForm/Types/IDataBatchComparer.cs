@@ -21,7 +21,8 @@ namespace XForm.Types
 
     public static class ComparerExtensions
     {
-        public delegate void Where<T>(T[] left, int index, int length, byte compareOperator, T right, byte booleanOperator, ulong[] vector, int vectorIndex);
+        public delegate void WhereSingle<T>(T[] left, int index, int length, byte compareOperator, T right, byte booleanOperator, ulong[] vector, int vectorIndex);
+        public delegate void Where<T>(T[] left, int leftIndex, byte compareOperator, T[] right, int rightIndex, int length, byte booleanOperator, ulong[] vector, int vectorIndex);
 
         public static Action<DataBatch, DataBatch, RowRemapper> TryBuild(this IDataBatchComparer comparer, CompareOperator cOp)
         {

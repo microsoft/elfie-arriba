@@ -14,10 +14,17 @@ namespace XForm
 
 			// AVX2 accelerated where comparing an array of ushort (two bytes) to a constant value
 			static void Where(array<UInt16>^ left, Int32 index, Int32 length, Byte compareOperator, UInt16 right, Byte booleanOperator, array<UInt64>^ vector, Int32 vectorIndex);
+			static void Where(array<UInt16>^ left, Int32 leftIindex, Byte compareOperator, array<UInt16>^ right, Int32 rightIndex, Int32 length, Byte booleanOperator, array<UInt64>^ vector, Int32 vectorIndex);
+
 			static void Where(array<Int16>^ left, Int32 index, Int32 length, Byte compareOperator, Int16 right, Byte booleanOperator, array<UInt64>^ vector, Int32 vectorIndex);
 
+			// Compare values to a constant [non-vector]
 			template<typename T>
 			static void WhereSingle(T* set, int length, Byte compareOperator, T value, Byte booleanOperator, unsigned __int64* matchVector);
+
+			// Compare pairs of values [non-vector]
+			template<typename T>
+			static void WhereSingle(T* left, int length, Byte cOp, T* right, Byte bOp, unsigned __int64* matchVector);
 		};
 	}
 }

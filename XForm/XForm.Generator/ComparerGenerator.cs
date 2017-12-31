@@ -22,6 +22,7 @@ namespace XForm.Types.Comparers
     /// </summary>
     internal class LongComparer : IDataBatchComparer
     {
+        internal static ComparerExtensions.WhereSingle<long> s_WhereSingleNative = null;
         internal static ComparerExtensions.Where<long> s_WhereNative = null;
 ";
 
@@ -62,6 +63,12 @@ namespace XForm.Types.Comparers
             else if (!right.Selector.IsSingleValue)
             {
                 // Faster Path: Compare contiguous arrays. ~20ms for 16M
+                if(s_WhereNative != null)
+                {
+                    s_WhereNative(leftArray, left.Selector.StartIndexInclusive, (byte)CompareOperator.Equal, rightArray, right.Selector.StartIndexInclusive, left.Selector.Count, (byte)BooleanOperator.Or, result.Vector.Array, 0);
+                    return;
+                }
+
                 int zeroOffset = left.Selector.StartIndexInclusive;
                 int leftIndexToRightIndex = right.Selector.StartIndexInclusive - left.Selector.StartIndexInclusive;
                 for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
@@ -75,9 +82,9 @@ namespace XForm.Types.Comparers
                 int zeroOffset = left.Selector.StartIndexInclusive;
                 long rightValue = rightArray[0];
 
-                if (s_WhereNative != null)
+                if (s_WhereSingleNative != null)
                 {
-                    s_WhereNative(leftArray, left.Selector.StartIndexInclusive, left.Selector.Count, (byte)CompareOperator.Equal, rightValue, (byte)BooleanOperator.Or, result.Vector.Array, 0);
+                    s_WhereSingleNative(leftArray, left.Selector.StartIndexInclusive, left.Selector.Count, (byte)CompareOperator.Equal, rightValue, (byte)BooleanOperator.Or, result.Vector.Array, 0);
                     return;
                 }
 
@@ -131,7 +138,7 @@ namespace XForm.Types.Comparers
                     typeName = "T";
                     prefix = prefix
                         .Replace("ComparableComparer : IDataBatchComparer", "ComparableComparer<T> : IDataBatchComparer where T : System.IComparable<T>")
-                        .Replace("Where<Comparable>", "Where<T>");
+                        .Replace("<Comparable>", "<T>");
                 }
 
                 writer.Write(prefix);

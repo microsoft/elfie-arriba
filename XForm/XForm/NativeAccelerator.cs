@@ -40,9 +40,14 @@ namespace XForm
             BitVector.s_nativePage = GetMethod<BitVector.PageSignature>("XForm.Native.BitVectorN", "Page");
 
             UshortComparer.s_WhereNative = GetMethod<ComparerExtensions.Where<ushort>>("XForm.Native.Comparer", "Where");
-            ShortComparer.s_WhereNative = GetMethod<ComparerExtensions.Where<short>>("XForm.Native.Comparer", "Where");
-            ByteComparer.s_WhereNative = GetMethod<ComparerExtensions.Where<byte>>("XForm.Native.Comparer", "Where");
-            SbyteComparer.s_WhereNative = GetMethod<ComparerExtensions.Where<sbyte>>("XForm.Native.Comparer", "Where");
+            //ShortComparer.s_WhereNative = GetMethod<ComparerExtensions.Where<short>>("XForm.Native.Comparer", "Where");
+            //ByteComparer.s_WhereNative = GetMethod<ComparerExtensions.Where<byte>>("XForm.Native.Comparer", "Where");
+            //SbyteComparer.s_WhereNative = GetMethod<ComparerExtensions.Where<sbyte>>("XForm.Native.Comparer", "Where");
+
+            UshortComparer.s_WhereSingleNative = GetMethod<ComparerExtensions.WhereSingle<ushort>>("XForm.Native.Comparer", "Where");
+            ShortComparer.s_WhereSingleNative = GetMethod<ComparerExtensions.WhereSingle<short>>("XForm.Native.Comparer", "Where");
+            ByteComparer.s_WhereSingleNative = GetMethod<ComparerExtensions.WhereSingle<byte>>("XForm.Native.Comparer", "Where");
+            SbyteComparer.s_WhereSingleNative = GetMethod<ComparerExtensions.WhereSingle<sbyte>>("XForm.Native.Comparer", "Where");
         }
     }
 }

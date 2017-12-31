@@ -14,6 +14,7 @@ namespace XForm.Types.Comparers
     /// </summary>
     internal class UintComparer : IDataBatchComparer
     {
+        internal static ComparerExtensions.WhereSingle<uint> s_WhereSingleNative = null;
         internal static ComparerExtensions.Where<uint> s_WhereNative = null;
 
 		public void WhereEqual(DataBatch left, DataBatch right, RowRemapper result)
@@ -46,6 +47,12 @@ namespace XForm.Types.Comparers
             else if (!right.Selector.IsSingleValue)
             {
                 // Faster Path: Compare contiguous arrays. ~20ms for 16M
+                if(s_WhereNative != null)
+                {
+                    s_WhereNative(leftArray, left.Selector.StartIndexInclusive, (byte)CompareOperator.Equal, rightArray, right.Selector.StartIndexInclusive, left.Selector.Count, (byte)BooleanOperator.Or, result.Vector.Array, 0);
+                    return;
+                }
+
                 int zeroOffset = left.Selector.StartIndexInclusive;
                 int leftIndexToRightIndex = right.Selector.StartIndexInclusive - left.Selector.StartIndexInclusive;
                 for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
@@ -59,9 +66,9 @@ namespace XForm.Types.Comparers
                 int zeroOffset = left.Selector.StartIndexInclusive;
                 uint rightValue = rightArray[0];
 
-                if (s_WhereNative != null)
+                if (s_WhereSingleNative != null)
                 {
-                    s_WhereNative(leftArray, left.Selector.StartIndexInclusive, left.Selector.Count, (byte)CompareOperator.Equal, rightValue, (byte)BooleanOperator.Or, result.Vector.Array, 0);
+                    s_WhereSingleNative(leftArray, left.Selector.StartIndexInclusive, left.Selector.Count, (byte)CompareOperator.Equal, rightValue, (byte)BooleanOperator.Or, result.Vector.Array, 0);
                     return;
                 }
 
@@ -110,6 +117,12 @@ namespace XForm.Types.Comparers
             else if (!right.Selector.IsSingleValue)
             {
                 // Faster Path: Compare contiguous arrays. ~20ms for 16M
+                if(s_WhereNative != null)
+                {
+                    s_WhereNative(leftArray, left.Selector.StartIndexInclusive, (byte)CompareOperator.NotEqual, rightArray, right.Selector.StartIndexInclusive, left.Selector.Count, (byte)BooleanOperator.Or, result.Vector.Array, 0);
+                    return;
+                }
+
                 int zeroOffset = left.Selector.StartIndexInclusive;
                 int leftIndexToRightIndex = right.Selector.StartIndexInclusive - left.Selector.StartIndexInclusive;
                 for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
@@ -123,9 +136,9 @@ namespace XForm.Types.Comparers
                 int zeroOffset = left.Selector.StartIndexInclusive;
                 uint rightValue = rightArray[0];
 
-                if (s_WhereNative != null)
+                if (s_WhereSingleNative != null)
                 {
-                    s_WhereNative(leftArray, left.Selector.StartIndexInclusive, left.Selector.Count, (byte)CompareOperator.NotEqual, rightValue, (byte)BooleanOperator.Or, result.Vector.Array, 0);
+                    s_WhereSingleNative(leftArray, left.Selector.StartIndexInclusive, left.Selector.Count, (byte)CompareOperator.NotEqual, rightValue, (byte)BooleanOperator.Or, result.Vector.Array, 0);
                     return;
                 }
 
@@ -174,6 +187,12 @@ namespace XForm.Types.Comparers
             else if (!right.Selector.IsSingleValue)
             {
                 // Faster Path: Compare contiguous arrays. ~20ms for 16M
+                if(s_WhereNative != null)
+                {
+                    s_WhereNative(leftArray, left.Selector.StartIndexInclusive, (byte)CompareOperator.LessThan, rightArray, right.Selector.StartIndexInclusive, left.Selector.Count, (byte)BooleanOperator.Or, result.Vector.Array, 0);
+                    return;
+                }
+
                 int zeroOffset = left.Selector.StartIndexInclusive;
                 int leftIndexToRightIndex = right.Selector.StartIndexInclusive - left.Selector.StartIndexInclusive;
                 for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
@@ -187,9 +206,9 @@ namespace XForm.Types.Comparers
                 int zeroOffset = left.Selector.StartIndexInclusive;
                 uint rightValue = rightArray[0];
 
-                if (s_WhereNative != null)
+                if (s_WhereSingleNative != null)
                 {
-                    s_WhereNative(leftArray, left.Selector.StartIndexInclusive, left.Selector.Count, (byte)CompareOperator.LessThan, rightValue, (byte)BooleanOperator.Or, result.Vector.Array, 0);
+                    s_WhereSingleNative(leftArray, left.Selector.StartIndexInclusive, left.Selector.Count, (byte)CompareOperator.LessThan, rightValue, (byte)BooleanOperator.Or, result.Vector.Array, 0);
                     return;
                 }
 
@@ -238,6 +257,12 @@ namespace XForm.Types.Comparers
             else if (!right.Selector.IsSingleValue)
             {
                 // Faster Path: Compare contiguous arrays. ~20ms for 16M
+                if(s_WhereNative != null)
+                {
+                    s_WhereNative(leftArray, left.Selector.StartIndexInclusive, (byte)CompareOperator.LessThanOrEqual, rightArray, right.Selector.StartIndexInclusive, left.Selector.Count, (byte)BooleanOperator.Or, result.Vector.Array, 0);
+                    return;
+                }
+
                 int zeroOffset = left.Selector.StartIndexInclusive;
                 int leftIndexToRightIndex = right.Selector.StartIndexInclusive - left.Selector.StartIndexInclusive;
                 for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
@@ -251,9 +276,9 @@ namespace XForm.Types.Comparers
                 int zeroOffset = left.Selector.StartIndexInclusive;
                 uint rightValue = rightArray[0];
 
-                if (s_WhereNative != null)
+                if (s_WhereSingleNative != null)
                 {
-                    s_WhereNative(leftArray, left.Selector.StartIndexInclusive, left.Selector.Count, (byte)CompareOperator.LessThanOrEqual, rightValue, (byte)BooleanOperator.Or, result.Vector.Array, 0);
+                    s_WhereSingleNative(leftArray, left.Selector.StartIndexInclusive, left.Selector.Count, (byte)CompareOperator.LessThanOrEqual, rightValue, (byte)BooleanOperator.Or, result.Vector.Array, 0);
                     return;
                 }
 
@@ -302,6 +327,12 @@ namespace XForm.Types.Comparers
             else if (!right.Selector.IsSingleValue)
             {
                 // Faster Path: Compare contiguous arrays. ~20ms for 16M
+                if(s_WhereNative != null)
+                {
+                    s_WhereNative(leftArray, left.Selector.StartIndexInclusive, (byte)CompareOperator.GreaterThan, rightArray, right.Selector.StartIndexInclusive, left.Selector.Count, (byte)BooleanOperator.Or, result.Vector.Array, 0);
+                    return;
+                }
+
                 int zeroOffset = left.Selector.StartIndexInclusive;
                 int leftIndexToRightIndex = right.Selector.StartIndexInclusive - left.Selector.StartIndexInclusive;
                 for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
@@ -315,9 +346,9 @@ namespace XForm.Types.Comparers
                 int zeroOffset = left.Selector.StartIndexInclusive;
                 uint rightValue = rightArray[0];
 
-                if (s_WhereNative != null)
+                if (s_WhereSingleNative != null)
                 {
-                    s_WhereNative(leftArray, left.Selector.StartIndexInclusive, left.Selector.Count, (byte)CompareOperator.GreaterThan, rightValue, (byte)BooleanOperator.Or, result.Vector.Array, 0);
+                    s_WhereSingleNative(leftArray, left.Selector.StartIndexInclusive, left.Selector.Count, (byte)CompareOperator.GreaterThan, rightValue, (byte)BooleanOperator.Or, result.Vector.Array, 0);
                     return;
                 }
 
@@ -366,6 +397,12 @@ namespace XForm.Types.Comparers
             else if (!right.Selector.IsSingleValue)
             {
                 // Faster Path: Compare contiguous arrays. ~20ms for 16M
+                if(s_WhereNative != null)
+                {
+                    s_WhereNative(leftArray, left.Selector.StartIndexInclusive, (byte)CompareOperator.GreaterThanOrEqual, rightArray, right.Selector.StartIndexInclusive, left.Selector.Count, (byte)BooleanOperator.Or, result.Vector.Array, 0);
+                    return;
+                }
+
                 int zeroOffset = left.Selector.StartIndexInclusive;
                 int leftIndexToRightIndex = right.Selector.StartIndexInclusive - left.Selector.StartIndexInclusive;
                 for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
@@ -379,9 +416,9 @@ namespace XForm.Types.Comparers
                 int zeroOffset = left.Selector.StartIndexInclusive;
                 uint rightValue = rightArray[0];
 
-                if (s_WhereNative != null)
+                if (s_WhereSingleNative != null)
                 {
-                    s_WhereNative(leftArray, left.Selector.StartIndexInclusive, left.Selector.Count, (byte)CompareOperator.GreaterThanOrEqual, rightValue, (byte)BooleanOperator.Or, result.Vector.Array, 0);
+                    s_WhereSingleNative(leftArray, left.Selector.StartIndexInclusive, left.Selector.Count, (byte)CompareOperator.GreaterThanOrEqual, rightValue, (byte)BooleanOperator.Or, result.Vector.Array, 0);
                     return;
                 }
 
