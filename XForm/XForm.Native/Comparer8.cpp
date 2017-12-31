@@ -84,7 +84,13 @@ static void WhereN(unsigned __int8* set, int length, unsigned __int8 value, unsi
 	}
 
 	// Match remaining values individually
-	if (length & 63) WhereSingle<cOp, unsigned __int8>(&set[i], length - i, value, bOp, &matchVector[i >> 6]);
+	if (length & 63)
+	{
+		if (sign == SigningN::Unsigned)
+			WhereSingle<cOp, unsigned __int8>(&set[i], length - i, value, bOp, &matchVector[i >> 6]);
+		else
+			WhereSingle<cOp, __int8>((__int8*)&set[i], length - i, (__int8)value, bOp, &matchVector[i >> 6]);
+	}
 }
 
 #pragma managed
@@ -122,6 +128,41 @@ namespace XForm
 				break;
 			case CompareOperatorN::GreaterThanOrEqual:
 				WhereN<CompareOperatorN::GreaterThanOrEqual, BooleanOperatorN::Or, SigningN::Unsigned>(pLeft, length, right, pVector);
+				break;
+			default:
+				throw gcnew ArgumentException("cOp");
+			}
+		}
+
+		void Comparer::Where(array<SByte>^ left, Int32 index, Int32 length, Byte cOp, SByte right, Byte bOp, array<UInt64>^ vector, Int32 vectorIndex)
+		{
+			if (index < 0 || length < 0 || vectorIndex < 0) throw gcnew IndexOutOfRangeException();
+			if (index + length > left->Length) throw gcnew IndexOutOfRangeException();
+			if (vectorIndex + length >(vector->Length * 64)) throw gcnew IndexOutOfRangeException();
+			if ((vectorIndex & 63) != 0) throw gcnew ArgumentException("Offset Where must run on a multiple of 64 offset.");
+
+			pin_ptr<SByte> pLeft = &left[index];
+			pin_ptr<UInt64> pVector = &vector[vectorIndex >> 6];
+
+			switch ((CompareOperatorN)cOp)
+			{
+			case CompareOperatorN::Equal:
+				WhereN<CompareOperatorN::Equal, BooleanOperatorN::Or, SigningN::Signed>((unsigned __int8*)pLeft, length, (unsigned __int8)right, pVector);
+				break;
+			case CompareOperatorN::NotEqual:
+				WhereN<CompareOperatorN::NotEqual, BooleanOperatorN::Or, SigningN::Signed>((unsigned __int8*)pLeft, length, (unsigned __int8)right, pVector);
+				break;
+			case CompareOperatorN::LessThan:
+				WhereN<CompareOperatorN::LessThan, BooleanOperatorN::Or, SigningN::Signed>((unsigned __int8*)pLeft, length, (unsigned __int8)right, pVector);
+				break;
+			case CompareOperatorN::LessThanOrEqual:
+				WhereN<CompareOperatorN::LessThanOrEqual, BooleanOperatorN::Or, SigningN::Signed>((unsigned __int8*)pLeft, length, (unsigned __int8)right, pVector);
+				break;
+			case CompareOperatorN::GreaterThan:
+				WhereN<CompareOperatorN::GreaterThan, BooleanOperatorN::Or, SigningN::Signed>((unsigned __int8*)pLeft, length, (unsigned __int8)right, pVector);
+				break;
+			case CompareOperatorN::GreaterThanOrEqual:
+				WhereN<CompareOperatorN::GreaterThanOrEqual, BooleanOperatorN::Or, SigningN::Signed>((unsigned __int8*)pLeft, length, (unsigned __int8)right, pVector);
 				break;
 			default:
 				throw gcnew ArgumentException("cOp");
