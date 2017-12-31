@@ -22,7 +22,7 @@ namespace XForm
 
         public PerformanceComparisons()
         {
-            _rowCount = 10 * 1000 * 1000;
+            _rowCount = 50 * 1000 * 1000;
             _values = new ushort[_rowCount];
             _thresholds = new ushort[_rowCount];
 
@@ -41,9 +41,9 @@ namespace XForm
             NativeAccelerator.Enable();
             //DoubleWhere();
             WhereUShortUnderConstant();
-            WhereUShortEqualsUshort();
+            //WhereUShortEqualsUshort();
             //TsvSplit();
-            ByteEqualsConstant();
+            //ByteEqualsConstant();
         }
 
         public void WhereUShortUnderConstant()
@@ -60,10 +60,10 @@ namespace XForm
                     return count;
                 });
 
-                b.Measure("Linq Count", _values.Length, () =>
-                {
-                    return _values.Where((i) => i <= 50).Count();
-                });
+                //b.Measure("Linq Count", _values.Length, () =>
+                //{
+                //    return _values.Where((i) => i <= 50).Count();
+                //});
 
                 b.Measure("XForm Count", _values.Length, () =>
                 {

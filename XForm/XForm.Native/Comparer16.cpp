@@ -7,18 +7,18 @@
 
 #pragma unmanaged
 
-template<CompareOperatorN cOp, BooleanOperatorN bOp, SigningN sign>
-static void WhereN(unsigned __int16* set, int length, unsigned __int16 value, unsigned __int64* matchVector)
+template<CompareOperatorN cOp>
+static void WhereN(BooleanOperatorN bOp, SigningN sign, unsigned __int16* set, int length, unsigned __int16 value, unsigned __int64* matchVector)
 {
 	int i = 0;
 	unsigned __int64 result;
 
 	// Load a mask to convert unsigned values for signed comparison
-	__m256i unsignedToSigned = _mm256_set1_epi16(-32768);
+	__m256i subtractValue = _mm256_set1_epi16(-32768);
+	if (sign == SigningN::Signed) subtractValue = _mm256_set1_epi16(0);
 
 	// Load copies of the value to compare against
-	__m256i blockOfValue = _mm256_set1_epi16(value);
-	if (sign == SigningN::Unsigned) blockOfValue = _mm256_sub_epi16(blockOfValue, unsignedToSigned);
+	__m256i blockOfValue = _mm256_sub_epi16(_mm256_set1_epi16(value), subtractValue);
 
 	// Build a PEXT mask asking for every other bit (1010 = A)
 	unsigned int everyOtherBit = 0xAAAAAAAA;
@@ -28,19 +28,10 @@ static void WhereN(unsigned __int16* set, int length, unsigned __int16 value, un
 	for (; i < blockLength; i += 64)
 	{
 		// Load 64 2-byte values to compare
-		__m256i block1 = _mm256_loadu_si256((__m256i*)(&set[i]));
-		__m256i block2 = _mm256_loadu_si256((__m256i*)(&set[i + 16]));
-		__m256i block3 = _mm256_loadu_si256((__m256i*)(&set[i + 32]));
-		__m256i block4 = _mm256_loadu_si256((__m256i*)(&set[i + 48]));
-
-		// Convert them to signed form, if needed
-		if (sign == SigningN::Unsigned)
-		{
-			block1 = _mm256_sub_epi16(block1, unsignedToSigned);
-			block2 = _mm256_sub_epi16(block2, unsignedToSigned);
-			block3 = _mm256_sub_epi16(block3, unsignedToSigned);
-			block4 = _mm256_sub_epi16(block4, unsignedToSigned);
-		}
+		__m256i block1 = _mm256_sub_epi16(_mm256_loadu_si256((__m256i*)(&set[i])), subtractValue);
+		__m256i block2 = _mm256_sub_epi16(_mm256_loadu_si256((__m256i*)(&set[i + 16])), subtractValue);
+		__m256i block3 = _mm256_sub_epi16(_mm256_loadu_si256((__m256i*)(&set[i + 32])), subtractValue);
+		__m256i block4 = _mm256_sub_epi16(_mm256_loadu_si256((__m256i*)(&set[i + 48])), subtractValue);
 
 		// Compare them to the desired value, building a mask with 0xFFFF for matches and 0x0000 for non-matches
 		__m256i matchMask1;
@@ -114,6 +105,31 @@ static void WhereN(unsigned __int16* set, int length, unsigned __int16 value, un
 	}
 }
 
+static void WhereN(CompareOperatorN cOp, BooleanOperatorN bOp, SigningN sign, unsigned __int16* set, int length, unsigned __int16 value, unsigned __int64* matchVector)
+{
+	switch (cOp)
+	{
+	case CompareOperatorN::Equal:
+		WhereN<CompareOperatorN::Equal>(bOp, sign, set, length, value, matchVector);
+		break;
+	case CompareOperatorN::NotEqual:
+		WhereN<CompareOperatorN::NotEqual>(bOp, sign, set, length, value, matchVector);
+		break;
+	case CompareOperatorN::LessThan:
+		WhereN<CompareOperatorN::LessThan>(bOp, sign, set, length, value, matchVector);
+		break;
+	case CompareOperatorN::LessThanOrEqual:
+		WhereN<CompareOperatorN::LessThanOrEqual>(bOp, sign, set, length, value, matchVector);
+		break;
+	case CompareOperatorN::GreaterThan:
+		WhereN<CompareOperatorN::GreaterThan>(bOp, sign, set, length, value, matchVector);
+		break;
+	case CompareOperatorN::GreaterThanOrEqual:
+		WhereN<CompareOperatorN::GreaterThanOrEqual>(bOp, sign, set, length, value, matchVector);
+		break;
+	}
+}
+
 #pragma managed
 
 namespace XForm
@@ -130,29 +146,7 @@ namespace XForm
 			pin_ptr<UInt16> pLeft = &left[index];
 			pin_ptr<UInt64> pVector = &vector[vectorIndex >> 6];
 
-			switch ((CompareOperatorN)cOp)
-			{
-			case CompareOperatorN::Equal:
-				WhereN<CompareOperatorN::Equal, BooleanOperatorN::Or, SigningN::Unsigned>(pLeft, length, right, pVector);
-				break;
-			case CompareOperatorN::NotEqual:
-				WhereN<CompareOperatorN::NotEqual, BooleanOperatorN::Or, SigningN::Unsigned>(pLeft, length, right, pVector);
-				break;
-			case CompareOperatorN::LessThan:
-				WhereN<CompareOperatorN::LessThan, BooleanOperatorN::Or, SigningN::Unsigned>(pLeft, length, right, pVector);
-				break;
-			case CompareOperatorN::LessThanOrEqual:
-				WhereN<CompareOperatorN::LessThanOrEqual, BooleanOperatorN::Or, SigningN::Unsigned>(pLeft, length, right, pVector);
-				break;
-			case CompareOperatorN::GreaterThan:
-				WhereN<CompareOperatorN::GreaterThan, BooleanOperatorN::Or, SigningN::Unsigned>(pLeft, length, right, pVector);
-				break;
-			case CompareOperatorN::GreaterThanOrEqual:
-				WhereN<CompareOperatorN::GreaterThanOrEqual, BooleanOperatorN::Or, SigningN::Unsigned>(pLeft, length, right, pVector);
-				break;
-			default:
-				throw gcnew ArgumentException("cOp");
-			}
+			WhereN((CompareOperatorN)cOp, BooleanOperatorN::Or, SigningN::Unsigned, pLeft, length, right, pVector);
 		}
 
 		void Comparer::Where(array<Int16>^ left, Int32 index, Int32 length, Byte cOp, Int16 right, Byte bOp, array<UInt64>^ vector, Int32 vectorIndex)
@@ -165,29 +159,7 @@ namespace XForm
 			pin_ptr<Int16> pLeft = &left[index];
 			pin_ptr<UInt64> pVector = &vector[vectorIndex >> 6];
 
-			switch ((CompareOperatorN)cOp)
-			{
-			case CompareOperatorN::Equal:
-				WhereN<CompareOperatorN::Equal, BooleanOperatorN::Or, SigningN::Signed>((unsigned __int16*)pLeft, length, (unsigned __int16)right, pVector);
-				break;
-			case CompareOperatorN::NotEqual:
-				WhereN<CompareOperatorN::NotEqual, BooleanOperatorN::Or, SigningN::Signed>((unsigned __int16*)pLeft, length, (unsigned __int16)right, pVector);
-				break;
-			case CompareOperatorN::LessThan:
-				WhereN<CompareOperatorN::LessThan, BooleanOperatorN::Or, SigningN::Signed>((unsigned __int16*)pLeft, length, (unsigned __int16)right, pVector);
-				break;
-			case CompareOperatorN::LessThanOrEqual:
-				WhereN<CompareOperatorN::LessThanOrEqual, BooleanOperatorN::Or, SigningN::Signed>((unsigned __int16*)pLeft, length, (unsigned __int16)right, pVector);
-				break;
-			case CompareOperatorN::GreaterThan:
-				WhereN<CompareOperatorN::GreaterThan, BooleanOperatorN::Or, SigningN::Signed>((unsigned __int16*)pLeft, length, (unsigned __int16)right, pVector);
-				break;
-			case CompareOperatorN::GreaterThanOrEqual:
-				WhereN<CompareOperatorN::GreaterThanOrEqual, BooleanOperatorN::Or, SigningN::Signed>((unsigned __int16*)pLeft, length, (unsigned __int16)right, pVector);
-				break;
-			default:
-				throw gcnew ArgumentException("cOp");
-			}
+			WhereN((CompareOperatorN)cOp, BooleanOperatorN::Or, SigningN::Signed, (unsigned __int16*)pLeft, length, (unsigned __int16)right, pVector);
 		}
 	}
 }
