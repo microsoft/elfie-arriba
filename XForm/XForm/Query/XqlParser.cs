@@ -12,6 +12,7 @@ using XForm.Data;
 using XForm.Extensions;
 using XForm.Functions;
 using XForm.Types;
+using XForm.Query.Expression;
 
 namespace XForm.Query
 {
@@ -282,6 +283,99 @@ namespace XForm.Query
             CompareOperator cOp = CompareOperator.Equal;
             ParseNextOrThrow(() => _scanner.Current.Value.TryParseCompareOperator(out cOp), "compareOperator", TokenType.Value, OperatorExtensions.ValidCompareOperators);
             return cOp;
+        }
+
+        public IExpression NextExpression(IDataBatchEnumerator source, WorkflowContext context)
+        {
+            List<IExpression> terms = new List<IExpression>();
+
+            // Parse the first term (and any 'AND'ed terms)
+            terms.Add(NextAndExpression(source, context));
+
+            while(HasAnotherArgument)
+            {
+                // If this is not an OR, stop
+                BooleanOperator bOp;
+                if (!_scanner.Current.Value.TryParseBooleanOperator(out bOp)) break;
+                if (bOp != BooleanOperator.Or) break;
+                _scanner.Next();
+
+                // Parse the next term
+                terms.Add(NextTerm(source, context));
+            }
+
+            // Return the full expression
+            if (terms.Count == 1) return terms[0];
+            return new OrExpression(terms.ToArray());
+        }
+
+        private IExpression NextAndExpression(IDataBatchEnumerator source, WorkflowContext context)
+        {
+            List<IExpression> terms = new List<IExpression>();
+
+            // Parse the first term
+            terms.Add(NextTerm(source, context));
+
+            while(HasAnotherArgument)
+            {
+                BooleanOperator bOp;
+                if (_scanner.Current.Value.TryParseBooleanOperator(out bOp))
+                {
+                    // If this is an 'Or', pop out and parse the OrExpression
+                    if (bOp == BooleanOperator.Or) break;
+
+                    // Otherwise, consume it
+                    _scanner.Next();
+                }
+                else
+                {
+                    // This is an implied AND, look for the next expression
+                }
+
+                // Parse the next term
+                terms.Add(NextTerm(source, context));
+            }
+
+            // Return the full expression
+            if (terms.Count == 1) return terms[0];
+            return new AndExpression(terms.ToArray());
+        }
+
+        private IExpression NextTerm(IDataBatchEnumerator source, WorkflowContext context)
+        {
+            IExpression term;
+            bool negate = false;
+
+            // Look for NOT
+            if(_scanner.Current.Value.TryParseNot())
+            {
+                _scanner.Next();
+                negate = true;
+            }
+
+            // Look for nested subexpression
+            if (_scanner.Current.Type == TokenType.OpenParen)
+            {
+                // Consume the open paren
+                _scanner.Next();
+
+                term = NextExpression(source, context);
+
+                // Consume the close paren (and tolerate it missing - partially typed queries)
+                if (_scanner.Current.Type == TokenType.CloseParen) _scanner.Next();
+            }
+            else
+            {
+                // Otherwise, it's a simple term
+                term = new TermExpression(
+                    source,
+                    NextColumn(source, context),
+                    NextCompareOperator(),
+                    NextColumn(source, context));
+            }
+
+            if (negate) return new NotExpression(term);
+            return term;
         }
 
         private void ParseNextOrThrow(Func<bool> parseMethod, string valueCategory, TokenType? requiredTokenType = null, IEnumerable<string> validValues = null)

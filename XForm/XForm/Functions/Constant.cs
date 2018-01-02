@@ -4,6 +4,7 @@
 using System;
 
 using XForm.Data;
+using XForm.Query;
 
 namespace XForm.Functions
 {
@@ -32,6 +33,11 @@ namespace XForm.Functions
                 if (IsNull) return DataBatch.Null(ValueArray, Source.CurrentBatchRowCount);
                 return DataBatch.Single(ValueArray, Source.CurrentBatchRowCount);
             };
+        }
+
+        public override string ToString()
+        {
+            return XqlScanner.Escape(Value.ToString(), TokenType.Value);
         }
     }
 }

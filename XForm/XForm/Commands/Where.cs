@@ -4,10 +4,9 @@
 using System;
 
 using XForm.Data;
-using XForm.Functions;
 using XForm.Query;
+using XForm.Query.Expression;
 using XForm.Transforms;
-using XForm.Types;
 
 namespace XForm.Commands
 {
@@ -18,59 +17,19 @@ namespace XForm.Commands
 
         public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)
         {
-            return new Where(source,
-                context.Parser.NextColumn(source, context),
-                context.Parser.NextCompareOperator(),
-                context.Parser.NextColumn(source, context)
-            );
+            return new Where(source, context.Parser.NextExpression(source, context));
         }
     }
 
     public class Where : DataBatchEnumeratorWrapper
     {
-        private Func<DataBatch> _leftGetter;
-        private Func<DataBatch> _rightGetter;
-        private ComparerExtensions.Comparer _comparer;
+        private IExpression _expression;
         private BitVector _vector;
         private RowRemapper _mapper;
 
-        public Where(IDataBatchEnumerator source, IDataBatchColumn left, CompareOperator op, IDataBatchColumn right) : base(source)
+        public Where(IDataBatchEnumerator source, IExpression expression) : base(source)
         {
-            // If the left side is a constant and the operator can be swapped, move it to the right side.
-            // Comparers can check if the right side is constant and run a faster loop when that's the case.
-            if (left is Constant && !(right is Constant))
-            {
-                if (op.TryInvertCompareOperator(out op))
-                {
-                    Func<DataBatch> swap = _leftGetter;
-                    _leftGetter = _rightGetter;
-                    _rightGetter = swap;
-                }
-            }
-
-            // Convert the right side to the left side type if required
-            // This means constants will always be casted to the other side type.
-            if (left.ColumnDetails.Type != right.ColumnDetails.Type)
-            {
-                right = XForm.Functions.Cast.Build(source, right, left.ColumnDetails.Type, null, true);
-            }
-
-            // Get the left and right getters
-            _leftGetter = left.Getter();
-            _rightGetter = right.Getter();
-
-            // Null comparison is generic
-            if ((right is Constant && ((Constant)right).IsNull) || (left is Constant && ((Constant)left).IsNull))
-            {
-                if (op == CompareOperator.Equal) _comparer = WhereIsNull;
-                else if (op == CompareOperator.NotEqual) _comparer = WhereIsNotNull;
-                else throw new ArgumentException($"Only equals and not equals operators are supported against null.");
-            }
-            else
-            {
-                // Get a comparer which can compare the values
-                _comparer = TypeProviderFactory.Get(left.ColumnDetails.Type).TryGetComparer(op);
-            }
+            _expression = expression;
 
             // Build a mapper to hold matching rows and remap source batches
             _mapper = new RowRemapper();
@@ -96,16 +55,12 @@ namespace XForm.Commands
 
         public override int Next(int desiredCount)
         {
-            while (_source.Next(desiredCount) > 0)
+            int outerCount;
+            while ((outerCount = _source.Next(desiredCount)) > 0)
             {
-                // Get the pair of values to compare
-                DataBatch left = _leftGetter();
-                DataBatch right = _rightGetter();
-
-                // Identify rows matching this criterion
-                Allocator.AllocateToSize(ref _vector, left.Count);
+                Allocator.AllocateToSize(ref _vector, outerCount);
                 _vector.None();
-                _comparer(left, right, _vector);
+                _expression.Evaluate(_vector);
 
                 // Stop if we got rows, otherwise get the next source batch
                 _mapper.SetMatches(_vector);
@@ -114,36 +69,6 @@ namespace XForm.Commands
             }
 
             return 0;
-        }
-
-        private void WhereIsNull(DataBatch source, DataBatch unused, BitVector vector)
-        {
-            // If nothing was null in the source batch, there are no matches
-            if (source.IsNull == null) return;
-            
-            // Otherwise, add rows where the value was marked null
-            for (int i = 0; i < source.Count; ++i)
-            {
-                int index = source.Index(i);
-                if (source.IsNull[index]) vector.Set(i);
-            }
-        }
-
-        private void WhereIsNotNull(DataBatch source, DataBatch unused, BitVector vector)
-        {
-            // If nothing was null in the source batch, every row matches
-            if (source.IsNull == null)
-            {
-                vector.All(source.Count);
-                return;
-            }
-
-            // Otherwise, add rows where the value was marked null
-            for (int i = 0; i < source.Count; ++i)
-            {
-                int index = source.Index(i);
-                if (!source.IsNull[index]) vector.Set(i);
-            }
-        }
+        }        
     }
 }

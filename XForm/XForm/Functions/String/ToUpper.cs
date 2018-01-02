@@ -18,6 +18,7 @@ namespace XForm.Functions.String
             String8Block block = new String8Block();
 
             return SimpleTransformFunction<String8, String8>.Build(
+                Name,
                 source,
                 context.Parser.NextColumn(source, context),
                 (string8) =>

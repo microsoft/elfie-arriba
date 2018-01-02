@@ -18,6 +18,7 @@ namespace XForm.Functions.Date
             TimeSpan offsetSpan = context.Parser.NextTimeSpan();
 
             return SimpleTransformFunction<DateTime, DateTime>.Build(
+                Name,
                 source,
                 baseDateTime,
                 (dateTime) => dateTime.Add(offsetSpan)

@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System;
 using System.Collections.Generic;
 
 namespace XForm.Query
@@ -26,6 +27,7 @@ namespace XForm.Query
     public static class OperatorExtensions
     {
         public static IEnumerable<string> ValidCompareOperators = new string[] { "<", "<=", ">", ">=", "=", "==", "!=", "<>" };
+        public static IEnumerable<string> ValidBooleanOperators = new string[] { "AND", "&&", "&", "OR", "||", "|" };
 
         public static bool TryParseCompareOperator(this string op, out CompareOperator result)
         {
@@ -59,6 +61,27 @@ namespace XForm.Query
             return true;
         }
 
+        public static string ToQueryForm(this CompareOperator op)
+        {
+            switch(op)
+            {
+                case CompareOperator.Equal:
+                    return "=";
+                case CompareOperator.NotEqual:
+                    return "!=";
+                case CompareOperator.LessThan:
+                    return "<";
+                case CompareOperator.LessThanOrEqual:
+                    return "<=";
+                case CompareOperator.GreaterThan:
+                    return ">";
+                case CompareOperator.GreaterThanOrEqual:
+                    return ">=";
+                default:
+                    throw new NotImplementedException(op.ToString());
+            }
+        }
+
         public static bool TryInvertCompareOperator(this CompareOperator op, out CompareOperator inverse)
         {
             switch (op)
@@ -84,6 +107,53 @@ namespace XForm.Query
                 default:
                     // No operators yet which can't be inverted, but 'contains', and 'startsWith' can't be.
                     inverse = op;
+                    return false;
+            }
+        }
+
+        public static bool TryParseBooleanOperator(this string op, out BooleanOperator result)
+        {
+            switch (op.ToUpperInvariant())
+            {
+                case "AND":
+                case "&&":
+                case "&":
+                    result = BooleanOperator.And;
+                    break;
+                case "OR":
+                case "||":
+                case "|":
+                    result = BooleanOperator.Or;
+                    break;
+                default:
+                    result = BooleanOperator.And;
+                    return false;
+            }
+
+            return true;
+        }
+
+        public static string ToQueryForm(this BooleanOperator op)
+        {
+            switch(op)
+            {
+                case BooleanOperator.And:
+                    return "AND";
+                case BooleanOperator.Or:
+                    return "OR";
+                default:
+                    throw new NotImplementedException(op.ToString());
+            }
+        }
+
+        public static bool TryParseNot(this string op)
+        {
+            switch(op.ToUpperInvariant())
+            {
+                case "NOT":
+                case "!":
+                    return true;
+                default:
                     return false;
             }
         }

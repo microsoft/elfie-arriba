@@ -20,20 +20,22 @@ namespace XForm.Functions
     /// <typeparam name="U">Type output by the function</typeparam>
     public class SimpleTransformFunction<T, U> : IDataBatchColumn
     {
+        private string Name { get; set; }
         private IDataBatchColumn Column { get; set; }
         private Func<T, U> Function { get; set; }
         private Action BeforeBatch { get; set; }
         public ColumnDetails ColumnDetails { get; private set; }
 
-        private SimpleTransformFunction(IDataBatchColumn column, Func<T, U> function, Action beforeBatch = null)
+        private SimpleTransformFunction(string name, IDataBatchColumn column, Func<T, U> function, Action beforeBatch = null)
         {
+            this.Name = name;
             this.Column = column;
             this.Function = function;
             this.BeforeBatch = beforeBatch;
             this.ColumnDetails = column.ColumnDetails.ChangeType(typeof(U));
         }
 
-        public static IDataBatchColumn Build(IDataBatchEnumerator source, IDataBatchColumn column, Func<T, U> function, Action beforeBatch = null)
+        public static IDataBatchColumn Build(string name, IDataBatchEnumerator source, IDataBatchColumn column, Func<T, U> function, Action beforeBatch = null)
         {
             if (column.ColumnDetails.Type != typeof(T)) throw new ArgumentException($"Function required argument of type {typeof(T).Name}, but argument was {column.ColumnDetails.Type.Name} instead.");
 
@@ -45,7 +47,7 @@ namespace XForm.Functions
             }
             else
             {
-                return new SimpleTransformFunction<T, U>(column, function, beforeBatch);
+                return new SimpleTransformFunction<T, U>(name, column, function, beforeBatch);
             }
         }
 
@@ -98,6 +100,11 @@ namespace XForm.Functions
 
                 return DataBatch.All(buffer, batch.Count, isNull);
             };
+        }
+
+        public override string ToString()
+        {
+            return $"{Name}({Column})";
         }
     }
 }

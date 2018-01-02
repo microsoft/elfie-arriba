@@ -132,6 +132,11 @@
     <Compile Include="IO\StreamProvider\MultipleSourceStreamProvider.cs" />
     <Compile Include="NativeAccelerator.cs" />
     <Compile Include="PerformanceComparisons.cs" />
+    <Compile Include="Query\Expression\NotExpression.cs" />
+    <Compile Include="Query\Expression\IExpression.cs" />
+    <Compile Include="Query\Expression\AndExpression.cs" />
+    <Compile Include="Query\Expression\OrExpression.cs" />
+    <Compile Include="Query\Expression\TermExpression.cs" />
     <Compile Include="Query\IPipelineStageBuilder.cs" />
     <Compile Include="Query\IUsage.cs" />
     <Compile Include="Query\Operator.cs" />
@@ -198,6 +203,9 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>ROBOCOPY /MIR /E "$(ProjectDir)\Web" "$(TargetDir)\Web"
+EXIT 0</PostBuildEvent>
+  </PropertyGroup>
 </Project>

@@ -5,6 +5,7 @@ using System;
 
 using XForm.Data;
 using XForm.Extensions;
+using XForm.Query;
 
 namespace XForm.Functions
 {
@@ -26,6 +27,11 @@ namespace XForm.Functions
         public Func<DataBatch> Getter()
         {
             return Source.ColumnGetter(ColumnIndex);
+        }
+
+        public override string ToString()
+        {
+            return XqlScanner.Escape(ColumnName, TokenType.ColumnName);
         }
     }
 }
