@@ -12,7 +12,7 @@ namespace XForm.Commands
 {
     internal class CosmosUnescapeCommandBuilder : IPipelineStageBuilder
     {
-        public string Verb => "cosmos-unescape";
+        public string Verb => "cosmosUnescape";
         public string Usage => this.Verb;
 
         public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)

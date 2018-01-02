@@ -12,7 +12,7 @@ namespace XForm.Test.Commands
     public class CosmosUnescapeTests
     {
         [TestMethod]
-        public void UnescapeCommand()
+        public void CosmosUnescapeCommand()
         {
             Dictionary<String8, String8> testCases = new Dictionary<String8, String8>();
             testCases.Add(String8.Empty, String8.Empty);
