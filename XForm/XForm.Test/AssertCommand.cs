@@ -55,7 +55,7 @@ namespace XForm.Test
                 _sourceRowsTotal += count;
 
                 // Make the asserts run and count matching rows
-                _assertRowsTotal += _assertPipeline.Run();
+                _assertRowsTotal += _assertPipeline.RunWithoutDispose();
             }
             else
             {

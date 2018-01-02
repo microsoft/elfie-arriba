@@ -8,6 +8,7 @@ using XForm.Data;
 using XForm.IO.StreamProvider;
 using XForm.Query;
 using XForm.Transforms;
+using XForm.Types.Comparers;
 
 namespace XForm.Types
 {
@@ -30,7 +31,7 @@ namespace XForm.Types
 
         public Action<DataBatch, DataBatch, RowRemapper> TryGetComparer(CompareOperator op)
         {
-            return new ComparableComparer<byte>().TryBuild(op);
+            return new ByteComparer().TryBuild(op);
         }
 
         public Func<DataBatch, DataBatch> TryGetConverter(Type sourceType, Type targetType, object defaultValue, bool strict)

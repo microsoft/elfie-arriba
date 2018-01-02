@@ -5,8 +5,8 @@ using System.Linq;
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-using XForm.Query;
 using XForm.Functions;
+using XForm.Query;
 using XForm.Types;
 
 namespace XForm.Test.Query
@@ -18,7 +18,7 @@ namespace XForm.Test.Query
         private static string s_sources = string.Join("|", SampleDatabase.WorkflowContext.Runner.SourceNames.OrderBy((s) => s));
         private static string s_types = string.Join("|", TypeProviderFactory.SupportedTypes.OrderBy((s) => s));
         private static string s_columnNames = string.Join("|", XqlParser.Parse(@"read WebRequest", null, SampleDatabase.WorkflowContext).Columns.Select((cd) => cd.Name).OrderBy((s) => s));
-        private static string s_selectListOptions = string.Join("|", 
+        private static string s_selectListOptions = string.Join("|",
             XqlParser.Parse(@"read WebRequest", null, SampleDatabase.WorkflowContext).Columns.Select((cd) => cd.Name)
             .Concat(FunctionFactory.SupportedFunctions)
             .OrderBy((s) => s));

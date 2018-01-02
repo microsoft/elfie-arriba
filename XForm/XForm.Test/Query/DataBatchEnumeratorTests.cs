@@ -45,14 +45,14 @@ namespace XForm.Test.Query
 
                 // Run without requesting any columns. Validate.
                 Assert.AreEqual(requiredColumnCount, innerValidator.ColumnGettersRequested.Count);
-                actualRowCount = pipeline.Run();
+                actualRowCount = pipeline.RunWithoutDispose();
                 Assert.AreEqual(expectedRowCount, actualRowCount, "DataSourceEnumerator should return correct count with no requested columns.");
                 Assert.AreEqual(requiredColumnCount, innerValidator.ColumnGettersRequested.Count, "No extra columns requested after Run");
 
                 // Reset; Request all columns. Validate.
                 pipeline.Reset();
                 pipeline = XqlParser.Parse("write \"Sample.output.csv\"", pipeline, SampleDatabase.WorkflowContext);
-                actualRowCount = pipeline.Run();
+                actualRowCount = pipeline.RunWithoutDispose();
             }
             finally
             {

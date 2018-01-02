@@ -1,2 +1,8 @@
 # Include Sample Database
 !XForm.Test/SampleDatabase.zip
+
+# Don't submit benchmark results
+*.Benchmarks.tsv
+
+# Don't include Push.cmd
+XForm/Push.cmd

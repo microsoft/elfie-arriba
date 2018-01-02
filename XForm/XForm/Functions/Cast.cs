@@ -1,4 +1,8 @@
-﻿using System;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
+
 using XForm.Data;
 using XForm.Types;
 
@@ -38,7 +42,7 @@ namespace XForm.Functions
             // If the column is already the right type, just return it
             if (column.ColumnDetails.Type == targetType) return column;
 
-            if(column is Constant)
+            if (column is Constant)
             {
                 // If the inner value is a constant, convert once and store the new constant
                 return new Constant(source, TypeConverterFactory.ConvertSingle(((Constant)column).Value, targetType), targetType);

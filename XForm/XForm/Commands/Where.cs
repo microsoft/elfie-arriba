@@ -61,8 +61,8 @@ namespace XForm.Commands
             // Null comparison is generic
             if ((right is Constant && ((Constant)right).IsNull) || (left is Constant && ((Constant)left).IsNull))
             {
-                if (op == CompareOperator.Equals) _comparer = WhereIsNull;
-                else if (op == CompareOperator.NotEquals) _comparer = WhereIsNotNull;
+                if (op == CompareOperator.Equal) _comparer = WhereIsNull;
+                else if (op == CompareOperator.NotEqual) _comparer = WhereIsNotNull;
                 else throw new ArgumentException($"Only equals and not equals operators are supported against null.");
             }
             else
@@ -105,7 +105,8 @@ namespace XForm.Commands
                 _comparer(left, right, _mapper);
 
                 // Stop if we got rows, otherwise get the next source batch
-                if (_mapper.Count > 0) return _mapper.Count;
+                int count = _mapper.Count;
+                if (count > 0) return count;
             }
 
             return 0;

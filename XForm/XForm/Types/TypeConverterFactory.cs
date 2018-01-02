@@ -47,7 +47,7 @@ namespace XForm.Types
             if (sourceType.Equals(targetType)) return value;
 
             // Until we have a StringTypeProvider, convert string to String8 for conversions
-            if(sourceType == typeof(string))
+            if (sourceType == typeof(string))
             {
                 sourceType = typeof(String8);
                 value = String8.Convert((string)value, new byte[String8.GetLength((string)value)]);

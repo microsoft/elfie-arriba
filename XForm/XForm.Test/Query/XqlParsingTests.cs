@@ -31,7 +31,7 @@ namespace XForm.Test.Query
             XqlScanner scanner = new XqlScanner(xqlLine);
 
             List<string> parts = new List<string>();
-            while(scanner.Current.Type != TokenType.End)
+            while (scanner.Current.Type != TokenType.End)
             {
                 parts.Add(scanner.Current.Value);
                 scanner.Next();

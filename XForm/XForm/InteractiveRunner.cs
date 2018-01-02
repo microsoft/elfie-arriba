@@ -127,7 +127,7 @@ namespace XForm
                     IDataBatchEnumerator firstTenWrapper = _pipeline;
                     firstTenWrapper = XqlParser.Parse("limit 10", firstTenWrapper, _workflowContext);
                     firstTenWrapper = XqlParser.Parse("write cout", firstTenWrapper, _workflowContext);
-                    lastCount = firstTenWrapper.Run();
+                    lastCount = firstTenWrapper.RunWithoutDispose();
 
                     // Get the count
                     RunResult result = _pipeline.RunUntilTimeout(TimeSpan.FromSeconds(3));

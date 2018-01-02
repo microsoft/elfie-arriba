@@ -1,4 +1,8 @@
-﻿using Microsoft.CodeAnalysis.Elfie.Model.Strings;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using Microsoft.CodeAnalysis.Elfie.Model.Strings;
+
 using XForm.Data;
 
 namespace XForm.Functions.String
@@ -12,7 +16,7 @@ namespace XForm.Functions.String
         {
             return SimpleTransformFunction<String8, String8>.Build(
                 source,
-                context.Parser.NextColumn(source, context), 
+                context.Parser.NextColumn(source, context),
                 (string8) => string8.Trim());
         }
     }

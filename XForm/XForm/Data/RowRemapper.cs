@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Collections.Generic;
-
+using System.Runtime.CompilerServices;
 using XForm.Data;
 
 namespace XForm.Transforms
@@ -15,8 +15,8 @@ namespace XForm.Transforms
     /// </summary>
     public class RowRemapper
     {
-        public int[] MatchingRowIndices;
-        public int Count;
+        private BitVector _matchVector;
+        private int[] _matchIndices;
         private Dictionary<ArraySelector, ArraySelector> _cachedRemappings;
 
         public RowRemapper()
@@ -24,31 +24,31 @@ namespace XForm.Transforms
             _cachedRemappings = new Dictionary<ArraySelector, ArraySelector>();
         }
 
+        public BitVector Vector => _matchVector;
+
         public void ClearAndSize(int length)
         {
             // Ensure the row index array is large enough
-            Allocator.AllocateToSize(ref MatchingRowIndices, length);
+            if (_matchVector == null || _matchVector.Capacity < length) _matchVector = new BitVector(length);
 
-            // Mark the array empty
-            Count = 0;
+            // Clear previous matches
+            _matchVector.None();
 
             // Clear cached remappings (they will need to be recomputed)
             _cachedRemappings.Clear();
         }
 
+        public int Count => _matchVector.Count;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Add(int index)
         {
-            MatchingRowIndices[Count++] = index;
+            _matchVector.Set(index);
         }
 
         public void All(int count)
         {
-            for(int i = 0; i < count; ++i)
-            {
-                MatchingRowIndices[i] = i;
-            }
-
-            Count = count;
+            _matchVector.All(count);
         }
 
         public DataBatch Remap(DataBatch source, ref int[] remapArray)
@@ -57,7 +57,14 @@ namespace XForm.Transforms
             ArraySelector cachedMapping;
             if (_cachedRemappings.TryGetValue(source.Selector, out cachedMapping)) return source.Reselect(cachedMapping);
 
-            DataBatch remapped = source.Select(ArraySelector.Map(MatchingRowIndices, Count), ref remapArray);
+            // Convert the BitVector to indices
+            int count = _matchVector.Count;
+            Allocator.AllocateToSize(ref _matchIndices, count);
+            int start = 0;
+            _matchVector.Page(_matchIndices, ref start);
+
+            // Remap the outer selector
+            DataBatch remapped = source.Select(ArraySelector.Map(_matchIndices, count), ref remapArray);
 
             // Cache the remapping
             _cachedRemappings[source.Selector] = remapped.Selector;

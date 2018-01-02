@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
@@ -44,7 +47,7 @@ namespace XForm.IO.StreamProvider
         public IEnumerable<StreamAttributes> Enumerate(string underLogicalPath, EnumerateTypes types, bool recursive)
         {
             // Enumerate items but make them look like the unpacked zip files
-            foreach(StreamAttributes item in Inner.Enumerate(underLogicalPath, types, recursive))
+            foreach (StreamAttributes item in Inner.Enumerate(underLogicalPath, types, recursive))
             {
                 if (item.Path.EndsWith(".zip")) item.Path = item.Path.Substring(0, item.Path.Length - 4);
                 yield return item;
