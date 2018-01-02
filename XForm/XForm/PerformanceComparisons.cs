@@ -43,8 +43,8 @@ namespace XForm
             WhereUShortUnderConstant();
             WhereUShortEqualsUshort();
             ByteEqualsConstant();
-
-            //DoubleWhere();
+            DoubleWhere();
+            
             //TsvSplit();
         }
 
@@ -108,17 +108,14 @@ namespace XForm
 
         public void DoubleWhere()
         {
-            using (Benchmarker b = new Benchmarker($"ushort[{_rowCount:n0}] | where [Value] < 50 | where [Value] = 25 | count", DefaultMeasureMilliseconds))
+            using (Benchmarker b = new Benchmarker($"ushort[{_rowCount:n0}] | where [Value] < 50 || [Value] > 950 | count", DefaultMeasureMilliseconds))
             {
                 b.Measure("For Count", _values.Length, () =>
                 {
                     int count = 0;
                     for (int i = 0; i < _values.Length; ++i)
                     {
-                        if (_values[i] < 50)
-                        {
-                            if (_values[i] == 25) count++;
-                        }
+                        if (_values[i] < 50 || _values[i] > 950) count++;
                     }
                     return count;
                 });
@@ -127,8 +124,7 @@ namespace XForm
                 {
                     return (int)XFormTable.FromArrays(_values.Length)
                     .WithColumn("Value", _values)
-                    .Query("where [Value] < 50", _context)
-                    .Query("where [Value] = 25", _context)
+                    .Query("where [Value] < 50 || [Value] > 950", _context)
                     .Count();
                 });
 

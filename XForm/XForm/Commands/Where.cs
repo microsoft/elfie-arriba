@@ -64,7 +64,7 @@ namespace XForm.Commands
 
                 // Stop if we got rows, otherwise get the next source batch
                 _mapper.SetMatches(_vector);
-                int count = _vector.Count;
+                int count = _mapper.Count;
                 if (count > 0) return count;
             }
 

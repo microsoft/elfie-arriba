@@ -26,12 +26,10 @@ namespace XForm.Transforms
             _cachedRemappings = new Dictionary<ArraySelector, ArraySelector>();
         }
 
-        public BitVector Vector => _vector;
-
         public void SetMatches(BitVector vector)
         {
             _vector = vector;
-            _count = -1;
+            _count = vector.Count;
 
             // Clear cached remappings (they will need to be recomputed)
             _cachedRemappings.Clear();
@@ -47,7 +45,7 @@ namespace XForm.Transforms
             _cachedRemappings.Clear();
         }
 
-        public int Count => _vector.Count;
+        public int Count => _count;
 
         public DataBatch Remap(DataBatch source, ref int[] remapArray)
         {
@@ -58,7 +56,6 @@ namespace XForm.Transforms
             // Convert the BitVector to indices
             if (_vector != null)
             {
-                _count = _vector.Count;
                 Allocator.AllocateToSize(ref _indices, _count);
                 int start = 0;
                 _vector.Page(_indices, ref start);
