@@ -229,6 +229,43 @@ namespace XForm.Data
             return this;
         }
 
+        public BitVector Set(bool[] other)
+        {
+            if (this.Capacity < other.Length) throw new InvalidOperationException();
+            this.None();
+
+            for (int i = 0; i < other.Length; ++i)
+            {
+                this[i] = other[i];
+            }
+
+            return this;
+        }
+
+        public BitVector And(bool[] other)
+        {
+            if (this.Capacity < other.Length) throw new InvalidOperationException();
+
+            for (int i = 0; i < other.Length; ++i)
+            {
+                this[i] &= other[i];
+            }
+
+            return this;
+        }
+
+        public BitVector Or(bool[] other)
+        {
+            if (this.Capacity < other.Length) throw new InvalidOperationException();
+
+            for (int i = 0; i < other.Length; ++i)
+            {
+                this[i] |= other[i];
+            }
+
+            return this;
+        }
+
         public override bool Equals(object obj)
         {
             BitVector other = obj as BitVector;

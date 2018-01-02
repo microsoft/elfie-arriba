@@ -48,7 +48,8 @@ namespace XForm.Commands
         private List<int> _mappedColumnIndices;
 
         private RowRemapper _sourceJoinedRowsFilter;
-        private int[] _currentJoinRowIndices;
+        private int[] _currentJoinLeftSideIndices;
+        private int[] _currentJoinRightSideIndices;
         private int _currentJoinCount;
 
         public Join(IDataBatchEnumerator source, string joinFromColumn, IDataBatchEnumerator joinToSource, string joinToColumn, string joinSidePrefix)
@@ -129,8 +130,8 @@ namespace XForm.Commands
                 String8[] array = (String8[])joinFromValues.Array;
 
                 // Find the matching row index for each value
-                Allocator.AllocateToSize(ref _currentJoinRowIndices, count);
-                _sourceJoinedRowsFilter.ClearAndSize(count);
+                Allocator.AllocateToSize(ref _currentJoinLeftSideIndices, count);
+                Allocator.AllocateToSize(ref _currentJoinRightSideIndices, count);
 
                 int joinedCount = 0;
                 for (int i = 0; i < count; ++i)
@@ -140,18 +141,19 @@ namespace XForm.Commands
                     int matchIndex;
                     if (_joinDictionary.TryGetValue(joinFromValue, out matchIndex))
                     {
-                        _currentJoinRowIndices[joinedCount] = matchIndex;
+                        _currentJoinRightSideIndices[joinedCount] = matchIndex;
+                        _currentJoinLeftSideIndices[joinedCount] = i;
                         joinedCount++;
-                        _sourceJoinedRowsFilter.Add(i);
                     }
                 }
 
+                _sourceJoinedRowsFilter.SetMatches(_currentJoinLeftSideIndices, joinedCount);
                 _currentJoinCount = joinedCount;
                 if (_currentJoinCount > 0) break;
             }
 
             // 'Seek' those particular rows in the JoinToSource
-            _cachedJoinSource.Get(ArraySelector.Map(_currentJoinRowIndices, _currentJoinCount));
+            _cachedJoinSource.Get(ArraySelector.Map(_currentJoinRightSideIndices, _currentJoinCount));
 
             CurrentBatchRowCount = _currentJoinCount;
             return _currentJoinCount;

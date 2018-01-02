@@ -15,8 +15,10 @@ namespace XForm.Transforms
     /// </summary>
     public class RowRemapper
     {
-        private BitVector _matchVector;
-        private int[] _matchIndices;
+        private BitVector _vector;
+        private int[] _indices;
+        private int _count;
+
         private Dictionary<ArraySelector, ArraySelector> _cachedRemappings;
 
         public RowRemapper()
@@ -24,32 +26,28 @@ namespace XForm.Transforms
             _cachedRemappings = new Dictionary<ArraySelector, ArraySelector>();
         }
 
-        public BitVector Vector => _matchVector;
+        public BitVector Vector => _vector;
 
-        public void ClearAndSize(int length)
+        public void SetMatches(BitVector vector)
         {
-            // Ensure the row index array is large enough
-            if (_matchVector == null || _matchVector.Capacity < length) _matchVector = new BitVector(length);
-
-            // Clear previous matches
-            _matchVector.None();
+            _vector = vector;
+            _count = -1;
 
             // Clear cached remappings (they will need to be recomputed)
             _cachedRemappings.Clear();
         }
 
-        public int Count => _matchVector.Count;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Add(int index)
+        public void SetMatches(int[] indices, int count)
         {
-            _matchVector.Set(index);
+            _vector = null;
+            _indices = indices;
+            _count = count;
+
+            // Clear cached remappings (they will need to be recomputed)
+            _cachedRemappings.Clear();
         }
 
-        public void All(int count)
-        {
-            _matchVector.All(count);
-        }
+        public int Count => _vector.Count;
 
         public DataBatch Remap(DataBatch source, ref int[] remapArray)
         {
@@ -58,13 +56,16 @@ namespace XForm.Transforms
             if (_cachedRemappings.TryGetValue(source.Selector, out cachedMapping)) return source.Reselect(cachedMapping);
 
             // Convert the BitVector to indices
-            int count = _matchVector.Count;
-            Allocator.AllocateToSize(ref _matchIndices, count);
-            int start = 0;
-            _matchVector.Page(_matchIndices, ref start);
+            if (_vector != null)
+            {
+                _count = _vector.Count;
+                Allocator.AllocateToSize(ref _indices, _count);
+                int start = 0;
+                _vector.Page(_indices, ref start);
+            }
 
             // Remap the outer selector
-            DataBatch remapped = source.Select(ArraySelector.Map(_matchIndices, count), ref remapArray);
+            DataBatch remapped = source.Select(ArraySelector.Map(_indices, _count), ref remapArray);
 
             // Cache the remapping
             _cachedRemappings[source.Selector] = remapped.Selector;

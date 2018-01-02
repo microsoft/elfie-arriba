@@ -29,7 +29,7 @@ namespace XForm.Types
             return new String8ColumnWriter(streamProvider, columnPath);
         }
 
-        public Action<DataBatch, DataBatch, RowRemapper> TryGetComparer(CompareOperator op)
+        public ComparerExtensions.Comparer TryGetComparer(CompareOperator op)
         {
             return new ComparableComparer<String8>().TryBuild(op);
         }

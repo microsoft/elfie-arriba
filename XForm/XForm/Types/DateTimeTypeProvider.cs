@@ -27,7 +27,7 @@ namespace XForm.Types
             return new ConvertingWriter(TypeProviderFactory.Get(typeof(long)).BinaryWriter(streamProvider, columnPath), TryGetConverter(typeof(DateTime), typeof(long), null, true));
         }
 
-        public Action<DataBatch, DataBatch, RowRemapper> TryGetComparer(CompareOperator op)
+        public ComparerExtensions.Comparer TryGetComparer(CompareOperator op)
         {
             return new ComparableComparer<DateTime>().TryBuild(op);
         }

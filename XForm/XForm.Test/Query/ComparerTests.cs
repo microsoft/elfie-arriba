@@ -69,12 +69,12 @@ namespace XForm.Test.Query
 
         private static void Comparer_VerifyWhere<T>(DataBatch left, DataBatch right, CompareOperator cOp) where T : IComparable<T>
         {
-            Action<DataBatch, DataBatch, RowRemapper> comparer = TypeProviderFactory.Get(typeof(T).Name).TryGetComparer(cOp);
-            RowRemapper mapper = new RowRemapper();
+            ComparerExtensions.Comparer comparer = TypeProviderFactory.Get(typeof(T).Name).TryGetComparer(cOp);
+            BitVector vector = new BitVector(left.Count);
 
             // Verify 'Set' on an empty set works as expected (normal matches)
-            comparer(left, right, mapper);
-            Comparer_VerifySetMatches<T>(mapper.Vector, left, right, cOp);
+            comparer(left, right, vector);
+            Comparer_VerifySetMatches<T>(vector, left, right, cOp);
         }
 
         private static void Comparer_VerifySetMatches<T>(BitVector set, DataBatch left, DataBatch right, CompareOperator cOp) where T : IComparable<T>

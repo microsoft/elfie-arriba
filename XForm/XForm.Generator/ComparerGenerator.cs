@@ -33,9 +33,8 @@ namespace XForm.Types.Comparers
 
         // NOTE: Edit this in the 'long[]' copy and then copy and paste the code here once tested
         private static string CompareMethodTemplate = @"
-		public void WhereEqual(DataBatch left, DataBatch right, RowRemapper result)
+		public void WhereEqual(DataBatch left, DataBatch right, BitVector vector)
         {
-            result.ClearAndSize(left.Count);
             long[] leftArray = (long[])left.Array;
             long[] rightArray = (long[])right.Array;
 
@@ -49,7 +48,7 @@ namespace XForm.Types.Comparers
                     int rightIndex = right.Index(i);
                     if (left.IsNull != null && left.IsNull[leftIndex]) continue;
                     if (right.IsNull != null && right.IsNull[rightIndex]) continue;
-                    if (leftArray[leftIndex] == rightArray[rightIndex]) result.Add(i);
+                    if (leftArray[leftIndex] == rightArray[rightIndex]) vector.Set(i);
                 }
             }
             else if (left.Selector.Indices != null || right.Selector.Indices != null)
@@ -57,7 +56,7 @@ namespace XForm.Types.Comparers
                 // Slow Path: Look up indices on both sides. ~55ms for 16M
                 for (int i = 0; i < left.Count; ++i)
                 {
-                    if (leftArray[left.Index(i)] == rightArray[right.Index(i)]) result.Add(i);
+                    if (leftArray[left.Index(i)] == rightArray[right.Index(i)]) vector.Set(i);
                 }
             }
             else if (!right.Selector.IsSingleValue)
@@ -65,7 +64,7 @@ namespace XForm.Types.Comparers
                 // Faster Path: Compare contiguous arrays. ~20ms for 16M
                 if(s_WhereNative != null)
                 {
-                    s_WhereNative(leftArray, left.Selector.StartIndexInclusive, (byte)CompareOperator.Equal, rightArray, right.Selector.StartIndexInclusive, left.Selector.Count, (byte)BooleanOperator.Or, result.Vector.Array, 0);
+                    s_WhereNative(leftArray, left.Selector.StartIndexInclusive, (byte)CompareOperator.Equal, rightArray, right.Selector.StartIndexInclusive, left.Selector.Count, (byte)BooleanOperator.Or, vector.Array, 0);
                     return;
                 }
 
@@ -73,7 +72,7 @@ namespace XForm.Types.Comparers
                 int leftIndexToRightIndex = right.Selector.StartIndexInclusive - left.Selector.StartIndexInclusive;
                 for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
                 {
-                    if (leftArray[i] == rightArray[i + leftIndexToRightIndex]) result.Add(i - zeroOffset);
+                    if (leftArray[i] == rightArray[i + leftIndexToRightIndex]) vector.Set(i - zeroOffset);
                 }
             }
             else if (!left.Selector.IsSingleValue)
@@ -84,13 +83,13 @@ namespace XForm.Types.Comparers
 
                 if (s_WhereSingleNative != null)
                 {
-                    s_WhereSingleNative(leftArray, left.Selector.StartIndexInclusive, left.Selector.Count, (byte)CompareOperator.Equal, rightValue, (byte)BooleanOperator.Or, result.Vector.Array, 0);
+                    s_WhereSingleNative(leftArray, left.Selector.StartIndexInclusive, left.Selector.Count, (byte)CompareOperator.Equal, rightValue, (byte)BooleanOperator.Or, vector.Array, 0);
                     return;
                 }
 
                 for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
                 {
-                    if (leftArray[i] == rightValue) result.Add(i - zeroOffset);
+                    if (leftArray[i] == rightValue) vector.Set(i - zeroOffset);
                 }
             }
             else
@@ -98,7 +97,7 @@ namespace XForm.Types.Comparers
                 // Single Static comparison. ~0.7ms for 16M [called every 10,240 rows]
                 if (leftArray[left.Selector.StartIndexInclusive] == rightArray[right.Selector.StartIndexInclusive])
                 {
-                    result.All(left.Count);
+                    vector.All(left.Count);
                 }
             }
         }

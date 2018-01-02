@@ -29,7 +29,7 @@ namespace XForm.Types
             return new ByteWriter(streamProvider.OpenWrite(Path.Combine(columnPath, "V.u8.bin")));
         }
 
-        public Action<DataBatch, DataBatch, RowRemapper> TryGetComparer(CompareOperator op)
+        public ComparerExtensions.Comparer TryGetComparer(CompareOperator op)
         {
             return new ByteComparer().TryBuild(op);
         }

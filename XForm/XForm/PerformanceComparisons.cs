@@ -39,11 +39,13 @@ namespace XForm
         public void Run()
         {
             NativeAccelerator.Enable();
-            //DoubleWhere();
+            
             WhereUShortUnderConstant();
             WhereUShortEqualsUshort();
+            ByteEqualsConstant();
+
+            //DoubleWhere();
             //TsvSplit();
-            //ByteEqualsConstant();
         }
 
         public void WhereUShortUnderConstant()

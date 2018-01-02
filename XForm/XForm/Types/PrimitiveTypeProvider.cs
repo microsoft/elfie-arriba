@@ -40,7 +40,7 @@ namespace XForm.Types
             return null;
         }
 
-        public Action<DataBatch, DataBatch, RowRemapper> TryGetComparer(CompareOperator op)
+        public ComparerExtensions.Comparer TryGetComparer(CompareOperator op)
         {
             if (typeof(T) == typeof(sbyte)) return new SbyteComparer().TryBuild(op);
             if (typeof(T) == typeof(byte)) return new ByteComparer().TryBuild(op);

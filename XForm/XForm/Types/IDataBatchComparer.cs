@@ -11,20 +11,22 @@ namespace XForm.Types
 {
     public interface IDataBatchComparer
     {
-        void WhereEqual(DataBatch left, DataBatch right, RowRemapper result);
-        void WhereNotEqual(DataBatch left, DataBatch right, RowRemapper result);
-        void WhereLessThan(DataBatch left, DataBatch right, RowRemapper result);
-        void WhereLessThanOrEqual(DataBatch left, DataBatch right, RowRemapper result);
-        void WhereGreaterThan(DataBatch left, DataBatch right, RowRemapper result);
-        void WhereGreaterThanOrEqual(DataBatch left, DataBatch right, RowRemapper result);
+        void WhereEqual(DataBatch left, DataBatch right, BitVector vector);
+        void WhereNotEqual(DataBatch left, DataBatch right, BitVector vector);
+        void WhereLessThan(DataBatch left, DataBatch right, BitVector vector);
+        void WhereLessThanOrEqual(DataBatch left, DataBatch right, BitVector vector);
+        void WhereGreaterThan(DataBatch left, DataBatch right, BitVector vector);
+        void WhereGreaterThanOrEqual(DataBatch left, DataBatch right, BitVector vector);
     }
 
     public static class ComparerExtensions
     {
+        public delegate void Comparer(DataBatch left, DataBatch right, BitVector vector);
+
         public delegate void WhereSingle<T>(T[] left, int index, int length, byte compareOperator, T right, byte booleanOperator, ulong[] vector, int vectorIndex);
         public delegate void Where<T>(T[] left, int leftIndex, byte compareOperator, T[] right, int rightIndex, int length, byte booleanOperator, ulong[] vector, int vectorIndex);
 
-        public static Action<DataBatch, DataBatch, RowRemapper> TryBuild(this IDataBatchComparer comparer, CompareOperator cOp)
+        public static Comparer TryBuild(this IDataBatchComparer comparer, CompareOperator cOp)
         {
             // Return the function for the desired comparison operation
             switch (cOp)
