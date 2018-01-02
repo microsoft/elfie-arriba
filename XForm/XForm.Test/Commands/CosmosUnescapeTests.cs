@@ -14,6 +14,7 @@ namespace XForm.Test.Commands
         [TestMethod]
         public void CosmosUnescapeCommand()
         {
+            // The dictionary key is the input text, the value is the expected unescaped text.
             Dictionary<String8, String8> testCases = new Dictionary<String8, String8>();
             testCases.Add(String8.Empty, String8.Empty);
             testCases.Add(String8.Convert("#NULL#", new byte[6]), String8.Empty);

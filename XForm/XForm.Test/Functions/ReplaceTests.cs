@@ -13,6 +13,7 @@ namespace XForm.Test.Functions
         [TestMethod]
         public void ReplaceFunction()
         {
+            // The tuple Item1 is the input text, Item2 is the expected text after the find-and-replace, Item3 is the find text, Item4 is the replace text, Item5 is whether the string comparison requires an exact match
             List<Tuple<String8, String8, String8, String8, bool>> testCases = new List<Tuple<String8, String8, String8, String8, bool>>();
             testCases.Add(Tuple.Create(String8.Empty, String8.Empty, "find".ToString8(), "replace".ToString8(), false));
             testCases.Add(Tuple.Create("N/A".ToString8(), String8.Empty, "N/A".ToString8(), String8.Empty, false));

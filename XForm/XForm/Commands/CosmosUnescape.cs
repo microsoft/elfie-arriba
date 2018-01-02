@@ -122,8 +122,9 @@ namespace XForm.Commands
 
                 if (!this.ReplacementMap.TryGetValue(escapedValue, out unescapedValue))
                 {
+                    // Since the escaped value wasn't one of the known escaped values, do not replace with the unescaped value.
+                    unescapedValue = originalValue.Substring(startIndex, endIndex - startIndex);
                     endIndex = endIndex - 1;
-                    unescapedValue = originalValue.Substring(startIndex, endIndex - startIndex + 1);
                 }
 
                 // Append the string before the escape sequence
