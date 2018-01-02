@@ -29,6 +29,11 @@ namespace XForm.Data
             this._bitVector = new ulong[((length + 63) >> 6)];
         }
 
+        public BitVector(ulong[] vector)
+        {
+            this._bitVector = vector;
+        }
+
         internal ulong[] Array => _bitVector;
 
         public bool this[int index]

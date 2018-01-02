@@ -28,6 +28,17 @@ namespace XForm.Data
         }
 
         /// <summary>
+        ///  AllocateToSize for BitVector. Ensure the vector is allocated and at least the required
+        ///  size.
+        /// </summary>
+        /// <param name="vector">BitVector instance to allocate</param>
+        /// <param name="size">Minimum required size for vector</param>
+        public static void AllocateToSize(ref BitVector vector, int size)
+        {
+            if (vector == null || vector.Capacity < size) vector = new BitVector(size);
+        }
+
+        /// <summary>
         ///  Generically create an array of a given type and desired size.
         /// </summary>
         /// <param name="elementType">Type of Array elements</param>
