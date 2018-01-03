@@ -8,6 +8,8 @@ using System.Linq;
 using System.Threading.Tasks;
 
 using Arriba.Monitoring;
+using System.Collections.Specialized;
+using System.Web;
 
 namespace Arriba.Communication.Application
 {
@@ -174,6 +176,26 @@ namespace Arriba.Communication.Application
             {
                 return _routes;
             }
+        }
+
+        protected async Task<NameValueCollection> ParametersFromQueryStringAndBody(IRequestContext ctx)
+        {
+            NameValueCollection parameters = new NameValueCollection();
+
+            // Read parameters from query string
+            foreach (var pair in ctx.Request.ResourceParameters.ValuePairs)
+            {
+                parameters.Add(pair.Item1, pair.Item2);
+            }
+
+            // Read parameters from body (these will override ones from the query string)
+            if (ctx.Request.HasBody)
+            {
+                string queryStringInBody = await ctx.Request.ReadBodyAsync<string>();
+                parameters.Add(HttpUtility.ParseQueryString(queryStringInBody));
+            }
+
+            return parameters;
         }
 
         /// <summary>
