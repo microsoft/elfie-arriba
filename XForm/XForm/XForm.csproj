@@ -89,6 +89,7 @@
     <Compile Include="Aggregators\CountAggregator.cs" />
     <Compile Include="BackgroundWebServer.cs" />
     <Compile Include="Commands\Cast.cs" />
+    <Compile Include="Commands\CosmosUnescape.cs" />
     <Compile Include="Commands\Rename.cs" />
     <Compile Include="Commands\Set.cs" />
     <Compile Include="Commands\Read.cs" />
@@ -108,6 +109,7 @@
     <Compile Include="Extensions\IComparableExtensions.cs" />
     <Compile Include="Extensions\InterfaceLoader.cs" />
     <Compile Include="Functions\AsOfDate.cs" />
+    <Compile Include="Functions\String\Replace.cs" />
     <Compile Include="Functions\Cast.cs" />
     <Compile Include="Functions\Date\DateAdd.cs" />
     <Compile Include="Functions\Rename.cs" />
