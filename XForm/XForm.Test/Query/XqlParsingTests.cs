@@ -40,19 +40,22 @@ namespace XForm.Test.Query
             Assert.AreEqual("[ServerPort] = 80 AND [ResponseBytes] > 900", Parse("[ServerPort] = 80 [ResponseBytes] > 900", source, context).ToString());
 
             // AND and OR with no parens, AND is tighter, parens omitted on ToString
-            Assert.AreEqual("[ServerPort] = 80 AND [ResponseBytes] > 1200 OR [ResponseBytes] < 400", Parse("[ServerPort] = 80 AND [ResponseBytes] > 1200 OR [ResponseBytes] < 400", source, context).ToString());
+            Assert.AreEqual("[ServerPort] = 80 AND [ResponseBytes] > 1200 OR [ResponseBytes] < 900", Parse("[ServerPort] = 80 AND [ResponseBytes] > 1200 OR [ResponseBytes] < 900", source, context).ToString());
 
             // AND and OR with AND parens, AND is tighter, parens omitted because same as default precedence
-            Assert.AreEqual("[ServerPort] = 80 AND [ResponseBytes] > 1200 OR [ResponseBytes] < 400", Parse("([ServerPort] = 80 AND [ResponseBytes] > 1200) OR [ResponseBytes] < 400", source, context).ToString());
+            Assert.AreEqual("[ServerPort] = 80 AND [ResponseBytes] > 1200 OR [ResponseBytes] < 900", Parse("([ServerPort] = 80 AND [ResponseBytes] > 1200) OR [ResponseBytes] < 900", source, context).ToString());
             
             // AND and OR with OR parens, parens on output to maintain evaluation order
-            Assert.AreEqual("[ServerPort] = 80 AND ([ResponseBytes] > 1200 OR [ResponseBytes] < 400)", Parse("[ServerPort] = 80 AND ([ResponseBytes] > 1200 OR [ResponseBytes] < 400)", source, context).ToString());
+            Assert.AreEqual("[ServerPort] = 80 AND ([ResponseBytes] > 1200 OR [ResponseBytes] < 900)", Parse("[ServerPort] = 80 AND ([ResponseBytes] > 1200 OR [ResponseBytes] < 900)", source, context).ToString());
+
+            // AND after OR [OrExpression parsing falls out correctly]
+            Assert.AreEqual("[ServerPort] = 80 AND [ResponseBytes] > 1200 OR [ResponseBytes] < 900 AND [ServerPort] != 443", Parse("[ServerPort] = 80 AND [ResponseBytes] > 1200 OR [ResponseBytes] < 900 AND [ServerPort] != 443", source, context).ToString());
 
             // NOT
             Assert.AreEqual("NOT([ServerPort] = 80)", Parse("NOT([ServerPort] = 80)", source, context).ToString());
 
             // Operators are case insensitive
-            Assert.AreEqual("[ServerPort] = 80 AND [ResponseBytes] > 1200 OR NOT([ResponseBytes] < 400)", Parse("[ServerPort] = 80 aNd [ResponseBytes] > 1200 oR nOT [ResponseBytes] < 400", source, context).ToString());
+            Assert.AreEqual("[ServerPort] = 80 AND [ResponseBytes] > 1200 OR NOT([ResponseBytes] < 900)", Parse("[ServerPort] = 80 aNd [ResponseBytes] > 1200 oR nOT [ResponseBytes] < 900", source, context).ToString());
         }
 
         private static IExpression Parse(string query, IDataBatchEnumerator source, WorkflowContext context)
@@ -68,7 +71,8 @@ namespace XForm.Test.Query
             WorkflowContext context = SampleDatabase.WorkflowContext;
             IDataBatchEnumerator source = XqlParser.Parse(@"
                 read WebRequest
-                cache all", null, context);
+                cache all
+                set [ResponseBytes] Cast([ResponseBytes], Int32)", null, context);
 
             // Results from WebRequest.20171202.r5.n1000, counts validated against Excel
 
@@ -79,7 +83,12 @@ namespace XForm.Test.Query
             Assert.AreEqual(1000, RunAndCount("where [ServerPort] = 80 OR [ServerPort] = 443", source, context));
 
             // AND
-            Assert.AreEqual(278, RunAndCount("where [ServerPort] = 80 AND Cast([ResponseBytes], Int32) > 1000", source, context));
+            Assert.AreEqual(278, RunAndCount("where [ServerPort] = 80 AND [ResponseBytes] > 1000", source, context));
+
+            // Precedence: Counts are correct for precedence; default is 'AND' terms evaluate together first 
+            Assert.AreEqual(55, RunAndCount("where [ServerPort] = 80 AND ([ResponseBytes] > 1200 OR [ResponseBytes] < 900)", source, context));
+            Assert.AreEqual(22 + 95, RunAndCount("where ([ServerPort] = 80 AND [ResponseBytes] > 1200) OR [ResponseBytes] < 900", source, context));
+            Assert.AreEqual(22 + 95, RunAndCount("where [ServerPort] = 80 AND [ResponseBytes] > 1200 OR [ResponseBytes] < 900", source, context));
         }
 
         private static int RunAndCount(string query, IDataBatchEnumerator source, WorkflowContext context)

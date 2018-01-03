@@ -301,7 +301,7 @@ namespace XForm.Query
                 _scanner.Next();
 
                 // Parse the next term
-                terms.Add(NextTerm(source, context));
+                terms.Add(NextAndExpression(source, context));
             }
 
             // Return the full expression
