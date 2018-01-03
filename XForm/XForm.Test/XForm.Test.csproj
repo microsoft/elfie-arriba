@@ -91,6 +91,7 @@
     <Compile Include="Data\BitVectorTests.cs" />
     <Compile Include="Extensions\IDataBatchExtensionsTests.cs" />
     <Compile Include="Extensions\StringExtensionsTests.cs" />
+    <Compile Include="Functions\String\CoalesceFunctionTests.cs" />
     <Compile Include="IO\StreamProviderTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Query\ComparerTests.cs" />
