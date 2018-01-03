@@ -519,7 +519,7 @@ export default class extends EventedComponent {
                         </thead>
                         <tbody>
                             {rows.map((row, rowIndex) => <tr key={"R" + rowIndex }>
-                                <GridHeadingCell key={"HR" + rows[rowIndex]} type="row" index={rowIndex} value={rows[rowIndex]} label={rowLabels[rowIndex]} onChange={this.handleQueryChange} />
+                                <GridHeadingCell key={"HR" + rows[rowIndex]} type="row" index={rowIndex} value={rows[rowIndex]} label={rowLabels[rowIndex]} onChange={this.handleQueryChange.bind(this)} />
                                 {columns.map((col, colIndex) => <GridValueCell
                                     key={"C" + colIndex + "R" + rowIndex}
                                     colIndex={colIndex}
