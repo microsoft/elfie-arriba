@@ -7,18 +7,53 @@ using System;
 namespace XForm
 {
     /// <summary>
-    ///  Hashing is a MurmurHash3 implementation. It's the same code from Arriba\Hashing.cs
+    ///  Hashing is a MurmurHash3 implementation. It's based on Arriba\Hashing.cs.
     /// </summary>
     public class Hashing
     {
-        public static unsafe ulong Hash(ulong key, uint seed)
+        public static unsafe ulong Hash(byte key, uint seed)
         {
-            return Hash((byte*)&key, 8, seed);
+            return Hash((byte*)&key, 1, seed);
+        }
+
+        public static unsafe ulong Hash(sbyte key, uint seed)
+        {
+            return Hash((byte*)&key, 1, seed);
+        }
+
+        public static unsafe ulong Hash(short key, uint seed)
+        {
+            return Hash((byte*)&key, 2, seed);
+        }
+
+        public static unsafe ulong Hash(ushort key, uint seed)
+        {
+            return Hash((byte*)&key, 2, seed);
+        }
+
+        public static unsafe ulong Hash(int key, uint seed)
+        {
+            return Hash((byte*)&key, 4, seed);
+        }
+
+        public static unsafe ulong Hash(uint key, uint seed)
+        {
+            return Hash((byte*)&key, 4, seed);
         }
 
         public static unsafe ulong Hash(long key, uint seed)
         {
             return Hash((byte*)&key, 8, seed);
+        }
+
+        public static unsafe ulong Hash(ulong key, uint seed)
+        {
+            return Hash((byte*)&key, 8, seed);
+        }
+
+        public static unsafe ulong Hash(float key, uint seed)
+        {
+            return Hash((byte*)&key, 4, seed);
         }
 
         public static unsafe ulong Hash(double key, uint seed)
