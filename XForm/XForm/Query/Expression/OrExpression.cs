@@ -1,4 +1,8 @@
-﻿using System.Text;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System.Text;
+
 using XForm.Data;
 
 namespace XForm.Query.Expression
@@ -17,7 +21,7 @@ namespace XForm.Query.Expression
         {
             Allocator.AllocateToSize(ref _termVector, vector.Capacity);
 
-            foreach(IExpression term in _terms)
+            foreach (IExpression term in _terms)
             {
                 _termVector.None();
                 term.Evaluate(_termVector);

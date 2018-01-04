@@ -1,7 +1,12 @@
-﻿using Microsoft.CodeAnalysis.Elfie.Model.Strings;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Linq;
+
+using Microsoft.CodeAnalysis.Elfie.Model.Strings;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+
 using XForm.Data;
 using XForm.Extensions;
 
@@ -135,7 +140,7 @@ namespace XForm.Test.Query
 
             Func<DataBatch> resultGetter = query.ColumnGetter(query.Columns.IndexOfColumn(outputColumnName));
             int pageCount;
-            
+
             // Get one row only and verify
             pageCount = query.Next(1);
             DataBatchTransformer.AssertAreEqual(DataBatchTransformer.Slice(expected, 0, 1), resultGetter(), pageCount);
@@ -187,7 +192,7 @@ public static class DataBatchTransformer
             areAnyNull |= isNull;
         }
 
-        if(!areAnyNull) Assert.IsTrue(actual.IsNull == null, "Result shouldn't have a null array if no values are null");
+        if (!areAnyNull) Assert.IsTrue(actual.IsNull == null, "Result shouldn't have a null array if no values are null");
     }
 
     // Return an IsSingleElement array with just the first value of the batch, but the same count

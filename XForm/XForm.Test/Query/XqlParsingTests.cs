@@ -5,10 +5,10 @@ using System.Collections.Generic;
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-using XForm.Query;
 using XForm.Data;
-using XForm.Query.Expression;
 using XForm.Extensions;
+using XForm.Query;
+using XForm.Query.Expression;
 
 namespace XForm.Test.Query
 {
@@ -44,7 +44,7 @@ namespace XForm.Test.Query
 
             // AND and OR with AND parens, AND is tighter, parens omitted because same as default precedence
             Assert.AreEqual("[ServerPort] = 80 AND [ResponseBytes] > 1200 OR [ResponseBytes] < 900", Parse("([ServerPort] = 80 AND [ResponseBytes] > 1200) OR [ResponseBytes] < 900", source, context).ToString());
-            
+
             // AND and OR with OR parens, parens on output to maintain evaluation order
             Assert.AreEqual("[ServerPort] = 80 AND ([ResponseBytes] > 1200 OR [ResponseBytes] < 900)", Parse("[ServerPort] = 80 AND ([ResponseBytes] > 1200 OR [ResponseBytes] < 900)", source, context).ToString());
 

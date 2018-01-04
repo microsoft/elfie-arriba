@@ -76,7 +76,7 @@ namespace XForm.Extensions
                 {
                     string assemblyName = ConfigurationManager.AppSettings[key];
 
-                    foreach(T value in BuildAllInAssembly<T>(Assembly.Load(assemblyName)))
+                    foreach (T value in BuildAllInAssembly<T>(Assembly.Load(assemblyName)))
                     {
                         yield return value;
                     }

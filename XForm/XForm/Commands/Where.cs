@@ -69,6 +69,6 @@ namespace XForm.Commands
             }
 
             return 0;
-        }        
+        }
     }
 }

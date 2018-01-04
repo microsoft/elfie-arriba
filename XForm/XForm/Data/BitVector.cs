@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Runtime.CompilerServices;
 
 namespace XForm.Data
@@ -26,28 +29,28 @@ namespace XForm.Data
         public BitVector(int length)
         {
             if (length < 0) throw new ArgumentOutOfRangeException("length");
-            this._bitVector = new ulong[((length + 63) >> 6)];
+            _bitVector = new ulong[((length + 63) >> 6)];
         }
 
         public BitVector(ulong[] vector)
         {
-            this._bitVector = vector;
+            _bitVector = vector;
         }
 
         internal ulong[] Array => _bitVector;
 
         public bool this[int index]
         {
-            get { return (this._bitVector[index >> 6] & (0x1UL << (index & 63))) != 0; }
+            get { return (_bitVector[index >> 6] & (0x1UL << (index & 63))) != 0; }
             set
             {
                 if (value)
                 {
-                    this._bitVector[index >> 6] |= (0x1UL << (index & 63));
+                    _bitVector[index >> 6] |= (0x1UL << (index & 63));
                 }
                 else
                 {
-                    this._bitVector[index >> 6] &= ~(0x1UL << (index & 63));
+                    _bitVector[index >> 6] &= ~(0x1UL << (index & 63));
                 }
             }
         }
@@ -55,25 +58,25 @@ namespace XForm.Data
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Set(int index)
         {
-            this._bitVector[index >> 6] |= (0x1UL << (index & 63));
+            _bitVector[index >> 6] |= (0x1UL << (index & 63));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Clear(int index)
         {
-            this._bitVector[index >> 6] &= ~(0x1UL << (index & 63));
+            _bitVector[index >> 6] &= ~(0x1UL << (index & 63));
         }
 
         public int Capacity
         {
-            get { return this._bitVector.Length << 6; }
+            get { return _bitVector.Length << 6; }
         }
 
         public int Count
         {
             get
             {
-                if (s_nativeCount != null) return s_nativeCount(this._bitVector);
+                if (s_nativeCount != null) return s_nativeCount(_bitVector);
 
                 // Count using the hamming weight algorithm [http://en.wikipedia.org/wiki/Hamming_weight]
                 const ulong m1 = 0x5555555555555555UL;
@@ -101,7 +104,7 @@ namespace XForm.Data
 
         public int Page(int[] indicesFound, ref int fromIndex)
         {
-            if (s_nativePage != null) return s_nativePage(this._bitVector, indicesFound, ref fromIndex);
+            if (s_nativePage != null) return s_nativePage(_bitVector, indicesFound, ref fromIndex);
 
             int countFound = 0;
             int i;
@@ -127,18 +130,18 @@ namespace XForm.Data
             // Clear bits over 'length' in the partially filled ulong, if any
             int lastIndex = length >> 6;
 
-            if((length & 63) != 0)
+            if ((length & 63) != 0)
             {
-                this._bitVector[lastIndex] &= ulong.MaxValue >> (64 - (length & 63));
+                _bitVector[lastIndex] &= ulong.MaxValue >> (64 - (length & 63));
                 lastIndex++;
             }
 
             // Clear all fully empty vector parts
-            if (lastIndex < this._bitVector.Length)
+            if (lastIndex < _bitVector.Length)
             {
-                System.Array.Clear(this._bitVector, lastIndex, this._bitVector.Length - lastIndex);
+                System.Array.Clear(_bitVector, lastIndex, _bitVector.Length - lastIndex);
             }
-            
+
             return this;
         }
 
@@ -155,7 +158,7 @@ namespace XForm.Data
             int end = (length + 63) >> 6;
             for (int i = 0; i < end; ++i)
             {
-                this._bitVector[i] = ulong.MaxValue;
+                _bitVector[i] = ulong.MaxValue;
             }
 
             // Clear the bits over the target length
@@ -172,7 +175,7 @@ namespace XForm.Data
             int end = (length + 63) >> 6;
             for (int i = 0; i < end; ++i)
             {
-                this._bitVector[i] = ~this._bitVector[i];
+                _bitVector[i] = ~_bitVector[i];
             }
 
             // Clear bits over the length
@@ -183,11 +186,11 @@ namespace XForm.Data
 
         public BitVector Set(BitVector other)
         {
-            if (this._bitVector.Length != other._bitVector.Length) throw new InvalidOperationException();
+            if (_bitVector.Length != other._bitVector.Length) throw new InvalidOperationException();
 
-            for (int i = 0; i < this._bitVector.Length; ++i)
+            for (int i = 0; i < _bitVector.Length; ++i)
             {
-                this._bitVector[i] = other._bitVector[i];
+                _bitVector[i] = other._bitVector[i];
             }
 
             return this;
@@ -195,11 +198,11 @@ namespace XForm.Data
 
         public BitVector And(BitVector other)
         {
-            if (this._bitVector.Length != other._bitVector.Length) throw new InvalidOperationException();
+            if (_bitVector.Length != other._bitVector.Length) throw new InvalidOperationException();
 
-            for(int i = 0; i < this._bitVector.Length; ++i)
+            for (int i = 0; i < _bitVector.Length; ++i)
             {
-                this._bitVector[i] &= other._bitVector[i];
+                _bitVector[i] &= other._bitVector[i];
             }
 
             return this;
@@ -207,11 +210,11 @@ namespace XForm.Data
 
         public BitVector Or(BitVector other)
         {
-            if (this._bitVector.Length != other._bitVector.Length) throw new InvalidOperationException();
+            if (_bitVector.Length != other._bitVector.Length) throw new InvalidOperationException();
 
-            for (int i = 0; i < this._bitVector.Length; ++i)
+            for (int i = 0; i < _bitVector.Length; ++i)
             {
-                this._bitVector[i] |= other._bitVector[i];
+                _bitVector[i] |= other._bitVector[i];
             }
 
             return this;
@@ -219,11 +222,11 @@ namespace XForm.Data
 
         public BitVector AndNot(BitVector other)
         {
-            if (this._bitVector.Length != other._bitVector.Length) throw new InvalidOperationException();
+            if (_bitVector.Length != other._bitVector.Length) throw new InvalidOperationException();
 
-            for (int i = 0; i < this._bitVector.Length; ++i)
+            for (int i = 0; i < _bitVector.Length; ++i)
             {
-                this._bitVector[i] &= ~other._bitVector[i];
+                _bitVector[i] &= ~other._bitVector[i];
             }
 
             return this;
@@ -271,10 +274,10 @@ namespace XForm.Data
             BitVector other = obj as BitVector;
             if (other == null) return false;
 
-            if (this._bitVector.Length != other._bitVector.Length) return false;
-            for (int i = 0; i < this._bitVector.Length; ++i)
+            if (_bitVector.Length != other._bitVector.Length) return false;
+            for (int i = 0; i < _bitVector.Length; ++i)
             {
-                if (this._bitVector[i] != other._bitVector[i]) return false;
+                if (_bitVector[i] != other._bitVector[i]) return false;
             }
 
             return true;
@@ -282,7 +285,7 @@ namespace XForm.Data
 
         public override int GetHashCode()
         {
-            return this._bitVector.GetHashCode();
+            return _bitVector.GetHashCode();
         }
 
         public override string ToString()

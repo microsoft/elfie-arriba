@@ -231,7 +231,7 @@ namespace XForm.Query
             if (type == TokenType.ColumnName)
             {
                 if (String.IsNullOrEmpty(value)) return "[]";
-                
+
                 // Always escape column names
                 return "[" + value.Replace("]", "]]") + "]";
             }

@@ -63,7 +63,7 @@ namespace XForm.Query
 
         public static string ToQueryForm(this CompareOperator op)
         {
-            switch(op)
+            switch (op)
             {
                 case CompareOperator.Equal:
                     return "=";
@@ -135,7 +135,7 @@ namespace XForm.Query
 
         public static string ToQueryForm(this BooleanOperator op)
         {
-            switch(op)
+            switch (op)
             {
                 case BooleanOperator.And:
                     return "AND";
@@ -148,7 +148,7 @@ namespace XForm.Query
 
         public static bool TryParseNot(this string op)
         {
-            switch(op.ToUpperInvariant())
+            switch (op.ToUpperInvariant())
             {
                 case "NOT":
                 case "!":

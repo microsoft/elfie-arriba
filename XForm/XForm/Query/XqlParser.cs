@@ -11,8 +11,8 @@ using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using XForm.Data;
 using XForm.Extensions;
 using XForm.Functions;
-using XForm.Types;
 using XForm.Query.Expression;
+using XForm.Types;
 
 namespace XForm.Query
 {
@@ -292,7 +292,7 @@ namespace XForm.Query
             // Parse the first term (and any 'AND'ed terms)
             terms.Add(NextAndExpression(source, context));
 
-            while(HasAnotherArgument)
+            while (HasAnotherArgument)
             {
                 // If this is not an OR, stop
                 BooleanOperator bOp;
@@ -316,7 +316,7 @@ namespace XForm.Query
             // Parse the first term
             terms.Add(NextTerm(source, context));
 
-            while(HasAnotherArgument)
+            while (HasAnotherArgument)
             {
                 BooleanOperator bOp;
                 if (_scanner.Current.Value.TryParseBooleanOperator(out bOp))
@@ -347,7 +347,7 @@ namespace XForm.Query
             bool negate = false;
 
             // Look for NOT
-            if(_scanner.Current.Value.TryParseNot())
+            if (_scanner.Current.Value.TryParseNot())
             {
                 _scanner.Next();
                 negate = true;

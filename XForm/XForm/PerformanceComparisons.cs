@@ -1,10 +1,12 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using Microsoft.CodeAnalysis.Elfie.Serialization;
 using System;
 using System.IO;
 using System.Linq;
+
+using Microsoft.CodeAnalysis.Elfie.Serialization;
+
 using XForm.Data;
 using XForm.Extensions;
 using XForm.Test;
@@ -42,12 +44,12 @@ namespace XForm
         public void Run()
         {
             //NativeAccelerator.Enable();
-            
+
             WhereUShortUnderConstant();
             WhereUShortEqualsUshort();
             ByteEqualsConstant();
             DoubleWhere();
-            
+
             //TsvSplit();
         }
 
