@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
-
 using XForm.Data;
 
 namespace XForm.Functions
@@ -11,6 +10,7 @@ namespace XForm.Functions
     {
         public string Name => "AsOfDate";
         public string Usage => "AsOfDate() [returns as-of-date report is requested for]";
+        public Type ReturnType => typeof(DateTime);
 
         public IDataBatchColumn Build(IDataBatchEnumerator source, WorkflowContext context)
         {

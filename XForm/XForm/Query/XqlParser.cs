@@ -135,10 +135,17 @@ namespace XForm.Query
             return provider.Type;
         }
 
-        public string NextColumnName(IDataBatchEnumerator currentSource)
+        public string NextColumnName(IDataBatchEnumerator currentSource, Type requiredType = null)
         {
             int columnIndex = -1;
-            ParseNextOrThrow(() => currentSource.Columns.TryGetIndexOfColumn(_scanner.Current.Value, out columnIndex), "columnName", TokenType.ColumnName, currentSource.Columns.Select((cd) => cd.Name));
+
+            ParseNextOrThrow(
+                () => currentSource.Columns.TryGetIndexOfColumn(_scanner.Current.Value, out columnIndex)
+                && (requiredType == null || currentSource.Columns[columnIndex].Type == requiredType), 
+                "columnName", 
+                TokenType.ColumnName, 
+                EscapedColumnList(currentSource, requiredType));
+
             return currentSource.Columns[columnIndex].Name;
         }
 
@@ -173,14 +180,20 @@ namespace XForm.Query
             }
         }
 
-        public IDataBatchColumn NextColumn(IDataBatchEnumerator source, WorkflowContext context)
+        public IDataBatchColumn NextColumn(IDataBatchEnumerator source, WorkflowContext context, Type requiredType = null)
         {
             IDataBatchColumn result = null;
 
             if (_scanner.Current.Type == TokenType.Value)
             {
-                String8 value = String8.Convert(_scanner.Current.Value, new byte[String8.GetLength(_scanner.Current.Value)]);
-                result = new Constant(source, value, typeof(String8));
+                object value = String8.Convert(_scanner.Current.Value, new byte[String8.GetLength(_scanner.Current.Value)]);
+
+                if(requiredType != null && requiredType != typeof(String8))
+                {
+                    value = TypeConverterFactory.ConvertSingle(value, requiredType);
+                }
+
+                result = new Constant(source, value, (requiredType == null ? typeof(String8) : requiredType));
                 _scanner.Next();
             }
             else if (_scanner.Current.Type == TokenType.FunctionName)
@@ -191,9 +204,10 @@ namespace XForm.Query
             {
                 result = new Column(source, context);
             }
-            else
-            {
-                Throw("columnFunctionOrLiteral", source.Columns.Select((c) => c.Name).Concat(FunctionFactory.SupportedFunctions));
+
+            if (result == null || (requiredType != null && result.ColumnDetails.Type != requiredType))
+            { 
+                Throw("columnFunctionOrLiteral", EscapedColumnList(source, requiredType).Concat(EscapedFunctionList(requiredType)));
             }
 
             if (_scanner.Current.Value.Equals("as", StringComparison.OrdinalIgnoreCase))
@@ -206,13 +220,18 @@ namespace XForm.Query
             return result;
         }
 
-        public IDataBatchColumn NextFunction(IDataBatchEnumerator source, WorkflowContext context)
+        public IDataBatchColumn NextFunction(IDataBatchEnumerator source, WorkflowContext context, Type requiredType = null)
         {
             string value = _scanner.Current.Value;
 
             // Get the builder for the function
             IFunctionBuilder builder = null;
-            ParseNextOrThrow(() => FunctionFactory.TryGetBuilder(_scanner.Current.Value, out builder), "functionName", TokenType.FunctionName, FunctionFactory.SupportedFunctions);
+            ParseNextOrThrow(() => FunctionFactory.TryGetBuilder(_scanner.Current.Value, out builder)
+                && (requiredType == null || builder.ReturnType == null || requiredType == builder.ReturnType), 
+                "functionName", 
+                TokenType.FunctionName, 
+                FunctionFactory.SupportedFunctions(requiredType));
+
             _currentlyBuilding.Push(builder);
 
             // Parse the open paren
@@ -226,6 +245,12 @@ namespace XForm.Query
                 // Ensure we've parsed all arguments, and consume the close paren
                 ParseNextOrThrow(() => true, ")", TokenType.CloseParen);
                 _currentlyBuilding.Pop();
+
+                // Error if the final function doesn't have the required return type
+                if(requiredType != null && result.ColumnDetails.Type != requiredType)
+                {
+                    Throw("functionName", FunctionFactory.SupportedFunctions(requiredType));
+                }
 
                 return result;
             }
@@ -388,6 +413,18 @@ namespace XForm.Query
             }
 
             _scanner.Next();
+        }
+
+        public static IEnumerable<string> EscapedColumnList(IDataBatchEnumerator source, Type requiredType = null)
+        {
+            return source.Columns
+                .Where((cd) => (requiredType == null || cd.Type == requiredType))
+                .Select((cd) => XqlScanner.Escape(cd.Name, TokenType.ColumnName));
+        }
+
+        public static IEnumerable<string> EscapedFunctionList(Type requiredType = null)
+        {
+            return FunctionFactory.SupportedFunctions(requiredType).Select((name) => name + "(");
         }
 
         private ErrorContext BuildErrorContext()

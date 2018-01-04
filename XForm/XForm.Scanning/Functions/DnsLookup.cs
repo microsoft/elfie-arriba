@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System;
 using System.Net;
 using System.Net.Sockets;
 
@@ -17,6 +18,7 @@ namespace XForm.Functions.String
     {
         public string Name => "DnsLookup";
         public string Usage => "DnsLookup([ComputerName])";
+        public Type ReturnType => typeof(String8);
 
         public IDataBatchColumn Build(IDataBatchEnumerator source, WorkflowContext context)
         {

@@ -12,12 +12,13 @@ namespace XForm.Functions
     {
         private static Dictionary<string, IFunctionBuilder> s_buildersByName;
 
-        public static IEnumerable<string> SupportedFunctions
+        public static IEnumerable<string> SupportedFunctions(Type returnType = null)
         {
-            get
+            EnsureLoaded();
+
+            foreach(IFunctionBuilder builder in s_buildersByName.Values)
             {
-                EnsureLoaded();
-                return s_buildersByName.Keys;
+                if (returnType == null || builder.ReturnType == null || builder.ReturnType == returnType) yield return builder.Name;
             }
         }
 

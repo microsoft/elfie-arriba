@@ -5,9 +5,9 @@ using System.Linq;
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-using XForm.Functions;
 using XForm.Query;
 using XForm.Types;
+using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 
 namespace XForm.Test.Query
 {
@@ -17,10 +17,16 @@ namespace XForm.Test.Query
         private static string s_verbs = string.Join("|", XqlParser.SupportedVerbs.OrderBy((s) => s));
         private static string s_sources = string.Join("|", SampleDatabase.WorkflowContext.Runner.SourceNames.OrderBy((s) => s));
         private static string s_types = string.Join("|", TypeProviderFactory.SupportedTypes.OrderBy((s) => s));
-        private static string s_columnNames = string.Join("|", XqlParser.Parse(@"read WebRequest", null, SampleDatabase.WorkflowContext).Columns.Select((cd) => cd.Name).OrderBy((s) => s));
+        private static string s_columnNames = string.Join("|", XqlParser.EscapedColumnList(XqlParser.Parse(@"read WebRequest", null, SampleDatabase.WorkflowContext)).OrderBy((s) => s));
+
         private static string s_selectListOptions = string.Join("|",
-            XqlParser.Parse(@"read WebRequest", null, SampleDatabase.WorkflowContext).Columns.Select((cd) => cd.Name)
-            .Concat(FunctionFactory.SupportedFunctions)
+            XqlParser.EscapedColumnList(XqlParser.Parse(@"read WebRequest", null, SampleDatabase.WorkflowContext))
+            .Concat(XqlParser.EscapedFunctionList())
+            .OrderBy((s) => s));
+
+        private static string s_stringSelectListOptions = string.Join("|",
+            XqlParser.EscapedColumnList(XqlParser.Parse(@"read WebRequest", null, SampleDatabase.WorkflowContext), typeof(String8))
+            .Concat(XqlParser.EscapedFunctionList(typeof(String8)))
             .OrderBy((s) => s));
 
         [TestMethod]
@@ -56,7 +62,7 @@ namespace XForm.Test.Query
             // ColumnFunctionOrLiteral
             Assert.AreEqual(s_selectListOptions, Values(suggester.Suggest($@"
                 read WebRequest
-                select ")));
+                select")));
 
             // Function argument (type)
             Assert.AreEqual(s_types, Values(suggester.Suggest($@"
@@ -64,12 +70,12 @@ namespace XForm.Test.Query
                 select Trim(Cast(Cast(5, Int32), ")));
 
             // Function argument (ColumnFunctionOrLiteral)
-            Assert.AreEqual(s_selectListOptions, Values(suggester.Suggest($@"
+            Assert.AreEqual(s_stringSelectListOptions, Values(suggester.Suggest($@"
                 read WebRequest
                 select Trim(")));
 
             // Nested Function argument (ColumnFunctionOrLiteral)
-            Assert.AreEqual(s_selectListOptions, Values(suggester.Suggest($@"
+            Assert.AreEqual(s_stringSelectListOptions, Values(suggester.Suggest($@"
                 read WebRequest
                 select Cast(Trim(")));
 
@@ -77,6 +83,11 @@ namespace XForm.Test.Query
             Assert.AreEqual(true, suggester.Suggest($@"
                 read WebRequest
                 select Trim(Cast(Cast(5, Int32), String8)) AS [Fiver]").IsValid);
+
+            // Select next argument
+            Assert.AreEqual(s_selectListOptions, Values(suggester.Suggest($@"
+                read WebRequest
+                select [HttpStatus]")));
         }
 
         [TestMethod]
