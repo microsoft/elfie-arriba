@@ -12,6 +12,8 @@ namespace XForm.Extensions
 {
     public class InterfaceLoader
     {
+        public const string XFormExtensionPrefix = "XFormExtension";
+
         public static T Build<T>(Type type)
         {
             ConstructorInfo ctor = type.GetConstructor(Array.Empty<Type>());
@@ -59,37 +61,26 @@ namespace XForm.Extensions
             }
         }
 
-        /// <summary>
-        ///  Build an instance of every type listed in a given app.config for a given base type or
-        ///  interface type, using the empty constructors.
-        /// </summary>
-        /// <typeparam name="T">Interface or Base Class Type to construct interfaces of</typeparam>
-        /// <returns>An instance of each type implementing T from app.config</returns>
-        private static IEnumerable<T> BuildAllFromConfig<T>()
-        {
-            string interfaceName = typeof(T).Name;
-
-            foreach (string key in ConfigurationManager.AppSettings.AllKeys)
-            {
-                if (key.StartsWith(interfaceName, StringComparison.OrdinalIgnoreCase))
-                {
-                    string[] settings = ConfigurationManager.AppSettings[key].Split(';');
-                    T instance = Build<T>(settings[1], settings[0]);
-                    if (instance != null) yield return instance;
-                }
-            }
-        }
-
         public static IEnumerable<T> BuildAll<T>()
         {
+            // Load everything in the immediate calling assembly (XForm)
             foreach (T value in BuildAllInAssembly<T>(Assembly.GetCallingAssembly()))
             {
                 yield return value;
             }
 
-            foreach (T value in BuildAllFromConfig<T>())
+            // Load everything in assemblies referenced in app.config
+            foreach (string key in ConfigurationManager.AppSettings.AllKeys)
             {
-                yield return value;
+                if (key.StartsWith(XFormExtensionPrefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    string assemblyName = ConfigurationManager.AppSettings[key];
+
+                    foreach(T value in BuildAllInAssembly<T>(Assembly.Load(assemblyName)))
+                    {
+                        yield return value;
+                    }
+                }
             }
         }
     }
