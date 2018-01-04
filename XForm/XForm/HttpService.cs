@@ -97,7 +97,7 @@ namespace XForm
                 Run(
                     Require(context, "q"),
                     Require(context, "fmt"),
-                    -1,
+                    ParseOrDefault(context.Request.QueryString["c"], -1),
                     response);
             }
             catch (Exception ex)
