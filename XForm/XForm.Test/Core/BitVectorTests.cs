@@ -5,9 +5,7 @@ using System.Text;
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-using XForm.Data;
-
-namespace XForm.Test.Data
+namespace XForm.Test.Core
 {
     [TestClass]
     public class BitVectorTests
