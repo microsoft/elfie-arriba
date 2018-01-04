@@ -1,5 +1,7 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.CodeAnalysis.Elfie.Model.Strings;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
+using System.Linq;
 using XForm.Data;
 using XForm.Extensions;
 
@@ -8,6 +10,8 @@ namespace XForm.Test.Query
     [TestClass]
     public class CommandsAndFunctionsTests
     {
+        public static DateTime TestAsOfDateTime = new DateTime(2017, 12, 10, 0, 0, 0, DateTimeKind.Utc);
+
         [TestMethod]
         public void Function_DateAdd()
         {
@@ -32,7 +36,75 @@ namespace XForm.Test.Query
             RunQueryAndVerify(values, "When", expected, "Result", "set [Result] DateAdd([When], \"-2d\")");
         }
 
-        public static void RunQueryAndVerify<T>(T[] values, string inputColumnName, T[] expected, string outputColumnName, string queryText)
+
+        [TestMethod]
+        public void Function_Cast()
+        {
+            int[] expected = Enumerable.Range(-2, 10).ToArray();
+            string[] values = expected.Select((i) => i.ToString()).ToArray();
+
+            RunQueryAndVerify(values, "Score", expected, "Result", "set [Result] Cast(Cast([Score], String8), Int32)");
+        }
+
+        [TestMethod]
+        public void Function_Trim()
+        {
+            String8Block block = new String8Block();
+            String8[] values = new String8[]
+            {
+                String8.Empty,
+                block.GetCopy("Simple"),
+                block.GetCopy("  Simple Spaced  "),
+                block.GetCopy("   "),
+                block.GetCopy("\t\t\t"),
+            };
+
+            String8[] expected = new String8[]
+            {
+                String8.Empty,
+                block.GetCopy("Simple"),
+                block.GetCopy("Simple Spaced"),
+                String8.Empty,
+                String8.Empty
+            };
+
+            RunQueryAndVerify(values, "Name", expected, "Name", "set [Name] Trim([Name])");
+        }
+
+        [TestMethod]
+        public void Function_ToUpper()
+        {
+            String8Block block = new String8Block();
+            String8[] values = new String8[]
+            {
+                String8.Empty,
+                block.GetCopy("Simple"),
+                block.GetCopy("ALREADY"),
+                block.GetCopy("   "),
+            };
+
+            String8[] expected = new String8[]
+            {
+                String8.Empty,
+                block.GetCopy("SIMPLE"),
+                block.GetCopy("ALREADY"),
+                block.GetCopy("   "),
+            };
+
+            RunQueryAndVerify(values, "Name", expected, "Name", "set [Name] ToUpper([Name])");
+        }
+
+        [TestMethod]
+        public void Function_AsOfDate()
+        {
+            int[] values = Enumerable.Range(0, 5).ToArray();
+            DateTime[] expected = new DateTime[] { TestAsOfDateTime, TestAsOfDateTime, TestAsOfDateTime, TestAsOfDateTime, TestAsOfDateTime };
+
+            // Can't try other scenarios with AsOfDate because it doesn't care of the inputs are null or indirect
+            RunAndCompare(DataBatch.All(values), "RowNumber", DataBatch.All(expected), "Result", "set [Result] AsOfDate()");
+        }
+
+        public static void RunQueryAndVerify(Array values, string inputColumnName, Array expected, string outputColumnName, string queryText)
         {
             Assert.IsTrue(expected.Length > 3, "Must have at least four values for a proper test.");
 
@@ -54,9 +126,12 @@ namespace XForm.Test.Query
 
         public static void RunAndCompare(DataBatch input, string inputColumnName, DataBatch expected, string outputColumnName, string queryText)
         {
+            WorkflowContext context = new WorkflowContext();
+            context.RequestedAsOfDateTime = TestAsOfDateTime;
+
             IDataBatchEnumerator query = XFormTable.FromArrays(input.Count)
                 .WithColumn(new ColumnDetails(inputColumnName, input.Array.GetType().GetElementType(), true), input)
-                .Query(queryText, new WorkflowContext());
+                .Query(queryText, context);
 
             Func<DataBatch> resultGetter = query.ColumnGetter(query.Columns.IndexOfColumn(outputColumnName));
             int pageCount;
@@ -90,8 +165,8 @@ public static class DataBatchTransformer
         Assert.AreEqual(expected.Count, nextRowCount, "Next() didn't return expected row count.");
         Assert.AreEqual(expected.Count, actual.Count, "Row count returned was not correct");
         Assert.AreEqual(expected.Array.GetType().GetElementType(), actual.Array.GetType().GetElementType(), "Result isn't of the expected type");
-        Assert.AreEqual(expected.IsNull == null, actual.IsNull == null, "Result didn't have nulls or not as expected");
 
+        bool areAnyNull = false;
         for (int i = 0; i < expected.Count; ++i)
         {
             int expectedIndex = expected.Index(i);
@@ -101,14 +176,18 @@ public static class DataBatchTransformer
             if (expected.IsNull != null)
             {
                 isNull = expected.IsNull[expectedIndex];
-                Assert.AreEqual(isNull, actual.IsNull[actualIndex], $"Value for row {i:n0} wasn't null or not as expected.");
+                Assert.AreEqual(isNull, actual.IsNull != null && actual.IsNull[actualIndex], $"Value for row {i:n0} wasn't null or not as expected.");
             }
 
             if (!isNull)
             {
                 Assert.AreEqual(expected.Array.GetValue(expectedIndex), actual.Array.GetValue(actualIndex), $"Value for row {i:n0} was not expected.");
             }
+
+            areAnyNull |= isNull;
         }
+
+        if(!areAnyNull) Assert.IsTrue(actual.IsNull == null, "Result shouldn't have a null array if no values are null");
     }
 
     // Return an IsSingleElement array with just the first value of the batch, but the same count

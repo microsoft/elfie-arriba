@@ -256,14 +256,8 @@ namespace XForm.Types
             Allocator.AllocateToSize(ref _nullArray, batch.Count);
             Allocator.AllocateToSize(ref _stringArray, batch.Count);
 
-            if (_block == null)
-            {
-                _block = new String8Block();
-            }
-            else
-            {
-                _block.Clear();
-            }
+            if (_block == null) _block = new String8Block();
+            _block.Clear();
 
             bool hasAnyNulls = false;
             string[] sourceArray = (string[])batch.Array;
@@ -308,10 +302,23 @@ namespace XForm.Types
 
             bool areAnyNull = false;
             String8[] sourceArray = (String8[])batch.Array;
+
             for (int i = 0; i < batch.Count; ++i)
             {
-                _nullArray[i] = !_converter(sourceArray[batch.Index(i)], out _array[i]);
-                areAnyNull |= _nullArray[i];
+                int index = batch.Index(i);
+                bool isNull = (batch.IsNull != null && batch.IsNull[index]);
+
+                if (isNull)
+                {
+                    _array[i] = default(T);
+                }
+                else
+                {
+                    isNull = !_converter(sourceArray[batch.Index(i)], out _array[i]);
+                }
+
+                _nullArray[i] = isNull;
+                areAnyNull |= isNull;
             }
 
             return DataBatch.All(_array, batch.Count, (areAnyNull ? _nullArray : null));

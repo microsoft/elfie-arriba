@@ -81,6 +81,7 @@ namespace XForm.Functions
                 }
 
                 // Convert each non-null value
+                bool areAnyNull = false;
                 T[] array = (T[])batch.Array;
                 for (int i = 0; i < batch.Count; ++i)
                 {
@@ -91,6 +92,7 @@ namespace XForm.Functions
                     {
                         buffer[i] = default(U);
                         isNull[i] = true;
+                        areAnyNull = true;
                     }
                     else
                     {
@@ -98,7 +100,7 @@ namespace XForm.Functions
                     }
                 }
 
-                return DataBatch.All(buffer, batch.Count, isNull);
+                return DataBatch.All(buffer, batch.Count, (areAnyNull ? isNull : null));
             };
         }
 
