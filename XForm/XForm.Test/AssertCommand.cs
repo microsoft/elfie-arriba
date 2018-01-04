@@ -15,7 +15,7 @@ namespace XForm.Test
         All = 1
     }
 
-    internal class AssertBuilder : IPipelineStageBuilder
+    internal class AssertBuilder : IVerbBuilder
     {
         public string Verb => "assert";
         public string Usage => "'assert' (none|all)\r\n  {subquery}\r\n  end";
@@ -41,7 +41,7 @@ namespace XForm.Test
         {
             _type = type;
             _singlePageSource = new SinglePageEnumerator(source);
-            _assertPipeline = context.Parser.NextPipeline(_singlePageSource);
+            _assertPipeline = context.Parser.NextQuery(_singlePageSource);
         }
 
         public override int Next(int desiredCount)
@@ -68,7 +68,7 @@ namespace XForm.Test
         }
     }
 
-    internal class AssertCountBuilder : IPipelineStageBuilder
+    internal class AssertCountBuilder : IVerbBuilder
     {
         public string Verb => "assertCount";
         public string Usage => "'assertCount' [rowCount]";

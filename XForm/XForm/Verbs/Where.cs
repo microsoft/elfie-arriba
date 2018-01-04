@@ -8,9 +8,9 @@ using XForm.Query;
 using XForm.Query.Expression;
 using XForm.Transforms;
 
-namespace XForm.Commands
+namespace XForm.Verbs
 {
-    internal class WhereCommandBuilder : IPipelineStageBuilder
+    internal class WhereCommandBuilder : IVerbBuilder
     {
         public string Verb => "where";
         public string Usage => "'where' [columnFunctionOrLiteral] [operator] [columnFunctionOrLiteral]";

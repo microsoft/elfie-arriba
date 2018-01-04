@@ -8,9 +8,9 @@ using System.Linq;
 using XForm.Data;
 using XForm.Query;
 
-namespace XForm.Commands
+namespace XForm.Verbs
 {
-    internal class SchemaCommandBuilder : IPipelineStageBuilder
+    internal class SchemaCommandBuilder : IVerbBuilder
     {
         public string Verb => "schema";
         public string Usage => "'schema'";

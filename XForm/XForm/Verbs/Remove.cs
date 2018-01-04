@@ -9,9 +9,9 @@ using XForm.Data;
 using XForm.Extensions;
 using XForm.Query;
 
-namespace XForm.Commands
+namespace XForm.Verbs
 {
-    internal class RemoveCommandBuilder : IPipelineStageBuilder
+    internal class RemoveCommandBuilder : IVerbBuilder
     {
         public string Verb => "remove";
         public string Usage => "'remove' [ColumnName], [ColumnName], ...";

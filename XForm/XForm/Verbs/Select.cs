@@ -8,9 +8,9 @@ using System.Linq;
 using XForm.Data;
 using XForm.Query;
 
-namespace XForm.Commands
+namespace XForm.Verbs
 {
-    internal class SelectCommandBuilder : IPipelineStageBuilder
+    internal class SelectCommandBuilder : IVerbBuilder
     {
         public string Verb => "select";
         public string Usage => "'select' [ColumnFunctionOrLiteral] (AS [Name])?, [ColumnFunctionOrLiteral], ...";

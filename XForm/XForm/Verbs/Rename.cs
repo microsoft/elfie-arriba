@@ -7,9 +7,9 @@ using System.Collections.Generic;
 using XForm.Data;
 using XForm.Query;
 
-namespace XForm.Commands
+namespace XForm.Verbs
 {
-    internal class RenameCommandBuilder : IPipelineStageBuilder
+    internal class RenameCommandBuilder : IVerbBuilder
     {
         public string Verb => "rename";
         public string Usage => "'rename' [ColumnName] [NewColumnName], [ColumnName] [NewColumnName], ...";

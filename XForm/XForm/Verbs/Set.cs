@@ -8,9 +8,9 @@ using XForm.Data;
 using XForm.Extensions;
 using XForm.Query;
 
-namespace XForm.Commands
+namespace XForm.Verbs
 {
-    internal class SetCommandBuilder : IPipelineStageBuilder
+    internal class SetCommandBuilder : IVerbBuilder
     {
         public string Verb => "set";
         public string Usage => "'set' [newColumnName] [ColumnFunctionOrLiteral]";

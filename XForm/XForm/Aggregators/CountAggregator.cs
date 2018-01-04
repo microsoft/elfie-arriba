@@ -9,7 +9,7 @@ using XForm.Query;
 
 namespace XForm.Aggregators
 {
-    internal class CountCommandBuilder : IPipelineStageBuilder
+    internal class CountCommandBuilder : IVerbBuilder
     {
         public string Verb => "count";
         public string Usage => "'count'";

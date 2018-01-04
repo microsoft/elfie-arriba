@@ -87,10 +87,10 @@
   <ItemGroup>
     <Compile Include="Aggregators\CountAggregator.cs" />
     <Compile Include="BackgroundWebServer.cs" />
-    <Compile Include="Commands\Cast.cs" />
-    <Compile Include="Commands\Rename.cs" />
-    <Compile Include="Commands\Set.cs" />
-    <Compile Include="Commands\Read.cs" />
+    <Compile Include="Verbs\Cast.cs" />
+    <Compile Include="Verbs\Rename.cs" />
+    <Compile Include="Verbs\Set.cs" />
+    <Compile Include="Verbs\Read.cs" />
     <Compile Include="Context\IWorkflowRunner.cs" />
     <Compile Include="Context\SingleFileRunner.cs" />
     <Compile Include="Data\Allocator.cs" />
@@ -136,7 +136,7 @@
     <Compile Include="Query\Expression\AndExpression.cs" />
     <Compile Include="Query\Expression\OrExpression.cs" />
     <Compile Include="Query\Expression\TermExpression.cs" />
-    <Compile Include="Query\IPipelineStageBuilder.cs" />
+    <Compile Include="Query\IVerbBuilder.cs" />
     <Compile Include="Query\IUsage.cs" />
     <Compile Include="Query\Operator.cs" />
     <Compile Include="Extensions\ColumnsExtensions.cs" />
@@ -147,8 +147,8 @@
     <Compile Include="IO\BinaryTableReader.cs" />
     <Compile Include="Query\UsageException.cs" />
     <Compile Include="Query\XqlParser.cs" />
-    <Compile Include="Commands\Remove.cs" />
-    <Compile Include="Commands\Select.cs" />
+    <Compile Include="Verbs\Remove.cs" />
+    <Compile Include="Verbs\Select.cs" />
     <Compile Include="Query\XqlScanner.cs" />
     <Compile Include="Query\QuerySuggester.cs" />
     <Compile Include="Test\Benchmarker.cs" />
@@ -166,12 +166,12 @@
     <Compile Include="Types\IDataBatchComparer.cs" />
     <Compile Include="Types\Nullable.cs" />
     <Compile Include="Types\TypeConverterFactory.cs" />
-    <Compile Include="Commands\Join.cs" />
-    <Compile Include="Commands\Limit.cs" />
+    <Compile Include="Verbs\Join.cs" />
+    <Compile Include="Verbs\Limit.cs" />
     <Compile Include="Data\RowRemapper.cs" />
     <Compile Include="IO\TabularFileReader.cs" />
-    <Compile Include="Commands\Schema.cs" />
-    <Compile Include="Commands\Where.cs" />
+    <Compile Include="Verbs\Schema.cs" />
+    <Compile Include="Verbs\Where.cs" />
     <Compile Include="IO\BinaryTableWriter.cs" />
     <Compile Include="IO\TabularFileWriter.cs" />
     <Compile Include="Types\ByteProvider.cs" />

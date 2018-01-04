@@ -22,7 +22,7 @@ namespace XForm.Query
         private WorkflowContext _workflow;
         private Stack<IUsage> _currentlyBuilding;
 
-        private static Dictionary<string, IPipelineStageBuilder> s_pipelineStageBuildersByName;
+        private static Dictionary<string, IVerbBuilder> s_pipelineStageBuildersByName;
 
         public XqlParser(string xqlQuery, WorkflowContext workflow)
         {
@@ -35,9 +35,9 @@ namespace XForm.Query
         private static void EnsureLoaded()
         {
             if (s_pipelineStageBuildersByName != null) return;
-            s_pipelineStageBuildersByName = new Dictionary<string, IPipelineStageBuilder>(StringComparer.OrdinalIgnoreCase);
+            s_pipelineStageBuildersByName = new Dictionary<string, IVerbBuilder>(StringComparer.OrdinalIgnoreCase);
 
-            foreach (IPipelineStageBuilder builder in InterfaceLoader.BuildAll<IPipelineStageBuilder>())
+            foreach (IVerbBuilder builder in InterfaceLoader.BuildAll<IVerbBuilder>())
             {
                 Add(builder);
             }
@@ -52,7 +52,7 @@ namespace XForm.Query
             }
         }
 
-        private static void Add(IPipelineStageBuilder builder)
+        private static void Add(IVerbBuilder builder)
         {
             s_pipelineStageBuildersByName[builder.Verb] = builder;
         }
@@ -70,7 +70,7 @@ namespace XForm.Query
             innerContext.Parser = parser;
 
             // Build the Pipeline
-            IDataBatchEnumerator result = parser.NextPipeline(source);
+            IDataBatchEnumerator result = parser.NextQuery(source);
 
             // Copy inner context results back out to the outer context
             innerContext.Pop(outerContext);
@@ -78,7 +78,7 @@ namespace XForm.Query
             return result;
         }
 
-        public IDataBatchEnumerator NextPipeline(IDataBatchEnumerator source)
+        public IDataBatchEnumerator NextQuery(IDataBatchEnumerator source)
         {
             IDataBatchEnumerator pipeline = source;
 
@@ -94,16 +94,16 @@ namespace XForm.Query
                     break;
                 }
 
-                pipeline = NextStage(pipeline);
+                pipeline = NextVerb(pipeline);
                 _scanner.Next();
             }
 
             return pipeline;
         }
 
-        public IDataBatchEnumerator NextStage(IDataBatchEnumerator source)
+        public IDataBatchEnumerator NextVerb(IDataBatchEnumerator source)
         {
-            IPipelineStageBuilder builder = null;
+            IVerbBuilder builder = null;
             ParseNextOrThrow(() => s_pipelineStageBuildersByName.TryGetValue(_scanner.Current.Value, out builder), "verb", TokenType.Value, SupportedVerbs);
             _currentlyBuilding.Push(builder);
 

@@ -9,7 +9,7 @@ namespace XForm.Query
     ///  XForm Queries are a set of stages built by IPipelineStageBuilders.
     ///  Create an IPipelineStageBuilder and specify the verbs it supports to extend the language.
     /// </summary>
-    public interface IPipelineStageBuilder : IUsage
+    public interface IVerbBuilder : IUsage
     {
         /// <summary>
         ///  Verb at the beginning of an XQL line which this builder constructs the command for.

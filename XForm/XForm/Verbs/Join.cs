@@ -12,9 +12,9 @@ using XForm.IO;
 using XForm.Query;
 using XForm.Transforms;
 
-namespace XForm.Commands
+namespace XForm.Verbs
 {
-    internal class JoinBuilder : IPipelineStageBuilder
+    internal class JoinBuilder : IVerbBuilder
     {
         public string Verb => "join";
         public string Usage => "'join' [FromColumnName] [ToBinarySource] [ToColumn] [JoinedInColumnPrefix]";

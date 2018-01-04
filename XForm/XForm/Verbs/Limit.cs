@@ -4,9 +4,9 @@
 using XForm.Data;
 using XForm.Query;
 
-namespace XForm.Commands
+namespace XForm.Verbs
 {
-    internal class LimitCommandBuilder : IPipelineStageBuilder
+    internal class LimitCommandBuilder : IVerbBuilder
     {
         public string Verb => "limit";
         public string Usage => "'limit' [RowCount]";

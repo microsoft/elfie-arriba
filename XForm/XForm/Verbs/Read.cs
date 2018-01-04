@@ -10,9 +10,9 @@ using XForm.IO;
 using XForm.IO.StreamProvider;
 using XForm.Query;
 
-namespace XForm.Commands
+namespace XForm.Verbs
 {
-    internal class ReadCommandBuilder : IPipelineStageBuilder
+    internal class ReadCommandBuilder : IVerbBuilder
     {
         public string Verb => "read";
         public string Usage => "'read' [tableNameOrFilePath]";
@@ -24,7 +24,7 @@ namespace XForm.Commands
         }
     }
 
-    internal class ReadRangeCommandBuilder : IPipelineStageBuilder
+    internal class ReadRangeCommandBuilder : IVerbBuilder
     {
         public string Verb => "readrange";
         public string Usage => "'readRange' [relativeTime] [tableNameOrFilePath]";

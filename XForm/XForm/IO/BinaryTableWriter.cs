@@ -14,7 +14,7 @@ using XForm.Types;
 
 namespace XForm.IO
 {
-    internal class WriteCommandBuilder : IPipelineStageBuilder
+    internal class WriteCommandBuilder : IVerbBuilder
     {
         public string Verb => "write";
         public string Usage => "'write' [tableNameOrFilePath]";

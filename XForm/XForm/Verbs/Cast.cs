@@ -8,9 +8,9 @@ using XForm.Data;
 using XForm.Extensions;
 using XForm.Query;
 
-namespace XForm.Commands
+namespace XForm.Verbs
 {
-    internal class CastCommandBuilder : IPipelineStageBuilder
+    internal class CastCommandBuilder : IVerbBuilder
     {
         public string Verb => "cast";
         public string Usage => "'cast' [columnName] [targetType] [default?] [strict?]";
