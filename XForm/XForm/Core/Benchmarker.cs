@@ -7,7 +7,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 
-namespace XForm.Test
+namespace XForm
 {
     /// <summary>
     ///  Benchmarker provides a simple interface for logging performance results quickly.

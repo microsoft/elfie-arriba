@@ -4,7 +4,7 @@
 using System;
 using System.Reflection;
 
-namespace XForm.Data
+namespace XForm
 {
     /// <summary>
     ///  Allocator provides simple just-in-time allocation for XForm components.

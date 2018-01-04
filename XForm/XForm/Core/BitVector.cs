@@ -4,7 +4,7 @@
 using System;
 using System.Runtime.CompilerServices;
 
-namespace XForm.Data
+namespace XForm
 {
     /// <summary>
     ///  BitVectory contains a bit vector stored in an array of ulongs.

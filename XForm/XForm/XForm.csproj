@@ -93,19 +93,19 @@
     <Compile Include="Verbs\Read.cs" />
     <Compile Include="Context\IWorkflowRunner.cs" />
     <Compile Include="Context\SingleFileRunner.cs" />
-    <Compile Include="Data\Allocator.cs" />
+    <Compile Include="Core\Allocator.cs" />
     <Compile Include="Data\ArraySelector.cs" />
     <Compile Include="Data\ColumnDetails.cs" />
     <Compile Include="Data\DataBatch.cs" />
     <Compile Include="Data\DataBatchEnumeratorWrapper.cs" />
     <Compile Include="Data\IDataBatchEnumerator.cs" />
-    <Compile Include="Data\BitVector.cs" />
+    <Compile Include="Core\BitVector.cs" />
     <Compile Include="Data\MemoryCacher.cs" />
     <Compile Include="Data\SinglePageEnumerator.cs" />
-    <Compile Include="Data\XFormTable.cs" />
+    <Compile Include="Core\XFormTable.cs" />
     <Compile Include="Extensions\DataBatchEnumeratorExtensions.cs" />
     <Compile Include="Extensions\IComparableExtensions.cs" />
-    <Compile Include="Extensions\InterfaceLoader.cs" />
+    <Compile Include="Core\InterfaceLoader.cs" />
     <Compile Include="Functions\AsOfDate.cs" />
     <Compile Include="Functions\Cast.cs" />
     <Compile Include="Functions\Date\DateAdd.cs" />
@@ -129,7 +129,7 @@
     <Compile Include="IO\SchemaSerializer.cs" />
     <Compile Include="Extensions\StreamProviderExtensions.cs" />
     <Compile Include="IO\StreamProvider\MultipleSourceStreamProvider.cs" />
-    <Compile Include="NativeAccelerator.cs" />
+    <Compile Include="Core\NativeAccelerator.cs" />
     <Compile Include="PerformanceComparisons.cs" />
     <Compile Include="Query\Expression\NotExpression.cs" />
     <Compile Include="Query\Expression\IExpression.cs" />
@@ -143,7 +143,7 @@
     <Compile Include="Extensions\StringExtensions.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="IO\ArrayTable.cs" />
+    <Compile Include="Data\ArrayTable.cs" />
     <Compile Include="IO\BinaryTableReader.cs" />
     <Compile Include="Query\UsageException.cs" />
     <Compile Include="Query\XqlParser.cs" />
@@ -151,7 +151,7 @@
     <Compile Include="Verbs\Select.cs" />
     <Compile Include="Query\XqlScanner.cs" />
     <Compile Include="Query\QuerySuggester.cs" />
-    <Compile Include="Test\Benchmarker.cs" />
+    <Compile Include="Core\Benchmarker.cs" />
     <Compile Include="Types\Comparers\ComparableComparer.cs" />
     <Compile Include="Types\Comparers\DoubleComparer.cs" />
     <Compile Include="Types\Comparers\FloatComparer.cs" />
@@ -193,14 +193,6 @@
       <Project>{d45f339f-847a-4f3a-88a0-afb883e9920e}</Project>
       <Name>Elfie</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Web\bundle.js">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Web\index.html">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

@@ -9,6 +9,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using XForm.Data;
 using XForm.Extensions;
+using XForm;
 
 namespace XForm.Test.Query
 {

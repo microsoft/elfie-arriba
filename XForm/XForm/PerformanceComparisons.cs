@@ -7,9 +7,7 @@ using System.Linq;
 
 using Microsoft.CodeAnalysis.Elfie.Serialization;
 
-using XForm.Data;
 using XForm.Extensions;
-using XForm.Test;
 
 namespace XForm
 {

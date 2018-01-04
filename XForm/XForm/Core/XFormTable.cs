@@ -1,11 +1,12 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using XForm.Data;
 using XForm.Extensions;
 using XForm.IO;
 using XForm.IO.StreamProvider;
 
-namespace XForm.Data
+namespace XForm
 {
     /// <summary>
     ///  XFormTable provides static helper functions to expose XForm in a friendly way
