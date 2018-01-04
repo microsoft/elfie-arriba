@@ -57,7 +57,7 @@ namespace XForm.IO
             {
                 if (columnIndex < 0 || columnIndex >= _columnArrays.Count) throw new IndexOutOfRangeException("columnIndex");
                 DataBatch raw = _columnArrays[columnIndex];
-                return DataBatch.All(raw.Array, raw.Count).Select(_currentSelector, ref remapArray);
+                return raw.Select(_currentSelector, ref remapArray);
             };
         }
 
