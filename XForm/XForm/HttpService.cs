@@ -32,6 +32,7 @@ namespace XForm
                 server.AddResponder("suggest", Suggest);
                 server.AddResponder("run", Run);
                 server.AddResponder("download", Download);
+                server.AddResponder("count", CountWithinTimeout);
 
                 server.Start();
                 Console.WriteLine("Http Server running; browse http://localhost:5073. Press enter to stop server.");
@@ -108,6 +109,56 @@ namespace XForm
             }
         }
 
+        private void CountWithinTimeout(HttpListenerContext context, HttpListenerResponse response)
+        {
+            try
+            {
+                CountWithinTimeout(
+                    Require(context, "q"),
+                    TimeSpan.FromMilliseconds(ParseOrDefault(context.Request.QueryString["ms"], 5000)),
+                    response);
+            }
+            catch (Exception ex)
+            {
+                using (ITabularWriter writer = new JsonTabularWriter(response.OutputStream))
+                {
+                    WriteException(ex, writer);
+                }
+            }
+        }
+
+        private void CountWithinTimeout(string query, TimeSpan timeout, HttpListenerResponse response)
+        {
+            IDataBatchEnumerator pipeline = null;
+
+            try
+            {
+                // Build a Pipeline for the Query
+                pipeline = XqlParser.Parse(query, null, _workflowContext);
+
+                // Try to get the count up to the timeout
+                RunResult result = pipeline.RunUntilTimeout(timeout);
+
+                using (ITabularWriter writer = WriterForFormat("json", response))
+                {
+                    writer.SetColumns(new string[] { "Count", "IsComplete", "RuntimeMs" });
+                    writer.Write((int)result.RowCount);
+                    writer.Write(result.IsComplete);
+                    writer.Write((int)result.Elapsed.TotalMilliseconds);
+                    writer.NextRow();
+                }
+            }
+            finally
+            {
+                if (pipeline != null)
+                {
+                    pipeline.Dispose();
+                    pipeline = null;
+                }
+            }
+        }
+
+
         private void Run(string query, string format, int rowCountLimit, HttpListenerResponse response)
         {
             IDataBatchEnumerator pipeline = null;
@@ -163,24 +214,7 @@ namespace XForm
 
         private void WriteException(SuggestResult result, ITabularWriter writer)
         {
-            String8Block block = new String8Block();
-
-            writer.SetColumns(new string[] { "Valid", "Usage", "ItemCategory", "Values" });
-            writer.Write(result.IsValid);
-            writer.Write(block.GetCopy(result.Context.Usage));
-            writer.Write(block.GetCopy(result.Context.InvalidValueCategory));
-
-            String8 values = String8.Empty;
-            if (result.Context.ValidValues != null)
-            {
-                foreach (string value in result.Context.ValidValues)
-                {
-                    values = block.Concatenate(values, s_delimiter, block.GetCopy(value));
-                }
-            }
-            writer.Write(values);
-
-            writer.NextRow();
+            WriteException(result.Context, result.IsValid, writer);
         }
 
         private void WriteException(Exception ex, ITabularWriter writer, bool isValid = false)
@@ -190,23 +224,7 @@ namespace XForm
             if (ex is UsageException)
             {
                 UsageException ue = ex as UsageException;
-
-                writer.SetColumns(new string[] { "Valid", "Usage", "ItemCategory", "Values" });
-                writer.Write(isValid);
-                writer.Write(block.GetCopy(ue.Context.Usage));
-                writer.Write(block.GetCopy(ue.Context.InvalidValueCategory));
-
-                String8 values = String8.Empty;
-                if (ue.Context.ValidValues != null)
-                {
-                    foreach (string value in ue.Context.ValidValues)
-                    {
-                        values = block.Concatenate(values, s_delimiter, block.GetCopy(value));
-                    }
-                }
-                writer.Write(values);
-
-                writer.NextRow();
+                WriteException(ue.Context, isValid, writer);
             }
             else
             {
@@ -215,6 +233,29 @@ namespace XForm
                 writer.Write(block.GetCopy(ex.Message));
                 writer.NextRow();
             }
+        }
+
+        private void WriteException(ErrorContext context, bool isValid, ITabularWriter writer)
+        {
+            String8Block block = new String8Block();
+
+            writer.SetColumns(new string[] { "Valid", "Usage", "ItemCategory", "ErrorMessage", "Values" });
+            writer.Write(isValid);
+            writer.Write(block.GetCopy(context.Usage));
+            writer.Write(block.GetCopy(context.InvalidValueCategory));
+            writer.Write(block.GetCopy(context.ErrorMessage));
+
+            String8 values = String8.Empty;
+            if (context.ValidValues != null)
+            {
+                foreach (string value in context.ValidValues)
+                {
+                    values = block.Concatenate(values, s_delimiter, block.GetCopy(value));
+                }
+            }
+            writer.Write(values);
+
+            writer.NextRow();
         }
 
         private static string Require(HttpListenerContext context, string parameterName)
