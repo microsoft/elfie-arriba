@@ -21,6 +21,9 @@ namespace XForm.Query.Expression
 
         public TermExpression(IDataBatchEnumerator source, IDataBatchColumn left, CompareOperator op, IDataBatchColumn right)
         {
+            // Disallow constant <op> constant [likely error not wrapping column name]
+            if (left is Constant && right is Constant) throw new ArgumentException($"({left} {op.ToQueryForm()} {right}) is comparing two constants. Wrap [ColumnNames] in braces.");
+
             // Save arguments as-is for ToString()
             _left = left;
             _cOp = op;
