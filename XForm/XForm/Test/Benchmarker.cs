@@ -7,8 +7,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-
 namespace XForm.Test
 {
     /// <summary>
@@ -109,7 +107,7 @@ namespace XForm.Test
             object expected = _results[0].Output;
             for (int i = 1; i < _results.Count; ++i)
             {
-                Assert.AreEqual(expected, _results[i].Output, $"{_results[i].Name} result {_results[i].Output} did not equal expected result {expected} from {_results[0].Output}");
+                Trace.WriteLine($"{_results[i].Name} result {_results[i].Output} did not equal expected result {expected} from {_results[0].Name}.");
             }
         }
 

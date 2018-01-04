@@ -23,9 +23,12 @@ namespace XForm
         public PerformanceComparisons()
         {
             _rowCount = 50 * 1000 * 1000;
+
+            // Allocate 50 million ushorts in two arrays
             _values = new ushort[_rowCount];
             _thresholds = new ushort[_rowCount];
 
+            // The first array has random values from 0-999, the second is all '50'
             Random r = new Random();
             for (int i = 0; i < _values.Length; ++i)
             {
@@ -38,7 +41,7 @@ namespace XForm
 
         public void Run()
         {
-            NativeAccelerator.Enable();
+            //NativeAccelerator.Enable();
             
             WhereUShortUnderConstant();
             WhereUShortEqualsUshort();
@@ -62,10 +65,10 @@ namespace XForm
                     return count;
                 });
 
-                //b.Measure("Linq Count", _values.Length, () =>
-                //{
-                //    return _values.Where((i) => i <= 50).Count();
-                //});
+                b.Measure("Linq Count", _values.Length, () =>
+                {
+                    return _values.Where((i) => i <= 50).Count();
+                });
 
                 b.Measure("XForm Count", _values.Length, () =>
                 {
