@@ -94,6 +94,7 @@
     <Compile Include="Aggregators\CountAggregator.cs" />
     <Compile Include="BackgroundWebServer.cs" />
     <Compile Include="Core\Hashing.cs" />
+    <Compile Include="Core\Dictionary.cs" />
     <Compile Include="Verbs\Cast.cs" />
     <Compile Include="Verbs\Rename.cs" />
     <Compile Include="Verbs\Set.cs" />
