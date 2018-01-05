@@ -93,6 +93,7 @@
   <ItemGroup>
     <Compile Include="Aggregators\CountAggregator.cs" />
     <Compile Include="BackgroundWebServer.cs" />
+    <Compile Include="Core\DataBatchHasher.cs" />
     <Compile Include="Core\Hashing.cs" />
     <Compile Include="Core\Dictionary.cs" />
     <Compile Include="Verbs\Cast.cs" />
