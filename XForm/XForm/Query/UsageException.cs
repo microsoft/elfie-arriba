@@ -27,6 +27,7 @@ namespace XForm.Query
             this.InvalidValue = invalidValue;
             this.InvalidValueCategory = invalidValueCategory;
             this.ValidValues = validValues;
+            this.ErrorMessage = $"Invalid {this.InvalidValueCategory}";
 
             // Always sort expected values
             if (this.ValidValues != null) this.ValidValues = this.ValidValues.OrderBy((s) => s);
