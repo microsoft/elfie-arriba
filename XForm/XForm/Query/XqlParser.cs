@@ -355,6 +355,8 @@ namespace XForm.Query
                 else
                 {
                     // This is an implied AND, look for the next expression
+                    // If there's a hint token here, suggest boolean operators
+                    if (_scanner.Current.Type == TokenType.NextTokenHint) Throw("booleanOperator", new string[] { "AND", "OR", "NOT" });
                 }
 
                 // Parse the next term
