@@ -42,15 +42,13 @@ namespace XForm.Verbs
         private int _joinFromColumnIndex;
         private Func<DataBatch> _joinFromColumnGetter;
         private Func<DataBatch> _joinToColumnGetter;
-        private Dictionary<String8, int> _joinDictionary;
+
+        private IJoinDictionary _joinDictionary;
 
         private List<ColumnDetails> _columns;
         private List<int> _mappedColumnIndices;
 
         private RowRemapper _sourceJoinedRowsFilter;
-        private int[] _currentJoinLeftSideIndices;
-        private int[] _currentJoinRightSideIndices;
-        private int _currentJoinCount;
 
         public Join(IDataBatchEnumerator source, string joinFromColumn, IDataBatchEnumerator joinToSource, string joinToColumn, string joinSidePrefix)
         {
@@ -116,6 +114,9 @@ namespace XForm.Verbs
             // If this is the first call, fully cache the JoinToSource and build a lookup Dictionary
             if (_joinDictionary == null) BuildJoinDictionary();
 
+            DataBatch joinToRows = default(DataBatch);
+            BitVector matchedRows = null;
+
             while (true)
             {
                 // Get the next rows from the source
@@ -126,52 +127,32 @@ namespace XForm.Verbs
                     return 0;
                 }
 
+                // Get values to join from
                 DataBatch joinFromValues = _joinFromColumnGetter();
-                String8[] array = (String8[])joinFromValues.Array;
 
-                // Find the matching row index for each value
-                Allocator.AllocateToSize(ref _currentJoinLeftSideIndices, count);
-                Allocator.AllocateToSize(ref _currentJoinRightSideIndices, count);
+                // Find which rows matched and to what right-side row indices
+                matchedRows = _joinDictionary.TryGetValues(joinFromValues, out joinToRows);
 
-                int joinedCount = 0;
-                for (int i = 0; i < count; ++i)
-                {
-                    String8 joinFromValue = array[joinFromValues.Index(i)];
+                // Filter left-side rows to the matches (inner join)
+                _sourceJoinedRowsFilter.SetMatches(matchedRows);
 
-                    int matchIndex;
-                    if (_joinDictionary.TryGetValue(joinFromValue, out matchIndex))
-                    {
-                        _currentJoinRightSideIndices[joinedCount] = matchIndex;
-                        _currentJoinLeftSideIndices[joinedCount] = i;
-                        joinedCount++;
-                    }
-                }
-
-                _sourceJoinedRowsFilter.SetMatches(_currentJoinLeftSideIndices, joinedCount);
-                _currentJoinCount = joinedCount;
-                if (_currentJoinCount > 0) break;
+                if (joinToRows.Count > 0) break;
             }
 
-            // 'Seek' those particular rows in the JoinToSource
-            _cachedJoinSource.Get(ArraySelector.Map(_currentJoinRightSideIndices, _currentJoinCount));
+            // 'Seek' the right-side rows which matched
+            _cachedJoinSource.Get(ArraySelector.Map((int[])joinToRows.Array, joinToRows.Count));
 
-            CurrentBatchRowCount = _currentJoinCount;
-            return _currentJoinCount;
+            CurrentBatchRowCount = joinToRows.Count;
+            return joinToRows.Count;
         }
 
         private void BuildJoinDictionary()
         {
-            _joinDictionary = new Dictionary<String8, int>();
-
             int joinToTotalCount = _cachedJoinSource.Next(int.MaxValue);
             DataBatch allJoinToValues = _joinToColumnGetter();
-            String8[] array = (String8[])allJoinToValues.Array;
 
-            for (int i = 0; i < joinToTotalCount; ++i)
-            {
-                String8 value = array[allJoinToValues.Index(i)];
-                _joinDictionary[value] = i;
-            }
+            _joinDictionary = new JoinDictionary<String8>(joinToTotalCount, new String8Comparer());
+            _joinDictionary.Add(allJoinToValues, 0);
         }
 
         public void Reset()

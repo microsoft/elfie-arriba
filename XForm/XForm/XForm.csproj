@@ -95,7 +95,7 @@
     <Compile Include="BackgroundWebServer.cs" />
     <Compile Include="Core\DataBatchHasher.cs" />
     <Compile Include="Core\Hashing.cs" />
-    <Compile Include="Core\Dictionary.cs" />
+    <Compile Include="Core\JoinDictionary.cs" />
     <Compile Include="Verbs\Cast.cs" />
     <Compile Include="Verbs\Rename.cs" />
     <Compile Include="Verbs\Set.cs" />
