@@ -39,6 +39,7 @@ namespace XForm.Verbs
         private IDataBatchEnumerator _source;
         private MemoryCacher _cachedJoinSource;
 
+        private Type _joinColumnType;
         private int _joinFromColumnIndex;
         private Func<DataBatch> _joinFromColumnGetter;
         private Func<DataBatch> _joinToColumnGetter;
@@ -60,9 +61,13 @@ namespace XForm.Verbs
             // Request the JoinFromColumn Getter
             _joinFromColumnIndex = source.Columns.IndexOfColumn(joinFromColumn);
             _joinFromColumnGetter = source.ColumnGetter(_joinFromColumnIndex);
+            _joinColumnType = source.Columns[_joinFromColumnIndex].Type;
 
             // Request the JoinToColumn Getter
-            _joinToColumnGetter = _cachedJoinSource.ColumnGetter(_cachedJoinSource.Columns.IndexOfColumn(joinToColumn));
+            int joinToColumnIndex = _cachedJoinSource.Columns.IndexOfColumn(joinToColumn);
+            Type joinToColumnType = _cachedJoinSource.Columns[joinToColumnIndex].Type;
+            if (joinToColumnType != _joinColumnType) throw new ArgumentException($"Join requires columns of matching types; join from {_joinColumnType.Name} to {joinToColumnType.Name} not supported.");
+            _joinToColumnGetter = _cachedJoinSource.ColumnGetter(joinToColumnIndex);
 
             // All of the main source columns are passed through
             _columns = new List<ColumnDetails>(source.Columns);
@@ -151,7 +156,7 @@ namespace XForm.Verbs
             int joinToTotalCount = _cachedJoinSource.Next(int.MaxValue);
             DataBatch allJoinToValues = _joinToColumnGetter();
 
-            _joinDictionary = new JoinDictionary<String8>(joinToTotalCount, new String8Comparer());
+            _joinDictionary = JoinDictionary<int>.BuildTypedJoinDictionary(_joinColumnType, joinToTotalCount, null);
             _joinDictionary.Add(allJoinToValues, 0);
         }
 

@@ -1,10 +1,14 @@
 ﻿using Microsoft.CodeAnalysis.Elfie.Model.Strings;
+using System;
 using System.Collections.Generic;
+using System.Reflection;
 using XForm.Data;
 
+// Fix TODOs!
+//  Add large scale performance test in PerformanceComparisons. 1M join to 100k with 90% match rate?
 namespace XForm
 {
-    public class String8Comparer : IEqualityComparer<String8>
+    public class String8EqualityComparer : IEqualityComparer<String8>
     {
         public bool Equals(String8 left, String8 right)
         {
@@ -14,6 +18,41 @@ namespace XForm
         public int GetHashCode(String8 value)
         {
             return unchecked((int)Hashing.Hash(value, 0));
+        }
+    }
+
+    public class IntEqualityComparer : IEqualityComparer<int>
+    {
+        public bool Equals(int left, int right)
+        {
+            return left == right;
+        }
+
+        public int GetHashCode(int value)
+        {
+            return unchecked((int)Hashing.Hash(value, 0));
+        }
+    }
+
+    // TODO: Use DataBatch comparer infrastructure instead
+    //  - Need to add GetHashCode to IDataBatchComparer.
+    //  - Likely slow until Dictionary hashes and compares in bulk.
+    public static class ComparerFactory
+    {
+        public static object BuildComparer<T>(string name)
+        {
+            if (String.IsNullOrEmpty(name)) name = typeof(T).Name;
+
+            switch(name.ToLowerInvariant())
+            {
+                case "string8":
+                    return new String8EqualityComparer();
+                case "int":
+                case "int32":
+                    return new IntEqualityComparer();
+                default:
+                    throw new NotImplementedException($"No IEqualityComparer known with name \"{name}\".");
+            }
         }
     }
 
@@ -35,8 +74,21 @@ namespace XForm
         private int[] _returnedIndicesBuffer;
         private BitVector _returnedVector;
 
-        public JoinDictionary(int initialCapacity, IEqualityComparer<T> comparer)
+        // TODO: Move this method to a non-generic class container. Allocator?
+        public static IJoinDictionary BuildTypedJoinDictionary(Type elementType, int capacity, string comparerName)
         {
+            Type typedDictionary = typeof(JoinDictionary<>).MakeGenericType(elementType);
+            ConstructorInfo ctor = typedDictionary.GetConstructor(new Type[] { typeof(int), typeof(string) });
+            return (IJoinDictionary)ctor.Invoke(new object[] { capacity, comparerName });
+        }
+
+        public JoinDictionary(int initialCapacity) : this(initialCapacity, null)
+        { }
+
+        public JoinDictionary(int initialCapacity, string comparerName)
+        {
+            IEqualityComparer<T> comparer = (IEqualityComparer<T>)ComparerFactory.BuildComparer<T>(comparerName);
+
             _dictionary = new Dictionary<T, int>(initialCapacity, comparer);
             _comparer = comparer;
         }

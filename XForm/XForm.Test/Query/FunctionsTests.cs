@@ -14,7 +14,7 @@ using XForm;
 namespace XForm.Test.Query
 {
     [TestClass]
-    public class CommandsAndFunctionsTests
+    public class FunctionsTests
     {
         public static DateTime TestAsOfDateTime = new DateTime(2017, 12, 10, 0, 0, 0, DateTimeKind.Utc);
 
