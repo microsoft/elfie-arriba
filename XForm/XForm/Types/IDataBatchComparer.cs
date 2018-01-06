@@ -5,7 +5,6 @@ using System;
 
 using XForm.Data;
 using XForm.Query;
-using XForm.Transforms;
 
 namespace XForm.Types
 {
@@ -17,6 +16,20 @@ namespace XForm.Types
         void WhereLessThanOrEqual(DataBatch left, DataBatch right, BitVector vector);
         void WhereGreaterThan(DataBatch left, DataBatch right, BitVector vector);
         void WhereGreaterThanOrEqual(DataBatch left, DataBatch right, BitVector vector);
+
+        void GetHashCodes(DataBatch values, int[] hashes);
+    }
+
+    public interface IDataBatchComparer<T>
+    {
+        bool WhereEqual(T left, T right);
+        bool WhereNotEqual(T left, T right);
+        bool WhereLessThan(T left, T right);
+        bool WhereLessThanOrEqual(T left, T right);
+        bool WhereGreaterThan(T left, T right);
+        bool WhereGreaterThanOrEqual(T left, T right);
+
+        int GetHashCode(T value);
     }
 
     public static class ComparerExtensions

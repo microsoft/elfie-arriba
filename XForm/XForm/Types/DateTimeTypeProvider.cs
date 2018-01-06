@@ -29,7 +29,8 @@ namespace XForm.Types
 
         public ComparerExtensions.Comparer TryGetComparer(CompareOperator op)
         {
-            return new ComparableComparer<DateTime>().TryBuild(op);
+            // DateTimeComparer is generated
+            return new DateTimeComparer().TryBuild(op);
         }
 
         public Func<DataBatch, DataBatch> TryGetConverter(Type sourceType, Type targetType, object defaultValue, bool strict)
@@ -54,31 +55,42 @@ namespace XForm.Types
     {
         private DateTime[] _dateTimeArray;
         private long[] _longArray;
+        private bool[] _isNullArray;
 
         public DataBatch DateTimeToLong(DataBatch batch)
         {
             Allocator.AllocateToSize(ref _longArray, batch.Count);
+            Allocator.AllocateToSize(ref _isNullArray, batch.Count);
 
+            bool areAnyNull = false;
             DateTime[] sourceArray = (DateTime[])batch.Array;
             for (int i = 0; i < batch.Count; ++i)
             {
-                _longArray[i] = sourceArray[batch.Index(i)].ToUniversalTime().Ticks;
+                int index = batch.Index(i);
+                _longArray[i] = sourceArray[index].ToUniversalTime().Ticks;
+                _isNullArray[i] = (batch.IsNull != null && batch.IsNull[index]);
+                areAnyNull |= _isNullArray[i];
             }
 
-            return DataBatch.All(_longArray, batch.Count);
+            return DataBatch.All(_longArray, batch.Count, (areAnyNull ? _isNullArray : null));
         }
 
         public DataBatch LongToDateTime(DataBatch batch)
         {
             Allocator.AllocateToSize(ref _dateTimeArray, batch.Count);
+            Allocator.AllocateToSize(ref _isNullArray, batch.Count);
 
+            bool areAnyNull = false;
             long[] sourceArray = (long[])batch.Array;
             for (int i = 0; i < batch.Count; ++i)
             {
-                _dateTimeArray[i] = new DateTime(sourceArray[batch.Index(i)], DateTimeKind.Utc);
+                int index = batch.Index(i);
+                _dateTimeArray[i] = new DateTime(index, DateTimeKind.Utc);
+                _isNullArray[i] = (batch.IsNull != null && batch.IsNull[index]);
+                areAnyNull |= _isNullArray[i];
             }
 
-            return DataBatch.All(_dateTimeArray, batch.Count);
+            return DataBatch.All(_longArray, batch.Count, (areAnyNull ? _isNullArray : null));
         }
     }
 }

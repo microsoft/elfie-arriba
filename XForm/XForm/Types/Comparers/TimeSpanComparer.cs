@@ -11,17 +11,17 @@ using XForm.Query;
 namespace XForm.Types.Comparers
 {
     /// <summary>
-    ///  IDataBatchComparer for sbyte[].
+    ///  IDataBatchComparer for TimeSpan[].
     /// </summary>
-    internal class SbyteComparer : IDataBatchComparer, IDataBatchComparer<sbyte>
+    internal class TimeSpanComparer : IDataBatchComparer, IDataBatchComparer<TimeSpan>
     {
-        internal static ComparerExtensions.WhereSingle<sbyte> s_WhereSingleNative = null;
-        internal static ComparerExtensions.Where<sbyte> s_WhereNative = null;
+        internal static ComparerExtensions.WhereSingle<TimeSpan> s_WhereSingleNative = null;
+        internal static ComparerExtensions.Where<TimeSpan> s_WhereNative = null;
 
         public void GetHashCodes(DataBatch batch, int[] hashes)
         {
             if (hashes.Length < batch.Count) throw new ArgumentOutOfRangeException("hashes.Length");
-            sbyte[] array = (sbyte[])batch.Array;
+            TimeSpan[] array = (TimeSpan[])batch.Array;
 
             for (int i = 0; i < batch.Count; ++i)
             {
@@ -33,15 +33,15 @@ namespace XForm.Types.Comparers
             }
         }
 
-        public int GetHashCode(sbyte value)
+        public int GetHashCode(TimeSpan value)
         {
             return unchecked((int)Hashing.Hash(value, 0));
         }
 
 		public void WhereEqual(DataBatch left, DataBatch right, BitVector vector)
         {
-            sbyte[] leftArray = (sbyte[])left.Array;
-            sbyte[] rightArray = (sbyte[])right.Array;
+            TimeSpan[] leftArray = (TimeSpan[])left.Array;
+            TimeSpan[] rightArray = (TimeSpan[])right.Array;
 
             // Check how the DataBatches are configured and run the fastest loop possible for the configuration.
             if (left.IsNull != null || right.IsNull != null)
@@ -84,7 +84,7 @@ namespace XForm.Types.Comparers
             {
                 // Fastest Path: Contiguous Array to constant. ~15ms for 16M
                 int zeroOffset = left.Selector.StartIndexInclusive;
-                sbyte rightValue = rightArray[0];
+                TimeSpan rightValue = rightArray[0];
 
                 if (s_WhereSingleNative != null)
                 {
@@ -107,15 +107,15 @@ namespace XForm.Types.Comparers
             }
         }
 
-        public bool WhereEqual(sbyte left, sbyte right)
+        public bool WhereEqual(TimeSpan left, TimeSpan right)
         {
             return left == right;
         }
 
 		public void WhereNotEqual(DataBatch left, DataBatch right, BitVector vector)
         {
-            sbyte[] leftArray = (sbyte[])left.Array;
-            sbyte[] rightArray = (sbyte[])right.Array;
+            TimeSpan[] leftArray = (TimeSpan[])left.Array;
+            TimeSpan[] rightArray = (TimeSpan[])right.Array;
 
             // Check how the DataBatches are configured and run the fastest loop possible for the configuration.
             if (left.IsNull != null || right.IsNull != null)
@@ -158,7 +158,7 @@ namespace XForm.Types.Comparers
             {
                 // Fastest Path: Contiguous Array to constant. ~15ms for 16M
                 int zeroOffset = left.Selector.StartIndexInclusive;
-                sbyte rightValue = rightArray[0];
+                TimeSpan rightValue = rightArray[0];
 
                 if (s_WhereSingleNative != null)
                 {
@@ -181,15 +181,15 @@ namespace XForm.Types.Comparers
             }
         }
 
-        public bool WhereNotEqual(sbyte left, sbyte right)
+        public bool WhereNotEqual(TimeSpan left, TimeSpan right)
         {
             return left != right;
         }
 
 		public void WhereLessThan(DataBatch left, DataBatch right, BitVector vector)
         {
-            sbyte[] leftArray = (sbyte[])left.Array;
-            sbyte[] rightArray = (sbyte[])right.Array;
+            TimeSpan[] leftArray = (TimeSpan[])left.Array;
+            TimeSpan[] rightArray = (TimeSpan[])right.Array;
 
             // Check how the DataBatches are configured and run the fastest loop possible for the configuration.
             if (left.IsNull != null || right.IsNull != null)
@@ -232,7 +232,7 @@ namespace XForm.Types.Comparers
             {
                 // Fastest Path: Contiguous Array to constant. ~15ms for 16M
                 int zeroOffset = left.Selector.StartIndexInclusive;
-                sbyte rightValue = rightArray[0];
+                TimeSpan rightValue = rightArray[0];
 
                 if (s_WhereSingleNative != null)
                 {
@@ -255,15 +255,15 @@ namespace XForm.Types.Comparers
             }
         }
 
-        public bool WhereLessThan(sbyte left, sbyte right)
+        public bool WhereLessThan(TimeSpan left, TimeSpan right)
         {
             return left < right;
         }
 
 		public void WhereLessThanOrEqual(DataBatch left, DataBatch right, BitVector vector)
         {
-            sbyte[] leftArray = (sbyte[])left.Array;
-            sbyte[] rightArray = (sbyte[])right.Array;
+            TimeSpan[] leftArray = (TimeSpan[])left.Array;
+            TimeSpan[] rightArray = (TimeSpan[])right.Array;
 
             // Check how the DataBatches are configured and run the fastest loop possible for the configuration.
             if (left.IsNull != null || right.IsNull != null)
@@ -306,7 +306,7 @@ namespace XForm.Types.Comparers
             {
                 // Fastest Path: Contiguous Array to constant. ~15ms for 16M
                 int zeroOffset = left.Selector.StartIndexInclusive;
-                sbyte rightValue = rightArray[0];
+                TimeSpan rightValue = rightArray[0];
 
                 if (s_WhereSingleNative != null)
                 {
@@ -329,15 +329,15 @@ namespace XForm.Types.Comparers
             }
         }
 
-        public bool WhereLessThanOrEqual(sbyte left, sbyte right)
+        public bool WhereLessThanOrEqual(TimeSpan left, TimeSpan right)
         {
             return left <= right;
         }
 
 		public void WhereGreaterThan(DataBatch left, DataBatch right, BitVector vector)
         {
-            sbyte[] leftArray = (sbyte[])left.Array;
-            sbyte[] rightArray = (sbyte[])right.Array;
+            TimeSpan[] leftArray = (TimeSpan[])left.Array;
+            TimeSpan[] rightArray = (TimeSpan[])right.Array;
 
             // Check how the DataBatches are configured and run the fastest loop possible for the configuration.
             if (left.IsNull != null || right.IsNull != null)
@@ -380,7 +380,7 @@ namespace XForm.Types.Comparers
             {
                 // Fastest Path: Contiguous Array to constant. ~15ms for 16M
                 int zeroOffset = left.Selector.StartIndexInclusive;
-                sbyte rightValue = rightArray[0];
+                TimeSpan rightValue = rightArray[0];
 
                 if (s_WhereSingleNative != null)
                 {
@@ -403,15 +403,15 @@ namespace XForm.Types.Comparers
             }
         }
 
-        public bool WhereGreaterThan(sbyte left, sbyte right)
+        public bool WhereGreaterThan(TimeSpan left, TimeSpan right)
         {
             return left > right;
         }
 
 		public void WhereGreaterThanOrEqual(DataBatch left, DataBatch right, BitVector vector)
         {
-            sbyte[] leftArray = (sbyte[])left.Array;
-            sbyte[] rightArray = (sbyte[])right.Array;
+            TimeSpan[] leftArray = (TimeSpan[])left.Array;
+            TimeSpan[] rightArray = (TimeSpan[])right.Array;
 
             // Check how the DataBatches are configured and run the fastest loop possible for the configuration.
             if (left.IsNull != null || right.IsNull != null)
@@ -454,7 +454,7 @@ namespace XForm.Types.Comparers
             {
                 // Fastest Path: Contiguous Array to constant. ~15ms for 16M
                 int zeroOffset = left.Selector.StartIndexInclusive;
-                sbyte rightValue = rightArray[0];
+                TimeSpan rightValue = rightArray[0];
 
                 if (s_WhereSingleNative != null)
                 {
@@ -477,7 +477,7 @@ namespace XForm.Types.Comparers
             }
         }
 
-        public bool WhereGreaterThanOrEqual(sbyte left, sbyte right)
+        public bool WhereGreaterThanOrEqual(TimeSpan left, TimeSpan right)
         {
             return left >= right;
         }

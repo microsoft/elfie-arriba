@@ -9,7 +9,6 @@ using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using XForm.Data;
 using XForm.IO.StreamProvider;
 using XForm.Query;
-using XForm.Transforms;
 using XForm.Types.Comparers;
 
 namespace XForm.Types
@@ -31,7 +30,8 @@ namespace XForm.Types
 
         public ComparerExtensions.Comparer TryGetComparer(CompareOperator op)
         {
-            return new ComparableComparer<String8>().TryBuild(op);
+            // String8Comparer is generated
+            return new String8Comparer().TryBuild(op);
         }
 
         public Func<DataBatch, DataBatch> TryGetConverter(Type sourceType, Type targetType, object defaultValue, bool strict)

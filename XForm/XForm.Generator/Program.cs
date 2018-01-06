@@ -13,11 +13,6 @@ namespace XForm.Generator
             Console.WriteLine($"Building Comparers to [{comparerPath}]...");
             ComparerGenerator.GenerateAll(comparerPath);
 
-            string corePath = Path.Combine(xformProjectPath, @"Core");
-            string dataBatchHasherGeneratorPath = Path.Combine(corePath, "DataBatchHasher.cs");
-            Console.WriteLine($"Building {dataBatchHasherGeneratorPath}...");
-            DataBatchHasherGenerator.Generate(dataBatchHasherGeneratorPath);
-
             Console.WriteLine("Done.");
         }
     }

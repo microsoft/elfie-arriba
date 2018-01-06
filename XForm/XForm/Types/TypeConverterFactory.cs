@@ -13,6 +13,13 @@ namespace XForm.Types
     {
         public static Func<DataBatch, DataBatch> GetConverter(Type sourceType, Type targetType, object defaultValue, bool strict)
         {
+            Func<DataBatch, DataBatch> converter = TryGetConverter(sourceType, targetType, defaultValue, strict);
+            if(converter == null) throw new ArgumentException($"No converter available from {sourceType.Name} to {targetType.Name}.");
+            return converter;
+        }
+
+        public static Func<DataBatch, DataBatch> TryGetConverter(Type sourceType, Type targetType, object defaultValue, bool strict)
+        {
             // Convert the defaultValue to the right type
             defaultValue = ConvertSingle(defaultValue, targetType);
 
@@ -34,25 +41,44 @@ namespace XForm.Types
                 if (converter != null) return converter;
             }
 
-            throw new ArgumentException($"No converter available from {sourceType.Name} to {targetType.Name}.");
+            // Try again with implicit string to String8 conversion
+            if(sourceType == typeof(string))
+            {
+                converter = TryGetConverter(typeof(String8), targetType, defaultValue, strict);
+
+                // If found, encode the string to String8 conversion and then the String8 to target conversion
+                if (converter != null)
+                {
+                    Func<DataBatch, DataBatch> innerConverter = GetConverter(typeof(string), typeof(String8), defaultValue, strict);
+                    return (batch) => converter(innerConverter(batch));
+                }
+            }
+
+            return null;
         }
 
         public static object ConvertSingle(object value, Type targetType)
         {
+            object result;
+            if (!TryConvertSingle(value, targetType, out result)) throw new ArgumentException($"Could not convert \"{value}\" to {targetType.Name}.");
+            return result;
+        }
+
+        public static bool TryConvertSingle(object value, Type targetType, out object result)
+        {
             // Nulls are always converted to null
-            if (value == null) return null;
+            if (value == null)
+            {
+                result = null;
+                return true;
+            }
 
             // If the type is already right, just return it
             Type sourceType = value.GetType();
-            if (sourceType.Equals(targetType)) return value;
-
-            // Until we have a StringTypeProvider, convert string to String8 for conversions
-            if (sourceType == typeof(string))
+            if (sourceType.Equals(targetType))
             {
-                sourceType = typeof(String8);
-                value = String8.Convert((string)value, new byte[String8.GetLength((string)value)]);
-
-                if (targetType == typeof(String8)) return value;
+                result = value;
+                return true;
             }
 
             // Get the converter for the desired type combination
@@ -61,17 +87,20 @@ namespace XForm.Types
             Array array = Allocator.AllocateArray(sourceType, 1);
             array.SetValue(value, 0);
 
-            DataBatch result = converter(DataBatch.Single(array, 1));
+            DataBatch resultBatch = converter(DataBatch.Single(array, 1));
 
             // Verify the result was not null unless the input was "" or 'null'
-            if (result.IsNull != null && result.IsNull[0] == true)
+            if (resultBatch.IsNull != null && resultBatch.IsNull[0] == true)
             {
+                result = null;
+
                 string stringValue = value.ToString();
-                if (stringValue != "" || String.Compare(stringValue, "null", true) == 0) return null;
-                throw new ArgumentException($"Could not convert \"{value}\" to {targetType.Name}.");
+                if (stringValue != "" || String.Compare(stringValue, "null", true) == 0) return true;
+                return false;
             }
 
-            return result.Array.GetValue(0);
+            result = resultBatch.Array.GetValue(0);
+            return true;
 
             throw new ArgumentException($"No converter available for value \"{value}\" (type {value.GetType().Name}) to {targetType.Name}.");
         }

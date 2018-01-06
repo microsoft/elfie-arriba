@@ -277,9 +277,9 @@ namespace XForm.Query
 
         public TimeSpan NextTimeSpan()
         {
-            TimeSpan value = TimeSpan.Zero;
-            ParseNextOrThrow(() => _scanner.Current.Value.TryParseTimeSpanFriendly(out value), "TimeSpan [ex: '60s', '15m', '24h', '7d']", TokenType.Value);
-            return value;
+            object value = null;
+            ParseNextOrThrow(() => TypeConverterFactory.TryConvertSingle(_scanner.Current.Value, typeof(TimeSpan), out value), "TimeSpan [ex: '60s', '15m', '24h', '7d']", TokenType.Value);
+            return (TimeSpan)value;
         }
 
         public string NextString()

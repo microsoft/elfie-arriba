@@ -93,9 +93,12 @@
   <ItemGroup>
     <Compile Include="Aggregators\CountAggregator.cs" />
     <Compile Include="BackgroundWebServer.cs" />
-    <Compile Include="Core\DataBatchHasher.cs" />
     <Compile Include="Core\Hashing.cs" />
     <Compile Include="Core\JoinDictionary.cs" />
+    <Compile Include="Types\Comparers\DateTimeComparer.cs" />
+    <Compile Include="Types\Comparers\String8Comparer.cs" />
+    <Compile Include="Types\Comparers\TimeSpanComparer.cs" />
+    <Compile Include="Types\TimeSpanTypeProvider.cs" />
     <Compile Include="Verbs\Cast.cs" />
     <Compile Include="Verbs\Rename.cs" />
     <Compile Include="Verbs\Set.cs" />
