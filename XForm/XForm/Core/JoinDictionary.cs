@@ -3,11 +3,32 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using XForm.Data;
+using XForm.Types;
 
 // Fix TODOs!
 //  Add large scale performance test in PerformanceComparisons. 1M join to 100k with 90% match rate?
 namespace XForm
 {
+    public class EqualityComparerAdapter<T> : IEqualityComparer<T>
+    {
+        private IDataBatchComparer<T> _inner;
+
+        public EqualityComparerAdapter(IDataBatchComparer inner)
+        {
+            _inner = (IDataBatchComparer<T>)inner;
+        }
+
+        public bool Equals(T left, T right)
+        {
+            return _inner.WhereEqual(left, right);
+        }
+
+        public int GetHashCode(T value)
+        {
+            return _inner.GetHashCode(value);
+        }
+    }
+
     public class String8EqualityComparer : IEqualityComparer<String8>
     {
         public bool Equals(String8 left, String8 right)
@@ -34,6 +55,19 @@ namespace XForm
         }
     }
 
+    public class UShortEqualityComparer : IEqualityComparer<ushort>
+    {
+        public bool Equals(ushort left, ushort right)
+        {
+            return left == right;
+        }
+
+        public int GetHashCode(ushort value)
+        {
+            return unchecked((int)Hashing.Hash(value, 0));
+        }
+    }
+
     // TODO: Use DataBatch comparer infrastructure instead
     //  - Need to add GetHashCode to IDataBatchComparer.
     //  - Likely slow until Dictionary hashes and compares in bulk.
@@ -50,6 +84,9 @@ namespace XForm
                 case "int":
                 case "int32":
                     return new IntEqualityComparer();
+                case "ushort":
+                case "uint16":
+                    return new UShortEqualityComparer();
                 default:
                     throw new NotImplementedException($"No IEqualityComparer known with name \"{name}\".");
             }

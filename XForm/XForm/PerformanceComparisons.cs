@@ -8,6 +8,8 @@ using System.Linq;
 using Microsoft.CodeAnalysis.Elfie.Serialization;
 
 using XForm.Extensions;
+using XForm.Data;
+using XForm.Verbs;
 
 namespace XForm
 {
@@ -43,11 +45,11 @@ namespace XForm
         {
             //NativeAccelerator.Enable();
 
-            WhereUShortUnderConstant();
-            WhereUShortEqualsUshort();
-            ByteEqualsConstant();
-            DoubleWhere();
-
+            //WhereUShortUnderConstant();
+            //WhereUShortEqualsUshort();
+            //ByteEqualsConstant();
+            //DoubleWhere();
+            Join();
             //TsvSplit();
         }
 
@@ -162,6 +164,24 @@ namespace XForm
                 });
 
                 b.AssertResultsEqual();
+            }
+        }
+
+        public void Join()
+        {
+            int joinFromLength = Math.Min(1000 * 1000, _values.Length);
+            ushort[] joinTo = Enumerable.Range(10, 1000).Select((i) => (ushort)i).ToArray();
+
+            using (Benchmarker b = new Benchmarker($"ushort[{joinFromLength:n0}] | join [Value] | count", DefaultMeasureMilliseconds))
+            {
+                b.Measure("XForm Join", joinFromLength, () =>
+                {
+                    IDataBatchEnumerator joinToSource = XFormTable.FromArrays(joinTo.Length).WithColumn("ID", joinTo);
+
+                    IDataBatchEnumerator enumerator = XFormTable.FromArrays(joinFromLength).WithColumn("Value", _values);
+                    enumerator = new Join(enumerator, "Value", joinToSource, "ID", "");
+                    return (int)enumerator.Count();
+                });
             }
         }
 

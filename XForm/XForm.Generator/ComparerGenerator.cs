@@ -160,7 +160,8 @@ namespace XForm.Types.Comparers
                 if (typeName == "T")
                 {
                     prefix = prefix
-                        .Replace("ComparableComparer : IDataBatchComparer, IDataBatchComparer<T>", "ComparableComparer<T> : IDataBatchComparer, IDataBatchComparer<T> where T : System.IComparable<T>")
+                        .Replace("ComparableComparer", "ComparableComparer<T>")
+                        .Replace("IDataBatchComparer<T>", "IDataBatchComparer<T> where T : System.IComparable<T>")
                         .Replace(", 0));", ".GetHashCode(), 0));");  // Get the generic hash code and re-hash it
                 }
 
