@@ -93,6 +93,7 @@
   <ItemGroup>
     <Compile Include="Aggregators\CountAggregator.cs" />
     <Compile Include="BackgroundWebServer.cs" />
+    <Compile Include="Core\Dictionary5.cs" />
     <Compile Include="Core\Hashing.cs" />
     <Compile Include="Core\JoinDictionary.cs" />
     <Compile Include="Types\Comparers\DateTimeComparer.cs" />

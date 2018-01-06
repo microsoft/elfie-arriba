@@ -15,13 +15,16 @@ namespace XForm
     ///  Dictionary has 8 bytes overhead [cached hashcode and next node] and resizes more each time.
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public class Dictionary<T> : IEnumerable<T> where T : IEquatable<T>
+    public class Dictionary5<T, U> : IEnumerable<T>
     {
         public int Count { get; private set; }
         public int MaxProbeLength { get; private set; }
 
+        private IEqualityComparer<T> Comparer;
+
         // The key values themselves
         private T[] Keys;
+        private U[] Values;
 
         // Metadata stores the probe length in the upper four bits and the probe increment in the lower four bits
         private byte[] Metadata;
@@ -35,8 +38,9 @@ namespace XForm
         // The HashSet is sized to (Capacity + Capacity >> CapacityOverheadShift), so 1 1/8 of base size for shift 3.
         private const int CapacityOverheadShift = 3;
 
-        public Dictionary(int capacity = -1)
+        public Dictionary5(IEqualityComparer<T> comparer, int capacity = -1)
         {
+            Comparer = comparer;
             if (capacity < MinimumCapacity) capacity = MinimumCapacity;
             Reset(capacity + (capacity >> CapacityOverheadShift) + 1);
         }
@@ -44,6 +48,7 @@ namespace XForm
         private void Reset(int size)
         {
             this.Keys = new T[size];
+            this.Values = new U[size];
             this.Metadata = new byte[size];
 
             this.Count = 0;
@@ -52,8 +57,9 @@ namespace XForm
 
         public void Clear()
         {
-            Array.Clear(this.Metadata, 0, this.Metadata.Length);
             Array.Clear(this.Keys, 0, this.Keys.Length);
+            Array.Clear(this.Values, 0, this.Values.Length);
+            Array.Clear(this.Metadata, 0, this.Metadata.Length);
 
             this.Count = 0;
             this.MaxProbeLength = 0;
@@ -71,9 +77,9 @@ namespace XForm
             return ((double)distance / (double)this.Count);
         }
 
-        private unsafe uint Hash(T value)
+        private uint Hash(T value)
         {
-            return unchecked((uint)Hashing.Hash((ulong)value.GetHashCode(), 0));
+            return unchecked((uint)Comparer.GetHashCode(value));
         }
 
         private uint Bucket(uint hash)
@@ -92,26 +98,26 @@ namespace XForm
         }
 
         /// <summary>
-        ///  Return whether this set contains the given value.
+        ///  Return whether this Dictionary contains the given key.
         /// </summary>
-        /// <param name="value">Value to find</param>
+        /// <param name="key">Value to find</param>
         /// <returns>True if in set, False otherwise</returns>
-        public bool Contains(T value)
+        public bool Contains(T key)
         {
-            return IndexOf(value) != -1;
+            return IndexOf(key) != -1;
         }
 
-        private int IndexOf(T value)
+        private int IndexOf(T key)
         {
-            uint hash = Hash(value);
+            uint hash = Hash(key);
             uint bucket = Bucket(hash);
             uint increment = Increment(hash);
 
-            // To find a value, just compare every value starting with the expected bucket
-            // up to the farthest any value had to be moved from the desired bucket.
+            // To find a key, just compare every key starting with the expected bucket
+            // up to the farthest any key had to be moved from the desired bucket.
             for (int probeLength = 1; probeLength <= this.MaxProbeLength; ++probeLength)
             {
-                if (this.Keys[bucket].Equals(value)) return (int)bucket;
+                if (this.Keys[bucket].Equals(key)) return (int)bucket;
 
                 bucket += increment;
                 if (bucket >= this.Metadata.Length) bucket -= (uint)this.Metadata.Length;
@@ -121,19 +127,20 @@ namespace XForm
         }
 
         /// <summary>
-        ///  Remove the given value from the set.
+        ///  Remove the given key from the Dictionary.
         /// </summary>
-        /// <param name="value">Value to remove</param>
+        /// <param name="key">Value to remove</param>
         /// <returns>True if removed, False if not found</returns>
-        public bool Remove(T value)
+        public bool Remove(T key)
         {
-            int index = IndexOf(value);
+            int index = IndexOf(key);
             if (index == -1) return false;
 
-            // To remove a value, just clear the value and wealth.
+            // To remove a key, just clear the key and wealth.
             // Searches don't stop on empty buckets, so this is safe.
             this.Metadata[index] = 0;
             this.Keys[index] = default(T);
+            this.Values[index] = default(U);
             this.Count--;
 
             return true;
@@ -142,14 +149,14 @@ namespace XForm
         /// <summary>
         ///  Add the given value to the set.
         /// </summary>
-        /// <param name="value">Value to add</param>
-        /// <returns>True if added, False if value was already in set</returns>
-        public bool Add(T value)
+        /// <param name="key">Key to add</param>
+        /// <param name="key">Value to add</param>
+        public void Add(T key, U value)
         {
             // If the table is too close to full, expand it. Very full tables cause slower inserts as many items are shifted.
             if (this.Count >= (this.Metadata.Length - (this.Metadata.Length >> CapacityOverheadShift))) Expand();
 
-            uint hash = Hash(value);
+            uint hash = Hash(key);
             uint bucket = Bucket(hash);
             uint increment = Increment(hash);
 
@@ -162,21 +169,25 @@ namespace XForm
                 {
                     // If we found an empty cell (probe zero), add the item and return
                     this.Metadata[bucket] = (byte)((probeLength << 4) + increment - 1);
-                    this.Keys[bucket] = value;
+                    this.Keys[bucket] = key;
+                    this.Values[bucket] = value;
                     if (probeLength > this.MaxProbeLength) this.MaxProbeLength = probeLength;
                     this.Count++;
 
-                    return true;
+                    return;
                 }
                 else if (probeLengthFound < probeLength)
                 {
                     // If we found an item with a higher wealth, put the new item here and move the existing one
-                    T valueMoved = this.Keys[bucket];
+                    T keyMoved = this.Keys[bucket];
+                    U valueMoved = this.Values[bucket];
 
                     this.Metadata[bucket] = (byte)((probeLength << 4) + increment - 1);
-                    this.Keys[bucket] = value;
+                    this.Keys[bucket] = key;
+                    this.Values[bucket] = value;
                     if (probeLength > this.MaxProbeLength) this.MaxProbeLength = probeLength;
 
+                    key = keyMoved;
                     value = valueMoved;
                     probeLength = probeLengthFound;
                     increment = Increment((uint)metadataFound);
@@ -184,7 +195,11 @@ namespace XForm
                 else if (probeLengthFound == probeLength)
                 {
                     // If this is a duplicate of the new item, stop
-                    if (this.Keys[bucket].Equals(value)) return false;
+                    if (this.Keys[bucket].Equals(key))
+                    {
+                        this.Values[bucket] = value;
+                        return;
+                    }
                 }
 
                 bucket += increment;
@@ -195,7 +210,7 @@ namespace XForm
             Expand();
 
             // If we resized, re-add the new value (recalculating the bucket for the new size)
-            return Add(value);
+            Add(key, value);
         }
 
         private void Expand()
@@ -204,7 +219,8 @@ namespace XForm
             int newSize = this.Metadata.Length + (this.Metadata.Length >= 1048576 ? this.Metadata.Length >> 3 : this.Metadata.Length >> 1);
 
             // Save the current contents
-            T[] oldValues = this.Keys;
+            T[] oldKeys = this.Keys;
+            U[] oldValues = this.Values;
             byte[] oldWealth = this.Metadata;
 
             // Allocate the larger table
@@ -213,19 +229,19 @@ namespace XForm
             // Add items to the enlarged table
             for (int i = 0; i < oldWealth.Length; ++i)
             {
-                if (oldWealth[i] > 0) Add(oldValues[i]);
+                if (oldWealth[i] > 0) Add(oldKeys[i], oldValues[i]);
             }
         }
 
-        public struct DictionaryEnumerator<U> : IEnumerator<U> where U : IEquatable<U>
+        public struct DictionaryEnumerator<V, W> : IEnumerator<V>
         {
-            private Dictionary<U> Set;
+            private Dictionary5<V, W> Set;
             private int NextBucket;
 
-            public U Current => this.Set.Keys[this.NextBucket];
+            public V Current => this.Set.Keys[this.NextBucket];
             object IEnumerator.Current => this.Set.Keys[this.NextBucket];
 
-            public DictionaryEnumerator(Dictionary<U> set)
+            public DictionaryEnumerator(Dictionary5<V, W> set)
             {
                 this.Set = set;
                 this.NextBucket = -1;
@@ -252,12 +268,12 @@ namespace XForm
 
         public IEnumerator<T> GetEnumerator()
         {
-            return new DictionaryEnumerator<T>(this);
+            return new DictionaryEnumerator<T, U>(this);
         }
 
         IEnumerator IEnumerable.GetEnumerator()
         {
-            return new DictionaryEnumerator<T>(this);
+            return new DictionaryEnumerator<T, U>(this);
         }
     }
 }
