@@ -28,10 +28,10 @@ namespace XForm.Types
             return new String8ColumnWriter(streamProvider, columnPath);
         }
 
-        public ComparerExtensions.Comparer TryGetComparer(CompareOperator op)
+        public IDataBatchComparer TryGetComparer()
         {
             // String8Comparer is generated
-            return new String8Comparer().TryBuild(op);
+            return new String8Comparer();
         }
 
         public Func<DataBatch, DataBatch> TryGetConverter(Type sourceType, Type targetType, object defaultValue, bool strict)

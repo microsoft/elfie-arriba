@@ -49,5 +49,38 @@ namespace XForm
             ConstructorInfo ctor = elementType.MakeArrayType().GetConstructor(new Type[] { typeof(int) });
             return (Array)ctor.Invoke(new object[] { length });
         }
+
+
+        /// <summary>
+        ///  Create a generic class for a dynamic type parameter using the empty constructor.
+        ///  
+        ///  Ex:
+        ///  IList list = (IList)ConstructTyped(typeof(List&lt;&gt;), typeof(int));
+        /// </summary>
+        /// <param name="genericContainerType">Type of class to create [ex: List&lt;&gt;]</param>
+        /// <param name="elementType">Type of elements for the class [typeof(int> for List&lt;int&gt;]</param>
+        /// <returns>new genericContainerType&lt;elementType&gt;()</returns>
+        public static object ConstructGenericOf(Type genericContainerType, Type elementType)
+        {
+            Type specificType = genericContainerType.MakeGenericType(elementType);
+            return Activator.CreateInstance(specificType);
+        }
+
+        /// <summary>
+        ///  Create a generic class for a dynamic type parameter using the constructor which takes an integer.
+        ///  
+        ///  Ex:
+        ///  IList list = (IList)ConstructTyped(typeof(List&lt;&gt;), typeof(int), 1000);
+        /// </summary>
+        /// <param name="genericContainerType">Type of class to create [ex: List&lt;&gt;]</param>
+        /// <param name="elementType">Type of elements for the class [typeof(int> for List&lt;int&gt;]</param>
+        /// <param name="capacity">Capacity (or int argument) to pass to constructor</param>
+        /// <returns>new genericContainerType&lt;elementType&gt;(capacity)</returns>
+        public static object ConstructGenericOf(Type genericContainerType, Type elementType, int capacity)
+        {
+            Type specificType = genericContainerType.MakeGenericType(elementType);
+            ConstructorInfo ctor = specificType.GetConstructor(new Type[] { typeof(int) });
+            return ctor.Invoke(new object[] { capacity });
+        }
     }
 }

@@ -20,7 +20,7 @@ namespace XForm.Types
         void GetHashCodes(DataBatch values, int[] hashes);
     }
 
-    public interface IDataBatchComparer<T>
+    public interface IDataBatchComparer<T> : IDataBatchComparer
     {
         bool WhereEqual(T left, T right);
         bool WhereNotEqual(T left, T right);

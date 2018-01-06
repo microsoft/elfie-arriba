@@ -31,6 +31,16 @@ namespace XForm.Types
 
         Func<DataBatch, DataBatch> TryGetConverter(Type sourceType, Type targetType, object defaultValue, bool strict);
 
-        ComparerExtensions.Comparer TryGetComparer(CompareOperator op);
+        IDataBatchComparer TryGetComparer();
+    }
+
+    public static class TypeProviderExtensions
+    {
+        public static ComparerExtensions.Comparer TryGetComparer(this ITypeProvider typeProvider, CompareOperator op)
+        {
+            IDataBatchComparer comparer = typeProvider.TryGetComparer();
+            if (comparer == null) return null;
+            return comparer.TryBuild(op);
+        }
     }
 }

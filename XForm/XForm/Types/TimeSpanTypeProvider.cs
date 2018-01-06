@@ -25,10 +25,10 @@ namespace XForm.Types
             return new ConvertingWriter(TypeProviderFactory.Get(typeof(long)).BinaryWriter(streamProvider, columnPath), TryGetConverter(typeof(TimeSpan), typeof(long), null, true));
         }
 
-        public ComparerExtensions.Comparer TryGetComparer(CompareOperator op)
+        public IDataBatchComparer TryGetComparer()
         {
             // TimeSpanComparer is generated
-            return new TimeSpanComparer().TryBuild(op);
+            return new TimeSpanComparer();
         }
 
         public Func<DataBatch, DataBatch> TryGetConverter(Type sourceType, Type targetType, object defaultValue, bool strict)

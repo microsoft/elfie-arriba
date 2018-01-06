@@ -5,6 +5,7 @@ using System;
 
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Collections.Generic;
 
 namespace XForm.Test.Core
 {
@@ -41,6 +42,17 @@ namespace XForm.Test.Core
             Array string8 = Allocator.AllocateArray(typeof(String8), 1);
             Assert.IsNotNull(string8 as String8[]);
             Assert.AreEqual(1, string8.Length);
+
+            // Verify generic object creators work
+            object list;
+            
+            list = Allocator.ConstructGenericOf(typeof(List<>), typeof(int));
+            Assert.AreEqual(typeof(List<int>), list.GetType());
+            Assert.AreEqual(0, ((List<int>)list).Capacity);
+
+            list = Allocator.ConstructGenericOf(typeof(List<>), typeof(int), 1000);
+            Assert.AreEqual(typeof(List<int>), list.GetType());
+            Assert.AreEqual(1000, ((List<int>)list).Capacity);
         }
     }
 }

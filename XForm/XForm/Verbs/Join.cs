@@ -156,7 +156,7 @@ namespace XForm.Verbs
             int joinToTotalCount = _cachedJoinSource.Next(int.MaxValue);
             DataBatch allJoinToValues = _joinToColumnGetter();
 
-            _joinDictionary = JoinDictionary<int>.BuildTypedJoinDictionary(_joinColumnType, joinToTotalCount, null);
+            _joinDictionary = (IJoinDictionary)Allocator.ConstructGenericOf(typeof(JoinDictionary<>), _joinColumnType, joinToTotalCount);
             _joinDictionary.Add(allJoinToValues, 0);
         }
 
