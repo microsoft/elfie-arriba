@@ -10,6 +10,26 @@ namespace XForm
         BitVector TryGetValues(DataBatch keys, out DataBatch foundAtIndices);
     }
 
+    public class EqualityComparerAdapter<T> : IEqualityComparer<T>
+    {
+        private IDataBatchComparer<T> _inner;
+
+        public EqualityComparerAdapter(IDataBatchComparer inner)
+        {
+            _inner = (IDataBatchComparer<T>)inner;
+        }
+
+        public bool Equals(T left, T right)
+        {
+            return _inner.WhereEqual(left, right);
+        }
+
+        public int GetHashCode(T value)
+        {
+            return _inner.GetHashCode(value);
+        }
+    }
+
     public class JoinDictionary<T> : IJoinDictionary
     {
         // JoinDictionary is using a .NET Dictionary and IEqualityComparer<T> for now
@@ -73,26 +93,6 @@ namespace XForm
 
             // Return the vector of which input rows matched
             return _returnedVector;
-        }
-
-        private class EqualityComparerAdapter<U> : IEqualityComparer<U>
-        {
-            private IDataBatchComparer<U> _inner;
-
-            public EqualityComparerAdapter(IDataBatchComparer inner)
-            {
-                _inner = (IDataBatchComparer<U>)inner;
-            }
-
-            public bool Equals(U left, U right)
-            {
-                return _inner.WhereEqual(left, right);
-            }
-
-            public int GetHashCode(U value)
-            {
-                return _inner.GetHashCode(value);
-            }
         }
     }
 }

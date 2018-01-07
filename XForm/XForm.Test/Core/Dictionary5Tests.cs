@@ -2,24 +2,26 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using XForm.Types;
 
 namespace XForm.Core
 {
     [TestClass]
-    public class HashSet5Tests
+    public class Dictionary5Tests
     {
         [TestMethod]
-        public void Dictionary_Basics()
+        public void Dictionary5_Basics()
         {
-            HashSet<int> expected = new HashSet<int>();
-            Dictionary<int> actual = new Dictionary<int>();
+            Dictionary<int, int> expected = new Dictionary<int, int>();
+            Dictionary5<int, int> actual = new Dictionary5<int, int>(new EqualityComparerAdapter<int>(TypeProviderFactory.Get(typeof(int)).TryGetComparer()));
 
             // Add random items. Verify the HashSet correctly reports whether they're already there and were added
             Random r = new Random(5);
             for(int i = 0; i < 100000; ++i)
             {
                 int value = r.Next();
-                Assert.AreEqual(expected.Add(value), actual.Add(value));
+                expected.Add(value, i);
+                actual.Add(value, i);
                 if (!actual.Contains(value)) Debugger.Break();
                 Assert.IsTrue(actual.Contains(value));
             }
@@ -30,7 +32,7 @@ namespace XForm.Core
             Assert.AreEqual(expected.Count, actual.Count);
 
             // Enumerate expected values and verify they're all still found
-            foreach(int value in expected)
+            foreach(int value in expected.Keys)
             {
                 if (!actual.Contains(value)) Debugger.Break();
                 Assert.IsTrue(actual.Contains(value));

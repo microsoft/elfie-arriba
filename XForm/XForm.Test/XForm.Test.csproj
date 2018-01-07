@@ -95,6 +95,7 @@
     <Compile Include="AssertCommand.cs" />
     <Compile Include="Core\AllocatorTests.cs" />
     <Compile Include="Core\BitVectorTests.cs" />
+    <Compile Include="Core\Dictionary5Tests.cs" />
     <Compile Include="Core\HashingTests.cs" />
     <Compile Include="Extensions\IDataBatchExtensionsTests.cs" />
     <Compile Include="Extensions\StringExtensionsTests.cs" />

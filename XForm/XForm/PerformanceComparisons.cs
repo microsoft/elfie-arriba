@@ -10,6 +10,8 @@ using Microsoft.CodeAnalysis.Elfie.Serialization;
 using XForm.Extensions;
 using XForm.Data;
 using XForm.Verbs;
+using System.Collections.Generic;
+using XForm.Types;
 
 namespace XForm
 {
@@ -50,6 +52,7 @@ namespace XForm
             //ByteEqualsConstant();
             //DoubleWhere();
             Join();
+            Dictionary();
             //TsvSplit();
         }
 
@@ -182,6 +185,45 @@ namespace XForm
                     enumerator = new Join(enumerator, "Value", joinToSource, "ID", "");
                     return (int)enumerator.Count();
                 });
+            }
+        }
+
+        public void Dictionary()
+        {
+            int count = 1000 * 1000;
+            Dictionary<int, int> expected = new Dictionary<int, int>();
+            Dictionary5<int, int> actual = new Dictionary5<int, int>(new EqualityComparerAdapter<int>(TypeProviderFactory.Get(typeof(int)).TryGetComparer()));
+
+            int[] values = new int[count];
+            Random r = new Random(5);
+            for (int i = 0; i < count; ++i)
+            {
+                values[i] = r.Next();
+            }
+
+            using (Benchmarker b = new Benchmarker($"Dictionary<int, int> [{count:n0}]", DefaultMeasureMilliseconds))
+            {
+                b.Measure("System.Collections.Generic.Dictionary", count, () =>
+                {
+                    for (int i = 0; i < count; ++i)
+                    {
+                        expected[values[i]] = i;
+                    }
+
+                    return expected.Count;
+                });
+
+                b.Measure("XForm.Dictionary5", count, () =>
+                {
+                    for (int i = 0; i < count; ++i)
+                    {
+                        actual.Add(values[i], i);
+                    }
+
+                    return actual.Count;
+                });
+
+                b.AssertResultsEqual();
             }
         }
 
