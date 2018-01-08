@@ -18,11 +18,13 @@ namespace XForm
     public class HttpService
     {
         private WorkflowContext _workflowContext;
+        private QuerySuggester _suggester;
         private static String8 s_delimiter = String8.Convert(";", new byte[1]);
 
         public HttpService(WorkflowContext workflowContext)
         {
             _workflowContext = workflowContext;
+            _suggester = new QuerySuggester(_workflowContext);
         }
 
         public void Run()
@@ -43,14 +45,13 @@ namespace XForm
 
         private void Suggest(HttpListenerContext context, HttpListenerResponse response)
         {
-            using (JsonTabularWriter writer = new JsonTabularWriter(response.OutputStream))
+            using (ITabularWriter writer = WriterForFormat("json", response))
             {
                 try
                 {
                     string query = Require(context, "q");
 
-                    QuerySuggester suggester = new QuerySuggester(_workflowContext);
-                    SuggestResult result = suggester.Suggest(query);
+                    SuggestResult result = _suggester.Suggest(query);
 
                     // If the query is valid and there are no extra values valid next, just return valid
                     if (result.IsValid == true && result.Context == null)

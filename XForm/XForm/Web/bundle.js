@@ -19005,7 +19005,8 @@ var Index = function (_React$Component) {
 
         var _this3 = _possibleConstructorReturn(this, (Index.__proto__ || Object.getPrototypeOf(Index)).call(this, props));
 
-        _this3.count = 20;
+        _this3.baseCount = 50;
+        _this3.count = _this3.baseCount;
         _this3.state = { query: _this3.query };
         return _this3;
     }
@@ -19067,6 +19068,7 @@ var Index = function (_React$Component) {
                 this.editor.onDidChangeModelContent(function (e) {
                     _newArrowCheck(this, _this4);
 
+                    this.count = this.baseCount;
                     this.refresh();
                 }.bind(this));
 
@@ -19090,14 +19092,18 @@ var Index = function (_React$Component) {
                     // Could this ever be true?
                     this.setState({ status: "Error: " + onlyRow[o.colIndex.Message || o.colIndex.ErrorMessage], loading: false });
                 } else {
-                    this.setState({ status: o.rows.length + "+ Results", results: o, loading: false });
-                    xhr("count?q=" + q).then(function (o) {
-                        _newArrowCheck(this, _this5);
+                    this.setState({ status: o.rows.length.toLocaleString() + "+ Results", results: o, loading: false });
 
-                        var onlyRow = o.rows[0];
-                        var count = onlyRow[o.colIndex.Count];
-                        this.setState({ status: count !== undefined && count + " Results" || "Error: " + onlyRow[o.colIndex.ErrorMessage] });
-                    }.bind(this));
+                    if (this.count === this.baseCount) {
+                        // No need to recount after the first page of results.
+                        xhr("count?q=" + q).then(function (o) {
+                            _newArrowCheck(this, _this5);
+
+                            var onlyRow = o.rows[0];
+                            var count = onlyRow[o.colIndex.Count];
+                            this.setState({ status: count !== undefined && count.toLocaleString() + " Results" || "Error: " + onlyRow[o.colIndex.ErrorMessage] });
+                        }.bind(this));
+                    }
                 }
             }.bind(this));
         }
