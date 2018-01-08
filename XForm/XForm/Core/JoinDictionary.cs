@@ -32,9 +32,8 @@ namespace XForm
 
     public class JoinDictionary<T> : IJoinDictionary
     {
-        // JoinDictionary is using a .NET Dictionary and IEqualityComparer<T> for now
-        private Dictionary<T, int> _dictionary;
-        private IEqualityComparer<T> _comparer;
+        // JoinDictionary uses a Dictionary5 internally
+        private Dictionary5<T, int> _dictionary;
 
         // JoinDictionary will use a Robin Hood Hash Dictionary [ported from V5]
         //private T[] _keys;
@@ -48,9 +47,7 @@ namespace XForm
         public JoinDictionary(int initialCapacity)
         {
             IEqualityComparer<T> comparer = new EqualityComparerAdapter<T>(TypeProviderFactory.TryGet(typeof(T).Name).TryGetComparer());
-
-            _dictionary = new Dictionary<T, int>(initialCapacity, comparer);
-            _comparer = comparer;
+            _dictionary = new Dictionary5<T, int>(comparer, initialCapacity);
         }
 
         public void Add(DataBatch keys, int firstRowIndex)

@@ -146,6 +146,34 @@ namespace XForm
             return true;
         }
 
+        public bool TryGetValue(T key, out U value)
+        {
+            int bucket = IndexOf(key);
+            if (bucket == -1)
+            {
+                value = default(U);
+                return false;
+            }
+
+            value = this.Values[bucket];
+            return true;
+        }
+
+        public U this[T key]
+        {
+            get
+            {
+                int bucket = IndexOf(key);
+                if (bucket == -1) throw new KeyNotFoundException();
+                return this.Values[bucket];
+            }
+
+            set
+            {
+                Add(key, value);
+            }
+        }
+
         /// <summary>
         ///  Add the given value to the set.
         /// </summary>

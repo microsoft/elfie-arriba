@@ -47,11 +47,12 @@ namespace XForm
         {
             //NativeAccelerator.Enable();
 
-            WhereUShortUnderConstant();
-            WhereUShortEqualsUshort();
-            ByteEqualsConstant();
-            DoubleWhere();
-            //Join();
+            //WhereUShortUnderConstant();
+            //WhereUShortEqualsUshort();
+            //ByteEqualsConstant();
+            //DoubleWhere();
+
+            Join();
             //Dictionary();
             //TsvSplit();
         }
