@@ -84,7 +84,7 @@ namespace XForm
             }
             catch (Exception ex)
             {
-                using (ITabularWriter writer = new JsonTabularWriter(response.OutputStream))
+                using (ITabularWriter writer = WriterForFormat("json", response))
                 {
                     WriteException(ex, writer);
                 }
@@ -103,7 +103,7 @@ namespace XForm
             }
             catch (Exception ex)
             {
-                using (ITabularWriter writer = new JsonTabularWriter(response.OutputStream))
+                using (ITabularWriter writer = WriterForFormat("json", response))
                 {
                     WriteException(ex, writer);
                 }
@@ -121,7 +121,7 @@ namespace XForm
             }
             catch (Exception ex)
             {
-                using (ITabularWriter writer = new JsonTabularWriter(response.OutputStream))
+                using (ITabularWriter writer = WriterForFormat("json", response))
                 {
                     WriteException(ex, writer);
                 }
@@ -172,7 +172,7 @@ namespace XForm
                 // Restrict the row count if requested
                 if (rowCountLimit >= 0)
                 {
-                    pipeline = XqlParser.Parse($"limit {rowCountLimit}", pipeline, _workflowContext);
+                    pipeline = new Verbs.Limit(pipeline, rowCountLimit);
                 }
 
                 // Build a writer for the desired format

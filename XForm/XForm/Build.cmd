@@ -6,6 +6,7 @@ PUSHD %~dp0..
 ECHO - Building XForm...
 "%MSBuildPath%" "XForm.sln" /p:Configuration=Release /p:Platform="x64"
 SET MSBuildError=%ERRORLEVEL%
+POPD
 IF NOT "%MSBuildError%"=="0" GOTO Error
 
 GOTO :EOF

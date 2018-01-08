@@ -19008,6 +19008,7 @@ var Index = function (_React$Component) {
         _this3.baseCount = 50;
         _this3.count = _this3.baseCount;
         _this3.state = { query: _this3.query };
+        _this3.debouncedRefresh = debounce(_this3.refresh, 200);
         return _this3;
     }
 
@@ -19062,14 +19063,14 @@ var Index = function (_React$Component) {
                     language: 'xform',
                     scrollBeyondLastLine: false,
                     minimap: { enabled: false },
-                    automaticLayout: false
+                    automaticLayout: true
                 });
 
                 this.editor.onDidChangeModelContent(function (e) {
                     _newArrowCheck(this, _this4);
 
                     this.count = this.baseCount;
-                    this.refresh();
+                    this.debouncedRefresh();
                 }.bind(this));
 
                 this.refresh();
@@ -19083,6 +19084,9 @@ var Index = function (_React$Component) {
             this.count += addCount || 0;
             var model = this.editor.getModel();
             var q = encodeURIComponent(model.getValue());
+
+            if (!q) return; // Running with an empty query will return a "" instead of an empty object table.
+
             this.setState({ loading: true });
             xhr("run?c=" + this.count + "&q=" + q).then(function (o) {
                 _newArrowCheck(this, _this5);
