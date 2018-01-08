@@ -107,7 +107,7 @@ namespace XForm
             object expected = _results[0].Output;
             for (int i = 1; i < _results.Count; ++i)
             {
-                if (expected != _results[i].Output)
+                if (!expected.Equals(_results[i].Output))
                 {
                     Trace.WriteLine($"{_results[i].Name} result {_results[i].Output} did not equal expected result {expected} from {_results[0].Name}.");
                 }
