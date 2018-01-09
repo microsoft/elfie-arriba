@@ -35,11 +35,6 @@ namespace XForm
         // JoinDictionary uses a Dictionary5 internally
         private Dictionary5<T, int> _dictionary;
 
-        // JoinDictionary will use a Robin Hood Hash Dictionary [ported from V5]
-        //private T[] _keys;
-        //private int[] _values;
-        //private byte[] _metadata;
-
         // Reused buffers for the matching row vector and matching row right side indices
         private int[] _returnedIndicesBuffer;
         private BitVector _returnedVector;

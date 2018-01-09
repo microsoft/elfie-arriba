@@ -93,6 +93,7 @@
   <ItemGroup>
     <Compile Include="Aggregators\CountAggregator.cs" />
     <Compile Include="BackgroundWebServer.cs" />
+    <Compile Include="Core\ChooseDictionary.cs" />
     <Compile Include="Core\HashCore.cs" />
     <Compile Include="Core\Dictionary5.cs" />
     <Compile Include="Core\Dictionary5_O.cs" />
