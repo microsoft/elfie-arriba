@@ -7,102 +7,24 @@ using System.Collections.Generic;
 
 namespace XForm
 {
-    public interface IDictionaryStorage<T, U>
-    {
-        T[] Keys { get; }
-        U[] Values { get; }
-
-        void Clear();
-        bool EqualsCurrent(uint index);
-        uint HashCurrent();
-        void Remove(uint index);
-        void Reset(int size);
-        void SetCurrent(T key, U value);
-        void SetToCurrent(uint index);
-        void SwapWithCurrent(uint index);
-    }
-
-    public class DictionaryStorage<T, U> : IDictionaryStorage<T, U>
-    {
-        public IEqualityComparer<T> Comparer;
-        public T[] Keys { get; private set; }
-        public U[] Values { get; private set; }
-
-        public T CurrentKey;
-        public U CurrentValue;
-
-        public DictionaryStorage(IEqualityComparer<T> comparer)
-        {
-            this.Comparer = comparer;
-        }
-
-        public void Reset(int size)
-        {
-            this.Keys = new T[size];
-            this.Values = new U[size];
-        }
-
-        public void Clear()
-        {
-            Array.Clear(this.Keys, 0, this.Keys.Length);
-            Array.Clear(this.Values, 0, this.Values.Length);
-        }
-
-        public void SetCurrent(T key, U value)
-        {
-            CurrentKey = key;
-            CurrentValue = value;
-        }
-
-        public uint HashCurrent()
-        {
-            return unchecked((uint)Comparer.GetHashCode(CurrentKey));
-        }
-
-        public bool EqualsCurrent(uint index)
-        {
-            return Comparer.Equals(this.Keys[index], CurrentKey);
-        }
-
-        public void Remove(uint index)
-        {
-            this.Keys[index] = default(T);
-            this.Values[index] = default(U);
-        }
-
-        public void SetToCurrent(uint index)
-        {
-            this.Keys[index] = CurrentKey;
-            this.Values[index] = CurrentValue;
-        }
-
-        public void SwapWithCurrent(uint index)
-        {
-            T swapKey = this.Keys[index];
-            U swapValue = this.Values[index];
-
-            this.Keys[index] = CurrentKey;
-            this.Values[index] = CurrentValue;
-
-            CurrentKey = swapKey;
-            CurrentValue = swapValue;
-        }
-    }
-
     /// <summary>
     ///  Dictionary5 is a Dictionary using Robin Hood hashing to provide good insert and search performance
-    ///  with much lower memory use than .NET Dictionary.
+    ///  with much lower memory use than .NET HashSet.
     ///  
     ///  Dictionary5 adds one byte of overhead and stays >= 75% full for large sizes;
     ///  Dictionary has 8 bytes overhead [cached hashcode and next node] and resizes more each time.
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public class Dictionary5<T, U> : IEnumerable<T>
+    public class Dictionary5O<T, U> : IEnumerable<T>
     {
         public int Count { get; private set; }
         public int MaxProbeLength { get; private set; }
 
-        private IDictionaryStorage<T, U> Storage;
+        private IEqualityComparer<T> Comparer;
+
+        // The key values themselves
+        private T[] Keys;
+        private U[] Values;
 
         // Metadata stores the probe length in the upper four bits and the probe increment in the lower four bits
         private byte[] Metadata;
@@ -116,24 +38,27 @@ namespace XForm
         // The HashSet is sized to (Capacity + Capacity >> CapacityOverheadShift), so 1 1/8 of base size for shift 3.
         private const int CapacityOverheadShift = 3;
 
-        public Dictionary5(IEqualityComparer<T> comparer, int capacity = -1)
+        public Dictionary5O(IEqualityComparer<T> comparer, int capacity = -1)
         {
-            Storage = new DictionaryStorage<T, U>(comparer);
+            Comparer = comparer;
             if (capacity < MinimumCapacity) capacity = MinimumCapacity;
             Reset(capacity + (capacity >> CapacityOverheadShift) + 1);
         }
 
         private void Reset(int size)
         {
-            this.Storage.Reset(size);
+            this.Keys = new T[size];
+            this.Values = new U[size];
             this.Metadata = new byte[size];
+
             this.Count = 0;
             this.MaxProbeLength = 0;
         }
 
         public void Clear()
         {
-            this.Storage.Clear();
+            Array.Clear(this.Keys, 0, this.Keys.Length);
+            Array.Clear(this.Values, 0, this.Values.Length);
             Array.Clear(this.Metadata, 0, this.Metadata.Length);
 
             this.Count = 0;
@@ -150,6 +75,11 @@ namespace XForm
             }
 
             return ((double)distance / (double)this.Count);
+        }
+
+        private uint Hash(T value)
+        {
+            return unchecked((uint)Comparer.GetHashCode(value));
         }
 
         private uint Bucket(uint hash)
@@ -179,9 +109,7 @@ namespace XForm
 
         private int IndexOf(T key)
         {
-            Storage.SetCurrent(key, default(U));
-
-            uint hash = Storage.HashCurrent();
+            uint hash = Hash(key);
             uint bucket = Bucket(hash);
             uint increment = Increment(hash);
 
@@ -189,7 +117,7 @@ namespace XForm
             // up to the farthest any key had to be moved from the desired bucket.
             for (int probeLength = 1; probeLength <= this.MaxProbeLength; ++probeLength)
             {
-                if (this.Storage.EqualsCurrent(bucket)) return (int)bucket;
+                if (this.Keys[bucket].Equals(key)) return (int)bucket;
 
                 bucket += increment;
                 if (bucket >= this.Metadata.Length) bucket -= (uint)this.Metadata.Length;
@@ -211,38 +139,11 @@ namespace XForm
             // To remove a key, just clear the key and wealth.
             // Searches don't stop on empty buckets, so this is safe.
             this.Metadata[index] = 0;
-            this.Storage.Remove((uint)index);
+            this.Keys[index] = default(T);
+            this.Values[index] = default(U);
             this.Count--;
 
             return true;
-        }
-
-        public bool TryGetValue(T key, out U value)
-        {
-            int bucket = IndexOf(key);
-            if (bucket == -1)
-            {
-                value = default(U);
-                return false;
-            }
-
-            value = Storage.Values[bucket];
-            return true;
-        }
-
-        public U this[T key]
-        {
-            get
-            {
-                int bucket = IndexOf(key);
-                if (bucket == -1) throw new KeyNotFoundException();
-                return Storage.Values[bucket];
-            }
-
-            set
-            {
-                Add(key, value);
-            }
         }
 
         /// <summary>
@@ -255,8 +156,7 @@ namespace XForm
             // If the table is too close to full, expand it. Very full tables cause slower inserts as many items are shifted.
             if (this.Count >= (this.Metadata.Length - (this.Metadata.Length >> CapacityOverheadShift))) Expand();
 
-            Storage.SetCurrent(key, value);
-            uint hash = Storage.HashCurrent();
+            uint hash = Hash(key);
             uint bucket = Bucket(hash);
             uint increment = Increment(hash);
 
@@ -269,7 +169,8 @@ namespace XForm
                 {
                     // If we found an empty cell (probe zero), add the item and return
                     this.Metadata[bucket] = (byte)((probeLength << 4) + increment - 1);
-                    this.Storage.SetToCurrent(bucket);
+                    this.Keys[bucket] = key;
+                    this.Values[bucket] = value;
                     if (probeLength > this.MaxProbeLength) this.MaxProbeLength = probeLength;
                     this.Count++;
 
@@ -278,20 +179,25 @@ namespace XForm
                 else if (probeLengthFound < probeLength)
                 {
                     // If we found an item with a higher wealth, put the new item here and move the existing one
-                    Storage.SwapWithCurrent(bucket);
+                    T keyMoved = this.Keys[bucket];
+                    U valueMoved = this.Values[bucket];
 
                     this.Metadata[bucket] = (byte)((probeLength << 4) + increment - 1);
+                    this.Keys[bucket] = key;
+                    this.Values[bucket] = value;
                     if (probeLength > this.MaxProbeLength) this.MaxProbeLength = probeLength;
 
+                    key = keyMoved;
+                    value = valueMoved;
                     probeLength = probeLengthFound;
                     increment = Increment((uint)metadataFound);
                 }
                 else if (probeLengthFound == probeLength)
                 {
                     // If this is a duplicate of the new item, stop
-                    if (this.Storage.EqualsCurrent(bucket))
+                    if (this.Keys[bucket].Equals(key))
                     {
-                        this.Storage.SetToCurrent(bucket);
+                        this.Values[bucket] = value;
                         return;
                     }
                 }
@@ -313,8 +219,8 @@ namespace XForm
             int newSize = this.Metadata.Length + (this.Metadata.Length >= 1048576 ? this.Metadata.Length >> 3 : this.Metadata.Length >> 1);
 
             // Save the current contents
-            T[] oldKeys = Storage.Keys;
-            U[] oldValues = Storage.Values;
+            T[] oldKeys = this.Keys;
+            U[] oldValues = this.Values;
             byte[] oldWealth = this.Metadata;
 
             // Allocate the larger table
@@ -329,17 +235,15 @@ namespace XForm
 
         public struct DictionaryEnumerator<V, W> : IEnumerator<V>
         {
-            private Dictionary5<V, W> Set;
-            private V[] Keys;
+            private Dictionary5O<V, W> Set;
             private int NextBucket;
 
-            public V Current => this.Keys[this.NextBucket];
-            object IEnumerator.Current => this.Keys[this.NextBucket];
+            public V Current => this.Set.Keys[this.NextBucket];
+            object IEnumerator.Current => this.Set.Keys[this.NextBucket];
 
-            public DictionaryEnumerator(Dictionary5<V, W> set)
+            public DictionaryEnumerator(Dictionary5O<V, W> set)
             {
                 this.Set = set;
-                this.Keys = set.Storage.Keys;
                 this.NextBucket = -1;
             }
 
