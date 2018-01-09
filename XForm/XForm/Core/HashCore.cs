@@ -6,7 +6,13 @@ using System.Collections.Generic;
 
 namespace XForm
 {
-    public class Dictionary52<T, U>
+    public interface IHashSetAdapter
+    {
+        bool EqualsCurrent(uint index);
+        void SwapWithCurrent(uint index);
+    }
+
+    public class Dictionary52<T, U> : IHashSetAdapter
     {
         private IEqualityComparer<T> Comparer;
         private HashCore Core { get; set; }
@@ -20,7 +26,7 @@ namespace XForm
         public Dictionary52(IEqualityComparer<T> comparer, int initialCapacity = -1)
         {
             this.Comparer = comparer;
-            this.Core = new HashCore();
+            this.Core = new HashCore(this);
             Reset(HashCore.SizeForCapacity(initialCapacity));
         }
 
@@ -54,12 +60,12 @@ namespace XForm
             return unchecked((uint)Comparer.GetHashCode(CurrentKey));
         }
 
-        private bool EqualsCurrent(uint index)
+        public bool EqualsCurrent(uint index)
         {
             return Comparer.Equals(this.Keys[index], CurrentKey);
         }
 
-        private void SwapWithCurrent(uint index)
+        public void SwapWithCurrent(uint index)
         {
             T swapKey = this.Keys[index];
             U swapValue = this.Values[index];
@@ -96,7 +102,7 @@ namespace XForm
         public bool ContainsKey(T key)
         {
             CurrentKey = key;
-            return this.Core.IndexOf(HashCurrent(), EqualsCurrent) != -1;
+            return this.Core.IndexOf(HashCurrent()) != -1;
         }
 
         /// <summary>
@@ -109,13 +115,13 @@ namespace XForm
             CurrentKey = key;
             CurrentValue = value;
 
-            if (!this.Core.Add(HashCurrent(), EqualsCurrent, SwapWithCurrent))
+            if (!this.Core.Add(HashCurrent()))
             {
                 Expand();
 
                 CurrentKey = key;
                 CurrentValue = value;
-                this.Core.Add(HashCurrent(), EqualsCurrent, SwapWithCurrent);
+                this.Core.Add(HashCurrent());
             }
         }
 
@@ -127,7 +133,7 @@ namespace XForm
         public bool Remove(T key)
         {
             CurrentKey = key;
-            int index = this.Core.IndexOf(HashCurrent(), EqualsCurrent);
+            int index = this.Core.IndexOf(HashCurrent());
             if (index == -1) return false;
 
             this.Core.Remove(index);
@@ -154,6 +160,8 @@ namespace XForm
 
     public class HashCore
     {
+        private IHashSetAdapter Adapter { get; set; }
+
         public int Count { get; private set; }
         public int MaxProbeLength { get; private set; }
 
@@ -163,8 +171,10 @@ namespace XForm
         // Items can be a maximum of 14 buckets from the initial bucket they hash to, so the probe length fits in four bits with a sentinel zero
         private const int ProbeLengthLimit = 14;
 
-        public HashCore()
-        { }
+        public HashCore(IHashSetAdapter adapter)
+        {
+            this.Adapter = adapter;
+        }
 
         public static int SizeForCapacity(int capacity)
         {
@@ -222,7 +232,7 @@ namespace XForm
             return (hashOrMetadata & 15) + 1;
         }
 
-        public int IndexOf(uint hash, Func<uint, bool> equals)
+        public int IndexOf(uint hash)
         {
             uint bucket = Bucket(hash);
             uint increment = Increment(hash);
@@ -231,7 +241,7 @@ namespace XForm
             // up to the farthest any key had to be moved from the desired bucket.
             for (int probeLength = 1; probeLength <= this.MaxProbeLength; ++probeLength)
             {
-                if (equals(bucket)) return (int)bucket;
+                if (Adapter.EqualsCurrent(bucket)) return (int)bucket;
 
                 bucket += increment;
                 if (bucket >= this.Metadata.Length) bucket -= (uint)this.Metadata.Length;
@@ -248,7 +258,7 @@ namespace XForm
             this.Count--;
         }
 
-        public bool Add(uint hash, Func<uint, bool> equalsCurrent, Action<uint> swapWithCurrent)
+        public bool Add(uint hash)
         {
             // If the table is too close to full, expand it. Very full tables cause slower inserts as many items are shifted.
             if (this.Metadata.Length < SizeForCapacity(this.Count)) return false;
@@ -266,7 +276,7 @@ namespace XForm
                 {
                     // If we found an empty cell (probe zero), add the item and return
                     this.Metadata[bucket] = (byte)((probeLength << 4) + increment - 1);
-                    swapWithCurrent(bucket);
+                    this.Adapter.SwapWithCurrent(bucket);
 
                     // Track the max probe length
                     if (probeLength > this.MaxProbeLength) this.MaxProbeLength = probeLength;
@@ -279,7 +289,7 @@ namespace XForm
                 else if (probeLengthFound < probeLength)
                 {
                     // If we found an item with a higher wealth, put the new item here
-                    swapWithCurrent(bucket);
+                    this.Adapter.SwapWithCurrent(bucket);
                     this.Metadata[bucket] = (byte)((probeLength << 4) + increment - 1);
 
                     // Track the max probe length
@@ -292,9 +302,9 @@ namespace XForm
                 else if (probeLengthFound == probeLength)
                 {
                     // If this is a duplicate of the new item, reset the value and stop
-                    if (equalsCurrent(bucket))
+                    if (this.Adapter.EqualsCurrent(bucket))
                     {
-                        swapWithCurrent(bucket);
+                        this.Adapter.SwapWithCurrent(bucket);
                         return true;
                     }
                 }
