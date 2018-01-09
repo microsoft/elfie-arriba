@@ -8,7 +8,7 @@ html, #app {
 }
 
 body {
-    font: 12px sans-serif;
+    font: 8pt sans-serif;
     background-color: $bg;
     color: $text;
     margin: 0;
@@ -94,18 +94,16 @@ body {
         border-collapse: collapse;
 
         thead td {
-            text-transform: uppercase;
             font-weight: bold;
             border-bottom: 1px solid $linedark;
         }
 
         td {
             border-bottom: 1px solid $line;
-            padding: 5px;
+            padding: 10px 20px 10px 0;
+            white-space: nowrap;
         }
 
-        tr:hover {
-            background: hsl(220, 20%, 98%);
-        }
+        // tr:hover { background: hsl(220, 20%, 98%); }
     }
 }
