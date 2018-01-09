@@ -95,7 +95,7 @@ class Index extends React.Component {
             if (o.colIndex.Valid === 0 && onlyRow[0] === false) { // Could this ever be true?
                 this.setState({ status: `Error: ${onlyRow[o.colIndex.Message || o.colIndex.ErrorMessage]}`, loading: false })
             } else {
-                this.setState({ status: `${o.rows.length.toLocaleString()}+ Results`, results: o, loading: false })
+                this.setState({ results: o, loading: false })
 
                 if (this.count === this.baseCount) { // No need to recount after the first page of results.
                     xhr(`count?q=${q}`).then(o => {
