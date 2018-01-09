@@ -1,13 +1,17 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using Microsoft.CodeAnalysis.Elfie.Serialization;
 using System;
 using System.IO;
 using System.Linq;
-using XForm.Data;
+
+using Microsoft.CodeAnalysis.Elfie.Serialization;
+
 using XForm.Extensions;
-using XForm.Test;
+using XForm.Data;
+using XForm.Verbs;
+using System.Collections.Generic;
+using XForm.Types;
 
 namespace XForm
 {
@@ -23,9 +27,12 @@ namespace XForm
         public PerformanceComparisons()
         {
             _rowCount = 50 * 1000 * 1000;
+
+            // Allocate 50 million ushorts in two arrays
             _values = new ushort[_rowCount];
             _thresholds = new ushort[_rowCount];
 
+            // The first array has random values from 0-999, the second is all '50'
             Random r = new Random();
             for (int i = 0; i < _values.Length; ++i)
             {
@@ -38,13 +45,14 @@ namespace XForm
 
         public void Run()
         {
-            NativeAccelerator.Enable();
-            
+            //NativeAccelerator.Enable();
+
             WhereUShortUnderConstant();
             WhereUShortEqualsUshort();
             ByteEqualsConstant();
             DoubleWhere();
-            
+            //Join();
+            //Dictionary();
             //TsvSplit();
         }
 
@@ -62,10 +70,10 @@ namespace XForm
                     return count;
                 });
 
-                //b.Measure("Linq Count", _values.Length, () =>
-                //{
-                //    return _values.Where((i) => i <= 50).Count();
-                //});
+                b.Measure("Linq Count", _values.Length, () =>
+                {
+                    return _values.Where((i) => i <= 50).Count();
+                });
 
                 b.Measure("XForm Count", _values.Length, () =>
                 {
@@ -156,6 +164,63 @@ namespace XForm
                     .WithColumn("Value", bytes)
                     .Query("where [Value] < 16", _context)
                     .Count();
+                });
+
+                b.AssertResultsEqual();
+            }
+        }
+
+        public void Join()
+        {
+            int joinFromLength = Math.Min(1000 * 1000, _values.Length);
+            ushort[] joinTo = Enumerable.Range(10, 1000).Select((i) => (ushort)i).ToArray();
+
+            using (Benchmarker b = new Benchmarker($"ushort[{joinFromLength:n0}] | join [Value] | count", DefaultMeasureMilliseconds))
+            {
+                b.Measure("XForm Join", joinFromLength, () =>
+                {
+                    IDataBatchEnumerator joinToSource = XFormTable.FromArrays(joinTo.Length).WithColumn("ID", joinTo);
+
+                    IDataBatchEnumerator enumerator = XFormTable.FromArrays(joinFromLength).WithColumn("Value", _values);
+                    enumerator = new Join(enumerator, "Value", joinToSource, "ID", "");
+                    return (int)enumerator.Count();
+                });
+            }
+        }
+
+        public void Dictionary()
+        {
+            int count = 1000 * 1000;
+            Dictionary<int, int> expected = new Dictionary<int, int>();
+            Dictionary5<int, int> actual = new Dictionary5<int, int>(new EqualityComparerAdapter<int>(TypeProviderFactory.Get(typeof(int)).TryGetComparer()));
+
+            int[] values = new int[count];
+            Random r = new Random(5);
+            for (int i = 0; i < count; ++i)
+            {
+                values[i] = r.Next();
+            }
+
+            using (Benchmarker b = new Benchmarker($"Dictionary<int, int> [{count:n0}]", DefaultMeasureMilliseconds))
+            {
+                b.Measure("System.Collections.Generic.Dictionary", count, () =>
+                {
+                    for (int i = 0; i < count; ++i)
+                    {
+                        expected[values[i]] = i;
+                    }
+
+                    return expected.Count;
+                });
+
+                b.Measure("XForm.Dictionary5", count, () =>
+                {
+                    for (int i = 0; i < count; ++i)
+                    {
+                        actual.Add(values[i], i);
+                    }
+
+                    return actual.Count;
                 });
 
                 b.AssertResultsEqual();

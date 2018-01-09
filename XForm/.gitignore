@@ -6,3 +6,4 @@
 
 # Don't include Push.cmd
 XForm/Push.cmd
+XForm/PullWeb.cmd

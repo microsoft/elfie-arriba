@@ -31,6 +31,9 @@ namespace XForm
         {
             try
             {
+                // Enable native acceleration by default
+                NativeAccelerator.Enable();
+
                 if (args == null || args.Length == 0)
                 {
                     return (int)new InteractiveRunner(context).Run();

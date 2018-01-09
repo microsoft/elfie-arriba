@@ -8,6 +8,7 @@ using Elfie.Test;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using XForm.Extensions;
+using XForm.Types;
 
 namespace XForm.Test.Extensions
 {
@@ -15,15 +16,14 @@ namespace XForm.Test.Extensions
     public class StringExtensionsTests
     {
         [TestMethod]
-        public void String_ParseTimeSpanFriendly()
-        {
-            Verify.Exception<ArgumentException>(() => ((string)null).ParseTimeSpanFriendly());
-            Verify.Exception<ArgumentException>(() => ("").ParseTimeSpanFriendly());
-
-            Assert.AreEqual(TimeSpan.FromSeconds(5.5), "5.5s".ParseTimeSpanFriendly());
-            Assert.AreEqual(TimeSpan.FromMinutes(15), "15m".ParseTimeSpanFriendly());
-            Assert.AreEqual(TimeSpan.FromHours(0.5), "0.5h".ParseTimeSpanFriendly());
-            Assert.AreEqual(TimeSpan.FromDays(7), "7d".ParseTimeSpanFriendly());
+        public void ParseTimeSpanFriendly()
+        { 
+            //Assert.AreEqual(null, TypeConverterFactory.ConvertSingle((string)null, typeof(TimeSpan)));
+            //Assert.AreEqual(null, TypeConverterFactory.ConvertSingle("", typeof(TimeSpan)));
+            Assert.AreEqual(TimeSpan.FromSeconds(5.5), TypeConverterFactory.ConvertSingle("5.5s", typeof(TimeSpan)));
+            Assert.AreEqual(TimeSpan.FromMinutes(15), TypeConverterFactory.ConvertSingle("15m", typeof(TimeSpan)));
+            Assert.AreEqual(TimeSpan.FromHours(0.5), TypeConverterFactory.ConvertSingle("0.5h", typeof(TimeSpan)));
+            Assert.AreEqual(TimeSpan.FromDays(7), TypeConverterFactory.ConvertSingle("7d", typeof(TimeSpan)));
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System;
 using XForm.Data;
 using XForm.Query;
 
@@ -16,6 +17,11 @@ namespace XForm.Functions
         ///  Function Name which this builder constructs.
         /// </summary>
         string Name { get; }
+
+        /// <summary>
+        ///  Return Type of function, if constant. Return null if type matches a parameter.
+        /// </summary>
+        Type ReturnType { get; }
 
         /// <summary>
         ///  Method to build the function given a source and context.

@@ -11,8 +11,8 @@ using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using XForm.Data;
 using XForm.Extensions;
 using XForm.Functions;
-using XForm.Types;
 using XForm.Query.Expression;
+using XForm.Types;
 
 namespace XForm.Query
 {
@@ -22,7 +22,7 @@ namespace XForm.Query
         private WorkflowContext _workflow;
         private Stack<IUsage> _currentlyBuilding;
 
-        private static Dictionary<string, IPipelineStageBuilder> s_pipelineStageBuildersByName;
+        private static Dictionary<string, IVerbBuilder> s_pipelineStageBuildersByName;
 
         public XqlParser(string xqlQuery, WorkflowContext workflow)
         {
@@ -35,9 +35,9 @@ namespace XForm.Query
         private static void EnsureLoaded()
         {
             if (s_pipelineStageBuildersByName != null) return;
-            s_pipelineStageBuildersByName = new Dictionary<string, IPipelineStageBuilder>(StringComparer.OrdinalIgnoreCase);
+            s_pipelineStageBuildersByName = new Dictionary<string, IVerbBuilder>(StringComparer.OrdinalIgnoreCase);
 
-            foreach (IPipelineStageBuilder builder in InterfaceLoader.BuildAll<IPipelineStageBuilder>())
+            foreach (IVerbBuilder builder in InterfaceLoader.BuildAll<IVerbBuilder>())
             {
                 Add(builder);
             }
@@ -52,7 +52,7 @@ namespace XForm.Query
             }
         }
 
-        private static void Add(IPipelineStageBuilder builder)
+        private static void Add(IVerbBuilder builder)
         {
             s_pipelineStageBuildersByName[builder.Verb] = builder;
         }
@@ -70,7 +70,7 @@ namespace XForm.Query
             innerContext.Parser = parser;
 
             // Build the Pipeline
-            IDataBatchEnumerator result = parser.NextPipeline(source);
+            IDataBatchEnumerator result = parser.NextQuery(source);
 
             // Copy inner context results back out to the outer context
             innerContext.Pop(outerContext);
@@ -78,7 +78,7 @@ namespace XForm.Query
             return result;
         }
 
-        public IDataBatchEnumerator NextPipeline(IDataBatchEnumerator source)
+        public IDataBatchEnumerator NextQuery(IDataBatchEnumerator source)
         {
             IDataBatchEnumerator pipeline = source;
 
@@ -94,16 +94,16 @@ namespace XForm.Query
                     break;
                 }
 
-                pipeline = NextStage(pipeline);
+                pipeline = NextVerb(pipeline);
                 _scanner.Next();
             }
 
             return pipeline;
         }
 
-        public IDataBatchEnumerator NextStage(IDataBatchEnumerator source)
+        public IDataBatchEnumerator NextVerb(IDataBatchEnumerator source)
         {
-            IPipelineStageBuilder builder = null;
+            IVerbBuilder builder = null;
             ParseNextOrThrow(() => s_pipelineStageBuildersByName.TryGetValue(_scanner.Current.Value, out builder), "verb", TokenType.Value, SupportedVerbs);
             _currentlyBuilding.Push(builder);
 
@@ -135,10 +135,17 @@ namespace XForm.Query
             return provider.Type;
         }
 
-        public string NextColumnName(IDataBatchEnumerator currentSource)
+        public string NextColumnName(IDataBatchEnumerator currentSource, Type requiredType = null)
         {
             int columnIndex = -1;
-            ParseNextOrThrow(() => currentSource.Columns.TryGetIndexOfColumn(_scanner.Current.Value, out columnIndex), "columnName", TokenType.ColumnName, currentSource.Columns.Select((cd) => cd.Name));
+
+            ParseNextOrThrow(
+                () => currentSource.Columns.TryGetIndexOfColumn(_scanner.Current.Value, out columnIndex)
+                && (requiredType == null || currentSource.Columns[columnIndex].Type == requiredType), 
+                "columnName", 
+                TokenType.ColumnName, 
+                EscapedColumnList(currentSource, requiredType));
+
             return currentSource.Columns[columnIndex].Name;
         }
 
@@ -173,14 +180,20 @@ namespace XForm.Query
             }
         }
 
-        public IDataBatchColumn NextColumn(IDataBatchEnumerator source, WorkflowContext context)
+        public IDataBatchColumn NextColumn(IDataBatchEnumerator source, WorkflowContext context, Type requiredType = null)
         {
             IDataBatchColumn result = null;
 
             if (_scanner.Current.Type == TokenType.Value)
             {
-                String8 value = String8.Convert(_scanner.Current.Value, new byte[String8.GetLength(_scanner.Current.Value)]);
-                result = new Constant(source, value, typeof(String8));
+                object value = String8.Convert(_scanner.Current.Value, new byte[String8.GetLength(_scanner.Current.Value)]);
+
+                if(requiredType != null && requiredType != typeof(String8))
+                {
+                    value = TypeConverterFactory.ConvertSingle(value, requiredType);
+                }
+
+                result = new Constant(source, value, (requiredType == null ? typeof(String8) : requiredType));
                 _scanner.Next();
             }
             else if (_scanner.Current.Type == TokenType.FunctionName)
@@ -191,9 +204,10 @@ namespace XForm.Query
             {
                 result = new Column(source, context);
             }
-            else
-            {
-                Throw("columnFunctionOrLiteral", source.Columns.Select((c) => c.Name).Concat(FunctionFactory.SupportedFunctions));
+
+            if (result == null || (requiredType != null && result.ColumnDetails.Type != requiredType))
+            { 
+                Throw("columnFunctionOrLiteral", EscapedColumnList(source, requiredType).Concat(EscapedFunctionList(requiredType)));
             }
 
             if (_scanner.Current.Value.Equals("as", StringComparison.OrdinalIgnoreCase))
@@ -206,13 +220,18 @@ namespace XForm.Query
             return result;
         }
 
-        public IDataBatchColumn NextFunction(IDataBatchEnumerator source, WorkflowContext context)
+        public IDataBatchColumn NextFunction(IDataBatchEnumerator source, WorkflowContext context, Type requiredType = null)
         {
             string value = _scanner.Current.Value;
 
             // Get the builder for the function
             IFunctionBuilder builder = null;
-            ParseNextOrThrow(() => FunctionFactory.TryGetBuilder(_scanner.Current.Value, out builder), "functionName", TokenType.FunctionName, FunctionFactory.SupportedFunctions);
+            ParseNextOrThrow(() => FunctionFactory.TryGetBuilder(_scanner.Current.Value, out builder)
+                && (requiredType == null || builder.ReturnType == null || requiredType == builder.ReturnType), 
+                "functionName", 
+                TokenType.FunctionName, 
+                FunctionFactory.SupportedFunctions(requiredType));
+
             _currentlyBuilding.Push(builder);
 
             // Parse the open paren
@@ -226,6 +245,12 @@ namespace XForm.Query
                 // Ensure we've parsed all arguments, and consume the close paren
                 ParseNextOrThrow(() => true, ")", TokenType.CloseParen);
                 _currentlyBuilding.Pop();
+
+                // Error if the final function doesn't have the required return type
+                if(requiredType != null && result.ColumnDetails.Type != requiredType)
+                {
+                    Throw("functionName", FunctionFactory.SupportedFunctions(requiredType));
+                }
 
                 return result;
             }
@@ -252,9 +277,9 @@ namespace XForm.Query
 
         public TimeSpan NextTimeSpan()
         {
-            TimeSpan value = TimeSpan.Zero;
-            ParseNextOrThrow(() => _scanner.Current.Value.TryParseTimeSpanFriendly(out value), "TimeSpan [ex: '60s', '15m', '24h', '7d']", TokenType.Value);
-            return value;
+            object value = null;
+            ParseNextOrThrow(() => TypeConverterFactory.TryConvertSingle(_scanner.Current.Value, typeof(TimeSpan), out value), "TimeSpan [ex: '60s', '15m', '24h', '7d']", TokenType.Value);
+            return (TimeSpan)value;
         }
 
         public string NextString()
@@ -292,7 +317,7 @@ namespace XForm.Query
             // Parse the first term (and any 'AND'ed terms)
             terms.Add(NextAndExpression(source, context));
 
-            while(HasAnotherArgument)
+            while (HasAnotherArgument)
             {
                 // If this is not an OR, stop
                 BooleanOperator bOp;
@@ -301,7 +326,7 @@ namespace XForm.Query
                 _scanner.Next();
 
                 // Parse the next term
-                terms.Add(NextTerm(source, context));
+                terms.Add(NextAndExpression(source, context));
             }
 
             // Return the full expression
@@ -316,7 +341,7 @@ namespace XForm.Query
             // Parse the first term
             terms.Add(NextTerm(source, context));
 
-            while(HasAnotherArgument)
+            while (HasAnotherArgument)
             {
                 BooleanOperator bOp;
                 if (_scanner.Current.Value.TryParseBooleanOperator(out bOp))
@@ -330,6 +355,8 @@ namespace XForm.Query
                 else
                 {
                     // This is an implied AND, look for the next expression
+                    // If there's a hint token here, suggest boolean operators
+                    if (_scanner.Current.Type == TokenType.NextTokenHint) Throw("booleanOperator", new string[] { "AND", "OR", "NOT" });
                 }
 
                 // Parse the next term
@@ -347,7 +374,7 @@ namespace XForm.Query
             bool negate = false;
 
             // Look for NOT
-            if(_scanner.Current.Value.TryParseNot())
+            if (_scanner.Current.Value.TryParseNot())
             {
                 _scanner.Next();
                 negate = true;
@@ -388,6 +415,18 @@ namespace XForm.Query
             }
 
             _scanner.Next();
+        }
+
+        public static IEnumerable<string> EscapedColumnList(IDataBatchEnumerator source, Type requiredType = null)
+        {
+            return source.Columns
+                .Where((cd) => (requiredType == null || cd.Type == requiredType))
+                .Select((cd) => XqlScanner.Escape(cd.Name, TokenType.ColumnName));
+        }
+
+        public static IEnumerable<string> EscapedFunctionList(Type requiredType = null)
+        {
+            return FunctionFactory.SupportedFunctions(requiredType).Select((name) => name + "(");
         }
 
         private ErrorContext BuildErrorContext()

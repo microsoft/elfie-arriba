@@ -6,8 +6,6 @@ using System.IO;
 
 using XForm.Data;
 using XForm.IO.StreamProvider;
-using XForm.Query;
-using XForm.Transforms;
 using XForm.Types.Comparers;
 
 namespace XForm.Types
@@ -29,9 +27,9 @@ namespace XForm.Types
             return new ByteWriter(streamProvider.OpenWrite(Path.Combine(columnPath, "V.u8.bin")));
         }
 
-        public ComparerExtensions.Comparer TryGetComparer(CompareOperator op)
+        public IDataBatchComparer TryGetComparer()
         {
-            return new ByteComparer().TryBuild(op);
+            return new ByteComparer();
         }
 
         public Func<DataBatch, DataBatch> TryGetConverter(Type sourceType, Type targetType, object defaultValue, bool strict)

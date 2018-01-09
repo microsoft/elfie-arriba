@@ -16,7 +16,8 @@ namespace XForm.Query
         Newline,
         OpenParen,
         CloseParen,
-        Comment
+        Comment,
+        NextTokenHint
     }
 
     public class Token
@@ -53,7 +54,7 @@ namespace XForm.Query
 
         static XqlScanner()
         {
-            s_charactersRequiringEscaping = new HashSet<char>(new char[] { ' ', '\t', '"', '[', ']', '(', ')', ',' });
+            s_charactersRequiringEscaping = new HashSet<char>(new char[] { ' ', '\t', '"', '[', ']', '(', ')', ',', '?' });
         }
 
         public XqlScanner(string xqlQuery)
@@ -107,6 +108,10 @@ namespace XForm.Query
                 this.CurrentLineNumber++;
                 this.LastNewlineIndex = CurrentIndex;
                 this.Current.Type = TokenType.Newline;
+            }
+            else if (next == '?')
+            {
+                this.Current.Type = TokenType.NextTokenHint;
             }
             else if (next == '#')
             {
@@ -231,7 +236,7 @@ namespace XForm.Query
             if (type == TokenType.ColumnName)
             {
                 if (String.IsNullOrEmpty(value)) return "[]";
-                
+
                 // Always escape column names
                 return "[" + value.Replace("]", "]]") + "]";
             }

@@ -15,7 +15,7 @@ namespace XForm.Data
         All
     }
 
-    internal class MemoryCacheBuilder : IPipelineStageBuilder
+    internal class MemoryCacheBuilder : IVerbBuilder
     {
         public string Verb => "cache";
         public string Usage => "'cache'";

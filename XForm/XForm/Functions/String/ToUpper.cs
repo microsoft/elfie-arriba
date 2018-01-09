@@ -1,8 +1,8 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System;
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
-
 using XForm.Data;
 
 namespace XForm.Functions.String
@@ -11,6 +11,7 @@ namespace XForm.Functions.String
     {
         public string Name => "ToUpper";
         public string Usage => "ToUpper([String8])";
+        public Type ReturnType => typeof(String8);
 
         public IDataBatchColumn Build(IDataBatchEnumerator source, WorkflowContext context)
         {
@@ -20,7 +21,7 @@ namespace XForm.Functions.String
             return SimpleTransformFunction<String8, String8>.Build(
                 Name,
                 source,
-                context.Parser.NextColumn(source, context),
+                context.Parser.NextColumn(source, context, typeof(String8)),
                 (string8) =>
                 {
                     // Make a copy, make it uppercase, and return it

@@ -7,8 +7,6 @@ using System.Runtime.InteropServices;
 
 using XForm.Data;
 using XForm.IO.StreamProvider;
-using XForm.Query;
-using XForm.Transforms;
 using XForm.Types.Comparers;
 
 namespace XForm.Types
@@ -40,20 +38,20 @@ namespace XForm.Types
             return null;
         }
 
-        public ComparerExtensions.Comparer TryGetComparer(CompareOperator op)
+        public IDataBatchComparer TryGetComparer()
         {
-            if (typeof(T) == typeof(sbyte)) return new SbyteComparer().TryBuild(op);
-            if (typeof(T) == typeof(byte)) return new ByteComparer().TryBuild(op);
-            if (typeof(T) == typeof(short)) return new ShortComparer().TryBuild(op);
-            if (typeof(T) == typeof(ushort)) return new UshortComparer().TryBuild(op);
-            if (typeof(T) == typeof(int)) return new IntComparer().TryBuild(op);
-            if (typeof(T) == typeof(uint)) return new UintComparer().TryBuild(op);
-            if (typeof(T) == typeof(long)) return new LongComparer().TryBuild(op);
-            if (typeof(T) == typeof(ulong)) return new UlongComparer().TryBuild(op);
-            if (typeof(T) == typeof(float)) return new FloatComparer().TryBuild(op);
-            if (typeof(T) == typeof(double)) return new DoubleComparer().TryBuild(op);
+            if (typeof(T) == typeof(sbyte)) return new SbyteComparer();
+            if (typeof(T) == typeof(byte)) return new ByteComparer();
+            if (typeof(T) == typeof(short)) return new ShortComparer();
+            if (typeof(T) == typeof(ushort)) return new UshortComparer();
+            if (typeof(T) == typeof(int)) return new IntComparer();
+            if (typeof(T) == typeof(uint)) return new UintComparer();
+            if (typeof(T) == typeof(long)) return new LongComparer();
+            if (typeof(T) == typeof(ulong)) return new UlongComparer();
+            if (typeof(T) == typeof(float)) return new FloatComparer();
+            if (typeof(T) == typeof(double)) return new DoubleComparer();
 
-            return new ComparableComparer<T>().TryBuild(op);
+            return null;
         }
 
         public static string ValuesFilePath(string columnPath)

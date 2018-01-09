@@ -12,6 +12,7 @@ namespace XForm.Functions
     {
         public string Name => "Cast";
         public string Usage => "Cast([ColumnFunctionOrLiteral], [TargetType], [DefaultValue?], [Strict?])";
+        public Type ReturnType => null;
 
         public IDataBatchColumn Build(IDataBatchEnumerator source, WorkflowContext context)
         {

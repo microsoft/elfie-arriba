@@ -1071,7 +1071,7 @@ exports = module.exports = __webpack_require__(18)(undefined);
 
 
 // module
-exports.push([module.i, "html, #app {\n  height: 100%; }\n\nbody {\n  font: 12px sans-serif;\n  background-color: white;\n  color: #4d4d4d;\n  margin: 0;\n  height: 100%; }\n  body * {\n    box-sizing: border-box;\n    outline: none; }\n\ninput {\n  color: #4d4d4d;\n  font: 11pt sans-serif; }\n\n.root {\n  display: flex;\n  height: 100%; }\n\n#query {\n  width: 500px;\n  height: 100%;\n  overflow: hidden; }\n\n#results {\n  flex: 1;\n  padding: 20px;\n  overflow: scroll;\n  border-left: 1px solid #b3b3b3;\n  background-color: #fffffe; }\n  #results table {\n    border-collapse: collapse; }\n  #results table thead td {\n    text-transform: uppercase;\n    font-weight: bold;\n    border-bottom: 1px solid #b3b3b3; }\n  #results table td {\n    border-bottom: 1px solid #ebebeb;\n    padding: 5px; }\n  #results table tr:hover {\n    background: #f9fafb; }\n", ""]);
+exports.push([module.i, "html, #app {\n  height: 100%; }\n\nbody {\n  font: 12px sans-serif;\n  background-color: white;\n  color: #4d4d4d;\n  margin: 0;\n  height: 100%; }\n  body * {\n    box-sizing: border-box;\n    outline: none; }\n  body a {\n    text-decoration: none; }\n\ninput {\n  color: #4d4d4d;\n  font: 11pt sans-serif; }\n\n.root {\n  display: flex;\n  height: 100%;\n  width: 100%; }\n\n#query {\n  width: 500px;\n  height: 100%;\n  overflow-y: hidden;\n  overflow-x: scroll;\n  resize: horizontal; }\n\n.myInlineDecoration {\n  color: red !important; }\n\n#results {\n  flex: 1;\n  height: 100%;\n  border-left: 1px solid #b3b3b3;\n  background-color: #fffffe;\n  display: flex;\n  flex-direction: column;\n  overflow: scroll; }\n  #results .resultsHeader {\n    flex-shrink: 0;\n    padding: 20px;\n    border-bottom: 1px solid #b3b3b3;\n    display: flex;\n    position: relative; }\n    #results .resultsHeader .flexFill {\n      flex: 1; }\n    #results .resultsHeader a {\n      margin-left: 10px; }\n    #results .resultsHeader .loading {\n      display: none;\n      position: absolute;\n      left: 0;\n      bottom: 0;\n      height: 3px;\n      width: 100%; }\n      #results .resultsHeader .loading.loading-active {\n        display: block;\n        background: linear-gradient(90deg, transparent 70%, #2080df 85%, transparent);\n        background-size: 200%;\n        animation: wave 1.5s linear 500ms infinite; }\n\n@keyframes wave {\n  0% {\n    background-position: 200% 50%; }\n  100% {\n    background-position: 0%   50%; } }\n  #results .tableWrapper {\n    flex: 1;\n    padding: 20px; }\n  #results table {\n    border-collapse: collapse; }\n  #results table thead td {\n    text-transform: uppercase;\n    font-weight: bold;\n    border-bottom: 1px solid #b3b3b3; }\n  #results table td {\n    border-bottom: 1px solid #ebebeb;\n    padding: 5px; }\n  #results table tr:hover {\n    background: #f9fafb; }\n", ""]);
 
 // exports
 
@@ -19005,7 +19005,10 @@ var Index = function (_React$Component) {
 
         var _this3 = _possibleConstructorReturn(this, (Index.__proto__ || Object.getPrototypeOf(Index)).call(this, props));
 
+        _this3.baseCount = 50;
+        _this3.count = _this3.baseCount;
         _this3.state = { query: _this3.query };
+        _this3.debouncedRefresh = debounce(_this3.refresh, 200);
         return _this3;
     }
 
@@ -19021,7 +19024,7 @@ var Index = function (_React$Component) {
 
                 monaco.languages.register({ id: 'xform' });
                 monaco.languages.registerCompletionItemProvider('xform', {
-                    triggerCharacters: [' ', '\n'],
+                    triggerCharacters: [' ', '\n', '('],
                     provideCompletionItems: function provideCompletionItems(model, position) {
                         _newArrowCheck(this, _this4);
 
@@ -19029,18 +19032,12 @@ var Index = function (_React$Component) {
                         return xhr("suggest?q=" + encodeURIComponent(textUntilPosition)).then(function (o) {
                             _newArrowCheck(this, _this4);
 
-                            var row = o.rows[0];
-                            var valid = row[0];
-                            var type = row[2];
-                            var values = row[3];
+                            var onlyRow = o.rows[0];
+                            var valid = onlyRow[o.colIndex.Valid];
+                            var type = onlyRow[o.colIndex.ItemCategory];
+                            var values = onlyRow[o.colIndex.Values];
 
-                            if (valid) {
-                                this.refresh();
-                            }
-
-                            if (!values) {
-                                return [];
-                            }
+                            if (!values) return [];
 
                             var kind = monaco.languages.CompletionItemKind;
                             var suggestions = !values.length ? [] : values.split(";").map(function (s) {
@@ -19062,25 +19059,56 @@ var Index = function (_React$Component) {
                 });
 
                 this.editor = monaco.editor.create(document.getElementById('query'), {
-                    value: ['read WebRequest', 'where HttpStatus != 200'].join('\n'),
+                    value: ['read WebRequest', 'where [HttpStatus] != 200'].join('\n'),
                     language: 'xform',
                     scrollBeyondLastLine: false,
-                    minimap: { enabled: false }
+                    minimap: { enabled: false },
+                    automaticLayout: true
                 });
+
+                this.editor.onDidChangeModelContent(function (e) {
+                    _newArrowCheck(this, _this4);
+
+                    this.count = this.baseCount;
+                    this.debouncedRefresh();
+                }.bind(this));
 
                 this.refresh();
             }.bind(this));
         }
     }, {
         key: "refresh",
-        value: function refresh() {
+        value: function refresh(addCount) {
             var _this5 = this;
 
+            this.count += addCount || 0;
             var model = this.editor.getModel();
-            xhr("run?c=100&q=" + encodeURIComponent(model.getValue())).then(function (o) {
+            var q = encodeURIComponent(model.getValue());
+
+            if (!q) return; // Running with an empty query will return a "" instead of an empty object table.
+
+            this.setState({ loading: true });
+            xhr("run?c=" + this.count + "&q=" + q).then(function (o) {
                 _newArrowCheck(this, _this5);
 
-                this.setState({ results: o });
+                var onlyRow = o.rows[0];
+                if (o.colIndex.Valid === 0 && onlyRow[0] === false) {
+                    // Could this ever be true?
+                    this.setState({ status: "Error: " + onlyRow[o.colIndex.Message || o.colIndex.ErrorMessage], loading: false });
+                } else {
+                    this.setState({ status: o.rows.length.toLocaleString() + "+ Results", results: o, loading: false });
+
+                    if (this.count === this.baseCount) {
+                        // No need to recount after the first page of results.
+                        xhr("count?q=" + q).then(function (o) {
+                            _newArrowCheck(this, _this5);
+
+                            var onlyRow = o.rows[0];
+                            var count = onlyRow[o.colIndex.Count];
+                            this.setState({ status: count !== undefined && count.toLocaleString() + " Results" || "Error: " + onlyRow[o.colIndex.ErrorMessage] });
+                        }.bind(this));
+                    }
+                }
             }.bind(this));
         }
     }, {
@@ -19090,10 +19118,12 @@ var Index = function (_React$Component) {
 
             var cols, rows;
             var results = this.state.results;
-            if (results && results.rows && results.colIndex) {
+            if (results) {
                 cols = Object.keys(results.colIndex);
                 rows = results.rows;
             }
+
+            var q = this.editor && encodeURIComponent(this.editor.getModel().getValue());
 
             return _react2.default.createElement(
                 "div",
@@ -19101,47 +19131,81 @@ var Index = function (_React$Component) {
                 _react2.default.createElement("div", { id: "query" }),
                 _react2.default.createElement(
                     "div",
-                    { id: "results" },
+                    { id: "results", onScroll: function (e) {
+                            _newArrowCheck(this, _this6);
+
+                            var element = e.target;
+                            var pixelsFromBottom = element.scrollHeight - element.clientHeight - element.scrollTop;
+                            if (pixelsFromBottom < 100) {
+                                this.refresh(10);
+                            }
+                            // TODO: Inc only if not currently fetching
+                        }.bind(this) },
                     _react2.default.createElement(
-                        "table",
-                        null,
+                        "div",
+                        { className: "resultsHeader" },
                         _react2.default.createElement(
-                            "thead",
+                            "span",
+                            null,
+                            this.state.status
+                        ),
+                        _react2.default.createElement("span", { className: "flexFill" }),
+                        q && _react2.default.createElement(
+                            "a",
+                            { target: "_blank", href: "http://localhost:5073/download?fmt=csv&q=" + q },
+                            "CSV"
+                        ),
+                        q && _react2.default.createElement(
+                            "a",
+                            { target: "_blank", href: "http://localhost:5073/download?fmt=tsv&q=" + q },
+                            "TSV"
+                        ),
+                        _react2.default.createElement("span", { className: "loading " + (this.state.loading && 'loading-active') })
+                    ),
+                    _react2.default.createElement(
+                        "div",
+                        { className: "tableWrapper" },
+                        _react2.default.createElement(
+                            "table",
                             null,
                             _react2.default.createElement(
-                                "tr",
+                                "thead",
                                 null,
-                                cols && cols.map(function (c) {
-                                    _newArrowCheck(this, _this6);
-
-                                    return _react2.default.createElement(
-                                        "td",
-                                        { key: c },
-                                        c
-                                    );
-                                }.bind(this))
-                            )
-                        ),
-                        _react2.default.createElement(
-                            "tbody",
-                            null,
-                            cols && rows && rows.map(function (r, i) {
-                                _newArrowCheck(this, _this6);
-
-                                return _react2.default.createElement(
+                                _react2.default.createElement(
                                     "tr",
-                                    { key: i },
-                                    r.map(function (c, ii) {
+                                    null,
+                                    cols && cols.map(function (c) {
                                         _newArrowCheck(this, _this6);
 
                                         return _react2.default.createElement(
                                             "td",
-                                            { key: i + "x" + ii },
+                                            { key: c },
                                             c
                                         );
                                     }.bind(this))
-                                );
-                            }.bind(this))
+                                )
+                            ),
+                            _react2.default.createElement(
+                                "tbody",
+                                null,
+                                rows && rows.map(function (r, i) {
+                                    _newArrowCheck(this, _this6);
+
+                                    return _react2.default.createElement(
+                                        "tr",
+                                        { key: i },
+                                        r.map(function (c, ii) {
+                                            _newArrowCheck(this, _this6);
+
+                                            return _react2.default.createElement(
+                                                "td",
+                                                { key: i + "x" + ii },
+                                                c
+                                            );
+                                        }.bind(this))
+                                    );
+                                }.bind(this))
+                            )
                         )
                     )
                 )

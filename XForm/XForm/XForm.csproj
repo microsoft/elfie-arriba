@@ -22,6 +22,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -32,6 +33,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup>
     <StartupObject>
@@ -45,6 +47,7 @@
     <PlatformTarget>x64</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
     <OutputPath>..\bin\x64\Release\</OutputPath>
@@ -54,6 +57,7 @@
     <PlatformTarget>x64</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
     <DebugSymbols>true</DebugSymbols>
@@ -63,6 +67,7 @@
     <PlatformTarget>x86</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
     <OutputPath>bin\x86\Release\</OutputPath>
@@ -72,9 +77,9 @@
     <PlatformTarget>x86</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
@@ -88,25 +93,32 @@
   <ItemGroup>
     <Compile Include="Aggregators\CountAggregator.cs" />
     <Compile Include="BackgroundWebServer.cs" />
-    <Compile Include="Commands\Cast.cs" />
-    <Compile Include="Commands\Rename.cs" />
-    <Compile Include="Commands\Set.cs" />
-    <Compile Include="Commands\Read.cs" />
+    <Compile Include="Core\Dictionary5.cs" />
+    <Compile Include="Core\Hashing.cs" />
+    <Compile Include="Core\JoinDictionary.cs" />
+    <Compile Include="Types\Comparers\DateTimeComparer.cs" />
+    <Compile Include="Types\Comparers\String8Comparer.cs" />
+    <Compile Include="Types\Comparers\TimeSpanComparer.cs" />
+    <Compile Include="Types\TimeSpanTypeProvider.cs" />
+    <Compile Include="Verbs\Cast.cs" />
+    <Compile Include="Verbs\Rename.cs" />
+    <Compile Include="Verbs\Set.cs" />
+    <Compile Include="Verbs\Read.cs" />
     <Compile Include="Context\IWorkflowRunner.cs" />
     <Compile Include="Context\SingleFileRunner.cs" />
-    <Compile Include="Data\Allocator.cs" />
+    <Compile Include="Core\Allocator.cs" />
     <Compile Include="Data\ArraySelector.cs" />
     <Compile Include="Data\ColumnDetails.cs" />
     <Compile Include="Data\DataBatch.cs" />
     <Compile Include="Data\DataBatchEnumeratorWrapper.cs" />
     <Compile Include="Data\IDataBatchEnumerator.cs" />
-    <Compile Include="Data\BitVector.cs" />
+    <Compile Include="Core\BitVector.cs" />
     <Compile Include="Data\MemoryCacher.cs" />
     <Compile Include="Data\SinglePageEnumerator.cs" />
-    <Compile Include="Data\XFormTable.cs" />
+    <Compile Include="Core\XFormTable.cs" />
     <Compile Include="Extensions\DataBatchEnumeratorExtensions.cs" />
     <Compile Include="Extensions\IComparableExtensions.cs" />
-    <Compile Include="Extensions\InterfaceLoader.cs" />
+    <Compile Include="Core\InterfaceLoader.cs" />
     <Compile Include="Functions\AsOfDate.cs" />
     <Compile Include="Functions\Cast.cs" />
     <Compile Include="Functions\Date\DateAdd.cs" />
@@ -131,29 +143,29 @@
     <Compile Include="IO\SchemaSerializer.cs" />
     <Compile Include="Extensions\StreamProviderExtensions.cs" />
     <Compile Include="IO\StreamProvider\MultipleSourceStreamProvider.cs" />
-    <Compile Include="NativeAccelerator.cs" />
+    <Compile Include="Core\NativeAccelerator.cs" />
     <Compile Include="PerformanceComparisons.cs" />
     <Compile Include="Query\Expression\NotExpression.cs" />
     <Compile Include="Query\Expression\IExpression.cs" />
     <Compile Include="Query\Expression\AndExpression.cs" />
     <Compile Include="Query\Expression\OrExpression.cs" />
     <Compile Include="Query\Expression\TermExpression.cs" />
-    <Compile Include="Query\IPipelineStageBuilder.cs" />
+    <Compile Include="Query\IVerbBuilder.cs" />
     <Compile Include="Query\IUsage.cs" />
     <Compile Include="Query\Operator.cs" />
     <Compile Include="Extensions\ColumnsExtensions.cs" />
     <Compile Include="Extensions\StringExtensions.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="IO\ArrayTable.cs" />
+    <Compile Include="Data\ArrayTable.cs" />
     <Compile Include="IO\BinaryTableReader.cs" />
     <Compile Include="Query\UsageException.cs" />
     <Compile Include="Query\XqlParser.cs" />
-    <Compile Include="Commands\Remove.cs" />
-    <Compile Include="Commands\Select.cs" />
+    <Compile Include="Verbs\Remove.cs" />
+    <Compile Include="Verbs\Select.cs" />
     <Compile Include="Query\XqlScanner.cs" />
     <Compile Include="Query\QuerySuggester.cs" />
-    <Compile Include="Test\Benchmarker.cs" />
+    <Compile Include="Core\Benchmarker.cs" />
     <Compile Include="Types\Comparers\ComparableComparer.cs" />
     <Compile Include="Types\Comparers\DoubleComparer.cs" />
     <Compile Include="Types\Comparers\FloatComparer.cs" />
@@ -168,12 +180,12 @@
     <Compile Include="Types\IDataBatchComparer.cs" />
     <Compile Include="Types\Nullable.cs" />
     <Compile Include="Types\TypeConverterFactory.cs" />
-    <Compile Include="Commands\Join.cs" />
-    <Compile Include="Commands\Limit.cs" />
+    <Compile Include="Verbs\Join.cs" />
+    <Compile Include="Verbs\Limit.cs" />
     <Compile Include="Data\RowRemapper.cs" />
     <Compile Include="IO\TabularFileReader.cs" />
-    <Compile Include="Commands\Schema.cs" />
-    <Compile Include="Commands\Where.cs" />
+    <Compile Include="Verbs\Schema.cs" />
+    <Compile Include="Verbs\Where.cs" />
     <Compile Include="IO\BinaryTableWriter.cs" />
     <Compile Include="IO\TabularFileWriter.cs" />
     <Compile Include="Types\ByteProvider.cs" />
@@ -195,14 +207,6 @@
       <Project>{d45f339f-847a-4f3a-88a0-afb883e9920e}</Project>
       <Name>Elfie</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Web\bundle.js">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Web\index.html">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

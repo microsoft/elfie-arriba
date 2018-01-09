@@ -36,7 +36,7 @@ namespace XForm.Query
                 result.IsValid = true;
 
                 // Parse the query with an extra argument on the last line to see what would be suggested
-                partialXqlQuery = partialXqlQuery + " \"\"";
+                partialXqlQuery = partialXqlQuery + " ?";
 
                 // Try building the query pipeline, using a *DeferredRunner* so dependencies aren't built right now
                 pipeline = XqlParser.Parse(partialXqlQuery, null, _workflowContext);

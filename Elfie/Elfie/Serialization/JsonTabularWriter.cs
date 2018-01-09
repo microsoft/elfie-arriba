@@ -325,10 +325,10 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         {
             if (_stream != null)
             {
-                // <closing 'rows'>
+                // <closing 'rows'>, opened in SetColumn
                 //    ]
                 // }
-                if (_rowCountWritten > 0)
+                if (_columnCount > 0)
                 {
                     _stream.WriteByte(UTF8.Newline);
                     _stream.WriteByte(UTF8.RightBracket);
