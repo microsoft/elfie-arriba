@@ -14,7 +14,7 @@ namespace XForm.Core
         public void Dictionary5_Basics()
         {
             Dictionary<int, int> expected = new Dictionary<int, int>();
-            Dictionary52<int, int> actual = new Dictionary52<int, int>(new EqualityComparerAdapter<int>(TypeProviderFactory.Get(typeof(int)).TryGetComparer()));
+            Dictionary5<int, int> actual = new Dictionary5<int, int>(new EqualityComparerAdapter<int>(TypeProviderFactory.Get(typeof(int)).TryGetComparer()));
 
             // Add random items. Verify the HashSet correctly reports whether they're already there and were added
             Random r = new Random(5);

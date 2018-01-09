@@ -188,7 +188,7 @@ namespace XForm
         {
             int count = 1000 * 1000;
             Dictionary<int, int> expected = new Dictionary<int, int>();
-            Dictionary52<int, int> actual = new Dictionary52<int, int>(new EqualityComparerAdapter<int>(TypeProviderFactory.Get(typeof(int)).TryGetComparer()));
+            Dictionary5<int, int> actual = new Dictionary5<int, int>(new EqualityComparerAdapter<int>(TypeProviderFactory.Get(typeof(int)).TryGetComparer()));
             Dictionary5O<int, int> actualO = new Dictionary5O<int, int>(new EqualityComparerAdapter<int>(TypeProviderFactory.Get(typeof(int)).TryGetComparer()));
 
             int[] values = new int[count];
@@ -210,7 +210,7 @@ namespace XForm
                     return expected.Count;
                 });
 
-                b.Measure("XForm.Dictionary52", count, () =>
+                b.Measure("XForm.Dictionary5", count, () =>
                 {
                     for (int i = 0; i < count; ++i)
                     {
@@ -220,7 +220,7 @@ namespace XForm
                     return actual.Count;
                 });
 
-                b.Measure("XForm.Dictionary5", count, () =>
+                b.Measure("XForm.Dictionary5O", count, () =>
                 {
                     for (int i = 0; i < count; ++i)
                     {

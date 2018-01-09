@@ -2,167 +2,23 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
-using System.Collections.Generic;
 
 namespace XForm
 {
-    public interface IHashSetAdapter
+    /// <summary>
+    ///  HashCore provides a base Robin Hood hash implementation for specific classes to build on.
+    ///  It provides the algorithm for choosing a bucket, probing, swapping on insert, and resizing.
+    ///  
+    ///  Implementing classes can store any number of other arrays, so that HashSet, Dictionary, and
+    ///  multiple-key, multiple-value classes can be implemented on top.
+    /// </summary>
+    public abstract class HashCore
     {
-        bool EqualsCurrent(uint index);
-        void SwapWithCurrent(uint index);
-    }
-
-    public class Dictionary52<T, U> : IHashSetAdapter
-    {
-        private IEqualityComparer<T> Comparer;
-        private HashCore Core { get; set; }
-
-        private T[] Keys { get; set; }
-        private U[] Values { get; set; }
-
-        private T CurrentKey;
-        private U CurrentValue;
-
-        public Dictionary52(IEqualityComparer<T> comparer, int initialCapacity = -1)
-        {
-            this.Comparer = comparer;
-            this.Core = new HashCore(this);
-            Reset(HashCore.SizeForCapacity(initialCapacity));
-        }
-
-        private void Reset(int size)
-        {
-            this.Core.Reset(size);
-            this.Keys = new T[size];
-            this.Values = new U[size];
-        }
-
-        private void Expand()
-        {
-            // Save the current Keys/Values/Metadata
-            T[] oldKeys = this.Keys;
-            U[] oldValues = this.Values;
-            byte[] oldMetaData = this.Core.Metadata;
-
-            // Expand the table
-            Reset(HashCore.ResizeToSize(this.Keys.Length));
-
-            // Add items to the enlarged table
-            for (int i = 0; i < oldMetaData.Length; ++i)
-            {
-                if (oldMetaData[i] > 0) Add(oldKeys[i], oldValues[i]);
-            }
-        }
-
-        #region Methods HashCore needs
-        private uint HashCurrent()
-        {
-            return unchecked((uint)Comparer.GetHashCode(CurrentKey));
-        }
-
-        public bool EqualsCurrent(uint index)
-        {
-            return Comparer.Equals(this.Keys[index], CurrentKey);
-        }
-
-        public void SwapWithCurrent(uint index)
-        {
-            T swapKey = this.Keys[index];
-            U swapValue = this.Values[index];
-
-            this.Keys[index] = CurrentKey;
-            this.Values[index] = CurrentValue;
-
-            CurrentKey = swapKey;
-            CurrentValue = swapValue;
-        }
-        #endregion
-
-        #region Public Members
         /// <summary>
         ///  Return the number of items currently in the Dictionary
         /// </summary>
-        public int Count => this.Core.Count;
-
-        /// <summary>
-        ///  Remove all items from the Dictionary, retaining the allocated size.
-        /// </summary>
-        public void Clear()
-        {
-            this.Core.Clear();
-            Array.Clear(this.Keys, 0, this.Keys.Length);
-            Array.Clear(this.Values, 0, this.Values.Length);
-        }
-
-        /// <summary>
-        ///  Return whether this Dictionary contains the given key.
-        /// </summary>
-        /// <param name="key">Value to find</param>
-        /// <returns>True if in set, False otherwise</returns>
-        public bool ContainsKey(T key)
-        {
-            CurrentKey = key;
-            return this.Core.IndexOf(HashCurrent()) != -1;
-        }
-
-        /// <summary>
-        ///  Add the given value to the set.
-        /// </summary>
-        /// <param name="key">Key to add</param>
-        /// <param name="key">Value to add</param>
-        public void Add(T key, U value)
-        {
-            CurrentKey = key;
-            CurrentValue = value;
-
-            if (!this.Core.Add(HashCurrent()))
-            {
-                Expand();
-
-                CurrentKey = key;
-                CurrentValue = value;
-                this.Core.Add(HashCurrent());
-            }
-        }
-
-        /// <summary>
-        ///  Remove the given key from the Dictionary.
-        /// </summary>
-        /// <param name="key">Value to remove</param>
-        /// <returns>True if removed, False if not found</returns>
-        public bool Remove(T key)
-        {
-            CurrentKey = key;
-            int index = this.Core.IndexOf(HashCurrent());
-            if (index == -1) return false;
-
-            this.Core.Remove(index);
-            this.Keys[index] = default(T);
-            this.Values[index] = default(U);
-            return true;
-        }
-
-        public IEnumerable<T> AllKeys
-        {
-            get
-            {
-                for(int index = 0; index < this.Keys.Length; ++index)
-                {
-                    if(this.Core.Metadata[index] > 0)
-                    {
-                        yield return this.Keys[index];
-                    }
-                }
-            }
-        }
-        #endregion
-    }
-
-    public class HashCore
-    {
-        private IHashSetAdapter Adapter { get; set; }
-
         public int Count { get; private set; }
+
         public int MaxProbeLength { get; private set; }
 
         // Metadata stores the probe length in the upper four bits and the probe increment in the lower four bits
@@ -171,12 +27,31 @@ namespace XForm
         // Items can be a maximum of 14 buckets from the initial bucket they hash to, so the probe length fits in four bits with a sentinel zero
         private const int ProbeLengthLimit = 14;
 
-        public HashCore(IHashSetAdapter adapter)
+        public HashCore(int capacity)
         {
-            this.Adapter = adapter;
+            Reset(SizeForCapacity(capacity));
         }
 
-        public static int SizeForCapacity(int capacity)
+        // Required methods - compare the value at an index to the current value to insert, swap the value at the index with the one to insert
+        protected abstract bool EqualsCurrent(uint index);
+        protected abstract void SwapWithCurrent(uint index);
+        protected abstract void Expand();
+
+        protected virtual void Reset(int size)
+        {
+            this.Metadata = new byte[size];
+            this.Count = 0;
+            this.MaxProbeLength = 0;
+        }
+
+        public virtual void Clear()
+        {
+            Array.Clear(this.Metadata, 0, this.Metadata.Length);
+            this.Count = 0;
+            this.MaxProbeLength = 0;
+        }
+
+        private static int SizeForCapacity(int capacity)
         {
             // Minimum capacity is 28 items, which is a 32-element array
             if (capacity < 28) return 32;
@@ -185,24 +60,10 @@ namespace XForm
             return capacity + (capacity >> 3) + 1;
         }
 
-        public static int ResizeToSize(int currentSize)
+        protected static int ResizeToSize(int currentSize)
         {
             // Grow by 1/2 under 1M items and 1/8 when over
             return currentSize + (currentSize >= 1048576 ? currentSize >> 3 : currentSize >> 1);
-        }
-
-        public void Reset(int size)
-        {
-            this.Metadata = new byte[size];
-            this.Count = 0;
-            this.MaxProbeLength = 0;
-        }
-
-        public void Clear()
-        {
-            Array.Clear(this.Metadata, 0, this.Metadata.Length);
-            this.Count = 0;
-            this.MaxProbeLength = 0;
         }
 
         // Find the average distance items are from their target buckets. Debuggability.
@@ -232,7 +93,13 @@ namespace XForm
             return (hashOrMetadata & 15) + 1;
         }
 
-        public int IndexOf(uint hash)
+        /// <summary>
+        ///  Find the bucket containing an item with the given hash.
+        ///  Uses EqualsCurrent to compare keys.
+        /// </summary>
+        /// <param name="hash">Hash of key to find</param>
+        /// <returns>Index of bucket with item or -1 if not present</returns>
+        protected int IndexOf(uint hash)
         {
             uint bucket = Bucket(hash);
             uint increment = Increment(hash);
@@ -241,7 +108,7 @@ namespace XForm
             // up to the farthest any key had to be moved from the desired bucket.
             for (int probeLength = 1; probeLength <= this.MaxProbeLength; ++probeLength)
             {
-                if (Adapter.EqualsCurrent(bucket)) return (int)bucket;
+                if (EqualsCurrent(bucket)) return (int)bucket;
 
                 bucket += increment;
                 if (bucket >= this.Metadata.Length) bucket -= (uint)this.Metadata.Length;
@@ -250,7 +117,11 @@ namespace XForm
             return -1;
         }
 
-        public void Remove(int bucket)
+        /// <summary>
+        ///  Remove the item in a given bucket. Any additional arrays must also be cleared.
+        /// </summary>
+        /// <param name="bucket">Index of Bucket of item to clear</param>
+        protected void Remove(int bucket)
         {
             // To remove a key, just clear the key and wealth.
             // Searches don't stop on empty buckets, so this is safe.
@@ -258,7 +129,14 @@ namespace XForm
             this.Count--;
         }
 
-        public bool Add(uint hash)
+        /// <summary>
+        ///  Find a bucket for an item with a given hash, swapping existing items to maintain the
+        ///  Robin Hood properties. Add calls EqualsCurrent to compare keys and SwapWithCurrent to
+        ///  insert the item.
+        /// </summary>
+        /// <param name="hash">Hash of item to find a bucket for</param>
+        /// <returns>True if the item was inserted, False if the table must be expanded</returns>
+        protected bool Add(uint hash)
         {
             // If the table is too close to full, expand it. Very full tables cause slower inserts as many items are shifted.
             if (this.Metadata.Length < SizeForCapacity(this.Count)) return false;
@@ -276,7 +154,7 @@ namespace XForm
                 {
                     // If we found an empty cell (probe zero), add the item and return
                     this.Metadata[bucket] = (byte)((probeLength << 4) + increment - 1);
-                    this.Adapter.SwapWithCurrent(bucket);
+                    this.SwapWithCurrent(bucket);
 
                     // Track the max probe length
                     if (probeLength > this.MaxProbeLength) this.MaxProbeLength = probeLength;
@@ -289,7 +167,7 @@ namespace XForm
                 else if (probeLengthFound < probeLength)
                 {
                     // If we found an item with a higher wealth, put the new item here
-                    this.Adapter.SwapWithCurrent(bucket);
+                    this.SwapWithCurrent(bucket);
                     this.Metadata[bucket] = (byte)((probeLength << 4) + increment - 1);
 
                     // Track the max probe length
@@ -302,9 +180,9 @@ namespace XForm
                 else if (probeLengthFound == probeLength)
                 {
                     // If this is a duplicate of the new item, reset the value and stop
-                    if (this.Adapter.EqualsCurrent(bucket))
+                    if (this.EqualsCurrent(bucket))
                     {
-                        this.Adapter.SwapWithCurrent(bucket);
+                        this.SwapWithCurrent(bucket);
                         return true;
                     }
                 }
