@@ -9,21 +9,16 @@ namespace XForm
 {
     public class DictionaryStorage<T, U>
     {
-        private IEqualityComparer<T> Comparer;
-        private T[] Keys;
-        private U[] Values;
+        public IEqualityComparer<T> Comparer;
+        public T[] Keys { get; private set; }
+        public U[] Values { get; private set; }
 
-        private T SwapKey;
-        private U SwapValue;
+        public T CurrentKey;
+        public U CurrentValue;
 
         public DictionaryStorage(IEqualityComparer<T> comparer)
         {
             this.Comparer = comparer;
-        }
-
-        public T[] GetKeys()
-        {
-            return this.Keys;
         }
 
         public void Reset(int size)
@@ -38,14 +33,20 @@ namespace XForm
             Array.Clear(this.Values, 0, this.Values.Length);
         }
 
-        public uint GetHashCode(T value)
+        public void SetCurrent(T key, U value)
         {
-            return unchecked((uint)Comparer.GetHashCode(value));
+            CurrentKey = key;
+            CurrentValue = value;
         }
 
-        public bool AreEqual(uint index, T value)
+        public uint HashCurrent()
         {
-            return Comparer.Equals(this.Keys[index], value);
+            return unchecked((uint)Comparer.GetHashCode(CurrentKey));
+        }
+
+        public bool EqualsCurrent(uint index)
+        {
+            return Comparer.Equals(this.Keys[index], CurrentKey);
         }
 
         public void Remove(uint index)
@@ -54,27 +55,28 @@ namespace XForm
             this.Values[index] = default(U);
         }
 
-        public void Set(uint index, T key, U value)
+        public void SetToCurrent(uint index)
         {
-            this.Keys[index] = key;
-            this.Values[index] = value;
+            this.Keys[index] = CurrentKey;
+            this.Values[index] = CurrentValue;
         }
 
-        public void Swap(uint index)
+        public void SwapWithCurrent(uint index)
         {
-            this.SwapKey = this.Keys[index];
-            this.SwapValue = this.Values[index];
-        }
+            T swapKey = this.Keys[index];
+            U swapValue = this.Values[index];
 
-        public U Value(uint index)
-        {
-            return this.Values[index];
+            this.Keys[index] = CurrentKey;
+            this.Values[index] = CurrentValue;
+
+            CurrentKey = swapKey;
+            CurrentValue = swapValue;
         }
     }
 
     /// <summary>
     ///  Dictionary5 is a Dictionary using Robin Hood hashing to provide good insert and search performance
-    ///  with much lower memory use than .NET HashSet.
+    ///  with much lower memory use than .NET Dictionary.
     ///  
     ///  Dictionary5 adds one byte of overhead and stays >= 75% full for large sizes;
     ///  Dictionary has 8 bytes overhead [cached hashcode and next node] and resizes more each time.
@@ -162,7 +164,9 @@ namespace XForm
 
         private int IndexOf(T key)
         {
-            uint hash = Storage.GetHashCode(key);
+            Storage.SetCurrent(key, default(U));
+
+            uint hash = Storage.HashCurrent();
             uint bucket = Bucket(hash);
             uint increment = Increment(hash);
 
@@ -170,7 +174,7 @@ namespace XForm
             // up to the farthest any key had to be moved from the desired bucket.
             for (int probeLength = 1; probeLength <= this.MaxProbeLength; ++probeLength)
             {
-                if (this.Storage.AreEqual(bucket, key)) return (int)bucket;
+                if (this.Storage.EqualsCurrent(bucket)) return (int)bucket;
 
                 bucket += increment;
                 if (bucket >= this.Metadata.Length) bucket -= (uint)this.Metadata.Length;
@@ -207,7 +211,7 @@ namespace XForm
                 return false;
             }
 
-            value = Storage.Value((uint)bucket);
+            value = Storage.Values[bucket];
             return true;
         }
 
@@ -217,7 +221,7 @@ namespace XForm
             {
                 int bucket = IndexOf(key);
                 if (bucket == -1) throw new KeyNotFoundException();
-                return Storage.Value((uint)bucket);
+                return Storage.Values[bucket];
             }
 
             set
@@ -236,7 +240,8 @@ namespace XForm
             // If the table is too close to full, expand it. Very full tables cause slower inserts as many items are shifted.
             if (this.Count >= (this.Metadata.Length - (this.Metadata.Length >> CapacityOverheadShift))) Expand();
 
-            uint hash = Storage.GetHashCode(key);
+            Storage.SetCurrent(key, value);
+            uint hash = Storage.HashCurrent();
             uint bucket = Bucket(hash);
             uint increment = Increment(hash);
 
@@ -249,7 +254,7 @@ namespace XForm
                 {
                     // If we found an empty cell (probe zero), add the item and return
                     this.Metadata[bucket] = (byte)((probeLength << 4) + increment - 1);
-                    this.Storage.Set(bucket, key, value);
+                    this.Storage.SetToCurrent(bucket);
                     if (probeLength > this.MaxProbeLength) this.MaxProbeLength = probeLength;
                     this.Count++;
 
@@ -258,25 +263,20 @@ namespace XForm
                 else if (probeLengthFound < probeLength)
                 {
                     // If we found an item with a higher wealth, put the new item here and move the existing one
-                    T keyMoved = this.Keys[bucket];
-                    U valueMoved = this.Values[bucket];
+                    Storage.SwapWithCurrent(bucket);
 
                     this.Metadata[bucket] = (byte)((probeLength << 4) + increment - 1);
-                    this.Keys[bucket] = key;
-                    this.Values[bucket] = value;
                     if (probeLength > this.MaxProbeLength) this.MaxProbeLength = probeLength;
 
-                    key = keyMoved;
-                    value = valueMoved;
                     probeLength = probeLengthFound;
                     increment = Increment((uint)metadataFound);
                 }
                 else if (probeLengthFound == probeLength)
                 {
                     // If this is a duplicate of the new item, stop
-                    if (this.Storage.AreEqual(bucket, key))
+                    if (this.Storage.EqualsCurrent(bucket))
                     {
-                        this.Storage.Set(bucket, key, value);
+                        this.Storage.SetToCurrent(bucket);
                         return;
                     }
                 }
@@ -298,8 +298,8 @@ namespace XForm
             int newSize = this.Metadata.Length + (this.Metadata.Length >= 1048576 ? this.Metadata.Length >> 3 : this.Metadata.Length >> 1);
 
             // Save the current contents
-            T[] oldKeys = this.Keys;
-            U[] oldValues = this.Values;
+            T[] oldKeys = Storage.Keys;
+            U[] oldValues = Storage.Values;
             byte[] oldWealth = this.Metadata;
 
             // Allocate the larger table
@@ -324,7 +324,7 @@ namespace XForm
             public DictionaryEnumerator(Dictionary5<V, W> set)
             {
                 this.Set = set;
-                this.Keys = set.Storage.GetKeys();
+                this.Keys = set.Storage.Keys;
                 this.NextBucket = -1;
             }
 

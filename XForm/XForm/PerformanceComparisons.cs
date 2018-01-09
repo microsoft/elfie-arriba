@@ -19,65 +19,63 @@ namespace XForm
     {
         private const int DefaultMeasureMilliseconds = 2500;
 
-        private int _rowCount;
-        private ushort[] _values;
-        private ushort[] _thresholds;
-        private WorkflowContext _context;
+        private WorkflowContext Context { get; set; }
+        private int Count { get; set; }
+        private ushort[] Values { get; set; }
+        private ushort[] Thresholds { get; set; }
 
         public PerformanceComparisons()
         {
-            _rowCount = 50 * 1000 * 1000;
-
-            // Allocate 50 million ushorts in two arrays
-            _values = new ushort[_rowCount];
-            _thresholds = new ushort[_rowCount];
-
-            // The first array has random values from 0-999, the second is all '50'
+            Context = new WorkflowContext();
             Random r = new Random();
-            for (int i = 0; i < _values.Length; ++i)
-            {
-                _values[i] = (ushort)r.Next(1000);
-                _thresholds[i] = 50;
-            }
+            Count = 50 * 1000 * 1000;
 
-            _context = new WorkflowContext();
+            // Two 50M item arrays - _values is 0-999, _thresholds is always 50
+            Values = new ushort[Count];
+            Thresholds = new ushort[Count];
+
+            for (int i = 0; i < Values.Length; ++i)
+            {
+                Values[i] = (ushort)r.Next(1000);
+                Thresholds[i] = 50;
+            }
         }
 
         public void Run()
         {
-            WhereUShortUnderConstant();
-            WhereUShortEqualsUshort();
-            ByteEqualsConstant();
-            DoubleWhere();
-            //Join();
-            //Dictionary();
+            //WhereUShortUnderConstant();
+            //WhereUShortEqualsUshort();
+            //ByteEqualsConstant();
+            //DoubleWhere();
+            Join();
+            Dictionary();
             //TsvSplit();
         }
 
         public void WhereUShortUnderConstant()
         {
-            using (Benchmarker b = new Benchmarker($"ushort[{_rowCount:n0}] | where [Value] <= 50 | count", DefaultMeasureMilliseconds))
+            using (Benchmarker b = new Benchmarker($"ushort[{Count:n0}] | where [Value] <= 50 | count", DefaultMeasureMilliseconds))
             {
-                b.Measure("For Count", _values.Length, () =>
+                b.Measure("For Count", Values.Length, () =>
                 {
                     int count = 0;
-                    for (int i = 0; i < _values.Length; ++i)
+                    for (int i = 0; i < Values.Length; ++i)
                     {
-                        if (_values[i] <= 50) count++;
+                        if (Values[i] <= 50) count++;
                     }
                     return count;
                 });
 
-                b.Measure("Linq Count", _values.Length, () =>
+                b.Measure("Linq Count", Values.Length, () =>
                 {
-                    return _values.Where((i) => i <= 50).Count();
+                    return Values.Where((i) => i <= 50).Count();
                 });
 
-                b.Measure("XForm Count", _values.Length, () =>
+                b.Measure("XForm Count", Values.Length, () =>
                 {
-                    return (int)XFormTable.FromArrays(_values.Length)
-                    .WithColumn("Value", _values)
-                    .Query("where [Value] <= 50", _context)
+                    return (int)XFormTable.FromArrays(Values.Length)
+                    .WithColumn("Value", Values)
+                    .Query("where [Value] <= 50", Context)
                     .Count();
                 });
 
@@ -87,24 +85,24 @@ namespace XForm
 
         public void WhereUShortEqualsUshort()
         {
-            using (Benchmarker b = new Benchmarker($"ushort[{_rowCount:n0}] | where [Value] = [Threshold] | count", DefaultMeasureMilliseconds))
+            using (Benchmarker b = new Benchmarker($"ushort[{Count:n0}] | where [Value] = [Threshold] | count", DefaultMeasureMilliseconds))
             {
-                b.Measure("For Count", _values.Length, () =>
+                b.Measure("For Count", Values.Length, () =>
                 {
                     int count = 0;
-                    for (int i = 0; i < _values.Length; ++i)
+                    for (int i = 0; i < Values.Length; ++i)
                     {
-                        if (_values[i] == _thresholds[i]) count++;
+                        if (Values[i] == Thresholds[i]) count++;
                     }
                     return count;
                 });
 
-                b.Measure("XForm Count", _values.Length, () =>
+                b.Measure("XForm Count", Values.Length, () =>
                 {
-                    return (int)XFormTable.FromArrays(_values.Length)
-                    .WithColumn("Value", _values)
-                    .WithColumn("Threshold", _thresholds)
-                    .Query("where [Value] = [Threshold]", _context)
+                    return (int)XFormTable.FromArrays(Values.Length)
+                    .WithColumn("Value", Values)
+                    .WithColumn("Threshold", Thresholds)
+                    .Query("where [Value] = [Threshold]", Context)
                     .Count();
                 });
 
@@ -114,23 +112,23 @@ namespace XForm
 
         public void DoubleWhere()
         {
-            using (Benchmarker b = new Benchmarker($"ushort[{_rowCount:n0}] | where [Value] < 50 || [Value] > 950 | count", DefaultMeasureMilliseconds))
+            using (Benchmarker b = new Benchmarker($"ushort[{Count:n0}] | where [Value] < 50 || [Value] > 950 | count", DefaultMeasureMilliseconds))
             {
-                b.Measure("For Count", _values.Length, () =>
+                b.Measure("For Count", Values.Length, () =>
                 {
                     int count = 0;
-                    for (int i = 0; i < _values.Length; ++i)
+                    for (int i = 0; i < Values.Length; ++i)
                     {
-                        if (_values[i] < 50 || _values[i] > 950) count++;
+                        if (Values[i] < 50 || Values[i] > 950) count++;
                     }
                     return count;
                 });
 
-                b.Measure("XForm Count", _values.Length, () =>
+                b.Measure("XForm Count", Values.Length, () =>
                 {
-                    return (int)XFormTable.FromArrays(_values.Length)
-                    .WithColumn("Value", _values)
-                    .Query("where [Value] < 50 || [Value] > 950", _context)
+                    return (int)XFormTable.FromArrays(Values.Length)
+                    .WithColumn("Value", Values)
+                    .Query("where [Value] < 50 || [Value] > 950", Context)
                     .Count();
                 });
 
@@ -160,7 +158,7 @@ namespace XForm
                 {
                     return (int)XFormTable.FromArrays(bytes.Length)
                     .WithColumn("Value", bytes)
-                    .Query("where [Value] < 16", _context)
+                    .Query("where [Value] < 16", Context)
                     .Count();
                 });
 
@@ -170,7 +168,7 @@ namespace XForm
 
         public void Join()
         {
-            int joinFromLength = Math.Min(1000 * 1000, _values.Length);
+            int joinFromLength = Math.Min(1000 * 1000, Values.Length);
             ushort[] joinTo = Enumerable.Range(10, 1000).Select((i) => (ushort)i).ToArray();
 
             using (Benchmarker b = new Benchmarker($"ushort[{joinFromLength:n0}] | join [Value] | count", DefaultMeasureMilliseconds))
@@ -179,7 +177,7 @@ namespace XForm
                 {
                     IDataBatchEnumerator joinToSource = XFormTable.FromArrays(joinTo.Length).WithColumn("ID", joinTo);
 
-                    IDataBatchEnumerator enumerator = XFormTable.FromArrays(joinFromLength).WithColumn("Value", _values);
+                    IDataBatchEnumerator enumerator = XFormTable.FromArrays(joinFromLength).WithColumn("Value", Values);
                     enumerator = new Join(enumerator, "Value", joinToSource, "ID", "");
                     return (int)enumerator.Count();
                 });
