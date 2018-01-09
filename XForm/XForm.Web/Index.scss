@@ -1,0 +1,111 @@
+$bg: white;
+$text: hsl(0, 0, 30%);
+$line: hsl(0, 0, 92%);
+$linedark: hsl(0, 0, 70%);
+
+html, #app {
+    height: 100%;
+}
+
+body {
+    font: 12px sans-serif;
+    background-color: $bg;
+    color: $text;
+    margin: 0;
+    height: 100%;
+
+    * {
+        box-sizing: border-box;
+        outline: none;
+    }
+
+    a {
+        text-decoration: none;
+    }
+
+    input {
+        color: $text;
+        font: 11pt sans-serif;
+    }
+}
+
+.root {
+    display: flex;
+    height: 100%;
+    width: 100%;
+}
+
+#query {
+    width: 500px;
+    height: 100%;
+    overflow-y: hidden;
+    overflow-x: scroll;
+    resize: horizontal;
+}
+
+#results {
+    flex: 1;
+    height: 100%;
+    border-left: 1px solid $linedark;
+    background-color: #fffffe; // Matching Monaco
+    display: flex;
+    flex-direction: column;
+    overflow: scroll;
+
+    .resultsHeader {
+        flex-shrink: 0;
+        padding: 20px;
+        border-bottom: 1px solid $linedark;
+        display: flex;
+        position: relative; // For .loading
+
+        .flexFill { flex: 1 }
+
+        a { margin-left: 10px; }
+
+        .loading {
+            display: none;
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            height: 3px;
+            width: 100%;
+
+            &.loading-active {
+                display: block;
+                background: linear-gradient(90deg, transparent 70%, hsl(210, 75%, 50%) 85%, transparent);
+                background-size: 200%;
+                animation: wave 1.5s linear 500ms infinite;
+
+                @keyframes wave {
+                    0%    { background-position: 200% 50% }
+                    100%  { background-position: 0%   50% }
+                }
+            }
+        }
+    }
+
+    .tableWrapper {
+        flex: 1;
+        padding: 20px;
+    }
+
+    table {
+        border-collapse: collapse;
+
+        thead td {
+            text-transform: uppercase;
+            font-weight: bold;
+            border-bottom: 1px solid $linedark;
+        }
+
+        td {
+            border-bottom: 1px solid $line;
+            padding: 5px;
+        }
+
+        tr:hover {
+            background: hsl(220, 20%, 98%);
+        }
+    }
+}

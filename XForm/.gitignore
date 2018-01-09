@@ -4,5 +4,10 @@
 # Don't submit benchmark results
 *.Benchmarks.tsv
 
+# Don't include XForm.Web references or outputs
+XForm.Web/node_modules
+XForm.Web/bundle*
+
 # Don't include Push.cmd
 XForm/Push.cmd
+XForm/PullWeb.cmd

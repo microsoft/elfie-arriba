@@ -23,14 +23,11 @@ namespace XForm.Functions.String
         public IDataBatchColumn Build(IDataBatchEnumerator source, WorkflowContext context)
         {
             // Strings in XForm are stored in the type 'String8'. 
-
             // Make a String8Block (like StringBuilder) to allocate space for the new strings for the resolved IP addresses.
             String8Block block = new String8Block();
 
-            return SimpleTransformFunction<String8, String8>.Build(
-                Name,
-                source,
-                context.Parser.NextColumn(source, context),
+            return SimpleTransformFunction<String8, String8>.Build(Name, source,
+                context.Parser.NextColumn(source, context, typeof(String8)),
                 (name8) =>
                 {
                     // Convert the value passed for the name column to a string
