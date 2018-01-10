@@ -2,9 +2,36 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Collections.Generic;
+using XForm.Types;
 
 namespace XForm
 {
+    /// <summary>
+    ///  EqualityComparerAdapter turns an IDataBatchComparer&lt;T&gt; into an IEqualityComparer&lt;T&gt;
+    ///  for use with types which require one.
+    /// </summary>
+    /// <typeparam name="T">Type of values being compared</typeparam>
+    public class EqualityComparerAdapter<T> : IEqualityComparer<T>
+    {
+        private IDataBatchComparer<T> _inner;
+
+        public EqualityComparerAdapter(IDataBatchComparer inner)
+        {
+            _inner = (IDataBatchComparer<T>)inner;
+        }
+
+        public bool Equals(T left, T right)
+        {
+            return _inner.WhereEqual(left, right);
+        }
+
+        public int GetHashCode(T value)
+        {
+            return _inner.GetHashCode(value);
+        }
+    }
+
     /// <summary>
     ///  HashCore provides a base Robin Hood hash implementation for specific classes to build on.
     ///  It provides the algorithm for choosing a bucket, probing, swapping on insert, and resizing.

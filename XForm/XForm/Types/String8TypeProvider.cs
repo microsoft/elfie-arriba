@@ -93,6 +93,31 @@ namespace XForm.Types
 
             return null;
         }
+
+        public IValueCopier TryGetCopier()
+        {
+            return new String8Copier();
+        }
+    }
+
+    public class String8Copier : IValueCopier<String8>
+    {
+        private String8Block _block;
+
+        public String8Copier()
+        {
+            _block = new String8Block();
+        }
+
+        public String8 Copy(String8 value)
+        {
+            return _block.GetCopy(value);
+        }
+
+        public void Reset()
+        {
+            _block.Clear();
+        }
     }
 
     internal class String8ColumnReader : IColumnReader

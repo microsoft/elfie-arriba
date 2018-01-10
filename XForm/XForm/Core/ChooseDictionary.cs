@@ -26,15 +26,20 @@ namespace XForm
     internal class DictionaryColumn<TColumnType> : IDictionaryColumn
     {
         private IDataBatchComparer<TColumnType> _comparer;
+        private IValueCopier<TColumnType> _copier;
+
         private TColumnType[] _values;
         private TColumnType _current;
+        private bool _currentIsNewValue;
 
         private DataBatch _currentBatch;
         private TColumnType[] _currentBatchArray;
 
         public DictionaryColumn()
         {
-            _comparer = (IDataBatchComparer<TColumnType>)TypeProviderFactory.TryGet(typeof(TColumnType)).TryGetComparer();
+            ITypeProvider typeProvider = TypeProviderFactory.Get(typeof(TColumnType));
+            _comparer = (IDataBatchComparer<TColumnType>)typeProvider.TryGetComparer();
+            _copier = (IValueCopier<TColumnType>)typeProvider.TryGetCopier();
         }
 
         public int Length => _values.Length;
@@ -58,6 +63,8 @@ namespace XForm
 
         public void SetCurrent(uint index)
         {
+            _currentIsNewValue = true;
+
             int realIndex = _currentBatch.Index((int)index);
             if(_currentBatch.IsNull != null && _currentBatch.IsNull[realIndex])
             {
@@ -88,6 +95,13 @@ namespace XForm
 
         public void SwapCurrent(uint index)
         {
+            // Copy only new values and only when they become used
+            if (_currentIsNewValue && _copier != null)
+            {
+                _current = _copier.Copy(_current);
+                _currentIsNewValue = false;
+            }
+
             TColumnType temp = _values[index];
             _values[index] = _current;
             _current = temp;
