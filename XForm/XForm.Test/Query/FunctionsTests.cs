@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
@@ -107,37 +108,66 @@ namespace XForm.Test.Query
             DateTime[] expected = new DateTime[] { TestAsOfDateTime, TestAsOfDateTime, TestAsOfDateTime, TestAsOfDateTime, TestAsOfDateTime };
 
             // Can't try other scenarios with AsOfDate because it doesn't care of the inputs are null or indirect
-            RunAndCompare(DataBatch.All(values), "RowNumber", DataBatch.All(expected), "Result", "set [Result] AsOfDate()");
+            DataBatch dataBatch = DataBatch.All(values);
+            ColumnDetails details = new ColumnDetails("RowNumber", dataBatch.Array.GetType().GetElementType(), true);
+            RunAndCompare(new List<ColumnDetails>() { details }, new List<DataBatch>() { dataBatch }, DataBatch.All(expected), "Result", "set [Result] AsOfDate()");
         }
 
         public static void RunQueryAndVerify(Array values, string inputColumnName, Array expected, string outputColumnName, string queryText)
         {
-            Assert.IsTrue(expected.Length > 3, "Must have at least four values for a proper test.");
-
-            DataBatch inputBatch = DataBatch.All(values, values.Length);
-            DataBatch expectedBatch = DataBatch.All(expected, expected.Length);
-
-            // Run with full array DataBatches
-            RunAndCompare(inputBatch, inputColumnName, expectedBatch, outputColumnName, queryText);
-
-            // Add indices and gaps and verify against original set
-            RunAndCompare(DataBatchTransformer.Pad(inputBatch), inputColumnName, expectedBatch, outputColumnName, queryText);
-
-            // Add alternating nulls and verify alternating null/expected
-            RunAndCompare(DataBatchTransformer.Nulls(inputBatch), inputColumnName, DataBatchTransformer.Nulls(expectedBatch), outputColumnName, queryText);
-
-            // Test a single value by itself
-            RunAndCompare(DataBatchTransformer.First(inputBatch), inputColumnName, DataBatchTransformer.First(expectedBatch), outputColumnName, queryText);
+            RunQueryAndVerify(new[] { values }, new bool[][] { null }, new[] { inputColumnName }, expected, null, outputColumnName, queryText);
         }
 
-        public static void RunAndCompare(DataBatch input, string inputColumnName, DataBatch expected, string outputColumnName, string queryText)
+        public static void RunQueryAndVerify(Array[] inputColumnsValues, bool[][] inputColumnsNulls, string[] inputColumnNames, Array expectedValues, bool[] expectedNulls, string outputColumnName, string queryText)
+        {
+            Assert.IsTrue(expectedValues.Length > 3, "Must have at least four values for a proper test.");
+
+            List<ColumnDetails> inputColumnDetails = new List<ColumnDetails>();
+            List<DataBatch> inputColumnData = new List<DataBatch>();
+            List<DataBatch> inputColumnPaddedData = new List<DataBatch>();
+            List<DataBatch> inputColumnNullsData = new List<DataBatch>();
+            List<DataBatch> inputColumnConstantData = new List<DataBatch>();
+
+            for (int i = 0; i < inputColumnsValues.Length; i++)
+            {
+                DataBatch data = DataBatch.All(inputColumnsValues[i], inputColumnsValues[i].Length, inputColumnsNulls[i]);
+                ColumnDetails details = new ColumnDetails(inputColumnNames[i], data.Array.GetType().GetElementType(), true);
+                inputColumnDetails.Add(details);
+                inputColumnData.Add(data);
+                inputColumnPaddedData.Add(DataBatchTransformer.Pad(data));
+                inputColumnNullsData.Add(DataBatchTransformer.Nulls(data));
+                inputColumnConstantData.Add(DataBatchTransformer.First(data));
+            }
+
+            DataBatch expectedBatch = DataBatch.All(expectedValues, expectedValues.Length, expectedNulls);
+            DataBatch expectedNullsBatch = DataBatchTransformer.Nulls(expectedBatch);
+            DataBatch expectedConstantBatch = DataBatchTransformer.First(expectedBatch);
+
+            // Run with full array DataBatches
+            RunAndCompare(inputColumnDetails, inputColumnData, expectedBatch, outputColumnName, queryText);
+
+            // Add indices and gaps and verify against original set
+            RunAndCompare(inputColumnDetails, inputColumnPaddedData, expectedBatch, outputColumnName, queryText);
+
+            // Add alternating nulls and verify alternating null/expected
+            RunAndCompare(inputColumnDetails, inputColumnNullsData, expectedNullsBatch, outputColumnName, queryText);
+
+            // Test a single value by itself
+            RunAndCompare(inputColumnDetails, inputColumnConstantData, expectedConstantBatch, outputColumnName, queryText);
+        }
+
+        public static void RunAndCompare(IList<ColumnDetails> inputColumnDetails, IList<DataBatch> inputColumnData, DataBatch expected, string outputColumnName, string queryText)
         {
             WorkflowContext context = new WorkflowContext();
             context.RequestedAsOfDateTime = TestAsOfDateTime;
 
-            IDataBatchEnumerator query = XFormTable.FromArrays(input.Count)
-                .WithColumn(new ColumnDetails(inputColumnName, input.Array.GetType().GetElementType(), true), input)
-                .Query(queryText, context);
+            var table = XFormTable.FromArrays(inputColumnData[0].Count);
+            for (int i = 0; i < inputColumnDetails.Count; i++)
+            {
+                table = table.WithColumn(inputColumnDetails[i], inputColumnData[i]);
+            }
+
+            var query = table.Query(queryText, context);
 
             Func<DataBatch> resultGetter = query.ColumnGetter(query.Columns.IndexOfColumn(outputColumnName));
             int pageCount;
@@ -160,6 +190,18 @@ namespace XForm.Test.Query
             pageCount = query.Next(expected.Count + 1);
             Assert.AreEqual(expected.Count, pageCount);
             DataBatchTransformer.AssertAreEqual(expected, resultGetter(), pageCount);
+
+            // Test resetting of the IsNull array
+            // Get two rows and verify. This will return an IsNull set of {true,false}.
+            query.Reset();
+            pageCount = query.Next(2);
+            DataBatchTransformer.AssertAreEqual(DataBatchTransformer.Slice(expected, 0, 2), resultGetter(), pageCount);
+
+            // Evaluate a DataBatch which returns an IsNull set of {false,true}. If the function doesn't reset the IsNull array, this should fail with the IsNull result set to {true,true}.
+            query.Reset();
+            pageCount = query.Next(1);
+            pageCount = query.Next(2);
+            DataBatchTransformer.AssertAreEqual(DataBatchTransformer.Slice(expected, 1, 3), resultGetter(), pageCount);
         }
     }
 }

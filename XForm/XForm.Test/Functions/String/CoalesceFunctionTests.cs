@@ -6,7 +6,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using XForm.Data;
+using XForm.Extensions;
 using XForm.Functions.String;
+using XForm.Test.Query;
 
 namespace XForm.Test.Functions.String
 {
@@ -14,28 +16,29 @@ namespace XForm.Test.Functions.String
     public class CoalesceFunctionTests
     {
         [TestMethod]
-        public void Coalesce()
+        public void Function_Coalesce()
         {
-            // Arrange
+            // Coalesce returns the first non-NULL or empty string from the input columns.
+            // If all values for all the columns are NULL, Coalesce returns null.
+            
+            // Test Cases
+            // [C1] [C2] [C3] = result
 
-            String8[] transformedArray = null;
-            bool[] nullArray = null;
-
-            // 1 a !   =   1
-            // 2 b -   =   2
-            // 3 - -   =   3 
-            // - d $   =   d
-            // - e -   =   e
-            // - - ^   =   ^
-            // - - -   =   -
+            //   1    a    !  =   1
+            //   2    b       =   2
+            //   3            =   3 
+            //        d    $  =   d
+            //        e       =   e
+            //             ^  =   ^
+            //                =       <-- the all nulls case is not included in the test set because it is covered by the test framework
 
 
+            String8Block block = new String8Block();
             String8[] column1 = new String8[]
             {
-                "1".ToString8(),
-                "2".ToString8(),
-                "3".ToString8(),
-                String8.Empty,
+                block.GetCopy("1"),
+                block.GetCopy("2"),
+                block.GetCopy("3"),
                 String8.Empty,
                 String8.Empty,
                 String8.Empty,
@@ -43,57 +46,50 @@ namespace XForm.Test.Functions.String
 
             String8[] column2 = new String8[]
             {
-                "a".ToString8(),
-                "b".ToString8(),
+                block.GetCopy("a"),
+                block.GetCopy("b"),
                 String8.Empty,
-                "d".ToString8(),
-                "e".ToString8(),
-                String8.Empty,
+                block.GetCopy("d"),
+                block.GetCopy("e"),
                 String8.Empty,
             };
 
             String8[] column3 = new String8[]
             {
-                "!".ToString8(),
+                block.GetCopy("!"),
                 String8.Empty,
                 String8.Empty,
-                "$".ToString8(),
+                block.GetCopy("$"),
                 String8.Empty,
-                "^".ToString8(),
-                String8.Empty,
+                block.GetCopy("^"),
             };
 
             String8[] expected = new String8[]
             {
-                "1".ToString8(),
-                "2".ToString8(),
-                "3".ToString8(),
-                "d".ToString8(),
-                "e".ToString8(),
-                "^".ToString8(),
-                String8.Empty,
+                block.GetCopy("1"),
+                block.GetCopy("2"),
+                block.GetCopy("3"),
+                block.GetCopy("d"),
+                block.GetCopy("e"),
+                block.GetCopy("^"),
             };
 
-
-            // Act
-            DataBatch actual = CoalesceColumn.CoalesceBatch(ref transformedArray, ref nullArray, DataBatch.All(column1), DataBatch.All(column2), DataBatch.All(column3));
-
-
-            // Assert
-            Assert.AreEqual(expected.Length, actual.Count, "The coalesced column length did not match the expected column length.");
-
-            for (int i = 0; i < expected.Length; i++)
+            bool[] expectedNulls = new bool[]
             {
-                Assert.AreEqual(expected[i], actual.Array.GetValue(i));
-            }
-        }
-    }
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+            };
 
-    static class String8Extensions
-    {
-        public static String8 ToString8(this string text)
-        {
-            return String8.Convert(text, new byte[String8.GetLength(text)]);
+            String8[][] inputColumnsValues = new String8[][] { column1, column2, column3 };
+            bool[][] inputColumnsNulls = new bool[][] { null, null, null };
+            string[] inputColumnNames = new string[] { "C1", "C2", "C3" };
+            string outputColumnName = "R1";
+
+            FunctionsTests.RunQueryAndVerify(inputColumnsValues, inputColumnsNulls, inputColumnNames, expected, expectedNulls, outputColumnName, "set [R1] Coalesce([C1], [C2], [C3])");
         }
     }
 }

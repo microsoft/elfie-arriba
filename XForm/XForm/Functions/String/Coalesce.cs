@@ -2,9 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using XForm.Commands;
 using XForm.Data;
-using XForm.Types;
 
 namespace XForm.Functions.String
 {
@@ -12,6 +10,7 @@ namespace XForm.Functions.String
     {
         public string Name => "Coalesce";
         public string Usage => "Coalesce([ColumnName], [...n])";
+        public Type ReturnType => typeof(String8);
 
         public IDataBatchColumn Build(IDataBatchEnumerator source, WorkflowContext context)
         {
@@ -24,7 +23,7 @@ namespace XForm.Functions.String
 
             if (columns.Count < 2)
             {
-                throw new ArgumentOutOfRangeException("Coalesce requries at least two input columns.");
+                throw new ArgumentException("Coalesce requries at least two input columns.");
             }
 
             return CoalesceColumn.Build(
@@ -33,15 +32,35 @@ namespace XForm.Functions.String
         }
     }
 
+    /// <summary>
+    /// Coalesce evaluates the input columns in order and returns the current value of the first column that does not evaluate to NULL or Empty string.
+    /// </summary>
+    /// <example>
+    /// The following command will evaluate the values of the input columns, C1, C2, C3 and return the first non-NULL value.
+    ///     set [R1] Coalesce([C1], [C2], [C3])
+    ///     
+    /// If C1 = NULL, C2 = "bob", C3 = "fred", R2 will be set to "bob".
+    /// If C1 = "", C2 = "bob", C3 = "fred", R2 will be set to "bob".
+    /// If all the values of the input columns are NULL, the output column will be set to NULL.
+    /// </example>
     public class CoalesceColumn : IDataBatchColumn
     {
-        private IEnumerable<IDataBatchColumn> Columns { get; }
-
         private CoalesceColumn(IEnumerable<IDataBatchColumn> columns)
         {
             Columns = columns;
 
             ColumnDetails = new ColumnDetails("Coalesce", typeof(String8), true);
+        }
+
+        private IEnumerable<IDataBatchColumn> Columns { get; }
+        public ColumnDetails ColumnDetails { get; }
+
+        public Func<DataBatch> Getter()
+        {
+            String8[] transformedArray = null;
+            bool[] nullArray = null;
+
+            return () => CoalesceColumn.CoalesceBatch(ref transformedArray, ref nullArray, Columns.Select(column => column.Getter()()).ToArray());
         }
 
         public static IDataBatchColumn Build(IDataBatchEnumerator source, IEnumerable<IDataBatchColumn> columns)
@@ -55,44 +74,49 @@ namespace XForm.Functions.String
             return new CoalesceColumn(columns);
         }
 
-        public ColumnDetails ColumnDetails
-        {
-            get;
-        }
-
-        public Func<DataBatch> Getter()
-        {
-            String8[] transformedArray = null;
-            bool[] nullArray = null;
-
-            return () => CoalesceColumn.CoalesceBatch(ref transformedArray, ref nullArray, Columns.Select(column => column.Getter()()).ToArray());
-        }
-
+        /// <summary>
+        /// Evaluates the input columns in order and returns the current value of the first column that does not evaluate to NULL or Empty string.
+        /// </summary>
         public static DataBatch CoalesceBatch(ref String8[] transformedArray, ref bool[] nullArray, params DataBatch[] batches)
         {
             Allocator.AllocateToSize(ref transformedArray, batches[0].Count);
             Allocator.AllocateToSize(ref nullArray, batches[0].Count);
+            Array.Clear(transformedArray, 0, batches[0].Count);
+            Array.Clear(nullArray, 0, batches[0].Count);
 
-            for (int i = 0; i < batches[0].Count; ++i)
+            bool hasNullValues = false;
+
+            for (int batchIndex = 0; batchIndex < batches[0].Count; ++batchIndex)
             {
+                int indexInBackingArray = batches[0].Selector.IsSingleValue ? 0 : batches[0].Index(batchIndex);
+                bool isNull = false;
+
                 foreach (var column in batches)
                 {
-                    // Choose the first non-null/empty value
-                    if ((column.IsNull != null && !column.IsNull[i]) || (String8)column.Array.GetValue(i) != String8.Empty)
+                    isNull = (column.IsNull != null && column.IsNull[indexInBackingArray]) || ((String8)column.Array.GetValue(indexInBackingArray)).Length == 0;
+
+                    if (isNull)
                     {
-                        transformedArray[i] = (String8)column.Array.GetValue(i);
+                        // Skip all columns with a null or empty value.
+                        continue;
+                    }
+                    else
+                    {
+                        // Take the column that contains a value.
+                        transformedArray[batchIndex] = (String8)column.Array.GetValue(indexInBackingArray);
                         break;
                     }
                 }
 
-                // Update the null array if the value is null/empty
-                if (transformedArray[i] == String8.Empty)
+                // If all the columns were null, set the null array.
+                if (isNull)
                 {
-                    nullArray[i] = true;
+                    nullArray[batchIndex] = true;
+                    hasNullValues = true;
                 }
             }
 
-            return DataBatch.All(transformedArray, batches[0].Count, nullArray);
+            return DataBatch.All(transformedArray, batches[0].Count, hasNullValues ? nullArray : null);
         }
     }
 }
