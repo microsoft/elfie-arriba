@@ -47,8 +47,9 @@ namespace XForm
             //WhereUShortEqualsUshort();
             //ByteEqualsConstant();
             //DoubleWhere();
-            Join();
-            Dictionary();
+            //Join();
+            //Dictionary();
+            Choose();
             //TsvSplit();
         }
 
@@ -231,6 +232,42 @@ namespace XForm
                 });
 
                 b.AssertResultsEqual();
+            }
+        }
+
+        public void Choose()
+        {
+            WorkflowContext context = new WorkflowContext();
+            int[] rankPattern = new int[] { 2, 3, 1, 4, 6, 5, 7, 9, 8 };
+
+            // Build three arrays
+            int distinctCount = 100000;
+            int countPerID = 9;
+            int length = countPerID * distinctCount;
+            int[] id = new int[length];
+            int[] rank = new int[length];
+            int[] value = new int[length];
+
+            for (int i = 0; i < length; ++i)
+            {
+                
+                id[i] = i / countPerID;                  // ID is the same for three rows at a time
+                rank[i] = rankPattern[i % countPerID];   // Rank is [2, 3, 1] repeating (so the middle is the biggest)
+                value[i] = i;                            // Value is the index of the real row
+            }
+
+            using (Benchmarker b = new Benchmarker($"Choose [{length:n0}]", 3 * DefaultMeasureMilliseconds))
+            {
+                b.Measure("Choose", length, () =>
+                {
+                    IDataBatchEnumerator actual = XFormTable.FromArrays(length)
+                        .WithColumn("ID", id)
+                        .WithColumn("Rank", rank)
+                        .WithColumn("Value", value)
+                        .Query("choose Max [Rank] [ID]", context);
+
+                    return actual.Count();
+                });
             }
         }
 

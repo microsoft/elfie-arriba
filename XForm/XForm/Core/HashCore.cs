@@ -33,6 +33,19 @@ namespace XForm
     }
 
     /// <summary>
+    ///  When Swap is called, this indicates the type of swap.
+    ///   Insert  - the target cell is empty.
+    ///   Move    - the target cell has an unrelated value.
+    ///   Match   - the target cell has the same key(s).
+    /// </summary>
+    public enum SwapType
+    {
+        Insert,
+        Move,
+        Match
+    }
+
+    /// <summary>
     ///  HashCore provides a base Robin Hood hash implementation for specific classes to build on.
     ///  It provides the algorithm for choosing a bucket, probing, swapping on insert, and resizing.
     ///  
@@ -62,7 +75,7 @@ namespace XForm
 
         // Required methods - compare the value at an index to the current value to insert, swap the value at the index with the one to insert
         protected abstract bool EqualsCurrent(uint index);
-        protected abstract void SwapWithCurrent(uint index);
+        protected abstract void SwapWithCurrent(uint index, SwapType swapType);
         protected abstract void Expand();
 
         protected virtual void Reset(int size)
@@ -90,8 +103,8 @@ namespace XForm
 
         protected static int ResizeToSize(int currentSize)
         {
-            // Grow by 1/2 under 1M items and 1/8 when over
-            return currentSize + (currentSize >= 1048576 ? currentSize >> 3 : currentSize >> 1);
+            // Double under 1M items and 1/8 when over
+            return currentSize + (currentSize >= 1048576 ? currentSize >> 3 : currentSize);
         }
 
         // Find the average distance items are from their target buckets. Debuggability.
@@ -182,7 +195,7 @@ namespace XForm
                 {
                     // If we found an empty cell (probe zero), add the item and return
                     this.Metadata[bucket] = (byte)((probeLength << 4) + increment - 1);
-                    this.SwapWithCurrent(bucket);
+                    this.SwapWithCurrent(bucket, SwapType.Insert);
 
                     // Track the max probe length
                     if (probeLength > this.MaxProbeLength) this.MaxProbeLength = probeLength;
@@ -195,7 +208,7 @@ namespace XForm
                 else if (probeLengthFound < probeLength)
                 {
                     // If we found an item with a higher wealth, put the new item here
-                    this.SwapWithCurrent(bucket);
+                    this.SwapWithCurrent(bucket, SwapType.Move);
                     this.Metadata[bucket] = (byte)((probeLength << 4) + increment - 1);
 
                     // Track the max probe length
@@ -210,7 +223,7 @@ namespace XForm
                     // If this is a duplicate of the new item, reset the value and stop
                     if (this.EqualsCurrent(bucket))
                     {
-                        this.SwapWithCurrent(bucket);
+                        this.SwapWithCurrent(bucket, SwapType.Match);
                         return true;
                     }
                 }

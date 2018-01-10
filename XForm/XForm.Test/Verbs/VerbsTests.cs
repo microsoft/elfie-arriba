@@ -64,7 +64,7 @@ namespace XForm.Test.Query
 
             // Build three arrays
             int distinctCount = 100;
-            int length = 3 * distinctCount;;
+            int length = 3 * distinctCount;
             int[] id = new int[length];
             int[] rank = new int[length];
             int[] value = new int[length];

@@ -123,12 +123,13 @@ namespace XForm.Verbs
                     keyBatches[i] = _keyColumnGetters[i]();
                 }
 
-                // Build a row index batch
+                // Build a row index batch for these global row IDs
                 for (int i = 0; i < count; ++i)
                 {
                     rowIndices[i] = totalSoFar + i;
                 }
                 DataBatch rowIndexBatch = DataBatch.All(rowIndices, count);
+                totalSoFar += count;
 
                 // Add these to the choose dictionary
                 _dictionary.Add(keyBatches, rankBatch, rowIndexBatch);

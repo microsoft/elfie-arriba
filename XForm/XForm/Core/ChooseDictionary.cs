@@ -271,11 +271,10 @@ namespace XForm
             return equals;
         }
 
-        protected override void SwapWithCurrent(uint index)
+        protected override void SwapWithCurrent(uint index, SwapType swapType)
         {
-            // If the keys matched but the rank isn't better, don't change the matching row
-            // Need to fix: Doubling Equals calls
-            if(EqualsCurrent(index))
+            // If the keys matched, compare the ranks
+            if (swapType == SwapType.Match)
             {
                 if (_ranks.BetterThanCurrent(index, _chooseDirection))
                 {
@@ -286,13 +285,12 @@ namespace XForm
             }
             else
             {
-                // If the keys didn't match, swap them
+                // Otherwise, write all values
                 for (int i = 0; i < _keys.Length; ++i)
                 {
                     _keys[i].SwapCurrent(index);
                 }
 
-                // If the rank is better or we're swapping with a non-match, write the new rank and row
                 _ranks.SwapCurrent(index);
                 _bestRowIndices.SwapCurrent(index);
             }

@@ -48,7 +48,7 @@ namespace XForm
             return _comparer.Equals(this._keys[index], _currentKey);
         }
 
-        protected override void SwapWithCurrent(uint index)
+        protected override void SwapWithCurrent(uint index, SwapType swapType)
         {
             T swapKey = this._keys[index];
             U swapValue = this._values[index];
