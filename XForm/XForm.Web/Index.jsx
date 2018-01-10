@@ -17,6 +17,17 @@ import ReactDOM from "react-dom"
             }, wait)
     	}
     }
+
+    Array.prototype.remove = function(item) {
+        var i = this.indexOf(item);
+        if (i >= 0) this.splice(i, 1);
+        return this;
+    };
+
+    Array.prototype.toggle = function(item) {
+        this.includes(item) ? this.remove(item) : this.push(item);
+        return this;
+    }
 })()
 
 class Index extends React.Component {
@@ -24,7 +35,7 @@ class Index extends React.Component {
         super(props)
         this.count = this.baseCount = 50
         this.debouncedRefresh = debounce(this.refresh, 200)
-        this.state = { query: this.query }
+        this.state = { query: this.query, userCols: [] }
     }
     componentDidMount() {
         window.require.config({ paths: { 'vs': 'node_modules/monaco-editor/min/vs' }});
@@ -74,23 +85,33 @@ class Index extends React.Component {
                 automaticLayout: true,
     		});
 
-            this.editor.onDidChangeModelContent(e => {
-                this.count = this.baseCount
-                this.debouncedRefresh()
-            })
-
-            this.refresh()
+            this.editor.onDidChangeModelContent(() => this.queryChanged())
+            this.queryChanged()
     	});
+    }
+    queryChanged() {
+        this.count = this.baseCount
+        this.debouncedRefresh()
+        xhr(`run?q=${this.encodedQuery}%0Aschema`).then(o => {
+            this.setState({
+                schemaBody: o.rows.map(r => ({ name: r[0], type: `${r[1]}${r[2] ? '' : '?'}` })),
+            })
+        })
+    }
+    get encodedQuery() {
+        return encodeURIComponent(this.editor.getModel().getValue())
     }
     refresh(addCount) {
         this.count += addCount || 0
-        const model = this.editor.getModel()
-        const q = encodeURIComponent(model.getValue())
+        const q = this.encodedQuery
 
         if (!q) return // Running with an empty query will return a "" instead of an empty object table.
 
         this.setState({ loading: true })
-        xhr(`run?c=${this.count}&q=${q}`).then(o => {
+
+        const userCols = this.state.userCols.length && `%0Aselect ${this.state.userCols.map(c => `[${c}]`).join(' ')}` || ''
+
+        xhr(`run?c=${this.count}&q=${q}${userCols}`).then(o => {
             const onlyRow = o.rows[0]
             if (o.colIndex.Valid === 0 && onlyRow[0] === false) { // Could this ever be true?
                 this.setState({ status: `Error: ${onlyRow[o.colIndex.Message || o.colIndex.ErrorMessage]}`, loading: false })
@@ -119,6 +140,33 @@ class Index extends React.Component {
 
         return <div className={`root`}>
             <div id="query"></div>
+            <div id="schema">
+                <div className="schemaHeader">
+                    {!this.state.userCols.length && this.state.schemaBody && <span>{this.state.schemaBody.length} Columns</span>}
+                    {!!this.state.userCols.length && <span className="schemaButton" onClick={e => this.setState({ userCols: [] }, () => this.queryChanged())}>Reset</span>}
+                    {!!this.state.userCols.length && <span className="schemaButton" onClick={e => {
+                        const userCols = this.state.userCols.length && `\nselect ${this.state.userCols.map(c => `[${c}]`).join(' ')}` || ''
+                        const r = this.editor.getModel().getFullModelRange()
+                        this.editor.executeEdits('my-source', [{
+                                identifier: { major: 1, minor: 1 },
+                                range: new monaco.Range(r.endLineNumber, r.endColumn, r.endLineNumber, r.endColumn),
+                                text: userCols,
+                                forceMoveMarkers: true,
+                            }])
+                        this.setState({ userCols: [] }, () => this.queryChanged())
+                    }}>Append to Query</span>}
+                </div>
+                {this.state.schemaBody && <table>
+                    <tbody>
+                        {this.state.schemaBody && this.state.schemaBody.map((r, i) => <tr key={i}>
+                            <td><label><input type="checkbox" checked={this.state.userCols.includes(r.name)} onChange={e => {
+                                this.setState({ userCols: [...this.state.userCols].toggle(r.name) }, () => this.queryChanged())
+                            }}/>{r.name}</label></td>
+                            <td>{r.type}</td>
+                        </tr>)}
+                    </tbody>
+                </table>}
+            </div>
             <div id="results" onScroll={e => {
                 const element = e.target
                 const pixelsFromBottom = (element.scrollHeight - element.clientHeight - element.scrollTop)
