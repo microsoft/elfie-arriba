@@ -51,9 +51,9 @@ namespace XForm.Test.Query
             // Run the join - verify the expected values without padding are found
             IDataBatchEnumerator result = new Join(joinFromTable, "ServerID", joinToTable, "ID", "Server.");
             Func<DataBatch> serverID = result.ColumnGetter(result.Columns.IndexOfColumn("Server.ID"));
-            int resultCount = result.Next(1024);
 
-            TableTestHarness.AssertAreEqual(DataBatch.All(expected), serverID(), resultCount);
+            IDataBatchEnumerator expectedTable = XFormTable.FromArrays(expected.Length).WithColumn("Server.ID", expected);
+            TableTestHarness.AssertAreEqual(expectedTable, result, 2);
         }
 
         [TestMethod]
@@ -105,7 +105,7 @@ namespace XForm.Test.Query
                 .Query("choose Max [Rank] [ID]", context);
 
             // Compare the result table with the expected one
-            TableTestHarness.AssertAreEqual(expected, query, length);
+            TableTestHarness.AssertAreEqual(expected, query, distinctCount / 3);
         }
     }
 }
