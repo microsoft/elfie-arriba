@@ -133,6 +133,17 @@ namespace XForm.Data
         }
 
         /// <summary>
+        ///  Return a DataBatch matching the slice of rows from the current one specified.
+        /// </summary>
+        /// <param name="startIndexInclusive">Index of first row to include [ex: 10 to skip first 10 rows]</param>
+        /// <param name="endIndexExclusive">Index of first row to exclude [ex: 20 to get rows before index 20]</param>
+        /// <returns>DataBatch containing the slice of rows specified</returns>
+        public DataBatch Slice(int startIndexInclusive, int endIndexExclusive)
+        {
+            return new DataBatch(this) { Selector = this.Selector.Slice(startIndexInclusive, endIndexExclusive) };
+        }
+
+        /// <summary>
         ///  Replace the Selector on this DataBatch.
         ///  This does not merge with an existing selector.
         ///  This is only have to use when the outer DataBatch is definitely not mapped (just created with DataBatch.All)
