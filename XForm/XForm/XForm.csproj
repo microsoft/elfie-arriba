@@ -210,7 +210,6 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>ROBOCOPY /MIR /E "$(ProjectDir)\Web" "$(TargetDir)\Web"
-EXIT 0</PostBuildEvent>
+    <PostBuildEvent>$(SolutionDir)\Deploy.WebSite.cmd $(TargetDir)</PostBuildEvent>
   </PropertyGroup>
 </Project>
