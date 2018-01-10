@@ -93,7 +93,7 @@ namespace XForm.Verbs
             while ((outerCount = _source.Next(desiredCount)) > 0)
             {
                 // Ask for the indices of rows which were chosen in this page
-                DataBatch chosenRows = _dictionary.GetChosenRows(totalSoFar, outerCount);
+                DataBatch chosenRows = _dictionary.GetChosenRows(totalSoFar, outerCount, totalSoFar);
 
                 // Track the total row count (so we know which rows to ask for chosens each time)
                 totalSoFar += outerCount;

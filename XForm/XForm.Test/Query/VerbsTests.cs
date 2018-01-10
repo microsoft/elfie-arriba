@@ -63,7 +63,7 @@ namespace XForm.Test.Query
             int[] rankPattern = new int[] { 2, 3, 1 };
 
             // Build three arrays
-            int distinctCount = 10;
+            int distinctCount = 100;
             int length = 3 * distinctCount;
             int[] id = new int[length];
             int[] rank = new int[length];

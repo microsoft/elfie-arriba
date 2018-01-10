@@ -142,12 +142,7 @@ namespace XForm
             if(!isResize) _totalRowCount += rankValues.Count;
 
             // Give the DataBatches to the keys and rank columns
-            for (int keyIndex = 0; keyIndex < keys.Length; ++keyIndex)
-            {
-                _keys[keyIndex].SetBatch(keys[keyIndex]);
-            }
-            _ranks.SetBatch(rankValues);
-            _bestRowIndices.SetBatch(rowIndexBatch);
+            SetCurrentBatches(keys, rankValues, rowIndexBatch);
 
             for (uint rowIndex = 0; rowIndex < rankValues.Count; ++rowIndex)
             {
@@ -162,13 +157,15 @@ namespace XForm
                 {
                     Expand();
 
+                    // Reset current to the batch we're trying to add
+                    SetCurrentBatches(keys, rankValues, rowIndexBatch);
                     SetCurrent(rowIndex);
                     Add(hash);
                 }
             }
         }
 
-        public DataBatch GetChosenRows(int startIndexInclusive, int endIndexExclusive)
+        public DataBatch GetChosenRows(int startIndexInclusive, int endIndexExclusive, int startIndexInSet)
         {
             // Allocate a buffer to hold matching rows in the range
             Allocator.AllocateToSize(ref _rowBuffer, endIndexExclusive - startIndexInclusive);
@@ -176,22 +173,12 @@ namespace XForm
             // If we haven't converted best rows to a vector, do so (one time)
             if (_bestRowVector == null) ConvertChosenToVector();
 
-            // Will this be faster because there will often be far more items than wanted?
-            //int count = 0;
-            //for (int i = startIndexInclusive; i < endIndexExclusive; ++i)
-            //{
-            //    if (_bestRowVector[i]) _rowBuffer[count++] = i;
-            //}
-
-            // Get a page from the vector starting with the first index
-            int lastIndex = startIndexInclusive;
-            int count = _bestRowVector.Page(_rowBuffer, ref lastIndex);
-
-            // If we got values from endIndexExclusive onward, remove them
-            // Binary search?
-            if(lastIndex > endIndexExclusive)
+            // Get rows matching the query and map them from global row IDs to DataBatch-relative indices
+            // Likely better than BitVector.Page because we can't ask it to subtract or to stop by endIndex.
+            int count = 0;
+            for (int i = startIndexInclusive; i < endIndexExclusive; ++i)
             {
-                while (_rowBuffer[count - 1] >= endIndexExclusive) count--;
+                if (_bestRowVector[i]) _rowBuffer[count++] = i - startIndexInSet;
             }
 
             // Return the matches
@@ -225,6 +212,16 @@ namespace XForm
 
             this._ranks.Reset(size);
             this._bestRowIndices.Reset(size);
+        }
+
+        private void SetCurrentBatches(DataBatch[] keys, DataBatch rankValues, DataBatch rowIndexBatch)
+        {
+            for (int keyIndex = 0; keyIndex < keys.Length; ++keyIndex)
+            {
+                _keys[keyIndex].SetBatch(keys[keyIndex]);
+            }
+            _ranks.SetBatch(rankValues);
+            _bestRowIndices.SetBatch(rowIndexBatch);
         }
 
         private void SetCurrent(uint index)
