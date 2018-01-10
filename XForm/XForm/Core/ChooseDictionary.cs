@@ -263,7 +263,12 @@ namespace XForm
             // Need to fix: Doubling Equals calls
             if(EqualsCurrent(index))
             {
-                if (!_ranks.BetterThanCurrent(index, _chooseDirection)) return;
+                if (_ranks.BetterThanCurrent(index, _chooseDirection))
+                {
+                    // If the rank is better or we're swapping with a non-match, write the new rank and row
+                    _ranks.SwapCurrent(index);
+                    _bestRowIndices.SwapCurrent(index);
+                }
             }
             else
             {
@@ -272,11 +277,11 @@ namespace XForm
                 {
                     _keys[i].SwapCurrent(index);
                 }
-            }
 
-            // If the rank is better or we're swapping with a non-match, write the new rank and row
-            _ranks.SwapCurrent(index);
-            _bestRowIndices.SwapCurrent(index);
+                // If the rank is better or we're swapping with a non-match, write the new rank and row
+                _ranks.SwapCurrent(index);
+                _bestRowIndices.SwapCurrent(index);
+            }
         }
 
         protected override void Expand()

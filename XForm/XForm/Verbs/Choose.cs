@@ -38,6 +38,7 @@ namespace XForm.Verbs
         private RowRemapper _chosenRowsFilter;
         private ChooseDictionary _dictionary;
         private bool _isDictionaryBuilt;
+        private int _totalRowsRead;
 
         private Func<DataBatch>[] _keyColumnGetters;
         private Func<DataBatch> _rankColumnGetter;
@@ -88,15 +89,14 @@ namespace XForm.Verbs
                 _source.Reset();
             }
 
-            int totalSoFar = 0;
             int outerCount;
             while ((outerCount = _source.Next(desiredCount)) > 0)
             {
                 // Ask for the indices of rows which were chosen in this page
-                DataBatch chosenRows = _dictionary.GetChosenRows(totalSoFar, outerCount, totalSoFar);
+                DataBatch chosenRows = _dictionary.GetChosenRows(_totalRowsRead, _totalRowsRead + outerCount, _totalRowsRead);
 
                 // Track the total row count (so we know which rows to ask for chosens each time)
-                totalSoFar += outerCount;
+                _totalRowsRead += outerCount;
 
                 // Tell the remapper to filter to chosen rows
                 _chosenRowsFilter.SetMatches((int[])chosenRows.Array, chosenRows.Count);
@@ -138,6 +138,7 @@ namespace XForm.Verbs
         public void Reset()
         {
             _source.Reset();
+            _totalRowsRead = 0;
         }
 
         public void Dispose()
