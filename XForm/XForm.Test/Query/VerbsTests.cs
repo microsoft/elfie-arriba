@@ -55,5 +55,57 @@ namespace XForm.Test.Query
 
             DataBatchTransformer.AssertAreEqual(DataBatch.All(expected), serverID(), resultCount);
         }
+
+        [TestMethod]
+        public void Verb_Choose()
+        {
+            WorkflowContext context = new WorkflowContext();
+            int[] rankPattern = new int[] { 2, 3, 1 };
+
+            // Build three arrays
+            int distinctCount = 10;
+            int length = 3 * distinctCount;
+            int[] id = new int[length];
+            int[] rank = new int[length];
+            int[] value = new int[length];
+
+            for(int i = 0; i < length; ++i)
+            {
+                // ID is the same for three rows at a time
+                id[i] = i / 3;
+
+                // Rank is [2, 3, 1] repeating (so the middle is the biggest)
+                rank[i] = rankPattern[i % 3];
+
+                // Value is the index of the real row
+                value[i] = i;
+            }
+
+            // Build the expected results - one for each distinct ID, each with max rank and from the right row
+            int[] expectedIds = new int[distinctCount];
+            int[] expectedRanks = new int[distinctCount];
+            int[] expectedValues = new int[distinctCount];
+
+            for(int i = 0; i < distinctCount; ++i)
+            {
+                expectedIds[i] = i;
+                expectedRanks[i] = 3;
+                expectedValues[i] = 3 * i + 1;
+            }
+
+            IDataBatchEnumerator expected = XFormTable.FromArrays(distinctCount)
+                .WithColumn("ID", expectedIds)
+                .WithColumn("Rank", expectedRanks)
+                .WithColumn("Value", expectedValues);
+
+            IDataBatchEnumerator query = XFormTable.FromArrays(length)
+                .WithColumn("ID", id)
+                .WithColumn("Rank", rank)
+                .WithColumn("Value", value)
+                .Query("choose Max [Rank] [ID]", context);
+
+            // Compare the result table with the expected one
+            DataBatchTransformer.AssertAreEqual(expected, query, length);
+        }
     }
 }

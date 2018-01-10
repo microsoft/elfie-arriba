@@ -104,6 +104,7 @@
     <Compile Include="Types\Comparers\TimeSpanComparer.cs" />
     <Compile Include="Types\TimeSpanTypeProvider.cs" />
     <Compile Include="Verbs\Cast.cs" />
+    <Compile Include="Verbs\Choose.cs" />
     <Compile Include="Verbs\Rename.cs" />
     <Compile Include="Verbs\Set.cs" />
     <Compile Include="Verbs\Read.cs" />

@@ -4,11 +4,8 @@
 using System;
 using System.Collections.Generic;
 
-using Microsoft.CodeAnalysis.Elfie.Model.Strings;
-
 using XForm.Data;
 using XForm.Extensions;
-using XForm.IO;
 using XForm.Query;
 using XForm.Transforms;
 

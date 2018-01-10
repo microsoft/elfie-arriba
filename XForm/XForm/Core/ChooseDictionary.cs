@@ -2,12 +2,12 @@
 using XForm.Data;
 using XForm.Types;
 
-namespace XForm.Core
+namespace XForm
 {
     public enum ChooseDirection
     {
-        Minimum,
-        Maximum
+        Min,
+        Max
     }
 
     public interface IDictionaryColumn
@@ -76,7 +76,7 @@ namespace XForm.Core
 
         public bool BetterThanCurrent(uint index, ChooseDirection direction)
         {
-            if(direction == ChooseDirection.Maximum)
+            if(direction == ChooseDirection.Max)
             {
                 return _comparer.WhereGreaterThan(_current, _values[index]);
             }
@@ -108,7 +108,7 @@ namespace XForm.Core
         private BitVector _bestRowVector;
         private int[] _rowBuffer;
 
-        public ChooseDictionary(ChooseDirection direction, ColumnDetails[] keyColumns, ColumnDetails rankColumn, int initialCapacity = -1) : base(initialCapacity)
+        public ChooseDictionary(ChooseDirection direction, ColumnDetails rankColumn, ColumnDetails[] keyColumns, int initialCapacity = -1)
         {
             _chooseDirection = direction;
             _keyColumns = keyColumns;
@@ -124,23 +124,22 @@ namespace XForm.Core
             // Create a strongly typed column to hold rank values
             _ranks = (IDictionaryColumn)Allocator.ConstructGenericOf(typeof(DictionaryColumn<>), rankColumn.Type);
             _bestRowIndices = (IDictionaryColumn)Allocator.ConstructGenericOf(typeof(DictionaryColumn<>), typeof(int));
+
+            // Allocate the arrays for the keys and values themselves
+            Reset(HashCore.SizeForCapacity(initialCapacity));
         }
 
-        public void Add(DataBatch[] keys, DataBatch rankValues, int startIndexInclusive)
+        public void Add(DataBatch[] keys, DataBatch rankValues, DataBatch rowIndexBatch)
         {
-            // Convert the index range to a DataBatch (lame, for consistency with resize path)
-            Allocator.AllocateToSize(ref _rowBuffer, rankValues.Count);
-            for(int i = 0; i < rankValues.Count; ++i)
-            {
-                _rowBuffer[i] = startIndexInclusive + i;
-            }
-
-            Add(keys, rankValues, DataBatch.All(_rowBuffer, rankValues.Count));
+            Add(keys, rankValues, rowIndexBatch, false);
         }
 
-        private void Add(DataBatch[] keys, DataBatch rankValues, DataBatch bestRowBatch)
+        private void Add(DataBatch[] keys, DataBatch rankValues, DataBatch rowIndexBatch, bool isResize)
         {
             if (keys.Length != _keys.Length) throw new ArgumentOutOfRangeException("keys.Length");
+
+            // Keep the total of rows added (don't count resizes; to know the vector size to make)
+            if(!isResize) _totalRowCount += rankValues.Count;
 
             // Give the DataBatches to the keys and rank columns
             for (int keyIndex = 0; keyIndex < keys.Length; ++keyIndex)
@@ -148,7 +147,7 @@ namespace XForm.Core
                 _keys[keyIndex].SetBatch(keys[keyIndex]);
             }
             _ranks.SetBatch(rankValues);
-            _bestRowIndices.SetBatch(bestRowBatch);
+            _bestRowIndices.SetBatch(rowIndexBatch);
 
             for (uint rowIndex = 0; rowIndex < rankValues.Count; ++rowIndex)
             {
@@ -167,12 +166,9 @@ namespace XForm.Core
                     Add(hash);
                 }
             }
-
-            // Keep the total of rows added (to know the vector size to make)
-            _totalRowCount += rankValues.Count;
         }
 
-        public DataBatch GetChosenRows(int firstRowIndex, int startIndexInclusive, int endIndexExclusive)
+        public DataBatch GetChosenRows(int startIndexInclusive, int endIndexExclusive)
         {
             // Allocate a buffer to hold matching rows in the range
             Allocator.AllocateToSize(ref _rowBuffer, endIndexExclusive - startIndexInclusive);
@@ -220,6 +216,8 @@ namespace XForm.Core
 
         protected override void Reset(int size)
         {
+            base.Reset(size);
+
             for (int i = 0; i < _keys.Length; ++i)
             {
                 _keys[i].Reset(size);
@@ -310,7 +308,7 @@ namespace XForm.Core
             Reset(HashCore.ResizeToSize(this._bestRowIndices.Length));
 
             // Add items to the enlarged table
-            Add(keyBatches, rankBatch, bestRowBatch);
+            Add(keyBatches, rankBatch, bestRowBatch, true);
         }
     }
 }

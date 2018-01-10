@@ -24,9 +24,10 @@ namespace XForm
         private T _currentKey;
         private U _currentValue;
 
-        public Dictionary5(IEqualityComparer<T> comparer, int initialCapacity = -1) : base(initialCapacity)
+        public Dictionary5(IEqualityComparer<T> comparer, int initialCapacity = -1)
         {
             this._comparer = comparer;
+            Reset(HashCore.SizeForCapacity(initialCapacity));
         }
 
         private uint HashCurrent()

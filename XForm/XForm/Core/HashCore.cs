@@ -27,9 +27,10 @@ namespace XForm
         // Items can be a maximum of 14 buckets from the initial bucket they hash to, so the probe length fits in four bits with a sentinel zero
         private const int ProbeLengthLimit = 14;
 
-        public HashCore(int capacity)
+        public HashCore()
         {
-            Reset(SizeForCapacity(capacity));
+            // Descendant needs to call Reset to ensure arrays allocated,
+            // but should do so after initializing the value arrays.
         }
 
         // Required methods - compare the value at an index to the current value to insert, swap the value at the index with the one to insert
@@ -51,7 +52,7 @@ namespace XForm
             this.MaxProbeLength = 0;
         }
 
-        private static int SizeForCapacity(int capacity)
+        protected static int SizeForCapacity(int capacity)
         {
             // Minimum capacity is 28 items, which is a 32-element array
             if (capacity < 28) return 32;

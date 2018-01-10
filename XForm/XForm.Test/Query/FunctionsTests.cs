@@ -166,6 +166,30 @@ namespace XForm.Test.Query
 
 public static class DataBatchTransformer
 {
+    public static void AssertAreEqual(IDataBatchEnumerator expected, IDataBatchEnumerator actual, int rowCountToGet)
+    {
+        // Get the column getters for every expected column and the columns of the same names in actual
+        Func<DataBatch>[] expectedGetters = new Func<DataBatch>[expected.Columns.Count];
+        Func<DataBatch>[] actualGetters = new Func<DataBatch>[actual.Columns.Count];
+
+        for(int i = 0; i < expected.Columns.Count; ++i)
+        {
+            expectedGetters[i] = expected.ColumnGetter(i);
+            actualGetters[i] = actual.ColumnGetter(actual.Columns.IndexOfColumn(expected.Columns[i].Name));
+        }
+
+        // Ask for the number of rows the caller specified
+        int expectedCount = expected.Next(rowCountToGet);
+        int actualCount = actual.Next(rowCountToGet);
+        Assert.AreEqual(expectedCount, actualCount, "Actual Enumerator didn't return the expected number of rows.");
+
+        // Validate the column batches match
+        for(int i = 0; i < expected.Columns.Count; ++i)
+        {
+            AssertAreEqual(expectedGetters[i](), actualGetters[i](), expectedCount);
+        }
+    }
+
     public static void AssertAreEqual(DataBatch expected, DataBatch actual, int nextRowCount)
     {
         Assert.AreEqual(expected.Count, nextRowCount, "Next() didn't return expected row count.");
