@@ -40,7 +40,7 @@ namespace XForm.Test.Query
             Type t = joinTo.GetType().GetElementType();
 
             // Build a table with padded nulls to join from (so we see nulls are also filtered out)
-            DataBatch joinFromBatch = DataBatchTransformer.Nulls(DataBatch.All(joinFrom));
+            DataBatch joinFromBatch = TableTestHarness.Nulls(DataBatch.All(joinFrom));
             IDataBatchEnumerator joinFromTable = XFormTable.FromArrays(joinFromBatch.Count)
                 .WithColumn(new ColumnDetails("ServerID", t, true), joinFromBatch);
 
@@ -53,7 +53,7 @@ namespace XForm.Test.Query
             Func<DataBatch> serverID = result.ColumnGetter(result.Columns.IndexOfColumn("Server.ID"));
             int resultCount = result.Next(1024);
 
-            DataBatchTransformer.AssertAreEqual(DataBatch.All(expected), serverID(), resultCount);
+            TableTestHarness.AssertAreEqual(DataBatch.All(expected), serverID(), resultCount);
         }
 
         [TestMethod]
@@ -105,7 +105,7 @@ namespace XForm.Test.Query
                 .Query("choose Max [Rank] [ID]", context);
 
             // Compare the result table with the expected one
-            DataBatchTransformer.AssertAreEqual(expected, query, length);
+            TableTestHarness.AssertAreEqual(expected, query, length);
         }
     }
 }
