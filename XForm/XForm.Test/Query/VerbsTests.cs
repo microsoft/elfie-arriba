@@ -64,7 +64,7 @@ namespace XForm.Test.Query
 
             // Build three arrays
             int distinctCount = 100;
-            int length = 3 * distinctCount;
+            int length = 3 * distinctCount;;
             int[] id = new int[length];
             int[] rank = new int[length];
             int[] value = new int[length];
@@ -98,14 +98,19 @@ namespace XForm.Test.Query
                 .WithColumn("Rank", expectedRanks)
                 .WithColumn("Value", expectedValues);
 
-            IDataBatchEnumerator query = XFormTable.FromArrays(length)
+            IDataBatchEnumerator actual = XFormTable.FromArrays(length)
                 .WithColumn("ID", id)
                 .WithColumn("Rank", rank)
-                .WithColumn("Value", value)
-                .Query("choose Max [Rank] [ID]", context);
+                .WithColumn("Value", value);
 
-            // Compare the result table with the expected one
-            TableTestHarness.AssertAreEqual(expected, query, distinctCount / 3);
+            // Run and compare (as integer)
+            TableTestHarness.AssertAreEqual(expected, actual.Query("choose Max [Rank] [ID]", context), distinctCount / 3);
+
+            // Run and compare (as String8)
+            TableTestHarness.AssertAreEqual(
+                expected.Query("select Cast([ID], String8), Cast([Rank], String8), Cast([Value], String8)", context),
+                actual.Query("select Cast([ID], String8), Cast([Rank], String8), Cast([Value], String8)", context).Query("choose Max [Rank] [ID]", context),
+                distinctCount);
         }
     }
 }
