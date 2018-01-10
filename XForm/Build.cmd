@@ -17,8 +17,9 @@ IF NOT EXIST node_modules\.bin\WebPack.cmd (
   ECHO Have you installed NPM and run 'npm install' from the XForm.Web folder?
   GOTO Error
 )
-node_modules\.bin\WebPack.cmd
+CALL node_modules\.bin\WebPack.cmd
 SET WebPackError=%ERRORLEVEL%
+POPD
 IF NOT "%WebPackError%"=="0" GOTO Error
 
 GOTO :EOF
