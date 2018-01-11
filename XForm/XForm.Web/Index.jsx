@@ -34,7 +34,7 @@ class Index extends React.Component {
     constructor(props) {
         super(props)
         this.count = this.baseCount = 50
-        this.debouncedRefresh = debounce(this.refresh, 200)
+        this.debouncedQueryChanged = debounce(this.queryChanged, 200)
         this.state = { query: this.query, userCols: [] }
     }
     componentDidMount() {
@@ -84,13 +84,13 @@ class Index extends React.Component {
                 automaticLayout: true,
     		});
 
-            this.editor.onDidChangeModelContent(() => this.queryChanged())
+            this.editor.onDidChangeModelContent(() => this.debouncedQueryChanged())
             this.queryChanged()
     	});
     }
     queryChanged() {
         this.count = this.baseCount
-        this.debouncedRefresh()
+        this.refresh()
         xhr(`run?q=${this.encodedQuery}%0Aschema`).then(o => {
             if (o.rows) {
                 this.setState({
