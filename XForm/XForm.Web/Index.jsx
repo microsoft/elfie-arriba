@@ -34,7 +34,7 @@ class Index extends React.Component {
     constructor(props) {
         super(props)
         this.count = this.baseCount = 50
-        this.debouncedQueryChanged = debounce(this.queryChanged, 200)
+        this.debouncedQueryChanged = debounce(this.queryChanged, 500)
         this.state = { query: this.query, userCols: [] }
     }
     componentDidMount() {
