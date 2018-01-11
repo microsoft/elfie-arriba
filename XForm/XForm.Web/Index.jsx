@@ -73,7 +73,7 @@ class Index extends React.Component {
                 }
             })
 
-    		this.editor = monaco.editor.create(document.getElementById('query'), {
+    		this.editor = monaco.editor.create(document.getElementById('queryEditor'), {
     			value: [
     				'read WebRequest',
                     'where [HttpStatus] != 200',
@@ -140,7 +140,7 @@ class Index extends React.Component {
         const q = this.encodedQuery
 
         return <div className={`root`}>
-            <div className="queryWrapper">
+            <div className="query">
                 <div className="queryHeader">
                     <input ref="name" type="text" placeholder="Add Title to Save" />
                     <span onClick={e => {
@@ -152,7 +152,7 @@ class Index extends React.Component {
                         })
                     }}>{ this.state.saving || "Save" }</span>
                 </div>
-                <div id="query"></div>
+                <div id="queryEditor"></div>
                 <div className="queryUsage">{ this.state.usage || `\u200B` }</div>
             </div>
             <div id="schema">

@@ -75,7 +75,7 @@ body {
     }
 }
 
-.queryWrapper {
+.query {
     display: flex;
     flex-direction: column;
 
@@ -96,7 +96,7 @@ body {
         }
     }
 
-    #query {
+    #queryEditor {
         flex: 1 1 auto;
         width: 500px;
         overflow-y: hidden;
