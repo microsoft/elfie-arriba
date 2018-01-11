@@ -52,6 +52,10 @@ class Index extends React.Component {
                         endColumn: position.column,
                     })
                     return xhr(`suggest?q=${encodeURIComponent(textUntilPosition)}`).then(o => {
+                        if (o.Usage !== this.state.usage) {
+                            this.setState({ usage: o.Usage })
+                        }
+
                         if (!o.Values) return []
 
                         const kind = monaco.languages.CompletionItemKind;
@@ -133,7 +137,10 @@ class Index extends React.Component {
         const q = this.editor && encodeURIComponent(this.editor.getModel().getValue())
 
         return <div className={`root`}>
-            <div id="query"></div>
+            <div className="queryWrapper">
+                <div id="query"></div>
+                <div className="queryUsage">{ this.state.usage || `\u200B` }</div>
+            </div>
             <div id="schema">
                 <div className="schemaHeader">
                     {!this.state.userCols.length && this.state.schemaBody && <span>{this.state.schemaBody.length} Columns</span>}

@@ -44,11 +44,27 @@ body {
     }
 }
 
-#query {
-    width: 500px;
-    overflow-y: hidden;
-    overflow-x: scroll;
-    resize: horizontal;
+.queryWrapper {
+    display: flex;
+    flex-direction: column;
+
+    #query {
+        flex: 1 1 auto;
+        width: 500px;
+        overflow-y: hidden;
+        overflow-x: scroll;
+        resize: horizontal;
+    }
+
+    .queryUsage {
+        font-family: monospace;
+        border-top: 1px solid $linedark;
+        background-color: hsl(0, 0, 98%);
+        color: hsl(0, 0, 50%);
+        padding: 15px 20px;
+        padding-right: 0;
+        overflow-x: hidden;
+    }
 }
 
 #results {
