@@ -3,6 +3,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 
@@ -40,6 +42,10 @@ namespace XForm
 
         public static void Enable()
         {
+            // Only enable the accelerator if it's available on disk and we're running 64-bit
+            string nativeBinaryPath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "XForm.Native.dll");
+            if (!File.Exists(nativeBinaryPath) || !Environment.Is64BitProcess) return;
+
             BitVector.s_nativeCount = GetMethod<Func<ulong[], int>>("XForm.Native.BitVectorN", "Count");
             BitVector.s_nativePage = GetMethod<BitVector.PageSignature>("XForm.Native.BitVectorN", "Page");
 
