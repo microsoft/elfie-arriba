@@ -6,7 +6,6 @@ using System;
 using XForm.Data;
 using XForm.IO.StreamProvider;
 using XForm.Query;
-using XForm.Transforms;
 
 namespace XForm.Types
 {
@@ -32,6 +31,8 @@ namespace XForm.Types
         Func<DataBatch, DataBatch> TryGetConverter(Type sourceType, Type targetType, object defaultValue, bool strict);
 
         IDataBatchComparer TryGetComparer();
+
+        IValueCopier TryGetCopier();
     }
 
     public static class TypeProviderExtensions

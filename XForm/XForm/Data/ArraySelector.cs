@@ -82,9 +82,15 @@ namespace XForm.Data
 
         public ArraySelector Slice(int startIndexInclusive, int endIndexExclusive)
         {
-            if (startIndexInclusive < this.StartIndexInclusive) throw new ArgumentOutOfRangeException("startIndexInclusive");
-            if (endIndexExclusive < startIndexInclusive || endIndexExclusive > this.EndIndexExclusive) throw new ArgumentOutOfRangeException("endIndexExclusive");
-            return new ArraySelector(this) { StartIndexInclusive = startIndexInclusive, EndIndexExclusive = endIndexExclusive };
+            // Get the slice relative to the current offsets
+            int shiftedStart = this.StartIndexInclusive + startIndexInclusive;
+            int shiftedEnd = shiftedStart + (endIndexExclusive - startIndexInclusive);
+
+            // Validate the Slice is within bounds of the outer ArraySelector
+            if (shiftedStart < this.StartIndexInclusive || shiftedStart > this.EndIndexExclusive) throw new ArgumentOutOfRangeException("startIndexInclusive");
+            if (shiftedEnd < this.StartIndexInclusive || shiftedEnd > this.EndIndexExclusive) throw new ArgumentOutOfRangeException("endIndexExclusive");
+
+            return new ArraySelector(this) { StartIndexInclusive = shiftedStart, EndIndexExclusive = shiftedEnd };
         }
 
         public ArraySelector Select(ArraySelector inner, ref int[] remapArray)

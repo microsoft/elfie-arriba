@@ -36,7 +36,7 @@ namespace XForm.Types.Comparers
                 int index = batch.Index(i);
                 if (batch.IsNull == null || batch.IsNull[index] == false)
                 {
-                    hashes[i] ^= unchecked((int) Hashing.Hash(array[batch.Index(i)], 0));
+                    hashes[i] = (hashes[i] << 5) - hashes[i] + unchecked((int) Hashing.Hash(array[batch.Index(i)], 0));
                 }
             }
         }

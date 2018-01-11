@@ -2,13 +2,14 @@ $bg: white;
 $text: hsl(0, 0, 30%);
 $line: hsl(0, 0, 92%);
 $linedark: hsl(0, 0, 70%);
+$blue: hsl(220, 75%, 95%);
 
 html, #app {
     height: 100%;
 }
 
 body {
-    font: 12px sans-serif;
+    font: 8pt sans-serif;
     background-color: $bg;
     color: $text;
     margin: 0;
@@ -33,24 +34,45 @@ body {
     display: flex;
     height: 100%;
     width: 100%;
+    background-color: #fffffe; // Matching Monaco
+
+    & > * {
+        height: 100%;
+    }
+    & > :not(:first-child) {
+        border-left: 1px solid $linedark;
+    }
 }
 
-#query {
-    width: 500px;
-    height: 100%;
-    overflow-y: hidden;
-    overflow-x: scroll;
-    resize: horizontal;
+.queryWrapper {
+    display: flex;
+    flex-direction: column;
+
+    #query {
+        flex: 1 1 auto;
+        width: 500px;
+        overflow-y: hidden;
+        overflow-x: scroll;
+        resize: horizontal;
+    }
+
+    .queryUsage {
+        font-family: monospace;
+        border-top: 1px solid $linedark;
+        background-color: hsl(0, 0, 98%);
+        color: hsl(0, 0, 50%);
+        padding: 15px 20px;
+        padding-right: 0;
+        overflow-x: hidden;
+    }
 }
 
 #results {
     flex: 1;
-    height: 100%;
-    border-left: 1px solid $linedark;
-    background-color: #fffffe; // Matching Monaco
     display: flex;
     flex-direction: column;
-    overflow: scroll;
+    overflow-x: auto;
+    overflow-y: scroll;
 
     .resultsHeader {
         flex-shrink: 0;
@@ -87,25 +109,74 @@ body {
 
     .tableWrapper {
         flex: 1;
-        padding: 20px;
+        padding: 10px 20px;
     }
 
     table {
         border-collapse: collapse;
 
         thead td {
-            text-transform: uppercase;
             font-weight: bold;
             border-bottom: 1px solid $linedark;
         }
 
         td {
             border-bottom: 1px solid $line;
-            padding: 5px;
+            padding: 10px 20px 10px 0;
+            white-space: nowrap;
         }
 
-        tr:hover {
-            background: hsl(220, 20%, 98%);
+        // tr:hover { background: hsl(220, 20%, 98%); }
+    }
+}
+
+#schema {
+    min-width: 150px;
+    overflow: hidden;
+
+    .schemaHeader {
+        padding: 12px 10px;
+        border-bottom: 1px solid $linedark;
+        display: flex;
+
+        & > * {
+            padding: 8px 10px;
+            padding-right: 12px; // Optical
+            border-radius: 3px;
+            &.schemaButton {
+                cursor: pointer;
+                &:hover { background-color: $blue; }
+            }
+        }
+    }
+
+    table {
+        margin-top: 20px;
+        border-collapse: collapse;
+        td {
+            white-space: nowrap;
+            padding: 0;
+
+            label {
+                padding: 5px 15px 5px 20px;
+                display: flex;
+                cursor: pointer;
+                user-select: none;
+            }
+
+            input {
+                margin: 0;
+                margin-right: 8px;
+            }
+
+            &:last-child {
+                color: $linedark;
+                padding-right: 20px;
+            }
+        }
+        tr:hover { background: $blue; }
+        :nth-child(5n) td {
+            padding-bottom: 20px;
         }
     }
 }

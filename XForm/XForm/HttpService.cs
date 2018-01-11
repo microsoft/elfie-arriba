@@ -35,6 +35,7 @@ namespace XForm
                 server.AddResponder("run", Run);
                 server.AddResponder("download", Download);
                 server.AddResponder("count", CountWithinTimeout);
+                server.AddResponder("save", Save);
 
                 server.Start();
                 Console.WriteLine("Http Server running; browse http://localhost:5073. Press enter to stop server.");
@@ -159,7 +160,6 @@ namespace XForm
             }
         }
 
-
         private void Run(string query, string format, int rowCountLimit, HttpListenerResponse response)
         {
             IDataBatchEnumerator pipeline = null;
@@ -190,6 +190,34 @@ namespace XForm
                     pipeline.Dispose();
                     pipeline = null;
                 }
+            }
+        }
+
+        private void Save(HttpListenerContext context, HttpListenerResponse response)
+        {
+            try
+            {
+                Save(
+                    Require(context, "q"),
+                    Require(context, "name"));
+
+                // Success
+                response.StatusCode = 200;
+            }
+            catch (Exception ex)
+            {
+                using (ITabularWriter writer = WriterForFormat("json", response))
+                {
+                    WriteException(ex, writer);
+                }
+            }
+        }
+
+        private void Save(string query, string fileName)
+        {
+            using (StreamWriter writer = new StreamWriter(_workflowContext.StreamProvider.OpenWrite($"Query\\{fileName}.xql")))
+            {
+                writer.Write(query);
             }
         }
 

@@ -54,6 +54,12 @@ namespace XForm.Types
             return null;
         }
 
+        public IValueCopier TryGetCopier()
+        {
+            // No copier needed for this type
+            return null;
+        }
+
         public static string ValuesFilePath(string columnPath)
         {
             return Path.Combine(columnPath, $"V.{BinaryFileTypePart()}.bin");

@@ -37,6 +37,12 @@ namespace XForm.Types
             // TODO: Add primitive number conversions
             return null;
         }
+
+        public IValueCopier TryGetCopier()
+        {
+            // No copier needed for this type
+            return null;
+        }
     }
 
     public class ByteReader : IColumnReader

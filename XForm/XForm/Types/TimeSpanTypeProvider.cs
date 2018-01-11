@@ -48,6 +48,12 @@ namespace XForm.Types
 
             return null;
         }
+
+        public IValueCopier TryGetCopier()
+        {
+            // No copier needed for this type
+            return null;
+        }
     }
 
     /// <summary>
