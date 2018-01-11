@@ -107,6 +107,9 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         {
             if (s_writers == null) LoadReadersAndWriters();
 
+            string directoryPath = Path.GetDirectoryName(filePath);
+            if (!String.IsNullOrEmpty(directoryPath)) Directory.CreateDirectory(directoryPath);
+
             string extension = Path.GetExtension(filePath).ToLowerInvariant().TrimStart('.');
             if (String.IsNullOrEmpty(extension)) extension = filePath;
 
