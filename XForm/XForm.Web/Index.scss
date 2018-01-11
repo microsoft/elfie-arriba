@@ -42,6 +42,8 @@ body {
         color: $text;
         font: 11pt sans-serif;
     }
+
+    ::placeholder { color: $line; }
 }
 
 .root {
@@ -61,6 +63,25 @@ body {
 .queryWrapper {
     display: flex;
     flex-direction: column;
+
+    .queryHeader {
+        border-bottom: 1px solid $linedark;
+        display: flex;
+        align-items: center;
+        padding-right: 12px;
+
+        input {
+            flex: 1 1 auto;
+            font: inherit;
+            border: 0;
+            padding: 20px;
+        }
+
+        span {
+            @include buttonBase;
+            &:hover { @include buttonActive; }
+        }
+    }
 
     #query {
         flex: 1 1 auto;

@@ -138,6 +138,17 @@ class Index extends React.Component {
 
         return <div className={`root`}>
             <div className="queryWrapper">
+                <div className="queryHeader">
+                    <input ref="name" type="text" placeholder="Add Title to Save" />
+                    <span onClick={e => {
+                        const name = this.refs.name.value
+                        if (!name || !q) return
+                        this.setState({ saving: "Saving..." })
+                        xhr(`save?name=${encodeURIComponent(name)}&q=${q}`).then(o => {
+                            this.setState({ saving: "Save" })
+                        })
+                    }}>{ this.state.saving || "Save" }</span>
+                </div>
                 <div id="query"></div>
                 <div className="queryUsage">{ this.state.usage || `\u200B` }</div>
             </div>
