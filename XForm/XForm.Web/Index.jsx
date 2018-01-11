@@ -52,20 +52,15 @@ class Index extends React.Component {
                         endColumn: position.column,
                     })
                     return xhr(`suggest?q=${encodeURIComponent(textUntilPosition)}`).then(o => {
-                        const onlyRow = o.rows[0]
-                        const valid = onlyRow[o.colIndex.Valid]
-                        const type = onlyRow[o.colIndex.ItemCategory]
-                        const values = onlyRow[o.colIndex.Values]
-
-                        if (!values) return []
+                        if (!o.Values) return []
 
                         const kind = monaco.languages.CompletionItemKind;
-                        const suggestions = !values.length ? [] : values.split(";").map(s => ({
+                        const suggestions = !o.Values.length ? [] : o.Values.split(";").map(s => ({
                             kind: {
                                 verb: kind.Keyword,
                                 compareOperator: kind.Keyword,
                                 columnName: kind.Field,
-                            }[type] || kind.Text,
+                            }[o.ItemCategory] || kind.Text,
                             label: s,
                             insertText: s,
                         }))
@@ -93,9 +88,11 @@ class Index extends React.Component {
         this.count = this.baseCount
         this.debouncedRefresh()
         xhr(`run?q=${this.encodedQuery}%0Aschema`).then(o => {
-            this.setState({
-                schemaBody: o.rows.map(r => ({ name: r[0], type: `${r[1]}${r[2] ? '' : '?'}` })),
-            })
+            if (o.rows) {
+                this.setState({
+                    schemaBody: o.rows.map(r => ({ name: r[0], type: `${r[1]}${r[2] ? '' : '?'}` })),
+                })
+            }
         })
     }
     get encodedQuery() {
@@ -112,17 +109,14 @@ class Index extends React.Component {
         const userCols = this.state.userCols.length && `%0Aselect ${this.state.userCols.map(c => `[${c}]`).join(' ')}` || ''
 
         xhr(`run?c=${this.count}&q=${q}${userCols}`).then(o => {
-            const onlyRow = o.rows[0]
-            if (o.colIndex.Valid === 0 && onlyRow[0] === false) { // Could this ever be true?
-                this.setState({ status: `Error: ${onlyRow[o.colIndex.Message || o.colIndex.ErrorMessage]}`, loading: false })
+            if (o.Message || o.ErrorMessage) {
+                this.setState({ status: `Error: ${o.Message || o.ErrorMessage}`, loading: false })
             } else {
                 this.setState({ results: o, loading: false })
 
                 if (this.count === this.baseCount) { // No need to recount after the first page of results.
                     xhr(`count?q=${q}`).then(o => {
-                        const onlyRow = o.rows[0]
-                        const count = onlyRow[o.colIndex.Count]
-                        this.setState({ status: count !== undefined && `${count.toLocaleString()} Results` || `Error: ${onlyRow[o.colIndex.ErrorMessage]}` })
+                        this.setState({ status: typeof o === "number" && `${o.toLocaleString()} Results` || `Error: ${o.ErrorMessage}` })
                     })
                 }
             }
@@ -132,7 +126,7 @@ class Index extends React.Component {
         var cols, rows
         const results = this.state.results
         if (results) {
-            cols = Object.keys(results.colIndex)
+            cols = results.cols
             rows = results.rows
         }
 

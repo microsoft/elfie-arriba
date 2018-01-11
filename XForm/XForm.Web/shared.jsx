@@ -13,7 +13,23 @@ window.xhr = (path, body) => {
             if (true || xhr.status >= 200 && xhr.status < 300 || xhr.status === 404) { // 404 workaround for delete table.
                 try {
                     const o = JSON.parse(responseText);
-                    resolve(o);
+
+                    // Custom logic for XForm
+                    function sugar() {
+                        if (o.colIndex.Count === 0) {
+                            return o.rows[0][0];
+                        } else if (o.colIndex.Valid === 0) {
+                            const dict = {};
+                            Object.keys(o.colIndex).forEach(k => dict[k] = o.rows[0][o.colIndex[k]])
+                            return dict
+                        } else {
+                            return {
+                                cols: Object.keys(o.colIndex),
+                                rows: o.rows,
+                            }
+                        }
+                    }
+                    resolve(sugar(o));
                 } catch(e) {
                     resolve(responseText)
                 }
