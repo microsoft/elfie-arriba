@@ -3,6 +3,20 @@ $text: hsl(0, 0, 30%);
 $line: hsl(0, 0, 92%);
 $linedark: hsl(0, 0, 70%);
 $blue: hsl(220, 75%, 95%);
+$bluehot: hsl(210, 90%, 90%);
+
+@mixin buttonBase {
+    padding: 8px 10px;
+    padding-right: 12px; // Optical
+    border-radius: 3px;
+}
+
+@mixin buttonActive {
+    cursor: pointer;
+    user-select: none;
+    &:hover { background-color: $blue; }
+    &:active { background-color: $bluehot; }
+}
 
 html, #app {
     height: 100%;
@@ -140,12 +154,9 @@ body {
         display: flex;
 
         & > * {
-            padding: 8px 10px;
-            padding-right: 12px; // Optical
-            border-radius: 3px;
+            @include buttonBase;
             &.schemaButton {
-                cursor: pointer;
-                &:hover { background-color: $blue; }
+                @include buttonActive;
             }
         }
     }
