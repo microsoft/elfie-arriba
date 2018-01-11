@@ -184,13 +184,13 @@ class Index extends React.Component {
                 </table>}
             </div>
             <div id="results" onScroll={e => {
-                const element = e.target
-                const pixelsFromBottom = (element.scrollHeight - element.clientHeight - element.scrollTop)
-                if (pixelsFromBottom < 100) {
-                    this.refresh(10)
-                }
-                // TODO: Inc only if not currently fetching
-            }}>
+                    const element = e.target
+                    const pixelsFromBottom = (element.scrollHeight - element.clientHeight - element.scrollTop)
+                    if (pixelsFromBottom < 100) {
+                        this.refresh(10)
+                    }
+                    // TODO: Inc only if not currently fetching
+                }}>
                 <div className="resultsHeader">
                     <span>{this.state.status}</span>
                     <span className="flexFill"></span>
