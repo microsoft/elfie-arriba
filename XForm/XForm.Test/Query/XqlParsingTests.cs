@@ -56,6 +56,9 @@ namespace XForm.Test.Query
 
             // Operators are case insensitive
             Assert.AreEqual("[ServerPort] = 80 AND [ResponseBytes] > 1200 OR NOT([ResponseBytes] < 900)", Parse("[ServerPort] = 80 aNd [ResponseBytes] > 1200 oR nOT [ResponseBytes] < 900", source, context).ToString());
+
+            // Unclosed quotes shouldn't parse across lines
+            Assert.AreEqual("[ServerPort] != 8", Parse("[ServerPort] != \"8\r\nschema", source, context).ToString());
         }
 
         private static IExpression Parse(string query, IDataBatchEnumerator source, WorkflowContext context)

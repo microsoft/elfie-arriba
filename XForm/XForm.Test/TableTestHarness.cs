@@ -188,6 +188,30 @@ namespace XForm.Test
         /// <summary>
         ///  Write a table to the Tracing system for debugging.
         /// </summary>
+        public static void TraceWrite(IDataBatchEnumerator table, int rowCount = DataBatchEnumeratorExtensions.DefaultBatchSize)
+        {
+            Func<DataBatch>[] columnGetters = new Func<DataBatch>[table.Columns.Count];
+            DataBatch[] columns = new DataBatch[table.Columns.Count];
+
+            for(int i = 0; i < columns.Length; ++i)
+            {
+                columnGetters[i] = table.ColumnGetter(i);
+            }
+
+            table.Next(rowCount);
+
+            for (int i = 0; i < columns.Length; ++i)
+            {
+                columns[i] = columnGetters[i]();
+            }
+
+            TraceWrite(columns, table.Columns);
+            table.Reset();
+        }
+
+        /// <summary>
+        ///  Write a table to the Tracing system for debugging.
+        /// </summary>
         public static void TraceWrite(DataBatch[] columns, IReadOnlyList<ColumnDetails> columnDetails, int startRowIndexInclusive = 0, int endRowIndexExclusive = -1)
         {
             StringBuilder row = new StringBuilder();

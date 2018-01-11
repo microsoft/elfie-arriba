@@ -176,9 +176,16 @@ namespace XForm.Query
         private void ParseWrappedValue(char escapeChar)
         {
             StringBuilder value = new StringBuilder();
-
+            
+            // Consume the opening character
             CurrentIndex++;
-            while (CurrentIndex < Text.Length)
+
+            // Find the end for unterminated values (the next newline or the end of the query)
+            int end = Text.IndexOf('\n', CurrentIndex);
+            if (end == -1) end = Text.Length;
+            else if (Text[end - 1] == '\r') end--;
+
+            while (CurrentIndex < end)
             {
                 int nextEscape = Text.IndexOf(escapeChar, CurrentIndex);
                 if (nextEscape == -1) break;
@@ -200,7 +207,7 @@ namespace XForm.Query
             }
 
             // If no terminator, treat the value as going to the end of the line. This is so partially typed queries run.
-            value.Append(Text, CurrentIndex, Text.Length - CurrentIndex);
+            value.Append(Text, CurrentIndex, end - CurrentIndex);
             CurrentIndex = Text.Length;
             this.Current.Value = value.ToString();
         }

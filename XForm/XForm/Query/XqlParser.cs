@@ -116,7 +116,7 @@ namespace XForm.Query
             {
                 stage = builder.Build(source, _workflow);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (!Debugger.IsAttached)
             {
                 Rethrow(ex);
             }
@@ -173,7 +173,7 @@ namespace XForm.Query
             {
                 return _workflow.Runner.Build(tableName, _workflow);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (!Debugger.IsAttached)
             {
                 Rethrow(ex);
                 return null;
