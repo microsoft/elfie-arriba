@@ -59,6 +59,8 @@ namespace XForm.Test.Query
 
             // Unclosed quotes shouldn't parse across lines
             Assert.AreEqual("[ServerPort] != 8", Parse("[ServerPort] != \"8\r\nschema", source, context).ToString());
+            Assert.AreEqual("[ServerPort] != \"\"", Parse("[ServerPort] != \"\nschema", source, context).ToString());
+            Assert.AreEqual("[ServerPort] != \"   \"", Parse("[ServerPort] != \"   \nschema", source, context).ToString());
         }
 
         private static IExpression Parse(string query, IDataBatchEnumerator source, WorkflowContext context)

@@ -208,7 +208,7 @@ namespace XForm.Query
 
             // If no terminator, treat the value as going to the end of the line. This is so partially typed queries run.
             value.Append(Text, CurrentIndex, end - CurrentIndex);
-            CurrentIndex = Text.Length;
+            CurrentIndex = end;
             this.Current.Value = value.ToString();
         }
 
