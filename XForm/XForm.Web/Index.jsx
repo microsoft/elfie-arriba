@@ -99,8 +99,11 @@ class Index extends React.Component {
             }
         })
     }
+    get query() {
+        return this.editor && this.editor.getModel().getValue()
+    }
     get encodedQuery() {
-        return this.editor && encodeURIComponent(this.editor.getModel().getValue())
+        return encodeURIComponent(this.query)
     }
     refresh(addCount) {
         this.count += addCount || 0
@@ -157,7 +160,8 @@ class Index extends React.Component {
                     {!this.state.userCols.length && this.state.schemaBody && <span>{this.state.schemaBody.length} Columns</span>}
                     {!!this.state.userCols.length && <span className="schemaButton" onClick={e => this.setState({ userCols: [] }, () => this.queryChanged())}>Reset</span>}
                     {!!this.state.userCols.length && <span className="schemaButton" onClick={e => {
-                        const userCols = this.state.userCols.length && `\nselect ${this.state.userCols.map(c => `[${c}]`).join(' ')}` || ''
+                        const newLine = this.query.endsWith('\n') ? '' : '\n'
+                        const userCols = this.state.userCols.length && `${newLine}select ${this.state.userCols.map(c => `[${c}]`).join(' ')}` || ''
                         const r = this.editor.getModel().getFullModelRange()
                         this.editor.executeEdits('my-source', [{
                                 identifier: { major: 1, minor: 1 },
