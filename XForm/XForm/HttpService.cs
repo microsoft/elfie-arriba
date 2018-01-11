@@ -52,6 +52,7 @@ namespace XForm
                 {
                     string query = Require(context, "q");
 
+                    DateTime asOfDate = ParseOrDefault(context.Request.QueryString["asof"], _workflowContext.RequestedAsOfDateTime);
                     SuggestResult result = _suggester.Suggest(query);
 
                     // If the query is valid and there are no extra values valid next, just return valid
@@ -81,6 +82,7 @@ namespace XForm
                     Require(context, "q"),
                     context.Request.QueryString["fmt"] ?? "json",
                     ParseOrDefault(context.Request.QueryString["c"], 100),
+                    ParseOrDefault(context.Request.QueryString["asof"], _workflowContext.RequestedAsOfDateTime),
                     response);
             }
             catch (Exception ex)
@@ -100,6 +102,7 @@ namespace XForm
                     Require(context, "q"),
                     Require(context, "fmt"),
                     ParseOrDefault(context.Request.QueryString["c"], -1),
+                    ParseOrDefault(context.Request.QueryString["asof"], _workflowContext.RequestedAsOfDateTime),
                     response);
             }
             catch (Exception ex)
@@ -118,6 +121,7 @@ namespace XForm
                 CountWithinTimeout(
                     Require(context, "q"),
                     TimeSpan.FromMilliseconds(ParseOrDefault(context.Request.QueryString["ms"], 5000)),
+                    ParseOrDefault(context.Request.QueryString["asof"], _workflowContext.RequestedAsOfDateTime),
                     response);
             }
             catch (Exception ex)
@@ -129,14 +133,22 @@ namespace XForm
             }
         }
 
-        private void CountWithinTimeout(string query, TimeSpan timeout, HttpListenerResponse response)
+        private void CountWithinTimeout(string query, TimeSpan timeout, DateTime asOfDate, HttpListenerResponse response)
         {
             IDataBatchEnumerator pipeline = null;
 
             try
             {
+                WorkflowContext context = _workflowContext;
+
+                // Build for another moment in time if requested
+                if(asOfDate != _workflowContext.RequestedAsOfDateTime)
+                {
+                    context = new WorkflowContext(_workflowContext) { RequestedAsOfDateTime = asOfDate };
+                }
+
                 // Build a Pipeline for the Query
-                pipeline = XqlParser.Parse(query, null, _workflowContext);
+                pipeline = XqlParser.Parse(query, null, context);
 
                 // Try to get the count up to the timeout
                 RunResult result = pipeline.RunUntilTimeout(timeout);
@@ -160,14 +172,22 @@ namespace XForm
             }
         }
 
-        private void Run(string query, string format, int rowCountLimit, HttpListenerResponse response)
+        private void Run(string query, string format, int rowCountLimit, DateTime asOfDate, HttpListenerResponse response)
         {
             IDataBatchEnumerator pipeline = null;
 
             try
             {
+                WorkflowContext context = _workflowContext;
+
+                // Build for another moment in time if requested
+                if (asOfDate != _workflowContext.RequestedAsOfDateTime)
+                {
+                    context = new WorkflowContext(_workflowContext) { RequestedAsOfDateTime = asOfDate };
+                }
+
                 // Build a Pipeline for the Query
-                pipeline = XqlParser.Parse(query, null, _workflowContext);
+                pipeline = XqlParser.Parse(query, null, context);
 
                 // Restrict the row count if requested
                 if (rowCountLimit >= 0)
@@ -254,9 +274,10 @@ namespace XForm
             }
             else
             {
-                writer.SetColumns(new string[] { "Valid", "Message" });
+                writer.SetColumns(new string[] { "Valid", "Message", "Stack" });
                 writer.Write(false);
                 writer.Write(block.GetCopy(ex.Message));
+                writer.Write(block.GetCopy(ex.StackTrace));
                 writer.NextRow();
             }
         }
@@ -297,6 +318,16 @@ namespace XForm
 
             int result;
             if (!int.TryParse(value, out result)) return defaultValue;
+
+            return result;
+        }
+
+        private static DateTime ParseOrDefault(string value, DateTime defaultValue)
+        {
+            if (String.IsNullOrEmpty(value)) return defaultValue;
+
+            DateTime result;
+            if (!DateTime.TryParse(value, out result)) return defaultValue;
 
             return result;
         }
