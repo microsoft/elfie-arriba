@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using System;
 
 using XForm.Data;
@@ -23,7 +24,7 @@ namespace XForm.Query.Expression
         {
             // Disallow constant <op> constant [likely error not wrapping column name]
             if (left is Constant && right is Constant) throw new ArgumentException($"({left} {op.ToQueryForm()} {right}) is comparing two constants. Wrap [ColumnNames] in braces.");
-
+            
             // Save arguments as-is for ToString()
             _left = left;
             _cOp = op;
@@ -41,10 +42,21 @@ namespace XForm.Query.Expression
                 }
             }
 
+            // Disallow unquoted constants used as strings
+            if (right is Constant && left.ColumnDetails.Type == typeof(String8) && right.ColumnDetails.Type == typeof(String8))
+            {
+                Constant cRight = (Constant)right;
+                if (!cRight.IsNull && cRight.WasUnwrappedLiteral)
+                {
+                    throw new ArgumentException($"{right} is compared to a string, but is unquoted. Strings must be quoted.");
+                }
+            }
+
             // Convert the right side to the left side type if required
             // This means constants will always be casted to the other side type.
             if (left.ColumnDetails.Type != right.ColumnDetails.Type)
             {
+                // Disallow comparing unwrapped constants to strings
                 right = XForm.Functions.Cast.Build(source, right, left.ColumnDetails.Type, null, true);
             }
 

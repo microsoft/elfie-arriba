@@ -13,14 +13,16 @@ namespace XForm.Functions
         private IDataBatchEnumerator Source { get; set; }
         private Array ValueArray { get; set; }
         public bool IsNull { get; private set; }
+        public bool WasUnwrappedLiteral { get; private set; }
         public ColumnDetails ColumnDetails { get; private set; }
 
-        public Constant(IDataBatchEnumerator source, object value, Type type)
+        public Constant(IDataBatchEnumerator source, object value, Type type, bool wasUnwrappedLiteral = false)
         {
             Source = source;
             ValueArray = Allocator.AllocateArray(type, 1);
             ValueArray.SetValue(value, 0);
-            IsNull = (value == null);
+            IsNull = (value == null || value.Equals("null"));
+            WasUnwrappedLiteral = wasUnwrappedLiteral;
             ColumnDetails = new ColumnDetails(string.Empty, type, false);
         }
 
@@ -37,7 +39,7 @@ namespace XForm.Functions
 
         public override string ToString()
         {
-            return XqlScanner.Escape(Value.ToString(), TokenType.Value);
+            return XqlScanner.Escape(Value.ToString(), TokenType.Value, WasUnwrappedLiteral);
         }
     }
 }

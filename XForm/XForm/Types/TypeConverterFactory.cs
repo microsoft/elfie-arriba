@@ -60,7 +60,10 @@ namespace XForm.Types
         public static object ConvertSingle(object value, Type targetType)
         {
             object result;
-            if (!TryConvertSingle(value, targetType, out result)) throw new ArgumentException($"Could not convert \"{value}\" to {targetType.Name}.");
+            if (!TryConvertSingle(value, targetType, out result))
+            {
+                throw new ArgumentException($"Could not convert \"{value}\" to {targetType.Name}.");
+            }
             return result;
         }
 
