@@ -194,8 +194,8 @@ class Index extends React.Component {
                 <div className="resultsHeader">
                     <span>{this.state.status}</span>
                     <span className="flexFill"></span>
-                    {q && <a target="_blank" href={`http://localhost:5073/download?fmt=csv&q=${q}`}>CSV</a>}
-                    {q && <a target="_blank" href={`http://localhost:5073/download?fmt=tsv&q=${q}`}>TSV</a>}
+                    {q && <a className="button" target="_blank" href={`http://localhost:5073/download?fmt=csv&q=${q}`}>CSV</a>}
+                    {q && <a className="button" target="_blank" href={`http://localhost:5073/download?fmt=tsv&q=${q}`}>TSV</a>}
                     <span className={`loading ${ this.state.loading && 'loading-active' }`}></span>
                 </div>
                 <div className="tableWrapper">
