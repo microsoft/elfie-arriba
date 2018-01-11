@@ -6,6 +6,17 @@ using XForm.Data;
 
 namespace XForm.Functions.String
 {
+    /// <summary>
+    /// Coalesce evaluates the input columns in order and returns the current value of the first column that does not evaluate to NULL or Empty string.
+    /// </summary>
+    /// <example>
+    /// The following command will evaluate the values of the input columns, C1, C2, C3 and return the first non-NULL value.
+    ///     set [R1] Coalesce([C1], [C2], [C3])
+    ///     
+    /// If C1 = NULL, C2 = "bob", C3 = "fred", R2 will be set to "bob".
+    /// If C1 = "", C2 = "bob", C3 = "fred", R2 will be set to "bob".
+    /// If all the values of the input columns are NULL, the output column will be set to NULL.
+    /// </example>
     internal class CoalesceBuilder : IFunctionBuilder
     {
         public string Name => "Coalesce";
@@ -32,17 +43,6 @@ namespace XForm.Functions.String
         }
     }
 
-    /// <summary>
-    /// Coalesce evaluates the input columns in order and returns the current value of the first column that does not evaluate to NULL or Empty string.
-    /// </summary>
-    /// <example>
-    /// The following command will evaluate the values of the input columns, C1, C2, C3 and return the first non-NULL value.
-    ///     set [R1] Coalesce([C1], [C2], [C3])
-    ///     
-    /// If C1 = NULL, C2 = "bob", C3 = "fred", R2 will be set to "bob".
-    /// If C1 = "", C2 = "bob", C3 = "fred", R2 will be set to "bob".
-    /// If all the values of the input columns are NULL, the output column will be set to NULL.
-    /// </example>
     public class CoalesceColumn : IDataBatchColumn
     {
         private CoalesceColumn(IEnumerable<IDataBatchColumn> columns)
