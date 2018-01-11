@@ -213,12 +213,9 @@ namespace XForm
             }
         }
 
-        private void Save(string query, string fileName)
+        private void Save(string query, string tableName)
         {
-            using (StreamWriter writer = new StreamWriter(_workflowContext.StreamProvider.OpenWrite($"Query\\{fileName}.xql")))
-            {
-                writer.Write(query);
-            }
+            _workflowContext.Runner.Save(query, tableName);
         }
 
         private ITabularWriter WriterForFormat(string format, HttpListenerResponse response)

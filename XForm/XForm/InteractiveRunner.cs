@@ -12,7 +12,6 @@ using Microsoft.CodeAnalysis.Elfie.Extensions;
 using XForm.Context;
 using XForm.Data;
 using XForm.Extensions;
-using XForm.IO;
 using XForm.IO.StreamProvider;
 using XForm.Query;
 
@@ -31,6 +30,11 @@ namespace XForm
         public IDataBatchEnumerator Build(string sourceName, WorkflowContext context)
         {
             return _workflowContext.Runner.Build(sourceName, context);
+        }
+
+        public void Save(string query, string saveToPath)
+        {
+            _workflowContext.Runner.Save(query, saveToPath);
         }
 
         public InteractiveRunner(WorkflowContext context)

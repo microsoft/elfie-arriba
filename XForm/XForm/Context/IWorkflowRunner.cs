@@ -28,6 +28,13 @@ namespace XForm.Context
         IDataBatchEnumerator Build(string sourceName, WorkflowContext context);
 
         /// <summary>
+        ///  Write a new query to the storage location and register it as a source
+        /// </summary>
+        /// <param name="query"></param>
+        /// <param name="saveToPath"></param>
+        void Save(string query, string saveToPath);
+
+        /// <summary>
         ///  Return a list of Source names known to this runner. These are returned
         ///  if a source isn't provided to 'read' in the syntax.
         /// </summary>

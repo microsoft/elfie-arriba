@@ -22,6 +22,7 @@ namespace XForm
     {
         private WorkflowContext WorkflowContext { get; set; }
         private HashSet<string> Sources { get; set; }
+        private DateTime SourcesCacheExpires { get; set; }
 
         public WorkflowRunner(WorkflowContext context)
         {
@@ -32,10 +33,13 @@ namespace XForm
         {
             get
             {
-                if (Sources == null)
+                DateTime now = DateTime.UtcNow;
+                if (Sources == null || now > SourcesCacheExpires)
                 {
                     Sources = new HashSet<string>(WorkflowContext.StreamProvider.Tables(), StringComparer.OrdinalIgnoreCase);
                     Sources.UnionWith(WorkflowContext.StreamProvider.Queries());
+
+                    SourcesCacheExpires = now.AddMinutes(10);
                 }
 
                 return Sources;
@@ -171,6 +175,21 @@ namespace XForm
             // This "fuzzyness" is because input files can have partial second freshness but written tables don't.
             return inputsWhenModifiedUtc - outputWhenModifiedUtc > TimeSpan.FromSeconds(1);
         }
+
+        public void Save(string query, string tableName)
+        {
+            // Ensure the table name is only a table name, not a path
+            if (tableName.EndsWith(".xql", StringComparison.OrdinalIgnoreCase)) tableName = tableName.Substring(0, tableName.Length - 4);
+
+            string fullPath = tableName;
+
+            using (StreamWriter writer = new StreamWriter(WorkflowContext.StreamProvider.OpenWrite($"Query\\{tableName}.xql")))
+            {
+                writer.Write(query);
+            }
+
+            if(this.Sources != null) this.Sources.Add(tableName);
+        }
     }
 
     public class DeferredRunner : IWorkflowRunner
@@ -188,6 +207,11 @@ namespace XForm
         {
             // Ask the workflow runner to defer computing dependencies now
             return _inner.Build(tableName, context, true);
+        }
+
+        public void Save(string query, string saveToPath)
+        {
+            _inner.Save(query, saveToPath);
         }
     }
 

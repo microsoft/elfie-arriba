@@ -3,7 +3,7 @@
 
 using System;
 using System.Collections.Generic;
-
+using System.IO;
 using XForm.Data;
 using XForm.IO;
 
@@ -27,6 +27,11 @@ namespace XForm.Context
             {
                 return new TabularFileReader(context.StreamProvider, sourceName);
             }
+        }
+
+        public void Save(string query, string saveToPath)
+        {
+            File.WriteAllText($"{saveToPath}.xql", query);
         }
     }
 }
