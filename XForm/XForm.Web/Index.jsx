@@ -100,7 +100,7 @@ class Index extends React.Component {
         })
     }
     get encodedQuery() {
-        return encodeURIComponent(this.editor.getModel().getValue())
+        return this.editor && encodeURIComponent(this.editor.getModel().getValue())
     }
     refresh(addCount) {
         this.count += addCount || 0
@@ -134,7 +134,7 @@ class Index extends React.Component {
             rows = results.rows
         }
 
-        const q = this.editor && encodeURIComponent(this.editor.getModel().getValue())
+        const q = this.encodedQuery
 
         return <div className={`root`}>
             <div className="queryWrapper">
