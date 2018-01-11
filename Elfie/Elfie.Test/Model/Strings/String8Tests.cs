@@ -182,6 +182,20 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
 
             Assert.AreEqual(string.Empty, String8.Empty.BeforeFirst((byte)'S').ToString());
             Assert.AreEqual(string.Empty, String8.Empty.AfterFirst((byte)'!').ToString());
+
+            TrySplitOnFirst(String8.Empty, (byte)'.', "", "");
+            TrySplitOnFirst(binaryName8, (byte)'@', "", "");
+            TrySplitOnFirst(binaryName8, (byte)'.', "System", "Collections.Generic.List!");
+            TrySplitOnFirst(binaryName8, (byte)'!', "System.Collections.Generic.List", "");
+            TrySplitOnFirst(binaryName8, (byte)'S', "", "ystem.Collections.Generic.List!");
+        }
+
+        private static void TrySplitOnFirst(String8 value, byte splitter, string firstExpected, string secondExpected)
+        {
+            String8 first, second;
+            Assert.AreEqual(!(firstExpected.Length == 0 && secondExpected.Length == 0), value.SplitOnFirst(splitter, out first, out second));
+            Assert.AreEqual(firstExpected, first.ToString());
+            Assert.AreEqual(secondExpected, second.ToString());
         }
 
         [TestMethod]
