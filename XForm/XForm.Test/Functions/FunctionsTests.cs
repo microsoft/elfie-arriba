@@ -134,14 +134,14 @@ namespace XForm.Test.Query
                 ColumnDetails details = new ColumnDetails(inputColumnNames[i], data.Array.GetType().GetElementType(), true);
                 inputColumnDetails.Add(details);
                 inputColumnData.Add(data);
-                inputColumnPaddedData.Add(DataBatchTransformer.Pad(data));
-                inputColumnNullsData.Add(DataBatchTransformer.Nulls(data));
-                inputColumnConstantData.Add(DataBatchTransformer.First(data));
+                inputColumnPaddedData.Add(TableTestHarness.Pad(data));
+                inputColumnNullsData.Add(TableTestHarness.Nulls(data));
+                inputColumnConstantData.Add(TableTestHarness.First(data));
             }
 
             DataBatch expectedBatch = DataBatch.All(expectedValues, expectedValues.Length, expectedNulls);
-            DataBatch expectedNullsBatch = DataBatchTransformer.Nulls(expectedBatch);
-            DataBatch expectedConstantBatch = DataBatchTransformer.First(expectedBatch);
+            DataBatch expectedNullsBatch = TableTestHarness.Nulls(expectedBatch);
+            DataBatch expectedConstantBatch = TableTestHarness.First(expectedBatch);
 
             // Run with full array DataBatches
             RunAndCompare(inputColumnDetails, inputColumnData, expectedBatch, outputColumnName, queryText);
@@ -195,13 +195,13 @@ namespace XForm.Test.Query
             // Get two rows and verify. This will return an IsNull set of {true,false}.
             query.Reset();
             pageCount = query.Next(2);
-            DataBatchTransformer.AssertAreEqual(DataBatchTransformer.Slice(expected, 0, 2), resultGetter(), pageCount);
+            TableTestHarness.AssertAreEqual(TableTestHarness.Slice(expected, 0, 2), resultGetter(), pageCount);
 
-            // Evaluate a DataBatch which returns an IsNull set of {false,true}. If the function doesn't reset the IsNull array, this should fail with the IsNull result set to {true,true}.
+            // Evaluate a DataBatch which returns an IsNull set of {false,true}. If the function doesn't reset the IsNull array, this should fail with the IsNull result set as {true,true}.
             query.Reset();
             pageCount = query.Next(1);
             pageCount = query.Next(2);
-            DataBatchTransformer.AssertAreEqual(DataBatchTransformer.Slice(expected, 1, 3), resultGetter(), pageCount);
+            TableTestHarness.AssertAreEqual(TableTestHarness.Slice(expected, 1, 3), resultGetter(), pageCount);
         }
     }
 }
