@@ -22,7 +22,7 @@ namespace XForm.Test.Query
             string xqlQuery = @"
                 read WebRequest
                 select [ServerPort], Cast([ResponseBytes], Int32)
-                where [ServerPort] = 80
+                where [ServerPort] = ""80""
                 limit 1000
                 ";
 

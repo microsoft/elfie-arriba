@@ -25,9 +25,19 @@ namespace XForm.Query
         public TokenType Type { get; set; }
         public string Value { get; set; }
         public string WhitespacePrefix { get; set; }
+        public bool IsWrapped { get; set; }
 
         public int LineNumber { get; set; }
         public int CharInLine { get; set; }
+
+        public Token(int currentLineNumber)
+        {
+            this.Type = TokenType.End;
+            this.Value = "";
+            this.WhitespacePrefix = "";
+            this.IsWrapped = false;
+            this.LineNumber = currentLineNumber;
+        }
     }
 
     /// <summary>
@@ -60,7 +70,7 @@ namespace XForm.Query
         public XqlScanner(string xqlQuery)
         {
             this.Text = xqlQuery;
-            Current = new Token() { Type = TokenType.Newline };
+            Current = new Token(1) { Type = TokenType.Newline };
             LastNewlineIndex = -1;
             CurrentLineNumber = 1;
             Next();
@@ -90,10 +100,7 @@ namespace XForm.Query
 
         public bool InnerNext()
         {
-            this.Current = new Token();
-            this.Current.Type = TokenType.End;
-            this.Current.Value = "";
-            this.Current.LineNumber = CurrentLineNumber;
+            this.Current = new Token(CurrentLineNumber);
 
             ReadWhitespace();
 
@@ -180,6 +187,9 @@ namespace XForm.Query
             // Consume the opening character
             CurrentIndex++;
 
+            // If we're here, mark the token as wrapped
+            this.Current.IsWrapped = true;
+
             // Find the end for unterminated values (the next newline or the end of the query)
             int end = Text.IndexOf('\n', CurrentIndex);
             if (end == -1) end = Text.Length;
@@ -209,7 +219,7 @@ namespace XForm.Query
             // If no terminator, treat the value as going to the end of the line. This is so partially typed queries run.
             value.Append(Text, CurrentIndex, end - CurrentIndex);
             CurrentIndex = end;
-            this.Current.Value = value.ToString();
+            this.Current.Value = value.ToString();            
         }
 
         private void ParseUnwrappedValue()
@@ -222,6 +232,7 @@ namespace XForm.Query
                 CurrentIndex++;
             }
 
+            this.Current.IsWrapped = false;
             this.Current.Value = Text.Substring(startIndex, CurrentIndex - startIndex);
         }
 
@@ -238,7 +249,7 @@ namespace XForm.Query
             this.Current.Value = Text.Substring(startIndex, CurrentIndex - startIndex);
         }
 
-        public static string Escape(string value, TokenType type)
+        public static string Escape(string value, TokenType type, bool wasUnwrapped = false)
         {
             if (type == TokenType.ColumnName)
             {
@@ -250,7 +261,7 @@ namespace XForm.Query
             else if (type == TokenType.Value)
             {
                 if (String.IsNullOrEmpty(value)) return "\"\"";
-                if (!RequiresEscaping(value)) return value;
+                if (wasUnwrapped && !RequiresEscaping(value)) return value;
                 return "\"" + value.Replace("\"", "\"\"") + "\"";
             }
             else

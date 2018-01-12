@@ -38,7 +38,7 @@ namespace XForm.Verbs
             // Identify the interval and table name requested
             TimeSpan interval = context.Parser.NextTimeSpan();
             DateTime rangeStart = context.RequestedAsOfDateTime.Subtract(interval);
-            string tableName = context.Parser.NextString();
+            string tableName = (string)context.Parser.NextLiteralValue();
 
             // Add rows *just before* each full source in range (the previous full crawl and all incremental ones)
             foreach (StreamAttributes fullSource in context.StreamProvider.VersionsInRange(LocationType.Source, tableName, CrawlType.Full, rangeStart, context.RequestedAsOfDateTime))

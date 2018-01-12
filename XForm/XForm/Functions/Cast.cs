@@ -21,7 +21,7 @@ namespace XForm.Functions
                 context.Parser.NextColumn(source, context),
                 context.Parser.NextType(),
                 (context.Parser.HasAnotherArgument ? context.Parser.NextLiteralValue() : null),
-                (context.Parser.HasAnotherArgument ? context.Parser.NextBoolean() : false));
+                (context.Parser.HasAnotherArgument ? context.Parser.NextBoolean() : true));
         }
     }
 

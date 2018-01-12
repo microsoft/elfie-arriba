@@ -1,7 +1,10 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System;
 using System.Collections.Generic;
+
+using Elfie.Test;
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -19,51 +22,65 @@ namespace XForm.Test.Query
         public void XqlParser_QueryParsing()
         {
             WorkflowContext context = SampleDatabase.WorkflowContext;
-            IDataBatchEnumerator source = XqlParser.Parse("read WebRequest", null, context);
+            IDataBatchEnumerator source = XqlParser.Parse(@"
+                read WebRequest
+                cast [ServerPort], Int32
+                cast [ResponseBytes], Int32, 0, false", null, context);
 
             // Single Term
-            Assert.AreEqual("[ServerPort] = 80", Parse("[ServerPort] = 80", source, context).ToString());
+            Assert.AreEqual("[ServerPort] = 80", ParseExpression("[ServerPort] = 80", source, context).ToString());
 
             // Column to Column
-            Assert.AreEqual("[ServerPort] < [RequestBytes]", Parse("[ServerPort] < [RequestBytes]", source, context).ToString());
+            Assert.AreEqual("[ServerPort] < [RequestBytes]", ParseExpression("[ServerPort] < [RequestBytes]", source, context).ToString());
 
             // Column to Function(Constant) => Resolved
-            Assert.AreEqual("[ServerName] = WS-FRONT-4", Parse("[ServerName] = ToUpper(\"ws-front-4\")", source, context).ToString());
+            Assert.AreEqual("[ServerName] = \"WS-FRONT-4\"", ParseExpression("[ServerName] = ToUpper(\"ws-front-4\")", source, context).ToString());
 
             // Column to Function(Column)
-            Assert.AreEqual("[ServerName] = ToUpper([ServerName])", Parse("[ServerName] = ToUpper([ServerName])", source, context).ToString());
+            Assert.AreEqual("[ServerName] = ToUpper([ServerName])", ParseExpression("[ServerName] = ToUpper([ServerName])", source, context).ToString());
+
+            // Compare to null and empty
+            Assert.AreEqual("[ServerName] = \"\"", ParseExpression("[ServerName] = \"\"", source, context).ToString());
+            Assert.AreEqual("[ServerName] = null", ParseExpression("[ServerName] = null", source, context).ToString());
 
             // Multiple Clauses, explicit AND
-            Assert.AreEqual("[ServerPort] = 80 AND [ResponseBytes] > 900", Parse("[ServerPort] = 80 AND [ResponseBytes] > 900", source, context).ToString());
+            Assert.AreEqual("[ServerPort] = 80 AND [ResponseBytes] > 900", ParseExpression("[ServerPort] = 80 AND [ResponseBytes] > 900", source, context).ToString());
 
             // Multiple Clauses, implicit AND
-            Assert.AreEqual("[ServerPort] = 80 AND [ResponseBytes] > 900", Parse("[ServerPort] = 80 [ResponseBytes] > 900", source, context).ToString());
+            Assert.AreEqual("[ServerPort] = 80 AND [ResponseBytes] > 900", ParseExpression("[ServerPort] = 80 [ResponseBytes] > 900", source, context).ToString());
 
             // AND and OR with no parens, AND is tighter, parens omitted on ToString
-            Assert.AreEqual("[ServerPort] = 80 AND [ResponseBytes] > 1200 OR [ResponseBytes] < 900", Parse("[ServerPort] = 80 AND [ResponseBytes] > 1200 OR [ResponseBytes] < 900", source, context).ToString());
+            Assert.AreEqual("[ServerPort] = 80 AND [ResponseBytes] > 1200 OR [ResponseBytes] < 900", ParseExpression("[ServerPort] = 80 AND [ResponseBytes] > 1200 OR [ResponseBytes] < 900", source, context).ToString());
 
             // AND and OR with AND parens, AND is tighter, parens omitted because same as default precedence
-            Assert.AreEqual("[ServerPort] = 80 AND [ResponseBytes] > 1200 OR [ResponseBytes] < 900", Parse("([ServerPort] = 80 AND [ResponseBytes] > 1200) OR [ResponseBytes] < 900", source, context).ToString());
+            Assert.AreEqual("[ServerPort] = 80 AND [ResponseBytes] > 1200 OR [ResponseBytes] < 900", ParseExpression("([ServerPort] = 80 AND [ResponseBytes] > 1200) OR [ResponseBytes] < 900", source, context).ToString());
 
             // AND and OR with OR parens, parens on output to maintain evaluation order
-            Assert.AreEqual("[ServerPort] = 80 AND ([ResponseBytes] > 1200 OR [ResponseBytes] < 900)", Parse("[ServerPort] = 80 AND ([ResponseBytes] > 1200 OR [ResponseBytes] < 900)", source, context).ToString());
+            Assert.AreEqual("[ServerPort] = 80 AND ([ResponseBytes] > 1200 OR [ResponseBytes] < 900)", ParseExpression("[ServerPort] = 80 AND ([ResponseBytes] > 1200 OR [ResponseBytes] < 900)", source, context).ToString());
 
             // AND after OR [OrExpression parsing falls out correctly]
-            Assert.AreEqual("[ServerPort] = 80 AND [ResponseBytes] > 1200 OR [ResponseBytes] < 900 AND [ServerPort] != 443", Parse("[ServerPort] = 80 AND [ResponseBytes] > 1200 OR [ResponseBytes] < 900 AND [ServerPort] != 443", source, context).ToString());
+            Assert.AreEqual("[ServerPort] = 80 AND [ResponseBytes] > 1200 OR [ResponseBytes] < 900 AND [ServerPort] != 443", ParseExpression("[ServerPort] = 80 AND [ResponseBytes] > 1200 OR [ResponseBytes] < 900 AND [ServerPort] != 443", source, context).ToString());
 
             // NOT
-            Assert.AreEqual("NOT([ServerPort] = 80)", Parse("NOT([ServerPort] = 80)", source, context).ToString());
+            Assert.AreEqual("NOT([ServerPort] = 80)", ParseExpression("NOT([ServerPort] = 80)", source, context).ToString());
 
             // Operators are case insensitive
-            Assert.AreEqual("[ServerPort] = 80 AND [ResponseBytes] > 1200 OR NOT([ResponseBytes] < 900)", Parse("[ServerPort] = 80 aNd [ResponseBytes] > 1200 oR nOT [ResponseBytes] < 900", source, context).ToString());
+            Assert.AreEqual("[ServerPort] = 80 AND [ResponseBytes] > 1200 OR NOT([ResponseBytes] < 900)", ParseExpression("[ServerPort] = 80 aNd [ResponseBytes] > 1200 oR nOT [ResponseBytes] < 900", source, context).ToString());
 
             // Unclosed quotes shouldn't parse across lines
-            Assert.AreEqual("[ServerPort] != 8", Parse("[ServerPort] != \"8\r\nschema", source, context).ToString());
-            Assert.AreEqual("[ServerPort] != \"\"", Parse("[ServerPort] != \"\nschema", source, context).ToString());
-            Assert.AreEqual("[ServerPort] != \"   \"", Parse("[ServerPort] != \"   \nschema", source, context).ToString());
+            Assert.AreEqual("[ServerName] != \"8\"", ParseExpression("[ServerName] != \"8\r\nschema", source, context).ToString());
+            Assert.AreEqual("[ServerName] != \"\"", ParseExpression("[ServerName] != \"\nschema", source, context).ToString());
+            Assert.AreEqual("[ServerName] != \"   \"", ParseExpression("[ServerName] != \"   \nschema", source, context).ToString());
+
+            // Constant = Constant rule
+            Verify.Exception<ArgumentException>(() => ParseExpression("80 = 80", source, context));
+
+            // String = Quoted Only Constant rule
+            Verify.Exception<ArgumentException>(() => ParseExpression("[ServerName] = 80", source, context));
+            Assert.AreEqual("[ServerName] = \"80\"", ParseExpression("[ServerName] = \"80\"", source, context).ToString());
         }
 
-        private static IExpression Parse(string query, IDataBatchEnumerator source, WorkflowContext context)
+        private static IExpression ParseExpression(string query, IDataBatchEnumerator source, WorkflowContext context)
         {
             XqlParser parser = new XqlParser(query, context);
             context.Parser = parser;
@@ -77,7 +94,9 @@ namespace XForm.Test.Query
             IDataBatchEnumerator source = XqlParser.Parse(@"
                 read WebRequest
                 cache all
-                set [ResponseBytes] Cast([ResponseBytes], Int32)", null, context);
+                cast [ServerPort], Int32, 
+                cast [ResponseBytes], Int32, 0, false
+                ", null, context);
 
             // Results from WebRequest.20171202.r5.n1000, counts validated against Excel
 

@@ -1,2 +1,2 @@
 read WebServer
-where [ServerRam] > 8000
+where Cast([ServerRam], Int32) > 8000

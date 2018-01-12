@@ -23,7 +23,7 @@ namespace XForm.Verbs
                     context.Parser.NextColumn(source, context),
                     context.Parser.NextType(),
                     (context.Parser.HasAnotherPart ? context.Parser.NextLiteralValue() : null),
-                    (context.Parser.HasAnotherPart ? context.Parser.NextBoolean() : false)
+                    (context.Parser.HasAnotherPart ? context.Parser.NextBoolean() : true)
                 )
             );
         }

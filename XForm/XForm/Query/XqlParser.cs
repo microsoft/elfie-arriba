@@ -193,7 +193,7 @@ namespace XForm.Query
                     value = TypeConverterFactory.ConvertSingle(value, requiredType);
                 }
 
-                result = new Constant(source, value, (requiredType == null ? typeof(String8) : requiredType));
+                result = new Constant(source, value, (requiredType == null ? typeof(String8) : requiredType), !_scanner.Current.IsWrapped);
                 _scanner.Next();
             }
             else if (_scanner.Current.Type == TokenType.FunctionName)
@@ -264,14 +264,18 @@ namespace XForm.Query
         public bool NextBoolean()
         {
             bool value = false;
-            ParseNextOrThrow(() => _scanner.Current.Type == TokenType.Value && bool.TryParse(_scanner.Current.Value, out value), "boolean", TokenType.Value, new string[] { "true", "false" });
+            ParseNextOrThrow(() => _scanner.Current.Type == TokenType.Value
+                && _scanner.Current.IsWrapped == false
+                && bool.TryParse(_scanner.Current.Value, out value), "boolean", TokenType.Value, new string[] { "true", "false" });
             return value;
         }
 
         public int NextInteger()
         {
             int value = -1;
-            ParseNextOrThrow(() => int.TryParse(_scanner.Current.Value, out value), "integer", TokenType.Value);
+            ParseNextOrThrow(() => _scanner.Current.Type == TokenType.Value
+                && _scanner.Current.IsWrapped == false
+                && int.TryParse(_scanner.Current.Value, out value), "integer", TokenType.Value);
             return value;
         }
 
@@ -285,7 +289,7 @@ namespace XForm.Query
         public string NextString()
         {
             string value = _scanner.Current.Value;
-            ParseNextOrThrow(() => true, "string", TokenType.Value);
+            ParseNextOrThrow(() => _scanner.Current.IsWrapped || value == "null", "string", TokenType.Value);
             return value;
         }
 

@@ -11,6 +11,7 @@ using XForm.Data;
 using XForm.Extensions;
 using XForm.Query;
 using XForm.Types;
+using System.Threading.Tasks;
 
 namespace XForm.IO
 {
@@ -40,7 +41,12 @@ namespace XForm.IO
 
         private Func<DataBatch>[] _innerGetters;
         private Func<DataBatch>[] _getters;
+        private DataBatch[] _currentBatches;
         private IColumnWriter[] _writers;
+
+        private List<ColumnDetails> _columnSchemaToWrite;
+        private string _queryToWrite;
+        private int _rowCountWritten;
 
         public BinaryTableWriter(IDataBatchEnumerator source, WorkflowContext workflowContext, string tableRootPath) : base(source)
         {
@@ -50,10 +56,12 @@ namespace XForm.IO
 
             int columnCount = source.Columns.Count;
 
-            List<ColumnDetails> columnSchemaToWrite = new List<ColumnDetails>();
+            _columnSchemaToWrite = new List<ColumnDetails>();
+            _queryToWrite = workflowContext.CurrentQuery;
 
             _innerGetters = new Func<DataBatch>[columnCount];
             _getters = new Func<DataBatch>[columnCount];
+            _currentBatches = new DataBatch[columnCount];
 
             for (int i = 0; i < columnCount; ++i)
             {
@@ -73,16 +81,10 @@ namespace XForm.IO
                     column = column.ChangeType(typeof(String8));
                 }
 
-                columnSchemaToWrite.Add(column);
+                _columnSchemaToWrite.Add(column);
                 _innerGetters[i] = directGetter;
                 _getters[i] = outputTypeGetter;
             }
-
-            // Write the schema for the table to create
-            SchemaSerializer.Write(workflowContext.StreamProvider, _tableRootPath, columnSchemaToWrite);
-
-            // Write the query for the table
-            workflowContext.StreamProvider.WriteAllText(Path.Combine(_tableRootPath, "Config.xql"), workflowContext.CurrentQuery);
         }
 
         private void BuildWriters()
@@ -133,11 +135,19 @@ namespace XForm.IO
                 return 0;
             }
 
+            // Get the next set of batches (parallel might not be safe)
             for (int i = 0; i < _getters.Length; ++i)
             {
-                _writers[i].Append(_getters[i]());
+                _currentBatches[i] = _getters[i]();
             }
 
+            // Write them out (Parallel safe)
+            Parallel.For(0, _getters.Length, (i) =>
+            {
+                _writers[i].Append(_currentBatches[i]);
+            });
+
+            _rowCountWritten += count;
             return count;
         }
 
@@ -158,8 +168,18 @@ namespace XForm.IO
 
                 _writers = null;
 
-                // On Dispose, tell the StreamProvider to publish the table
-                _workflowContext.StreamProvider.Publish(_tableRootPath);
+                // Write the schema and query only if the table was valid
+                if (_columnSchemaToWrite.Count > 0)
+                {
+                    // Write the schema for the table to create
+                    SchemaSerializer.Write(_workflowContext.StreamProvider, _tableRootPath, _columnSchemaToWrite);
+
+                    // Write the query for the table
+                    _workflowContext.StreamProvider.WriteAllText(Path.Combine(_tableRootPath, "Config.xql"), _queryToWrite);
+
+                    // On Dispose, tell the StreamProvider to publish the table
+                    _workflowContext.StreamProvider.Publish(_tableRootPath);
+                }
             }
         }
 

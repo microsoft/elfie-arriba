@@ -75,7 +75,7 @@ namespace XForm.Test.Query
             DataSourceEnumerator_All("select [ID] [EventTime] [ServerPort] [HttpStatus] [ClientOs] [WasCachedResponse]", 1000);
             DataSourceEnumerator_All("limit 10", 10);
             DataSourceEnumerator_All("count", 1);
-            DataSourceEnumerator_All("where [ServerPort] = 80", 423, new string[] { "ServerPort" });
+            DataSourceEnumerator_All("where [ServerPort] = \"80\"", 423, new string[] { "ServerPort" });
             DataSourceEnumerator_All("cast [EventTime] DateTime", 1000);
             DataSourceEnumerator_All("remove [EventTime]", 1000);
             DataSourceEnumerator_All("rename [ServerPort] [PortNumber], [HttpStatus] [HttpResult]", 1000);

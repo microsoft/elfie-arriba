@@ -1,15 +1,6 @@
 @ECHO OFF
 CALL "%~dp0..\FindMSBuild.cmd"
 
-
-
-ECHO - Building XForm...
-PUSHD %~dp0
-"%MSBuildPath%" "XForm.sln" /p:Configuration=Release /p:Platform="x64"
-SET MSBuildError=%ERRORLEVEL%
-POPD
-IF NOT "%MSBuildError%"=="0" GOTO Error
-
 ECHO - Building XForm.Web...
 PUSHD %~dp0XForm.Web
 IF NOT EXIST node_modules\.bin\WebPack.cmd (
@@ -21,6 +12,13 @@ CALL node_modules\.bin\WebPack.cmd
 SET WebPackError=%ERRORLEVEL%
 POPD
 IF NOT "%WebPackError%"=="0" GOTO Error
+
+ECHO - Building XForm...
+PUSHD %~dp0
+"%MSBuildPath%" "XForm.sln" /p:Configuration=Release /p:Platform="x64"
+SET MSBuildError=%ERRORLEVEL%
+POPD
+IF NOT "%MSBuildError%"=="0" GOTO Error
 
 GOTO :EOF
 :Error
