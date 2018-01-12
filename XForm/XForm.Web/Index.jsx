@@ -172,16 +172,18 @@ class Index extends React.Component {
                         this.setState({ userCols: [] }, () => this.queryChanged())
                     }}>Append to Query</span>}
                 </div>
-                {this.state.schemaBody && <table>
-                    <tbody>
-                        {this.state.schemaBody && this.state.schemaBody.map((r, i) => <tr key={i}>
-                            <td><label><input type="checkbox" checked={this.state.userCols.includes(r.name)} onChange={e => {
-                                this.setState({ userCols: [...this.state.userCols].toggle(r.name) }, () => this.queryChanged())
-                            }}/>{r.name}</label></td>
-                            <td>{r.type}</td>
-                        </tr>)}
-                    </tbody>
-                </table>}
+                {this.state.schemaBody && <div className="tableWrapper">
+                    <table>
+                        <tbody>
+                            {this.state.schemaBody && this.state.schemaBody.map((r, i) => <tr key={i}>
+                                <td><label><input type="checkbox" checked={this.state.userCols.includes(r.name)} onChange={e => {
+                                    this.setState({ userCols: [...this.state.userCols].toggle(r.name) }, () => this.queryChanged())
+                                }}/>{r.name}</label></td>
+                                <td>{r.type}</td>
+                            </tr>)}
+                        </tbody>
+                    </table>
+                </div>}
             </div>
             <div id="results" onScroll={e => {
                     const element = e.target

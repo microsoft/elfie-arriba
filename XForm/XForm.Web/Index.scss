@@ -117,10 +117,17 @@ body {
 
 #schema {
     min-width: 150px;
-    overflow: hidden;
+    display: flex;
+    flex-direction: column;
 
     .schemaHeader {
         @include header;
+        flex: 0 0 auto;
+    }
+
+    .tableWrapper {
+        overflow-x: hidden;
+        overflow-y: auto;
     }
 
     table {
