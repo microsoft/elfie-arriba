@@ -102,14 +102,16 @@ body {
         overflow-y: hidden;
         overflow-x: scroll;
         resize: horizontal;
+
+        .monaco-editor .view-overlays .current-line {
+            border: 0; // Override default monaco styling.
+        }
     }
 
     .queryUsage {
         font-family: monospace;
-        border-top: 1px solid $linedark;
-        background-color: hsl(0, 0, 98%);
         color: hsl(0, 0, 50%);
-        padding: 15px 20px;
+        padding: 10px 5px 10px 30px;
         padding-right: 0;
         overflow-x: hidden;
     }

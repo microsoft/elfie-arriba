@@ -53,7 +53,7 @@ class Index extends React.Component {
                     })
                     return xhr(`suggest?q=${encodeURIComponent(textUntilPosition)}`).then(o => {
                         if (o.Usage !== this.state.usage) {
-                            this.setState({ usage: o.Usage })
+                            this.setState({ usage: o.Usage.replace(/'/g, "") })
                         }
 
                         if (!o.Values) return []
@@ -152,8 +152,8 @@ class Index extends React.Component {
                         })
                     }}>{ this.state.saving || "Save" }</span>
                 </div>
-                <div id="queryEditor"></div>
                 <div className="queryUsage">{ this.state.usage || `\u200B` }</div>
+                <div id="queryEditor"></div>
             </div>
             <div id="schema">
                 <div className="schemaHeader">
