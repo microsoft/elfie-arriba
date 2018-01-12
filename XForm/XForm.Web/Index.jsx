@@ -146,9 +146,9 @@ class Index extends React.Component {
                     <span onClick={e => {
                         const name = this.refs.name.value
                         if (!name || !q) return
-                        this.setState({ saving: "Saving..." })
                         xhr(`save?name=${encodeURIComponent(name)}&q=${q}`).then(o => {
-                            this.setState({ saving: "Save" })
+                            this.setState({ saving: "Saved" })
+                            setTimeout(() => this.setState({ saving: "Save" }), 3000)
                         })
                     }}>{ this.state.saving || "Save" }</span>
                 </div>
