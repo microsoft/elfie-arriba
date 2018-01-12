@@ -2,10 +2,10 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Collections.Generic;
 
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Collections.Generic;
 
 namespace XForm.Test.Core
 {
@@ -45,7 +45,7 @@ namespace XForm.Test.Core
 
             // Verify generic object creators work
             object list;
-            
+
             list = Allocator.ConstructGenericOf(typeof(List<>), typeof(int));
             Assert.AreEqual(typeof(List<int>), list.GetType());
             Assert.AreEqual(0, ((List<int>)list).Capacity);

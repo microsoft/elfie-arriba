@@ -188,7 +188,7 @@ namespace XForm
                 writer.Write(query);
             }
 
-            if(this.Sources != null) this.Sources.Add(tableName);
+            if (this.Sources != null) this.Sources.Add(tableName);
         }
     }
 

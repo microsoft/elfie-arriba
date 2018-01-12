@@ -141,9 +141,9 @@ namespace XForm.Query
 
             ParseNextOrThrow(
                 () => currentSource.Columns.TryGetIndexOfColumn(_scanner.Current.Value, out columnIndex)
-                && (requiredType == null || currentSource.Columns[columnIndex].Type == requiredType), 
-                "columnName", 
-                TokenType.ColumnName, 
+                && (requiredType == null || currentSource.Columns[columnIndex].Type == requiredType),
+                "columnName",
+                TokenType.ColumnName,
                 EscapedColumnList(currentSource, requiredType));
 
             return currentSource.Columns[columnIndex].Name;
@@ -188,7 +188,7 @@ namespace XForm.Query
             {
                 object value = String8.Convert(_scanner.Current.Value, new byte[String8.GetLength(_scanner.Current.Value)]);
 
-                if(requiredType != null && requiredType != typeof(String8))
+                if (requiredType != null && requiredType != typeof(String8))
                 {
                     value = TypeConverterFactory.ConvertSingle(value, requiredType);
                 }
@@ -206,7 +206,7 @@ namespace XForm.Query
             }
 
             if (result == null || (requiredType != null && result.ColumnDetails.Type != requiredType))
-            { 
+            {
                 Throw("columnFunctionOrLiteral", EscapedColumnList(source, requiredType).Concat(EscapedFunctionList(requiredType)));
             }
 
@@ -227,9 +227,9 @@ namespace XForm.Query
             // Get the builder for the function
             IFunctionBuilder builder = null;
             ParseNextOrThrow(() => FunctionFactory.TryGetBuilder(_scanner.Current.Value, out builder)
-                && (requiredType == null || builder.ReturnType == null || requiredType == builder.ReturnType), 
-                "functionName", 
-                TokenType.FunctionName, 
+                && (requiredType == null || builder.ReturnType == null || requiredType == builder.ReturnType),
+                "functionName",
+                TokenType.FunctionName,
                 FunctionFactory.SupportedFunctions(requiredType));
 
             _currentlyBuilding.Push(builder);
@@ -247,7 +247,7 @@ namespace XForm.Query
                 _currentlyBuilding.Pop();
 
                 // Error if the final function doesn't have the required return type
-                if(requiredType != null && result.ColumnDetails.Type != requiredType)
+                if (requiredType != null && result.ColumnDetails.Type != requiredType)
                 {
                     Throw("functionName", FunctionFactory.SupportedFunctions(requiredType));
                 }

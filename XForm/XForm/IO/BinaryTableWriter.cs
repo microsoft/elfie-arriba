@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 
@@ -11,7 +12,6 @@ using XForm.Data;
 using XForm.Extensions;
 using XForm.Query;
 using XForm.Types;
-using System.Threading.Tasks;
 
 namespace XForm.IO
 {

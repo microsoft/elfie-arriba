@@ -2,12 +2,12 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 
 using Microsoft.CodeAnalysis.Elfie.Model.Structures;
 using Microsoft.CodeAnalysis.Elfie.Serialization;
-using System.Collections.Generic;
-using System.Collections;
 
 namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
 {

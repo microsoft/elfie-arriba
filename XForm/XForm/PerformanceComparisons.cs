@@ -2,16 +2,16 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
 using Microsoft.CodeAnalysis.Elfie.Serialization;
 
-using XForm.Extensions;
 using XForm.Data;
-using XForm.Verbs;
-using System.Collections.Generic;
+using XForm.Extensions;
 using XForm.Types;
+using XForm.Verbs;
 
 namespace XForm
 {
@@ -250,7 +250,6 @@ namespace XForm
 
             for (int i = 0; i < length; ++i)
             {
-                
                 id[i] = i / countPerID;                  // ID is the same for three rows at a time
                 rank[i] = rankPattern[i % countPerID];   // Rank is [2, 3, 1] repeating (so the middle is the biggest)
                 value[i] = i;                            // Value is the index of the real row

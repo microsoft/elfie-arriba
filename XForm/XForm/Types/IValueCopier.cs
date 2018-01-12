@@ -1,4 +1,7 @@
-﻿namespace XForm.Types
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+namespace XForm.Types
 {
     /// <summary>
     ///  IValueCopier makes copies of values which can't just be copied by assignment.
@@ -13,5 +16,4 @@
     {
         T Copy(T value);
     }
-
 }

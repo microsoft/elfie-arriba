@@ -14,7 +14,7 @@ namespace XForm.Types
         public static Func<DataBatch, DataBatch> GetConverter(Type sourceType, Type targetType, object defaultValue, bool strict)
         {
             Func<DataBatch, DataBatch> converter = TryGetConverter(sourceType, targetType, defaultValue, strict);
-            if(converter == null) throw new ArgumentException($"No converter available from {sourceType.Name} to {targetType.Name}.");
+            if (converter == null) throw new ArgumentException($"No converter available from {sourceType.Name} to {targetType.Name}.");
             return converter;
         }
 
@@ -42,7 +42,7 @@ namespace XForm.Types
             }
 
             // Try again with implicit string to String8 conversion
-            if(sourceType == typeof(string))
+            if (sourceType == typeof(string))
             {
                 converter = TryGetConverter(typeof(String8), targetType, defaultValue, strict);
 

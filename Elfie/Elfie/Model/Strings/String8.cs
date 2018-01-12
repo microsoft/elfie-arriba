@@ -374,7 +374,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             }
 
             int endIndex = Index + Length - 1;
-            for(; endIndex > startIndex; --endIndex)
+            for (; endIndex > startIndex; --endIndex)
             {
                 if (!IsWhiteSpace(Array[endIndex])) break;
             }
@@ -396,7 +396,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         public String8 TrimEnd(byte c)
         {
             int index = Index + Length - 1;
-            for(; index >= Index; --index)
+            for (; index >= Index; --index)
             {
                 if (Array[index] != c) break;
             }
@@ -923,9 +923,9 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
 
             // Convert with time part
             bool success = TryToDateTimeExact(out result, 0, 5, 8, 11, 14, 17);
-            
+
             // Parse partial seconds
-            if(Length > 20)
+            if (Length > 20)
             {
                 uint partialSeconds;
                 if (!this.Substring(20).TryToUInt(out partialSeconds)) return false;

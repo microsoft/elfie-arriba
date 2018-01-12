@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 
@@ -10,9 +11,8 @@ using Elfie.Test;
 
 using Microsoft.CodeAnalysis.Elfie.Extensions;
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Diagnostics;
 using Microsoft.CodeAnalysis.Elfie.Model.Structures;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
 {
@@ -267,7 +267,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
             int totalShift = 0;
 
             String8Set parts = shiftable.Split(UTF8.Semicolon, new PartialArray<int>(5, false));
-            for(int i = 0; i < parts.Count; ++i)
+            for (int i = 0; i < parts.Count; ++i)
             {
                 String8 part = parts[i];
 
@@ -566,7 +566,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
 
             int iterations = 1 * 1000 * 1000;
             Stopwatch w = Stopwatch.StartNew();
-            for(int i = 0; i < iterations; ++i)
+            for (int i = 0; i < iterations; ++i)
             {
                 one8.TryToLong(out value);
                 sum += value;

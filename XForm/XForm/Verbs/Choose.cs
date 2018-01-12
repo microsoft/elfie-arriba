@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+
 using XForm.Data;
 using XForm.Extensions;
 using XForm.Query;
@@ -114,7 +115,7 @@ namespace XForm.Verbs
 
             int totalSoFar = 0;
             int count;
-            while((count = _source.Next(DataBatchEnumeratorExtensions.DefaultBatchSize)) != 0)
+            while ((count = _source.Next(DataBatchEnumeratorExtensions.DefaultBatchSize)) != 0)
             {
                 // Get the rank and key column batches
                 DataBatch rankBatch = _rankColumnGetter();

@@ -7,9 +7,9 @@ using System.Linq;
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
+using XForm;
 using XForm.Data;
 using XForm.Extensions;
-using XForm;
 
 namespace XForm.Test.Query
 {

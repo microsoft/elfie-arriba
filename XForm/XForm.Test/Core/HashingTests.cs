@@ -4,8 +4,8 @@
 using System;
 using System.Collections.Generic;
 
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace XForm.Test.Core
 {

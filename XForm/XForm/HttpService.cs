@@ -142,7 +142,7 @@ namespace XForm
                 WorkflowContext context = _workflowContext;
 
                 // Build for another moment in time if requested
-                if(asOfDate != _workflowContext.RequestedAsOfDateTime)
+                if (asOfDate != _workflowContext.RequestedAsOfDateTime)
                 {
                     context = new WorkflowContext(_workflowContext) { RequestedAsOfDateTime = asOfDate };
                 }

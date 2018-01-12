@@ -183,7 +183,7 @@ namespace XForm.Query
         private void ParseWrappedValue(char escapeChar)
         {
             StringBuilder value = new StringBuilder();
-            
+
             // Consume the opening character
             CurrentIndex++;
 
@@ -219,7 +219,7 @@ namespace XForm.Query
             // If no terminator, treat the value as going to the end of the line. This is so partially typed queries run.
             value.Append(Text, CurrentIndex, end - CurrentIndex);
             CurrentIndex = end;
-            this.Current.Value = value.ToString();            
+            this.Current.Value = value.ToString();
         }
 
         private void ParseUnwrappedValue()

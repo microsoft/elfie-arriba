@@ -17,7 +17,7 @@ namespace XForm.Test.Extensions
     {
         [TestMethod]
         public void ParseTimeSpanFriendly()
-        { 
+        {
             //Assert.AreEqual(null, TypeConverterFactory.ConvertSingle((string)null, typeof(TimeSpan)));
             //Assert.AreEqual(null, TypeConverterFactory.ConvertSingle("", typeof(TimeSpan)));
             Assert.AreEqual(TimeSpan.FromSeconds(5.5), TypeConverterFactory.ConvertSingle("5.5s", typeof(TimeSpan)));

@@ -26,7 +26,7 @@ namespace XForm
 
         public Dictionary5(IEqualityComparer<T> comparer, int initialCapacity = -1)
         {
-            this._comparer = comparer;
+            _comparer = comparer;
             Reset(HashCore.SizeForCapacity(initialCapacity));
         }
 
@@ -39,22 +39,22 @@ namespace XForm
         protected override void Reset(int size)
         {
             base.Reset(size);
-            this._keys = new T[size];
-            this._values = new U[size];
+            _keys = new T[size];
+            _values = new U[size];
         }
 
         protected override bool EqualsCurrent(uint index)
         {
-            return _comparer.Equals(this._keys[index], _currentKey);
+            return _comparer.Equals(_keys[index], _currentKey);
         }
 
         protected override void SwapWithCurrent(uint index, SwapType swapType)
         {
-            T swapKey = this._keys[index];
-            U swapValue = this._values[index];
+            T swapKey = _keys[index];
+            U swapValue = _values[index];
 
-            this._keys[index] = _currentKey;
-            this._values[index] = _currentValue;
+            _keys[index] = _currentKey;
+            _values[index] = _currentValue;
 
             _currentKey = swapKey;
             _currentValue = swapValue;
@@ -63,12 +63,12 @@ namespace XForm
         protected override void Expand()
         {
             // Save the current Keys/Values/Metadata
-            T[] oldKeys = this._keys;
-            U[] oldValues = this._values;
+            T[] oldKeys = _keys;
+            U[] oldValues = _values;
             byte[] oldMetaData = this.Metadata;
 
             // Expand the table
-            Reset(HashCore.ResizeToSize(this._keys.Length));
+            Reset(HashCore.ResizeToSize(_keys.Length));
 
             // Add items to the enlarged table
             for (int i = 0; i < oldMetaData.Length; ++i)
@@ -83,8 +83,8 @@ namespace XForm
         public override void Clear()
         {
             base.Clear();
-            Array.Clear(this._keys, 0, this._keys.Length);
-            Array.Clear(this._values, 0, this._values.Length);
+            Array.Clear(_keys, 0, _keys.Length);
+            Array.Clear(_values, 0, _values.Length);
         }
         #endregion
 
@@ -96,7 +96,7 @@ namespace XForm
                 _currentKey = key;
                 int bucket = this.IndexOf(HashCurrent());
                 if (bucket == -1) throw new KeyNotFoundException();
-                return this._values[bucket];
+                return _values[bucket];
             }
 
             set
@@ -110,14 +110,14 @@ namespace XForm
             _currentKey = key;
             int bucket = this.IndexOf(HashCurrent());
 
-            if(bucket == -1)
+            if (bucket == -1)
             {
                 value = default(U);
                 return false;
             }
             else
             {
-                value = this._values[bucket];
+                value = _values[bucket];
                 return true;
             }
         }
@@ -165,8 +165,8 @@ namespace XForm
             if (index == -1) return false;
 
             base.Remove(index);
-            this._keys[index] = default(T);
-            this._values[index] = default(U);
+            _keys[index] = default(T);
+            _values[index] = default(U);
             return true;
         }
 
@@ -174,11 +174,11 @@ namespace XForm
         {
             get
             {
-                for (int index = 0; index < this._keys.Length; ++index)
+                for (int index = 0; index < _keys.Length; ++index)
                 {
                     if (this.Metadata[index] > 0)
                     {
-                        yield return this._keys[index];
+                        yield return _keys[index];
                     }
                 }
             }

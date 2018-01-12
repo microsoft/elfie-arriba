@@ -1,7 +1,12 @@
-﻿using Microsoft.CodeAnalysis.Elfie.Model.Strings;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Linq;
+
+using Microsoft.CodeAnalysis.Elfie.Model.Strings;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+
 using XForm.Data;
 using XForm.Extensions;
 using XForm.Verbs;
@@ -69,7 +74,7 @@ namespace XForm.Test.Query
             int[] rank = new int[length];
             int[] value = new int[length];
 
-            for(int i = 0; i < length; ++i)
+            for (int i = 0; i < length; ++i)
             {
                 // ID is the same for three rows at a time
                 id[i] = i / 3;
@@ -86,7 +91,7 @@ namespace XForm.Test.Query
             int[] expectedRanks = new int[distinctCount];
             int[] expectedValues = new int[distinctCount];
 
-            for(int i = 0; i < distinctCount; ++i)
+            for (int i = 0; i < distinctCount; ++i)
             {
                 expectedIds[i] = i;
                 expectedRanks[i] = 3;

@@ -1,9 +1,14 @@
-﻿using Microsoft.CodeAnalysis.Elfie.Model.Strings;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
+
+using Microsoft.CodeAnalysis.Elfie.Model.Strings;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+
 using XForm.Data;
 using XForm.Extensions;
 
@@ -93,7 +98,7 @@ namespace XForm.Test
                 }
 
                 // If the table spans weren't equal, show the rows and error message
-                if(!String.IsNullOrEmpty(errorMessage))
+                if (!String.IsNullOrEmpty(errorMessage))
                 {
                     Trace.WriteLine("Expected:");
                     TraceWrite(expectedBatches, expected.Columns, expectedNextIndex + firstMismatchedRow, expectedCurrentCount - (expectedNextIndex + firstMismatchedRow));
@@ -114,8 +119,8 @@ namespace XForm.Test
         {
             string errorMessage = "";
             int firstMismatchedRow = FirstMismatchedRow(expected, actual, rowCount, columnName, out errorMessage);
-            
-            if(!String.IsNullOrEmpty(errorMessage))
+
+            if (!String.IsNullOrEmpty(errorMessage))
             {
                 Trace.WriteLine("Expected:");
                 TraceWrite(expected, columnName, firstMismatchedRow, expected.Count - firstMismatchedRow);
@@ -150,7 +155,7 @@ namespace XForm.Test
 
                 if (!isNull)
                 {
-                    if(!AssertAreEqual(expected.Array.GetValue(expectedIndex), actual.Array.GetValue(actualIndex), $"{columnName}[{i:n0}].Value", ref errorMessage)) return i;
+                    if (!AssertAreEqual(expected.Array.GetValue(expectedIndex), actual.Array.GetValue(actualIndex), $"{columnName}[{i:n0}].Value", ref errorMessage)) return i;
                 }
 
                 areAnyNull |= isNull;
@@ -193,7 +198,7 @@ namespace XForm.Test
             Func<DataBatch>[] columnGetters = new Func<DataBatch>[table.Columns.Count];
             DataBatch[] columns = new DataBatch[table.Columns.Count];
 
-            for(int i = 0; i < columns.Length; ++i)
+            for (int i = 0; i < columns.Length; ++i)
             {
                 columnGetters[i] = table.ColumnGetter(i);
             }

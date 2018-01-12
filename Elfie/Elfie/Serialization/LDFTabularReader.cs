@@ -1,9 +1,13 @@
-﻿using Microsoft.CodeAnalysis.Elfie.Model.Strings;
-using Microsoft.CodeAnalysis.Elfie.Model.Structures;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Security.Principal;
+
+using Microsoft.CodeAnalysis.Elfie.Model.Strings;
+using Microsoft.CodeAnalysis.Elfie.Model.Structures;
 
 namespace Microsoft.CodeAnalysis.Elfie.Serialization
 {
@@ -20,7 +24,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
     /// </summary>
     public class LdfTabularReader : ITabularReader
     {
-        private static String8 MultiValueDelimiter = String8.Convert(";", new byte[1]);
+        private static String8 s_multiValueDelimiter = String8.Convert(";", new byte[1]);
 
         private BufferedRowReader _reader;
 
@@ -73,7 +77,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             BufferedRowReader reader = new BufferedRowReader(stream, (block, array) => block.Split(UTF8.Newline, array));
 
             // Scan the lines for column names (something before a colon)
-            while(true)
+            while (true)
             {
                 String8 line = reader.NextRow();
                 if (line.IsEmpty()) break;
@@ -93,7 +97,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             // Skip record separator, continuation lines, comments, and grouping lines
             byte first = line[0];
             if (first == UTF8.CR || first == UTF8.Space || first == UTF8.Pound || first == UTF8.Dash) return;
- 
+
             // Find the column name part of the line
             String8 columnName = line.BeforeFirst(UTF8.Colon);
 
@@ -169,7 +173,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             String8 currentPropertyValue = String8.Empty;
             bool currentIsBase64 = false;
 
-            for(; _nextLineIndex < _blockLines.Count; ++_nextLineIndex)
+            for (; _nextLineIndex < _blockLines.Count; ++_nextLineIndex)
             {
                 String8 line = _blockLines[_nextLineIndex];
 
@@ -201,7 +205,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
 
                     // Determine if the value is encoded
                     currentIsBase64 = (line[currentPropertyName.Length + 1] == UTF8.Colon);
-                    if (currentIsBase64) currentPropertyValue = currentPropertyValue.Substring(1);                    
+                    if (currentIsBase64) currentPropertyValue = currentPropertyValue.Substring(1);
                 }
             }
 
@@ -219,7 +223,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         {
             if (currentPropertyName.IsEmpty()) return;
 
-            if(isEncoded)
+            if (isEncoded)
             {
                 currentPropertyValue = DecodeBase64(currentPropertyValue);
             }
@@ -239,7 +243,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
                 String8 previousValue = _currentRowValues[columnIndex].ToString8();
                 if (!previousValue.IsEmpty())
                 {
-                    currentPropertyValue = _currentRowBlock.Concatenate(previousValue, MultiValueDelimiter, currentPropertyValue);
+                    currentPropertyValue = _currentRowBlock.Concatenate(previousValue, s_multiValueDelimiter, currentPropertyValue);
                 }
 
                 _currentRowValues[columnIndex].SetValue(currentPropertyValue);
