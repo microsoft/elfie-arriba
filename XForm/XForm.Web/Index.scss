@@ -18,6 +18,21 @@ $bluehot: hsl(210, 90%, 90%);
     &:active { background-color: $bluehot; }
 }
 
+@mixin header {
+    height: 50px;
+    border-bottom: 1px solid $linedark;
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+
+    & > :not(input) {
+        @include buttonBase;
+        &.button { @include buttonActive; }
+    }
+
+    & > a { color: inherit; }
+}
+
 html, #app {
     height: 100%;
 }
@@ -60,21 +75,19 @@ body {
     }
 }
 
-.queryWrapper {
+.query {
     display: flex;
     flex-direction: column;
 
     .queryHeader {
-        border-bottom: 1px solid $linedark;
-        display: flex;
-        align-items: center;
-        padding-right: 12px;
+        @include header;
+        padding-left: 0; // Override 'header'
 
         input {
             flex: 1 1 auto;
             font: inherit;
             border: 0;
-            padding: 20px;
+            padding: 18px;
         }
 
         span {
@@ -83,22 +96,70 @@ body {
         }
     }
 
-    #query {
+    #queryEditor {
         flex: 1 1 auto;
         width: 500px;
         overflow-y: hidden;
         overflow-x: scroll;
         resize: horizontal;
+
+        .monaco-editor .view-overlays .current-line {
+            border: 0; // Override default monaco styling.
+        }
     }
 
     .queryUsage {
         font-family: monospace;
-        border-top: 1px solid $linedark;
-        background-color: hsl(0, 0, 98%);
         color: hsl(0, 0, 50%);
-        padding: 15px 20px;
+        padding: 10px 5px 10px 30px;
         padding-right: 0;
         overflow-x: hidden;
+    }
+}
+
+#schema {
+    min-width: 150px;
+    display: flex;
+    flex-direction: column;
+
+    .schemaHeader {
+        @include header;
+        flex: 0 0 auto;
+    }
+
+    .tableWrapper {
+        overflow-x: hidden;
+        overflow-y: auto;
+    }
+
+    table {
+        margin-top: 20px;
+        border-collapse: collapse;
+        td {
+            white-space: nowrap;
+            padding: 0;
+
+            label {
+                padding: 5px 15px 5px 20px;
+                display: flex;
+                cursor: pointer;
+                user-select: none;
+            }
+
+            input {
+                margin: 0;
+                margin-right: 8px;
+            }
+
+            &:last-child {
+                color: $linedark;
+                padding-right: 20px;
+            }
+        }
+        tr:hover { background: $blue; }
+        :nth-child(5n) td {
+            padding-bottom: 20px;
+        }
     }
 }
 
@@ -110,15 +171,11 @@ body {
     overflow-y: scroll;
 
     .resultsHeader {
+        @include header;
         flex-shrink: 0;
-        padding: 20px;
-        border-bottom: 1px solid $linedark;
-        display: flex;
         position: relative; // For .loading
 
         .flexFill { flex: 1 }
-
-        a { margin-left: 10px; }
 
         .loading {
             display: none;
@@ -165,50 +222,3 @@ body {
     }
 }
 
-#schema {
-    min-width: 150px;
-    overflow: hidden;
-
-    .schemaHeader {
-        padding: 12px 10px;
-        border-bottom: 1px solid $linedark;
-        display: flex;
-
-        & > * {
-            @include buttonBase;
-            &.schemaButton {
-                @include buttonActive;
-            }
-        }
-    }
-
-    table {
-        margin-top: 20px;
-        border-collapse: collapse;
-        td {
-            white-space: nowrap;
-            padding: 0;
-
-            label {
-                padding: 5px 15px 5px 20px;
-                display: flex;
-                cursor: pointer;
-                user-select: none;
-            }
-
-            input {
-                margin: 0;
-                margin-right: 8px;
-            }
-
-            &:last-child {
-                color: $linedark;
-                padding-right: 20px;
-            }
-        }
-        tr:hover { background: $blue; }
-        :nth-child(5n) td {
-            padding-bottom: 20px;
-        }
-    }
-}
