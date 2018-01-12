@@ -13,7 +13,7 @@ namespace XForm.Verbs
     internal class WhereCommandBuilder : IVerbBuilder
     {
         public string Verb => "where";
-        public string Usage => "'where' [columnFunctionOrLiteral] [operator] [columnFunctionOrLiteral]";
+        public string Usage => "'where' [Expression]";
 
         public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)
         {

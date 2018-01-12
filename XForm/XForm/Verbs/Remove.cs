@@ -14,7 +14,7 @@ namespace XForm.Verbs
     internal class RemoveCommandBuilder : IVerbBuilder
     {
         public string Verb => "remove";
-        public string Usage => "'remove' [ColumnName], [ColumnName], ...";
+        public string Usage => "'remove' [ColumnName], ...";
 
         public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)
         {

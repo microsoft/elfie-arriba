@@ -14,7 +14,7 @@ namespace XForm.Verbs
     internal class ChooseBuilder : IVerbBuilder
     {
         public string Verb => "choose";
-        public string Usage => "'choose' [Max|Min] [RankColumnName] [IdentityColumnNames]";
+        public string Usage => "'choose' [Max|Min] [RankColumn] [IdentityColumns]";
 
         public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)
         {

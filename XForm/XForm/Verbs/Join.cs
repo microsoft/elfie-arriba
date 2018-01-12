@@ -15,7 +15,7 @@ namespace XForm.Verbs
     internal class JoinBuilder : IVerbBuilder
     {
         public string Verb => "join";
-        public string Usage => "'join' [FromColumnName] [ToBinarySource] [ToColumn] [JoinedInColumnPrefix]";
+        public string Usage => "'join' [FromColumnName] [ToTable] [ToColumn] [ColumnPrefixForJoinedColumns]";
 
         public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)
         {

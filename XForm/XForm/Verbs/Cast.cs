@@ -13,7 +13,7 @@ namespace XForm.Verbs
     internal class CastCommandBuilder : IVerbBuilder
     {
         public string Verb => "cast";
-        public string Usage => "'cast' [columnName] [targetType] [default?] [strict?]";
+        public string Usage => "'cast' [ColumnName] [ToType] [Default?] [Strict?]";
 
         public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)
         {
