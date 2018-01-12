@@ -3,11 +3,11 @@
 
 using System.Linq;
 
+using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using XForm.Query;
 using XForm.Types;
-using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 
 namespace XForm.Test.Query
 {
@@ -102,7 +102,7 @@ namespace XForm.Test.Query
             Assert.AreEqual(false, result.IsValid);
             Assert.AreEqual("UsageError.WebRequest.MissingColumn", result.Context.TableName);
             Assert.AreEqual(2, result.Context.QueryLineNumber);
-            Assert.AreEqual("'where' [columnFunctionOrLiteral] [operator] [columnFunctionOrLiteral]", result.Context.Usage);
+            Assert.AreEqual("'where' [Expression]", result.Context.Usage);
             Assert.AreEqual("BadColumnName", result.Context.InvalidValue);
             Assert.AreEqual("columnName", result.Context.InvalidValueCategory);
             Assert.AreEqual(s_columnNames, string.Join("|", result.Context.ValidValues));
