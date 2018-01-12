@@ -61,7 +61,8 @@ namespace XForm.IO
         {
             ColumnDetails column = Columns[columnIndex];
             Func<DataBatch>[] gettersPerSource = new Func<DataBatch>[_sources.Length];
-            Array nullArray = Allocator.AllocateArray(column.Type, 1);
+            Array nullArray = null;
+            Allocator.AllocateToSize(ref nullArray, 1, column.Type);
 
             // Get and cache the corresponding column getter from each source (null if the source doesn't have that column)
             for (int i = 0; i < _sources.Length; ++i)

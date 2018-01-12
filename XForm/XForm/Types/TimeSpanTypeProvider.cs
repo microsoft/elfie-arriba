@@ -5,7 +5,6 @@ using System;
 
 using XForm.Data;
 using XForm.IO.StreamProvider;
-using XForm.Query;
 using XForm.Types.Comparers;
 
 namespace XForm.Types
@@ -17,12 +16,12 @@ namespace XForm.Types
 
         public IColumnReader BinaryReader(IStreamProvider streamProvider, string columnPath)
         {
-            return new ConvertingReader(TypeProviderFactory.Get(typeof(long)).BinaryReader(streamProvider, columnPath), TryGetConverter(typeof(long), typeof(TimeSpan), null, true));
+            return new ConvertingReader(TypeProviderFactory.Get(typeof(long)).BinaryReader(streamProvider, columnPath), TypeConverterFactory.GetConverter(typeof(long), typeof(TimeSpan)));
         }
 
         public IColumnWriter BinaryWriter(IStreamProvider streamProvider, string columnPath)
         {
-            return new ConvertingWriter(TypeProviderFactory.Get(typeof(long)).BinaryWriter(streamProvider, columnPath), TryGetConverter(typeof(TimeSpan), typeof(long), null, true));
+            return new ConvertingWriter(TypeProviderFactory.Get(typeof(long)).BinaryWriter(streamProvider, columnPath), TypeConverterFactory.GetConverter(typeof(TimeSpan), typeof(long)));
         }
 
         public IDataBatchComparer TryGetComparer()
@@ -31,19 +30,19 @@ namespace XForm.Types
             return new TimeSpanComparer();
         }
 
-        public Func<DataBatch, DataBatch> TryGetConverter(Type sourceType, Type targetType, object defaultValue, bool strict)
+        public NegatedTryConvert TryGetNegatedTryConvert(Type sourceType, Type targetType, object defaultValue)
         {
             if (sourceType == typeof(TimeSpan) && targetType == typeof(long))
             {
-                return new TimeSpanConverter().TimeSpanToLong;
+                return new TimeSpanConverter(null).TimeSpanToLong;
             }
             else if (sourceType == typeof(long) && targetType == typeof(TimeSpan))
             {
-                return new TimeSpanConverter().LongToTimeSpan;
+                return new TimeSpanConverter(null).LongToTimeSpan;
             }
             else if (sourceType == typeof(string) && targetType == typeof(TimeSpan))
             {
-                return new TimeSpanConverter().StringToTimeSpan;
+                return new TimeSpanConverter(defaultValue).StringToTimeSpan;
             }
 
             return null;
@@ -61,72 +60,66 @@ namespace XForm.Types
     /// </summary>
     public class TimeSpanConverter
     {
+        private TimeSpan _defaultValue;
+
         private TimeSpan[] _timeSpanArray;
         private long[] _longArray;
-        private bool[] _isNullArray;
+        private bool[] _couldNotConvertArray;
 
-        public DataBatch TimeSpanToLong(DataBatch batch)
+        public TimeSpanConverter(object defaultValue)
+        {
+            _defaultValue = (TimeSpan)(TypeConverterFactory.ConvertSingle(defaultValue, typeof(TimeSpan)) ?? default(TimeSpan));
+        }
+
+        public bool[] TimeSpanToLong(DataBatch batch, out Array result)
         {
             Allocator.AllocateToSize(ref _longArray, batch.Count);
-            Allocator.AllocateToSize(ref _isNullArray, batch.Count);
 
-            bool areAnyNull = false;
             TimeSpan[] sourceArray = (TimeSpan[])batch.Array;
             for (int i = 0; i < batch.Count; ++i)
             {
-                int index = batch.Index(i);
-                _longArray[i] = sourceArray[index].Ticks;
-                _isNullArray[i] = (batch.IsNull != null && batch.IsNull[index]);
-                areAnyNull |= _isNullArray[i];
+                _longArray[i] = sourceArray[batch.Index(i)].Ticks;
             }
 
-            return DataBatch.All(_longArray, batch.Count, (areAnyNull ? _isNullArray : null));
+            result = _longArray;
+            return null;
         }
 
-        public DataBatch LongToTimeSpan(DataBatch batch)
+        public bool[] LongToTimeSpan(DataBatch batch, out Array result)
         {
             Allocator.AllocateToSize(ref _timeSpanArray, batch.Count);
-            Allocator.AllocateToSize(ref _isNullArray, batch.Count);
 
-            bool areAnyNull = false;
             long[] sourceArray = (long[])batch.Array;
             for (int i = 0; i < batch.Count; ++i)
             {
-                int index = batch.Index(i);
-                _timeSpanArray[i] = TimeSpan.FromTicks(sourceArray[index]);
-                _isNullArray[i] = (batch.IsNull != null && batch.IsNull[index]);
-                areAnyNull |= _isNullArray[i];
+                _timeSpanArray[i] = TimeSpan.FromTicks(sourceArray[batch.Index(i)]);
             }
 
-            return DataBatch.All(_timeSpanArray, batch.Count, (areAnyNull ? _isNullArray : null));
+            result = _timeSpanArray;
+            return null;
         }
 
-        public DataBatch StringToTimeSpan(DataBatch batch)
+        public bool[] StringToTimeSpan(DataBatch batch, out Array result)
         {
             Allocator.AllocateToSize(ref _timeSpanArray, batch.Count);
-            Allocator.AllocateToSize(ref _isNullArray, batch.Count);
+            Allocator.AllocateToSize(ref _couldNotConvertArray, batch.Count);
 
-            bool areAnyNull = false;
+            bool anyCouldNotConvert = false;
             string[] sourceArray = (string[])batch.Array;
             for (int i = 0; i < batch.Count; ++i)
             {
-                int index = batch.Index(i);
-                bool isNull = (batch.IsNull != null && batch.IsNull[index]);
-                if (isNull)
-                {
-                    _timeSpanArray[i] = TimeSpan.Zero;
-                }
-                else
-                {
-                    isNull = !TryParseTimeSpanFriendly(sourceArray[index], out _timeSpanArray[i]);
-                    if (isNull) isNull = !TimeSpan.TryParse(sourceArray[index], out _timeSpanArray[i]);
-                }
+                string value = sourceArray[batch.Index(i)];
 
-                _isNullArray[i] = (batch.IsNull != null && batch.IsNull[index]);
-                areAnyNull |= _isNullArray[i];
+                bool couldNotConvert = !TryParseTimeSpanFriendly(value, out _timeSpanArray[i]);
+                if (couldNotConvert) couldNotConvert = String.IsNullOrEmpty(value) || !TimeSpan.TryParse(value, out _timeSpanArray[i]);
+                if (couldNotConvert) _timeSpanArray[i] = _defaultValue;
+
+                _couldNotConvertArray[i] = couldNotConvert;
+                anyCouldNotConvert |= couldNotConvert;
             }
 
-            return DataBatch.All(_timeSpanArray, batch.Count, (areAnyNull ? _isNullArray : null));
+            result = _timeSpanArray;
+            return (anyCouldNotConvert ? _couldNotConvertArray : null);
         }
 
         /// <summary>

@@ -76,7 +76,7 @@ namespace XForm.IO
                 // If the column type doesn't have a provider or writer, convert to String8 and write that
                 if (columnTypeProvider == null)
                 {
-                    Func<DataBatch, DataBatch> converter = TypeConverterFactory.GetConverter(column.Type, typeof(String8), null, false);
+                    Func<DataBatch, DataBatch> converter = TypeConverterFactory.GetConverter(column.Type, typeof(String8));
                     outputTypeGetter = () => converter(directGetter());
                     column = column.ChangeType(typeof(String8));
                 }
@@ -106,7 +106,7 @@ namespace XForm.IO
                 // If the column type doesn't have a provider or writer, convert to String8 and write that
                 if (writer == null)
                 {
-                    Func<DataBatch, DataBatch> converter = TypeConverterFactory.GetConverter(column.Type, typeof(String8), null, false);
+                    Func<DataBatch, DataBatch> converter = TypeConverterFactory.GetConverter(column.Type, typeof(String8));
                     writer = TypeProviderFactory.TryGet(typeof(String8)).BinaryWriter(_workflowContext.StreamProvider, columnPath);
                     column = column.ChangeType(typeof(String8));
                 }

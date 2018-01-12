@@ -266,7 +266,8 @@ namespace XForm.Test
         // Return an IsSingleElement array with just the first value of the batch, but the same count
         public static DataBatch First(DataBatch values)
         {
-            Array modifiedArray = Allocator.AllocateArray(values.Array.GetType().GetElementType(), 1);
+            Array modifiedArray = null;
+            Allocator.AllocateToSize(ref modifiedArray, 1, values.Array.GetType().GetElementType());
             modifiedArray.SetValue(values.Array.GetValue(values.Index(0)), 0);
 
             return DataBatch.Single(modifiedArray, values.Count);
@@ -275,7 +276,8 @@ namespace XForm.Test
         // Return a DataBatch with two empty array elements before and after the valid portion and indices pointing to the valid portion
         public static DataBatch Pad(DataBatch values)
         {
-            Array modifiedArray = Allocator.AllocateArray(values.Array.GetType().GetElementType(), values.Array.Length + 4);
+            Array modifiedArray = null;
+            Allocator.AllocateToSize(ref modifiedArray, values.Array.Length + 4, values.Array.GetType().GetElementType());
             int[] indices = new int[modifiedArray.Length];
 
             // Copy values shifted over two (so, two default values at the beginning and two at the end)
@@ -293,7 +295,8 @@ namespace XForm.Test
         // Return a DataBatch with nulls inserted for every other value
         public static DataBatch Nulls(DataBatch values)
         {
-            Array modifiedArray = Allocator.AllocateArray(values.Array.GetType().GetElementType(), values.Array.Length * 2);
+            Array modifiedArray = null;
+            Allocator.AllocateToSize(ref modifiedArray, values.Array.Length * 2, values.Array.GetType().GetElementType());
             bool[] isNull = new bool[modifiedArray.Length];
 
             // Every other value is null

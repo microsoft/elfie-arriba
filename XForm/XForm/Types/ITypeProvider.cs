@@ -28,7 +28,7 @@ namespace XForm.Types
         IColumnReader BinaryReader(IStreamProvider streamProvider, string columnPath);
         IColumnWriter BinaryWriter(IStreamProvider streamProvider, string columnPath);
 
-        Func<DataBatch, DataBatch> TryGetConverter(Type sourceType, Type targetType, object defaultValue, bool strict);
+        NegatedTryConvert TryGetNegatedTryConvert(Type sourceType, Type targetType, object defaultValue);
 
         IDataBatchComparer TryGetComparer();
 
@@ -42,6 +42,11 @@ namespace XForm.Types
             IDataBatchComparer comparer = typeProvider.TryGetComparer();
             if (comparer == null) return null;
             return comparer.TryBuild(op);
+        }
+
+        public static Func<DataBatch, DataBatch> TryGetConverter(Type sourceType, Type targetType, ValueKinds errorOnKinds, object defaultValue, ValueKinds changeToDefaultKinds)
+        {
+            return TypeConverterFactory.TryGetConverter(sourceType, targetType, errorOnKinds, defaultValue, changeToDefaultKinds);
         }
     }
 }

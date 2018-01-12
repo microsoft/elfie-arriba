@@ -35,11 +35,13 @@ namespace XForm.Test.Core
             Assert.ReferenceEquals(buffer, previous);
 
             // Verify generic allocator works
-            Array generic = Allocator.AllocateArray(typeof(int), 10);
+            Array generic = null;
+            Allocator.AllocateToSize(ref generic, 10, typeof(int));
             Assert.IsNotNull(generic as int[]);
             Assert.AreEqual(10, generic.Length);
 
-            Array string8 = Allocator.AllocateArray(typeof(String8), 1);
+            Array string8 = null;
+            Allocator.AllocateToSize(ref string8, 1, typeof(String8));
             Assert.IsNotNull(string8 as String8[]);
             Assert.AreEqual(1, string8.Length);
 

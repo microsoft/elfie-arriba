@@ -25,7 +25,7 @@ namespace XForm.Test.Query
             IDataBatchEnumerator source = XqlParser.Parse(@"
                 read WebRequest
                 cast [ServerPort], Int32
-                cast [ResponseBytes], Int32, 0, false", null, context);
+                cast [ResponseBytes], Int32, None, 0, InvalidOrNull", null, context);
 
             // Single Term
             Assert.AreEqual("[ServerPort] = 80", ParseExpression("[ServerPort] = 80", source, context).ToString());
@@ -95,7 +95,7 @@ namespace XForm.Test.Query
                 read WebRequest
                 cache all
                 cast [ServerPort], Int32, 
-                cast [ResponseBytes], Int32, 0, false
+                cast [ResponseBytes], Int32, None, 0, InvalidOrNull
                 ", null, context);
 
             // Results from WebRequest.20171202.r5.n1000, counts validated against Excel

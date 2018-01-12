@@ -8,7 +8,6 @@ using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 
 using XForm.Data;
 using XForm.IO.StreamProvider;
-using XForm.Query;
 using XForm.Types.Comparers;
 
 namespace XForm.Types
@@ -34,67 +33,66 @@ namespace XForm.Types
             return new String8Comparer();
         }
 
-        public Func<DataBatch, DataBatch> TryGetConverter(Type sourceType, Type targetType, object defaultValue, bool strict)
+        public IValueCopier TryGetCopier()
+        {
+            return new String8Copier();
+        }
+
+        public NegatedTryConvert TryGetNegatedTryConvert(Type sourceType, Type targetType, object defaultValue)
         {
             // Build a converter for the set of types
             if (targetType == typeof(String8))
             {
-                ToString8Converter converter = new ToString8Converter();
-                if (sourceType == typeof(string)) return converter.StringToString8;
-                if (sourceType == typeof(int)) return (batch) => converter.Convert<int>(batch, (value, buffer, index) => String8.FromInteger(value, buffer, index), 12);
-                if (sourceType == typeof(DateTime)) return (batch) => converter.Convert<DateTime>(batch, String8.FromDateTime, 20);
-                if (sourceType == typeof(bool)) return (batch) => converter.Convert<bool>(batch, (value, buffer, index) => String8.FromBoolean(value), 0);
+                if (sourceType == typeof(string)) return new StringToString8Converter(defaultValue).StringToString8;
+                if (sourceType == typeof(int)) return new ToString8Converter<int>(defaultValue, 12, (value, buffer, index) => String8.FromInteger(value, buffer, index)).Convert;
+                if (sourceType == typeof(DateTime)) return new ToString8Converter<DateTime>(defaultValue, 20, String8.FromDateTime).Convert;
+                if (sourceType == typeof(bool)) return new ToString8Converter<bool>(defaultValue, 0, (value, buffer, index) => String8.FromBoolean(value)).Convert;
             }
             else if (sourceType == typeof(String8))
             {
                 if (targetType == typeof(int))
                 {
-                    return new FromString8Converter<int>((String8 value, out int result) => value.TryToInteger(out result), defaultValue, strict).Convert;
+                    return new FromString8Converter<int>(defaultValue, (String8 value, out int result) => value.TryToInteger(out result)).Convert;
                 }
                 else if (targetType == typeof(uint))
                 {
-                    return new FromString8Converter<uint>((String8 value, out uint result) => value.TryToUInt(out result), defaultValue, strict).Convert;
+                    return new FromString8Converter<uint>(defaultValue, (String8 value, out uint result) => value.TryToUInt(out result)).Convert;
                 }
                 else if (targetType == typeof(DateTime))
                 {
-                    return new FromString8Converter<DateTime>((String8 value, out DateTime result) => value.TryToDateTime(out result), defaultValue, strict).Convert;
+                    return new FromString8Converter<DateTime>(defaultValue, (String8 value, out DateTime result) => value.TryToDateTime(out result)).Convert;
                 }
                 else if (targetType == typeof(bool))
                 {
-                    return new FromString8Converter<bool>((String8 value, out bool result) => value.TryToBoolean(out result), defaultValue, strict).Convert;
+                    return new FromString8Converter<bool>(defaultValue, (String8 value, out bool result) => value.TryToBoolean(out result)).Convert;
                 }
                 else if (targetType == typeof(long))
                 {
-                    return new FromString8Converter<long>((String8 value, out long result) => value.TryToLong(out result), defaultValue, strict).Convert;
+                    return new FromString8Converter<long>(defaultValue, (String8 value, out long result) => value.TryToLong(out result)).Convert;
                 }
                 else if (targetType == typeof(ulong))
                 {
-                    return new FromString8Converter<ulong>((String8 value, out ulong result) => value.TryToULong(out result), defaultValue, strict).Convert;
+                    return new FromString8Converter<ulong>(defaultValue, (String8 value, out ulong result) => value.TryToULong(out result)).Convert;
                 }
                 else if (targetType == typeof(ushort))
                 {
-                    return new FromString8Converter<ushort>((String8 value, out ushort result) => value.TryToUShort(out result), defaultValue, strict).Convert;
+                    return new FromString8Converter<ushort>(defaultValue, (String8 value, out ushort result) => value.TryToUShort(out result)).Convert;
                 }
                 else if (targetType == typeof(short))
                 {
-                    return new FromString8Converter<short>((String8 value, out short result) => value.TryToShort(out result), defaultValue, strict).Convert;
+                    return new FromString8Converter<short>(defaultValue, (String8 value, out short result) => value.TryToShort(out result)).Convert;
                 }
                 else if (targetType == typeof(byte))
                 {
-                    return new FromString8Converter<byte>((String8 value, out byte result) => value.TryToByte(out result), defaultValue, strict).Convert;
+                    return new FromString8Converter<byte>(defaultValue, (String8 value, out byte result) => value.TryToByte(out result)).Convert;
                 }
                 else if (targetType == typeof(sbyte))
                 {
-                    return new FromString8Converter<sbyte>((String8 value, out sbyte result) => value.TryToSByte(out result), defaultValue, strict).Convert;
+                    return new FromString8Converter<sbyte>(defaultValue, (String8 value, out sbyte result) => value.TryToSByte(out result)).Convert;
                 }
             }
 
             return null;
-        }
-
-        public IValueCopier TryGetCopier()
-        {
-            return new String8Copier();
         }
     }
 
@@ -238,20 +236,40 @@ namespace XForm.Types
         }
     }
 
-    internal class ToString8Converter
+    internal class ToString8Converter<T>
     {
-        private bool[] _nullArray;
-        private String8[] _stringArray;
+        private String8 _defaultValue;
+        private Func<T, byte[], int, String8> _converter;
+        private int _bytesPerItem;
+
         private byte[] _buffer;
-        private String8Block _block;
+        private String8[] _string8Array;
 
-        public DataBatch Convert<T>(DataBatch batch, Func<T, byte[], int, String8> converter, int bytesPerItem)
+        public ToString8Converter(object defaultValue, int bytesPerItem, Func<T, byte[], int, String8> converter)
         {
-            Allocator.AllocateToSize(ref _nullArray, batch.Count);
-            Allocator.AllocateToSize(ref _stringArray, batch.Count);
-            Allocator.AllocateToSize(ref _buffer, batch.Count * bytesPerItem);
+            if (defaultValue == null)
+            {
+                _defaultValue = String8.Empty;
+            }
+            else if (defaultValue is String8)
+            {
+                _defaultValue = (String8)defaultValue;
+            }
+            else
+            {
+                string defaultAsString = defaultValue.ToString();
+                _defaultValue = String8.Convert(defaultAsString, new byte[String8.GetLength(defaultAsString)]);
+            }
 
-            bool hasAnyNulls = false;
+            _converter = converter;
+            _bytesPerItem = bytesPerItem;
+        }
+
+        public bool[] Convert(DataBatch batch, out Array result)
+        {
+            Allocator.AllocateToSize(ref _string8Array, batch.Count);
+            Allocator.AllocateToSize(ref _buffer, batch.Count * _bytesPerItem);
+
             int bufferBytesUsed = 0;
             T[] sourceArray = (T[])batch.Array;
             for (int i = 0; i < batch.Count; ++i)
@@ -259,103 +277,117 @@ namespace XForm.Types
                 int index = batch.Index(i);
                 if (batch.IsNull != null && batch.IsNull[index])
                 {
-                    _stringArray[i] = String8.Empty;
-                    _nullArray[i] = true;
-                    hasAnyNulls = true;
+                    // Always turn nulls into the default value rather than converting default of other type
+                    _string8Array[i] = _defaultValue;
                 }
                 else
                 {
-                    _stringArray[i] = converter(sourceArray[index], _buffer, bufferBytesUsed);
-                    bufferBytesUsed += _stringArray[i].Length;
-                    _nullArray[i] = false;
+                    String8 converted = _converter(sourceArray[index], _buffer, bufferBytesUsed);
+                    _string8Array[i] = converted;
+                    bufferBytesUsed += converted.Length;
                 }
             }
 
-            return DataBatch.All(_stringArray, batch.Count, (hasAnyNulls ? _nullArray : null));
+            result = _string8Array;
+            return null;
+        }
+    }
+
+    internal class StringToString8Converter
+    {
+        private String8 _defaultValue;
+
+        private String8Block _block;
+        private String8[] _string8Array;
+        private bool[] _couldNotConvertArray;
+
+        public StringToString8Converter(object defaultValue)
+        {
+            if (defaultValue == null)
+            {
+                _defaultValue = String8.Empty;
+            }
+            else if (defaultValue is String8)
+            {
+                _defaultValue = (String8)defaultValue;
+            }
+            else
+            {
+                string defaultAsString = defaultValue.ToString();
+                _defaultValue = String8.Convert(defaultAsString, new byte[String8.GetLength(defaultAsString)]);
+            }
         }
 
-        public DataBatch StringToString8(DataBatch batch)
+        public bool[] StringToString8(DataBatch batch, out Array result)
         {
-            Allocator.AllocateToSize(ref _nullArray, batch.Count);
-            Allocator.AllocateToSize(ref _stringArray, batch.Count);
+            Allocator.AllocateToSize(ref _string8Array, batch.Count);
+            Allocator.AllocateToSize(ref _couldNotConvertArray, batch.Count);
 
             if (_block == null) _block = new String8Block();
             _block.Clear();
 
-            bool hasAnyNulls = false;
+            bool anyCouldNotConvert = false;
             string[] sourceArray = (string[])batch.Array;
             for (int i = 0; i < batch.Count; ++i)
             {
                 int index = batch.Index(i);
                 string value = sourceArray[index];
 
-                if (value == null || batch.IsNull != null && batch.IsNull[index])
+                if (value == null || (batch.IsNull != null && batch.IsNull[index]))
                 {
-                    _stringArray[i] = String8.Empty;
-                    _nullArray[i] = true;
+                    // Always turn nulls into the default value rather than converting string default
+                    _string8Array[i] = _defaultValue;
+                    _couldNotConvertArray[i] = true;
+                    anyCouldNotConvert = true;
                 }
                 else
                 {
-                    _stringArray[i] = _block.GetCopy(sourceArray[batch.Index(i)]);
-                    _nullArray[i] = false;
+                    _string8Array[i] = _block.GetCopy(value);
+                    _couldNotConvertArray[i] = false;
                 }
             }
 
-            return DataBatch.All(_stringArray, batch.Count, (hasAnyNulls ? _nullArray : null));
+            result = _string8Array;
+            return (anyCouldNotConvert ? _couldNotConvertArray : null);
         }
     }
 
     internal class FromString8Converter<T>
     {
         public delegate bool TryConvert(String8 value, out T result);
-
-        private bool[] _nullArray;
-        private T[] _array;
-
         private TryConvert _tryConvert;
-        private T _defaultValue;
-        private bool _strict;
-        private bool _defaultIsNull;
 
-        public FromString8Converter(TryConvert tryConvert, object defaultValue, bool strict)
+        private T _defaultValue;
+
+        private T[] _array;
+        private bool[] _couldNotConvertArray;
+
+        public FromString8Converter(object defaultValue, TryConvert tryConvert)
         {
             _tryConvert = tryConvert;
-
-            defaultValue = TypeConverterFactory.ConvertSingle(defaultValue, typeof(T));
-            _defaultIsNull = (defaultValue == null);
             _defaultValue = (T)(TypeConverterFactory.ConvertSingle(defaultValue, typeof(T)) ?? default(T));
-            _strict = strict;
         }
 
-        public DataBatch Convert(DataBatch batch)
+        public bool[] Convert(DataBatch batch, out Array result)
         {
             Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _nullArray, batch.Count);
+            Allocator.AllocateToSize(ref _couldNotConvertArray, batch.Count);
 
-            bool areAnyNull = false;
+            bool anyCouldNotConvert = false;
             String8[] sourceArray = (String8[])batch.Array;
-
             for (int i = 0; i < batch.Count; ++i)
             {
-                int index = batch.Index(i);
-                bool isNull = (batch.IsNull != null && batch.IsNull[index]);
+                _couldNotConvertArray[i] = !_tryConvert(sourceArray[batch.Index(i)], out _array[i]);
 
-                if (!isNull)
+                if(_couldNotConvertArray[i])
                 {
-                    isNull = !_tryConvert(sourceArray[index], out _array[i]);
-
-                    if (isNull && !_strict && !_defaultIsNull)
-                    {
-                        _array[i] = _defaultValue;
-                        isNull = false;
-                    }
+                    _array[i] = _defaultValue;
+                    anyCouldNotConvert = true;
                 }
-
-                _nullArray[i] = isNull;
-                areAnyNull |= isNull;
             }
 
-            return DataBatch.All(_array, batch.Count, (areAnyNull ? _nullArray : null));
+            result = _array;
+            return (anyCouldNotConvert ? _couldNotConvertArray : null);
         }
     }
 }

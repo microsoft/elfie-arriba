@@ -73,34 +73,16 @@ namespace XForm.Functions
                 // Allocate for results
                 Allocator.AllocateToSize(ref buffer, batch.Count);
 
-                // Allocate null array if needed
-                if (batch.IsNull != null)
-                {
-                    Allocator.AllocateToSize(ref isNull, batch.Count);
-                    Array.Clear(isNull, 0, batch.Count);
-                }
-
                 // Convert each non-null value
-                bool areAnyNull = false;
                 T[] array = (T[])batch.Array;
                 for (int i = 0; i < batch.Count; ++i)
                 {
                     int index = batch.Index(i);
-                    bool rowIsNull = batch.IsNull != null && batch.IsNull[index];
-
-                    if (rowIsNull)
-                    {
-                        buffer[i] = default(U);
-                        isNull[i] = true;
-                        areAnyNull = true;
-                    }
-                    else
-                    {
-                        buffer[i] = Function(array[index]);
-                    }
+                    bool rowIsNull = (batch.IsNull != null && batch.IsNull[index]);
+                    buffer[i] = (rowIsNull ? default(U) : Function(array[index]));
                 }
 
-                return DataBatch.All(buffer, batch.Count, (areAnyNull ? isNull : null));
+                return DataBatch.All(buffer, batch.Count, DataBatch.RemapNulls(batch, ref isNull));
             };
         }
 

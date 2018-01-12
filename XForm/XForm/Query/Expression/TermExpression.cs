@@ -57,8 +57,7 @@ namespace XForm.Query.Expression
             // This means constants will always be casted to the other side type.
             if (left.ColumnDetails.Type != right.ColumnDetails.Type)
             {
-                // Disallow comparing unwrapped constants to strings
-                right = XForm.Functions.Cast.Build(source, right, left.ColumnDetails.Type, null, true);
+                right = XForm.Functions.Cast.Build(source, right, left.ColumnDetails.Type, ValueKinds.Invalid);
             }
 
             // Get the left and right getters

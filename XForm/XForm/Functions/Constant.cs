@@ -10,30 +10,34 @@ namespace XForm.Functions
 {
     public class Constant : IDataBatchColumn
     {
-        private IDataBatchEnumerator Source { get; set; }
-        private Array ValueArray { get; set; }
         public bool IsNull { get; private set; }
         public bool WasUnwrappedLiteral { get; private set; }
         public ColumnDetails ColumnDetails { get; private set; }
 
+        private Array _valueArray;
+        private IDataBatchEnumerator Source { get; set; }
+
         public Constant(IDataBatchEnumerator source, object value, Type type, bool wasUnwrappedLiteral = false)
         {
             Source = source;
-            ValueArray = Allocator.AllocateArray(type, 1);
-            ValueArray.SetValue(value, 0);
+
+            _valueArray = null;
+            Allocator.AllocateToSize(ref _valueArray, 1, type);
+            _valueArray.SetValue(value, 0);
+
             IsNull = (value == null || value.Equals("null"));
             WasUnwrappedLiteral = wasUnwrappedLiteral;
             ColumnDetails = new ColumnDetails(string.Empty, type, false);
         }
 
-        public object Value => ValueArray.GetValue(0);
+        public object Value => _valueArray.GetValue(0);
 
         public Func<DataBatch> Getter()
         {
             return () =>
             {
-                if (IsNull) return DataBatch.Null(ValueArray, Source.CurrentBatchRowCount);
-                return DataBatch.Single(ValueArray, Source.CurrentBatchRowCount);
+                if (IsNull) return DataBatch.Null(_valueArray, Source.CurrentBatchRowCount);
+                return DataBatch.Single(_valueArray, Source.CurrentBatchRowCount);
             };
         }
 

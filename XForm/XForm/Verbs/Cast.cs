@@ -6,6 +6,7 @@ using System.Collections.Generic;
 
 using XForm.Data;
 using XForm.Extensions;
+using XForm.Functions;
 using XForm.Query;
 
 namespace XForm.Verbs
@@ -13,19 +14,12 @@ namespace XForm.Verbs
     internal class CastCommandBuilder : IVerbBuilder
     {
         public string Verb => "cast";
-        public string Usage => "'cast' [ColumnName] [ToType] [Default?] [Strict?]";
+        public string Usage => "'cast' [ColumnName] [ToType] [ErrorOn?] [DefaultValue?] [ChangeToDefaultOn?]";
+        private CastBuilder _castFunctionBuilder = new CastBuilder();
 
         public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)
         {
-            return new Cast(source,
-                XForm.Functions.Cast.Build(
-                    source,
-                    context.Parser.NextColumn(source, context),
-                    context.Parser.NextType(),
-                    (context.Parser.HasAnotherPart ? context.Parser.NextLiteralValue() : null),
-                    (context.Parser.HasAnotherPart ? context.Parser.NextBoolean() : true)
-                )
-            );
+            return new Cast(source, _castFunctionBuilder.Build(source, context));
         }
     }
 

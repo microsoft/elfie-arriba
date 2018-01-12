@@ -249,6 +249,11 @@ namespace XForm.Query
             this.Current.Value = Text.Substring(startIndex, CurrentIndex - startIndex);
         }
 
+        public static string Escape(object value, TokenType type, bool wasUnwrapped = false)
+        {
+            return Escape((value == null ? null : value.ToString()), type, wasUnwrapped);
+        }
+
         public static string Escape(string value, TokenType type, bool wasUnwrapped = false)
         {
             if (type == TokenType.ColumnName)

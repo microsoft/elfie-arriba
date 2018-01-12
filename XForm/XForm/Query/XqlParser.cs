@@ -254,7 +254,7 @@ namespace XForm.Query
 
                 return result;
             }
-            catch (Exception ex)
+            catch (Exception ex) when (!Debugger.IsAttached)
             {
                 Rethrow(ex);
                 return null;

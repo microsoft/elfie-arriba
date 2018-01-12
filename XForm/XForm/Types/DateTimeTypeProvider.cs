@@ -19,12 +19,12 @@ namespace XForm.Types
 
         public IColumnReader BinaryReader(IStreamProvider streamProvider, string columnPath)
         {
-            return new ConvertingReader(TypeProviderFactory.Get(typeof(long)).BinaryReader(streamProvider, columnPath), TryGetConverter(typeof(long), typeof(DateTime), null, true));
+            return new ConvertingReader(TypeProviderFactory.Get(typeof(long)).BinaryReader(streamProvider, columnPath), TypeConverterFactory.GetConverter(typeof(long), typeof(DateTime)));
         }
 
         public IColumnWriter BinaryWriter(IStreamProvider streamProvider, string columnPath)
         {
-            return new ConvertingWriter(TypeProviderFactory.Get(typeof(long)).BinaryWriter(streamProvider, columnPath), TryGetConverter(typeof(DateTime), typeof(long), null, true));
+            return new ConvertingWriter(TypeProviderFactory.Get(typeof(long)).BinaryWriter(streamProvider, columnPath), TypeConverterFactory.GetConverter(typeof(DateTime), typeof(long)));
         }
 
         public IDataBatchComparer TryGetComparer()
@@ -33,7 +33,7 @@ namespace XForm.Types
             return new DateTimeComparer();
         }
 
-        public Func<DataBatch, DataBatch> TryGetConverter(Type sourceType, Type targetType, object defaultValue, bool strict)
+        public NegatedTryConvert TryGetNegatedTryConvert(Type sourceType, Type targetType, object defaultValue)
         {
             if (sourceType == typeof(DateTime) && targetType == typeof(long))
             {
@@ -61,42 +61,33 @@ namespace XForm.Types
     {
         private DateTime[] _dateTimeArray;
         private long[] _longArray;
-        private bool[] _isNullArray;
 
-        public DataBatch DateTimeToLong(DataBatch batch)
+        public bool[] DateTimeToLong(DataBatch batch, out Array result)
         {
             Allocator.AllocateToSize(ref _longArray, batch.Count);
-            Allocator.AllocateToSize(ref _isNullArray, batch.Count);
 
-            bool areAnyNull = false;
             DateTime[] sourceArray = (DateTime[])batch.Array;
             for (int i = 0; i < batch.Count; ++i)
             {
-                int index = batch.Index(i);
-                _longArray[i] = sourceArray[index].ToUniversalTime().Ticks;
-                _isNullArray[i] = (batch.IsNull != null && batch.IsNull[index]);
-                areAnyNull |= _isNullArray[i];
+                _longArray[i] = sourceArray[batch.Index(i)].ToUniversalTime().Ticks;
             }
 
-            return DataBatch.All(_longArray, batch.Count, (areAnyNull ? _isNullArray : null));
+            result = _longArray;
+            return null;
         }
 
-        public DataBatch LongToDateTime(DataBatch batch)
+        public bool[] LongToDateTime(DataBatch batch, out Array result)
         {
             Allocator.AllocateToSize(ref _dateTimeArray, batch.Count);
-            Allocator.AllocateToSize(ref _isNullArray, batch.Count);
 
-            bool areAnyNull = false;
             long[] sourceArray = (long[])batch.Array;
             for (int i = 0; i < batch.Count; ++i)
             {
-                int index = batch.Index(i);
-                _dateTimeArray[i] = new DateTime(index, DateTimeKind.Utc);
-                _isNullArray[i] = (batch.IsNull != null && batch.IsNull[index]);
-                areAnyNull |= _isNullArray[i];
+                _dateTimeArray[i] = new DateTime(sourceArray[batch.Index(i)], DateTimeKind.Utc);
             }
 
-            return DataBatch.All(_longArray, batch.Count, (areAnyNull ? _isNullArray : null));
+            result = _dateTimeArray;
+            return null;
         }
     }
 }

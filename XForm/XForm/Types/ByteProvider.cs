@@ -32,7 +32,7 @@ namespace XForm.Types
             return new ByteComparer();
         }
 
-        public Func<DataBatch, DataBatch> TryGetConverter(Type sourceType, Type targetType, object defaultValue, bool strict)
+        public NegatedTryConvert TryGetNegatedTryConvert(Type sourceType, Type targetType, object defaultValue)
         {
             // TODO: Add primitive number conversions
             return null;

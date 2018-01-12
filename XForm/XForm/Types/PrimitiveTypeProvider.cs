@@ -32,9 +32,15 @@ namespace XForm.Types
             return new PrimitiveArrayWriter<T>(streamProvider.OpenWrite(ValuesFilePath(columnPath)));
         }
 
-        public Func<DataBatch, DataBatch> TryGetConverter(Type sourceType, Type targetType, object defaultValue, bool strict)
+        public NegatedTryConvert TryGetNegatedTryConvert(Type sourceType, Type targetType, object defaultValue)
         {
             // TODO: Add primitive number conversions
+            return null;
+        }
+
+        public IValueCopier TryGetCopier()
+        {
+            // No copier needed for these types
             return null;
         }
 
@@ -51,12 +57,6 @@ namespace XForm.Types
             if (typeof(T) == typeof(float)) return new FloatComparer();
             if (typeof(T) == typeof(double)) return new DoubleComparer();
 
-            return null;
-        }
-
-        public IValueCopier TryGetCopier()
-        {
-            // No copier needed for this type
             return null;
         }
 
