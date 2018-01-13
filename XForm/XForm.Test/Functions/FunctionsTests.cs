@@ -44,7 +44,7 @@ namespace XForm.Test.Query
         }
 
         [TestMethod]
-        public void Function_Cast()
+        public void Function_Cast_Basics()
         {
             int[] expected = Enumerable.Range(-2, 10).ToArray();
             string[] values = expected.Select((i) => i.ToString()).ToArray();
@@ -54,6 +54,35 @@ namespace XForm.Test.Query
 
             // Verify an unavailable cast throws
             Verify.Exception<UsageException>(() => RunQueryAndVerify(expected, "Score", expected, "Result", "set [Result] Cast(Cast([Score], TimeSpan), DateTime)"));
+        }
+
+        [TestMethod]
+        public void Function_Cast_Conversions()
+        {
+            int[] values = Enumerable.Range(0, 10).ToArray();
+            RunCastConversions(typeof(sbyte), values);
+            RunCastConversions(typeof(byte), values);
+            RunCastConversions(typeof(short), values);
+            RunCastConversions(typeof(ushort), values);
+            RunCastConversions(typeof(int), values);
+            RunCastConversions(typeof(uint), values);
+            RunCastConversions(typeof(long), values);
+            RunCastConversions(typeof(ulong), values);
+
+            // No String8 to floating point cast yet
+            //RunCastConversions(typeof(float), values);
+            //RunCastConversions(typeof(double), values);
+        }
+
+        private static void RunCastConversions(Type type, int[] values)
+        {
+            // Convert to type and back to int
+            RunQueryAndVerify(values, "Value", values, "Value", $"select Cast(Cast([Value], {type.Name}), Int32)");
+
+            // Convert to string and back to int
+            TableTestHarness.AssertAreEqual(
+                XFormTable.FromArrays(values.Length).WithColumn("Value", values).Query($"select Cast(Cast(Cast([Value], String8), {type.Name}), Int32)", TableTestHarness.WorkflowContext),
+                XFormTable.FromArrays(values.Length).WithColumn("Value", values), 10);
         }
 
         [TestMethod]

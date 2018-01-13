@@ -561,7 +561,6 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             return valid;
         }
 
-
         /// <summary>
         ///  Convert a String8 with a numeric value to the sbyte representation, if in range.
         /// </summary>
@@ -723,7 +722,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         /// <returns>String8 representation of integer value</returns>
         public static String8 FromInteger(int value, byte[] buffer)
         {
-            return FromInteger(value, buffer, 0, 1);
+            return FromNumber(value, buffer, 0, 1);
         }
 
         /// <summary>
@@ -737,14 +736,48 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         /// <returns>String8 representation of integer value</returns>
         public static String8 FromInteger(int value, byte[] buffer, int index, int minimumDigits = 1)
         {
-            bool isNegative = value < 0;
-            long valueLeft = value;
-            if (isNegative) valueLeft = -valueLeft;
+            return FromNumber(value, buffer, index, minimumDigits);
+        }
+
+        /// <summary>
+        ///  Convert a number into the equivalent String8 representation, using the provided buffer.
+        ///  Buffer must be at least 11 bytes long to handle all values.
+        /// </summary>
+        /// <param name="value">long value to convert</param>
+        /// <param name="buffer">byte[] for conversion (at least length 11 for all values)</param>
+        /// <param name="index">Index within byte[] at which to being writing</param>
+        /// <param name="minimumDigits">Minimum integer length (leading zeros written if needed)</param>
+        /// <returns>String8 representation of integer value</returns>
+        public static String8 FromNumber(long value, byte[] buffer, int index, int minimumDigits = 1)
+        {
+            if(value >= 0)
+            {
+                return FromNumber((ulong)value, false, buffer, index, minimumDigits);
+            }
+            else
+            {
+                return FromNumber((ulong)(-value), true, buffer, index, minimumDigits);
+            }
+        }
+
+        /// <summary>
+        ///  Convert a number into the equivalent String8 representation, using the provided buffer.
+        ///  Buffer must be at least 11 bytes long to handle all values.
+        /// </summary>
+        /// <param name="value">ulong value to convert</param>
+        /// <param name="isNegative">True if the original value was negative</param>
+        /// <param name="buffer">byte[] for conversion (at least length 11 for all values)</param>
+        /// <param name="index">Index within byte[] at which to being writing</param>
+        /// <param name="minimumDigits">Minimum integer length (leading zeros written if needed)</param>
+        /// <returns>String8 representation of integer value</returns>
+        public static String8 FromNumber(ulong value, bool isNegative, byte[] buffer, int index, int minimumDigits = 1)
+        {
+            ulong valueLeft = value;
 
             // Determine how many digits in value
             int digits = 1;
-            int scale = 10;
-            while (valueLeft >= scale && digits < 10)
+            ulong scale = 10;
+            while (valueLeft >= scale && digits < 20)
             {
                 digits++;
                 scale *= 10;
@@ -756,7 +789,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             // Validate buffer is long enough
             int requiredLength = digits;
             if (isNegative) requiredLength++;
-            if (buffer.Length + index < requiredLength) throw new ArgumentException("String8.FromInteger requires an 11 byte buffer for integer conversion.");
+            if (buffer.Length + index < requiredLength) throw new ArgumentException("String8.FromNumber requires an 21 byte buffer for number conversion.");
 
             // Write minus sign if negative
             int digitStartIndex = index;
@@ -769,7 +802,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             // Write digits right to left
             for (int j = digitStartIndex + digits - 1; j >= digitStartIndex; --j)
             {
-                long digit = valueLeft % 10;
+                ulong digit = valueLeft % 10;
                 buffer[j] = (byte)(UTF8.Zero + (byte)digit);
                 valueLeft /= 10;
             }

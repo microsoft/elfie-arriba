@@ -94,7 +94,7 @@ namespace XForm.Test.Query
             IDataBatchEnumerator source = XqlParser.Parse(@"
                 read WebRequest
                 cache all
-                cast [ServerPort], Int32, 
+                cast [ServerPort], Int32
                 cast [ResponseBytes], Int32, None, 0, InvalidOrNull
                 ", null, context);
 

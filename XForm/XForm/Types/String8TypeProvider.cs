@@ -44,9 +44,17 @@ namespace XForm.Types
             if (targetType == typeof(String8))
             {
                 if (sourceType == typeof(string)) return new StringToString8Converter(defaultValue).StringToString8;
-                if (sourceType == typeof(int)) return new ToString8Converter<int>(defaultValue, 12, (value, buffer, index) => String8.FromInteger(value, buffer, index)).Convert;
                 if (sourceType == typeof(DateTime)) return new ToString8Converter<DateTime>(defaultValue, 20, String8.FromDateTime).Convert;
                 if (sourceType == typeof(bool)) return new ToString8Converter<bool>(defaultValue, 0, (value, buffer, index) => String8.FromBoolean(value)).Convert;
+
+                if (sourceType == typeof(sbyte)) return new ToString8Converter<sbyte>(defaultValue, 4, (value, buffer, index) => String8.FromNumber(value, buffer, index)).Convert;
+                if (sourceType == typeof(byte)) return new ToString8Converter<byte>(defaultValue, 3, (value, buffer, index) => String8.FromNumber(value, buffer, index)).Convert;
+                if (sourceType == typeof(short)) return new ToString8Converter<short>(defaultValue, 6, (value, buffer, index) => String8.FromNumber(value, buffer, index)).Convert;
+                if (sourceType == typeof(ushort)) return new ToString8Converter<ushort>(defaultValue, 5, (value, buffer, index) => String8.FromNumber(value, buffer, index)).Convert;
+                if (sourceType == typeof(int)) return new ToString8Converter<int>(defaultValue, 11, (value, buffer, index) => String8.FromNumber(value, buffer, index)).Convert;
+                if (sourceType == typeof(uint)) return new ToString8Converter<uint>(defaultValue, 10, (value, buffer, index) => String8.FromNumber(value, buffer, index)).Convert;
+                if (sourceType == typeof(long)) return new ToString8Converter<long>(defaultValue, 21, (value, buffer, index) => String8.FromNumber(value, buffer, index)).Convert;
+                if (sourceType == typeof(ulong)) return new ToString8Converter<ulong>(defaultValue, 20, (value, buffer, index) => String8.FromNumber(value, false, buffer, index)).Convert;
             }
             else if (sourceType == typeof(String8))
             {

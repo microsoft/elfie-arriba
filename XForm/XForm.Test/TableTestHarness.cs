@@ -20,6 +20,17 @@ namespace XForm.Test
     /// </summary>
     public static class TableTestHarness
     {
+        private static WorkflowContext s_WorkflowContext;
+
+        public static WorkflowContext WorkflowContext
+        {
+            get
+            {
+                if (s_WorkflowContext == null) s_WorkflowContext = new WorkflowContext();
+                return s_WorkflowContext;
+            }
+        }
+
         public static void AssertAreEqual(IDataBatchEnumerator expected, IDataBatchEnumerator actual, int pageSize)
         {
             // Reset both tables (so they can be used for repeated scenarios)
@@ -161,7 +172,9 @@ namespace XForm.Test
                 areAnyNull |= isNull;
             }
 
-            if (!areAnyNull) AssertAreEqual(true, actual.IsNull == null, "Result Null Array (when no null values)", ref errorMessage);
+            // NOTE: We should not filter the null array if we aren't looping over every item, so this rule isn't always valid.
+            //if (!areAnyNull) AssertAreEqual(true, actual.IsNull == null, "Result Null Array (when no null values)", ref errorMessage);
+
             return 0;
         }
 

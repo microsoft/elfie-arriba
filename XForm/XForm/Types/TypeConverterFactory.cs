@@ -14,7 +14,7 @@ namespace XForm.Types
         None = 0,
         Invalid = 1,
         InvalidOrNull = 2,
-        
+
         ErrorOnDefault = None,
         ChangeToDefaultOnDefault = None
     }
@@ -128,6 +128,7 @@ namespace XForm.Types
 
             Array result;
             bool[] couldNotConvert;
+            bool[] buffer = null;
 
             if (changeToDefault == ValueKinds.None)
             {
@@ -136,7 +137,7 @@ namespace XForm.Types
                 {
                     couldNotConvert = negatedTryConvert(values, out result);
                     ErrorWhenSpecified(errorOn, values, couldNotConvert, errorContextMessage);
-                    return DataBatch.All(result, values.Count, couldNotConvert);
+                    return DataBatch.All(result, values.Count, MergeNulls(values, couldNotConvert, ref buffer));
                 };
             }
             else if (changeToDefault == ValueKinds.Invalid)
@@ -192,6 +193,33 @@ namespace XForm.Types
             {
                 throw new NotImplementedException(errorOnKinds.ToString());
             }
+        }
+
+        private static bool[] MergeNulls(DataBatch batch, bool[] couldNotConvert, ref bool[] buffer)
+        {
+            // No nulls? Just return the values which didn't convert
+            if (batch.IsNull == null) return couldNotConvert;
+
+            if (couldNotConvert == null) return DataBatch.RemapNulls(batch, ref buffer);
+
+            // Or together the nulls and values which didn't convert
+            if (batch.Selector.Indices != null)
+            {
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    couldNotConvert[i] |= batch.IsNull[batch.Index(i)];
+                }
+            }
+            else
+            {
+                int start = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    couldNotConvert[i] |= batch.IsNull[i + start];
+                }
+            }
+
+            return couldNotConvert;
         }
     }
 }
