@@ -47,9 +47,9 @@ namespace XForm
             //WhereUShortEqualsUshort();
             //ByteEqualsConstant();
             //DoubleWhere();
-            //Join();
-            //Dictionary();
-            Choose();
+            Join();
+            Dictionary();
+            //Choose();
             //TsvSplit();
         }
 
