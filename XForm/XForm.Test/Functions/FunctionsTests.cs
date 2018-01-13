@@ -9,6 +9,8 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using XForm.Data;
 using XForm.Extensions;
+using Elfie.Test;
+using XForm.Query;
 
 namespace XForm.Test.Query
 {
@@ -41,14 +43,17 @@ namespace XForm.Test.Query
             RunQueryAndVerify(values, "When", expected, "Result", "set [Result] DateAdd([When], \"-2d\")");
         }
 
-
         [TestMethod]
         public void Function_Cast()
         {
             int[] expected = Enumerable.Range(-2, 10).ToArray();
             string[] values = expected.Select((i) => i.ToString()).ToArray();
 
+            // Try casting int to String8 and back
             RunQueryAndVerify(values, "Score", expected, "Result", "set [Result] Cast(Cast([Score], String8), Int32)");
+
+            // Verify an unavailable cast throws
+            Verify.Exception<UsageException>(() => RunQueryAndVerify(expected, "Score", expected, "Result", "set [Result] Cast(Cast([Score], TimeSpan), DateTime)"));
         }
 
         [TestMethod]

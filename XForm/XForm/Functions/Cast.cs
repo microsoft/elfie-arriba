@@ -47,6 +47,7 @@ namespace XForm.Functions
     ///  If passed only a column and target type, it will convert valid values and turn invalid values, empty strings, and nulls into Null.
     ///  
     ///  Likely Desired Forms:
+    ///    Cast([Column], [Type])                                   -> 'Safe'. Invalid/Null/Empty turn into Null.
     ///    Cast([Column], [Type], NullOrInvalid)                    -> 'Strict'. Error on Invalid, Null, or Empty values.
     ///    Cast([Column], [Type], Invalid)                          -> Throw on invalid values, but all empty/null to pass through.
     ///    Cast([Column], [Type], None, [Default], Invalid)         -> Leave nulls alone but replaced invalid values with the default.

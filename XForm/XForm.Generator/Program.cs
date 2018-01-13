@@ -16,6 +16,10 @@ namespace XForm.Generator
             Console.WriteLine($"Building Comparers to [{comparerPath}]...");
             ComparerGenerator.GenerateAll(comparerPath);
 
+            string primitiveConverterPath = Path.Combine(xformProjectPath, @"Types\PrimitiveConverters.cs");
+            Console.WriteLine($"Building [{primitiveConverterPath}]...");
+            PrimitiveConvertersGenerator.Generate(primitiveConverterPath);
+
             Console.WriteLine("Done.");
         }
     }

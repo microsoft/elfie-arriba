@@ -34,8 +34,7 @@ namespace XForm.Types
 
         public NegatedTryConvert TryGetNegatedTryConvert(Type sourceType, Type targetType, object defaultValue)
         {
-            // TODO: Add primitive number conversions
-            return null;
+            return PrimitiveConverterFactory.TryGetNegatedTryConvert(sourceType, targetType, defaultValue);
         }
 
         public IValueCopier TryGetCopier()

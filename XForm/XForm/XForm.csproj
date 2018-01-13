@@ -102,6 +102,7 @@
     <Compile Include="Types\Comparers\String8Comparer.cs" />
     <Compile Include="Types\Comparers\TimeSpanComparer.cs" />
     <Compile Include="Types\IValueCopier.cs" />
+    <Compile Include="Types\PrimitiveConverters.cs" />
     <Compile Include="Types\TimeSpanTypeProvider.cs" />
     <Compile Include="Verbs\Cast.cs" />
     <Compile Include="Verbs\Choose.cs" />

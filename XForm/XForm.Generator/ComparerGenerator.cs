@@ -151,7 +151,7 @@ namespace XForm.Types.Comparers
 
         public static void Generate(string typeName, string outputPath)
         {
-            string className = (typeName == "T" ? "ComparableComparer" : Char.ToUpperInvariant(typeName[0]) + typeName.Substring(1) + "Comparer");
+            string className = (typeName == "T" ? "ComparableComparer" : SupportedTypes.ToClassName(typeName) + "Comparer");
 
             using (var writer = new StreamWriter(File.Open(Path.Combine(outputPath, $"{className}.cs"), FileMode.Create)))
             {
