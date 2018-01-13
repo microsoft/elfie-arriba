@@ -63,10 +63,10 @@ namespace XForm
                     Stopwatch w = Stopwatch.StartNew();
                     try
                     {
-                        XqlParser parser = new XqlParser(nextLine, _workflowContext);
-                        if (!parser.HasAnotherPart) return lastCount;
+                        if (String.IsNullOrEmpty(nextLine)) return lastCount;
 
-                        string command = parser.NextString().ToLowerInvariant();
+                        string[] parts = nextLine.Split(' ');
+                        string command = parts[0].ToLowerInvariant();
                         switch (command)
                         {
                             case "quit":
@@ -88,7 +88,7 @@ namespace XForm
 
                                 break;
                             case "save":
-                                string tableName = parser.NextOutputTableName();
+                                string tableName = parts[1];
                                 string queryPath = _workflowContext.StreamProvider.Path(LocationType.Query, tableName, ".xql");
                                 _workflowContext.StreamProvider.WriteAllText(queryPath, String.Join(Environment.NewLine, _commands));
                                 Console.WriteLine($"Query saved to \"{tableName}\".");
@@ -101,7 +101,7 @@ namespace XForm
 
                                 break;
                             case "run":
-                                LoadScript(parser.NextString());
+                                LoadScript(parts[1]);
                                 break;
                             case "rerun":
                                 LoadScript(s_commandCachePath);
