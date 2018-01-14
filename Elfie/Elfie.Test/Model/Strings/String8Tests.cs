@@ -166,6 +166,23 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
         }
 
         [TestMethod]
+        public void String8_Contains()
+        {
+            Assert.AreEqual(0, "".TestConvert().Contains("".TestConvert()), "Empty always contains empty");
+            Assert.AreEqual(1, "Simple".TestConvert().Contains("imp".TestConvert()), "Case sensitive match");
+            Assert.AreEqual(1, "Simple".TestConvert().Contains("IMP".TestConvert()), "Case insensitive matching");
+            Assert.AreEqual(-1, "Simple".TestConvert().Contains("imz".TestConvert()), "Non-match in last character only");
+            Assert.AreEqual(0, "Simple".TestConvert().Contains("sim".TestConvert()), "Match at start, case insensitive");
+            Assert.AreEqual(0, "Simple".TestConvert().Contains("simple".TestConvert()), "Full match, case insensitive");
+            Assert.AreEqual(-1, "Simple".TestConvert().Contains("simpler".TestConvert()), "Non-match because too long");
+            Assert.AreEqual(5, "Simple".TestConvert().Contains("e".TestConvert()), "Match at last character only");
+            Assert.AreEqual(4, "Simple".TestConvert().Contains("le".TestConvert()), "Match at end");
+            Assert.AreEqual(-1, "Simple".TestConvert().Contains("er".TestConvert()), "Non-match trailing off end");
+            Assert.AreEqual(3, "bananas".TestConvert().Contains("anas".TestConvert()), "Overlapping match");
+
+        }
+
+        [TestMethod]
         public void String8_BeforeFirstAfterFirst()
         {
             string binaryName = "System.Collections.Generic.List!";

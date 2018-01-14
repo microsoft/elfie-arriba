@@ -1217,6 +1217,34 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             // Negative if left earlier, zero if equal, positive if left later
             return left - right;
         }
+
+        /// <summary>
+        ///  Return the index at which this string contains 'other' using case-insensitive comparison,
+        ///  or -1 if it was not found.
+        /// </summary>
+        /// <param name="other">Value to find within this String</param>
+        /// <returns>Index of first instance of value in this String or -1 if not found</returns>
+        public int Contains(String8 other)
+        {
+            int otherLength = other.Length;
+            int end = this.Length - otherLength + 1;
+
+            for(int matchStart = 0; matchStart < end; ++matchStart)
+            {
+                int i = 0;
+                for(; i < otherLength; ++i)
+                {
+                    int cmp = CompareOrdinalIgnoreCase(Array[Index + matchStart + i], other.Array[other.Index + i]);
+                    if (cmp != 0) break;
+                }
+
+                // Match found
+                if (i == otherLength) return matchStart;
+            }
+            
+            // No matches found
+            return -1;
+        }
         #endregion
 
         #region Output
