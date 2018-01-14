@@ -27,7 +27,7 @@ namespace XForm.Functions
 
             IsNull = (value == null || value.Equals("null"));
             WasUnwrappedLiteral = wasUnwrappedLiteral;
-            ColumnDetails = new ColumnDetails(string.Empty, type, false);
+            ColumnDetails = new ColumnDetails(string.Empty, type);
         }
 
         public object Value => _valueArray.GetValue(0);

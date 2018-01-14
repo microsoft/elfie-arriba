@@ -169,7 +169,7 @@ namespace XForm.Test.Query
             context.RequestedAsOfDateTime = TestAsOfDateTime;
 
             IDataBatchEnumerator query = XFormTable.FromArrays(input.Count)
-                .WithColumn(new ColumnDetails(inputColumnName, input.Array.GetType().GetElementType(), true), input)
+                .WithColumn(new ColumnDetails(inputColumnName, input.Array.GetType().GetElementType()), input)
                 .Query(queryText, context);
 
             Func<DataBatch> resultGetter = query.ColumnGetter(query.Columns.IndexOfColumn(outputColumnName));

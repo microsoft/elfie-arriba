@@ -41,7 +41,7 @@ namespace XForm.IO
 
         public ArrayTable WithColumn(string columnName, Array array)
         {
-            return WithColumn(new ColumnDetails(columnName, array.GetType().GetElementType(), false), DataBatch.All(array, _rowCount));
+            return WithColumn(new ColumnDetails(columnName, array.GetType().GetElementType()), DataBatch.All(array, _rowCount));
         }
 
         public IReadOnlyList<ColumnDetails> Columns => _columns;

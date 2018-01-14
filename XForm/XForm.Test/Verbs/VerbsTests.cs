@@ -47,11 +47,11 @@ namespace XForm.Test.Query
             // Build a table with padded nulls to join from (so we see nulls are also filtered out)
             DataBatch joinFromBatch = TableTestHarness.Nulls(DataBatch.All(joinFrom));
             IDataBatchEnumerator joinFromTable = XFormTable.FromArrays(joinFromBatch.Count)
-                .WithColumn(new ColumnDetails("ServerID", t, true), joinFromBatch);
+                .WithColumn(new ColumnDetails("ServerID", t), joinFromBatch);
 
             // Build the table to join to
             IDataBatchEnumerator joinToTable = XFormTable.FromArrays(joinTo.Length)
-               .WithColumn(new ColumnDetails("ID", t, false), DataBatch.All(joinTo));
+               .WithColumn(new ColumnDetails("ID", t), DataBatch.All(joinTo));
 
             // Run the join - verify the expected values without padding are found
             IDataBatchEnumerator result = new Join(joinFromTable, "ServerID", joinToTable, "ID", "Server.");

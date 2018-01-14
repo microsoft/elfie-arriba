@@ -200,7 +200,7 @@ namespace XForm.Test
         /// </summary>
         public static void TraceWrite(DataBatch column, string columnName, int startRowIndexInclusive = 0, int endRowIndexExclusive = -1)
         {
-            TraceWrite(new DataBatch[] { column }, new ColumnDetails[] { new ColumnDetails(columnName, typeof(String8), false) }, startRowIndexInclusive, endRowIndexExclusive);
+            TraceWrite(new DataBatch[] { column }, new ColumnDetails[] { new ColumnDetails(columnName, typeof(String8)) }, startRowIndexInclusive, endRowIndexExclusive);
         }
 
         /// <summary>

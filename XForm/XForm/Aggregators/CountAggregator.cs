@@ -33,7 +33,7 @@ namespace XForm.Aggregators
             _count = -1;
 
             _column = new List<ColumnDetails>();
-            _column.Add(new ColumnDetails("Count", typeof(int), false));
+            _column.Add(new ColumnDetails("Count", typeof(int)));
         }
 
         public IReadOnlyList<ColumnDetails> Columns => _column;
