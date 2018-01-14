@@ -248,31 +248,6 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         }
 
         /// <summary>
-        ///  Return the first index at which the passed string appears in this string.
-        /// </summary>
-        /// <param name="value">Value to find</param>
-        /// <param name="startIndex">First index at which to check</param>
-        /// <returns>Index of first occurrence of value or -1 if not found</returns>
-        public int IndexOf(String8 value, int startIndex = 0)
-        {
-            int length = value.Length;
-
-            int end = Index + Length - value.Length + 1;
-            for (int start = Index + startIndex; start < end; ++start)
-            {
-                int i = 0;
-                for (; i < length; ++i)
-                {
-                    if (Array[start + i] != value.Array[value.Index + i]) break;
-                }
-
-                if (i == length) return start - Index;
-            }
-
-            return -1;
-        }
-
-        /// <summary>
         ///  Return the first index at which the passed character appears in this string.
         /// </summary>
         /// <param name="c">Character to find</param>
@@ -1218,18 +1193,52 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             return left - right;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private bool IsAlphaNumeric(byte value)
+        {
+            return ((byte)(value - UTF8.a) < UTF8.AlphabetLength)
+                || ((byte)(value - UTF8.A) < UTF8.AlphabetLength)
+                || ((byte)(value - UTF8.Zero) < 10);
+        }
+
+        /// <summary>
+        ///  Return the first index at which the passed string appears in this string.
+        /// </summary>
+        /// <param name="value">Value to find</param>
+        /// <param name="startIndex">First index at which to check</param>
+        /// <returns>Index of first occurrence of value or -1 if not found</returns>
+        public int IndexOf(String8 value, int startIndex = 0)
+        {
+            int length = value.Length;
+
+            int end = Index + Length - value.Length + 1;
+            for (int start = Index + startIndex; start < end; ++start)
+            {
+                int i = 0;
+                for (; i < length; ++i)
+                {
+                    if (Array[start + i] != value.Array[value.Index + i]) break;
+                }
+
+                if (i == length) return start - Index;
+            }
+
+            return -1;
+        }
+
         /// <summary>
         ///  Return the index at which this string contains 'other' using case-insensitive comparison,
         ///  or -1 if it was not found.
         /// </summary>
         /// <param name="other">Value to find within this String</param>
+        /// <param name="startIndex">Index from which to search</param>
         /// <returns>Index of first instance of value in this String or -1 if not found</returns>
-        public int Contains(String8 other)
+        public int IndexOfOrdinalIgnoreCase(String8 other, int startIndex = 0)
         {
             int otherLength = other.Length;
             int end = this.Length - otherLength + 1;
 
-            for(int matchStart = 0; matchStart < end; ++matchStart)
+            for(int matchStart = startIndex; matchStart < end; ++matchStart)
             {
                 int i = 0;
                 for(; i < otherLength; ++i)
@@ -1244,6 +1253,60 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             
             // No matches found
             return -1;
+        }
+
+        /// <summary>
+        ///  Return the index at which this string contains 'other' using case-insensitive comparison,
+        ///  with non-alphanumeric character beforehand, or -1 if not found.
+        /// </summary>
+        /// <param name="other">Value to find within this String</param>
+        /// <param name="startIndex">Index from which to search</param>
+        /// <returns>Index of first instance of value in this String or -1 if not found</returns>
+        public int Contains(String8 other, int startIndex = 0)
+        {
+            while (true)
+            {
+                // Find the next occurrence of 'other'
+                int foundAtIndex = IndexOfOrdinalIgnoreCase(other, startIndex);
+
+                // If not found, there are no matches
+                if (foundAtIndex == -1) return -1;
+
+                // If there's a boundary right before and after, this is a match
+                int before = foundAtIndex - 1;
+                int after = foundAtIndex + other.Length;
+                if ((before < 0 || !IsAlphaNumeric(Array[Index + before]))) return foundAtIndex;
+
+                // Otherwise, keep looking
+                startIndex = foundAtIndex + 1;
+            }
+        }
+
+        /// <summary>
+        ///  Return the index at which this string contains 'other' using case-insensitive comparison,
+        ///  with non-alphanumeric surrounding characters, or -1 if not found.
+        /// </summary>
+        /// <param name="other">Value to find within this String</param>
+        /// <param name="startIndex">Index from which to search</param>
+        /// <returns>Index of first instance of value in this String or -1 if not found</returns>
+        public int ContainsExact(String8 other, int startIndex = 0)
+        {
+            while(true)
+            {
+                // Find the next occurrence of 'other'
+                int foundAtIndex = IndexOfOrdinalIgnoreCase(other, startIndex);
+
+                // If not found, there are no matches
+                if (foundAtIndex == -1) return -1;
+
+                // If there's a boundary right before and after, this is a match
+                int before = foundAtIndex - 1;
+                int after = foundAtIndex + other.Length;
+                if ((before < 0 || !IsAlphaNumeric(Array[Index + before])) && (after >= Length || !IsAlphaNumeric(Array[Index + after]))) return foundAtIndex;
+
+                // Otherwise, keep looking
+                startIndex = foundAtIndex + 1;
+            }
         }
         #endregion
 

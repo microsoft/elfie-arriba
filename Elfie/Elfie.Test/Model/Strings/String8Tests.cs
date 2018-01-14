@@ -166,20 +166,34 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
         }
 
         [TestMethod]
-        public void String8_Contains()
+        public void String8_ContainsVariants()
         {
-            Assert.AreEqual(0, "".TestConvert().Contains("".TestConvert()), "Empty always contains empty");
-            Assert.AreEqual(1, "Simple".TestConvert().Contains("imp".TestConvert()), "Case sensitive match");
-            Assert.AreEqual(1, "Simple".TestConvert().Contains("IMP".TestConvert()), "Case insensitive matching");
-            Assert.AreEqual(-1, "Simple".TestConvert().Contains("imz".TestConvert()), "Non-match in last character only");
-            Assert.AreEqual(0, "Simple".TestConvert().Contains("sim".TestConvert()), "Match at start, case insensitive");
-            Assert.AreEqual(0, "Simple".TestConvert().Contains("simple".TestConvert()), "Full match, case insensitive");
-            Assert.AreEqual(-1, "Simple".TestConvert().Contains("simpler".TestConvert()), "Non-match because too long");
-            Assert.AreEqual(5, "Simple".TestConvert().Contains("e".TestConvert()), "Match at last character only");
-            Assert.AreEqual(4, "Simple".TestConvert().Contains("le".TestConvert()), "Match at end");
-            Assert.AreEqual(-1, "Simple".TestConvert().Contains("er".TestConvert()), "Non-match trailing off end");
-            Assert.AreEqual(3, "bananas".TestConvert().Contains("anas".TestConvert()), "Overlapping match");
+            Assert.AreEqual(0, "".TestConvert().IndexOfOrdinalIgnoreCase("".TestConvert()), "Empty always contains empty");
+            Assert.AreEqual(1, "Simple".TestConvert().IndexOfOrdinalIgnoreCase("imp".TestConvert()), "Case sensitive match");
+            Assert.AreEqual(1, "Simple".TestConvert().IndexOfOrdinalIgnoreCase("IMP".TestConvert()), "Case insensitive matching");
+            Assert.AreEqual(-1, "Simple".TestConvert().IndexOfOrdinalIgnoreCase("imz".TestConvert()), "Non-match in last character only");
+            Assert.AreEqual(0, "Simple".TestConvert().IndexOfOrdinalIgnoreCase("sim".TestConvert()), "Match at start, case insensitive");
+            Assert.AreEqual(0, "Simple".TestConvert().IndexOfOrdinalIgnoreCase("simple".TestConvert()), "Full match, case insensitive");
+            Assert.AreEqual(-1, "Simple".TestConvert().IndexOfOrdinalIgnoreCase("simpler".TestConvert()), "Non-match because too long");
+            Assert.AreEqual(5, "Simple".TestConvert().IndexOfOrdinalIgnoreCase("e".TestConvert()), "Match at last character only");
+            Assert.AreEqual(4, "Simple".TestConvert().IndexOfOrdinalIgnoreCase("le".TestConvert()), "Match at end");
+            Assert.AreEqual(-1, "Simple".TestConvert().IndexOfOrdinalIgnoreCase("er".TestConvert()), "Non-match trailing off end");
+            Assert.AreEqual(3, "bananas".TestConvert().IndexOfOrdinalIgnoreCase("anas".TestConvert()), "Overlapping match");
 
+            Assert.AreEqual(0, "Simple things to match".TestConvert().Contains("simp".TestConvert()), "Match at beginning of string");
+            Assert.AreEqual(7, "Simple things to match".TestConvert().Contains("thin".TestConvert()), "Match at beginning of word");
+            Assert.AreEqual(-1, "Simple things to match".TestConvert().Contains("imp".TestConvert()), "Match, but not at word start");
+            Assert.AreEqual(17, "Simple things to match".TestConvert().Contains("m".TestConvert()), "Match after first attempt");
+            Assert.AreEqual(17, "Simple things to match".TestConvert().Contains("match".TestConvert()), "Match at end of string");
+            Assert.AreEqual(-1, "Simple things to match".TestConvert().Contains("matche".TestConvert()), "Match off end of string");
+
+            Assert.AreEqual(0, "Simple things to match".TestConvert().ContainsExact("simple".TestConvert()), "Match first word");
+            Assert.AreEqual(7, "Simple things to match".TestConvert().ContainsExact("things".TestConvert()), "Match middle word");
+            Assert.AreEqual(17, "Simple things to match".TestConvert().ContainsExact("match".TestConvert()), "Match last word");
+            Assert.AreEqual(-1, "Simple things to match".TestConvert().ContainsExact("Simpl".TestConvert()), "Non-full-word match (not start)");
+            Assert.AreEqual(-1, "Simple things to match".TestConvert().ContainsExact("imple".TestConvert()), "Non-full-word match (not end)");
+            Assert.AreEqual(-1, "Simple things to match".TestConvert().ContainsExact("matc".TestConvert()), "Non-full-word match (not start)");
+            Assert.AreEqual(-1, "Simple things to match".TestConvert().ContainsExact("atch".TestConvert()), "Non-full-word match (not end)");
         }
 
         [TestMethod]
