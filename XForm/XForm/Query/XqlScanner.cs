@@ -297,5 +297,22 @@ namespace XForm.Query
 
             return false;
         }
+
+        public static string QueryToSingleLineStyle(string query)
+        {
+            StringBuilder result = new StringBuilder();
+
+            foreach (string line in query.Split('\n'))
+            {
+                string cleanLine = line.TrimEnd('\r').Trim();
+                if (!String.IsNullOrEmpty(cleanLine))
+                {
+                    if (result.Length > 0) result.Append(" | ");
+                    result.Append(cleanLine);
+                }
+            }
+
+            return result.ToString();
+        }
     }
 }

@@ -68,7 +68,7 @@ namespace XForm
                         new HttpService(context).Run();
                         return 0;
                     case "perf":
-                        new PerformanceComparisons().Run();
+                        new PerformanceComparisons(context).Run();
                         return 0;
                     default:
                         throw new UsageException($"Unknown XForm mode '{command}'.");

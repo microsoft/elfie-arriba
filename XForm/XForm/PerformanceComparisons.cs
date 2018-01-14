@@ -12,6 +12,8 @@ using XForm.Data;
 using XForm.Extensions;
 using XForm.Types;
 using XForm.Verbs;
+using XForm.Query;
+using System.Text;
 
 namespace XForm
 {
@@ -24,9 +26,9 @@ namespace XForm
         private ushort[] Values { get; set; }
         private ushort[] Thresholds { get; set; }
 
-        public PerformanceComparisons()
+        public PerformanceComparisons(WorkflowContext context)
         {
-            Context = new WorkflowContext();
+            Context = context;
             Random r = new Random();
             Count = 50 * 1000 * 1000;
 
@@ -43,14 +45,34 @@ namespace XForm
 
         public void Run()
         {
+            Current();
+
             //WhereUShortUnderConstant();
             //WhereUShortEqualsUshort();
             //ByteEqualsConstant();
             //DoubleWhere();
-            Join();
-            Dictionary();
+            //Join();
+            //Dictionary();
             //Choose();
             //TsvSplit();
+        }
+
+        public void Current()
+        {
+            string query = @"
+                read WebRequest
+                schema
+            ";
+
+            string singleLineQuery = XqlScanner.QueryToSingleLineStyle(query);
+
+            using (Benchmarker b = new Benchmarker(singleLineQuery, 10000))
+            {
+                b.Measure($"XForm", 1, () =>
+                {
+                    return XqlParser.Parse(query, null, Context).Count();
+                });
+            }
         }
 
         public void WhereUShortUnderConstant()
