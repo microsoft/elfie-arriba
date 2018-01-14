@@ -172,7 +172,7 @@ namespace XForm.IO
                 if (_columnSchemaToWrite.Count > 0)
                 {
                     // Write the schema for the table to create
-                    SchemaSerializer.Write(_workflowContext.StreamProvider, _tableRootPath, _columnSchemaToWrite);
+                    TableMetadataSerializer.Write(_workflowContext.StreamProvider, _tableRootPath, _columnSchemaToWrite);
 
                     // Write the query for the table
                     _workflowContext.StreamProvider.WriteAllText(Path.Combine(_tableRootPath, "Config.xql"), _queryToWrite);

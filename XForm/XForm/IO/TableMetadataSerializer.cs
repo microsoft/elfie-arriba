@@ -13,7 +13,7 @@ using XForm.Types;
 
 namespace XForm.IO
 {
-    public static class SchemaSerializer
+    public static class TableMetadataSerializer
     {
         private const string SchemaFileName = "Schema.csv";
 

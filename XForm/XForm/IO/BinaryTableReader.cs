@@ -32,7 +32,7 @@ namespace XForm.IO
             TablePath = tableRootPath;
             Query = streamProvider.ReadAllText(Path.Combine(tableRootPath, ConfigQueryPath));
 
-            _columns = SchemaSerializer.Read(streamProvider, TablePath);
+            _columns = TableMetadataSerializer.Read(streamProvider, TablePath);
             _readers = new IColumnReader[_columns.Count];
             Reset();
         }
