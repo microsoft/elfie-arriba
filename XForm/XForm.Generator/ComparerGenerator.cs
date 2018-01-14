@@ -171,7 +171,9 @@ namespace XForm.Types.Comparers
                 // Differences for String8Comparer
                 if (typeName == "String8")
                 {
-                    prefix = prefix.Replace("using System;", "using System;\r\n\r\nusing Microsoft.CodeAnalysis.Elfie.Model.Strings;");
+                    prefix = prefix
+                        .Replace("using System;", "using System;\r\n\r\nusing Microsoft.CodeAnalysis.Elfie.Model.Strings;")
+                        .Replace("IDataBatchComparer<String8>", "IDataBatchTextComparer, IDataBatchComparer<String8>");
                 }
 
                 writer.Write(prefix);
@@ -182,6 +184,13 @@ namespace XForm.Types.Comparers
                 WriteMethod(writer, typeName, "LessThanOrEqual", "<=");
                 WriteMethod(writer, typeName, "GreaterThan", ">");
                 WriteMethod(writer, typeName, "GreaterThanOrEqual", ">=");
+
+                if(typeName == "String8")
+                {
+                    WriteMethod(writer, typeName, "Contains", "");
+                    WriteMethod(writer, typeName, "ContainsExact", "");
+                    WriteMethod(writer, typeName, "StartsWith", "");
+                }
 
                 writer.Write(s_fileSuffix);
             }
@@ -197,7 +206,27 @@ namespace XForm.Types.Comparers
                     .Replace("long", typeName)
                     .Replace("Equal", operatorName);
 
-                methodBody = Regex.Replace(methodBody, " == (?<right>(rightValue|rightArray\\[[^\\]]+\\]|right))", ".CompareTo(${right}) " + operatorCode + " 0");
+                string replacement = ".CompareTo(${right}) " + operatorCode + " 0";
+                if(operatorCode == "")
+                {
+                    switch(operatorName)
+                    {
+                        case "Contains":
+                            replacement = ".Contains(${right}) != -1";
+                            break;
+                        case "ContainsExact":
+                            replacement = ".Contains(${right}) != -1";
+                            break;
+                        case "StartsWith":
+                            replacement = ".StartsWith(${right}, true)";
+                            break;
+                        default:
+                            throw new NotImplementedException();
+
+                    }
+                }
+
+                methodBody = Regex.Replace(methodBody, " == (?<right>(rightValue|rightArray\\[[^\\]]+\\]|right))", replacement);
             }
             else
             {
