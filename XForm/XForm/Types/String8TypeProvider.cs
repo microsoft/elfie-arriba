@@ -130,6 +130,9 @@ namespace XForm.Types
         private ByteReader _bytesReader;
         private PrimitiveArrayReader<int> _positionsReader;
 
+        private DataBatch _currentBatch;
+        private ArraySelector _currentSelector;
+
         private String8[] _resultArray;
 
         public String8ColumnReader(IStreamProvider streamProvider, string columnPath)
@@ -145,6 +148,9 @@ namespace XForm.Types
         {
             if (selector.Indices != null) throw new NotImplementedException();
             if (selector.Count == 0) return DataBatch.All(_resultArray, 0);
+
+            // Return previous batch if re-requested
+            if (selector.Equals(_currentSelector)) return _currentBatch;
 
             // Read the end of the previous string
             int start;
@@ -177,7 +183,10 @@ namespace XForm.Types
                 previousStringEnd = valueEnd;
             }
 
-            return DataBatch.All(_resultArray, selector.Count);
+            // Cache the batch and return it
+            _currentBatch = DataBatch.All(_resultArray, selector.Count);
+            _currentSelector = selector;
+            return _currentBatch;
         }
 
         public void Dispose()

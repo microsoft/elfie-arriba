@@ -90,6 +90,9 @@ namespace XForm.Types
         private ByteReader _byteReader;
         private T[] _array;
 
+        private DataBatch _currentBatch;
+        private ArraySelector _currentSelector;
+
         public PrimitiveArrayReader(Stream stream)
         {
             _byteReader = new ByteReader(stream);
@@ -101,6 +104,9 @@ namespace XForm.Types
         public DataBatch Read(ArraySelector selector)
         {
             if (selector.Indices != null) throw new NotImplementedException();
+
+            // Return the previous batch if re-requested
+            if (selector.Equals(_currentSelector)) return _currentBatch;
 
             // Allocate the result array
             Allocator.AllocateToSize(ref _array, selector.Count);
@@ -117,7 +123,10 @@ namespace XForm.Types
                 bytesRead += currentByteEnd - currentByteIndex;
             }
 
-            return DataBatch.All(_array, selector.Count);
+            // Cache and return the current batch
+            _currentBatch = DataBatch.All(_array, selector.Count);
+            _currentSelector = selector;
+            return _currentBatch;
         }
 
         public void Dispose()

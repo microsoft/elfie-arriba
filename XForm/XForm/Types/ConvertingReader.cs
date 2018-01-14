@@ -18,6 +18,9 @@ namespace XForm.Types
         private IColumnReader _innerReader;
         private Func<DataBatch, DataBatch> _converter;
 
+        private DataBatch _currentBatch;
+        private ArraySelector _currentSelector;
+
         public ConvertingReader(IColumnReader innerReader, Func<DataBatch, DataBatch> converter)
         {
             _innerReader = innerReader;
@@ -37,7 +40,11 @@ namespace XForm.Types
 
         public DataBatch Read(ArraySelector selector)
         {
-            return _converter(_innerReader.Read(selector));
+            if (selector.Equals(_currentSelector)) return _currentBatch;
+
+            _currentBatch = _converter(_innerReader.Read(selector));
+            _currentSelector = selector;
+            return _currentBatch;
         }
     }
 }

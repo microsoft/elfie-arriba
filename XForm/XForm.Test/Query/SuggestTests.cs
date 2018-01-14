@@ -50,7 +50,7 @@ namespace XForm.Test.Query
             Assert.AreEqual(s_verbs, Values(suggester.Suggest($"read WebRequest\r\n ")));
 
             // CompareOperator
-            Assert.AreEqual("!=|<|<=|<>|=|==|>|>=", Values(suggester.Suggest($@"
+            Assert.AreEqual("!=|:|::||>|<|<=|<>|=|==|>|>=", Values(suggester.Suggest($@"
                 read WebRequest
                 where [HttpStatus] !")));
 

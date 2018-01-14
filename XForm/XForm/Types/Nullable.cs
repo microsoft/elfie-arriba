@@ -107,6 +107,9 @@ namespace XForm.Types
         private IColumnReader _valueReader;
         private PrimitiveArrayReader<bool> _nullReader;
 
+        private DataBatch _currentBatch;
+        private ArraySelector _currentSelector;
+
         public NullableReader(IStreamProvider streamProvider, string columnPath, IColumnReader valueReader)
         {
             _streamProvider = streamProvider;
@@ -121,6 +124,9 @@ namespace XForm.Types
 
         public DataBatch Read(ArraySelector selector)
         {
+            // Return the cached batch if re-requested
+            if (selector.Equals(_currentSelector)) return _currentBatch;
+
             // Read the values themselves
             DataBatch values = _valueReader.Read(selector);
 
@@ -130,8 +136,10 @@ namespace XForm.Types
             // Otherwise, read the null markers
             DataBatch nulls = _nullReader.Read(selector);
 
-            // Return the values and null markers together
-            return DataBatch.All(values.Array, -1, (bool[])nulls.Array).Reselect(values.Selector);
+            // Cache and return the values and null markers together
+            _currentBatch = DataBatch.All(values.Array, -1, (bool[])nulls.Array).Reselect(values.Selector);
+            _currentSelector = selector;
+            return _currentBatch;
         }
 
         public void Dispose()
