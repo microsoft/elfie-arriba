@@ -171,8 +171,8 @@ namespace XForm.IO
                 // Write the schema and query only if the table was valid
                 if (_columnSchemaToWrite.Count > 0)
                 {
-                    // Write the schema for the table to create
-                    TableMetadataSerializer.Write(_workflowContext.StreamProvider, _tableRootPath, _columnSchemaToWrite);
+                    // Write table metadata for the completed table
+                    TableMetadataSerializer.Write(_workflowContext.StreamProvider, _tableRootPath, new TableMetadata(_rowCountWritten, _columnSchemaToWrite));
 
                     // Write the query for the table
                     _workflowContext.StreamProvider.WriteAllText(Path.Combine(_tableRootPath, "Config.xql"), _queryToWrite);
