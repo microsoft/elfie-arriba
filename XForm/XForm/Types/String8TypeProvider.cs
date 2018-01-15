@@ -160,12 +160,14 @@ namespace XForm.Types
             }
             else
             {
-                start = ((int[])_positionsReader.Read(ArraySelector.All(Count).Slice(selector.StartIndexInclusive - 1, selector.StartIndexInclusive)).Array)[0];
+                DataBatch first = _positionsReader.Read(ArraySelector.All(Count).Slice(selector.StartIndexInclusive - 1, selector.StartIndexInclusive));
+                start = ((int[])first.Array)[first.Index(0)];
             }
 
             // Read the ends of this batch
-            int[] positions = (int[])_positionsReader.Read(selector).Array;
-            int end = positions[selector.Count - 1];
+            DataBatch positionBatch = _positionsReader.Read(selector);
+            int[] positions = (int[])positionBatch.Array;
+            int end = positions[positionBatch.Index(selector.Count - 1)];
             int lengthToRead = end - start;
 
             Allocator.AllocateToSize(ref _resultArray, selector.Count);
@@ -175,11 +177,11 @@ namespace XForm.Types
             byte[] textArray = (byte[])textBytes.Array;
 
             // Update the String8 array to point to them
-            int previousStringEnd = start;
+            int previousStringEnd = textBytes.Index(0);
             for (int i = 0; i < selector.Count; ++i)
             {
-                int valueEnd = positions[i];
-                _resultArray[i] = new String8(textArray, previousStringEnd - start, valueEnd - previousStringEnd);
+                int valueEnd = positions[positionBatch.Index(i)] - start;
+                _resultArray[i] = new String8(textArray, previousStringEnd, valueEnd - previousStringEnd);
                 previousStringEnd = valueEnd;
             }
 
