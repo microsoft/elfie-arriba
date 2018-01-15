@@ -56,7 +56,7 @@ namespace XForm
         public T GetOrBuild(string key, Func<DateTime> getWhenModifiedUtc, Func<T> build)
         {
             DateTime now = DateTime.UtcNow;
-            DateTime liveWhenModifiedUtc;
+            DateTime liveWhenModifiedUtc = now;
 
             CacheEntry<T> entry;
             if (_cache.TryGetValue(key, out entry))
@@ -65,18 +65,24 @@ namespace XForm
                 if ((now - entry.WhenCachedUtc) < _expireAfter) return entry.Value;
 
                 // Otherwise, check if the item has changed
-                liveWhenModifiedUtc = getWhenModifiedUtc();
-
-                // If not, mark the entry fresh and return it again
-                if (liveWhenModifiedUtc <= entry.WhenModifiedUtc)
+                if (getWhenModifiedUtc != null)
                 {
-                    entry.WhenCachedUtc = now;
-                    return entry.Value;
+                    liveWhenModifiedUtc = getWhenModifiedUtc();
+
+                    // If not, mark the entry fresh and return it again
+                    if (liveWhenModifiedUtc <= entry.WhenModifiedUtc)
+                    {
+                        entry.WhenCachedUtc = now;
+                        return entry.Value;
+                    }
                 }
             }
             else
             {
-                liveWhenModifiedUtc = getWhenModifiedUtc();
+                if (getWhenModifiedUtc != null)
+                {
+                    liveWhenModifiedUtc = getWhenModifiedUtc();
+                }
             }
 
             // Otherwise, rebuild and return
