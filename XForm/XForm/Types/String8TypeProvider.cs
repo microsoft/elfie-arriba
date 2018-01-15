@@ -127,8 +127,8 @@ namespace XForm.Types
     internal class String8ColumnReader : IColumnReader
     {
         private IStreamProvider _streamProvider;
-        private ByteReader _bytesReader;
-        private PrimitiveArrayReader<int> _positionsReader;
+        private IColumnReader _bytesReader;
+        private IColumnReader _positionsReader;
 
         private DataBatch _currentBatch;
         private ArraySelector _currentSelector;
@@ -138,8 +138,8 @@ namespace XForm.Types
         public String8ColumnReader(IStreamProvider streamProvider, string columnPath)
         {
             _streamProvider = streamProvider;
-            _bytesReader = new ByteReader(streamProvider.OpenRead(Path.Combine(columnPath, "V.s.bin")));
-            _positionsReader = new PrimitiveArrayReader<int>(streamProvider.OpenRead(Path.Combine(columnPath, "Vp.i32.bin")));
+            _bytesReader = TypeProviderFactory.Get(typeof(byte)).BinaryReader(streamProvider, Path.Combine(columnPath, "V.s.bin"));
+            _positionsReader = TypeProviderFactory.Get(typeof(int)).BinaryReader(streamProvider, Path.Combine(columnPath, "Vp.i32.bin"));
         }
 
         public int Count => _positionsReader.Count;
