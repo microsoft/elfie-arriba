@@ -90,12 +90,12 @@ namespace XForm.IO.StreamProvider
 
         private StreamAttributes Convert(FileInfo info)
         {
-            return new StreamAttributes() { Exists = true, Path = info.FullName.Substring(RootPath.Length + 1), Length = info.Length, WhenModifiedUtc = info.LastWriteTimeUtc };
+            return new StreamAttributes() { Exists = true, Type = EnumerateTypes.Folder, Path = info.FullName.Substring(RootPath.Length + 1), Length = info.Length, WhenModifiedUtc = info.LastWriteTimeUtc };
         }
 
         private StreamAttributes Convert(DirectoryInfo info)
         {
-            return new StreamAttributes() { Exists = true, Path = info.FullName.Substring(RootPath.Length + 1), Length = 0, WhenModifiedUtc = info.LastWriteTimeUtc };
+            return new StreamAttributes() { Exists = true, Type = EnumerateTypes.Folder, Path = info.FullName.Substring(RootPath.Length + 1), Length = 0, WhenModifiedUtc = info.LastWriteTimeUtc };
         }
 
         private string PathCombineSandbox(string logicalPath)
