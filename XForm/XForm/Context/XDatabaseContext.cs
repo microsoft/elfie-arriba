@@ -4,6 +4,7 @@
 using System;
 
 using XForm.Context;
+using XForm.Data;
 using XForm.Extensions;
 using XForm.IO;
 using XForm.IO.StreamProvider;
@@ -16,7 +17,7 @@ namespace XForm
     ///  how XForm runs. These implement different Database Model rules, different source locations,
     ///  different logging, and so on.
     /// </summary>
-    public class WorkflowContext
+    public class XDatabaseContext
     {
         /// <summary>
         ///  IWorkflowRunner implements 'Build(sourceName)' which knows how to build a table with a given name.
@@ -71,7 +72,7 @@ namespace XForm
         /// </summary>
         public bool RebuiltSomething { get; set; }
 
-        public WorkflowContext()
+        public XDatabaseContext()
         {
             this.RequestedAsOfDateTime = DateTime.UtcNow;
             this.NewestDependency = DateTime.MinValue;
@@ -81,13 +82,13 @@ namespace XForm
             this.Runner = new SingleFileRunner();
         }
 
-        public WorkflowContext(IWorkflowRunner runner, IStreamProvider streamProvider) : this()
+        public XDatabaseContext(IWorkflowRunner runner, IStreamProvider streamProvider) : this()
         {
             this.Runner = runner;
             this.StreamProvider = streamProvider;
         }
 
-        public WorkflowContext(WorkflowContext copyFrom) : this()
+        public XDatabaseContext(XDatabaseContext copyFrom) : this()
         {
             if (copyFrom != null)
             {
@@ -101,18 +102,60 @@ namespace XForm
             }
         }
 
-        public static WorkflowContext Push(WorkflowContext outer)
+        public static XDatabaseContext Push(XDatabaseContext outer)
         {
-            return new WorkflowContext(outer);
+            return new XDatabaseContext(outer);
         }
 
-        public void Pop(WorkflowContext outer)
+        public void Pop(XDatabaseContext outer)
         {
             if (outer != null)
             {
                 outer.NewestDependency = outer.NewestDependency.BiggestOf(this.NewestDependency);
                 outer.RebuiltSomething |= this.RebuiltSomething;
             }
+        }
+
+        /// <summary>
+        ///  Build an XForm Table wrapping in-memory arrays with all rows available.
+        /// </summary>
+        /// <example>
+        ///  int[] id = Enumerable.Range(0, 1024).ToArray();
+        ///  int[] score = ...
+        ///  
+        ///  WorkflowContext context = new WorkflowContext();
+        ///  TableTestHarness.DatabaseContext.FromArrays(1024)
+        ///     .WithColumn("ID", id)
+        ///     .WithColumn("Score", score)
+        ///     .Query("where [Score] > 90", context)
+        ///     .Count();
+        /// </example>
+        /// <param name="totalCount"></param>
+        /// <returns></returns>
+        public ArrayTable FromArrays(int totalCount)
+        {
+            return new ArrayTable(totalCount);
+        }
+
+        /// <summary>
+        ///  Read a binary format table from disk and return it.
+        /// </summary>
+        /// <param name="tableName">Table Name to load</param>
+        /// <param name="context">WorkflowContext with where to load from, as-of-date of version to load, and other context</param>
+        /// <returns>IDataBatchEnumerator of table</returns>
+        public IDataBatchEnumerator Load(string tableName)
+        {
+            return new BinaryTableReader(this.StreamProvider, this.StreamProvider.LatestBeforeCutoff(LocationType.Table, tableName, CrawlType.Full, this.RequestedAsOfDateTime).Path);
+        }
+
+        /// <summary>
+        ///  Build a table for a query result to evaluate.
+        /// </summary>
+        /// <param name="xqlQuery">XQL Query to execute</param>
+        /// <returns>IDataBatchEnumerator of query result</returns>
+        public IDataBatchEnumerator Query(string xqlQuery)
+        {
+            return XqlParser.Parse(xqlQuery, null, this);
         }
     }
 }

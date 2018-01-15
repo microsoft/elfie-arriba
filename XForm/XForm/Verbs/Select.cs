@@ -15,7 +15,7 @@ namespace XForm.Verbs
         public string Verb => "select";
         public string Usage => "'select' [Column|Function|Literal] (AS [Name])?, ...";
 
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)
+        public IDataBatchEnumerator Build(IDataBatchEnumerator source, XDatabaseContext context)
         {
             List<IDataBatchColumn> columns = new List<IDataBatchColumn>();
             do

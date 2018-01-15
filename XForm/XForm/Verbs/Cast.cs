@@ -17,7 +17,7 @@ namespace XForm.Verbs
         public string Usage => "'cast' [ColumnName] [ToType] [ErrorOn?] [DefaultValue?] [ChangeToDefaultOn?]";
         private CastBuilder _castFunctionBuilder = new CastBuilder();
 
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)
+        public IDataBatchEnumerator Build(IDataBatchEnumerator source, XDatabaseContext context)
         {
             return new Cast(source, _castFunctionBuilder.Build(source, context));
         }

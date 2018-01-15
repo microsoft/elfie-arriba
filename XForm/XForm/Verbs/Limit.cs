@@ -11,7 +11,7 @@ namespace XForm.Verbs
         public string Verb => "limit";
         public string Usage => "'limit' [RowCount]";
 
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)
+        public IDataBatchEnumerator Build(IDataBatchEnumerator source, XDatabaseContext context)
         {
             int limit = context.Parser.NextInteger();
             return new Limit(source, limit);

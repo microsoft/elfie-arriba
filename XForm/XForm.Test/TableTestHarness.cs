@@ -20,14 +20,14 @@ namespace XForm.Test
     /// </summary>
     public static class TableTestHarness
     {
-        private static WorkflowContext s_WorkflowContext;
+        private static XDatabaseContext s_DatabaseContext;
 
-        public static WorkflowContext WorkflowContext
+        public static XDatabaseContext DatabaseContext
         {
             get
             {
-                if (s_WorkflowContext == null) s_WorkflowContext = new WorkflowContext();
-                return s_WorkflowContext;
+                if (s_DatabaseContext == null) s_DatabaseContext = new XDatabaseContext();
+                return s_DatabaseContext;
             }
         }
 

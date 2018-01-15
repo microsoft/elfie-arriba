@@ -46,25 +46,25 @@ namespace XForm.Test.Query
 
             // Build a table with padded nulls to join from (so we see nulls are also filtered out)
             DataBatch joinFromBatch = TableTestHarness.Nulls(DataBatch.All(joinFrom));
-            IDataBatchEnumerator joinFromTable = XFormTable.FromArrays(joinFromBatch.Count)
+            IDataBatchEnumerator joinFromTable = TableTestHarness.DatabaseContext.FromArrays(joinFromBatch.Count)
                 .WithColumn(new ColumnDetails("ServerID", t), joinFromBatch);
 
             // Build the table to join to
-            IDataBatchEnumerator joinToTable = XFormTable.FromArrays(joinTo.Length)
+            IDataBatchEnumerator joinToTable = TableTestHarness.DatabaseContext.FromArrays(joinTo.Length)
                .WithColumn(new ColumnDetails("ID", t), DataBatch.All(joinTo));
 
             // Run the join - verify the expected values without padding are found
             IDataBatchEnumerator result = new Join(joinFromTable, "ServerID", joinToTable, "ID", "Server.");
             Func<DataBatch> serverID = result.ColumnGetter(result.Columns.IndexOfColumn("Server.ID"));
 
-            IDataBatchEnumerator expectedTable = XFormTable.FromArrays(expected.Length).WithColumn("Server.ID", expected);
+            IDataBatchEnumerator expectedTable = TableTestHarness.DatabaseContext.FromArrays(expected.Length).WithColumn("Server.ID", expected);
             TableTestHarness.AssertAreEqual(expectedTable, result, 2);
         }
 
         [TestMethod]
         public void Verb_Choose()
         {
-            WorkflowContext context = new WorkflowContext();
+            XDatabaseContext context = new XDatabaseContext();
             int[] rankPattern = new int[] { 2, 3, 1 };
 
             // Build three arrays
@@ -98,12 +98,12 @@ namespace XForm.Test.Query
                 expectedValues[i] = 3 * i + 1;
             }
 
-            IDataBatchEnumerator expected = XFormTable.FromArrays(distinctCount)
+            IDataBatchEnumerator expected = TableTestHarness.DatabaseContext.FromArrays(distinctCount)
                 .WithColumn("ID", expectedIds)
                 .WithColumn("Rank", expectedRanks)
                 .WithColumn("Value", expectedValues);
 
-            IDataBatchEnumerator actual = XFormTable.FromArrays(length)
+            IDataBatchEnumerator actual = TableTestHarness.DatabaseContext.FromArrays(length)
                 .WithColumn("ID", id)
                 .WithColumn("Rank", rank)
                 .WithColumn("Value", value);

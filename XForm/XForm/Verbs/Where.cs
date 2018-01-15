@@ -15,7 +15,7 @@ namespace XForm.Verbs
         public string Verb => "where";
         public string Usage => "'where' [Expression]";
 
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)
+        public IDataBatchEnumerator Build(IDataBatchEnumerator source, XDatabaseContext context)
         {
             return new Where(source, context.Parser.NextExpression(source, context));
         }

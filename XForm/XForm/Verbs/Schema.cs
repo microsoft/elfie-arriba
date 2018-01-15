@@ -15,7 +15,7 @@ namespace XForm.Verbs
         public string Verb => "schema";
         public string Usage => "'schema'";
 
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)
+        public IDataBatchEnumerator Build(IDataBatchEnumerator source, XDatabaseContext context)
         {
             return new SchemaTransformer(source);
         }

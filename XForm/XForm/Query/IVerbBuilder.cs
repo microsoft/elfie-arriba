@@ -23,6 +23,6 @@ namespace XForm.Query
         /// <param name="source">IDataSourceEnumerator so far in this pipeline</param>
         /// <param name="context">WorkflowContext to read arguments, get logger, and so on</param>
         /// <returns>IDataSourceEnumerator for the new stage</returns>
-        IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context);
+        IDataBatchEnumerator Build(IDataBatchEnumerator source, XDatabaseContext context);
     }
 }

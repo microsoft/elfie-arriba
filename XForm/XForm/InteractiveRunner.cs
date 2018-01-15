@@ -20,14 +20,14 @@ namespace XForm
     public class InteractiveRunner : IWorkflowRunner
     {
         private static string s_commandCachePath;
-        private WorkflowContext _workflowContext;
+        private XDatabaseContext _workflowContext;
         private IDataBatchEnumerator _pipeline;
         private List<IDataBatchEnumerator> _stages;
         private List<string> _commands;
 
         public IEnumerable<string> SourceNames => _workflowContext.Runner.SourceNames;
 
-        public IDataBatchEnumerator Build(string sourceName, WorkflowContext context)
+        public IDataBatchEnumerator Build(string sourceName, XDatabaseContext context)
         {
             return _workflowContext.Runner.Build(sourceName, context);
         }
@@ -37,7 +37,7 @@ namespace XForm
             _workflowContext.Runner.Save(query, saveToPath);
         }
 
-        public InteractiveRunner(WorkflowContext context)
+        public InteractiveRunner(XDatabaseContext context)
         {
             s_commandCachePath = Environment.ExpandEnvironmentVariables(@"%TEMP%\XForm.Last.xql");
             _workflowContext = context;

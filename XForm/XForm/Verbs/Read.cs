@@ -17,7 +17,7 @@ namespace XForm.Verbs
         public string Verb => "read";
         public string Usage => "'read' [TableName]";
 
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)
+        public IDataBatchEnumerator Build(IDataBatchEnumerator source, XDatabaseContext context)
         {
             if (source != null) throw new ArgumentException($"'read' must be the first stage in a pipeline.");
             return context.Parser.NextTableSource();
@@ -29,7 +29,7 @@ namespace XForm.Verbs
         public string Verb => "readrange";
         public string Usage => "'readRange' [TimeSpanUpToAsOfDate] [TableName]";
 
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)
+        public IDataBatchEnumerator Build(IDataBatchEnumerator source, XDatabaseContext context)
         {
             if (source != null) throw new ArgumentException($"'read' must be the first stage in a pipeline.");
 
@@ -44,7 +44,7 @@ namespace XForm.Verbs
             foreach (StreamAttributes fullSource in context.StreamProvider.VersionsInRange(LocationType.Source, tableName, CrawlType.Full, rangeStart, context.RequestedAsOfDateTime))
             {
                 // Ask for the state just before this source
-                WorkflowContext historicalContext = new WorkflowContext(context);
+                XDatabaseContext historicalContext = new XDatabaseContext(context);
                 historicalContext.RequestedAsOfDateTime = fullSource.WhenModifiedUtc.AddSeconds(-1);
                 sources.Add(context.Runner.Build(tableName, historicalContext));
             }

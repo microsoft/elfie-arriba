@@ -32,7 +32,7 @@ namespace XForm.Extensions
         /// <param name="xqlQuery">XQL query to run</param>
         /// <param name="context">WorkflowContext for loading location, as-of-date, and other context</param>
         /// <returns>IDataBatchEnumerator of result</returns>
-        public static IDataBatchEnumerator Query(this IDataBatchEnumerator source, string xqlQuery, WorkflowContext context)
+        public static IDataBatchEnumerator Query(this IDataBatchEnumerator source, string xqlQuery, XDatabaseContext context)
         {
             return XqlParser.Parse(xqlQuery, source, context);
         }
@@ -185,7 +185,7 @@ namespace XForm.Extensions
         /// <param name="context">WorkflowContext for location to save to, as-of-date of result, and other context</param>
         /// <param name="batchSize">Number of rows to process in each iteration</param>
         /// <returns>Row Count Written</returns>
-        public static long Save(this IDataBatchEnumerator source, string tableName, WorkflowContext context, int batchSize = DefaultBatchSize)
+        public static long Save(this IDataBatchEnumerator source, string tableName, XDatabaseContext context, int batchSize = DefaultBatchSize)
         {
             string tableRootPath = context.StreamProvider.Path(LocationType.Table, tableName, CrawlType.Full, context.RequestedAsOfDateTime);
             return new BinaryTableWriter(source, context, tableRootPath).RunAndDispose();

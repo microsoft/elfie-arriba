@@ -20,7 +20,7 @@ namespace XForm.IO
         public string Verb => "write";
         public string Usage => "'write' [tableNameOrFilePath]";
 
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)
+        public IDataBatchEnumerator Build(IDataBatchEnumerator source, XDatabaseContext context)
         {
             string filePath = context.Parser.NextOutputTableName();
             if (filePath.StartsWith("Table\\", StringComparison.OrdinalIgnoreCase) || filePath.EndsWith(".xform", StringComparison.OrdinalIgnoreCase))
@@ -36,7 +36,7 @@ namespace XForm.IO
 
     public class BinaryTableWriter : DataBatchEnumeratorWrapper
     {
-        private WorkflowContext _workflowContext;
+        private XDatabaseContext _workflowContext;
         private string _tableRootPath;
 
         private Func<DataBatch>[] _innerGetters;
@@ -48,7 +48,7 @@ namespace XForm.IO
         private string _queryToWrite;
         private int _rowCountWritten;
 
-        public BinaryTableWriter(IDataBatchEnumerator source, WorkflowContext workflowContext, string tableRootPath) : base(source)
+        public BinaryTableWriter(IDataBatchEnumerator source, XDatabaseContext workflowContext, string tableRootPath) : base(source)
         {
             _workflowContext = workflowContext;
             _tableRootPath = tableRootPath;

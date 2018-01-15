@@ -16,7 +16,7 @@ namespace XForm.Verbs
         public string Verb => "remove";
         public string Usage => "'remove' [ColumnName], ...";
 
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)
+        public IDataBatchEnumerator Build(IDataBatchEnumerator source, XDatabaseContext context)
         {
             List<string> columnNames = new List<string>();
             while (context.Parser.HasAnotherPart)

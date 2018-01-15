@@ -17,7 +17,7 @@ namespace XForm.Verbs
         public string Verb => "choose";
         public string Usage => "'choose' [Max|Min] [RankColumn] [IdentityColumns]";
 
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)
+        public IDataBatchEnumerator Build(IDataBatchEnumerator source, XDatabaseContext context)
         {
             ChooseDirection direction = context.Parser.NextEnum<ChooseDirection>();
             IDataBatchColumn rankColumn = context.Parser.NextColumn(source, context);

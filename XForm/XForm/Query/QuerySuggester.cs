@@ -16,12 +16,12 @@ namespace XForm.Query
 
     public class QuerySuggester
     {
-        private WorkflowContext _workflowContext;
+        private XDatabaseContext _workflowContext;
 
-        public QuerySuggester(WorkflowContext workflowContext)
+        public QuerySuggester(XDatabaseContext workflowContext)
         {
             // *Copy* the WorkflowContext and replace the runner. Only supported on a real underlying WorkflowRunner
-            _workflowContext = new WorkflowContext(workflowContext);
+            _workflowContext = new XDatabaseContext(workflowContext);
             _workflowContext.Runner = new DeferredRunner((WorkflowRunner)_workflowContext.Runner);
         }
 
@@ -33,12 +33,12 @@ namespace XForm.Query
 
             try
             {
-                WorkflowContext context = _workflowContext;
+                XDatabaseContext context = _workflowContext;
 
                 // Reset the as of date if requested
                 if (asOfDate != default(DateTime) && asOfDate != _workflowContext.RequestedAsOfDateTime)
                 {
-                    context = new WorkflowContext(context) { RequestedAsOfDateTime = asOfDate };
+                    context = new XDatabaseContext(context) { RequestedAsOfDateTime = asOfDate };
                 }
 
                 // Parse the query as-is to see if it's valid

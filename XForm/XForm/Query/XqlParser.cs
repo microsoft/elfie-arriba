@@ -19,12 +19,12 @@ namespace XForm.Query
     public class XqlParser
     {
         private XqlScanner _scanner;
-        private WorkflowContext _workflow;
+        private XDatabaseContext _workflow;
         private Stack<IUsage> _currentlyBuilding;
 
         private static Dictionary<string, IVerbBuilder> s_pipelineStageBuildersByName;
 
-        public XqlParser(string xqlQuery, WorkflowContext workflow)
+        public XqlParser(string xqlQuery, XDatabaseContext workflow)
         {
             EnsureLoaded();
             _scanner = new XqlScanner(xqlQuery);
@@ -57,14 +57,14 @@ namespace XForm.Query
             s_pipelineStageBuildersByName[builder.Verb] = builder;
         }
 
-        public static IDataBatchEnumerator Parse(string xqlQuery, IDataBatchEnumerator source, WorkflowContext outerContext)
+        public static IDataBatchEnumerator Parse(string xqlQuery, IDataBatchEnumerator source, XDatabaseContext outerContext)
         {
             if (outerContext == null) throw new ArgumentNullException("outerContext");
             if (outerContext.StreamProvider == null) throw new ArgumentNullException("outerContext.StreamProvider");
             if (outerContext.Runner == null) throw new ArgumentNullException("outerContext.Runner");
 
             // Build an inner context to hold this copy of the parser
-            WorkflowContext innerContext = WorkflowContext.Push(outerContext);
+            XDatabaseContext innerContext = XDatabaseContext.Push(outerContext);
             XqlParser parser = new XqlParser(xqlQuery, innerContext);
             innerContext.CurrentQuery = xqlQuery;
             innerContext.Parser = parser;
@@ -180,7 +180,7 @@ namespace XForm.Query
             }
         }
 
-        public IDataBatchColumn NextColumn(IDataBatchEnumerator source, WorkflowContext context, Type requiredType = null)
+        public IDataBatchColumn NextColumn(IDataBatchEnumerator source, XDatabaseContext context, Type requiredType = null)
         {
             IDataBatchColumn result = null;
 
@@ -220,7 +220,7 @@ namespace XForm.Query
             return result;
         }
 
-        public IDataBatchColumn NextFunction(IDataBatchEnumerator source, WorkflowContext context, Type requiredType = null)
+        public IDataBatchColumn NextFunction(IDataBatchEnumerator source, XDatabaseContext context, Type requiredType = null)
         {
             string value = _scanner.Current.Value;
 
@@ -314,7 +314,7 @@ namespace XForm.Query
             return cOp;
         }
 
-        public IExpression NextExpression(IDataBatchEnumerator source, WorkflowContext context)
+        public IExpression NextExpression(IDataBatchEnumerator source, XDatabaseContext context)
         {
             List<IExpression> terms = new List<IExpression>();
 
@@ -338,7 +338,7 @@ namespace XForm.Query
             return new OrExpression(terms.ToArray());
         }
 
-        private IExpression NextAndExpression(IDataBatchEnumerator source, WorkflowContext context)
+        private IExpression NextAndExpression(IDataBatchEnumerator source, XDatabaseContext context)
         {
             List<IExpression> terms = new List<IExpression>();
 
@@ -372,7 +372,7 @@ namespace XForm.Query
             return new AndExpression(terms.ToArray());
         }
 
-        private IExpression NextTerm(IDataBatchEnumerator source, WorkflowContext context)
+        private IExpression NextTerm(IDataBatchEnumerator source, XDatabaseContext context)
         {
             IExpression term;
             bool negate = false;

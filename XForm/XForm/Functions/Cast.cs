@@ -14,7 +14,7 @@ namespace XForm.Functions
         public string Usage => "Cast([Column|Function|Literal], [ToType], [ErrorOn?], [DefaultValue?], [ChangeToDefaultOn?])";
         public Type ReturnType => null;
 
-        public IDataBatchColumn Build(IDataBatchEnumerator source, WorkflowContext context)
+        public IDataBatchColumn Build(IDataBatchEnumerator source, XDatabaseContext context)
         {
             // Column and ToType are required
             IDataBatchColumn column = context.Parser.NextColumn(source, context);

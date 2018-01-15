@@ -14,7 +14,7 @@ namespace XForm.Verbs
         public string Verb => "rename";
         public string Usage => "'rename' [ColumnName] [NewColumnName], ...";
 
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)
+        public IDataBatchEnumerator Build(IDataBatchEnumerator source, XDatabaseContext context)
         {
             Dictionary<string, string> columnNameMappings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             while (context.Parser.HasAnotherPart)

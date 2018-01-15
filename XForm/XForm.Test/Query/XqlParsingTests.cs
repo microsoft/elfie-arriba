@@ -21,7 +21,7 @@ namespace XForm.Test.Query
         [TestMethod]
         public void XqlParser_QueryParsing()
         {
-            WorkflowContext context = SampleDatabase.WorkflowContext;
+            XDatabaseContext context = SampleDatabase.WorkflowContext;
             IDataBatchEnumerator source = XqlParser.Parse(@"
                 read WebRequest
                 cast [ServerPort], Int32
@@ -80,7 +80,7 @@ namespace XForm.Test.Query
             Assert.AreEqual("[ServerName] = \"80\"", ParseExpression("[ServerName] = \"80\"", source, context).ToString());
         }
 
-        private static IExpression ParseExpression(string query, IDataBatchEnumerator source, WorkflowContext context)
+        private static IExpression ParseExpression(string query, IDataBatchEnumerator source, XDatabaseContext context)
         {
             XqlParser parser = new XqlParser(query, context);
             context.Parser = parser;
@@ -90,7 +90,7 @@ namespace XForm.Test.Query
         [TestMethod]
         public void XqlParser_QueryEvaluation()
         {
-            WorkflowContext context = SampleDatabase.WorkflowContext;
+            XDatabaseContext context = SampleDatabase.WorkflowContext;
             IDataBatchEnumerator source = XqlParser.Parse(@"
                 read WebRequest
                 cache all
@@ -115,7 +115,7 @@ namespace XForm.Test.Query
             Assert.AreEqual(22 + 95, RunAndCount("where [ServerPort] = 80 AND [ResponseBytes] > 1200 OR [ResponseBytes] < 900", source, context));
         }
 
-        private static int RunAndCount(string query, IDataBatchEnumerator source, WorkflowContext context)
+        private static int RunAndCount(string query, IDataBatchEnumerator source, XDatabaseContext context)
         {
             source.Reset();
             return (int)source.Query(query, context).RunWithoutDispose();

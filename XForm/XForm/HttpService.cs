@@ -17,11 +17,11 @@ namespace XForm
 {
     public class HttpService
     {
-        private WorkflowContext _workflowContext;
+        private XDatabaseContext _workflowContext;
         private QuerySuggester _suggester;
         private static String8 s_delimiter = String8.Convert(";", new byte[1]);
 
-        public HttpService(WorkflowContext workflowContext)
+        public HttpService(XDatabaseContext workflowContext)
         {
             _workflowContext = workflowContext;
             _suggester = new QuerySuggester(_workflowContext);
@@ -139,12 +139,12 @@ namespace XForm
 
             try
             {
-                WorkflowContext context = _workflowContext;
+                XDatabaseContext context = _workflowContext;
 
                 // Build for another moment in time if requested
                 if (asOfDate != _workflowContext.RequestedAsOfDateTime)
                 {
-                    context = new WorkflowContext(_workflowContext) { RequestedAsOfDateTime = asOfDate };
+                    context = new XDatabaseContext(_workflowContext) { RequestedAsOfDateTime = asOfDate };
                 }
 
                 // Build a Pipeline for the Query
@@ -178,12 +178,12 @@ namespace XForm
 
             try
             {
-                WorkflowContext context = _workflowContext;
+                XDatabaseContext context = _workflowContext;
 
                 // Build for another moment in time if requested
                 if (asOfDate != _workflowContext.RequestedAsOfDateTime)
                 {
-                    context = new WorkflowContext(_workflowContext) { RequestedAsOfDateTime = asOfDate };
+                    context = new XDatabaseContext(_workflowContext) { RequestedAsOfDateTime = asOfDate };
                 }
 
                 // Build a Pipeline for the Query

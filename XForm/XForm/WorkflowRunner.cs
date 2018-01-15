@@ -20,11 +20,11 @@ namespace XForm
 {
     public class WorkflowRunner : IWorkflowRunner
     {
-        private WorkflowContext WorkflowContext { get; set; }
+        private XDatabaseContext WorkflowContext { get; set; }
         private HashSet<string> Sources { get; set; }
         private DateTime SourcesCacheExpires { get; set; }
 
-        public WorkflowRunner(WorkflowContext context)
+        public WorkflowRunner(XDatabaseContext context)
         {
             this.WorkflowContext = context;
         }
@@ -46,15 +46,15 @@ namespace XForm
             }
         }
 
-        public IDataBatchEnumerator Build(string tableName, WorkflowContext outerContext)
+        public IDataBatchEnumerator Build(string tableName, XDatabaseContext outerContext)
         {
             return Build(tableName, outerContext, false);
         }
 
-        public IDataBatchEnumerator Build(string tableName, WorkflowContext outerContext, bool deferred)
+        public IDataBatchEnumerator Build(string tableName, XDatabaseContext outerContext, bool deferred)
         {
             // Create a context to track what we're building now
-            WorkflowContext innerContext = WorkflowContext.Push(outerContext);
+            XDatabaseContext innerContext = XDatabaseContext.Push(outerContext);
             innerContext.Runner = this;
             innerContext.CurrentTable = tableName;
 
@@ -126,7 +126,7 @@ namespace XForm
             return new BinaryTableReader(innerContext.StreamProvider, tablePath);
         }
 
-        public IDataBatchEnumerator ReadSource(string tableName, WorkflowContext context)
+        public IDataBatchEnumerator ReadSource(string tableName, XDatabaseContext context)
         {
             List<IDataBatchEnumerator> sources = new List<IDataBatchEnumerator>();
 
@@ -203,7 +203,7 @@ namespace XForm
 
         public IEnumerable<string> SourceNames => _inner.SourceNames;
 
-        public IDataBatchEnumerator Build(string tableName, WorkflowContext context)
+        public IDataBatchEnumerator Build(string tableName, XDatabaseContext context)
         {
             // Ask the workflow runner to defer computing dependencies now
             return _inner.Build(tableName, context, true);
@@ -217,7 +217,7 @@ namespace XForm
 
     public static class ReportWriter
     {
-        public static string Build(string tableName, WorkflowContext context, string outputFormat)
+        public static string Build(string tableName, XDatabaseContext context, string outputFormat)
         {
             IDataBatchEnumerator builder = null;
 

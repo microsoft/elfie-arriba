@@ -121,7 +121,6 @@
     <Compile Include="Core\BitVector.cs" />
     <Compile Include="Data\MemoryCacher.cs" />
     <Compile Include="Data\SinglePageEnumerator.cs" />
-    <Compile Include="Core\XFormTable.cs" />
     <Compile Include="Extensions\DataBatchEnumeratorExtensions.cs" />
     <Compile Include="Extensions\IComparableExtensions.cs" />
     <Compile Include="Core\InterfaceLoader.cs" />
@@ -201,7 +200,7 @@
     <Compile Include="Types\PrimitiveTypeProvider.cs" />
     <Compile Include="Types\String8TypeProvider.cs" />
     <Compile Include="Types\TypeProviderFactory.cs" />
-    <Compile Include="Context\WorkflowContext.cs" />
+    <Compile Include="Context\XDatabaseContext.cs" />
     <Compile Include="WorkflowRunner.cs" />
   </ItemGroup>
   <ItemGroup>

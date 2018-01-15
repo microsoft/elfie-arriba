@@ -24,16 +24,16 @@ namespace XForm.Test
     {
         private static object s_locker = new object();
         private static string s_RootPath;
-        private static WorkflowContext s_WorkflowContext;
+        private static XDatabaseContext s_WorkflowContext;
 
-        public static WorkflowContext WorkflowContext
+        public static XDatabaseContext WorkflowContext
         {
             get
             {
                 if (s_WorkflowContext != null) return s_WorkflowContext;
                 EnsureBuilt();
 
-                s_WorkflowContext = new WorkflowContext();
+                s_WorkflowContext = new XDatabaseContext();
                 s_WorkflowContext.StreamProvider = new LocalFileStreamProvider(s_RootPath);
                 s_WorkflowContext.Runner = new WorkflowRunner(s_WorkflowContext);
                 return s_WorkflowContext;
@@ -85,7 +85,7 @@ namespace XForm.Test
             Assert.IsTrue(Directory.Exists(expectedPath), $"XForm add didn't add to expected location {expectedPath}");
         }
 
-        public static void XForm(string xformCommand, int expectedExitCode = 0, WorkflowContext context = null)
+        public static void XForm(string xformCommand, int expectedExitCode = 0, XDatabaseContext context = null)
         {
             if (context == null)
             {
@@ -163,7 +163,7 @@ namespace XForm.Test
             SampleDatabase.EnsureBuilt();
 
             // Asking for 2d from 2017-12-04 should get 2017-12-03 and 2017-12-02 crawls
-            WorkflowContext historicalContext = new WorkflowContext(SampleDatabase.WorkflowContext) { RequestedAsOfDateTime = new DateTime(2017, 12, 04, 00, 00, 00, DateTimeKind.Utc) };
+            XDatabaseContext historicalContext = new XDatabaseContext(SampleDatabase.WorkflowContext) { RequestedAsOfDateTime = new DateTime(2017, 12, 04, 00, 00, 00, DateTimeKind.Utc) };
             Assert.AreEqual(2000, XqlParser.Parse("readRange 2d WebRequest", null, historicalContext).RunAndDispose());
 
             // Asking for 3d should get all three crawls
@@ -205,7 +205,7 @@ namespace XForm.Test
 
             IStreamProvider mainStreamProvider = SampleDatabase.WorkflowContext.StreamProvider;
 
-            WorkflowContext branchedContext = new WorkflowContext(SampleDatabase.WorkflowContext);
+            XDatabaseContext branchedContext = new XDatabaseContext(SampleDatabase.WorkflowContext);
             branchedContext.StreamProvider = new MultipleSourceStreamProvider(branchedStreamProvider, branchedContext.StreamProvider, MultipleSourceStreamConfiguration.LocalBranch);
             branchedContext.Runner = new WorkflowRunner(branchedContext);
 
@@ -242,7 +242,7 @@ namespace XForm.Test
         {
             SampleDatabase.EnsureBuilt();
 
-            WorkflowContext reportContext = new WorkflowContext(SampleDatabase.WorkflowContext);
+            XDatabaseContext reportContext = new XDatabaseContext(SampleDatabase.WorkflowContext);
 
             // Build WebServer as of 2017-11-25; should have 86 original rows, verify built copy cached
             reportContext.NewestDependency = DateTime.MinValue;

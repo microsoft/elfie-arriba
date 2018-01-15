@@ -156,7 +156,7 @@ namespace XForm
             }
             else
             {
-                return string.Format("{0:n3} / s", itemsPerSecond);
+                return string.Format("{0:n1} / s", itemsPerSecond);
             }
         }
 

@@ -81,8 +81,8 @@ namespace XForm.Test.Query
 
             // Convert to string and back to int
             TableTestHarness.AssertAreEqual(
-                XFormTable.FromArrays(values.Length).WithColumn("Value", values).Query($"select Cast(Cast(Cast([Value], String8), {type.Name}), Int32)", TableTestHarness.WorkflowContext),
-                XFormTable.FromArrays(values.Length).WithColumn("Value", values), 10);
+                TableTestHarness.DatabaseContext.FromArrays(values.Length).WithColumn("Value", values).Query($"select Cast(Cast(Cast([Value], String8), {type.Name}), Int32)", TableTestHarness.DatabaseContext),
+                TableTestHarness.DatabaseContext.FromArrays(values.Length).WithColumn("Value", values), 10);
         }
 
         [TestMethod]
@@ -165,10 +165,10 @@ namespace XForm.Test.Query
 
         public static void RunAndCompare(DataBatch input, string inputColumnName, DataBatch expected, string outputColumnName, string queryText)
         {
-            WorkflowContext context = new WorkflowContext();
+            XDatabaseContext context = new XDatabaseContext();
             context.RequestedAsOfDateTime = TestAsOfDateTime;
 
-            IDataBatchEnumerator query = XFormTable.FromArrays(input.Count)
+            IDataBatchEnumerator query = TableTestHarness.DatabaseContext.FromArrays(input.Count)
                 .WithColumn(new ColumnDetails(inputColumnName, input.Array.GetType().GetElementType()), input)
                 .Query(queryText, context);
 

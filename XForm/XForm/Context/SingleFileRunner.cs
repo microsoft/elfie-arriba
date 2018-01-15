@@ -18,7 +18,7 @@ namespace XForm.Context
     {
         public IEnumerable<string> SourceNames => Array.Empty<string>();
 
-        public IDataBatchEnumerator Build(string sourceName, WorkflowContext context)
+        public IDataBatchEnumerator Build(string sourceName, XDatabaseContext context)
         {
             if (sourceName.StartsWith("Table\\", StringComparison.OrdinalIgnoreCase) || sourceName.EndsWith(".xform", StringComparison.OrdinalIgnoreCase))
             {

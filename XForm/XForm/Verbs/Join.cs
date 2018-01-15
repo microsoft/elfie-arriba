@@ -17,7 +17,7 @@ namespace XForm.Verbs
         public string Verb => "join";
         public string Usage => "'join' [FromColumnName] [ToTable] [ToColumn] [ColumnPrefixForJoinedColumns]";
 
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)
+        public IDataBatchEnumerator Build(IDataBatchEnumerator source, XDatabaseContext context)
         {
             string sourceColumnName = context.Parser.NextColumnName(source);
             IDataBatchEnumerator joinToSource = context.Parser.NextTableSource();
