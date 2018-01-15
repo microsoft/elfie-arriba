@@ -20,13 +20,13 @@ namespace XForm
 {
     public class WorkflowRunner : IWorkflowRunner
     {
-        private XDatabaseContext WorkflowContext { get; set; }
+        private XDatabaseContext XDatabaseContext { get; set; }
         private HashSet<string> Sources { get; set; }
         private DateTime SourcesCacheExpires { get; set; }
 
         public WorkflowRunner(XDatabaseContext context)
         {
-            this.WorkflowContext = context;
+            this.XDatabaseContext = context;
         }
 
         public IEnumerable<string> SourceNames
@@ -36,8 +36,8 @@ namespace XForm
                 DateTime now = DateTime.UtcNow;
                 if (Sources == null || now > SourcesCacheExpires)
                 {
-                    Sources = new HashSet<string>(WorkflowContext.StreamProvider.Tables(), StringComparer.OrdinalIgnoreCase);
-                    Sources.UnionWith(WorkflowContext.StreamProvider.Queries());
+                    Sources = new HashSet<string>(XDatabaseContext.StreamProvider.Tables(), StringComparer.OrdinalIgnoreCase);
+                    Sources.UnionWith(XDatabaseContext.StreamProvider.Queries());
 
                     SourcesCacheExpires = now.AddMinutes(10);
                 }
@@ -62,7 +62,7 @@ namespace XForm
             StreamAttributes queryAttributes = innerContext.StreamProvider.Attributes(innerContext.StreamProvider.Path(LocationType.Query, tableName, ".xql"));
             if (queryAttributes.Exists)
             {
-                IDataBatchEnumerator queryPipeline = XqlParser.Parse(innerContext.StreamProvider.ReadAllText(queryAttributes.Path), null, innerContext);
+                IDataBatchEnumerator queryPipeline = innerContext.Query(innerContext.StreamProvider.ReadAllText(queryAttributes.Path));
                 innerContext.Pop(outerContext);
                 return queryPipeline;
             }
@@ -101,7 +101,7 @@ namespace XForm
                 xql = innerContext.StreamProvider.ReadAllText(configAttributes.Path);
 
                 // Build a pipeline for the query, recursively creating dependencies
-                builder = XqlParser.Parse(xql, null, innerContext);
+                builder = innerContext.Query(xql);
             }
 
             // Get the path we're either reading or building
@@ -183,7 +183,7 @@ namespace XForm
 
             string fullPath = tableName;
 
-            using (StreamWriter writer = new StreamWriter(WorkflowContext.StreamProvider.OpenWrite($"Query\\{tableName}.xql")))
+            using (StreamWriter writer = new StreamWriter(XDatabaseContext.StreamProvider.OpenWrite($"Query\\{tableName}.xql")))
             {
                 writer.Write(query);
             }

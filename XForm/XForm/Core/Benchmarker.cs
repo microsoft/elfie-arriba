@@ -187,7 +187,7 @@ namespace XForm
             elapsed = w.Elapsed;
 
             // If we used less than half the time, re-estimate and run again
-            if(elapsed.TotalMilliseconds < forMilliseconds / 2)
+            if (elapsed.TotalMilliseconds < forMilliseconds / 2)
             {
                 int remainingMs = forMilliseconds - (int)elapsed.TotalMilliseconds;
                 double iterationsPerMs = iterations / elapsed.TotalMilliseconds;

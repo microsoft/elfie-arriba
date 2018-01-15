@@ -5,15 +5,15 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 
 using Microsoft.CodeAnalysis.Elfie.Serialization;
 
 using XForm.Data;
 using XForm.Extensions;
+using XForm.Query;
 using XForm.Types;
 using XForm.Verbs;
-using XForm.Query;
-using System.Text;
 
 namespace XForm
 {
@@ -69,9 +69,9 @@ namespace XForm
                 where [FirstName] : ""dar""
             ";
 
-            IDataBatchEnumerator table = XqlParser.Parse(@"
+            IDataBatchEnumerator table = Context.Query(@"
                 read Employee.Summary.V0
-                cache all", null, Context);
+                cache all");
             table.RunWithoutDispose();
 
             string singleLineQuery = XqlScanner.QueryToSingleLineStyle(query);
@@ -81,7 +81,7 @@ namespace XForm
                 b.Measure($"XForm", 1, () =>
                 {
                     table.Reset();
-                    return XqlParser.Parse(query, table, Context).Count();
+                    return Context.Query(query, table).Count();
                 });
             }
         }

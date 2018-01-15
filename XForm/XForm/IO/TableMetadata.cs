@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System;
 using System.Collections.Generic;
 using System.IO;
 
@@ -10,7 +11,6 @@ using Microsoft.CodeAnalysis.Elfie.Serialization;
 using XForm.Data;
 using XForm.IO.StreamProvider;
 using XForm.Types;
-using System;
 
 namespace XForm.IO
 {
@@ -94,14 +94,14 @@ namespace XForm.IO
                 int nameIndex = mr.ColumnIndex("Name");
                 int contextIndex = mr.ColumnIndex("Context");
                 int valueIndex = mr.ColumnIndex("Value");
-                
-                while(mr.NextRow())
+
+                while (mr.NextRow())
                 {
                     String8 name = mr.Current(nameIndex).ToString8();
                     String8 context = mr.Current(contextIndex).ToString8();
                     ITabularValue value = mr.Current(valueIndex);
 
-                    if(name.Equals("RowCount"))
+                    if (name.Equals("RowCount"))
                     {
                         metadata.RowCount = value.ToInteger();
                     }

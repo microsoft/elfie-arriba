@@ -396,7 +396,7 @@ namespace XForm.Types
             {
                 _couldNotConvertArray[i] = !_tryConvert(sourceArray[batch.Index(i)], out _array[i]);
 
-                if(_couldNotConvertArray[i])
+                if (_couldNotConvertArray[i])
                 {
                     _array[i] = _defaultValue;
                     anyCouldNotConvert = true;

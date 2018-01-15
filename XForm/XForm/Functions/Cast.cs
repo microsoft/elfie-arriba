@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+
 using XForm.Data;
 using XForm.Query;
 using XForm.Types;
@@ -19,7 +20,7 @@ namespace XForm.Functions
             // Column and ToType are required
             IDataBatchColumn column = context.Parser.NextColumn(source, context);
             Type toType = context.Parser.NextType();
-           
+
             // ErrorOn, DefaultValue, and ChangeToDefaultOn are optional
             ValueKinds errorOn = ValueKinds.ErrorOnDefault;
             object defaultValue = null;
@@ -31,7 +32,7 @@ namespace XForm.Functions
                 errorOn = context.Parser.NextEnum<ValueKinds>();
 
                 // If there's another argument, both of the last two are required
-                if(context.Parser.HasAnotherArgument)
+                if (context.Parser.HasAnotherArgument)
                 {
                     defaultValue = context.Parser.NextLiteralValue();
                     changeToDefaultOn = context.Parser.NextEnum<ValueKinds>();
@@ -100,11 +101,11 @@ namespace XForm.Functions
 
         public override string ToString()
         {
-            if(DefaultValue != null && ChangeToDefaultKinds != ValueKinds.InvalidOrNull)
+            if (DefaultValue != null && ChangeToDefaultKinds != ValueKinds.InvalidOrNull)
             {
                 return $"Cast({Column}, {TargetType.Name}, {ErrorOnKinds}, {XqlScanner.Escape(DefaultValue, TokenType.Value)}, {ChangeToDefaultKinds})";
             }
-            else if(ErrorOnKinds != ValueKinds.None)
+            else if (ErrorOnKinds != ValueKinds.None)
             {
                 return $"Cast({Column}, {TargetType.Name}, {ErrorOnKinds})";
             }

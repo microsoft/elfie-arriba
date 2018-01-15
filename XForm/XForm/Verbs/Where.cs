@@ -78,7 +78,7 @@ namespace XForm.Verbs
             int result = desiredCount;
 
             // Request enough to get the desired match count, if we know the match percentage so far
-            if(_totalRowsMatched > 0)
+            if (_totalRowsMatched > 0)
             {
                 double rowsPerMatch = (double)_totalRowsRetrieved / (double)_totalRowsMatched;
                 result = (int)(desiredCount * rowsPerMatch);

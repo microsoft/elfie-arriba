@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.IO;
 
 namespace XForm.Generator
@@ -102,7 +105,7 @@ namespace XForm.Types
             return null;
         }
 ");
-                    WriteLinePerType(writer, @"
+                WriteLinePerType(writer, @"
         public static NegatedTryConvert TryGetNegatedTryConvert(Type fromType, INumericConverter converter)
         {", @"
             if (fromType == typeof(typeName)) return converter.FromTypeName;", @"
@@ -133,7 +136,7 @@ namespace XForm.Types
         {
             writer.Write(prefix);
 
-            foreach(string typeName in SupportedTypes.PrimitiveTypes)
+            foreach (string typeName in SupportedTypes.PrimitiveTypes)
             {
                 writer.Write(lineTemplate.Replace("typeName", typeName).Replace("TypeName", SupportedTypes.ToClassName(typeName)));
             }

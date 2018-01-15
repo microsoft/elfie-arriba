@@ -119,7 +119,7 @@ namespace XForm
             long rowsWritten = 0;
             using (new TraceWatch(query))
             {
-                using (IDataBatchEnumerator source = XqlParser.Parse(query, null, context))
+                using (IDataBatchEnumerator source = context.Query(query))
                 {
                     rowsWritten = source.RunWithoutDispose();
                 }

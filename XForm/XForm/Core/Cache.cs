@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Collections.Generic;
 
 namespace XForm
@@ -40,7 +43,7 @@ namespace XForm
         public bool TryGet(string key, out T value)
         {
             CacheEntry<T> entry;
-            if(_cache.TryGetValue(key, out entry) && (DateTime.UtcNow - entry.WhenCachedUtc) < _expireAfter)
+            if (_cache.TryGetValue(key, out entry) && (DateTime.UtcNow - entry.WhenCachedUtc) < _expireAfter)
             {
                 value = entry.Value;
                 return true;
@@ -70,7 +73,6 @@ namespace XForm
                     entry.WhenCachedUtc = now;
                     return entry.Value;
                 }
-
             }
             else
             {

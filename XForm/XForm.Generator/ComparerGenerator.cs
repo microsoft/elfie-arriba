@@ -185,7 +185,7 @@ namespace XForm.Types.Comparers
                 WriteMethod(writer, typeName, "GreaterThan", ">");
                 WriteMethod(writer, typeName, "GreaterThanOrEqual", ">=");
 
-                if(typeName == "String8")
+                if (typeName == "String8")
                 {
                     WriteMethod(writer, typeName, "Contains", "");
                     WriteMethod(writer, typeName, "ContainsExact", "");
@@ -207,9 +207,9 @@ namespace XForm.Types.Comparers
                     .Replace("Equal", operatorName);
 
                 string replacement = ".CompareTo(${right}) " + operatorCode + " 0";
-                if(operatorCode == "")
+                if (operatorCode == "")
                 {
-                    switch(operatorName)
+                    switch (operatorName)
                     {
                         case "Contains":
                             replacement = ".Contains(${right}) != -1";
@@ -222,7 +222,6 @@ namespace XForm.Types.Comparers
                             break;
                         default:
                             throw new NotImplementedException();
-
                     }
                 }
 

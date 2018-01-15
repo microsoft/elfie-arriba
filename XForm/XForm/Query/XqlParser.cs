@@ -107,7 +107,7 @@ namespace XForm.Query
             ParseNextOrThrow(() => s_pipelineStageBuildersByName.TryGetValue(_scanner.Current.Value, out builder), "verb", TokenType.Value, SupportedVerbs);
             _currentlyBuilding.Push(builder);
 
-            // Verify the Workflow Parser is this parser (need to use copy constructor on WorkflowContext when recursing to avoid resuming by parsing the wrong query)
+            // Verify the Workflow Parser is this parser (need to use copy constructor on XDatabaseContext when recursing to avoid resuming by parsing the wrong query)
             Debug.Assert(_workflow.Parser == this);
 
             IDataBatchEnumerator stage = null;

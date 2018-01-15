@@ -725,7 +725,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         /// <returns>String8 representation of integer value</returns>
         public static String8 FromNumber(long value, byte[] buffer, int index, int minimumDigits = 1)
         {
-            if(value >= 0)
+            if (value >= 0)
             {
                 return FromNumber((ulong)value, false, buffer, index, minimumDigits);
             }
@@ -1238,10 +1238,10 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             int otherLength = other.Length;
             int end = this.Length - otherLength + 1;
 
-            for(int matchStart = startIndex; matchStart < end; ++matchStart)
+            for (int matchStart = startIndex; matchStart < end; ++matchStart)
             {
                 int i = 0;
-                for(; i < otherLength; ++i)
+                for (; i < otherLength; ++i)
                 {
                     int cmp = CompareOrdinalIgnoreCase(Array[Index + matchStart + i], other.Array[other.Index + i]);
                     if (cmp != 0) break;
@@ -1250,7 +1250,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
                 // Match found
                 if (i == otherLength) return matchStart;
             }
-            
+
             // No matches found
             return -1;
         }
@@ -1291,7 +1291,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         /// <returns>Index of first instance of value in this String or -1 if not found</returns>
         public int ContainsExact(String8 other, int startIndex = 0)
         {
-            while(true)
+            while (true)
             {
                 // Find the next occurrence of 'other'
                 int foundAtIndex = IndexOfOrdinalIgnoreCase(other, startIndex);

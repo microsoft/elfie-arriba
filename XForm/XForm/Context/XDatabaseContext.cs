@@ -13,7 +13,7 @@ using XForm.Query;
 namespace XForm
 {
     /// <summary>
-    ///  WorkflowContext wraps the different configuration interfaces used to customize
+    ///  XDatabaseContext wraps the different configuration interfaces used to customize
     ///  how XForm runs. These implement different Database Model rules, different source locations,
     ///  different logging, and so on.
     /// </summary>
@@ -123,7 +123,7 @@ namespace XForm
         ///  int[] id = Enumerable.Range(0, 1024).ToArray();
         ///  int[] score = ...
         ///  
-        ///  WorkflowContext context = new WorkflowContext();
+        ///  XDatabaseContext context = new XDatabaseContext();
         ///  TableTestHarness.DatabaseContext.FromArrays(1024)
         ///     .WithColumn("ID", id)
         ///     .WithColumn("Score", score)
@@ -141,7 +141,7 @@ namespace XForm
         ///  Read a binary format table from disk and return it.
         /// </summary>
         /// <param name="tableName">Table Name to load</param>
-        /// <param name="context">WorkflowContext with where to load from, as-of-date of version to load, and other context</param>
+        /// <param name="context">XDatabaseContext with where to load from, as-of-date of version to load, and other context</param>
         /// <returns>IDataBatchEnumerator of table</returns>
         public IDataBatchEnumerator Load(string tableName)
         {
@@ -152,10 +152,11 @@ namespace XForm
         ///  Build a table for a query result to evaluate.
         /// </summary>
         /// <param name="xqlQuery">XQL Query to execute</param>
+        /// <param name="source">Source to run query against (null if it</param>
         /// <returns>IDataBatchEnumerator of query result</returns>
-        public IDataBatchEnumerator Query(string xqlQuery)
+        public IDataBatchEnumerator Query(string xqlQuery, IDataBatchEnumerator source = null)
         {
-            return XqlParser.Parse(xqlQuery, null, this);
+            return XqlParser.Parse(xqlQuery, source, this);
         }
     }
 }

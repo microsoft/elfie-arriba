@@ -50,9 +50,9 @@ namespace XForm.Types
         {
             // Return text comparisons if this is a text comparer only
             IDataBatchTextComparer textComparer = comparer as IDataBatchTextComparer;
-            if(textComparer != null)
+            if (textComparer != null)
             {
-                switch(cOp)
+                switch (cOp)
                 {
                     case CompareOperator.Contains:
                         return textComparer.WhereContains;
