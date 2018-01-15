@@ -97,7 +97,6 @@
     <Compile Include="Core\ChooseDictionary.cs" />
     <Compile Include="Core\HashCore.cs" />
     <Compile Include="Core\Dictionary5.cs" />
-    <Compile Include="Core\Dictionary5_O.cs" />
     <Compile Include="Core\Hashing.cs" />
     <Compile Include="Types\Comparers\DateTimeComparer.cs" />
     <Compile Include="Types\Comparers\String8Comparer.cs" />
