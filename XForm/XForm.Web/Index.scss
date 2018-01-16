@@ -113,8 +113,9 @@ body {
         overflow-x: scroll;
         resize: horizontal;
 
-        .monaco-editor .view-overlays .current-line {
-            border: 0; // Override default monaco styling.
+        .monaco-editor { // Override default monaco styling.
+            .line-numbers { color: hsl(0, 0, 80%); }
+            .current-line { border: 0; }
         }
     }
 
