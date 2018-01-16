@@ -13,8 +13,6 @@ namespace XForm.IO
 {
     public class BinaryTableReader : IDataBatchList
     {
-        internal const string ConfigQueryPath = "Config.xql";
-
         private IStreamProvider _streamProvider;
         private TableMetadata _metadata;
 
@@ -47,11 +45,8 @@ namespace XForm.IO
                 ColumnDetails column = Columns[columnIndex];
                 string columnPath = Path.Combine(TablePath, column.Name);
 
-                // Build the reader for the column type
-                IColumnReader reader = TypeProviderFactory.Get(column.Type).BinaryReader(_streamProvider, columnPath);
-
-                // Wrap in a NullableReader to handle null recognition
-                _readers[columnIndex] = new NullableReader(_streamProvider, columnPath, reader);
+                // Read the column using the correct typed reader
+                _readers[columnIndex] = TypeProviderFactory.TryGetColumn(column.Type, _streamProvider, columnPath);
             }
 
             return () => _readers[columnIndex].Read(_currentSelector);

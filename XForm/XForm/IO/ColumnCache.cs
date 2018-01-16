@@ -31,30 +31,27 @@ namespace XForm.IO
     /// </summary>
     public class CachedColumnReader : IColumnReader
     {
-        private Array _array;
-        private int _length;
+        private DataBatch _column;
+        private int[] _remapArray;
 
-        public CachedColumnReader(Array array, int length)
+        public CachedColumnReader(DataBatch column)
         {
-            _array = array;
-            _length = length;
+            _column = column;
         }
 
         public CachedColumnReader(IColumnReader inner)
         {
             using (inner)
             {
-                DataBatch all = inner.Read(ArraySelector.All(inner.Count));
-                _array = all.Array;
-                _length = all.Count;
+                _column = inner.Read(ArraySelector.All(inner.Count));
             }
         }
 
-        public int Count => _length;
+        public int Count => _column.Count;
 
         public DataBatch Read(ArraySelector selector)
         {
-            return DataBatch.All(_array, _length).Reselect(selector);
+            return _column.Select(selector, ref _remapArray);
         }
 
         public void Dispose()

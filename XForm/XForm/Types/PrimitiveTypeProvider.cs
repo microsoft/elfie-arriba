@@ -24,10 +24,7 @@ namespace XForm.Types
 
         public IColumnReader BinaryReader(IStreamProvider streamProvider, string columnPath)
         {
-            return ColumnCache.Instance.GetOrBuild(columnPath, () =>
-            {
-                return new PrimitiveArrayReader<T>(streamProvider.OpenRead(ValuesFilePath(columnPath)));
-            });
+            return new PrimitiveArrayReader<T>(streamProvider.OpenRead(ValuesFilePath(columnPath)));
         }
 
         public IColumnWriter BinaryWriter(IStreamProvider streamProvider, string columnPath)

@@ -138,8 +138,8 @@ namespace XForm.Types
         public String8ColumnReader(IStreamProvider streamProvider, string columnPath)
         {
             _streamProvider = streamProvider;
-            _bytesReader = TypeProviderFactory.Get(typeof(byte)).BinaryReader(streamProvider, Path.Combine(columnPath, "V.s.bin"));
-            _positionsReader = TypeProviderFactory.Get(typeof(int)).BinaryReader(streamProvider, Path.Combine(columnPath, "Vp.i32.bin"));
+            _bytesReader = TypeProviderFactory.TryGetColumn(typeof(byte), streamProvider, Path.Combine(columnPath, "V.s.bin"));
+            _positionsReader = TypeProviderFactory.TryGetColumn(typeof(int), streamProvider, Path.Combine(columnPath, "Vp.i32.bin"));
         }
 
         public int Count => _positionsReader.Count;

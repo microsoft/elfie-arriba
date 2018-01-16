@@ -14,6 +14,7 @@ using XForm.Extensions;
 using XForm.Query;
 using XForm.Types;
 using XForm.Verbs;
+using XForm.IO;
 
 namespace XForm
 {
@@ -59,6 +60,7 @@ namespace XForm
 
         public void Current()
         {
+            ColumnCache.IsEnabled = true;
             // Still want to tune schema requests. Current bottleneck: LatestBeforeCutoff
             //string query = @"
             //    read WebRequest
@@ -66,8 +68,8 @@ namespace XForm
             //";
 
             string query = @"
-                read Asset.Extended.Release
-                where [Name]: ""CY1"" AND [DomainCalc]: ""PHX""";
+                read Asset.Extended.Release.Typed
+                where [Asset_SourceID] = 29 AND [IsBaseline] = 0";
 
             string singleLineQuery = XqlScanner.QueryToSingleLineStyle(query);
 
