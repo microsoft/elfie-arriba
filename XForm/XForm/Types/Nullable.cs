@@ -5,6 +5,7 @@ using System;
 using System.IO;
 
 using XForm.Data;
+using XForm.IO;
 using XForm.IO.StreamProvider;
 
 namespace XForm.Types
@@ -105,7 +106,7 @@ namespace XForm.Types
         private IStreamProvider _streamProvider;
         private string _columnPath;
         private IColumnReader _valueReader;
-        private PrimitiveArrayReader<bool> _nullReader;
+        private IColumnReader _nullReader;
 
         private DataBatch _currentBatch;
         private ArraySelector _currentSelector;
@@ -116,8 +117,13 @@ namespace XForm.Types
             _columnPath = columnPath;
             _valueReader = valueReader;
 
+            // NullableReader can't use TypeProviderFactory.TryGetColumn or it'll be recursively wrapped in a NullableReader also.
             string nullsPath = Path.Combine(_columnPath, "Vn.b8.bin");
-            if (File.Exists(nullsPath)) _nullReader = new PrimitiveArrayReader<bool>(streamProvider.OpenRead(nullsPath));
+            _nullReader = ColumnCache.Instance.GetOrBuild(nullsPath, () =>
+            {
+                if (!streamProvider.Attributes(nullsPath).Exists) return null;
+                return new PrimitiveArrayReader<bool>(streamProvider.OpenRead(nullsPath));
+            });
         }
 
         public int Count => _valueReader.Count;

@@ -22,7 +22,11 @@ namespace XForm.IO
         public IColumnReader GetOrBuild(string key, Func<IColumnReader> build)
         {
             if (!IsEnabled) return build();
-            return _cache.GetOrBuild(key, null, () => new CachedColumnReader(build()));
+            return _cache.GetOrBuild(key, null, () =>
+            {
+                IColumnReader inner = build();
+                return (inner == null ? null : new CachedColumnReader(inner));
+            });
         }
     }
 

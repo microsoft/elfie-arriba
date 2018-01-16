@@ -48,20 +48,9 @@ namespace XForm.Types
 
         public static IColumnReader TryGetColumn(Type type, IStreamProvider streamProvider, string columnPath)
         {
-            if (type == typeof(String8))
-            {
-                // Don't cache String8Columns whole; the inner int[] and byte[] are cached. This avoids String8 overhead in the cache.
-                return new NullableReader(streamProvider, columnPath, Get(type).BinaryReader(streamProvider, columnPath));
-            }
-            else
-            {
-                return ColumnCache.Instance.GetOrBuild(columnPath, () =>
-                {
-                    IColumnReader column = Get(type).BinaryReader(streamProvider, columnPath);
-                    column = new NullableReader(streamProvider, columnPath, column);
-                    return column;
-                });
-            }
+            IColumnReader column = Get(type).BinaryReader(streamProvider, columnPath);
+            column = new NullableReader(streamProvider, columnPath, column);
+            return column;
         }
 
         public static IEnumerable<string> SupportedTypes

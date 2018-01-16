@@ -10,6 +10,7 @@ using Microsoft.CodeAnalysis.Elfie.Diagnostics;
 
 using XForm.Data;
 using XForm.Extensions;
+using XForm.IO;
 using XForm.IO.StreamProvider;
 using XForm.Query;
 
@@ -33,6 +34,9 @@ namespace XForm
             {
                 // Enable native acceleration by default
                 NativeAccelerator.Enable();
+                
+                // Don't enable column cache by default (need size limit and rules)
+                //ColumnCache.IsEnabled = true;
 
                 if (args == null || args.Length == 0)
                 {
