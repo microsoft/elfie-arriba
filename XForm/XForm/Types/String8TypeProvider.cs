@@ -152,35 +152,31 @@ namespace XForm.Types
             // Return previous batch if re-requested
             if (selector.Equals(_currentSelector)) return _currentBatch;
 
-            // Read the end of the previous string
-            int start;
-            if (selector.StartIndexInclusive == 0)
-            {
-                start = 0;
-            }
-            else
-            {
-                DataBatch first = _positionsReader.Read(ArraySelector.All(Count).Slice(selector.StartIndexInclusive - 1, selector.StartIndexInclusive));
-                start = ((int[])first.Array)[first.Index(0)];
-            }
-
-            // Read the ends of this batch
-            DataBatch positionBatch = _positionsReader.Read(selector);
-            int[] positions = (int[])positionBatch.Array;
-            int end = positions[positionBatch.Index(selector.Count - 1)];
-            int lengthToRead = end - start;
-
             Allocator.AllocateToSize(ref _resultArray, selector.Count);
+            bool includesFirstString = (selector.StartIndexInclusive == 0);
+
+            // Read the string positions
+            DataBatch positionBatch = _positionsReader.Read(ArraySelector.All(Count).Slice((includesFirstString ? 0 : selector.StartIndexInclusive - 1), selector.EndIndexExclusive));
+            if (positionBatch.Selector.Indices != null) throw new NotImplementedException("String8TypeProvider requires positions to be read contiguously.");
+            int[] positionArray = (int[])positionBatch.Array;
+
+            // Get the full byte range of all of the strings
+            int firstStringStart = (includesFirstString ? 0 : positionArray[positionBatch.Index(0)]);
+            int lastStringEnd = positionArray[positionBatch.Index(positionBatch.Count - 1)];
 
             // Read the raw string bytes
-            DataBatch textBytes = _bytesReader.Read(ArraySelector.All(int.MaxValue).Slice(start, end));
-            byte[] textArray = (byte[])textBytes.Array;
+            DataBatch textBatch = _bytesReader.Read(ArraySelector.All(int.MaxValue).Slice(firstStringStart, lastStringEnd));
+            if (textBatch.Selector.Indices != null) throw new NotImplementedException("String8TypeProvider requires positions to be read contiguously.");
+            byte[] textArray = (byte[])textBatch.Array;
 
             // Update the String8 array to point to them
-            int previousStringEnd = textBytes.Index(0);
+            int positionOffset = positionBatch.Index((includesFirstString ? 0 : 1));
+            int textOffset = firstStringStart - textBatch.Index(0);
+
+            int previousStringEnd = firstStringStart - textOffset;
             for (int i = 0; i < selector.Count; ++i)
             {
-                int valueEnd = positions[positionBatch.Index(i)] - start;
+                int valueEnd = positionArray[i + positionOffset] - textOffset;
                 _resultArray[i] = new String8(textArray, previousStringEnd, valueEnd - previousStringEnd);
                 previousStringEnd = valueEnd;
             }

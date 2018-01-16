@@ -6,6 +6,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 
 using XForm.Data;
+using XForm.IO;
 using XForm.IO.StreamProvider;
 using XForm.Types.Comparers;
 
@@ -14,7 +15,6 @@ namespace XForm.Types
     public class PrimitiveTypeProvider<T> : ITypeProvider where T : IComparable<T>
     {
         public string Name => typeof(T).Name;
-
         public Type Type => typeof(T);
 
         public PrimitiveTypeProvider()
@@ -24,7 +24,10 @@ namespace XForm.Types
 
         public IColumnReader BinaryReader(IStreamProvider streamProvider, string columnPath)
         {
-            return new PrimitiveArrayReader<T>(streamProvider.OpenRead(ValuesFilePath(columnPath)));
+            return ColumnCache.Instance.GetOrBuild(columnPath, () =>
+            {
+                return new PrimitiveArrayReader<T>(streamProvider.OpenRead(ValuesFilePath(columnPath)));
+            });
         }
 
         public IColumnWriter BinaryWriter(IStreamProvider streamProvider, string columnPath)
@@ -61,6 +64,7 @@ namespace XForm.Types
 
         public static string ValuesFilePath(string columnPath)
         {
+            if (columnPath.EndsWith(".bin")) return columnPath;
             return Path.Combine(columnPath, $"V.{BinaryFileTypePart()}.bin");
         }
 

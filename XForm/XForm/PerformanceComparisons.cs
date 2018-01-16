@@ -66,13 +66,8 @@ namespace XForm
             //";
 
             string query = @"
-                where [FirstName] : ""dar""
-            ";
-
-            IDataBatchEnumerator table = Context.Query(@"
-                read Employee.Summary.V0
-                cache all");
-            table.RunWithoutDispose();
+                read Asset.Extended.Release
+                where [Name]: ""CY1"" AND [DomainCalc]: ""PHX""";
 
             string singleLineQuery = XqlScanner.QueryToSingleLineStyle(query);
 
@@ -80,8 +75,7 @@ namespace XForm
             {
                 b.Measure($"XForm", 1, () =>
                 {
-                    table.Reset();
-                    return Context.Query(query, table).Count();
+                    return Context.Query(query).Count();
                 });
             }
         }
