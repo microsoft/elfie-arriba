@@ -94,11 +94,20 @@ namespace XForm
             StreamAttributes configAttributes = innerContext.StreamProvider.Attributes(innerContext.StreamProvider.Path(LocationType.Config, tableName, ".xql"));
             if (!configAttributes.Exists)
             {
-                // If this is a simple source, just reading it is how to build it
-                xql = $"read {XqlScanner.Escape(tableName, TokenType.Value)}";
+                if (latestTableQuery != null)
+                {
+                    // If this is a simple source, just reading it is how to build it
+                    xql = $"read {XqlScanner.Escape(tableName, TokenType.Value)}";
 
-                // Build a reader concatenating all needed pieces
-                builder = ReadSource(tableName, innerContext);
+                    // Build a reader concatenating all needed pieces
+                    builder = ReadSource(tableName, innerContext);
+                }
+                else
+                {
+                    // Ad-Hoc table from code
+                    xql = null;
+                    builder = null;
+                }
             }
             else
             {
@@ -108,6 +117,9 @@ namespace XForm
                 // Build a pipeline for the query, recursively creating dependencies
                 builder = innerContext.Query(xql);
             }
+
+            // If we don't have the table or the source, we have to throw
+            if(latestTable == null && builder == null) throw new UsageException(tableName, "tableName", innerContext.StreamProvider.Tables());
 
             // Get the path we're either reading or building
             string tablePath = innerContext.StreamProvider.Path(LocationType.Table, tableName, CrawlType.Full, innerContext.NewestDependency);

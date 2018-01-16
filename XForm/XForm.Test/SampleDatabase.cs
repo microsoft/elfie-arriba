@@ -34,7 +34,7 @@ namespace XForm.Test
                 EnsureBuilt();
 
                 s_xDatabaseContext = new XDatabaseContext();
-                s_xDatabaseContext.StreamProvider = new LocalFileStreamProvider(s_RootPath);
+                s_xDatabaseContext.StreamProvider = new StreamProviderCache(new LocalFileStreamProvider(s_RootPath));
                 s_xDatabaseContext.Runner = new WorkflowRunner(s_xDatabaseContext);
                 return s_xDatabaseContext;
             }

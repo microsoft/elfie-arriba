@@ -83,6 +83,8 @@ namespace XForm.IO.StreamProvider
 
         public void Publish(string logicalTablePath)
         {
+            string[] parts = logicalTablePath.Split('\\');
+            if(parts.Length > 1) _versionCache.Remove($"{parts[0]}|{parts[1]}");
             _inner.Publish(logicalTablePath);
         }
     }

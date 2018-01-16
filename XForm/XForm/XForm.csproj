@@ -113,7 +113,6 @@
     <Compile Include="Verbs\Set.cs" />
     <Compile Include="Verbs\Read.cs" />
     <Compile Include="Context\IWorkflowRunner.cs" />
-    <Compile Include="Context\SingleFileRunner.cs" />
     <Compile Include="Core\Allocator.cs" />
     <Compile Include="Data\ArraySelector.cs" />
     <Compile Include="Data\ColumnDetails.cs" />
