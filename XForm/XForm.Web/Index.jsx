@@ -28,6 +28,23 @@ import ReactDOM from "react-dom"
         this.includes(item) ? this.remove(item) : this.push(item);
         return this;
     }
+
+    Date.daysAgo = function(n) {
+        const d = new Date()
+        d.setDate(d.getDate() - (n || 0))
+        return d
+    }
+
+    Date.firstOfMonth = function() {
+        const now = new Date()
+        return new Date(now.getFullYear(), now.getMonth())
+    }
+
+    Date.prototype.toXFormat = function() {
+        const mm = this.toLocaleString('en-US', { month: '2-digit' })
+        const dd = this.toLocaleString('en-US', { day: '2-digit' })
+        return `${this.getFullYear()}-${mm}-${dd}`
+    }
 })()
 
 class Index extends React.Component {
@@ -91,13 +108,16 @@ class Index extends React.Component {
     queryChanged() {
         this.count = this.baseCount
         this.refresh()
-        xhr(`run?q=${this.encodedQuery}%0Aschema`).then(o => {
+        xhr(`run?${this.asOf}q=${this.encodedQuery}%0Aschema`).then(o => {
             if (o.rows) {
                 this.setState({
                     schemaBody: o.rows.map(r => ({ name: r[0], type: `${r[1]}` })),
                 })
             }
         })
+    }
+    get asOf() {
+        return this.state.asOf && `&asof=${this.state.asOf}` || ''
     }
     get query() {
         return this.editor && this.editor.getModel().getValue()
@@ -115,7 +135,7 @@ class Index extends React.Component {
 
         const userCols = this.state.userCols.length && `%0Aselect ${this.state.userCols.map(c => `[${c}]`).join(' ')}` || ''
 
-        xhr(`run?rowLimit=${this.count}&q=${q}${userCols}`).then(o => {
+        xhr(`run?rowLimit=${this.count}${this.asOf}&q=${q}${userCols}`).then(o => {
             if (o.Message || o.ErrorMessage) {
                 this.setState({ status: `Error: ${o.Message || o.ErrorMessage}`, loading: false })
             } else {
@@ -151,6 +171,12 @@ class Index extends React.Component {
                             setTimeout(() => this.setState({ saving: "Save" }), 3000)
                         })
                     }}>{ this.state.saving || "Save" }</span>
+                    <select onChange={e => this.setState({ asOf: e.target.value }, () => this.refresh())}>
+                        <option value="">As of Now</option>
+                        <option value={Date.daysAgo(1).toXFormat()}>As of Yesterday</option>
+                        <option value={Date.daysAgo(7).toXFormat()}>As of Last Week</option>
+                        <option value={Date.firstOfMonth().toXFormat()}>As of {(new Date()).toLocaleString('en-us', { month: "long" })} 1st</option>
+                    </select>
                 </div>
                 <div className="queryUsage">{ this.state.usage || `\u200B` }</div>
                 <div id="queryEditor"></div>
