@@ -1,4 +1,4 @@
-$bg: white;
+$bg: #fffffe; // Matching Monaco (light)
 $text: hsl(0, 0, 30%);
 $line: hsl(0, 0, 92%);
 $linedark: hsl(0, 0, 70%);
@@ -56,6 +56,7 @@ body {
     input, select {
         color: $text;
         font: inherit;
+        background-color: inherit;
     }
 
     select {
@@ -69,7 +70,6 @@ body {
     display: flex;
     height: 100%;
     width: 100%;
-    background-color: #fffffe; // Matching Monaco
 
     & > * {
         height: 100%;
@@ -114,6 +114,8 @@ body {
         resize: horizontal;
 
         .monaco-editor { // Override default monaco styling.
+            background-color: transparent;
+            .margin, .monaco-editor-background { background-color: transparent; }
             .line-numbers { color: hsl(0, 0, 80%); }
             .current-line { border: 0; }
         }
