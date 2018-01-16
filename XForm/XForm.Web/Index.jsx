@@ -59,6 +59,25 @@ class Index extends React.Component {
 
     	window.require(['vs/editor/editor.main'], () => {
             monaco.languages.register({ id: 'xform' });
+            monaco.languages.setMonarchTokensProvider('xform', {
+                tokenizer: {
+                    root: [
+                        [/^\w+/, 'verb'],
+                        [/\[\w*\]/, 'column'],
+                        [/"\w*"/, 'string'],
+                    ]
+                }
+            })
+            monaco.editor.defineTheme('xform', {
+                base: 'vs',
+                inherit: false,
+                rules: [
+                    // https://github.com/Microsoft/vscode/blob/bef497ff82391f4f29ea52f532d896a6903f6ff6/src/vs/editor/standalone/common/themes.ts
+                    { token: 'verb', foreground: '569cd6' }, // Atom dark: 44C0C6
+                    { token: 'column', foreground: '4ec9b0' }, // Atom dark: D1BC92
+                    { token: 'string', foreground: 'd69d85' }, // Atom dark: FC8458
+                ]
+            })
             monaco.languages.registerCompletionItemProvider('xform', {
                 triggerCharacters: [' ', '\n', '('],
                 provideCompletionItems: (model, position) => {
@@ -99,6 +118,7 @@ class Index extends React.Component {
                 scrollBeyondLastLine: false,
                 minimap: { enabled: false },
                 automaticLayout: true,
+                theme: 'xform',
     		});
 
             this.editor.onDidChangeModelContent(() => this.debouncedQueryChanged())
