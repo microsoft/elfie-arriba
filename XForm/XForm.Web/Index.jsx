@@ -128,7 +128,7 @@ class Index extends React.Component {
     queryChanged() {
         this.count = this.baseCount
         this.refresh()
-        xhr(`run?${this.asOf}q=${this.encodedQuery}%0Aschema`).then(o => {
+        xhr(`run?q=${this.encodedQuery}%0Aschema${this.asOf}`).then(o => {
             if (o.rows) {
                 this.setState({
                     schemaBody: o.rows.map(r => ({ name: r[0], type: `${r[1]}` })),
@@ -162,7 +162,7 @@ class Index extends React.Component {
                 this.setState({ results: o, loading: false })
 
                 if (this.count === this.baseCount) { // No need to recount after the first page of results.
-                    xhr(`count?q=${q}`).then(o => {
+                    xhr(`count?q=${q}${this.asOf}`).then(o => {
                         this.setState({ status: typeof o === "number" && `${o.toLocaleString()} Results` || `Error: ${o.ErrorMessage}` })
                     })
                 }
