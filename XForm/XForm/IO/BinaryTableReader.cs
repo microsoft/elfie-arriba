@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.IO;
 
 using XForm.Data;
-using XForm.Extensions;
 using XForm.IO.StreamProvider;
 using XForm.Types;
 
@@ -27,18 +26,15 @@ namespace XForm.IO
         public BinaryTableReader(IStreamProvider streamProvider, string tableRootPath)
         {
             _streamProvider = streamProvider;
-
             TablePath = tableRootPath;
-            Query = streamProvider.ReadAllText(Path.Combine(tableRootPath, ConfigQueryPath));
 
             _metadata = TableMetadataSerializer.Read(streamProvider, TablePath);
             _readers = new IColumnReader[_metadata.Schema.Count];
             Reset();
         }
-
-        public string Query { get; private set; }
+        
         public string TablePath { get; private set; }
-
+        public string Query => _metadata.Query;
         public int Count => _metadata.RowCount;
         public IReadOnlyList<ColumnDetails> Columns => _metadata.Schema;
 

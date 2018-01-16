@@ -11,12 +11,14 @@ using Microsoft.CodeAnalysis.Elfie.Serialization;
 using XForm.Data;
 using XForm.IO.StreamProvider;
 using XForm.Types;
+using XForm.Extensions;
 
 namespace XForm.IO
 {
     public class TableMetadata
     {
         public int RowCount { get; set; }
+        public string Query { get; set; }
         public List<ColumnDetails> Schema { get; set; }
 
         public TableMetadata()
@@ -35,6 +37,7 @@ namespace XForm.IO
     {
         private const string SchemaFileName = "Schema.csv";
         private const string MetadataFileName = "Metadata.csv";
+        private const string ConfigQueryPath = "Config.xql";
 
         private static Cache<TableMetadata> s_Cache = new Cache<TableMetadata>(TimeSpan.FromMinutes(1));
 
@@ -62,6 +65,8 @@ namespace XForm.IO
                 mw.Write(metadata.RowCount);
                 mw.NextRow();
             }
+
+            streamProvider.WriteAllText(Path.Combine(tableRootPath, ConfigQueryPath), metadata.Query);
 
             s_Cache.Add(tableRootPath, metadata);
         }
@@ -111,6 +116,8 @@ namespace XForm.IO
                     }
                 }
             }
+
+            metadata.Query = streamProvider.ReadAllText(Path.Combine(tableRootPath, ConfigQueryPath));
 
             return metadata;
         }

@@ -44,9 +44,7 @@ namespace XForm.IO
         private DataBatch[] _currentBatches;
         private IColumnWriter[] _writers;
 
-        private List<ColumnDetails> _columnSchemaToWrite;
-        private string _queryToWrite;
-        private int _rowCountWritten;
+        private TableMetadata _metadata;
 
         public BinaryTableWriter(IDataBatchEnumerator source, XDatabaseContext xDatabaseContext, string tableRootPath) : base(source)
         {
@@ -56,8 +54,8 @@ namespace XForm.IO
 
             int columnCount = source.Columns.Count;
 
-            _columnSchemaToWrite = new List<ColumnDetails>();
-            _queryToWrite = xDatabaseContext.CurrentQuery;
+            _metadata = new TableMetadata();
+            _metadata.Query = xDatabaseContext.CurrentQuery;
 
             _innerGetters = new Func<DataBatch>[columnCount];
             _getters = new Func<DataBatch>[columnCount];
@@ -81,7 +79,7 @@ namespace XForm.IO
                     column = column.ChangeType(typeof(String8));
                 }
 
-                _columnSchemaToWrite.Add(column);
+                _metadata.Schema.Add(column);
                 _innerGetters[i] = directGetter;
                 _getters[i] = outputTypeGetter;
             }
@@ -147,7 +145,7 @@ namespace XForm.IO
                 _writers[i].Append(_currentBatches[i]);
             });
 
-            _rowCountWritten += count;
+            _metadata.RowCount += count;
             return count;
         }
 
@@ -169,13 +167,10 @@ namespace XForm.IO
                 _writers = null;
 
                 // Write the schema and query only if the table was valid
-                if (_columnSchemaToWrite.Count > 0)
+                if (_metadata.Schema.Count > 0)
                 {
                     // Write table metadata for the completed table
-                    TableMetadataSerializer.Write(_xDatabaseContext.StreamProvider, _tableRootPath, new TableMetadata(_rowCountWritten, _columnSchemaToWrite));
-
-                    // Write the query for the table
-                    _xDatabaseContext.StreamProvider.WriteAllText(Path.Combine(_tableRootPath, "Config.xql"), _queryToWrite);
+                    TableMetadataSerializer.Write(_xDatabaseContext.StreamProvider, _tableRootPath, _metadata);
 
                     // On Dispose, tell the StreamProvider to publish the table
                     _xDatabaseContext.StreamProvider.Publish(_tableRootPath);
