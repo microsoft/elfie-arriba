@@ -64,7 +64,7 @@ namespace XForm.IO
         {
             if (_readers[columnIndex] == null || !(_readers[columnIndex] is CachedColumnReader))
             {
-                _readers[columnIndex] = ColumnCache.Instance.RequireCached(Path.Combine(TablePath, Columns[columnIndex].Name), () => ColumnReader(columnIndex));
+                _readers[columnIndex] = TypeProviderFactory.TryGetColumn(Columns[columnIndex].Type, _streamProvider, Path.Combine(TablePath, Columns[columnIndex].Name), true);
             }
 
             return _readers[columnIndex];

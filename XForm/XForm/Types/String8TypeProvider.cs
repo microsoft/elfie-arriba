@@ -9,6 +9,7 @@ using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using XForm.Data;
 using XForm.IO.StreamProvider;
 using XForm.Types.Comparers;
+using XForm.IO;
 
 namespace XForm.Types
 {
@@ -17,9 +18,9 @@ namespace XForm.Types
         public string Name => "String8";
         public Type Type => typeof(String8);
 
-        public IColumnReader BinaryReader(IStreamProvider streamProvider, string columnPath)
+        public IColumnReader BinaryReader(IStreamProvider streamProvider, string columnPath, bool requireCached)
         {
-            return new String8ColumnReader(streamProvider, columnPath);
+            return new String8ColumnReader(streamProvider, columnPath, requireCached);
         }
 
         public IColumnWriter BinaryWriter(IStreamProvider streamProvider, string columnPath)
@@ -126,6 +127,8 @@ namespace XForm.Types
 
     internal class String8ColumnReader : IColumnReader
     {
+        private string _columnPath;
+
         private IStreamProvider _streamProvider;
         private IColumnReader _bytesReader;
         private IColumnReader _positionsReader;
@@ -135,18 +138,20 @@ namespace XForm.Types
 
         private String8[] _resultArray;
 
-        public String8ColumnReader(IStreamProvider streamProvider, string columnPath)
+        public String8ColumnReader(IStreamProvider streamProvider, string columnPath, bool requireCached)
         {
+            _columnPath = columnPath;
+
             _streamProvider = streamProvider;
-            _bytesReader = TypeProviderFactory.TryGetColumn(typeof(byte), streamProvider, Path.Combine(columnPath, "V.s.bin"));
-            _positionsReader = TypeProviderFactory.TryGetColumn(typeof(int), streamProvider, Path.Combine(columnPath, "Vp.i32.bin"));
+            _bytesReader = TypeProviderFactory.TryGetColumn(typeof(byte), streamProvider, Path.Combine(columnPath, "V.s.bin"), requireCached);
+            _positionsReader = TypeProviderFactory.TryGetColumn(typeof(int), streamProvider, Path.Combine(columnPath, "Vp.i32.bin"), requireCached);
         }
 
         public int Count => _positionsReader.Count;
 
         public DataBatch Read(ArraySelector selector)
         {
-            if (selector.Indices != null) throw new NotImplementedException();
+            if (selector.Indices != null) return ReadIndices(selector);
             if (selector.Count == 0) return DataBatch.All(_resultArray, 0);
 
             // Return previous batch if re-requested
@@ -179,6 +184,33 @@ namespace XForm.Types
                 int valueEnd = positionArray[i + positionOffset] - textOffset;
                 _resultArray[i] = new String8(textArray, previousStringEnd, valueEnd - previousStringEnd);
                 previousStringEnd = valueEnd;
+            }
+
+            // Cache the batch and return it
+            _currentBatch = DataBatch.All(_resultArray, selector.Count);
+            _currentSelector = selector;
+            return _currentBatch;
+        }
+
+        private DataBatch ReadIndices(ArraySelector selector)
+        {
+            Allocator.AllocateToSize(ref _resultArray, selector.Count);
+
+            // Read all string positions
+            DataBatch positionBatch = _positionsReader.Read(ArraySelector.All(_positionsReader.Count));
+            int[] positionArray = (int[])positionBatch.Array;
+
+            // Read all raw string bytes
+            DataBatch textBatch = _bytesReader.Read(ArraySelector.All(_bytesReader.Count));
+            byte[] textArray = (byte[])textBatch.Array;
+
+            // Update the String8 array to point to them
+            for (int i = 0; i < selector.Count; ++i)
+            {
+                int rowIndex = selector.Index(i);
+                int valueStart = (rowIndex == 0 ? 0 : positionArray[rowIndex - 1]);
+                int valueEnd = positionArray[rowIndex];
+                _resultArray[i] = new String8(textArray, valueStart, valueEnd - valueStart);
             }
 
             // Cache the batch and return it

@@ -16,9 +16,9 @@ namespace XForm.Types
         public string Name => typeof(byte).Name;
         public Type Type => typeof(byte);
 
-        public IColumnReader BinaryReader(IStreamProvider streamProvider, string columnPath)
+        public IColumnReader BinaryReader(IStreamProvider streamProvider, string columnPath, bool requireCached)
         {
-            return ColumnCache.Instance.GetOrBuild(columnPath, () =>
+            return ColumnCache.Instance.GetOrBuild(columnPath, requireCached, () =>
             {
                 string filePath = ValuesFilePath(columnPath);
                 if (!streamProvider.Attributes(filePath).Exists) return null;

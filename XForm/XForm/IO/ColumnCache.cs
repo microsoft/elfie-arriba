@@ -19,27 +19,25 @@ namespace XForm.IO
             _cache = new Cache<IColumnReader>(TimeSpan.FromMinutes(10));
         }
 
-        public IColumnReader GetOrBuild(string key, Func<IColumnReader> build)
+        public IColumnReader GetOrBuild(string key, bool requireCached, Func<IColumnReader> build)
         {
-            if (!IsEnabled) return build();
-            return _cache.GetOrBuild(key, null, () =>
+            if (requireCached || IsEnabled)
             {
-                IColumnReader inner = build();
-                if (inner == null) return null;
-                if (inner is CachedColumnReader) return inner;
-                return new CachedColumnReader(inner);
-            });
-        }
+                return _cache.GetOrBuild(key, null, () =>
+                {
+                    IColumnReader inner = build();
+                    if (inner == null) return null;
+                    if (inner is CachedColumnReader) return inner;
+                    return new CachedColumnReader(inner);
+                });
+            }
+            else
+            {
+                IColumnReader result;
+                if (_cache.TryGet(key, out result)) return result;
 
-        public IColumnReader RequireCached(string key, Func<IColumnReader> build)
-        {
-            return _cache.GetOrBuild(key, null, () =>
-            {
-                IColumnReader inner = build();
-                if (inner == null) return null;
-                if (inner is CachedColumnReader) return inner;
-                return new CachedColumnReader(inner);
-            });
+                return build();
+            }
         }
     }
 

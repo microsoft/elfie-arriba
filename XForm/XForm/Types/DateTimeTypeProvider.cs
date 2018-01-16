@@ -5,8 +5,6 @@ using System;
 
 using XForm.Data;
 using XForm.IO.StreamProvider;
-using XForm.Query;
-using XForm.Transforms;
 using XForm.Types.Comparers;
 
 namespace XForm.Types
@@ -17,9 +15,9 @@ namespace XForm.Types
 
         public Type Type => typeof(DateTime);
 
-        public IColumnReader BinaryReader(IStreamProvider streamProvider, string columnPath)
+        public IColumnReader BinaryReader(IStreamProvider streamProvider, string columnPath, bool requireCached)
         {
-            return new ConvertingReader(TypeProviderFactory.Get(typeof(long)).BinaryReader(streamProvider, columnPath), TypeConverterFactory.GetConverter(typeof(long), typeof(DateTime)));
+            return new ConvertingReader(TypeProviderFactory.Get(typeof(long)).BinaryReader(streamProvider, columnPath, requireCached), TypeConverterFactory.GetConverter(typeof(long), typeof(DateTime)));
         }
 
         public IColumnWriter BinaryWriter(IStreamProvider streamProvider, string columnPath)

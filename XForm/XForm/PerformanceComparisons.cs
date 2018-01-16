@@ -61,15 +61,21 @@ namespace XForm
         public void Current()
         {
             ColumnCache.IsEnabled = true;
+
+            string query;
             // Still want to tune schema requests. Current bottleneck: LatestBeforeCutoff
-            //string query = @"
+            //query = @"
             //    read WebRequest
             //    schema
             //";
 
-            string query = @"
-                read Asset.Extended.Release.Typed
-                where [Asset_SourceID] = 29 AND [IsBaseline] = 0";
+            //query = @"
+            //    read Asset.Extended.Release.Typed
+            //    where [Asset_SourceID] = 29 AND [IsBaseline] = 0";
+
+            query = @"
+                read Identity.StandingAdmins.AssetAdminSummary.V0
+                join [Name] Asset.Extended.Release [Name] Asset. ";
 
             string singleLineQuery = XqlScanner.QueryToSingleLineStyle(query);
 
