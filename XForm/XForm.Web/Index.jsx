@@ -94,7 +94,7 @@ class Index extends React.Component {
         xhr(`run?q=${this.encodedQuery}%0Aschema`).then(o => {
             if (o.rows) {
                 this.setState({
-                    schemaBody: o.rows.map(r => ({ name: r[0], type: `${r[1]}${r[2] ? '' : '?'}` })),
+                    schemaBody: o.rows.map(r => ({ name: r[0], type: `${r[1]}` })),
                 })
             }
         })
@@ -115,7 +115,7 @@ class Index extends React.Component {
 
         const userCols = this.state.userCols.length && `%0Aselect ${this.state.userCols.map(c => `[${c}]`).join(' ')}` || ''
 
-        xhr(`run?c=${this.count}&q=${q}${userCols}`).then(o => {
+        xhr(`run?rowLimit=${this.count}&q=${q}${userCols}`).then(o => {
             if (o.Message || o.ErrorMessage) {
                 this.setState({ status: `Error: ${o.Message || o.ErrorMessage}`, loading: false })
             } else {
@@ -189,7 +189,7 @@ class Index extends React.Component {
                     const element = e.target
                     const pixelsFromBottom = (element.scrollHeight - element.clientHeight - element.scrollTop)
                     if (pixelsFromBottom < 100) {
-                        this.refresh(10)
+                        this.refresh(50)
                     }
                     // TODO: Inc only if not currently fetching
                 }}>

@@ -81,7 +81,8 @@ namespace XForm
                 Run(
                     Require(context, "q"),
                     context.Request.QueryString["fmt"] ?? "json",
-                    ParseOrDefault(context.Request.QueryString["c"], 100),
+                    ParseOrDefault(context.Request.QueryString["rowLimit"], 100),
+                    ParseOrDefault(context.Request.QueryString["colLimit"], -1),
                     ParseOrDefault(context.Request.QueryString["asof"], _xDatabaseContext.RequestedAsOfDateTime),
                     response);
             }
@@ -101,7 +102,8 @@ namespace XForm
                 Run(
                     Require(context, "q"),
                     Require(context, "fmt"),
-                    ParseOrDefault(context.Request.QueryString["c"], -1),
+                    ParseOrDefault(context.Request.QueryString["rowLimit"], -1),
+                    ParseOrDefault(context.Request.QueryString["colLimit"], -1),
                     ParseOrDefault(context.Request.QueryString["asof"], _xDatabaseContext.RequestedAsOfDateTime),
                     response);
             }
@@ -172,7 +174,7 @@ namespace XForm
             }
         }
 
-        private void Run(string query, string format, int rowCountLimit, DateTime asOfDate, HttpListenerResponse response)
+        private void Run(string query, string format, int rowCountLimit, int colCountLimit, DateTime asOfDate, HttpListenerResponse response)
         {
             IDataBatchEnumerator pipeline = null;
 
@@ -189,10 +191,10 @@ namespace XForm
                 // Build a Pipeline for the Query
                 pipeline = context.Query(query);
 
-                // Restrict the row count if requested
-                if (rowCountLimit >= 0)
+                // Restrict the row and column count if requested
+                if (rowCountLimit >= 0 || colCountLimit > 0)
                 {
-                    pipeline = new Verbs.Limit(pipeline, rowCountLimit);
+                    pipeline = new Verbs.Limit(pipeline, rowCountLimit, colCountLimit);
                 }
 
                 // Build a writer for the desired format
