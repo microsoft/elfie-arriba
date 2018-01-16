@@ -40,6 +40,14 @@ namespace XForm.IO
 
         public Func<DataBatch> ColumnGetter(int columnIndex)
         {
+            // Get and cache the reader
+            ColumnReader(columnIndex);
+
+            return () => _readers[columnIndex].Read(_currentSelector);
+        }
+
+        public IColumnReader ColumnReader(int columnIndex)
+        {
             if (_readers[columnIndex] == null)
             {
                 ColumnDetails column = Columns[columnIndex];
@@ -49,7 +57,17 @@ namespace XForm.IO
                 _readers[columnIndex] = TypeProviderFactory.TryGetColumn(column.Type, _streamProvider, columnPath);
             }
 
-            return () => _readers[columnIndex].Read(_currentSelector);
+            return _readers[columnIndex];
+        }
+
+        public IColumnReader CachedColumnReader(int columnIndex)
+        {
+            if (_readers[columnIndex] == null || !(_readers[columnIndex] is CachedColumnReader))
+            {
+                _readers[columnIndex] = ColumnCache.Instance.RequireCached(Path.Combine(TablePath, Columns[columnIndex].Name), () => ColumnReader(columnIndex));
+            }
+
+            return _readers[columnIndex];
         }
 
         public int Next(int desiredCount)

@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 
 using XForm.Data;
+using XForm.Types;
 
 namespace XForm.IO
 {
@@ -74,9 +75,14 @@ namespace XForm.IO
             return CurrentBatchRowCount;
         }
 
-        public void Get(ArraySelector selector)
+        public IColumnReader ColumnReader(int columnIndex)
         {
-            _currentSelector = selector;
+            return CachedColumnReader(columnIndex);
+        }
+
+        public IColumnReader CachedColumnReader(int columnIndex)
+        {
+            return new CachedColumnReader(_columnArrays[columnIndex]);
         }
 
         public void Dispose()

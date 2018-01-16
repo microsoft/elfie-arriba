@@ -119,7 +119,6 @@
     <Compile Include="Data\DataBatchEnumeratorWrapper.cs" />
     <Compile Include="Data\IDataBatchEnumerator.cs" />
     <Compile Include="Core\BitVector.cs" />
-    <Compile Include="Data\MemoryCacher.cs" />
     <Compile Include="Data\SinglePageEnumerator.cs" />
     <Compile Include="Extensions\DataBatchEnumeratorExtensions.cs" />
     <Compile Include="Extensions\IComparableExtensions.cs" />

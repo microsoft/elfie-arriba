@@ -25,7 +25,20 @@ namespace XForm.IO
             return _cache.GetOrBuild(key, null, () =>
             {
                 IColumnReader inner = build();
-                return (inner == null ? null : new CachedColumnReader(inner));
+                if (inner == null) return null;
+                if (inner is CachedColumnReader) return inner;
+                return new CachedColumnReader(inner);
+            });
+        }
+
+        public IColumnReader RequireCached(string key, Func<IColumnReader> build)
+        {
+            return _cache.GetOrBuild(key, null, () =>
+            {
+                IColumnReader inner = build();
+                if (inner == null) return null;
+                if (inner is CachedColumnReader) return inner;
+                return new CachedColumnReader(inner);
             });
         }
     }

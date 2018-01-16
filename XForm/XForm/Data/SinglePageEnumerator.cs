@@ -13,7 +13,7 @@ namespace XForm.Data
     ///  
     ///  Used to share an IDataBatchEnumerator source with a second pipeline.
     /// </summary>
-    public class SinglePageEnumerator : IDataBatchList
+    public class SinglePageEnumerator : IDataBatchEnumerator
     {
         private IDataBatchEnumerator _source;
 
@@ -80,11 +80,6 @@ namespace XForm.Data
             _currentEnumerateSelector = _currentEnumerateSelector.NextPage(_currentPageCount, desiredCount);
             _currentSelector = _currentEnumerateSelector;
             return _currentEnumerateSelector.Count;
-        }
-
-        public void Get(ArraySelector selector)
-        {
-            _currentSelector = selector;
         }
 
         public void Dispose()

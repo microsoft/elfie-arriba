@@ -53,6 +53,8 @@ namespace XForm
 
         public IDataBatchEnumerator Build(string tableName, XDatabaseContext outerContext, bool deferred)
         {
+            //return new BinaryTableReader(outerContext.StreamProvider, @"Table\Asset.Extended.Release.Typed\Full\2018.01.11 00.00.00Z");
+
             // Create a context to track what we're building now
             XDatabaseContext innerContext = XDatabaseContext.Push(outerContext);
             innerContext.Runner = this;
