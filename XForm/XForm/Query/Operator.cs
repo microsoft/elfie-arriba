@@ -15,7 +15,10 @@ namespace XForm.Query
         LessThan = 2,
         LessThanOrEqual = 3,
         GreaterThan = 4,
-        GreaterThanOrEqual = 5
+        GreaterThanOrEqual = 5,
+        Contains = 6,
+        ContainsExact = 7,
+        StartsWith = 8
     }
 
     public enum BooleanOperator : byte
@@ -26,7 +29,7 @@ namespace XForm.Query
 
     public static class OperatorExtensions
     {
-        public static IEnumerable<string> ValidCompareOperators = new string[] { "<", "<=", ">", ">=", "=", "==", "!=", "<>" };
+        public static IEnumerable<string> ValidCompareOperators = new string[] { "<", "<=", ">", ">=", "=", "==", "!=", "<>", ":", "::", "|>" };
         public static IEnumerable<string> ValidBooleanOperators = new string[] { "AND", "&&", "&", "OR", "||", "|" };
 
         public static bool TryParseCompareOperator(this string op, out CompareOperator result)
@@ -53,6 +56,15 @@ namespace XForm.Query
                 case "<>":
                     result = CompareOperator.NotEqual;
                     break;
+                case ":":
+                    result = CompareOperator.Contains;
+                    break;
+                case "::":
+                    result = CompareOperator.ContainsExact;
+                    break;
+                case "|>":
+                    result = CompareOperator.StartsWith;
+                    break;
                 default:
                     result = CompareOperator.Equal;
                     return false;
@@ -77,6 +89,12 @@ namespace XForm.Query
                     return ">";
                 case CompareOperator.GreaterThanOrEqual:
                     return ">=";
+                case CompareOperator.Contains:
+                    return ":";
+                case CompareOperator.ContainsExact:
+                    return "::";
+                case CompareOperator.StartsWith:
+                    return "|>";
                 default:
                     throw new NotImplementedException(op.ToString());
             }
@@ -105,7 +123,7 @@ namespace XForm.Query
                     inverse = CompareOperator.LessThan;
                     return true;
                 default:
-                    // No operators yet which can't be inverted, but 'contains', and 'startsWith' can't be.
+                    // Can't invert other operators (Contains, ContainsExact, StartsWith)
                     inverse = op;
                     return false;
             }

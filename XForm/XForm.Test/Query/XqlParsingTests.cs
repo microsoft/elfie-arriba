@@ -21,11 +21,11 @@ namespace XForm.Test.Query
         [TestMethod]
         public void XqlParser_QueryParsing()
         {
-            WorkflowContext context = SampleDatabase.WorkflowContext;
-            IDataBatchEnumerator source = XqlParser.Parse(@"
+            XDatabaseContext context = SampleDatabase.XDatabaseContext;
+            IDataBatchEnumerator source = context.Query(@"
                 read WebRequest
                 cast [ServerPort], Int32
-                cast [ResponseBytes], Int32, 0, false", null, context);
+                cast [ResponseBytes], Int32, None, 0, InvalidOrNull");
 
             // Single Term
             Assert.AreEqual("[ServerPort] = 80", ParseExpression("[ServerPort] = 80", source, context).ToString());
@@ -80,7 +80,7 @@ namespace XForm.Test.Query
             Assert.AreEqual("[ServerName] = \"80\"", ParseExpression("[ServerName] = \"80\"", source, context).ToString());
         }
 
-        private static IExpression ParseExpression(string query, IDataBatchEnumerator source, WorkflowContext context)
+        private static IExpression ParseExpression(string query, IDataBatchEnumerator source, XDatabaseContext context)
         {
             XqlParser parser = new XqlParser(query, context);
             context.Parser = parser;
@@ -90,13 +90,13 @@ namespace XForm.Test.Query
         [TestMethod]
         public void XqlParser_QueryEvaluation()
         {
-            WorkflowContext context = SampleDatabase.WorkflowContext;
-            IDataBatchEnumerator source = XqlParser.Parse(@"
+            XDatabaseContext context = SampleDatabase.XDatabaseContext;
+            IDataBatchEnumerator source = context.Query(@"
                 read WebRequest
                 cache all
-                cast [ServerPort], Int32, 
-                cast [ResponseBytes], Int32, 0, false
-                ", null, context);
+                cast [ServerPort], Int32
+                cast [ResponseBytes], Int32, None, 0, InvalidOrNull
+                ");
 
             // Results from WebRequest.20171202.r5.n1000, counts validated against Excel
 
@@ -115,10 +115,10 @@ namespace XForm.Test.Query
             Assert.AreEqual(22 + 95, RunAndCount("where [ServerPort] = 80 AND [ResponseBytes] > 1200 OR [ResponseBytes] < 900", source, context));
         }
 
-        private static int RunAndCount(string query, IDataBatchEnumerator source, WorkflowContext context)
+        private static int RunAndCount(string query, IDataBatchEnumerator source, XDatabaseContext context)
         {
             source.Reset();
-            return (int)source.Query(query, context).RunWithoutDispose();
+            return (int)context.Query(query, source).RunWithoutDispose();
         }
 
         [TestMethod]

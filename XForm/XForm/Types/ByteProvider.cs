@@ -5,6 +5,7 @@ using System;
 using System.IO;
 
 using XForm.Data;
+using XForm.IO;
 using XForm.IO.StreamProvider;
 using XForm.Types.Comparers;
 
@@ -13,12 +14,22 @@ namespace XForm.Types
     public class ByteTypeProvider : ITypeProvider
     {
         public string Name => typeof(byte).Name;
-
         public Type Type => typeof(byte);
 
         public IColumnReader BinaryReader(IStreamProvider streamProvider, string columnPath)
         {
-            return new ByteReader(streamProvider.OpenRead(Path.Combine(columnPath, "V.u8.bin")));
+            return ColumnCache.Instance.GetOrBuild(columnPath, () =>
+            {
+                string filePath = ValuesFilePath(columnPath);
+                if (!streamProvider.Attributes(filePath).Exists) return null;
+                return new ByteReader(streamProvider.OpenRead(filePath));
+            });
+        }
+
+        private static string ValuesFilePath(string columnPath)
+        {
+            if (columnPath.EndsWith(".bin")) return columnPath;
+            return Path.Combine(columnPath, $"V.u8.bin");
         }
 
         public IColumnWriter BinaryWriter(IStreamProvider streamProvider, string columnPath)
@@ -32,7 +43,7 @@ namespace XForm.Types
             return new ByteComparer();
         }
 
-        public Func<DataBatch, DataBatch> TryGetConverter(Type sourceType, Type targetType, object defaultValue, bool strict)
+        public NegatedTryConvert TryGetNegatedTryConvert(Type sourceType, Type targetType, object defaultValue)
         {
             // TODO: Add primitive number conversions
             return null;

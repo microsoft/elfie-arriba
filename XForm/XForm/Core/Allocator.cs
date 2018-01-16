@@ -39,17 +39,19 @@ namespace XForm
         }
 
         /// <summary>
-        ///  Generically create an array of a given type and desired size.
+        ///  Ensure a given array is at least the required size, dynamically creating it of the right type.
         /// </summary>
+        /// <param name="array">Array reference to ensure is the minimum size</param>
+        /// <param name="minimumSize">Minimum size Array will be after the call. It may be larger.</param>
         /// <param name="elementType">Type of Array elements</param>
-        /// <param name="length">Length of array to create</param>
-        /// <returns>Strongly typed array of length 'length' with elements of type 'elementType'</returns>
-        public static Array AllocateArray(Type elementType, int length)
+        public static void AllocateToSize(ref Array array, int minimumSize, Type elementType)
         {
-            ConstructorInfo ctor = elementType.MakeArrayType().GetConstructor(new Type[] { typeof(int) });
-            return (Array)ctor.Invoke(new object[] { length });
+            if (array == null || array.Length < minimumSize)
+            {
+                ConstructorInfo ctor = elementType.MakeArrayType().GetConstructor(new Type[] { typeof(int) });
+                array = (Array)ctor.Invoke(new object[] { minimumSize });
+            }
         }
-
 
         /// <summary>
         ///  Create a generic class for a dynamic type parameter using the empty constructor.

@@ -15,7 +15,7 @@ namespace XForm.Verbs
         public string Verb => "schema";
         public string Usage => "'schema'";
 
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)
+        public IDataBatchEnumerator Build(IDataBatchEnumerator source, XDatabaseContext context)
         {
             return new SchemaTransformer(source);
         }
@@ -31,10 +31,9 @@ namespace XForm.Verbs
 
         public SchemaTransformer(IDataBatchEnumerator source) : base(source)
         {
-            _columns = new ColumnDetails[3];
-            _columns[0] = new ColumnDetails("Name", typeof(string), false);
-            _columns[1] = new ColumnDetails("Type", typeof(string), false);
-            _columns[2] = new ColumnDetails("Nullable", typeof(bool), false);
+            _columns = new ColumnDetails[2];
+            _columns[0] = new ColumnDetails("Name", typeof(string));
+            _columns[1] = new ColumnDetails("Type", typeof(string));
         }
 
         public override IReadOnlyList<ColumnDetails> Columns => _columns;
@@ -56,7 +55,6 @@ namespace XForm.Verbs
                 _results = new DataBatch[3];
                 _results[0] = DataBatch.All(_source.Columns.Select((cd) => cd.Name).ToArray());
                 _results[1] = DataBatch.All(_source.Columns.Select((cd) => cd.Type.Name.ToString()).ToArray());
-                _results[2] = DataBatch.All(_source.Columns.Select((cd) => cd.Nullable).ToArray());
 
                 return _source.Columns.Count;
             }

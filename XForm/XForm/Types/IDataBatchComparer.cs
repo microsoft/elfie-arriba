@@ -32,6 +32,13 @@ namespace XForm.Types
         int GetHashCode(T value);
     }
 
+    public interface IDataBatchTextComparer : IDataBatchComparer
+    {
+        void WhereContains(DataBatch left, DataBatch right, BitVector vector);
+        void WhereContainsExact(DataBatch left, DataBatch right, BitVector vector);
+        void WhereStartsWith(DataBatch left, DataBatch right, BitVector vector);
+    }
+
     public static class ComparerExtensions
     {
         public delegate void Comparer(DataBatch left, DataBatch right, BitVector vector);
@@ -41,6 +48,21 @@ namespace XForm.Types
 
         public static Comparer TryBuild(this IDataBatchComparer comparer, CompareOperator cOp)
         {
+            // Return text comparisons if this is a text comparer only
+            IDataBatchTextComparer textComparer = comparer as IDataBatchTextComparer;
+            if (textComparer != null)
+            {
+                switch (cOp)
+                {
+                    case CompareOperator.Contains:
+                        return textComparer.WhereContains;
+                    case CompareOperator.ContainsExact:
+                        return textComparer.WhereContainsExact;
+                    case CompareOperator.StartsWith:
+                        return textComparer.WhereStartsWith;
+                }
+            }
+
             // Return the function for the desired comparison operation
             switch (cOp)
             {
@@ -56,9 +78,13 @@ namespace XForm.Types
                     return comparer.WhereLessThan;
                 case CompareOperator.LessThanOrEqual:
                     return comparer.WhereLessThanOrEqual;
-                default:
-                    throw new NotImplementedException(cOp.ToString());
+                case CompareOperator.Contains:
+                    // Contains resolves to Equals by default
+                    return comparer.WhereEqual;
             }
+
+            // Throw if this comparison isn't supported
+            throw new ArgumentException($"{cOp} not supported for column");
         }
     }
 }

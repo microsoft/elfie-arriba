@@ -39,6 +39,5 @@ namespace XForm.Extensions
 
             return fullPath.Substring(index, length);
         }
-
     }
 }

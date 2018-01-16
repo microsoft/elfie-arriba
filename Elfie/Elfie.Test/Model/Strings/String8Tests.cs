@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 
@@ -10,9 +11,8 @@ using Elfie.Test;
 
 using Microsoft.CodeAnalysis.Elfie.Extensions;
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Diagnostics;
 using Microsoft.CodeAnalysis.Elfie.Model.Structures;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
 {
@@ -166,6 +166,37 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
         }
 
         [TestMethod]
+        public void String8_ContainsVariants()
+        {
+            Assert.AreEqual(0, "".TestConvert().IndexOfOrdinalIgnoreCase("".TestConvert()), "Empty always contains empty");
+            Assert.AreEqual(1, "Simple".TestConvert().IndexOfOrdinalIgnoreCase("imp".TestConvert()), "Case sensitive match");
+            Assert.AreEqual(1, "Simple".TestConvert().IndexOfOrdinalIgnoreCase("IMP".TestConvert()), "Case insensitive matching");
+            Assert.AreEqual(-1, "Simple".TestConvert().IndexOfOrdinalIgnoreCase("imz".TestConvert()), "Non-match in last character only");
+            Assert.AreEqual(0, "Simple".TestConvert().IndexOfOrdinalIgnoreCase("sim".TestConvert()), "Match at start, case insensitive");
+            Assert.AreEqual(0, "Simple".TestConvert().IndexOfOrdinalIgnoreCase("simple".TestConvert()), "Full match, case insensitive");
+            Assert.AreEqual(-1, "Simple".TestConvert().IndexOfOrdinalIgnoreCase("simpler".TestConvert()), "Non-match because too long");
+            Assert.AreEqual(5, "Simple".TestConvert().IndexOfOrdinalIgnoreCase("e".TestConvert()), "Match at last character only");
+            Assert.AreEqual(4, "Simple".TestConvert().IndexOfOrdinalIgnoreCase("le".TestConvert()), "Match at end");
+            Assert.AreEqual(-1, "Simple".TestConvert().IndexOfOrdinalIgnoreCase("er".TestConvert()), "Non-match trailing off end");
+            Assert.AreEqual(3, "bananas".TestConvert().IndexOfOrdinalIgnoreCase("anas".TestConvert()), "Overlapping match");
+
+            Assert.AreEqual(0, "Simple things to match".TestConvert().Contains("simp".TestConvert()), "Match at beginning of string");
+            Assert.AreEqual(7, "Simple things to match".TestConvert().Contains("thin".TestConvert()), "Match at beginning of word");
+            Assert.AreEqual(-1, "Simple things to match".TestConvert().Contains("imp".TestConvert()), "Match, but not at word start");
+            Assert.AreEqual(17, "Simple things to match".TestConvert().Contains("m".TestConvert()), "Match after first attempt");
+            Assert.AreEqual(17, "Simple things to match".TestConvert().Contains("match".TestConvert()), "Match at end of string");
+            Assert.AreEqual(-1, "Simple things to match".TestConvert().Contains("matche".TestConvert()), "Match off end of string");
+
+            Assert.AreEqual(0, "Simple things to match".TestConvert().ContainsExact("simple".TestConvert()), "Match first word");
+            Assert.AreEqual(7, "Simple things to match".TestConvert().ContainsExact("things".TestConvert()), "Match middle word");
+            Assert.AreEqual(17, "Simple things to match".TestConvert().ContainsExact("match".TestConvert()), "Match last word");
+            Assert.AreEqual(-1, "Simple things to match".TestConvert().ContainsExact("Simpl".TestConvert()), "Non-full-word match (not start)");
+            Assert.AreEqual(-1, "Simple things to match".TestConvert().ContainsExact("imple".TestConvert()), "Non-full-word match (not end)");
+            Assert.AreEqual(-1, "Simple things to match".TestConvert().ContainsExact("matc".TestConvert()), "Non-full-word match (not start)");
+            Assert.AreEqual(-1, "Simple things to match".TestConvert().ContainsExact("atch".TestConvert()), "Non-full-word match (not end)");
+        }
+
+        [TestMethod]
         public void String8_BeforeFirstAfterFirst()
         {
             string binaryName = "System.Collections.Generic.List!";
@@ -267,7 +298,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
             int totalShift = 0;
 
             String8Set parts = shiftable.Split(UTF8.Semicolon, new PartialArray<int>(5, false));
-            for(int i = 0; i < parts.Count; ++i)
+            for (int i = 0; i < parts.Count; ++i)
             {
                 String8 part = parts[i];
 
@@ -566,7 +597,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
 
             int iterations = 1 * 1000 * 1000;
             Stopwatch w = Stopwatch.StartNew();
-            for(int i = 0; i < iterations; ++i)
+            for (int i = 0; i < iterations; ++i)
             {
                 one8.TryToLong(out value);
                 sum += value;

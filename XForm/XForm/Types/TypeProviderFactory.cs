@@ -1,10 +1,11 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using System;
 using System.Collections.Generic;
-
-using XForm.Extensions;
+using XForm.IO;
+using XForm.IO.StreamProvider;
 
 namespace XForm.Types
 {
@@ -43,6 +44,13 @@ namespace XForm.Types
             ITypeProvider provider;
             if (!s_providersByType.TryGetValue(type, out provider)) provider = null;
             return provider;
+        }
+
+        public static IColumnReader TryGetColumn(Type type, IStreamProvider streamProvider, string columnPath)
+        {
+            IColumnReader column = Get(type).BinaryReader(streamProvider, columnPath);
+            column = new NullableReader(streamProvider, columnPath, column);
+            return column;
         }
 
         public static IEnumerable<string> SupportedTypes

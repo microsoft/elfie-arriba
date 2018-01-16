@@ -5,6 +5,7 @@ using System;
 using System.IO;
 
 using XForm.Data;
+using XForm.IO;
 using XForm.IO.StreamProvider;
 
 namespace XForm.Types
@@ -105,7 +106,10 @@ namespace XForm.Types
         private IStreamProvider _streamProvider;
         private string _columnPath;
         private IColumnReader _valueReader;
-        private PrimitiveArrayReader<bool> _nullReader;
+        private IColumnReader _nullReader;
+
+        private DataBatch _currentBatch;
+        private ArraySelector _currentSelector;
 
         public NullableReader(IStreamProvider streamProvider, string columnPath, IColumnReader valueReader)
         {
@@ -113,14 +117,22 @@ namespace XForm.Types
             _columnPath = columnPath;
             _valueReader = valueReader;
 
+            // NullableReader can't use TypeProviderFactory.TryGetColumn or it'll be recursively wrapped in a NullableReader also.
             string nullsPath = Path.Combine(_columnPath, "Vn.b8.bin");
-            if (File.Exists(nullsPath)) _nullReader = new PrimitiveArrayReader<bool>(streamProvider.OpenRead(nullsPath));
+            _nullReader = ColumnCache.Instance.GetOrBuild(nullsPath, () =>
+            {
+                if (!streamProvider.Attributes(nullsPath).Exists) return null;
+                return new PrimitiveArrayReader<bool>(streamProvider.OpenRead(nullsPath));
+            });
         }
 
         public int Count => _valueReader.Count;
 
         public DataBatch Read(ArraySelector selector)
         {
+            // Return the cached batch if re-requested
+            if (selector.Equals(_currentSelector)) return _currentBatch;
+
             // Read the values themselves
             DataBatch values = _valueReader.Read(selector);
 
@@ -130,8 +142,10 @@ namespace XForm.Types
             // Otherwise, read the null markers
             DataBatch nulls = _nullReader.Read(selector);
 
-            // Return the values and null markers together
-            return DataBatch.All(values.Array, -1, (bool[])nulls.Array).Reselect(values.Selector);
+            // Cache and return the values and null markers together
+            _currentBatch = DataBatch.All(values.Array, -1, (bool[])nulls.Array).Reselect(values.Selector);
+            _currentSelector = selector;
+            return _currentBatch;
         }
 
         public void Dispose()

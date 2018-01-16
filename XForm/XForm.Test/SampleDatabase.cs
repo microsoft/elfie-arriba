@@ -7,7 +7,6 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.IO.Compression;
-using System.Linq;
 
 using Elfie.Test;
 
@@ -25,19 +24,19 @@ namespace XForm.Test
     {
         private static object s_locker = new object();
         private static string s_RootPath;
-        private static WorkflowContext s_WorkflowContext;
+        private static XDatabaseContext s_xDatabaseContext;
 
-        public static WorkflowContext WorkflowContext
+        public static XDatabaseContext XDatabaseContext
         {
             get
             {
-                if (s_WorkflowContext != null) return s_WorkflowContext;
+                if (s_xDatabaseContext != null) return s_xDatabaseContext;
                 EnsureBuilt();
 
-                s_WorkflowContext = new WorkflowContext();
-                s_WorkflowContext.StreamProvider = new LocalFileStreamProvider(s_RootPath);
-                s_WorkflowContext.Runner = new WorkflowRunner(s_WorkflowContext);
-                return s_WorkflowContext;
+                s_xDatabaseContext = new XDatabaseContext();
+                s_xDatabaseContext.StreamProvider = new LocalFileStreamProvider(s_RootPath);
+                s_xDatabaseContext.Runner = new WorkflowRunner(s_xDatabaseContext);
+                return s_xDatabaseContext;
             }
         }
 
@@ -86,11 +85,11 @@ namespace XForm.Test
             Assert.IsTrue(Directory.Exists(expectedPath), $"XForm add didn't add to expected location {expectedPath}");
         }
 
-        public static void XForm(string xformCommand, int expectedExitCode = 0, WorkflowContext context = null)
+        public static void XForm(string xformCommand, int expectedExitCode = 0, XDatabaseContext context = null)
         {
             if (context == null)
             {
-                context = SampleDatabase.WorkflowContext;
+                context = SampleDatabase.XDatabaseContext;
 
                 // Ensure the as-of DateTime is reset for each operation
                 context.RequestedAsOfDateTime = DateTime.UtcNow;
@@ -114,12 +113,12 @@ namespace XForm.Test
         {
             SampleDatabase.EnsureBuilt();
 
-            XqlParser.Parse(@"
+            SampleDatabase.XDatabaseContext.Query(@"
                 read WebRequest
                 set [ClientOsUpper] Trim(ToUpper([ClientOs]))
                 set [Sample] ToUpper(Trim(""  Sample  ""))
                 assert none
-                    where [Sample] != ""SAMPLE""", null, SampleDatabase.WorkflowContext).RunAndDispose();
+                    where [Sample] != ""SAMPLE""").RunAndDispose();
         }
 
         [TestMethod]
@@ -128,7 +127,7 @@ namespace XForm.Test
             SampleDatabase.EnsureBuilt();
 
             // Validate Database source list as returned by IWorkflowRunner.SourceNames. Don't validate the full list so that as test data is added this test isn't constantly failing.
-            List<string> sources = new List<string>(SampleDatabase.WorkflowContext.Runner.SourceNames);
+            List<string> sources = new List<string>(SampleDatabase.XDatabaseContext.Runner.SourceNames);
             Trace.Write(string.Join("\r\n", sources));
             Assert.IsTrue(sources.Contains("WebRequest"), "WebRequest table should exist");
             Assert.IsTrue(sources.Contains("WebRequest.Authenticated"), "WebRequest.Authenticated config should exist");
@@ -147,14 +146,14 @@ namespace XForm.Test
             XForm($"build WebRequest xform \"{cutoff:yyyy-MM-dd hh:mm:ssZ}");
 
             // Verify it has been created
-            DateTime versionFound = SampleDatabase.WorkflowContext.StreamProvider.LatestBeforeCutoff(LocationType.Table, "WebRequest", CrawlType.Full, cutoff).WhenModifiedUtc;
+            DateTime versionFound = SampleDatabase.XDatabaseContext.StreamProvider.LatestBeforeCutoff(LocationType.Table, "WebRequest", CrawlType.Full, cutoff).WhenModifiedUtc;
             Assert.AreEqual(new DateTime(2017, 12, 02, 00, 00, 00, DateTimeKind.Utc), versionFound);
 
             // Ask for WebRequest.Authenticated. Verify a 2017-12-02 version is also built for it
             XForm($"build WebRequest.Authenticated xform \"{cutoff:yyyy-MM-dd hh:mm:ssZ}");
 
             // Verify it has been created
-            versionFound = SampleDatabase.WorkflowContext.StreamProvider.LatestBeforeCutoff(LocationType.Table, "WebRequest.Authenticated", CrawlType.Full, cutoff).WhenModifiedUtc;
+            versionFound = SampleDatabase.XDatabaseContext.StreamProvider.LatestBeforeCutoff(LocationType.Table, "WebRequest.Authenticated", CrawlType.Full, cutoff).WhenModifiedUtc;
             Assert.AreEqual(new DateTime(2017, 12, 02, 00, 00, 00, DateTimeKind.Utc), versionFound);
         }
 
@@ -164,14 +163,14 @@ namespace XForm.Test
             SampleDatabase.EnsureBuilt();
 
             // Asking for 2d from 2017-12-04 should get 2017-12-03 and 2017-12-02 crawls
-            WorkflowContext historicalContext = new WorkflowContext(SampleDatabase.WorkflowContext) { RequestedAsOfDateTime = new DateTime(2017, 12, 04, 00, 00, 00, DateTimeKind.Utc) };
-            Assert.AreEqual(2000, XqlParser.Parse("readRange 2d WebRequest", null, historicalContext).RunAndDispose());
+            XDatabaseContext historicalContext = new XDatabaseContext(SampleDatabase.XDatabaseContext) { RequestedAsOfDateTime = new DateTime(2017, 12, 04, 00, 00, 00, DateTimeKind.Utc) };
+            Assert.AreEqual(2000, historicalContext.Query("readRange 2d WebRequest").RunAndDispose());
 
             // Asking for 3d should get all three crawls
-            Assert.AreEqual(3000, XqlParser.Parse("readRange 3d WebRequest", null, historicalContext).RunAndDispose());
+            Assert.AreEqual(3000, historicalContext.Query("readRange 3d WebRequest").RunAndDispose());
 
             // Asking for 4d should error (no version for the range start)
-            Verify.Exception<UsageException>(() => XqlParser.Parse("readRange 4d WebRequest", null, historicalContext).RunAndDispose());
+            Verify.Exception<UsageException>(() => historicalContext.Query("readRange 4d WebRequest").RunAndDispose());
         }
 
         [TestMethod]
@@ -182,16 +181,16 @@ namespace XForm.Test
 
             // Build WebRequest.tsv. Verify it's a 2017-12-03 version. Verify the TSV is found
             XForm($"build WebRequest tsv");
-            latestReport = SampleDatabase.WorkflowContext.StreamProvider.LatestBeforeCutoff(LocationType.Report, "WebRequest", CrawlType.Full, DateTime.UtcNow);
+            latestReport = SampleDatabase.XDatabaseContext.StreamProvider.LatestBeforeCutoff(LocationType.Report, "WebRequest", CrawlType.Full, DateTime.UtcNow);
             Assert.AreEqual(new DateTime(2017, 12, 03, 00, 00, 00, DateTimeKind.Utc), latestReport.WhenModifiedUtc);
-            Assert.IsTrue(SampleDatabase.WorkflowContext.StreamProvider.Attributes(Path.Combine(latestReport.Path, "Report.tsv")).Exists);
+            Assert.IsTrue(SampleDatabase.XDatabaseContext.StreamProvider.Attributes(Path.Combine(latestReport.Path, "Report.tsv")).Exists);
 
             // Ask for a 2017-12-02 report. Verify 2017-12-02 version is created
             DateTime cutoff = new DateTime(2017, 12, 02, 11, 50, 00, DateTimeKind.Utc);
             XForm($"build WebRequest tsv \"{cutoff:yyyy-MM-dd hh:mm:ssZ}");
-            latestReport = SampleDatabase.WorkflowContext.StreamProvider.LatestBeforeCutoff(LocationType.Report, "WebRequest", CrawlType.Full, cutoff);
+            latestReport = SampleDatabase.XDatabaseContext.StreamProvider.LatestBeforeCutoff(LocationType.Report, "WebRequest", CrawlType.Full, cutoff);
             Assert.AreEqual(new DateTime(2017, 12, 02, 00, 00, 00, DateTimeKind.Utc), latestReport.WhenModifiedUtc);
-            Assert.IsTrue(SampleDatabase.WorkflowContext.StreamProvider.Attributes(Path.Combine(latestReport.Path, "Report.tsv")).Exists);
+            Assert.IsTrue(SampleDatabase.XDatabaseContext.StreamProvider.Attributes(Path.Combine(latestReport.Path, "Report.tsv")).Exists);
         }
 
         [TestMethod]
@@ -204,9 +203,9 @@ namespace XForm.Test
             IStreamProvider branchedStreamProvider = new LocalFileStreamProvider(branchedFolder);
             branchedStreamProvider.Delete(".");
 
-            IStreamProvider mainStreamProvider = SampleDatabase.WorkflowContext.StreamProvider;
+            IStreamProvider mainStreamProvider = SampleDatabase.XDatabaseContext.StreamProvider;
 
-            WorkflowContext branchedContext = new WorkflowContext(SampleDatabase.WorkflowContext);
+            XDatabaseContext branchedContext = new XDatabaseContext(SampleDatabase.XDatabaseContext);
             branchedContext.StreamProvider = new MultipleSourceStreamProvider(branchedStreamProvider, branchedContext.StreamProvider, MultipleSourceStreamConfiguration.LocalBranch);
             branchedContext.Runner = new WorkflowRunner(branchedContext);
 
@@ -235,7 +234,7 @@ namespace XForm.Test
             XForm("build WebRequest.Authenticated", 0, branchedContext);
             Assert.IsTrue(branchedStreamProvider.Attributes("Table\\WebRequest.Authenticated").Exists);
             Assert.AreEqual(webRequestAuthenticatedConfigNew, ((BinaryTableReader)branchedContext.Runner.Build("WebRequest.Authenticated", branchedContext)).Query);
-            Assert.AreNotEqual(webRequestAuthenticatedConfigNew, ((BinaryTableReader)SampleDatabase.WorkflowContext.Runner.Build("WebRequest.Authenticated", SampleDatabase.WorkflowContext)).Query);
+            Assert.AreNotEqual(webRequestAuthenticatedConfigNew, ((BinaryTableReader)SampleDatabase.XDatabaseContext.Runner.Build("WebRequest.Authenticated", SampleDatabase.XDatabaseContext)).Query);
         }
 
         [TestMethod]
@@ -243,25 +242,25 @@ namespace XForm.Test
         {
             SampleDatabase.EnsureBuilt();
 
-            WorkflowContext reportContext = new WorkflowContext(SampleDatabase.WorkflowContext);
+            XDatabaseContext reportContext = new XDatabaseContext(SampleDatabase.XDatabaseContext);
 
             // Build WebServer as of 2017-11-25; should have 86 original rows, verify built copy cached
             reportContext.NewestDependency = DateTime.MinValue;
             reportContext.RequestedAsOfDateTime = new DateTime(2017, 11, 25, 00, 00, 00, DateTimeKind.Utc);
-            Assert.AreEqual(86, SampleDatabase.WorkflowContext.Runner.Build("WebServer", reportContext).RunAndDispose());
-            Assert.AreEqual(new DateTime(2017, 11, 25, 00, 00, 00, DateTimeKind.Utc), SampleDatabase.WorkflowContext.StreamProvider.LatestBeforeCutoff(LocationType.Table, "WebServer", CrawlType.Full, DateTime.UtcNow).WhenModifiedUtc);
+            Assert.AreEqual(86, SampleDatabase.XDatabaseContext.Runner.Build("WebServer", reportContext).RunAndDispose());
+            Assert.AreEqual(new DateTime(2017, 11, 25, 00, 00, 00, DateTimeKind.Utc), SampleDatabase.XDatabaseContext.StreamProvider.LatestBeforeCutoff(LocationType.Table, "WebServer", CrawlType.Full, DateTime.UtcNow).WhenModifiedUtc);
 
             // Build WebServer as of 2017-11-27; should have 91 rows (one incremental added)
             reportContext.NewestDependency = DateTime.MinValue;
             reportContext.RequestedAsOfDateTime = new DateTime(2017, 11, 27, 00, 00, 00, DateTimeKind.Utc);
-            Assert.AreEqual(91, SampleDatabase.WorkflowContext.Runner.Build("WebServer", reportContext).RunAndDispose());
-            Assert.AreEqual(new DateTime(2017, 11, 27, 00, 00, 00, DateTimeKind.Utc), SampleDatabase.WorkflowContext.StreamProvider.LatestBeforeCutoff(LocationType.Table, "WebServer", CrawlType.Full, DateTime.UtcNow).WhenModifiedUtc);
+            Assert.AreEqual(91, SampleDatabase.XDatabaseContext.Runner.Build("WebServer", reportContext).RunAndDispose());
+            Assert.AreEqual(new DateTime(2017, 11, 27, 00, 00, 00, DateTimeKind.Utc), SampleDatabase.XDatabaseContext.StreamProvider.LatestBeforeCutoff(LocationType.Table, "WebServer", CrawlType.Full, DateTime.UtcNow).WhenModifiedUtc);
 
             // Build WebServer as of 2017-11-29; should have 96 rows (two incrementals added)
             reportContext.NewestDependency = DateTime.MinValue;
             reportContext.RequestedAsOfDateTime = new DateTime(2017, 11, 29, 00, 00, 00, DateTimeKind.Utc);
-            Assert.AreEqual(96, SampleDatabase.WorkflowContext.Runner.Build("WebServer", reportContext).RunAndDispose());
-            Assert.AreEqual(new DateTime(2017, 11, 29, 00, 00, 00, DateTimeKind.Utc), SampleDatabase.WorkflowContext.StreamProvider.LatestBeforeCutoff(LocationType.Table, "WebServer", CrawlType.Full, DateTime.UtcNow).WhenModifiedUtc);
+            Assert.AreEqual(96, SampleDatabase.XDatabaseContext.Runner.Build("WebServer", reportContext).RunAndDispose());
+            Assert.AreEqual(new DateTime(2017, 11, 29, 00, 00, 00, DateTimeKind.Utc), SampleDatabase.XDatabaseContext.StreamProvider.LatestBeforeCutoff(LocationType.Table, "WebServer", CrawlType.Full, DateTime.UtcNow).WhenModifiedUtc);
         }
 
         [TestMethod]
@@ -270,7 +269,7 @@ namespace XForm.Test
             SampleDatabase.EnsureBuilt();
 
             // XForm build each source
-            foreach (string sourceName in SampleDatabase.WorkflowContext.Runner.SourceNames)
+            foreach (string sourceName in SampleDatabase.XDatabaseContext.Runner.SourceNames)
             {
                 XForm($"build {XqlScanner.Escape(sourceName, TokenType.Value)}", ExpectedResult(sourceName));
             }
@@ -287,7 +286,7 @@ namespace XForm.Test
             //XForm("build WebRequest.NullableHandling");
 
             // To debug engine execution, run like this:
-            XqlParser.Parse("read WebRequest.NullableHandling", null, SampleDatabase.WorkflowContext).RunAndDispose();
+            XqlParser.Parse("read WebRequest.NullableHandling", null, SampleDatabase.XDatabaseContext).RunAndDispose();
         }
 
         private static int ExpectedResult(string sourceName)

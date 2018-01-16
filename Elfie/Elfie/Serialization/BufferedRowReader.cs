@@ -1,10 +1,11 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using Microsoft.CodeAnalysis.Elfie.Model.Strings;
-using Microsoft.CodeAnalysis.Elfie.Model.Structures;
 using System;
 using System.IO;
+
+using Microsoft.CodeAnalysis.Elfie.Model.Strings;
+using Microsoft.CodeAnalysis.Elfie.Model.Structures;
 
 namespace Microsoft.CodeAnalysis.Elfie.Serialization
 {
@@ -33,7 +34,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             _startOfStream = true;
 
             long length = 64 * 1024;
-            if(stream.CanSeek)
+            if (stream.CanSeek)
             {
                 length = Math.Min(length, stream.Length + 1);
             }

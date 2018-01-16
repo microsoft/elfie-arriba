@@ -20,10 +20,10 @@ namespace XForm.Test.Query
             if (s_SampleReader == null)
             {
                 SampleDatabase.EnsureBuilt();
-                s_SampleReader = XqlParser.Parse(@"
+                s_SampleReader = SampleDatabase.XDatabaseContext.Query(@"
                 read WebRequest
                 cache all
-                ", null, SampleDatabase.WorkflowContext);
+                ");
             }
 
             s_SampleReader.Reset();
@@ -41,7 +41,7 @@ namespace XForm.Test.Query
             {
                 pipeline = SampleReader();
                 innerValidator = new DataBatchEnumeratorContractValidator(pipeline);
-                pipeline = XqlParser.Parse(configurationLine, innerValidator, SampleDatabase.WorkflowContext);
+                pipeline = SampleDatabase.XDatabaseContext.Query(configurationLine, innerValidator);
 
                 // Run without requesting any columns. Validate.
                 Assert.AreEqual(requiredColumnCount, innerValidator.ColumnGettersRequested.Count);
@@ -51,7 +51,7 @@ namespace XForm.Test.Query
 
                 // Reset; Request all columns. Validate.
                 pipeline.Reset();
-                pipeline = XqlParser.Parse("write \"Sample.output.csv\"", pipeline, SampleDatabase.WorkflowContext);
+                pipeline = SampleDatabase.XDatabaseContext.Query("write \"Sample.output.csv\"", pipeline);
                 actualRowCount = pipeline.RunWithoutDispose();
             }
             finally
@@ -84,21 +84,19 @@ namespace XForm.Test.Query
         [TestMethod]
         public void DataSourceEnumerator_Errors()
         {
-            Verify.Exception<UsageException>(() => XqlParser.Parse("read", null, SampleDatabase.WorkflowContext));
-            Verify.Exception<UsageException>(() => XqlParser.Parse("read NotFound.csv", null, SampleDatabase.WorkflowContext));
-            Verify.Exception<UsageException>(() => XqlParser.Parse(@"
+            Verify.Exception<UsageException>(() => SampleDatabase.XDatabaseContext.Query("read"));
+            Verify.Exception<UsageException>(() => SampleDatabase.XDatabaseContext.Query("read NotFound.csv"));
+            Verify.Exception<UsageException>(() => SampleDatabase.XDatabaseContext.Query(@"
                 read WebRequest
-                remove [NotFound]", null, SampleDatabase.WorkflowContext));
+                remove [NotFound]"));
 
             // String value in braces
-            Verify.Exception<UsageException>(() => XqlParser.Parse(@"read [WebRequest]", null, SampleDatabase.WorkflowContext));
+            Verify.Exception<UsageException>(() => SampleDatabase.XDatabaseContext.Query(@"read [WebRequest]"));
 
             // Verify casting a type to itself doesn't error
-            XqlParser.Parse(@"
+            SampleDatabase.XDatabaseContext.Query(@"
                 read WebRequest
-                select Cast(Cast([EventTime], DateTime), DateTime)",
-                null,
-                SampleDatabase.WorkflowContext).RunAndDispose();
+                select Cast(Cast([EventTime], DateTime), DateTime)").RunAndDispose();
         }
     }
 }

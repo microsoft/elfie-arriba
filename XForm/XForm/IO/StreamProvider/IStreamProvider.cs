@@ -58,6 +58,7 @@ namespace XForm.IO.StreamProvider
         public bool Exists { get; set; }
         public long Length { get; set; }
         public DateTime WhenModifiedUtc { get; set; }
+        public EnumerateTypes Type { get; set; }
 
         public override string ToString()
         {

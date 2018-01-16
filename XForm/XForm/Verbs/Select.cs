@@ -13,9 +13,9 @@ namespace XForm.Verbs
     internal class SelectCommandBuilder : IVerbBuilder
     {
         public string Verb => "select";
-        public string Usage => "'select' [ColumnFunctionOrLiteral] (AS [Name])?, [ColumnFunctionOrLiteral], ...";
+        public string Usage => "'select' [Column|Function|Literal] (AS [Name])?, ...";
 
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)
+        public IDataBatchEnumerator Build(IDataBatchEnumerator source, XDatabaseContext context)
         {
             List<IDataBatchColumn> columns = new List<IDataBatchColumn>();
             do

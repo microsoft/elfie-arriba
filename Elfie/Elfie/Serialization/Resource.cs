@@ -61,9 +61,9 @@ namespace Elfie.Serialization
             if (asm == null) asm = Assembly.GetCallingAssembly();
 
             Directory.CreateDirectory(folderPath);
-            foreach(string streamName in asm.GetManifestResourceNames())
+            foreach (string streamName in asm.GetManifestResourceNames())
             {
-                if(streamName.StartsWith(streamFolderName))
+                if (streamName.StartsWith(streamFolderName))
                 {
                     string fileName = streamName.Substring(streamFolderName.Length + 1);
                     SaveStreamTo(streamName, Path.Combine(folderPath, fileName), asm);

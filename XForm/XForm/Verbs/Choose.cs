@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+
 using XForm.Data;
 using XForm.Extensions;
 using XForm.Query;
@@ -14,9 +15,9 @@ namespace XForm.Verbs
     internal class ChooseBuilder : IVerbBuilder
     {
         public string Verb => "choose";
-        public string Usage => "'choose' [Max|Min] [RankColumnName] [IdentityColumnNames]";
+        public string Usage => "'choose' [Max|Min] [RankColumn] [IdentityColumns]";
 
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)
+        public IDataBatchEnumerator Build(IDataBatchEnumerator source, XDatabaseContext context)
         {
             ChooseDirection direction = context.Parser.NextEnum<ChooseDirection>();
             IDataBatchColumn rankColumn = context.Parser.NextColumn(source, context);
@@ -114,7 +115,7 @@ namespace XForm.Verbs
 
             int totalSoFar = 0;
             int count;
-            while((count = _source.Next(DataBatchEnumeratorExtensions.DefaultBatchSize)) != 0)
+            while ((count = _source.Next(DataBatchEnumeratorExtensions.DefaultBatchSize)) != 0)
             {
                 // Get the rank and key column batches
                 DataBatch rankBatch = _rankColumnGetter();

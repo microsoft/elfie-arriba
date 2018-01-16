@@ -183,7 +183,7 @@ namespace XForm.Query
         private void ParseWrappedValue(char escapeChar)
         {
             StringBuilder value = new StringBuilder();
-            
+
             // Consume the opening character
             CurrentIndex++;
 
@@ -219,7 +219,7 @@ namespace XForm.Query
             // If no terminator, treat the value as going to the end of the line. This is so partially typed queries run.
             value.Append(Text, CurrentIndex, end - CurrentIndex);
             CurrentIndex = end;
-            this.Current.Value = value.ToString();            
+            this.Current.Value = value.ToString();
         }
 
         private void ParseUnwrappedValue()
@@ -247,6 +247,11 @@ namespace XForm.Query
             }
 
             this.Current.Value = Text.Substring(startIndex, CurrentIndex - startIndex);
+        }
+
+        public static string Escape(object value, TokenType type, bool wasUnwrapped = false)
+        {
+            return Escape((value == null ? null : value.ToString()), type, wasUnwrapped);
         }
 
         public static string Escape(string value, TokenType type, bool wasUnwrapped = false)
@@ -291,6 +296,23 @@ namespace XForm.Query
             }
 
             return false;
+        }
+
+        public static string QueryToSingleLineStyle(string query)
+        {
+            StringBuilder result = new StringBuilder();
+
+            foreach (string line in query.Split('\n'))
+            {
+                string cleanLine = line.TrimEnd('\r').Trim();
+                if (!String.IsNullOrEmpty(cleanLine))
+                {
+                    if (result.Length > 0) result.Append(" | ");
+                    result.Append(cleanLine);
+                }
+            }
+
+            return result.ToString();
         }
     }
 }

@@ -2,16 +2,19 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 
 using Microsoft.CodeAnalysis.Elfie.Serialization;
 
-using XForm.Extensions;
 using XForm.Data;
-using XForm.Verbs;
-using System.Collections.Generic;
+using XForm.Extensions;
+using XForm.Query;
 using XForm.Types;
+using XForm.Verbs;
+using XForm.IO;
 
 namespace XForm
 {
@@ -19,14 +22,14 @@ namespace XForm
     {
         private const int DefaultMeasureMilliseconds = 2500;
 
-        private WorkflowContext Context { get; set; }
+        private XDatabaseContext Context { get; set; }
         private int Count { get; set; }
         private ushort[] Values { get; set; }
         private ushort[] Thresholds { get; set; }
 
-        public PerformanceComparisons()
+        public PerformanceComparisons(XDatabaseContext context)
         {
-            Context = new WorkflowContext();
+            Context = context;
             Random r = new Random();
             Count = 50 * 1000 * 1000;
 
@@ -43,14 +46,40 @@ namespace XForm
 
         public void Run()
         {
+            Current();
+
             //WhereUShortUnderConstant();
             //WhereUShortEqualsUshort();
             //ByteEqualsConstant();
             //DoubleWhere();
             //Join();
             //Dictionary();
-            Choose();
+            //Choose();
             //TsvSplit();
+        }
+
+        public void Current()
+        {
+            ColumnCache.IsEnabled = true;
+            // Still want to tune schema requests. Current bottleneck: LatestBeforeCutoff
+            //string query = @"
+            //    read WebRequest
+            //    schema
+            //";
+
+            string query = @"
+                read Asset.Extended.Release.Typed
+                where [Asset_SourceID] = 29 AND [IsBaseline] = 0";
+
+            string singleLineQuery = XqlScanner.QueryToSingleLineStyle(query);
+
+            using (Benchmarker b = new Benchmarker(singleLineQuery, 10000))
+            {
+                b.Measure($"XForm", 1, () =>
+                {
+                    return Context.Query(query).Count();
+                });
+            }
         }
 
         public void WhereUShortUnderConstant()
@@ -74,7 +103,7 @@ namespace XForm
 
                 b.Measure("XForm Count", Values.Length, () =>
                 {
-                    return (int)XFormTable.FromArrays(Values.Length)
+                    return (int)Context.FromArrays(Values.Length)
                     .WithColumn("Value", Values)
                     .Query("where [Value] <= 50", Context)
                     .Count();
@@ -100,7 +129,7 @@ namespace XForm
 
                 b.Measure("XForm Count", Values.Length, () =>
                 {
-                    return (int)XFormTable.FromArrays(Values.Length)
+                    return (int)Context.FromArrays(Values.Length)
                     .WithColumn("Value", Values)
                     .WithColumn("Threshold", Thresholds)
                     .Query("where [Value] = [Threshold]", Context)
@@ -127,7 +156,7 @@ namespace XForm
 
                 b.Measure("XForm Count", Values.Length, () =>
                 {
-                    return (int)XFormTable.FromArrays(Values.Length)
+                    return (int)Context.FromArrays(Values.Length)
                     .WithColumn("Value", Values)
                     .Query("where [Value] < 50 || [Value] > 950", Context)
                     .Count();
@@ -157,7 +186,7 @@ namespace XForm
 
                 b.Measure("XForm Count", bytes.Length, () =>
                 {
-                    return (int)XFormTable.FromArrays(bytes.Length)
+                    return (int)Context.FromArrays(bytes.Length)
                     .WithColumn("Value", bytes)
                     .Query("where [Value] < 16", Context)
                     .Count();
@@ -176,9 +205,9 @@ namespace XForm
             {
                 b.Measure("XForm Join", joinFromLength, () =>
                 {
-                    IDataBatchEnumerator joinToSource = XFormTable.FromArrays(joinTo.Length).WithColumn("ID", joinTo);
+                    IDataBatchEnumerator joinToSource = Context.FromArrays(joinTo.Length).WithColumn("ID", joinTo);
 
-                    IDataBatchEnumerator enumerator = XFormTable.FromArrays(joinFromLength).WithColumn("Value", Values);
+                    IDataBatchEnumerator enumerator = Context.FromArrays(joinFromLength).WithColumn("Value", Values);
                     enumerator = new Join(enumerator, "Value", joinToSource, "ID", "");
                     return (int)enumerator.Count();
                 });
@@ -190,7 +219,6 @@ namespace XForm
             int count = 1000 * 1000;
             Dictionary<int, int> expected = new Dictionary<int, int>();
             Dictionary5<int, int> actual = new Dictionary5<int, int>(new EqualityComparerAdapter<int>(TypeProviderFactory.Get(typeof(int)).TryGetComparer()));
-            Dictionary5O<int, int> actualO = new Dictionary5O<int, int>(new EqualityComparerAdapter<int>(TypeProviderFactory.Get(typeof(int)).TryGetComparer()));
 
             int[] values = new int[count];
             Random r = new Random(5);
@@ -221,23 +249,13 @@ namespace XForm
                     return actual.Count;
                 });
 
-                b.Measure("XForm.Dictionary5O", count, () =>
-                {
-                    for (int i = 0; i < count; ++i)
-                    {
-                        actualO.Add(values[i], i);
-                    }
-
-                    return actualO.Count;
-                });
-
                 b.AssertResultsEqual();
             }
         }
 
         public void Choose()
         {
-            WorkflowContext context = new WorkflowContext();
+            XDatabaseContext context = new XDatabaseContext();
             int[] rankPattern = new int[] { 2, 3, 1, 4, 6, 5, 7, 9, 8 };
 
             // Build three arrays
@@ -250,7 +268,6 @@ namespace XForm
 
             for (int i = 0; i < length; ++i)
             {
-                
                 id[i] = i / countPerID;                  // ID is the same for three rows at a time
                 rank[i] = rankPattern[i % countPerID];   // Rank is [2, 3, 1] repeating (so the middle is the biggest)
                 value[i] = i;                            // Value is the index of the real row
@@ -260,7 +277,7 @@ namespace XForm
             {
                 b.Measure("Choose", length, () =>
                 {
-                    IDataBatchEnumerator actual = XFormTable.FromArrays(length)
+                    IDataBatchEnumerator actual = Context.FromArrays(length)
                         .WithColumn("ID", id)
                         .WithColumn("Rank", rank)
                         .WithColumn("Value", value)

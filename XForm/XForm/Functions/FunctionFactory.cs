@@ -16,7 +16,7 @@ namespace XForm.Functions
         {
             EnsureLoaded();
 
-            foreach(IFunctionBuilder builder in s_buildersByName.Values)
+            foreach (IFunctionBuilder builder in s_buildersByName.Values)
             {
                 if (returnType == null || builder.ReturnType == null || builder.ReturnType == returnType) yield return builder.Name;
             }

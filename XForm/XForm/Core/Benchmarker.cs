@@ -156,7 +156,7 @@ namespace XForm
             }
             else
             {
-                return string.Format("{0:n3}", itemsPerSecond / (double)(1000));
+                return string.Format("{0:n1} / s", itemsPerSecond);
             }
         }
 
@@ -172,7 +172,10 @@ namespace XForm
                 return new BenchmarkResult() { Name = name, Output = output, ItemCount = itemCount, Iterations = 1, Elapsed = w.Elapsed };
             }
 
+            // Estimate iterations from one run
             int iterations = (w.Elapsed.TotalMilliseconds < 1 ? 2 * forMilliseconds : (int)(forMilliseconds / w.Elapsed.TotalMilliseconds));
+            TimeSpan elapsed;
+
             w.Restart();
 
             for (int iteration = 0; iteration < iterations; ++iteration)
@@ -181,6 +184,26 @@ namespace XForm
             }
 
             w.Stop();
+            elapsed = w.Elapsed;
+
+            // If we used less than half the time, re-estimate and run again
+            if (elapsed.TotalMilliseconds < forMilliseconds / 2)
+            {
+                int remainingMs = forMilliseconds - (int)elapsed.TotalMilliseconds;
+                double iterationsPerMs = iterations / elapsed.TotalMilliseconds;
+                int additionalIterations = (int)(remainingMs * iterationsPerMs);
+
+                w.Restart();
+                for (int iteration = 0; iteration < additionalIterations; ++iteration)
+                {
+                    output = method();
+                }
+                w.Stop();
+
+                iterations += additionalIterations;
+                elapsed += w.Elapsed;
+            }
+
             return new BenchmarkResult() { Name = name, Output = output, ItemCount = itemCount, Iterations = iterations, Elapsed = w.Elapsed };
         }
 

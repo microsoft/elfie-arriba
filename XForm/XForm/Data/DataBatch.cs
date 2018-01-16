@@ -155,5 +155,33 @@ namespace XForm.Data
         {
             return new DataBatch(this) { Selector = selector };
         }
+
+        /// <summary>
+        ///  Remap the IsNull array from the source batch, if any, to a non-indexed array.
+        ///  Used when the values in the batch were converted into an in-order array but IsNull
+        ///  from the source needs to be preserved.
+        /// </summary>
+        /// <param name="batch">DataBatch to remap nulls from</param>
+        /// <param name="remapArray">bool[] to use to remap IsNull values, if needed</param>
+        /// <returns>IsNull array to use in returned DataBatch</returns>
+        public static bool[] RemapNulls(DataBatch batch, ref bool[] remapArray)
+        {
+            // If there were no source nulls, there are none for the output
+            if (batch.IsNull == null) return null;
+
+            // If the source isn't indexed or shifted, the IsNull array may be reused
+            if (batch.Selector.Indices == null && batch.Selector.StartIndexInclusive == 0) return batch.IsNull;
+
+            // Otherwise, we must remap nulls
+            Allocator.AllocateToSize(ref remapArray, batch.Count);
+
+            bool areAnyNulls = false;
+            for (int i = 0; i < batch.Count; ++i)
+            {
+                areAnyNulls |= (remapArray[i] = batch.IsNull[batch.Index(i)]);
+            }
+
+            return (areAnyNulls ? remapArray : null);
+        }
     }
 }

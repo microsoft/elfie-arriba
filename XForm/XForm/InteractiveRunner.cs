@@ -20,27 +20,27 @@ namespace XForm
     public class InteractiveRunner : IWorkflowRunner
     {
         private static string s_commandCachePath;
-        private WorkflowContext _workflowContext;
+        private XDatabaseContext _xDatabaseContext;
         private IDataBatchEnumerator _pipeline;
         private List<IDataBatchEnumerator> _stages;
         private List<string> _commands;
 
-        public IEnumerable<string> SourceNames => _workflowContext.Runner.SourceNames;
+        public IEnumerable<string> SourceNames => _xDatabaseContext.Runner.SourceNames;
 
-        public IDataBatchEnumerator Build(string sourceName, WorkflowContext context)
+        public IDataBatchEnumerator Build(string sourceName, XDatabaseContext context)
         {
-            return _workflowContext.Runner.Build(sourceName, context);
+            return _xDatabaseContext.Runner.Build(sourceName, context);
         }
 
         public void Save(string query, string saveToPath)
         {
-            _workflowContext.Runner.Save(query, saveToPath);
+            _xDatabaseContext.Runner.Save(query, saveToPath);
         }
 
-        public InteractiveRunner(WorkflowContext context)
+        public InteractiveRunner(XDatabaseContext context)
         {
             s_commandCachePath = Environment.ExpandEnvironmentVariables(@"%TEMP%\XForm.Last.xql");
-            _workflowContext = context;
+            _xDatabaseContext = context;
 
             _pipeline = null;
             _stages = new List<IDataBatchEnumerator>();
@@ -63,10 +63,10 @@ namespace XForm
                     Stopwatch w = Stopwatch.StartNew();
                     try
                     {
-                        XqlParser parser = new XqlParser(nextLine, _workflowContext);
-                        if (!parser.HasAnotherPart) return lastCount;
+                        if (String.IsNullOrEmpty(nextLine)) return lastCount;
 
-                        string command = parser.NextString().ToLowerInvariant();
+                        string[] parts = nextLine.Split(' ');
+                        string command = parts[0].ToLowerInvariant();
                         switch (command)
                         {
                             case "quit":
@@ -88,9 +88,9 @@ namespace XForm
 
                                 break;
                             case "save":
-                                string tableName = parser.NextOutputTableName();
-                                string queryPath = _workflowContext.StreamProvider.Path(LocationType.Query, tableName, ".xql");
-                                _workflowContext.StreamProvider.WriteAllText(queryPath, String.Join(Environment.NewLine, _commands));
+                                string tableName = parts[1];
+                                string queryPath = _xDatabaseContext.StreamProvider.Path(LocationType.Query, tableName, ".xql");
+                                _xDatabaseContext.StreamProvider.WriteAllText(queryPath, String.Join(Environment.NewLine, _commands));
                                 Console.WriteLine($"Query saved to \"{tableName}\".");
 
 
@@ -101,7 +101,7 @@ namespace XForm
 
                                 break;
                             case "run":
-                                LoadScript(parser.NextString());
+                                LoadScript(parts[1]);
                                 break;
                             case "rerun":
                                 LoadScript(s_commandCachePath);
@@ -129,8 +129,8 @@ namespace XForm
 
                     // Get the first 10 results
                     IDataBatchEnumerator firstTenWrapper = _pipeline;
-                    firstTenWrapper = XqlParser.Parse("limit 10", firstTenWrapper, _workflowContext);
-                    firstTenWrapper = XqlParser.Parse("write cout", firstTenWrapper, _workflowContext);
+                    firstTenWrapper = _xDatabaseContext.Query("limit 10", firstTenWrapper);
+                    firstTenWrapper = _xDatabaseContext.Query("write cout", firstTenWrapper);
                     lastCount = firstTenWrapper.RunWithoutDispose();
 
                     // Get the count
@@ -171,7 +171,7 @@ namespace XForm
             _stages.Add(_pipeline);
 
             // Build the new stage
-            _pipeline = XqlParser.Parse(nextLine, _pipeline, _workflowContext);
+            _pipeline = _xDatabaseContext.Query(nextLine, _pipeline);
 
             // Save the current command set
             _commands.Add(nextLine);

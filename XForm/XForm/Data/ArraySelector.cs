@@ -141,7 +141,12 @@ namespace XForm.Data
         public override bool Equals(object obj)
         {
             if (!(obj is ArraySelector)) return false;
-            ArraySelector other = (ArraySelector)obj;
+            return Equals((ArraySelector)obj);
+        }
+
+        public bool Equals(ArraySelector other)
+        {
+            if (other == null) return false;
             return this.Indices == other.Indices && this.StartIndexInclusive == other.StartIndexInclusive && this.EndIndexExclusive == other.EndIndexExclusive;
         }
 

@@ -2,10 +2,10 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Collections.Generic;
 
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Collections.Generic;
 
 namespace XForm.Test.Core
 {
@@ -35,17 +35,19 @@ namespace XForm.Test.Core
             Assert.ReferenceEquals(buffer, previous);
 
             // Verify generic allocator works
-            Array generic = Allocator.AllocateArray(typeof(int), 10);
+            Array generic = null;
+            Allocator.AllocateToSize(ref generic, 10, typeof(int));
             Assert.IsNotNull(generic as int[]);
             Assert.AreEqual(10, generic.Length);
 
-            Array string8 = Allocator.AllocateArray(typeof(String8), 1);
+            Array string8 = null;
+            Allocator.AllocateToSize(ref string8, 1, typeof(String8));
             Assert.IsNotNull(string8 as String8[]);
             Assert.AreEqual(1, string8.Length);
 
             // Verify generic object creators work
             object list;
-            
+
             list = Allocator.ConstructGenericOf(typeof(List<>), typeof(int));
             Assert.AreEqual(typeof(List<int>), list.GetType());
             Assert.AreEqual(0, ((List<int>)list).Capacity);

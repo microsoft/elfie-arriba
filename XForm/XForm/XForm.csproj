@@ -93,15 +93,17 @@
   <ItemGroup>
     <Compile Include="Aggregators\CountAggregator.cs" />
     <Compile Include="BackgroundWebServer.cs" />
+    <Compile Include="Core\Cache.cs" />
     <Compile Include="Core\ChooseDictionary.cs" />
     <Compile Include="Core\HashCore.cs" />
     <Compile Include="Core\Dictionary5.cs" />
-    <Compile Include="Core\Dictionary5_O.cs" />
     <Compile Include="Core\Hashing.cs" />
+    <Compile Include="IO\ColumnCache.cs" />
     <Compile Include="Types\Comparers\DateTimeComparer.cs" />
     <Compile Include="Types\Comparers\String8Comparer.cs" />
     <Compile Include="Types\Comparers\TimeSpanComparer.cs" />
     <Compile Include="Types\IValueCopier.cs" />
+    <Compile Include="Types\PrimitiveConverters.cs" />
     <Compile Include="Types\TimeSpanTypeProvider.cs" />
     <Compile Include="Verbs\Cast.cs" />
     <Compile Include="Verbs\Choose.cs" />
@@ -119,7 +121,6 @@
     <Compile Include="Core\BitVector.cs" />
     <Compile Include="Data\MemoryCacher.cs" />
     <Compile Include="Data\SinglePageEnumerator.cs" />
-    <Compile Include="Core\XFormTable.cs" />
     <Compile Include="Extensions\DataBatchEnumeratorExtensions.cs" />
     <Compile Include="Extensions\IComparableExtensions.cs" />
     <Compile Include="Core\InterfaceLoader.cs" />
@@ -143,7 +144,7 @@
     <Compile Include="IO\StreamProvider\IStreamProvider.cs" />
     <Compile Include="IO\StreamProvider\LocalFileStreamProvider.cs" />
     <Compile Include="IO\Logger.cs" />
-    <Compile Include="IO\SchemaSerializer.cs" />
+    <Compile Include="IO\TableMetadata.cs" />
     <Compile Include="Extensions\StreamProviderExtensions.cs" />
     <Compile Include="IO\StreamProvider\MultipleSourceStreamProvider.cs" />
     <Compile Include="Core\NativeAccelerator.cs" />
@@ -199,7 +200,7 @@
     <Compile Include="Types\PrimitiveTypeProvider.cs" />
     <Compile Include="Types\String8TypeProvider.cs" />
     <Compile Include="Types\TypeProviderFactory.cs" />
-    <Compile Include="Context\WorkflowContext.cs" />
+    <Compile Include="Context\XDatabaseContext.cs" />
     <Compile Include="WorkflowRunner.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -248,31 +248,6 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         }
 
         /// <summary>
-        ///  Return the first index at which the passed string appears in this string.
-        /// </summary>
-        /// <param name="value">Value to find</param>
-        /// <param name="startIndex">First index at which to check</param>
-        /// <returns>Index of first occurrence of value or -1 if not found</returns>
-        public int IndexOf(String8 value, int startIndex = 0)
-        {
-            int length = value.Length;
-
-            int end = Index + Length - value.Length + 1;
-            for (int start = Index + startIndex; start < end; ++start)
-            {
-                int i = 0;
-                for (; i < length; ++i)
-                {
-                    if (Array[start + i] != value.Array[value.Index + i]) break;
-                }
-
-                if (i == length) return start - Index;
-            }
-
-            return -1;
-        }
-
-        /// <summary>
         ///  Return the first index at which the passed character appears in this string.
         /// </summary>
         /// <param name="c">Character to find</param>
@@ -374,7 +349,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             }
 
             int endIndex = Index + Length - 1;
-            for(; endIndex > startIndex; --endIndex)
+            for (; endIndex > startIndex; --endIndex)
             {
                 if (!IsWhiteSpace(Array[endIndex])) break;
             }
@@ -396,7 +371,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         public String8 TrimEnd(byte c)
         {
             int index = Index + Length - 1;
-            for(; index >= Index; --index)
+            for (; index >= Index; --index)
             {
                 if (Array[index] != c) break;
             }
@@ -561,7 +536,6 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             return valid;
         }
 
-
         /// <summary>
         ///  Convert a String8 with a numeric value to the sbyte representation, if in range.
         /// </summary>
@@ -723,7 +697,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         /// <returns>String8 representation of integer value</returns>
         public static String8 FromInteger(int value, byte[] buffer)
         {
-            return FromInteger(value, buffer, 0, 1);
+            return FromNumber(value, buffer, 0, 1);
         }
 
         /// <summary>
@@ -737,14 +711,48 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         /// <returns>String8 representation of integer value</returns>
         public static String8 FromInteger(int value, byte[] buffer, int index, int minimumDigits = 1)
         {
-            bool isNegative = value < 0;
-            long valueLeft = value;
-            if (isNegative) valueLeft = -valueLeft;
+            return FromNumber(value, buffer, index, minimumDigits);
+        }
+
+        /// <summary>
+        ///  Convert a number into the equivalent String8 representation, using the provided buffer.
+        ///  Buffer must be at least 11 bytes long to handle all values.
+        /// </summary>
+        /// <param name="value">long value to convert</param>
+        /// <param name="buffer">byte[] for conversion (at least length 11 for all values)</param>
+        /// <param name="index">Index within byte[] at which to being writing</param>
+        /// <param name="minimumDigits">Minimum integer length (leading zeros written if needed)</param>
+        /// <returns>String8 representation of integer value</returns>
+        public static String8 FromNumber(long value, byte[] buffer, int index, int minimumDigits = 1)
+        {
+            if (value >= 0)
+            {
+                return FromNumber((ulong)value, false, buffer, index, minimumDigits);
+            }
+            else
+            {
+                return FromNumber((ulong)(-value), true, buffer, index, minimumDigits);
+            }
+        }
+
+        /// <summary>
+        ///  Convert a number into the equivalent String8 representation, using the provided buffer.
+        ///  Buffer must be at least 11 bytes long to handle all values.
+        /// </summary>
+        /// <param name="value">ulong value to convert</param>
+        /// <param name="isNegative">True if the original value was negative</param>
+        /// <param name="buffer">byte[] for conversion (at least length 11 for all values)</param>
+        /// <param name="index">Index within byte[] at which to being writing</param>
+        /// <param name="minimumDigits">Minimum integer length (leading zeros written if needed)</param>
+        /// <returns>String8 representation of integer value</returns>
+        public static String8 FromNumber(ulong value, bool isNegative, byte[] buffer, int index, int minimumDigits = 1)
+        {
+            ulong valueLeft = value;
 
             // Determine how many digits in value
             int digits = 1;
-            int scale = 10;
-            while (valueLeft >= scale && digits < 10)
+            ulong scale = 10;
+            while (valueLeft >= scale && digits < 20)
             {
                 digits++;
                 scale *= 10;
@@ -756,7 +764,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             // Validate buffer is long enough
             int requiredLength = digits;
             if (isNegative) requiredLength++;
-            if (buffer.Length + index < requiredLength) throw new ArgumentException("String8.FromInteger requires an 11 byte buffer for integer conversion.");
+            if (buffer.Length + index < requiredLength) throw new ArgumentException("String8.FromNumber requires an 21 byte buffer for number conversion.");
 
             // Write minus sign if negative
             int digitStartIndex = index;
@@ -769,7 +777,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             // Write digits right to left
             for (int j = digitStartIndex + digits - 1; j >= digitStartIndex; --j)
             {
-                long digit = valueLeft % 10;
+                ulong digit = valueLeft % 10;
                 buffer[j] = (byte)(UTF8.Zero + (byte)digit);
                 valueLeft /= 10;
             }
@@ -923,9 +931,9 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
 
             // Convert with time part
             bool success = TryToDateTimeExact(out result, 0, 5, 8, 11, 14, 17);
-            
+
             // Parse partial seconds
-            if(Length > 20)
+            if (Length > 20)
             {
                 uint partialSeconds;
                 if (!this.Substring(20).TryToUInt(out partialSeconds)) return false;
@@ -1183,6 +1191,122 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
 
             // Negative if left earlier, zero if equal, positive if left later
             return left - right;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private bool IsAlphaNumeric(byte value)
+        {
+            return ((byte)(value - UTF8.a) < UTF8.AlphabetLength)
+                || ((byte)(value - UTF8.A) < UTF8.AlphabetLength)
+                || ((byte)(value - UTF8.Zero) < 10);
+        }
+
+        /// <summary>
+        ///  Return the first index at which the passed string appears in this string.
+        /// </summary>
+        /// <param name="value">Value to find</param>
+        /// <param name="startIndex">First index at which to check</param>
+        /// <returns>Index of first occurrence of value or -1 if not found</returns>
+        public int IndexOf(String8 value, int startIndex = 0)
+        {
+            int length = value.Length;
+
+            int end = Index + Length - value.Length + 1;
+            for (int start = Index + startIndex; start < end; ++start)
+            {
+                int i = 0;
+                for (; i < length; ++i)
+                {
+                    if (Array[start + i] != value.Array[value.Index + i]) break;
+                }
+
+                if (i == length) return start - Index;
+            }
+
+            return -1;
+        }
+
+        /// <summary>
+        ///  Return the index at which this string contains 'other' using case-insensitive comparison,
+        ///  or -1 if it was not found.
+        /// </summary>
+        /// <param name="other">Value to find within this String</param>
+        /// <param name="startIndex">Index from which to search</param>
+        /// <returns>Index of first instance of value in this String or -1 if not found</returns>
+        public int IndexOfOrdinalIgnoreCase(String8 other, int startIndex = 0)
+        {
+            int otherLength = other.Length;
+            int end = this.Length - otherLength + 1;
+
+            for (int matchStart = startIndex; matchStart < end; ++matchStart)
+            {
+                int i = 0;
+                for (; i < otherLength; ++i)
+                {
+                    int cmp = CompareOrdinalIgnoreCase(Array[Index + matchStart + i], other.Array[other.Index + i]);
+                    if (cmp != 0) break;
+                }
+
+                // Match found
+                if (i == otherLength) return matchStart;
+            }
+
+            // No matches found
+            return -1;
+        }
+
+        /// <summary>
+        ///  Return the index at which this string contains 'other' using case-insensitive comparison,
+        ///  with non-alphanumeric character beforehand, or -1 if not found.
+        /// </summary>
+        /// <param name="other">Value to find within this String</param>
+        /// <param name="startIndex">Index from which to search</param>
+        /// <returns>Index of first instance of value in this String or -1 if not found</returns>
+        public int Contains(String8 other, int startIndex = 0)
+        {
+            while (true)
+            {
+                // Find the next occurrence of 'other'
+                int foundAtIndex = IndexOfOrdinalIgnoreCase(other, startIndex);
+
+                // If not found, there are no matches
+                if (foundAtIndex == -1) return -1;
+
+                // If there's a boundary right before and after, this is a match
+                int before = foundAtIndex - 1;
+                int after = foundAtIndex + other.Length;
+                if ((before < 0 || !IsAlphaNumeric(Array[Index + before]))) return foundAtIndex;
+
+                // Otherwise, keep looking
+                startIndex = foundAtIndex + 1;
+            }
+        }
+
+        /// <summary>
+        ///  Return the index at which this string contains 'other' using case-insensitive comparison,
+        ///  with non-alphanumeric surrounding characters, or -1 if not found.
+        /// </summary>
+        /// <param name="other">Value to find within this String</param>
+        /// <param name="startIndex">Index from which to search</param>
+        /// <returns>Index of first instance of value in this String or -1 if not found</returns>
+        public int ContainsExact(String8 other, int startIndex = 0)
+        {
+            while (true)
+            {
+                // Find the next occurrence of 'other'
+                int foundAtIndex = IndexOfOrdinalIgnoreCase(other, startIndex);
+
+                // If not found, there are no matches
+                if (foundAtIndex == -1) return -1;
+
+                // If there's a boundary right before and after, this is a match
+                int before = foundAtIndex - 1;
+                int after = foundAtIndex + other.Length;
+                if ((before < 0 || !IsAlphaNumeric(Array[Index + before])) && (after >= Length || !IsAlphaNumeric(Array[Index + after]))) return foundAtIndex;
+
+                // Otherwise, keep looking
+                startIndex = foundAtIndex + 1;
+            }
         }
         #endregion
 

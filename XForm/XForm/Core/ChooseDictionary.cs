@@ -1,4 +1,8 @@
-﻿using System;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
+
 using XForm.Data;
 using XForm.Types;
 
@@ -66,7 +70,7 @@ namespace XForm
             _currentIsNewValue = true;
 
             int realIndex = _currentBatch.Index((int)index);
-            if(_currentBatch.IsNull != null && _currentBatch.IsNull[realIndex])
+            if (_currentBatch.IsNull != null && _currentBatch.IsNull[realIndex])
             {
                 _current = default(TColumnType);
             }
@@ -83,7 +87,7 @@ namespace XForm
 
         public bool BetterThanCurrent(uint index, ChooseDirection direction)
         {
-            if(direction == ChooseDirection.Max)
+            if (direction == ChooseDirection.Max)
             {
                 return _comparer.WhereGreaterThan(_current, _values[index]);
             }
@@ -130,7 +134,7 @@ namespace XForm
 
             // Create a strongly typed column for each key
             _keys = new IDictionaryColumn[keyColumns.Length];
-            for(int i = 0; i < keyColumns.Length; ++i)
+            for (int i = 0; i < keyColumns.Length; ++i)
             {
                 _keys[i] = (IDictionaryColumn)Allocator.ConstructGenericOf(typeof(DictionaryColumn<>), keyColumns[i].Type);
             }
@@ -153,7 +157,7 @@ namespace XForm
             if (keys.Length != _keys.Length) throw new ArgumentOutOfRangeException("keys.Length");
 
             // Keep the total of rows added (don't count resizes; to know the vector size to make)
-            if(!isResize) _totalRowCount += rankValues.Count;
+            if (!isResize) _totalRowCount += rankValues.Count;
 
             // Give the DataBatches to the keys and rank columns
             SetCurrentBatches(keys, rankValues, rowIndexBatch);
@@ -205,10 +209,10 @@ namespace XForm
 
             // Build a bit vector of all of the best rows identified
             byte[] metadata = this.Metadata;
-            int[] bestRowIndices = (int[])this._bestRowIndices.Values;
-            for(int i = 0; i < metadata.Length; ++i)
+            int[] bestRowIndices = (int[])_bestRowIndices.Values;
+            for (int i = 0; i < metadata.Length; ++i)
             {
-                if(metadata[i] != 0)
+                if (metadata[i] != 0)
                 {
                     _bestRowVector.Set(bestRowIndices[i]);
                 }
@@ -224,8 +228,8 @@ namespace XForm
                 _keys[i].Reset(size);
             }
 
-            this._ranks.Reset(size);
-            this._bestRowIndices.Reset(size);
+            _ranks.Reset(size);
+            _bestRowIndices.Reset(size);
         }
 
         private void SetCurrentBatches(DataBatch[] keys, DataBatch rankValues, DataBatch rowIndexBatch)
@@ -299,7 +303,7 @@ namespace XForm
         protected override void Expand()
         {
             // Build a selector of table values which were non-empty
-            int[] indices = new int[this._bestRowIndices.Length];
+            int[] indices = new int[_bestRowIndices.Length];
 
             byte[] metadata = this.Metadata;
             int count = 0;
@@ -309,17 +313,17 @@ namespace XForm
             }
 
             // Save the old keys, ranks, and row indices in DataBatches
-            DataBatch[] keyBatches = new DataBatch[this._keys.Length];
-            for (int i = 0; i < this._keys.Length; ++i)
+            DataBatch[] keyBatches = new DataBatch[_keys.Length];
+            for (int i = 0; i < _keys.Length; ++i)
             {
-                keyBatches[i] = DataBatch.All(this._keys[i].Values).Reselect(ArraySelector.Map(indices, count));
+                keyBatches[i] = DataBatch.All(_keys[i].Values).Reselect(ArraySelector.Map(indices, count));
             }
 
-            DataBatch rankBatch = DataBatch.All(this._ranks.Values).Reselect(ArraySelector.Map(indices, count));
-            DataBatch bestRowBatch = DataBatch.All(this._bestRowIndices.Values).Reselect(ArraySelector.Map(indices, count));
+            DataBatch rankBatch = DataBatch.All(_ranks.Values).Reselect(ArraySelector.Map(indices, count));
+            DataBatch bestRowBatch = DataBatch.All(_bestRowIndices.Values).Reselect(ArraySelector.Map(indices, count));
 
             // Expand the table
-            Reset(HashCore.ResizeToSize(this._bestRowIndices.Length));
+            Reset(HashCore.ResizeToSize(_bestRowIndices.Length));
 
             // Add items to the enlarged table
             Add(keyBatches, rankBatch, bestRowBatch, true);

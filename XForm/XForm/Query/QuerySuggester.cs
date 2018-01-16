@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+
 using XForm.Data;
 
 namespace XForm.Query
@@ -15,13 +16,13 @@ namespace XForm.Query
 
     public class QuerySuggester
     {
-        private WorkflowContext _workflowContext;
+        private XDatabaseContext _xDatabaseContext;
 
-        public QuerySuggester(WorkflowContext workflowContext)
+        public QuerySuggester(XDatabaseContext xDatabaseContext)
         {
-            // *Copy* the WorkflowContext and replace the runner. Only supported on a real underlying WorkflowRunner
-            _workflowContext = new WorkflowContext(workflowContext);
-            _workflowContext.Runner = new DeferredRunner((WorkflowRunner)_workflowContext.Runner);
+            // *Copy* the XDatabaseContext and replace the runner. Only supported on a real underlying WorkflowRunner
+            _xDatabaseContext = new XDatabaseContext(xDatabaseContext);
+            _xDatabaseContext.Runner = new DeferredRunner((WorkflowRunner)_xDatabaseContext.Runner);
         }
 
         public SuggestResult Suggest(string partialXqlQuery, DateTime asOfDate = default(DateTime))
@@ -32,23 +33,23 @@ namespace XForm.Query
 
             try
             {
-                WorkflowContext context = _workflowContext;
+                XDatabaseContext context = _xDatabaseContext;
 
                 // Reset the as of date if requested
-                if(asOfDate != default(DateTime) && asOfDate != _workflowContext.RequestedAsOfDateTime)
+                if (asOfDate != default(DateTime) && asOfDate != _xDatabaseContext.RequestedAsOfDateTime)
                 {
-                    context = new WorkflowContext(context) { RequestedAsOfDateTime = asOfDate };
+                    context = new XDatabaseContext(context) { RequestedAsOfDateTime = asOfDate };
                 }
 
                 // Parse the query as-is to see if it's valid
-                IDataBatchEnumerator pipeline = XqlParser.Parse(partialXqlQuery, null, context);
+                IDataBatchEnumerator pipeline = _xDatabaseContext.Query(partialXqlQuery);
                 result.IsValid = true;
 
                 // Parse the query with an extra argument on the last line to see what would be suggested
                 partialXqlQuery = partialXqlQuery + " ?";
 
                 // Try building the query pipeline, using a *DeferredRunner* so dependencies aren't built right now
-                pipeline = XqlParser.Parse(partialXqlQuery, null, context);
+                pipeline = context.Query(partialXqlQuery);
             }
             catch (UsageException ex)
             {

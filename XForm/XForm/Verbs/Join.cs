@@ -15,9 +15,9 @@ namespace XForm.Verbs
     internal class JoinBuilder : IVerbBuilder
     {
         public string Verb => "join";
-        public string Usage => "'join' [FromColumnName] [ToBinarySource] [ToColumn] [JoinedInColumnPrefix]";
+        public string Usage => "'join' [FromColumnName] [ToTable] [ToColumn] [ColumnPrefixForJoinedColumns]";
 
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)
+        public IDataBatchEnumerator Build(IDataBatchEnumerator source, XDatabaseContext context)
         {
             string sourceColumnName = context.Parser.NextColumnName(source);
             IDataBatchEnumerator joinToSource = context.Parser.NextTableSource();
@@ -35,7 +35,7 @@ namespace XForm.Verbs
     public class Join : IDataBatchEnumerator
     {
         private IDataBatchEnumerator _source;
-        private MemoryCacher _cachedJoinSource;
+        private IDataBatchList _cachedJoinSource;
 
         private Type _joinColumnType;
         private int _joinFromColumnIndex;
@@ -189,6 +189,7 @@ namespace XForm.Verbs
     {
         // JoinDictionary uses a Dictionary5 internally
         private Dictionary5<T, int> _dictionary;
+        private IValueCopier<T> _valueCopier;
 
         // Reused buffers for the matching row vector and matching row right side indices
         private int[] _returnedIndicesBuffer;
@@ -196,18 +197,35 @@ namespace XForm.Verbs
 
         public JoinDictionary(int initialCapacity)
         {
-            IEqualityComparer<T> comparer = new EqualityComparerAdapter<T>(TypeProviderFactory.TryGet(typeof(T).Name).TryGetComparer());
+            ITypeProvider typeProvider = TypeProviderFactory.Get(typeof(T));
+            IEqualityComparer<T> comparer = new EqualityComparerAdapter<T>(typeProvider.TryGetComparer());
             _dictionary = new Dictionary5<T, int>(comparer, initialCapacity);
+            _valueCopier = (IValueCopier<T>)(typeProvider.TryGetCopier());
         }
 
         public void Add(DataBatch keys, int firstRowIndex)
         {
             T[] keyArray = (T[])keys.Array;
-            for (int i = 0; i < keys.Count; ++i)
+
+            if (_valueCopier != null || keys.IsNull != null)
             {
-                int index = keys.Index(i);
-                if (keys.IsNull != null && keys.IsNull[index]) continue;
-                _dictionary[keyArray[index]] = firstRowIndex + i;
+                for (int i = 0; i < keys.Count; ++i)
+                {
+                    int index = keys.Index(i);
+                    if (keys.IsNull != null && keys.IsNull[index]) continue;
+                    T key = keyArray[index];
+                    if (_valueCopier != null) key = _valueCopier.Copy(key);
+                    _dictionary[key] = firstRowIndex + i;
+                }
+            }
+            else
+            {
+                for (int i = 0; i < keys.Count; ++i)
+                {
+                    int index = keys.Index(i);
+                    T key = keyArray[index];
+                    _dictionary[key] = firstRowIndex + i;
+                }
             }
         }
 

@@ -4,12 +4,14 @@
 using System;
 using System.Linq;
 
+using Elfie.Test;
+
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using XForm.Data;
 using XForm.Extensions;
-using XForm;
+using XForm.Query;
 
 namespace XForm.Test.Query
 {
@@ -42,14 +44,46 @@ namespace XForm.Test.Query
             RunQueryAndVerify(values, "When", expected, "Result", "set [Result] DateAdd([When], \"-2d\")");
         }
 
-
         [TestMethod]
-        public void Function_Cast()
+        public void Function_Cast_Basics()
         {
             int[] expected = Enumerable.Range(-2, 10).ToArray();
             string[] values = expected.Select((i) => i.ToString()).ToArray();
 
+            // Try casting int to String8 and back
             RunQueryAndVerify(values, "Score", expected, "Result", "set [Result] Cast(Cast([Score], String8), Int32)");
+
+            // Verify an unavailable cast throws
+            Verify.Exception<UsageException>(() => RunQueryAndVerify(expected, "Score", expected, "Result", "set [Result] Cast(Cast([Score], TimeSpan), DateTime)"));
+        }
+
+        [TestMethod]
+        public void Function_Cast_Conversions()
+        {
+            int[] values = Enumerable.Range(0, 10).ToArray();
+            RunCastConversions(typeof(sbyte), values);
+            RunCastConversions(typeof(byte), values);
+            RunCastConversions(typeof(short), values);
+            RunCastConversions(typeof(ushort), values);
+            RunCastConversions(typeof(int), values);
+            RunCastConversions(typeof(uint), values);
+            RunCastConversions(typeof(long), values);
+            RunCastConversions(typeof(ulong), values);
+
+            // No String8 to floating point cast yet
+            //RunCastConversions(typeof(float), values);
+            //RunCastConversions(typeof(double), values);
+        }
+
+        private static void RunCastConversions(Type type, int[] values)
+        {
+            // Convert to type and back to int
+            RunQueryAndVerify(values, "Value", values, "Value", $"select Cast(Cast([Value], {type.Name}), Int32)");
+
+            // Convert to string and back to int
+            TableTestHarness.AssertAreEqual(
+                TableTestHarness.DatabaseContext.FromArrays(values.Length).WithColumn("Value", values).Query($"select Cast(Cast(Cast([Value], String8), {type.Name}), Int32)", TableTestHarness.DatabaseContext),
+                TableTestHarness.DatabaseContext.FromArrays(values.Length).WithColumn("Value", values), 10);
         }
 
         [TestMethod]
@@ -132,11 +166,11 @@ namespace XForm.Test.Query
 
         public static void RunAndCompare(DataBatch input, string inputColumnName, DataBatch expected, string outputColumnName, string queryText)
         {
-            WorkflowContext context = new WorkflowContext();
+            XDatabaseContext context = new XDatabaseContext();
             context.RequestedAsOfDateTime = TestAsOfDateTime;
 
-            IDataBatchEnumerator query = XFormTable.FromArrays(input.Count)
-                .WithColumn(new ColumnDetails(inputColumnName, input.Array.GetType().GetElementType(), true), input)
+            IDataBatchEnumerator query = TableTestHarness.DatabaseContext.FromArrays(input.Count)
+                .WithColumn(new ColumnDetails(inputColumnName, input.Array.GetType().GetElementType()), input)
                 .Query(queryText, context);
 
             Func<DataBatch> resultGetter = query.ColumnGetter(query.Columns.IndexOfColumn(outputColumnName));

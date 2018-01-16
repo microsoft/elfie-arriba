@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 
@@ -11,7 +12,6 @@ using XForm.Data;
 using XForm.Extensions;
 using XForm.Query;
 using XForm.Types;
-using System.Threading.Tasks;
 
 namespace XForm.IO
 {
@@ -20,7 +20,7 @@ namespace XForm.IO
         public string Verb => "write";
         public string Usage => "'write' [tableNameOrFilePath]";
 
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)
+        public IDataBatchEnumerator Build(IDataBatchEnumerator source, XDatabaseContext context)
         {
             string filePath = context.Parser.NextOutputTableName();
             if (filePath.StartsWith("Table\\", StringComparison.OrdinalIgnoreCase) || filePath.EndsWith(".xform", StringComparison.OrdinalIgnoreCase))
@@ -36,7 +36,7 @@ namespace XForm.IO
 
     public class BinaryTableWriter : DataBatchEnumeratorWrapper
     {
-        private WorkflowContext _workflowContext;
+        private XDatabaseContext _xDatabaseContext;
         private string _tableRootPath;
 
         private Func<DataBatch>[] _innerGetters;
@@ -44,20 +44,18 @@ namespace XForm.IO
         private DataBatch[] _currentBatches;
         private IColumnWriter[] _writers;
 
-        private List<ColumnDetails> _columnSchemaToWrite;
-        private string _queryToWrite;
-        private int _rowCountWritten;
+        private TableMetadata _metadata;
 
-        public BinaryTableWriter(IDataBatchEnumerator source, WorkflowContext workflowContext, string tableRootPath) : base(source)
+        public BinaryTableWriter(IDataBatchEnumerator source, XDatabaseContext xDatabaseContext, string tableRootPath) : base(source)
         {
-            _workflowContext = workflowContext;
+            _xDatabaseContext = xDatabaseContext;
             _tableRootPath = tableRootPath;
-            workflowContext.StreamProvider.Delete(tableRootPath);
+            xDatabaseContext.StreamProvider.Delete(tableRootPath);
 
             int columnCount = source.Columns.Count;
 
-            _columnSchemaToWrite = new List<ColumnDetails>();
-            _queryToWrite = workflowContext.CurrentQuery;
+            _metadata = new TableMetadata();
+            _metadata.Query = xDatabaseContext.CurrentQuery;
 
             _innerGetters = new Func<DataBatch>[columnCount];
             _getters = new Func<DataBatch>[columnCount];
@@ -76,12 +74,12 @@ namespace XForm.IO
                 // If the column type doesn't have a provider or writer, convert to String8 and write that
                 if (columnTypeProvider == null)
                 {
-                    Func<DataBatch, DataBatch> converter = TypeConverterFactory.GetConverter(column.Type, typeof(String8), null, false);
+                    Func<DataBatch, DataBatch> converter = TypeConverterFactory.GetConverter(column.Type, typeof(String8));
                     outputTypeGetter = () => converter(directGetter());
                     column = column.ChangeType(typeof(String8));
                 }
 
-                _columnSchemaToWrite.Add(column);
+                _metadata.Schema.Add(column);
                 _innerGetters[i] = directGetter;
                 _getters[i] = outputTypeGetter;
             }
@@ -101,18 +99,18 @@ namespace XForm.IO
 
                 // Build a direct writer for the column type, if available
                 ITypeProvider columnTypeProvider = TypeProviderFactory.TryGet(column.Type);
-                if (columnTypeProvider != null) writer = columnTypeProvider.BinaryWriter(_workflowContext.StreamProvider, columnPath);
+                if (columnTypeProvider != null) writer = columnTypeProvider.BinaryWriter(_xDatabaseContext.StreamProvider, columnPath);
 
                 // If the column type doesn't have a provider or writer, convert to String8 and write that
                 if (writer == null)
                 {
-                    Func<DataBatch, DataBatch> converter = TypeConverterFactory.GetConverter(column.Type, typeof(String8), null, false);
-                    writer = TypeProviderFactory.TryGet(typeof(String8)).BinaryWriter(_workflowContext.StreamProvider, columnPath);
+                    Func<DataBatch, DataBatch> converter = TypeConverterFactory.GetConverter(column.Type, typeof(String8));
+                    writer = TypeProviderFactory.TryGet(typeof(String8)).BinaryWriter(_xDatabaseContext.StreamProvider, columnPath);
                     column = column.ChangeType(typeof(String8));
                 }
 
                 // Wrap with a NullableWriter to handle null persistence
-                writer = new NullableWriter(_workflowContext.StreamProvider, columnPath, writer);
+                writer = new NullableWriter(_xDatabaseContext.StreamProvider, columnPath, writer);
 
                 _writers[i] = writer;
             }
@@ -147,7 +145,7 @@ namespace XForm.IO
                 _writers[i].Append(_currentBatches[i]);
             });
 
-            _rowCountWritten += count;
+            _metadata.RowCount += count;
             return count;
         }
 
@@ -169,16 +167,13 @@ namespace XForm.IO
                 _writers = null;
 
                 // Write the schema and query only if the table was valid
-                if (_columnSchemaToWrite.Count > 0)
+                if (_metadata.Schema.Count > 0)
                 {
-                    // Write the schema for the table to create
-                    SchemaSerializer.Write(_workflowContext.StreamProvider, _tableRootPath, _columnSchemaToWrite);
-
-                    // Write the query for the table
-                    _workflowContext.StreamProvider.WriteAllText(Path.Combine(_tableRootPath, "Config.xql"), _queryToWrite);
+                    // Write table metadata for the completed table
+                    TableMetadataSerializer.Write(_xDatabaseContext.StreamProvider, _tableRootPath, _metadata);
 
                     // On Dispose, tell the StreamProvider to publish the table
-                    _workflowContext.StreamProvider.Publish(_tableRootPath);
+                    _xDatabaseContext.StreamProvider.Publish(_tableRootPath);
                 }
             }
         }

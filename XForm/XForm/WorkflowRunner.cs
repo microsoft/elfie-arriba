@@ -20,13 +20,13 @@ namespace XForm
 {
     public class WorkflowRunner : IWorkflowRunner
     {
-        private WorkflowContext WorkflowContext { get; set; }
+        private XDatabaseContext XDatabaseContext { get; set; }
         private HashSet<string> Sources { get; set; }
         private DateTime SourcesCacheExpires { get; set; }
 
-        public WorkflowRunner(WorkflowContext context)
+        public WorkflowRunner(XDatabaseContext context)
         {
-            this.WorkflowContext = context;
+            this.XDatabaseContext = context;
         }
 
         public IEnumerable<string> SourceNames
@@ -36,8 +36,8 @@ namespace XForm
                 DateTime now = DateTime.UtcNow;
                 if (Sources == null || now > SourcesCacheExpires)
                 {
-                    Sources = new HashSet<string>(WorkflowContext.StreamProvider.Tables(), StringComparer.OrdinalIgnoreCase);
-                    Sources.UnionWith(WorkflowContext.StreamProvider.Queries());
+                    Sources = new HashSet<string>(XDatabaseContext.StreamProvider.Tables(), StringComparer.OrdinalIgnoreCase);
+                    Sources.UnionWith(XDatabaseContext.StreamProvider.Queries());
 
                     SourcesCacheExpires = now.AddMinutes(10);
                 }
@@ -46,15 +46,15 @@ namespace XForm
             }
         }
 
-        public IDataBatchEnumerator Build(string tableName, WorkflowContext outerContext)
+        public IDataBatchEnumerator Build(string tableName, XDatabaseContext outerContext)
         {
             return Build(tableName, outerContext, false);
         }
 
-        public IDataBatchEnumerator Build(string tableName, WorkflowContext outerContext, bool deferred)
+        public IDataBatchEnumerator Build(string tableName, XDatabaseContext outerContext, bool deferred)
         {
             // Create a context to track what we're building now
-            WorkflowContext innerContext = WorkflowContext.Push(outerContext);
+            XDatabaseContext innerContext = XDatabaseContext.Push(outerContext);
             innerContext.Runner = this;
             innerContext.CurrentTable = tableName;
 
@@ -62,7 +62,7 @@ namespace XForm
             StreamAttributes queryAttributes = innerContext.StreamProvider.Attributes(innerContext.StreamProvider.Path(LocationType.Query, tableName, ".xql"));
             if (queryAttributes.Exists)
             {
-                IDataBatchEnumerator queryPipeline = XqlParser.Parse(innerContext.StreamProvider.ReadAllText(queryAttributes.Path), null, innerContext);
+                IDataBatchEnumerator queryPipeline = innerContext.Query(innerContext.StreamProvider.ReadAllText(queryAttributes.Path));
                 innerContext.Pop(outerContext);
                 return queryPipeline;
             }
@@ -101,7 +101,7 @@ namespace XForm
                 xql = innerContext.StreamProvider.ReadAllText(configAttributes.Path);
 
                 // Build a pipeline for the query, recursively creating dependencies
-                builder = XqlParser.Parse(xql, null, innerContext);
+                builder = innerContext.Query(xql);
             }
 
             // Get the path we're either reading or building
@@ -126,7 +126,7 @@ namespace XForm
             return new BinaryTableReader(innerContext.StreamProvider, tablePath);
         }
 
-        public IDataBatchEnumerator ReadSource(string tableName, WorkflowContext context)
+        public IDataBatchEnumerator ReadSource(string tableName, XDatabaseContext context)
         {
             List<IDataBatchEnumerator> sources = new List<IDataBatchEnumerator>();
 
@@ -183,12 +183,12 @@ namespace XForm
 
             string fullPath = tableName;
 
-            using (StreamWriter writer = new StreamWriter(WorkflowContext.StreamProvider.OpenWrite($"Query\\{tableName}.xql")))
+            using (StreamWriter writer = new StreamWriter(XDatabaseContext.StreamProvider.OpenWrite($"Query\\{tableName}.xql")))
             {
                 writer.Write(query);
             }
 
-            if(this.Sources != null) this.Sources.Add(tableName);
+            if (this.Sources != null) this.Sources.Add(tableName);
         }
     }
 
@@ -203,7 +203,7 @@ namespace XForm
 
         public IEnumerable<string> SourceNames => _inner.SourceNames;
 
-        public IDataBatchEnumerator Build(string tableName, WorkflowContext context)
+        public IDataBatchEnumerator Build(string tableName, XDatabaseContext context)
         {
             // Ask the workflow runner to defer computing dependencies now
             return _inner.Build(tableName, context, true);
@@ -217,7 +217,7 @@ namespace XForm
 
     public static class ReportWriter
     {
-        public static string Build(string tableName, WorkflowContext context, string outputFormat)
+        public static string Build(string tableName, XDatabaseContext context, string outputFormat)
         {
             IDataBatchEnumerator builder = null;
 

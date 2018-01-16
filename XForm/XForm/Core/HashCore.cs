@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+
 using XForm.Types;
 
 namespace XForm
@@ -96,7 +97,7 @@ namespace XForm
         {
             // Minimum capacity is 28 items, which is a 32-element array
             if (capacity < 28) return 32;
-            
+
             // Size to 1/8 over capacity so the table is just under 90% filled at the configured capacity
             return capacity + (capacity >> 3) + 1;
         }
@@ -111,7 +112,7 @@ namespace XForm
         public double DistanceMean()
         {
             ulong distance = 0;
-            for(int i = 0; i < this.Metadata.Length; ++i)
+            for (int i = 0; i < this.Metadata.Length; ++i)
             {
                 if (this.Metadata[i] > 0) distance += (ulong)(this.Metadata[i] >> 4);
             }

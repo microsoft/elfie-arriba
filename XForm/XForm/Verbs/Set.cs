@@ -13,9 +13,9 @@ namespace XForm.Verbs
     internal class SetCommandBuilder : IVerbBuilder
     {
         public string Verb => "set";
-        public string Usage => "'set' [newColumnName] [ColumnFunctionOrLiteral]";
+        public string Usage => "'set' [NewColumnName] [Column|Function|Literal]";
 
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)
+        public IDataBatchEnumerator Build(IDataBatchEnumerator source, XDatabaseContext context)
         {
             return new Set(source,
                 context.Parser.NextOutputColumnName(source),

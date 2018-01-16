@@ -6,20 +6,16 @@ using System.Collections.Generic;
 using System.IO;
 
 using XForm.Data;
-using XForm.Extensions;
 using XForm.IO.StreamProvider;
-using XForm.Query;
 using XForm.Types;
 
 namespace XForm.IO
 {
     public class BinaryTableReader : IDataBatchList
     {
-        internal const string ConfigQueryPath = "Config.xql";
-
         private IStreamProvider _streamProvider;
+        private TableMetadata _metadata;
 
-        private List<ColumnDetails> _columns;
         private IColumnReader[] _readers;
 
         private ArraySelector _currentSelector;
@@ -28,20 +24,18 @@ namespace XForm.IO
         public BinaryTableReader(IStreamProvider streamProvider, string tableRootPath)
         {
             _streamProvider = streamProvider;
-
             TablePath = tableRootPath;
-            Query = streamProvider.ReadAllText(Path.Combine(tableRootPath, ConfigQueryPath));
 
-            _columns = SchemaSerializer.Read(streamProvider, TablePath);
-            _readers = new IColumnReader[_columns.Count];
+            _metadata = TableMetadataSerializer.Read(streamProvider, TablePath);
+            _readers = new IColumnReader[_metadata.Schema.Count];
             Reset();
         }
-
-        public string Query { get; private set; }
+        
         public string TablePath { get; private set; }
-        public int Count { get; private set; }
+        public string Query => _metadata.Query;
+        public int Count => _metadata.RowCount;
+        public IReadOnlyList<ColumnDetails> Columns => _metadata.Schema;
 
-        public IReadOnlyList<ColumnDetails> Columns => _columns;
         public int CurrentBatchRowCount { get; private set; }
 
         public Func<DataBatch> ColumnGetter(int columnIndex)
@@ -51,11 +45,8 @@ namespace XForm.IO
                 ColumnDetails column = Columns[columnIndex];
                 string columnPath = Path.Combine(TablePath, column.Name);
 
-                // Build the reader for the column type
-                IColumnReader reader = TypeProviderFactory.Get(column.Type).BinaryReader(_streamProvider, columnPath);
-
-                // Wrap in a NullableReader to handle null recognition
-                _readers[columnIndex] = new NullableReader(_streamProvider, columnPath, reader);
+                // Read the column using the correct typed reader
+                _readers[columnIndex] = TypeProviderFactory.TryGetColumn(column.Type, _streamProvider, columnPath);
             }
 
             return () => _readers[columnIndex].Read(_currentSelector);
@@ -76,10 +67,6 @@ namespace XForm.IO
 
         public void Reset()
         {
-            // Get the first reader in order to get the row count
-            Func<DataBatch> unused = ColumnGetter(0);
-            Count = _readers[0].Count;
-
             // Mark our current position (nothing read yet)
             _currentEnumerateSelector = ArraySelector.All(Count).Slice(0, 0);
         }

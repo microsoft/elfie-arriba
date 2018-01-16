@@ -2,7 +2,9 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
+
 using XForm.Data;
 
 namespace XForm.Functions.String
@@ -13,7 +15,7 @@ namespace XForm.Functions.String
         public string Usage => "ToUpper([String8])";
         public Type ReturnType => typeof(String8);
 
-        public IDataBatchColumn Build(IDataBatchEnumerator source, WorkflowContext context)
+        public IDataBatchColumn Build(IDataBatchEnumerator source, XDatabaseContext context)
         {
             // Create a String8Block to hold the uppercase copy of the values
             String8Block block = new String8Block();

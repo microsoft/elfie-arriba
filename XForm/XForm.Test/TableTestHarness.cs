@@ -1,9 +1,14 @@
-﻿using Microsoft.CodeAnalysis.Elfie.Model.Strings;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
+
+using Microsoft.CodeAnalysis.Elfie.Model.Strings;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+
 using XForm.Data;
 using XForm.Extensions;
 
@@ -15,6 +20,17 @@ namespace XForm.Test
     /// </summary>
     public static class TableTestHarness
     {
+        private static XDatabaseContext s_DatabaseContext;
+
+        public static XDatabaseContext DatabaseContext
+        {
+            get
+            {
+                if (s_DatabaseContext == null) s_DatabaseContext = new XDatabaseContext();
+                return s_DatabaseContext;
+            }
+        }
+
         public static void AssertAreEqual(IDataBatchEnumerator expected, IDataBatchEnumerator actual, int pageSize)
         {
             // Reset both tables (so they can be used for repeated scenarios)
@@ -93,7 +109,7 @@ namespace XForm.Test
                 }
 
                 // If the table spans weren't equal, show the rows and error message
-                if(!String.IsNullOrEmpty(errorMessage))
+                if (!String.IsNullOrEmpty(errorMessage))
                 {
                     Trace.WriteLine("Expected:");
                     TraceWrite(expectedBatches, expected.Columns, expectedNextIndex + firstMismatchedRow, expectedCurrentCount - (expectedNextIndex + firstMismatchedRow));
@@ -114,8 +130,8 @@ namespace XForm.Test
         {
             string errorMessage = "";
             int firstMismatchedRow = FirstMismatchedRow(expected, actual, rowCount, columnName, out errorMessage);
-            
-            if(!String.IsNullOrEmpty(errorMessage))
+
+            if (!String.IsNullOrEmpty(errorMessage))
             {
                 Trace.WriteLine("Expected:");
                 TraceWrite(expected, columnName, firstMismatchedRow, expected.Count - firstMismatchedRow);
@@ -150,13 +166,15 @@ namespace XForm.Test
 
                 if (!isNull)
                 {
-                    if(!AssertAreEqual(expected.Array.GetValue(expectedIndex), actual.Array.GetValue(actualIndex), $"{columnName}[{i:n0}].Value", ref errorMessage)) return i;
+                    if (!AssertAreEqual(expected.Array.GetValue(expectedIndex), actual.Array.GetValue(actualIndex), $"{columnName}[{i:n0}].Value", ref errorMessage)) return i;
                 }
 
                 areAnyNull |= isNull;
             }
 
-            if (!areAnyNull) AssertAreEqual(true, actual.IsNull == null, "Result Null Array (when no null values)", ref errorMessage);
+            // NOTE: We should not filter the null array if we aren't looping over every item, so this rule isn't always valid.
+            //if (!areAnyNull) AssertAreEqual(true, actual.IsNull == null, "Result Null Array (when no null values)", ref errorMessage);
+
             return 0;
         }
 
@@ -182,7 +200,7 @@ namespace XForm.Test
         /// </summary>
         public static void TraceWrite(DataBatch column, string columnName, int startRowIndexInclusive = 0, int endRowIndexExclusive = -1)
         {
-            TraceWrite(new DataBatch[] { column }, new ColumnDetails[] { new ColumnDetails(columnName, typeof(String8), false) }, startRowIndexInclusive, endRowIndexExclusive);
+            TraceWrite(new DataBatch[] { column }, new ColumnDetails[] { new ColumnDetails(columnName, typeof(String8)) }, startRowIndexInclusive, endRowIndexExclusive);
         }
 
         /// <summary>
@@ -193,7 +211,7 @@ namespace XForm.Test
             Func<DataBatch>[] columnGetters = new Func<DataBatch>[table.Columns.Count];
             DataBatch[] columns = new DataBatch[table.Columns.Count];
 
-            for(int i = 0; i < columns.Length; ++i)
+            for (int i = 0; i < columns.Length; ++i)
             {
                 columnGetters[i] = table.ColumnGetter(i);
             }
@@ -261,7 +279,8 @@ namespace XForm.Test
         // Return an IsSingleElement array with just the first value of the batch, but the same count
         public static DataBatch First(DataBatch values)
         {
-            Array modifiedArray = Allocator.AllocateArray(values.Array.GetType().GetElementType(), 1);
+            Array modifiedArray = null;
+            Allocator.AllocateToSize(ref modifiedArray, 1, values.Array.GetType().GetElementType());
             modifiedArray.SetValue(values.Array.GetValue(values.Index(0)), 0);
 
             return DataBatch.Single(modifiedArray, values.Count);
@@ -270,7 +289,8 @@ namespace XForm.Test
         // Return a DataBatch with two empty array elements before and after the valid portion and indices pointing to the valid portion
         public static DataBatch Pad(DataBatch values)
         {
-            Array modifiedArray = Allocator.AllocateArray(values.Array.GetType().GetElementType(), values.Array.Length + 4);
+            Array modifiedArray = null;
+            Allocator.AllocateToSize(ref modifiedArray, values.Array.Length + 4, values.Array.GetType().GetElementType());
             int[] indices = new int[modifiedArray.Length];
 
             // Copy values shifted over two (so, two default values at the beginning and two at the end)
@@ -288,7 +308,8 @@ namespace XForm.Test
         // Return a DataBatch with nulls inserted for every other value
         public static DataBatch Nulls(DataBatch values)
         {
-            Array modifiedArray = Allocator.AllocateArray(values.Array.GetType().GetElementType(), values.Array.Length * 2);
+            Array modifiedArray = null;
+            Allocator.AllocateToSize(ref modifiedArray, values.Array.Length * 2, values.Array.GetType().GetElementType());
             bool[] isNull = new bool[modifiedArray.Length];
 
             // Every other value is null

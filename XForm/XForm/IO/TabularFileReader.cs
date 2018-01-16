@@ -59,7 +59,7 @@ namespace XForm.IO
             _columns = new List<ColumnDetails>();
             foreach (string columnName in _reader.Columns)
             {
-                _columns.Add(new ColumnDetails(columnName, typeof(String8), false));
+                _columns.Add(new ColumnDetails(columnName, typeof(String8)));
             }
         }
 

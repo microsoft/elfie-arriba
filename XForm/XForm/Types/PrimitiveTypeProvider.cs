@@ -6,6 +6,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 
 using XForm.Data;
+using XForm.IO;
 using XForm.IO.StreamProvider;
 using XForm.Types.Comparers;
 
@@ -14,7 +15,6 @@ namespace XForm.Types
     public class PrimitiveTypeProvider<T> : ITypeProvider where T : IComparable<T>
     {
         public string Name => typeof(T).Name;
-
         public Type Type => typeof(T);
 
         public PrimitiveTypeProvider()
@@ -24,7 +24,12 @@ namespace XForm.Types
 
         public IColumnReader BinaryReader(IStreamProvider streamProvider, string columnPath)
         {
-            return new PrimitiveArrayReader<T>(streamProvider.OpenRead(ValuesFilePath(columnPath)));
+            return ColumnCache.Instance.GetOrBuild(columnPath, () =>
+            {
+                string filePath = ValuesFilePath(columnPath);
+                if (!streamProvider.Attributes(filePath).Exists) return null;
+                return new PrimitiveArrayReader<T>(streamProvider.OpenRead(filePath));
+            });
         }
 
         public IColumnWriter BinaryWriter(IStreamProvider streamProvider, string columnPath)
@@ -32,9 +37,14 @@ namespace XForm.Types
             return new PrimitiveArrayWriter<T>(streamProvider.OpenWrite(ValuesFilePath(columnPath)));
         }
 
-        public Func<DataBatch, DataBatch> TryGetConverter(Type sourceType, Type targetType, object defaultValue, bool strict)
+        public NegatedTryConvert TryGetNegatedTryConvert(Type sourceType, Type targetType, object defaultValue)
         {
-            // TODO: Add primitive number conversions
+            return PrimitiveConverterFactory.TryGetNegatedTryConvert(sourceType, targetType, defaultValue);
+        }
+
+        public IValueCopier TryGetCopier()
+        {
+            // No copier needed for these types
             return null;
         }
 
@@ -54,14 +64,9 @@ namespace XForm.Types
             return null;
         }
 
-        public IValueCopier TryGetCopier()
-        {
-            // No copier needed for this type
-            return null;
-        }
-
         public static string ValuesFilePath(string columnPath)
         {
+            if (columnPath.EndsWith(".bin")) return columnPath;
             return Path.Combine(columnPath, $"V.{BinaryFileTypePart()}.bin");
         }
 
@@ -91,6 +96,9 @@ namespace XForm.Types
         private ByteReader _byteReader;
         private T[] _array;
 
+        private DataBatch _currentBatch;
+        private ArraySelector _currentSelector;
+
         public PrimitiveArrayReader(Stream stream)
         {
             _byteReader = new ByteReader(stream);
@@ -102,6 +110,9 @@ namespace XForm.Types
         public DataBatch Read(ArraySelector selector)
         {
             if (selector.Indices != null) throw new NotImplementedException();
+
+            // Return the previous batch if re-requested
+            if (selector.Equals(_currentSelector)) return _currentBatch;
 
             // Allocate the result array
             Allocator.AllocateToSize(ref _array, selector.Count);
@@ -118,7 +129,10 @@ namespace XForm.Types
                 bytesRead += currentByteEnd - currentByteIndex;
             }
 
-            return DataBatch.All(_array, selector.Count);
+            // Cache and return the current batch
+            _currentBatch = DataBatch.All(_array, selector.Count);
+            _currentSelector = selector;
+            return _currentBatch;
         }
 
         public void Dispose()

@@ -10,6 +10,7 @@ using Microsoft.CodeAnalysis.Elfie.Diagnostics;
 
 using XForm.Data;
 using XForm.Extensions;
+using XForm.IO;
 using XForm.IO.StreamProvider;
 using XForm.Query;
 
@@ -19,7 +20,7 @@ namespace XForm
     {
         public static int Main(string[] args)
         {
-            WorkflowContext context = new WorkflowContext();
+            XDatabaseContext context = new XDatabaseContext();
             context.RequestedAsOfDateTime = DateTime.UtcNow;
             context.StreamProvider = new LocalFileStreamProvider(Environment.CurrentDirectory);
             context.Runner = new WorkflowRunner(context);
@@ -27,12 +28,15 @@ namespace XForm
             return Run(args, context);
         }
 
-        public static int Run(string[] args, WorkflowContext context)
+        public static int Run(string[] args, XDatabaseContext context)
         {
             try
             {
                 // Enable native acceleration by default
                 NativeAccelerator.Enable();
+                
+                // Don't enable column cache by default (need size limit and rules)
+                //ColumnCache.IsEnabled = true;
 
                 if (args == null || args.Length == 0)
                 {
@@ -68,7 +72,7 @@ namespace XForm
                         new HttpService(context).Run();
                         return 0;
                     case "perf":
-                        new PerformanceComparisons().Run();
+                        new PerformanceComparisons(context).Run();
                         return 0;
                     default:
                         throw new UsageException($"Unknown XForm mode '{command}'.");
@@ -112,14 +116,14 @@ namespace XForm
             return result;
         }
 
-        private static long RunFileQuery(string queryFilePath, WorkflowContext context)
+        private static long RunFileQuery(string queryFilePath, XDatabaseContext context)
         {
             string query = File.ReadAllText(queryFilePath);
 
             long rowsWritten = 0;
             using (new TraceWatch(query))
             {
-                using (IDataBatchEnumerator source = XqlParser.Parse(query, null, context))
+                using (IDataBatchEnumerator source = context.Query(query))
                 {
                     rowsWritten = source.RunWithoutDispose();
                 }

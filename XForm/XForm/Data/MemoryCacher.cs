@@ -20,7 +20,7 @@ namespace XForm.Data
         public string Verb => "cache";
         public string Usage => "'cache'";
 
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, WorkflowContext context)
+        public IDataBatchEnumerator Build(IDataBatchEnumerator source, XDatabaseContext context)
         {
             IDataBatchList sourceList = source as IDataBatchList;
             if (sourceList == null) throw new ArgumentException("'cache' can only be used on IDataBatchList sources.");

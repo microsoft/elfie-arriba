@@ -17,7 +17,7 @@ namespace XForm.Functions
 
         public ColumnDetails ColumnDetails => Source.Columns[ColumnIndex];
 
-        public Column(IDataBatchEnumerator source, WorkflowContext context)
+        public Column(IDataBatchEnumerator source, XDatabaseContext context)
         {
             ColumnName = context.Parser.NextColumnName(source);
             ColumnIndex = source.Columns.IndexOfColumn(ColumnName);

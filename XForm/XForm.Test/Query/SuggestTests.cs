@@ -3,11 +3,11 @@
 
 using System.Linq;
 
+using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using XForm.Query;
 using XForm.Types;
-using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 
 namespace XForm.Test.Query
 {
@@ -15,17 +15,17 @@ namespace XForm.Test.Query
     public class SuggestTests
     {
         private static string s_verbs = string.Join("|", XqlParser.SupportedVerbs.OrderBy((s) => s));
-        private static string s_sources = string.Join("|", SampleDatabase.WorkflowContext.Runner.SourceNames.OrderBy((s) => s));
+        private static string s_sources = string.Join("|", SampleDatabase.XDatabaseContext.Runner.SourceNames.OrderBy((s) => s));
         private static string s_types = string.Join("|", TypeProviderFactory.SupportedTypes.OrderBy((s) => s));
-        private static string s_columnNames = string.Join("|", XqlParser.EscapedColumnList(XqlParser.Parse(@"read WebRequest", null, SampleDatabase.WorkflowContext)).OrderBy((s) => s));
+        private static string s_columnNames = string.Join("|", XqlParser.EscapedColumnList(XqlParser.Parse(@"read WebRequest", null, SampleDatabase.XDatabaseContext)).OrderBy((s) => s));
 
         private static string s_selectListOptions = string.Join("|",
-            XqlParser.EscapedColumnList(XqlParser.Parse(@"read WebRequest", null, SampleDatabase.WorkflowContext))
+            XqlParser.EscapedColumnList(XqlParser.Parse(@"read WebRequest", null, SampleDatabase.XDatabaseContext))
             .Concat(XqlParser.EscapedFunctionList())
             .OrderBy((s) => s));
 
         private static string s_stringSelectListOptions = string.Join("|",
-            XqlParser.EscapedColumnList(XqlParser.Parse(@"read WebRequest", null, SampleDatabase.WorkflowContext), typeof(String8))
+            XqlParser.EscapedColumnList(XqlParser.Parse(@"read WebRequest", null, SampleDatabase.XDatabaseContext), typeof(String8))
             .Concat(XqlParser.EscapedFunctionList(typeof(String8)))
             .OrderBy((s) => s));
 
@@ -33,7 +33,7 @@ namespace XForm.Test.Query
         public void Suggest_Basics()
         {
             SampleDatabase.EnsureBuilt();
-            QuerySuggester suggester = new QuerySuggester(SampleDatabase.WorkflowContext);
+            QuerySuggester suggester = new QuerySuggester(SampleDatabase.XDatabaseContext);
 
             // Verbs
             Assert.AreEqual(s_verbs, Values(suggester.Suggest("")));
@@ -50,7 +50,7 @@ namespace XForm.Test.Query
             Assert.AreEqual(s_verbs, Values(suggester.Suggest($"read WebRequest\r\n ")));
 
             // CompareOperator
-            Assert.AreEqual("!=|<|<=|<>|=|==|>|>=", Values(suggester.Suggest($@"
+            Assert.AreEqual("!=|:|::||>|<|<=|<>|=|==|>|>=", Values(suggester.Suggest($@"
                 read WebRequest
                 where [HttpStatus] !")));
 
@@ -94,7 +94,7 @@ namespace XForm.Test.Query
         public void Suggest_FullErrorFidelity()
         {
             SampleDatabase.EnsureBuilt();
-            QuerySuggester suggester = new QuerySuggester(SampleDatabase.WorkflowContext);
+            QuerySuggester suggester = new QuerySuggester(SampleDatabase.XDatabaseContext);
 
             SuggestResult result = suggester.Suggest(@"
                 read UsageError.WebRequest.MissingColumn");
@@ -102,7 +102,7 @@ namespace XForm.Test.Query
             Assert.AreEqual(false, result.IsValid);
             Assert.AreEqual("UsageError.WebRequest.MissingColumn", result.Context.TableName);
             Assert.AreEqual(2, result.Context.QueryLineNumber);
-            Assert.AreEqual("'where' [columnFunctionOrLiteral] [operator] [columnFunctionOrLiteral]", result.Context.Usage);
+            Assert.AreEqual("'where' [Expression]", result.Context.Usage);
             Assert.AreEqual("BadColumnName", result.Context.InvalidValue);
             Assert.AreEqual("columnName", result.Context.InvalidValueCategory);
             Assert.AreEqual(s_columnNames, string.Join("|", result.Context.ValidValues));

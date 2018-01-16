@@ -30,7 +30,7 @@ namespace XForm.Test.Query
             int maxResponseBytes = -1;
 
             // Build a Pipeline for the query. Wrap in a using statement to Dispose it when done.
-            using (IDataBatchEnumerator pipeline = XqlParser.Parse(xqlQuery, null, SampleDatabase.WorkflowContext))
+            using (IDataBatchEnumerator pipeline = SampleDatabase.XDatabaseContext.Query(xqlQuery))
             {
                 // Identify the columns you're consuming by requesting and caching the getter functions for them.
                 //  You must request the getters before the first call to Next().

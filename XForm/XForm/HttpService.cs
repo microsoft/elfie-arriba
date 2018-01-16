@@ -17,14 +17,14 @@ namespace XForm
 {
     public class HttpService
     {
-        private WorkflowContext _workflowContext;
+        private XDatabaseContext _xDatabaseContext;
         private QuerySuggester _suggester;
         private static String8 s_delimiter = String8.Convert(";", new byte[1]);
 
-        public HttpService(WorkflowContext workflowContext)
+        public HttpService(XDatabaseContext xDatabaseContext)
         {
-            _workflowContext = workflowContext;
-            _suggester = new QuerySuggester(_workflowContext);
+            _xDatabaseContext = xDatabaseContext;
+            _suggester = new QuerySuggester(_xDatabaseContext);
         }
 
         public void Run()
@@ -52,7 +52,7 @@ namespace XForm
                 {
                     string query = Require(context, "q");
 
-                    DateTime asOfDate = ParseOrDefault(context.Request.QueryString["asof"], _workflowContext.RequestedAsOfDateTime);
+                    DateTime asOfDate = ParseOrDefault(context.Request.QueryString["asof"], _xDatabaseContext.RequestedAsOfDateTime);
                     SuggestResult result = _suggester.Suggest(query);
 
                     // If the query is valid and there are no extra values valid next, just return valid
@@ -81,8 +81,9 @@ namespace XForm
                 Run(
                     Require(context, "q"),
                     context.Request.QueryString["fmt"] ?? "json",
-                    ParseOrDefault(context.Request.QueryString["c"], 100),
-                    ParseOrDefault(context.Request.QueryString["asof"], _workflowContext.RequestedAsOfDateTime),
+                    ParseOrDefault(context.Request.QueryString["rowLimit"], 100),
+                    ParseOrDefault(context.Request.QueryString["colLimit"], -1),
+                    ParseOrDefault(context.Request.QueryString["asof"], _xDatabaseContext.RequestedAsOfDateTime),
                     response);
             }
             catch (Exception ex)
@@ -101,8 +102,9 @@ namespace XForm
                 Run(
                     Require(context, "q"),
                     Require(context, "fmt"),
-                    ParseOrDefault(context.Request.QueryString["c"], -1),
-                    ParseOrDefault(context.Request.QueryString["asof"], _workflowContext.RequestedAsOfDateTime),
+                    ParseOrDefault(context.Request.QueryString["rowLimit"], -1),
+                    ParseOrDefault(context.Request.QueryString["colLimit"], -1),
+                    ParseOrDefault(context.Request.QueryString["asof"], _xDatabaseContext.RequestedAsOfDateTime),
                     response);
             }
             catch (Exception ex)
@@ -121,7 +123,7 @@ namespace XForm
                 CountWithinTimeout(
                     Require(context, "q"),
                     TimeSpan.FromMilliseconds(ParseOrDefault(context.Request.QueryString["ms"], 5000)),
-                    ParseOrDefault(context.Request.QueryString["asof"], _workflowContext.RequestedAsOfDateTime),
+                    ParseOrDefault(context.Request.QueryString["asof"], _xDatabaseContext.RequestedAsOfDateTime),
                     response);
             }
             catch (Exception ex)
@@ -139,16 +141,16 @@ namespace XForm
 
             try
             {
-                WorkflowContext context = _workflowContext;
+                XDatabaseContext context = _xDatabaseContext;
 
                 // Build for another moment in time if requested
-                if(asOfDate != _workflowContext.RequestedAsOfDateTime)
+                if (asOfDate != _xDatabaseContext.RequestedAsOfDateTime)
                 {
-                    context = new WorkflowContext(_workflowContext) { RequestedAsOfDateTime = asOfDate };
+                    context = new XDatabaseContext(_xDatabaseContext) { RequestedAsOfDateTime = asOfDate };
                 }
 
                 // Build a Pipeline for the Query
-                pipeline = XqlParser.Parse(query, null, context);
+                pipeline = context.Query(query);
 
                 // Try to get the count up to the timeout
                 RunResult result = pipeline.RunUntilTimeout(timeout);
@@ -172,27 +174,27 @@ namespace XForm
             }
         }
 
-        private void Run(string query, string format, int rowCountLimit, DateTime asOfDate, HttpListenerResponse response)
+        private void Run(string query, string format, int rowCountLimit, int colCountLimit, DateTime asOfDate, HttpListenerResponse response)
         {
             IDataBatchEnumerator pipeline = null;
 
             try
             {
-                WorkflowContext context = _workflowContext;
+                XDatabaseContext context = _xDatabaseContext;
 
                 // Build for another moment in time if requested
-                if (asOfDate != _workflowContext.RequestedAsOfDateTime)
+                if (asOfDate != _xDatabaseContext.RequestedAsOfDateTime)
                 {
-                    context = new WorkflowContext(_workflowContext) { RequestedAsOfDateTime = asOfDate };
+                    context = new XDatabaseContext(_xDatabaseContext) { RequestedAsOfDateTime = asOfDate };
                 }
 
                 // Build a Pipeline for the Query
-                pipeline = XqlParser.Parse(query, null, context);
+                pipeline = context.Query(query);
 
-                // Restrict the row count if requested
-                if (rowCountLimit >= 0)
+                // Restrict the row and column count if requested
+                if (rowCountLimit >= 0 || colCountLimit > 0)
                 {
-                    pipeline = new Verbs.Limit(pipeline, rowCountLimit);
+                    pipeline = new Verbs.Limit(pipeline, rowCountLimit, colCountLimit);
                 }
 
                 // Build a writer for the desired format
@@ -235,7 +237,7 @@ namespace XForm
 
         private void Save(string query, string tableName)
         {
-            _workflowContext.Runner.Save(query, tableName);
+            _xDatabaseContext.Runner.Save(query, tableName);
         }
 
         private ITabularWriter WriterForFormat(string format, HttpListenerResponse response)

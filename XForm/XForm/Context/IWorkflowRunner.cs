@@ -23,9 +23,9 @@ namespace XForm.Context
         ///     - Do the work to build the result and return a reader for it after it's computed.
         /// </summary>
         /// <param name="sourceName">The name of the Table, Config, or Query to build</param>
-        /// <param name="context">WorkflowContext to use for construction</param>
+        /// <param name="context">XDatabaseContext to use for construction</param>
         /// <returns>IDataBatchEnumerator which returns the rows from the desired source</returns>
-        IDataBatchEnumerator Build(string sourceName, WorkflowContext context);
+        IDataBatchEnumerator Build(string sourceName, XDatabaseContext context);
 
         /// <summary>
         ///  Write a new query to the storage location and register it as a source
