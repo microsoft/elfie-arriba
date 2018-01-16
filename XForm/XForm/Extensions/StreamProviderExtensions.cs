@@ -53,52 +53,6 @@ namespace XForm.Extensions
             }
         }
 
-        public static StreamAttributes LatestBeforeCutoff(this IStreamProvider streamProvider, LocationType type, string tableName, CrawlType crawlType, DateTime asOfDateTime)
-        {
-            // Find the last crawl which isn't after the cutoff
-            StreamAttributes latestStream = StreamAttributes.NotExists;
-            DateTime latestStreamVersion = DateTime.MinValue;
-
-            string sourceFullPath = streamProvider.Path(type, tableName, crawlType);
-            foreach (StreamAttributes version in streamProvider.Enumerate(sourceFullPath, EnumerateTypes.Folder, false))
-            {
-                DateTime versionAsOf;
-                if (!DateTime.TryParseExact(System.IO.Path.GetFileName(version.Path), DateTimeFolderFormat, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out versionAsOf))
-                {
-                    continue;
-                }
-
-                // Track the latest version, modifying the WhenModifiedUtc to be the folder stamp and not the actual file time
-                if (versionAsOf > latestStreamVersion && versionAsOf <= asOfDateTime)
-                {
-                    latestStream = version;
-                    latestStream.WhenModifiedUtc = versionAsOf;
-                }
-            }
-
-            return latestStream;
-        }
-
-        public static IEnumerable<StreamAttributes> VersionsInRange(this IStreamProvider streamProvider, LocationType type, string tableName, CrawlType crawlType, DateTime startDateTime, DateTime asOfDateTime)
-        {
-            string sourceFullPath = streamProvider.Path(type, tableName, crawlType);
-            foreach (StreamAttributes version in streamProvider.Enumerate(sourceFullPath, EnumerateTypes.Folder, false))
-            {
-                DateTime versionAsOf;
-                if (!DateTime.TryParseExact(System.IO.Path.GetFileName(version.Path), DateTimeFolderFormat, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out versionAsOf))
-                {
-                    continue;
-                }
-
-                // Track the latest version, modifying the WhenModifiedUtc to be the folder stamp and not the actual file time
-                if (versionAsOf > startDateTime && versionAsOf <= asOfDateTime)
-                {
-                    version.WhenModifiedUtc = versionAsOf;
-                    yield return version;
-                }
-            }
-        }
-
         public static IEnumerable<string> Tables(this IStreamProvider streamProvider)
         {
             HashSet<string> tables = new HashSet<string>(StringComparer.OrdinalIgnoreCase);

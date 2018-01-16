@@ -23,10 +23,12 @@ namespace XForm
         private XDatabaseContext XDatabaseContext { get; set; }
         private HashSet<string> Sources { get; set; }
         private DateTime SourcesCacheExpires { get; set; }
+        private Cache<ItemVersions> _versionCache { get; set; }
 
         public WorkflowRunner(XDatabaseContext context)
         {
             this.XDatabaseContext = context;
+            _versionCache = new Cache<ItemVersions>();
         }
 
         public IEnumerable<string> SourceNames
@@ -70,18 +72,19 @@ namespace XForm
             }
 
             // Find the latest already built result, and associated query
-            StreamAttributes latestTableAttributes = innerContext.StreamProvider.LatestBeforeCutoff(LocationType.Table, tableName, CrawlType.Full, outerContext.RequestedAsOfDateTime);
+            ItemVersions tableVersions = innerContext.StreamProvider.ItemVersions(LocationType.Table, tableName);
+            ItemVersion latestTable = tableVersions.LatestBeforeCutoff(CrawlType.Full, outerContext.RequestedAsOfDateTime);
             string latestTableQuery = "";
-            if (latestTableAttributes.Exists)
+            if (latestTable != null)
             {
-                using (BinaryTableReader reader = new BinaryTableReader(outerContext.StreamProvider, latestTableAttributes.Path))
+                using (BinaryTableReader reader = new BinaryTableReader(outerContext.StreamProvider, latestTable.Path))
                 {
                     latestTableQuery = reader.Query;
                 }
             }
 
             // Set the dependency date to the latest table we've already built (if any)
-            innerContext.NewestDependency = latestTableAttributes.WhenModifiedUtc;
+            innerContext.NewestDependency = (latestTable == null ? DateTime.MinValue : latestTable.AsOfDate);
 
             // Determine the XQL to build the table and construct a builder which can do so
             string xql;
@@ -110,7 +113,7 @@ namespace XForm
             string tablePath = innerContext.StreamProvider.Path(LocationType.Table, tableName, CrawlType.Full, innerContext.NewestDependency);
 
             // If sources rebuilt, the query changed, or the latest output isn't up-to-date, rebuild it
-            if (innerContext.RebuiltSomething || xql != latestTableQuery || IsOutOfDate(latestTableAttributes.WhenModifiedUtc, innerContext.NewestDependency))
+            if (innerContext.RebuiltSomething || xql != latestTableQuery || IsOutOfDate(latestTable.AsOfDate, innerContext.NewestDependency))
             {
                 // If we're not running now, just return how to build it
                 if (deferred) return builder;
@@ -133,34 +136,36 @@ namespace XForm
             List<IDataBatchEnumerator> sources = new List<IDataBatchEnumerator>();
 
             // Find the latest source of this type
-            StreamAttributes latestFullSourceAttributes = context.StreamProvider.LatestBeforeCutoff(LocationType.Source, tableName, CrawlType.Full, context.RequestedAsOfDateTime);
-            if (!latestFullSourceAttributes.Exists) throw new UsageException(tableName, "tableName", context.StreamProvider.SourceNames());
+            ItemVersions sourceVersions = context.StreamProvider.ItemVersions(LocationType.Source, tableName);
+            ItemVersion latestFullSource = sourceVersions.LatestBeforeCutoff(CrawlType.Full, context.RequestedAsOfDateTime);
+            if (latestFullSource == null) throw new UsageException(tableName, "tableName", context.StreamProvider.SourceNames());
 
             // Find the latest already converted table
-            StreamAttributes latestBuiltTableAttributes = context.StreamProvider.LatestBeforeCutoff(LocationType.Table, tableName, CrawlType.Full, context.RequestedAsOfDateTime);
+            ItemVersions tableVersions = context.StreamProvider.ItemVersions(LocationType.Table, tableName);
+            ItemVersion latestBuiltTable = tableVersions.LatestBeforeCutoff(CrawlType.Full, context.RequestedAsOfDateTime);
 
             // Read the Table or the Full Crawl Source, whichever is newer
             DateTime incrementalNeededAfterCutoff;
-            if (latestBuiltTableAttributes.Exists && !IsOutOfDate(latestBuiltTableAttributes.WhenModifiedUtc, latestFullSourceAttributes.WhenModifiedUtc))
+            if (latestBuiltTable != null && !IsOutOfDate(latestBuiltTable.AsOfDate, latestFullSource.AsOfDate))
             {
                 // If the table is current, reuse it
-                sources.Add(new BinaryTableReader(context.StreamProvider, latestBuiltTableAttributes.Path));
-                incrementalNeededAfterCutoff = latestBuiltTableAttributes.WhenModifiedUtc;
+                sources.Add(new BinaryTableReader(context.StreamProvider, latestBuiltTable.Path));
+                incrementalNeededAfterCutoff = latestBuiltTable.AsOfDate;
             }
             else
             {
                 // Otherwise, build a new table from the latest source full crawl
-                sources.AddRange(context.StreamProvider.Enumerate(latestFullSourceAttributes.Path, EnumerateTypes.File, true).Select((sa) => new TabularFileReader(context.StreamProvider, sa.Path)));
-                incrementalNeededAfterCutoff = latestFullSourceAttributes.WhenModifiedUtc;
+                sources.AddRange(context.StreamProvider.Enumerate(latestFullSource.Path, EnumerateTypes.File, true).Select((sa) => new TabularFileReader(context.StreamProvider, sa.Path)));
+                incrementalNeededAfterCutoff = latestFullSource.AsOfDate;
             }
 
             // Add incremental crawls between the full source and the reporting date
             DateTime latestComponent = incrementalNeededAfterCutoff;
 
-            foreach (StreamAttributes incrementalCrawl in context.StreamProvider.VersionsInRange(LocationType.Source, tableName, CrawlType.Inc, incrementalNeededAfterCutoff, context.RequestedAsOfDateTime))
+            foreach (ItemVersion incrementalCrawl in sourceVersions.VersionsInRange(CrawlType.Inc, incrementalNeededAfterCutoff, context.RequestedAsOfDateTime))
             {
                 sources.AddRange(context.StreamProvider.Enumerate(incrementalCrawl.Path, EnumerateTypes.File, true).Select((sa) => new TabularFileReader(context.StreamProvider, sa.Path)));
-                latestComponent = latestComponent.BiggestOf(incrementalCrawl.WhenModifiedUtc);
+                latestComponent = latestComponent.BiggestOf(incrementalCrawl.AsOfDate);
             }
 
             // Report the latest incorporated source back
@@ -233,7 +238,7 @@ namespace XForm
                 // Recursively build dependencies and return a reader for the result table
                 builder = context.Runner.Build(tableName, context);
 
-                string outputPath;
+                string outputPath = null;
 
                 if ((String.IsNullOrEmpty(outputFormat) || outputFormat.Equals("xform", StringComparison.OrdinalIgnoreCase)) && builder is BinaryTableReader)
                 {
@@ -242,10 +247,13 @@ namespace XForm
                 }
                 else
                 {
-                    StreamAttributes attributes = context.StreamProvider.LatestBeforeCutoff(LocationType.Report, tableName, CrawlType.Full, context.RequestedAsOfDateTime);
-                    outputPath = Path.Combine(context.StreamProvider.Path(LocationType.Report, tableName, CrawlType.Full, attributes.WhenModifiedUtc), $"Report.{outputFormat}");
+                    ItemVersion latestReportVersion = context.StreamProvider.ItemVersions(LocationType.Report, tableName).LatestBeforeCutoff(CrawlType.Full, context.RequestedAsOfDateTime);
+                    if (latestReportVersion != null)
+                    {
+                        outputPath = Path.Combine(context.StreamProvider.Path(LocationType.Report, tableName, CrawlType.Full, latestReportVersion.AsOfDate), $"Report.{outputFormat}");
+                    }
 
-                    if (attributes.WhenModifiedUtc < context.NewestDependency || context.RebuiltSomething || !context.StreamProvider.Attributes(outputPath).Exists)
+                    if (latestReportVersion == null || latestReportVersion.AsOfDate < context.NewestDependency || context.RebuiltSomething || !context.StreamProvider.Attributes(outputPath).Exists)
                     {
                         // If the report needs to be rebuilt, make it and return the path
                         outputPath = Path.Combine(context.StreamProvider.Path(LocationType.Report, tableName, CrawlType.Full, context.NewestDependency), $"Report.{outputFormat}");

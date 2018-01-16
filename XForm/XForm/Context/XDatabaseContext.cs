@@ -145,7 +145,7 @@ namespace XForm
         /// <returns>IDataBatchEnumerator of table</returns>
         public IDataBatchEnumerator Load(string tableName)
         {
-            return new BinaryTableReader(this.StreamProvider, this.StreamProvider.LatestBeforeCutoff(LocationType.Table, tableName, CrawlType.Full, this.RequestedAsOfDateTime).Path);
+            return new BinaryTableReader(this.StreamProvider, this.StreamProvider.ItemVersions(LocationType.Table, tableName).LatestBeforeCutoff(CrawlType.Full, this.RequestedAsOfDateTime).Path);
         }
 
         /// <summary>

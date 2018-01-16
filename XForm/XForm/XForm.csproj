@@ -99,6 +99,8 @@
     <Compile Include="Core\Dictionary5.cs" />
     <Compile Include="Core\Hashing.cs" />
     <Compile Include="IO\ColumnCache.cs" />
+    <Compile Include="IO\ItemVersions.cs" />
+    <Compile Include="IO\StreamProvider\StreamProviderCache.cs" />
     <Compile Include="Types\Comparers\DateTimeComparer.cs" />
     <Compile Include="Types\Comparers\String8Comparer.cs" />
     <Compile Include="Types\Comparers\TimeSpanComparer.cs" />

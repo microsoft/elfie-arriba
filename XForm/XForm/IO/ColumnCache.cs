@@ -16,7 +16,7 @@ namespace XForm.IO
 
         private ColumnCache()
         {
-            _cache = new Cache<IColumnReader>(TimeSpan.FromMinutes(10));
+            _cache = new Cache<IColumnReader>();
         }
 
         public IColumnReader GetOrBuild(string key, bool requireCached, Func<IColumnReader> build)

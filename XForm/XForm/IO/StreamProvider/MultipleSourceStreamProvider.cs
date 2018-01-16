@@ -164,5 +164,12 @@ namespace XForm.IO.StreamProvider
                 Trace.WriteLine($"Done with PUBLISH: {logicalTablePath}");
             }
         }
+
+        public ItemVersions ItemVersions(LocationType location, string itemName)
+        {
+            ItemVersions versions = LocalProvider.ItemVersions(location, itemName);
+            versions.Merge(RemoteProvider.ItemVersions(location, itemName));
+            return versions;
+        }
     }
 }
