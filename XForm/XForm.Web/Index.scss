@@ -53,9 +53,13 @@ body {
         text-decoration: none;
     }
 
-    input {
+    input, select {
         color: $text;
-        font: 11pt sans-serif;
+        font: inherit;
+    }
+
+    select {
+        border: 1px solid hsl(0, 0, 80%);
     }
 
     ::placeholder { color: $line; }
@@ -93,6 +97,12 @@ body {
         span {
             @include buttonBase;
             &:hover { @include buttonActive; }
+        }
+
+        select {
+            padding: 6px 4px;
+            margin-left: 4px;
+            option { padding: 6px 4px; }
         }
     }
 
