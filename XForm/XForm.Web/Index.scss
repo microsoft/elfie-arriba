@@ -1,4 +1,4 @@
-$bg: white;
+$bg: #fffffe; // Matching Monaco (light)
 $text: hsl(0, 0, 30%);
 $line: hsl(0, 0, 92%);
 $linedark: hsl(0, 0, 70%);
@@ -53,9 +53,14 @@ body {
         text-decoration: none;
     }
 
-    input {
+    input, select {
         color: $text;
-        font: 11pt sans-serif;
+        font: inherit;
+        background-color: inherit;
+    }
+
+    select {
+        border: 1px solid hsl(0, 0, 80%);
     }
 
     ::placeholder { color: $line; }
@@ -65,7 +70,6 @@ body {
     display: flex;
     height: 100%;
     width: 100%;
-    background-color: #fffffe; // Matching Monaco
 
     & > * {
         height: 100%;
@@ -94,6 +98,12 @@ body {
             @include buttonBase;
             &:hover { @include buttonActive; }
         }
+
+        select {
+            padding: 6px 4px;
+            margin-left: 4px;
+            option { padding: 6px 4px; }
+        }
     }
 
     #queryEditor {
@@ -103,8 +113,11 @@ body {
         overflow-x: scroll;
         resize: horizontal;
 
-        .monaco-editor .view-overlays .current-line {
-            border: 0; // Override default monaco styling.
+        .monaco-editor { // Override default monaco styling.
+            background-color: transparent;
+            .margin, .monaco-editor-background { background-color: transparent; }
+            .line-numbers { color: hsl(0, 0, 80%); }
+            .current-line { border: 0; }
         }
     }
 
