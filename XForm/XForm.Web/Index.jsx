@@ -150,16 +150,17 @@ class Index extends React.Component {
 
         this.setState({ loading: true })
 
+        const asof = this.state.asOf
         const userCols = this.state.userCols.length && `\nselect ${this.state.userCols.map(c => `[${c}]`).join(' ')}` || ''
 
-        xhr(`run`, { rowLimit: this.count, asof: this.state.asOf, q: `${q}${userCols}` }).then(o => {
+        xhr(`run`, { rowLimit: this.count, asof, q: `${q}${userCols}` }).then(o => {
             if (o.Message || o.ErrorMessage) {
                 this.setState({ status: `Error: ${o.Message || o.ErrorMessage}`, loading: false })
             } else {
                 this.setState({ results: o, loading: false })
 
                 if (this.count === this.baseCount) { // No need to recount after the first page of results.
-                    xhr(`count`, { q }).then(o => {
+                    xhr(`count`, { asof, q }).then(o => {
                         this.setState({ status: typeof o === "number" && `${o.toLocaleString()} Results` || `Error: ${o.ErrorMessage}` })
                     })
                 }
