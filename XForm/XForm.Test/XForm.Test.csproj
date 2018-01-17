@@ -98,7 +98,6 @@
     <Compile Include="Core\Dictionary5Tests.cs" />
     <Compile Include="Core\HashingTests.cs" />
     <Compile Include="TableTestHarness.cs" />
-    <Compile Include="Extensions\IDataBatchExtensionsTests.cs" />
     <Compile Include="Extensions\StringExtensionsTests.cs" />
     <Compile Include="IO\StreamProviderTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -92,20 +92,11 @@ namespace XForm
             StreamAttributes configAttributes = innerContext.StreamProvider.Attributes(innerContext.StreamProvider.Path(LocationType.Config, tableName, ".xql"));
             if (!configAttributes.Exists)
             {
-                if (latestTableQuery != null)
-                {
-                    // If this is a simple source, just reading it is how to build it
-                    xql = $"read {XqlScanner.Escape(tableName, TokenType.Value)}";
+                // If this is a simple source, just reading it is how to build it
+                xql = $"read {XqlScanner.Escape(tableName, TokenType.Value)}";
 
-                    // Build a reader concatenating all needed pieces
-                    builder = ReadSource(tableName, innerContext);
-                }
-                else
-                {
-                    // Ad-Hoc table from code
-                    xql = null;
-                    builder = null;
-                }
+                // Build a reader concatenating all needed pieces
+                builder = ReadSource(tableName, innerContext);
             }
             else
             {
