@@ -244,7 +244,6 @@ class Index extends React.Component {
                         const element = e.target
                         const pixelsFromLimitX = (element.scrollWidth - element.clientWidth - element.scrollLeft)
                         const pixelsFromLimitY = (element.scrollHeight - element.clientHeight - element.scrollTop)
-                        log(element.scrollHeight, element.clientHeight, element.scrollTop)
                         if (pixelsFromLimitX < 20) this.refresh(0, 10)
                         if (pixelsFromLimitY < 100) this.refresh(50)
                     }}>
