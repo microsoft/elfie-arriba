@@ -144,9 +144,9 @@ class Index extends React.Component {
     get encodedQuery() {
         return encodeURIComponent(this.query)
     }
-    refresh(addCount, addCols) {
-        this.count += addCount || 0
-        this.cols += addCols || 0
+    refresh(addCount = 0, addCols = 0) {
+        this.count += addCount
+        this.cols += addCols
         const q = this.query
 
         if (!q) return // Running with an empty query will return a "" instead of an empty object table.
