@@ -13,6 +13,7 @@ namespace XForm.Query
     {
         public string TableName { get; set; }
         public int QueryLineNumber { get; set; }
+        public int InvalidTokenIndex { get; set; }
         public string Usage { get; set; }
         public string ErrorMessage { get; set; }
         public string InvalidValue { get; set; }
@@ -27,7 +28,6 @@ namespace XForm.Query
             this.InvalidValue = invalidValue;
             this.InvalidValueCategory = invalidValueCategory;
             this.ValidValues = validValues;
-            this.ErrorMessage = $"Invalid {this.InvalidValueCategory} \"{this.InvalidValue ?? "<null>"}\"";
 
             // Always sort expected values
             if (this.ValidValues != null) this.ValidValues = this.ValidValues.OrderBy((s) => s);
@@ -39,6 +39,7 @@ namespace XForm.Query
             {
                 if (!String.IsNullOrEmpty(inner.TableName)) TableName = inner.TableName;
                 if (inner.QueryLineNumber > 0) QueryLineNumber = inner.QueryLineNumber;
+                if (inner.InvalidTokenIndex > 0) InvalidTokenIndex = inner.InvalidTokenIndex;
                 if (!String.IsNullOrEmpty(inner.Usage)) Usage = inner.Usage;
                 if (!String.IsNullOrEmpty(inner.ErrorMessage)) ErrorMessage = inner.ErrorMessage;
                 if (!String.IsNullOrEmpty(inner.InvalidValue)) InvalidValue = inner.InvalidValue;

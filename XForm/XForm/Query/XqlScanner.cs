@@ -29,6 +29,7 @@ namespace XForm.Query
 
         public int LineNumber { get; set; }
         public int CharInLine { get; set; }
+        public int Index { get; set; }
 
         public Token(int currentLineNumber)
         {
@@ -70,7 +71,7 @@ namespace XForm.Query
         public XqlScanner(string xqlQuery)
         {
             this.Text = xqlQuery;
-            Current = new Token(1) { Type = TokenType.Newline };
+            Current = new Token(1) { Type = TokenType.Newline, Index = 0 };
             LastNewlineIndex = -1;
             CurrentLineNumber = 1;
             Next();
@@ -104,8 +105,10 @@ namespace XForm.Query
 
             ReadWhitespace();
 
-            if (CurrentIndex >= Text.Length) return false;
+            this.Current.Index = this.CurrentIndex;
             this.Current.CharInLine = this.CurrentIndex - this.LastNewlineIndex;
+
+            if (CurrentIndex >= Text.Length) return false;
 
             char next = Text[CurrentIndex];
             if (next == '\r' || next == '\n')

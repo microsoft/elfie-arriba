@@ -22,9 +22,9 @@ namespace XForm.Functions
             Type toType = context.Parser.NextType();
 
             // ErrorOn, DefaultValue, and ChangeToDefaultOn are optional
-            ValueKinds errorOn = ValueKinds.ErrorOnDefault;
+            ValueKinds errorOn = ValueKindsDefaults.ErrorOn;
             object defaultValue = null;
-            ValueKinds changeToDefaultOn = ValueKinds.ChangeToDefaultOnDefault;
+            ValueKinds changeToDefaultOn = ValueKindsDefaults.ChangeToDefault;
 
             if (context.Parser.HasAnotherArgument)
             {
@@ -65,7 +65,7 @@ namespace XForm.Functions
         private object DefaultValue { get; set; }
         private ValueKinds ChangeToDefaultKinds { get; set; }
 
-        private Cast(IDataBatchColumn column, Type targetType, ValueKinds errorOnKinds = ValueKinds.ErrorOnDefault, object defaultValue = null, ValueKinds changeToDefaultKinds = ValueKinds.ChangeToDefaultOnDefault)
+        private Cast(IDataBatchColumn column, Type targetType, ValueKinds errorOnKinds = ValueKindsDefaults.ErrorOn, object defaultValue = null, ValueKinds changeToDefaultKinds = ValueKindsDefaults.ChangeToDefault)
         {
             Column = column;
             ColumnDetails = column.ColumnDetails.ChangeType(targetType);
@@ -77,7 +77,7 @@ namespace XForm.Functions
             ChangeToDefaultKinds = changeToDefaultKinds;
         }
 
-        public static IDataBatchColumn Build(IDataBatchEnumerator source, IDataBatchColumn column, Type targetType, ValueKinds errorOnKinds = ValueKinds.ErrorOnDefault, object defaultValue = null, ValueKinds changeToDefaultKinds = ValueKinds.ChangeToDefaultOnDefault)
+        public static IDataBatchColumn Build(IDataBatchEnumerator source, IDataBatchColumn column, Type targetType, ValueKinds errorOnKinds = ValueKindsDefaults.ErrorOn, object defaultValue = null, ValueKinds changeToDefaultKinds = ValueKindsDefaults.ChangeToDefault)
         {
             // If the column is already the right type, just return it
             if (column.ColumnDetails.Type == targetType) return column;

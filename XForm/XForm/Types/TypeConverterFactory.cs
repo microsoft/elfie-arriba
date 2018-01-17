@@ -14,23 +14,26 @@ namespace XForm.Types
         None = 0,
         Invalid = 1,
         InvalidOrNull = 2,
+    }
 
-        ErrorOnDefault = None,
-        ChangeToDefaultOnDefault = None
+    public static class ValueKindsDefaults
+    {
+        public const ValueKinds ErrorOn = ValueKinds.None;
+        public const ValueKinds ChangeToDefault = ValueKinds.None;
     }
 
     public delegate bool[] NegatedTryConvert(DataBatch values, out Array result);
 
     public static class TypeConverterFactory
     {
-        public static Func<DataBatch, DataBatch> GetConverter(Type sourceType, Type targetType, ValueKinds errorOn = ValueKinds.ErrorOnDefault, object defaultValue = null, ValueKinds changeToDefault = ValueKinds.ChangeToDefaultOnDefault)
+        public static Func<DataBatch, DataBatch> GetConverter(Type sourceType, Type targetType, ValueKinds errorOn = ValueKindsDefaults.ErrorOn, object defaultValue = null, ValueKinds changeToDefault = ValueKindsDefaults.ChangeToDefault)
         {
             Func<DataBatch, DataBatch> converter = TryGetConverter(sourceType, targetType, errorOn, defaultValue, changeToDefault);
             if (converter == null) throw new ArgumentException($"No converter available from {sourceType.Name} to {targetType.Name}.");
             return converter;
         }
 
-        public static Func<DataBatch, DataBatch> TryGetConverter(Type sourceType, Type targetType, ValueKinds errorOn = ValueKinds.ErrorOnDefault, object defaultValue = null, ValueKinds changeToDefault = ValueKinds.ChangeToDefaultOnDefault)
+        public static Func<DataBatch, DataBatch> TryGetConverter(Type sourceType, Type targetType, ValueKinds errorOn = ValueKindsDefaults.ErrorOn, object defaultValue = null, ValueKinds changeToDefault = ValueKindsDefaults.ChangeToDefault)
         {
             // Error if there's a default but nothing will be changed to it
             if (defaultValue != null && changeToDefault == ValueKinds.None) throw new ArgumentException("Cast with a default value must have [ChangeToDefaultOn] not 'None'.");
@@ -122,7 +125,7 @@ namespace XForm.Types
             return true;
         }
 
-        public static Func<DataBatch, DataBatch> NegatedTryConvertToConverter(NegatedTryConvert negatedTryConvert, string errorContextMessage, ValueKinds errorOn = ValueKinds.ErrorOnDefault, ValueKinds changeToDefault = ValueKinds.ChangeToDefaultOnDefault)
+        public static Func<DataBatch, DataBatch> NegatedTryConvertToConverter(NegatedTryConvert negatedTryConvert, string errorContextMessage, ValueKinds errorOn = ValueKindsDefaults.ErrorOn, ValueKinds changeToDefault = ValueKindsDefaults.ChangeToDefault)
         {
             if (negatedTryConvert == null) return null;
 

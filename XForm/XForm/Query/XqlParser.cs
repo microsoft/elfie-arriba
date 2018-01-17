@@ -142,7 +142,7 @@ namespace XForm.Query
             ParseNextOrThrow(
                 () => currentSource.Columns.TryGetIndexOfColumn(_scanner.Current.Value, out columnIndex)
                 && (requiredType == null || currentSource.Columns[columnIndex].Type == requiredType),
-                "columnName",
+                "[Column]",
                 TokenType.ColumnName,
                 EscapedColumnList(currentSource, requiredType));
 
@@ -152,21 +152,21 @@ namespace XForm.Query
         public string NextOutputColumnName(IDataBatchEnumerator currentSource)
         {
             string value = _scanner.Current.Value;
-            ParseNextOrThrow(() => true, "columnName", TokenType.ColumnName);
+            ParseNextOrThrow(() => true, "[Column]", TokenType.ColumnName);
             return value;
         }
 
         public string NextOutputTableName()
         {
             string tableName = _scanner.Current.Value;
-            ParseNextOrThrow(() => true, "tableName", TokenType.Value, null);
+            ParseNextOrThrow(() => true, "Table", TokenType.Value, null);
             return tableName;
         }
 
         public IDataBatchEnumerator NextTableSource()
         {
             string tableName = _scanner.Current.Value;
-            ParseNextOrThrow(() => _scanner.Current.Type == TokenType.Value, "tableName", TokenType.Value, _workflow.Runner.SourceNames);
+            ParseNextOrThrow(() => _scanner.Current.Type == TokenType.Value, "Table", TokenType.Value, _workflow.Runner.SourceNames);
 
             // If there's a WorkflowProvider, ask it to get the table. This will recurse.
             try
@@ -207,7 +207,7 @@ namespace XForm.Query
 
             if (result == null || (requiredType != null && result.ColumnDetails.Type != requiredType))
             {
-                Throw("columnFunctionOrLiteral", EscapedColumnList(source, requiredType).Concat(EscapedFunctionList(requiredType)));
+                Throw("Col|Func|Const", EscapedColumnList(source, requiredType).Concat(EscapedFunctionList(requiredType)));
             }
 
             if (_scanner.Current.Value.Equals("as", StringComparison.OrdinalIgnoreCase))
@@ -228,7 +228,7 @@ namespace XForm.Query
             IFunctionBuilder builder = null;
             ParseNextOrThrow(() => FunctionFactory.TryGetBuilder(_scanner.Current.Value, out builder)
                 && (requiredType == null || builder.ReturnType == null || requiredType == builder.ReturnType),
-                "functionName",
+                "Function",
                 TokenType.FunctionName,
                 FunctionFactory.SupportedFunctions(requiredType));
 
@@ -249,7 +249,7 @@ namespace XForm.Query
                 // Error if the final function doesn't have the required return type
                 if (requiredType != null && result.ColumnDetails.Type != requiredType)
                 {
-                    Throw("functionName", FunctionFactory.SupportedFunctions(requiredType));
+                    Throw("Function", FunctionFactory.SupportedFunctions(requiredType));
                 }
 
                 return result;
@@ -266,7 +266,7 @@ namespace XForm.Query
             bool value = false;
             ParseNextOrThrow(() => _scanner.Current.Type == TokenType.Value
                 && _scanner.Current.IsWrapped == false
-                && bool.TryParse(_scanner.Current.Value, out value), "boolean", TokenType.Value, new string[] { "true", "false" });
+                && bool.TryParse(_scanner.Current.Value, out value), "Boolean", TokenType.Value, new string[] { "true", "false" });
             return value;
         }
 
@@ -275,14 +275,14 @@ namespace XForm.Query
             int value = -1;
             ParseNextOrThrow(() => _scanner.Current.Type == TokenType.Value
                 && _scanner.Current.IsWrapped == false
-                && int.TryParse(_scanner.Current.Value, out value), "integer", TokenType.Value);
+                && int.TryParse(_scanner.Current.Value, out value), "Integer", TokenType.Value);
             return value;
         }
 
         public TimeSpan NextTimeSpan()
         {
             object value = null;
-            ParseNextOrThrow(() => TypeConverterFactory.TryConvertSingle(_scanner.Current.Value, typeof(TimeSpan), out value), "TimeSpan [ex: '60s', '15m', '24h', '7d']", TokenType.Value);
+            ParseNextOrThrow(() => TypeConverterFactory.TryConvertSingle(_scanner.Current.Value, typeof(TimeSpan), out value), "TimeSpan ['60s', '7d']", TokenType.Value);
             return (TimeSpan)value;
         }
 
@@ -296,7 +296,7 @@ namespace XForm.Query
         public object NextLiteralValue()
         {
             object value = (object)_scanner.Current.Value;
-            ParseNextOrThrow(() => true, "literal", TokenType.Value);
+            ParseNextOrThrow(() => true, "Constant", TokenType.Value);
             return value;
         }
 
@@ -310,7 +310,7 @@ namespace XForm.Query
         public CompareOperator NextCompareOperator()
         {
             CompareOperator cOp = CompareOperator.Equal;
-            ParseNextOrThrow(() => _scanner.Current.Value.TryParseCompareOperator(out cOp), "compareOperator", TokenType.Value, OperatorExtensions.ValidCompareOperators);
+            ParseNextOrThrow(() => _scanner.Current.Value.TryParseCompareOperator(out cOp), "CompareOperator", TokenType.Value, OperatorExtensions.ValidCompareOperators);
             return cOp;
         }
 
@@ -360,7 +360,7 @@ namespace XForm.Query
                 {
                     // This is an implied AND, look for the next expression
                     // If there's a hint token here, suggest boolean operators
-                    if (_scanner.Current.Type == TokenType.NextTokenHint) Throw("booleanOperator", new string[] { "AND", "OR", "NOT" });
+                    if (_scanner.Current.Type == TokenType.NextTokenHint) Throw("{AND|OR|NOT}", new string[] { "AND", "OR", "NOT" });
                 }
 
                 // Parse the next term
@@ -440,6 +440,7 @@ namespace XForm.Query
             context.QueryLineNumber = _scanner.Current.LineNumber;
             context.Usage = (_currentlyBuilding.Count > 0 ? _currentlyBuilding.Peek().Usage : null);
             context.InvalidValue = _scanner.Current.Value;
+            context.InvalidTokenIndex = _scanner.Current.Index;
 
             return context;
         }
@@ -447,6 +448,20 @@ namespace XForm.Query
         private void Throw(string valueCategory, IEnumerable<string> validValues = null)
         {
             ErrorContext context = BuildErrorContext().Merge(new ErrorContext(_scanner.Current.Value, valueCategory, validValues));
+            _scanner.Next();
+
+            if ((this.HasAnotherPart && _scanner.Current.Type != TokenType.NextTokenHint) || _scanner.Current.WhitespacePrefix.Length > 0)
+            {
+                if (String.IsNullOrEmpty(context.ErrorMessage))
+                {
+                    context.ErrorMessage = $"Invalid {context.InvalidValueCategory} \"{context.InvalidValue ?? "<null>"}\"";
+                }
+            }
+            else
+            {
+                context.ErrorMessage = "";
+            }
+
             throw new UsageException(context);
         }
 

@@ -288,10 +288,10 @@ namespace XForm
         {
             String8Block block = new String8Block();
 
-            writer.SetColumns(new string[] { "Valid", "Usage", "ItemCategory", "ErrorMessage", "Values" });
+            writer.SetColumns(new string[] { "Valid", "Usage", "ItemCategory", "ErrorMessage", "Values", "InvalidToken", "InvalidTokenIndex" });
             writer.Write(isValid);
             writer.Write(block.GetCopy(context.Usage));
-            writer.Write(block.GetCopy(context.InvalidValueCategory));
+            writer.Write(block.GetCopy(context.InvalidValueCategory));            
             writer.Write(block.GetCopy(context.ErrorMessage));
 
             String8 values = String8.Empty;
@@ -303,6 +303,9 @@ namespace XForm
                 }
             }
             writer.Write(values);
+
+            writer.Write(block.GetCopy(context.InvalidValue ?? ""));
+            writer.Write(context.InvalidTokenIndex);
 
             writer.NextRow();
         }
