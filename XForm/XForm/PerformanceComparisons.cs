@@ -20,7 +20,7 @@ namespace XForm
 {
     public class PerformanceComparisons
     {
-        private const int DefaultMeasureMilliseconds = 2500;
+        private const int DefaultMeasureMilliseconds = 2000;
 
         private XDatabaseContext Context { get; set; }
         private int Count { get; set; }
@@ -46,12 +46,12 @@ namespace XForm
 
         public void Run()
         {
-            Current();
+            //Current();
 
-            //WhereUShortUnderConstant();
-            //WhereUShortEqualsUshort();
-            //ByteEqualsConstant();
-            //DoubleWhere();
+            WhereUShortUnderConstant();
+            WhereUShortEqualsUshort();
+            ByteEqualsConstant();
+            DoubleWhere();
             //Join();
             //Dictionary();
             //Choose();
