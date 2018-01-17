@@ -25,7 +25,7 @@ $bluehot: hsl(210, 90%, 90%);
     align-items: center;
     padding: 0 12px;
 
-    & > :not(input) {
+    & > :not(input):not(.loading) {
         @include buttonBase;
         &.button { @include buttonActive; }
     }
@@ -180,8 +180,7 @@ body {
     flex: 1;
     display: flex;
     flex-direction: column;
-    overflow-x: auto;
-    overflow-y: scroll;
+    overflow: hidden;
 
     .resultsHeader {
         @include header;
@@ -213,6 +212,8 @@ body {
     }
 
     .tableWrapper {
+        width: 100%;
+        overflow: auto;
         flex: 1;
         padding: 10px 20px;
     }

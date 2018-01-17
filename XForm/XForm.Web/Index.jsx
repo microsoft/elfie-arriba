@@ -51,6 +51,7 @@ class Index extends React.Component {
     constructor(props) {
         super(props)
         this.count = this.baseCount = 50
+        this.cols = this.baseCols = 20
         this.debouncedQueryChanged = debounce(this.queryChanged, 500)
         this.state = { query: this.query, userCols: [] }
     }
@@ -87,7 +88,7 @@ class Index extends React.Component {
                         endLineNumber: position.lineNumber,
                         endColumn: position.column,
                     })
-                    return xhr(`suggest?q=${encodeURIComponent(textUntilPosition)}`).then(o => {
+                    return xhr(`suggest`, { q: textUntilPosition }).then(o => {
                         if (o.Usage !== this.state.usage) {
                             this.setState({ usage: o.Usage.replace(/'/g, "") })
                         }
@@ -127,8 +128,9 @@ class Index extends React.Component {
     }
     queryChanged() {
         this.count = this.baseCount
+        this.cols = this.baseCols
         this.refresh()
-        xhr(`run?q=${this.encodedQuery}%0Aschema${this.asOf}`).then(o => {
+        xhr(`run`, { asof: this.state.asOf, q: `${this.query}\nschema` }).then(o => {
             if (o.rows) {
                 this.setState({
                     schemaBody: o.rows.map(r => ({ name: r[0], type: `${r[1]}` })),
@@ -136,33 +138,32 @@ class Index extends React.Component {
             }
         })
     }
-    get asOf() {
-        return this.state.asOf && `&asof=${this.state.asOf}` || ''
-    }
     get query() {
         return this.editor && this.editor.getModel().getValue()
     }
     get encodedQuery() {
         return encodeURIComponent(this.query)
     }
-    refresh(addCount) {
-        this.count += addCount || 0
-        const q = this.encodedQuery
+    refresh(addCount = 0, addCols = 0) {
+        this.count += addCount
+        this.cols += addCols
+        const q = this.query
 
         if (!q) return // Running with an empty query will return a "" instead of an empty object table.
 
         this.setState({ loading: true })
 
-        const userCols = this.state.userCols.length && `%0Aselect ${this.state.userCols.map(c => `[${c}]`).join(' ')}` || ''
+        const asof = this.state.asOf
+        const userCols = this.state.userCols.length && `\nselect ${this.state.userCols.map(c => `[${c}]`).join(' ')}` || ''
 
-        xhr(`run?rowLimit=${this.count}${this.asOf}&q=${q}${userCols}`).then(o => {
+        xhr(`run`, { rowLimit: this.count, colLimit: this.cols, asof, q: `${q}${userCols}` }).then(o => {
             if (o.Message || o.ErrorMessage) {
                 this.setState({ status: `Error: ${o.Message || o.ErrorMessage}`, loading: false })
             } else {
                 this.setState({ results: o, loading: false })
 
                 if (this.count === this.baseCount) { // No need to recount after the first page of results.
-                    xhr(`count?q=${q}${this.asOf}`).then(o => {
+                    xhr(`count`, { asof, q }).then(o => {
                         this.setState({ status: typeof o === "number" && `${o.toLocaleString()} Results` || `Error: ${o.ErrorMessage}` })
                     })
                 }
@@ -186,12 +187,12 @@ class Index extends React.Component {
                     <span onClick={e => {
                         const name = this.refs.name.value
                         if (!name || !q) return
-                        xhr(`save?name=${encodeURIComponent(name)}&q=${q}`).then(o => {
+                        xhr(`save`, { name, q }).then(o => {
                             this.setState({ saving: "Saved" })
                             setTimeout(() => this.setState({ saving: "Save" }), 3000)
                         })
                     }}>{ this.state.saving || "Save" }</span>
-                    <select onChange={e => this.setState({ asOf: e.target.value }, () => this.refresh())}>
+                    <select onChange={e => this.setState({ asOf: e.target.value || undefined }, () => this.refresh())}>
                         <option value="">As of Now</option>
                         <option value={Date.daysAgo(1).toXFormat()}>As of Yesterday</option>
                         <option value={Date.daysAgo(7).toXFormat()}>As of Last Week</option>
@@ -231,14 +232,7 @@ class Index extends React.Component {
                     </table>
                 </div>}
             </div>
-            <div id="results" onScroll={e => {
-                    const element = e.target
-                    const pixelsFromBottom = (element.scrollHeight - element.clientHeight - element.scrollTop)
-                    if (pixelsFromBottom < 100) {
-                        this.refresh(50)
-                    }
-                    // TODO: Inc only if not currently fetching
-                }}>
+            <div id="results">
                 <div className="resultsHeader">
                     <span>{this.state.status}</span>
                     <span className="flexFill"></span>
@@ -246,7 +240,13 @@ class Index extends React.Component {
                     {q && <a className="button" target="_blank" href={`http://localhost:5073/download?fmt=tsv&q=${q}`}>TSV</a>}
                     <span className={`loading ${ this.state.loading && 'loading-active' }`}></span>
                 </div>
-                <div className="tableWrapper">
+                <div className="tableWrapper" onScroll={e => {
+                        const element = e.target
+                        const pixelsFromLimitX = (element.scrollWidth - element.clientWidth - element.scrollLeft)
+                        const pixelsFromLimitY = (element.scrollHeight - element.clientHeight - element.scrollTop)
+                        if (pixelsFromLimitX < 20) this.refresh(0, 10)
+                        if (pixelsFromLimitY < 100) this.refresh(50)
+                    }}>
                     <table>
                         <thead>
                             <tr>
