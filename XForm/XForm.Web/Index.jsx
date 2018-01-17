@@ -120,6 +120,9 @@ class Index extends React.Component {
                 minimap: { enabled: false },
                 automaticLayout: true,
                 theme: 'xform',
+                overviewRulerBorder: false,
+                occurrencesHighlight: false,
+                hideCursorInOverviewRuler: true,
     		});
 
             this.editor.onDidChangeModelContent(() => this.debouncedQueryChanged())
