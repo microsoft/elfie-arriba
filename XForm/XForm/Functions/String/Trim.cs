@@ -12,7 +12,7 @@ namespace XForm.Functions.String
     internal class TrimBuilder : IFunctionBuilder
     {
         public string Name => "Trim";
-        public string Usage => "Trim([String8])";
+        public string Usage => "Trim({String8})";
         public Type ReturnType => typeof(String8);
 
         public IDataBatchColumn Build(IDataBatchEnumerator source, XDatabaseContext context)

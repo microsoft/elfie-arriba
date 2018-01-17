@@ -12,7 +12,7 @@ namespace XForm.Verbs
     internal class RenameCommandBuilder : IVerbBuilder
     {
         public string Verb => "rename";
-        public string Usage => "'rename' [ColumnName] [NewColumnName], ...";
+        public string Usage => "rename {Column} {NewName}, ...";
 
         public IDataBatchEnumerator Build(IDataBatchEnumerator source, XDatabaseContext context)
         {

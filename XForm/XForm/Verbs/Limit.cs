@@ -11,7 +11,7 @@ namespace XForm.Verbs
     internal class LimitCommandBuilder : IVerbBuilder
     {
         public string Verb => "limit";
-        public string Usage => "'limit' [RowLimit] [ColLimit?]";
+        public string Usage => "limit {RowLimit} {ColLimit?}";
 
         public IDataBatchEnumerator Build(IDataBatchEnumerator source, XDatabaseContext context)
         {

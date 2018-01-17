@@ -14,7 +14,7 @@ namespace XForm.Verbs
     internal class ReadCommandBuilder : IVerbBuilder
     {
         public string Verb => "read";
-        public string Usage => "'read' [TableName]";
+        public string Usage => "read {Table|Query}";
 
         public IDataBatchEnumerator Build(IDataBatchEnumerator source, XDatabaseContext context)
         {
@@ -26,7 +26,7 @@ namespace XForm.Verbs
     internal class ReadRangeCommandBuilder : IVerbBuilder
     {
         public string Verb => "readrange";
-        public string Usage => "'readRange' [TimeSpanUpToAsOfDate] [TableName]";
+        public string Usage => "readRange {TimeSpanUpToAsOfDate} {TableName}";
 
         public IDataBatchEnumerator Build(IDataBatchEnumerator source, XDatabaseContext context)
         {

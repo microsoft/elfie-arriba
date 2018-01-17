@@ -17,7 +17,7 @@ namespace XForm.Functions.String
     internal class DnsLookupBuilder : IFunctionBuilder
     {
         public string Name => "DnsLookup";
-        public string Usage => "DnsLookup([ComputerName])";
+        public string Usage => "DnsLookup({ComputerName})";
         public Type ReturnType => typeof(String8);
 
         public IDataBatchColumn Build(IDataBatchEnumerator source, XDatabaseContext context)

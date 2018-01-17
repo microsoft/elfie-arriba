@@ -13,7 +13,7 @@ namespace XForm.Verbs
     internal class SetCommandBuilder : IVerbBuilder
     {
         public string Verb => "set";
-        public string Usage => "'set' [NewColumnName] [Column|Function|Literal]";
+        public string Usage => "set {NewName} {Col|Func|Const}";
 
         public IDataBatchEnumerator Build(IDataBatchEnumerator source, XDatabaseContext context)
         {

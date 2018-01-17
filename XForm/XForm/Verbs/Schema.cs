@@ -13,7 +13,7 @@ namespace XForm.Verbs
     internal class SchemaCommandBuilder : IVerbBuilder
     {
         public string Verb => "schema";
-        public string Usage => "'schema'";
+        public string Usage => "schema";
 
         public IDataBatchEnumerator Build(IDataBatchEnumerator source, XDatabaseContext context)
         {

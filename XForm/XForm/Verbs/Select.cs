@@ -13,7 +13,7 @@ namespace XForm.Verbs
     internal class SelectCommandBuilder : IVerbBuilder
     {
         public string Verb => "select";
-        public string Usage => "'select' [Column|Function|Literal] (AS [Name])?, ...";
+        public string Usage => "select {Col|Func|Const} (AS {Name})?, ...";
 
         public IDataBatchEnumerator Build(IDataBatchEnumerator source, XDatabaseContext context)
         {

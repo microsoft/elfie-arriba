@@ -10,7 +10,7 @@ namespace XForm.Functions.Date
     internal class DateAddBuilder : IFunctionBuilder
     {
         public string Name => "DateAdd";
-        public string Usage => "DateAdd([DateTime], [TimeSpanToAdd])";
+        public string Usage => "DateAdd({DateTime}, {TimeSpanToAdd})";
         public Type ReturnType => typeof(DateTime);
 
         public IDataBatchColumn Build(IDataBatchEnumerator source, XDatabaseContext context)

@@ -12,7 +12,7 @@ namespace XForm.Functions
     internal class CastBuilder : IFunctionBuilder
     {
         public string Name => "Cast";
-        public string Usage => "Cast([Column|Function|Literal], [ToType], [ErrorOn?], [DefaultValue?], [ChangeToDefaultOn?])";
+        public string Usage => "Cast({Col|Func|Const}, {ToType}, {ErrorOn?}, {DefaultValue?}, {DefaultOn?})";
         public Type ReturnType => null;
 
         public IDataBatchColumn Build(IDataBatchEnumerator source, XDatabaseContext context)

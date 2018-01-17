@@ -14,7 +14,7 @@ namespace XForm.Verbs
     internal class CastCommandBuilder : IVerbBuilder
     {
         public string Verb => "cast";
-        public string Usage => "'cast' [ColumnName] [ToType] [ErrorOn?] [DefaultValue?] [ChangeToDefaultOn?]";
+        public string Usage => "cast {Column} {ToType} {ErrorOn?} {DefaultValue?} {DefaultOn?}";
         private CastBuilder _castFunctionBuilder = new CastBuilder();
 
         public IDataBatchEnumerator Build(IDataBatchEnumerator source, XDatabaseContext context)

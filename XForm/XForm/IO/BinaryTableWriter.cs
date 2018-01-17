@@ -18,7 +18,7 @@ namespace XForm.IO
     internal class WriteCommandBuilder : IVerbBuilder
     {
         public string Verb => "write";
-        public string Usage => "'write' [tableNameOrFilePath]";
+        public string Usage => "write {Table}";
 
         public IDataBatchEnumerator Build(IDataBatchEnumerator source, XDatabaseContext context)
         {

@@ -12,7 +12,7 @@ namespace XForm.Functions.String
     internal class ToUpperBuilder : IFunctionBuilder
     {
         public string Name => "ToUpper";
-        public string Usage => "ToUpper([String8])";
+        public string Usage => "ToUpper({String8})";
         public Type ReturnType => typeof(String8);
 
         public IDataBatchColumn Build(IDataBatchEnumerator source, XDatabaseContext context)

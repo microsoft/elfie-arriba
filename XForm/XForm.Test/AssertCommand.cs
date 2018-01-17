@@ -18,7 +18,7 @@ namespace XForm.Test
     internal class AssertBuilder : IVerbBuilder
     {
         public string Verb => "assert";
-        public string Usage => "'assert' (none|all)\r\n  {subquery}\r\n  end";
+        public string Usage => "assert {none|all}\r\n  {subquery}\r\n  end";
 
         public IDataBatchEnumerator Build(IDataBatchEnumerator source, XDatabaseContext context)
         {
@@ -71,7 +71,7 @@ namespace XForm.Test
     internal class AssertCountBuilder : IVerbBuilder
     {
         public string Verb => "assertCount";
-        public string Usage => "'assertCount' [rowCount]";
+        public string Usage => "assertCount {rowCount}";
 
         public IDataBatchEnumerator Build(IDataBatchEnumerator source, XDatabaseContext context)
         {

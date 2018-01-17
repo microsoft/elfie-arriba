@@ -12,7 +12,7 @@ namespace XForm.Aggregators
     internal class CountCommandBuilder : IVerbBuilder
     {
         public string Verb => "count";
-        public string Usage => "'count'";
+        public string Usage => "count";
 
         public IDataBatchEnumerator Build(IDataBatchEnumerator source, XDatabaseContext context)
         {
