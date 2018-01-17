@@ -83,9 +83,27 @@ namespace XForm.IO.StreamProvider
 
         public void Publish(string logicalTablePath)
         {
-            string[] parts = logicalTablePath.Split('\\');
-            if(parts.Length > 1) _versionCache.Remove($"{parts[0]}|{parts[1]}");
+            // Table\Table\Name\Parts\Full\
+            ClearVersionCachePaths(logicalTablePath);
             _inner.Publish(logicalTablePath);
+        }
+
+        private void ClearVersionCachePaths(string fullLogicalPath)
+        {
+            int firstBackslash = fullLogicalPath.IndexOf('\\');
+            if (firstBackslash == -1) return;
+
+            string locationType = fullLogicalPath.Substring(0, firstBackslash);
+            string subPath = fullLogicalPath.Substring(firstBackslash + 1);
+
+            while(true)
+            {
+                _versionCache.Remove($"{locationType}|{subPath}");
+
+                int lastBackslash = subPath.LastIndexOf('\\');
+                if (lastBackslash == -1) break;
+                subPath = subPath.Substring(0, lastBackslash);
+            }
         }
     }
 }
