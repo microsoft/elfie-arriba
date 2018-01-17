@@ -109,7 +109,7 @@ namespace XForm.Types
             DataBatch resultBatch = converter(DataBatch.Single(array, 1));
 
             // Verify the result was not null unless the input was "" or 'null'
-            if (resultBatch.IsNull != null && resultBatch.IsNull[0] == true)
+            if (resultBatch.IsNull != null && resultBatch.IsNull[resultBatch.Index(0)] == true)
             {
                 result = null;
 
@@ -118,7 +118,7 @@ namespace XForm.Types
                 return false;
             }
 
-            result = resultBatch.Array.GetValue(0);
+            result = resultBatch.Array.GetValue(resultBatch.Index(0));
             return true;
         }
 
