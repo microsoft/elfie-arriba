@@ -51,6 +51,7 @@ class Index extends React.Component {
     constructor(props) {
         super(props)
         this.count = this.baseCount = 50
+        this.cols = this.baseCols = 20
         this.debouncedQueryChanged = debounce(this.queryChanged, 500)
         this.state = { query: this.query, userCols: [] }
     }
@@ -127,6 +128,7 @@ class Index extends React.Component {
     }
     queryChanged() {
         this.count = this.baseCount
+        this.cols = this.baseCols
         this.refresh()
         xhr(`run`, { asof: this.state.asOf, q: `${this.query}\nschema` }).then(o => {
             if (o.rows) {
@@ -142,8 +144,9 @@ class Index extends React.Component {
     get encodedQuery() {
         return encodeURIComponent(this.query)
     }
-    refresh(addCount) {
+    refresh(addCount, addCols) {
         this.count += addCount || 0
+        this.cols += addCols || 0
         const q = this.query
 
         if (!q) return // Running with an empty query will return a "" instead of an empty object table.
@@ -153,7 +156,7 @@ class Index extends React.Component {
         const asof = this.state.asOf
         const userCols = this.state.userCols.length && `\nselect ${this.state.userCols.map(c => `[${c}]`).join(' ')}` || ''
 
-        xhr(`run`, { rowLimit: this.count, asof, q: `${q}${userCols}` }).then(o => {
+        xhr(`run`, { rowLimit: this.count, colLimit: this.cols, asof, q: `${q}${userCols}` }).then(o => {
             if (o.Message || o.ErrorMessage) {
                 this.setState({ status: `Error: ${o.Message || o.ErrorMessage}`, loading: false })
             } else {
@@ -231,7 +234,9 @@ class Index extends React.Component {
             </div>
             <div id="results" onScroll={e => {
                     const element = e.target
+                    const pixelsFromLimitX = (element.scrollWidth - element.clientWidth - element.scrollLeft)
                     const pixelsFromLimitY = (element.scrollHeight - element.clientHeight - element.scrollTop)
+                    if (pixelsFromLimitX < 20) this.refresh(0, 10)
                     if (pixelsFromLimitY < 100) this.refresh(50)
                 }}>
                 <div className="resultsHeader">
