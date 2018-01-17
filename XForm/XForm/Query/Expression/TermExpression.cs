@@ -75,6 +75,7 @@ namespace XForm.Query.Expression
             {
                 // Get a comparer which can compare the values
                 _comparer = TypeProviderFactory.Get(left.ColumnDetails.Type).TryGetComparer(op);
+                if (_comparer == null) throw new ArgumentException($"No comparer found for type {left.ColumnDetails.Type.Name}.");
             }
         }
 

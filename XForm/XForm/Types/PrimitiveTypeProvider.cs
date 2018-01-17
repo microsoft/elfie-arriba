@@ -61,6 +61,8 @@ namespace XForm.Types
             if (typeof(T) == typeof(float)) return new FloatComparer();
             if (typeof(T) == typeof(double)) return new DoubleComparer();
 
+            if (typeof(T) == typeof(bool)) return new BoolComparer();
+
             return null;
         }
 
