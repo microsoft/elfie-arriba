@@ -88,6 +88,28 @@ namespace XForm.Test.Query
             Assert.AreEqual(s_selectListOptions, Values(suggester.Suggest($@"
                 read WebRequest
                 select [HttpStatus]")));
+
+        }
+
+        [TestMethod]
+        public void Suggest_NoErrorOnLastToken()
+        {
+            SampleDatabase.EnsureBuilt();
+            QuerySuggester suggester = new QuerySuggester(SampleDatabase.XDatabaseContext);
+
+            // Verify errors only when token is complete and you've moved on
+            Assert.AreEqual("", suggester.Suggest("read WebRequest\r\ncase").Context.ErrorMessage);
+            Assert.AreNotEqual("", suggester.Suggest("read WebRequest\r\ncase ").Context.ErrorMessage, "Bad verb 'case' is now complete");
+            Assert.AreEqual("", suggester.Suggest("read WebRequest\r\ncast ").Context.ErrorMessage);
+            Assert.AreEqual("", suggester.Suggest("read WebRequest\r\ncast [HttpStatur]").Context.ErrorMessage);
+            Assert.AreNotEqual("", suggester.Suggest("read WebRequest\r\ncast [HttpStatur] ").Context.ErrorMessage, "Bad column name now complete");
+            Assert.AreEqual("", suggester.Suggest("read WebRequest\r\ncast [HttpStatus] Int").Context.ErrorMessage);
+            Assert.AreEqual("", suggester.Suggest("read WebRequest\r\ncast [HttpStatus] Int33").Context.ErrorMessage);
+            Assert.AreNotEqual("", suggester.Suggest("read WebRequest\r\ncast [HttpStatus] Int33 ").Context.ErrorMessage, "Bad Type name now complete");
+            Assert.AreEqual("", suggester.Suggest("read WebRequest\r\ncast [HttpStatus] Int32 ").Context.ErrorMessage, "All Valid");
+            Assert.AreNotEqual("", suggester.Suggest("read WebRequest\r\ncast [HttpStatur] Int32").Context.ErrorMessage, "Bad column name isn't last argument");
+            Assert.AreNotEqual("", suggester.Suggest("read WebRequest\r\ncase [HttpStatus] Int32").Context.ErrorMessage, "Bad verb isn't last argument");
+            Assert.AreNotEqual("", suggester.Suggest("read BadTable\r\ncast [HttpStatus] Int32").Context.ErrorMessage, "Bad table isn't last argument");
         }
 
         [TestMethod]
@@ -104,7 +126,7 @@ namespace XForm.Test.Query
             Assert.AreEqual(2, result.Context.QueryLineNumber);
             Assert.AreEqual("where {Expression}", result.Context.Usage);
             Assert.AreEqual("BadColumnName", result.Context.InvalidValue);
-            Assert.AreEqual("columnName", result.Context.InvalidValueCategory);
+            Assert.AreEqual("[Column]", result.Context.InvalidValueCategory);
             Assert.AreEqual(s_columnNames, string.Join("|", result.Context.ValidValues));
         }
 

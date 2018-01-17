@@ -153,7 +153,7 @@ namespace XForm
             // Find the latest source of this type
             ItemVersions sourceVersions = context.StreamProvider.ItemVersions(LocationType.Source, tableName);
             ItemVersion latestFullSource = sourceVersions.LatestBeforeCutoff(CrawlType.Full, context.RequestedAsOfDateTime);
-            if (latestFullSource == null) throw new UsageException(tableName, "tableName", context.StreamProvider.SourceNames());
+            if (latestFullSource == null) throw new UsageException(tableName, "[Table]", context.StreamProvider.SourceNames());
 
             // Find the latest already converted table
             ItemVersions tableVersions = context.StreamProvider.ItemVersions(LocationType.Table, tableName);

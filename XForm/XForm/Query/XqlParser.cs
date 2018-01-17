@@ -173,7 +173,7 @@ namespace XForm.Query
             {
                 return _workflow.Runner.Build(tableName, _workflow);
             }
-            catch (Exception ex) when (!Debugger.IsAttached)
+            catch (Exception ex)
             {
                 Rethrow(ex);
                 return null;
@@ -441,6 +441,7 @@ namespace XForm.Query
             context.Usage = (_currentlyBuilding.Count > 0 ? _currentlyBuilding.Peek().Usage : null);
             context.InvalidValue = _scanner.Current.Value;
             context.InvalidTokenIndex = _scanner.Current.Index;
+            context.ErrorMessage = "";
 
             return context;
         }
@@ -448,18 +449,24 @@ namespace XForm.Query
         private void Throw(string valueCategory, IEnumerable<string> validValues = null)
         {
             ErrorContext context = BuildErrorContext().Merge(new ErrorContext(_scanner.Current.Value, valueCategory, validValues));
-            _scanner.Next();
 
-            if ((this.HasAnotherPart && _scanner.Current.Type != TokenType.NextTokenHint) || _scanner.Current.WhitespacePrefix.Length > 0)
+            if(_scanner.Current.Type == TokenType.End || _scanner.Current.Type == TokenType.NextTokenHint)
             {
-                if (String.IsNullOrEmpty(context.ErrorMessage))
-                {
-                    context.ErrorMessage = $"Invalid {context.InvalidValueCategory} \"{context.InvalidValue ?? "<null>"}\"";
-                }
+                // If this was the last token, no error message (wait for it to be complete)
+                context.ErrorMessage = "";
             }
             else
             {
-                context.ErrorMessage = "";
+                // If the
+                _scanner.Next();
+
+                if (_scanner.Current.Type != TokenType.End || _scanner.Current.Type == TokenType.NextTokenHint || _scanner.Current.WhitespacePrefix.Length > 0)
+                {
+                    if (String.IsNullOrEmpty(context.ErrorMessage))
+                    {
+                        context.ErrorMessage = $"Invalid {context.InvalidValueCategory} \"{context.InvalidValue ?? "<null>"}\"";
+                    }
+                }
             }
 
             throw new UsageException(context);
