@@ -1,12 +1,14 @@
 window.log = function() { console.log.apply(console, arguments) }
 
-window.xhr = (path, body) => {
+window.xhr = (path, params) => {
     return new Promise((resolve, reject) => {
-        var host = "localhost:5073"
-        const pathParams = path;
-        var xhr = new XMLHttpRequest();
+        const host = "localhost:5073"
+        const encodedParams = Object.keys(params)
+            .filter(k => params[k] !== undefined)
+            .map(k => `${k}=${encodeURIComponent(params[k])}`).join('&')
+        const xhr = new XMLHttpRequest();
         xhr.withCredentials = false;
-        xhr.open(body ? "POST" : "GET", `http://${host}/${pathParams}`, true); // For testing: http://httpbin.org/post
+        xhr.open("GET", `http://${host}/${path}?${encodedParams}`, true); // For testing: http://httpbin.org/post
         xhr.onload = () => {
             const responseText = xhr.responseText;
 
@@ -40,6 +42,6 @@ window.xhr = (path, body) => {
         xhr.onerror = e => {
             reject(xhr);
         };
-        xhr.send(typeof body === "string" ? body : JSON.stringify(body));
+        xhr.send();
     });
 };
