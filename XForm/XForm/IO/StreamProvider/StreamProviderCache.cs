@@ -83,7 +83,6 @@ namespace XForm.IO.StreamProvider
 
         public void Publish(string logicalTablePath)
         {
-            // Table\Table\Name\Parts\Full\
             ClearVersionCachePaths(logicalTablePath);
             _inner.Publish(logicalTablePath);
         }

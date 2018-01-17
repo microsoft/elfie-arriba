@@ -21,9 +21,14 @@ namespace XForm
         public static int Main(string[] args)
         {
             XDatabaseContext context = new XDatabaseContext();
-            context.RequestedAsOfDateTime = DateTime.UtcNow;
+            context.RequestedAsOfDateTime = DateTime.MaxValue;
             context.StreamProvider = new StreamProviderCache(new LocalFileStreamProvider(Environment.CurrentDirectory));
             context.Runner = new WorkflowRunner(context);
+
+            foreach(string arg in args)
+            {
+                if(arg.Equals("+cache", StringComparison.OrdinalIgnoreCase)) ColumnCache.IsEnabled = true;
+            }
 
             return Run(args, context);
         }
@@ -35,9 +40,6 @@ namespace XForm
                 // Enable native acceleration by default
                 NativeAccelerator.Enable();
                 
-                // Don't enable column cache by default (need size limit and rules)
-                //ColumnCache.IsEnabled = true;
-
                 if (args == null || args.Length == 0)
                 {
                     return (int)new InteractiveRunner(context).Run();

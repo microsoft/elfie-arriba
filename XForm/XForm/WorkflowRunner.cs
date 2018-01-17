@@ -23,12 +23,15 @@ namespace XForm
         private XDatabaseContext XDatabaseContext { get; set; }
         private HashSet<string> Sources { get; set; }
         private DateTime SourcesCacheExpires { get; set; }
-        private Cache<ItemVersions> _versionCache { get; set; }
+
+        private Cache<ItemVersions> _versionCache;
+        private Cache<LatestTableForCutoff> _currentTableVersions;
 
         public WorkflowRunner(XDatabaseContext context)
         {
             this.XDatabaseContext = context;
             _versionCache = new Cache<ItemVersions>();
+            _currentTableVersions = new Cache<LatestTableForCutoff>();
         }
 
         public IEnumerable<string> SourceNames
@@ -55,6 +58,16 @@ namespace XForm
 
         public IDataBatchEnumerator Build(string tableName, XDatabaseContext outerContext, bool deferred)
         {
+            // If we previously found the latest for this table, just return it again
+            LatestTableForCutoff previousLatest;
+            if (_currentTableVersions.TryGet(tableName, out previousLatest)
+                && previousLatest.Cutoff >= outerContext.RequestedAsOfDateTime
+                && previousLatest.TableVersion.AsOfDate <= outerContext.RequestedAsOfDateTime)
+            {
+                outerContext.NewestDependency = previousLatest.TableVersion.AsOfDate;
+                return new BinaryTableReader(outerContext.StreamProvider, previousLatest.TableVersion.Path);
+            }
+
             // Create a context to track what we're building now
             XDatabaseContext innerContext = XDatabaseContext.Push(outerContext);
             innerContext.Runner = this;
@@ -129,6 +142,7 @@ namespace XForm
             // Report the newest dependency in this chain to the components above
             innerContext.Pop(outerContext);
 
+            _currentTableVersions.Add(tableName, new LatestTableForCutoff(outerContext.RequestedAsOfDateTime, new ItemVersion(LocationType.Table, tableName, CrawlType.Full, innerContext.NewestDependency)));
             return new BinaryTableReader(innerContext.StreamProvider, tablePath);
         }
 
@@ -197,6 +211,18 @@ namespace XForm
             }
 
             if (this.Sources != null) this.Sources.Add(tableName);
+        }
+
+        private class LatestTableForCutoff
+        {
+            public ItemVersion TableVersion;
+            public DateTime Cutoff;
+
+            public LatestTableForCutoff(DateTime cutoff, ItemVersion tableVersion)
+            {
+                TableVersion = tableVersion;
+                Cutoff = cutoff;
+            }
         }
     }
 

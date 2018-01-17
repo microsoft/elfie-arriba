@@ -63,6 +63,14 @@ namespace XForm.IO
             this.AsOfDate = asOfDate;
         }
 
+        public ItemVersion(LocationType locationType, string tableName, CrawlType crawlType, DateTime asOfDate)
+        {
+            this.LocationType = locationType;
+            this.Name = tableName;
+            this.CrawlType = crawlType;
+            this.AsOfDate = asOfDate;
+        }
+
         public bool Equals(ItemVersion other)
         {
             if (other == null) return false;
