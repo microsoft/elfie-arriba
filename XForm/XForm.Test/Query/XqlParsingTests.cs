@@ -93,7 +93,6 @@ namespace XForm.Test.Query
             XDatabaseContext context = SampleDatabase.XDatabaseContext;
             IDataBatchEnumerator source = context.Query(@"
                 read WebRequest
-                cache all
                 cast [ServerPort], Int32
                 cast [ResponseBytes], Int32, None, 0, InvalidOrNull
                 ");

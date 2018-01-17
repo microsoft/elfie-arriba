@@ -23,6 +23,8 @@ namespace XForm.IO.StreamProvider
         Stream OpenAppend(string logicalPath);
         StreamAttributes Attributes(string logicalPath);
 
+        ItemVersions ItemVersions(LocationType location, string itemName);
+
         IEnumerable<StreamAttributes> Enumerate(string underLogicalPath, EnumerateTypes types, bool recursive);
         void Publish(string logicalTablePath);
         void Delete(string logicalPath);

@@ -34,7 +34,7 @@ namespace XForm.Test
                 EnsureBuilt();
 
                 s_xDatabaseContext = new XDatabaseContext();
-                s_xDatabaseContext.StreamProvider = new LocalFileStreamProvider(s_RootPath);
+                s_xDatabaseContext.StreamProvider = new StreamProviderCache(new LocalFileStreamProvider(s_RootPath));
                 s_xDatabaseContext.Runner = new WorkflowRunner(s_xDatabaseContext);
                 return s_xDatabaseContext;
             }
@@ -146,14 +146,14 @@ namespace XForm.Test
             XForm($"build WebRequest xform \"{cutoff:yyyy-MM-dd hh:mm:ssZ}");
 
             // Verify it has been created
-            DateTime versionFound = SampleDatabase.XDatabaseContext.StreamProvider.LatestBeforeCutoff(LocationType.Table, "WebRequest", CrawlType.Full, cutoff).WhenModifiedUtc;
+            DateTime versionFound = SampleDatabase.XDatabaseContext.StreamProvider.ItemVersions(LocationType.Table, "WebRequest").LatestBeforeCutoff(CrawlType.Full, cutoff).AsOfDate;
             Assert.AreEqual(new DateTime(2017, 12, 02, 00, 00, 00, DateTimeKind.Utc), versionFound);
 
             // Ask for WebRequest.Authenticated. Verify a 2017-12-02 version is also built for it
             XForm($"build WebRequest.Authenticated xform \"{cutoff:yyyy-MM-dd hh:mm:ssZ}");
 
             // Verify it has been created
-            versionFound = SampleDatabase.XDatabaseContext.StreamProvider.LatestBeforeCutoff(LocationType.Table, "WebRequest.Authenticated", CrawlType.Full, cutoff).WhenModifiedUtc;
+            versionFound = SampleDatabase.XDatabaseContext.StreamProvider.ItemVersions(LocationType.Table, "WebRequest.Authenticated").LatestBeforeCutoff(CrawlType.Full, cutoff).AsOfDate;
             Assert.AreEqual(new DateTime(2017, 12, 02, 00, 00, 00, DateTimeKind.Utc), versionFound);
         }
 
@@ -177,19 +177,19 @@ namespace XForm.Test
         public void Database_Report()
         {
             SampleDatabase.EnsureBuilt();
-            StreamAttributes latestReport;
+            ItemVersion latestReport;
 
             // Build WebRequest.tsv. Verify it's a 2017-12-03 version. Verify the TSV is found
             XForm($"build WebRequest tsv");
-            latestReport = SampleDatabase.XDatabaseContext.StreamProvider.LatestBeforeCutoff(LocationType.Report, "WebRequest", CrawlType.Full, DateTime.UtcNow);
-            Assert.AreEqual(new DateTime(2017, 12, 03, 00, 00, 00, DateTimeKind.Utc), latestReport.WhenModifiedUtc);
+            latestReport = SampleDatabase.XDatabaseContext.StreamProvider.ItemVersions(LocationType.Report, "WebRequest").LatestBeforeCutoff(CrawlType.Full, DateTime.UtcNow);
+            Assert.AreEqual(new DateTime(2017, 12, 03, 00, 00, 00, DateTimeKind.Utc), latestReport.AsOfDate);
             Assert.IsTrue(SampleDatabase.XDatabaseContext.StreamProvider.Attributes(Path.Combine(latestReport.Path, "Report.tsv")).Exists);
 
             // Ask for a 2017-12-02 report. Verify 2017-12-02 version is created
             DateTime cutoff = new DateTime(2017, 12, 02, 11, 50, 00, DateTimeKind.Utc);
             XForm($"build WebRequest tsv \"{cutoff:yyyy-MM-dd hh:mm:ssZ}");
-            latestReport = SampleDatabase.XDatabaseContext.StreamProvider.LatestBeforeCutoff(LocationType.Report, "WebRequest", CrawlType.Full, cutoff);
-            Assert.AreEqual(new DateTime(2017, 12, 02, 00, 00, 00, DateTimeKind.Utc), latestReport.WhenModifiedUtc);
+            latestReport = SampleDatabase.XDatabaseContext.StreamProvider.ItemVersions(LocationType.Report, "WebRequest").LatestBeforeCutoff(CrawlType.Full, cutoff);
+            Assert.AreEqual(new DateTime(2017, 12, 02, 00, 00, 00, DateTimeKind.Utc), latestReport.AsOfDate);
             Assert.IsTrue(SampleDatabase.XDatabaseContext.StreamProvider.Attributes(Path.Combine(latestReport.Path, "Report.tsv")).Exists);
         }
 
@@ -248,19 +248,19 @@ namespace XForm.Test
             reportContext.NewestDependency = DateTime.MinValue;
             reportContext.RequestedAsOfDateTime = new DateTime(2017, 11, 25, 00, 00, 00, DateTimeKind.Utc);
             Assert.AreEqual(86, SampleDatabase.XDatabaseContext.Runner.Build("WebServer", reportContext).RunAndDispose());
-            Assert.AreEqual(new DateTime(2017, 11, 25, 00, 00, 00, DateTimeKind.Utc), SampleDatabase.XDatabaseContext.StreamProvider.LatestBeforeCutoff(LocationType.Table, "WebServer", CrawlType.Full, DateTime.UtcNow).WhenModifiedUtc);
+            Assert.AreEqual(new DateTime(2017, 11, 25, 00, 00, 00, DateTimeKind.Utc), SampleDatabase.XDatabaseContext.StreamProvider.ItemVersions(LocationType.Table, "WebServer").LatestBeforeCutoff(CrawlType.Full, DateTime.UtcNow).AsOfDate);
 
             // Build WebServer as of 2017-11-27; should have 91 rows (one incremental added)
             reportContext.NewestDependency = DateTime.MinValue;
             reportContext.RequestedAsOfDateTime = new DateTime(2017, 11, 27, 00, 00, 00, DateTimeKind.Utc);
             Assert.AreEqual(91, SampleDatabase.XDatabaseContext.Runner.Build("WebServer", reportContext).RunAndDispose());
-            Assert.AreEqual(new DateTime(2017, 11, 27, 00, 00, 00, DateTimeKind.Utc), SampleDatabase.XDatabaseContext.StreamProvider.LatestBeforeCutoff(LocationType.Table, "WebServer", CrawlType.Full, DateTime.UtcNow).WhenModifiedUtc);
+            Assert.AreEqual(new DateTime(2017, 11, 27, 00, 00, 00, DateTimeKind.Utc), SampleDatabase.XDatabaseContext.StreamProvider.ItemVersions(LocationType.Table, "WebServer").LatestBeforeCutoff(CrawlType.Full, DateTime.UtcNow).AsOfDate);
 
             // Build WebServer as of 2017-11-29; should have 96 rows (two incrementals added)
             reportContext.NewestDependency = DateTime.MinValue;
             reportContext.RequestedAsOfDateTime = new DateTime(2017, 11, 29, 00, 00, 00, DateTimeKind.Utc);
             Assert.AreEqual(96, SampleDatabase.XDatabaseContext.Runner.Build("WebServer", reportContext).RunAndDispose());
-            Assert.AreEqual(new DateTime(2017, 11, 29, 00, 00, 00, DateTimeKind.Utc), SampleDatabase.XDatabaseContext.StreamProvider.LatestBeforeCutoff(LocationType.Table, "WebServer", CrawlType.Full, DateTime.UtcNow).WhenModifiedUtc);
+            Assert.AreEqual(new DateTime(2017, 11, 29, 00, 00, 00, DateTimeKind.Utc), SampleDatabase.XDatabaseContext.StreamProvider.ItemVersions(LocationType.Table, "WebServer").LatestBeforeCutoff(CrawlType.Full, DateTime.UtcNow).AsOfDate);
         }
 
         [TestMethod]

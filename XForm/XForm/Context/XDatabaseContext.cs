@@ -79,7 +79,7 @@ namespace XForm
             this.RebuiltSomething = false;
 
             this.StreamProvider = new LocalFileStreamProvider(Environment.CurrentDirectory);
-            this.Runner = new SingleFileRunner();
+            this.Runner = new WorkflowRunner(this);
         }
 
         public XDatabaseContext(IWorkflowRunner runner, IStreamProvider streamProvider) : this()
@@ -145,7 +145,7 @@ namespace XForm
         /// <returns>IDataBatchEnumerator of table</returns>
         public IDataBatchEnumerator Load(string tableName)
         {
-            return new BinaryTableReader(this.StreamProvider, this.StreamProvider.LatestBeforeCutoff(LocationType.Table, tableName, CrawlType.Full, this.RequestedAsOfDateTime).Path);
+            return this.Runner.Build(tableName, this);
         }
 
         /// <summary>

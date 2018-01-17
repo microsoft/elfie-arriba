@@ -31,8 +31,12 @@ namespace XForm
     /// <typeparam name="T">Type of item to cache</typeparam>
     public class Cache<T>
     {
+        public static TimeSpan DefaultCacheDuration = TimeSpan.FromMinutes(10);
         private Dictionary<string, CacheEntry<T>> _cache;
         private TimeSpan _expireAfter;
+
+        public Cache() : this(DefaultCacheDuration)
+        { }
 
         public Cache(TimeSpan expireAfter)
         {
@@ -96,6 +100,11 @@ namespace XForm
         {
             DateTime now = DateTime.UtcNow;
             _cache[key] = new CacheEntry<T>(value, now, now);
+        }
+
+        public void Remove(string key)
+        {
+            _cache.Remove(key);
         }
     }
 }

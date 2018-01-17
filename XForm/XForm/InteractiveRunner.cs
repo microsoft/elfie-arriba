@@ -127,9 +127,9 @@ namespace XForm
 
                     SaveScript(s_commandCachePath);
 
-                    // Get the first 10 results
+                    // Get the first 10 results and 10 columns
                     IDataBatchEnumerator firstTenWrapper = _pipeline;
-                    firstTenWrapper = _xDatabaseContext.Query("limit 10", firstTenWrapper);
+                    firstTenWrapper = _xDatabaseContext.Query("limit 10 10", firstTenWrapper);
                     firstTenWrapper = _xDatabaseContext.Query("write cout", firstTenWrapper);
                     lastCount = firstTenWrapper.RunWithoutDispose();
 

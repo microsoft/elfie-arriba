@@ -14,24 +14,10 @@ namespace XForm.Test.Query
     [TestClass]
     public class DataBatchEnumeratorTests
     {
-        private static IDataBatchEnumerator s_SampleReader;
-        private static IDataBatchEnumerator SampleReader()
-        {
-            if (s_SampleReader == null)
-            {
-                SampleDatabase.EnsureBuilt();
-                s_SampleReader = SampleDatabase.XDatabaseContext.Query(@"
-                read WebRequest
-                cache all
-                ");
-            }
-
-            s_SampleReader.Reset();
-            return s_SampleReader;
-        }
-
         public static void DataSourceEnumerator_All(string configurationLine, int expectedRowCount, string[] requiredColumns = null)
         {
+            SampleDatabase.EnsureBuilt();
+
             int requiredColumnCount = (requiredColumns == null ? 0 : requiredColumns.Length);
             long actualRowCount;
 
@@ -39,7 +25,7 @@ namespace XForm.Test.Query
             DataBatchEnumeratorContractValidator innerValidator = null;
             try
             {
-                pipeline = SampleReader();
+                pipeline = SampleDatabase.XDatabaseContext.Load("WebRequest");
                 innerValidator = new DataBatchEnumeratorContractValidator(pipeline);
                 pipeline = SampleDatabase.XDatabaseContext.Query(configurationLine, innerValidator);
 

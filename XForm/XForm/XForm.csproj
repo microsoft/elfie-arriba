@@ -99,6 +99,8 @@
     <Compile Include="Core\Dictionary5.cs" />
     <Compile Include="Core\Hashing.cs" />
     <Compile Include="IO\ColumnCache.cs" />
+    <Compile Include="IO\ItemVersions.cs" />
+    <Compile Include="IO\StreamProvider\StreamProviderCache.cs" />
     <Compile Include="Types\Comparers\DateTimeComparer.cs" />
     <Compile Include="Types\Comparers\String8Comparer.cs" />
     <Compile Include="Types\Comparers\TimeSpanComparer.cs" />
@@ -111,7 +113,6 @@
     <Compile Include="Verbs\Set.cs" />
     <Compile Include="Verbs\Read.cs" />
     <Compile Include="Context\IWorkflowRunner.cs" />
-    <Compile Include="Context\SingleFileRunner.cs" />
     <Compile Include="Core\Allocator.cs" />
     <Compile Include="Data\ArraySelector.cs" />
     <Compile Include="Data\ColumnDetails.cs" />
@@ -119,7 +120,6 @@
     <Compile Include="Data\DataBatchEnumeratorWrapper.cs" />
     <Compile Include="Data\IDataBatchEnumerator.cs" />
     <Compile Include="Core\BitVector.cs" />
-    <Compile Include="Data\MemoryCacher.cs" />
     <Compile Include="Data\SinglePageEnumerator.cs" />
     <Compile Include="Extensions\DataBatchEnumeratorExtensions.cs" />
     <Compile Include="Extensions\IComparableExtensions.cs" />

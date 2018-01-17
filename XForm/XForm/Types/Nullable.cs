@@ -111,7 +111,7 @@ namespace XForm.Types
         private DataBatch _currentBatch;
         private ArraySelector _currentSelector;
 
-        public NullableReader(IStreamProvider streamProvider, string columnPath, IColumnReader valueReader)
+        public NullableReader(IStreamProvider streamProvider, string columnPath, IColumnReader valueReader, bool requireCached)
         {
             _streamProvider = streamProvider;
             _columnPath = columnPath;
@@ -119,7 +119,7 @@ namespace XForm.Types
 
             // NullableReader can't use TypeProviderFactory.TryGetColumn or it'll be recursively wrapped in a NullableReader also.
             string nullsPath = Path.Combine(_columnPath, "Vn.b8.bin");
-            _nullReader = ColumnCache.Instance.GetOrBuild(nullsPath, () =>
+            _nullReader = ColumnCache.Instance.GetOrBuild(nullsPath, requireCached, () =>
             {
                 if (!streamProvider.Attributes(nullsPath).Exists) return null;
                 return new PrimitiveArrayReader<bool>(streamProvider.OpenRead(nullsPath));

@@ -3,7 +3,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
+using XForm.Extensions;
 
 namespace XForm.IO.StreamProvider
 {
@@ -110,6 +112,29 @@ namespace XForm.IO.StreamProvider
             if (String.IsNullOrEmpty(physicalPath)) return;
             string folderPath = Path.GetDirectoryName(physicalPath);
             if (!String.IsNullOrEmpty(folderPath)) Directory.CreateDirectory(folderPath);
+        }
+
+        public ItemVersions ItemVersions(LocationType location, string itemName)
+        {
+            ItemVersions versions = new ItemVersions(location, itemName);
+            AddVersions(versions, CrawlType.Full);
+            AddVersions(versions, CrawlType.Inc);
+            return versions;
+        }
+
+        private void AddVersions(ItemVersions versions, CrawlType crawlType)
+        {
+            string sourceFullPath = this.Path(versions.LocationType, versions.Name, crawlType);
+            foreach (StreamAttributes version in Enumerate(sourceFullPath, EnumerateTypes.Folder, false))
+            {
+                DateTime versionAsOf;
+                if (!DateTime.TryParseExact(System.IO.Path.GetFileName(version.Path), StreamProviderExtensions.DateTimeFolderFormat, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out versionAsOf))
+                {
+                    continue;
+                }
+
+                versions.AddVersion(crawlType, versionAsOf);
+            }
         }
     }
 }

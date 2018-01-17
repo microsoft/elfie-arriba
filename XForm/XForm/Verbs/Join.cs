@@ -35,12 +35,12 @@ namespace XForm.Verbs
     public class Join : IDataBatchEnumerator
     {
         private IDataBatchEnumerator _source;
-        private IDataBatchList _cachedJoinSource;
-
         private Type _joinColumnType;
         private int _joinFromColumnIndex;
         private Func<DataBatch> _joinFromColumnGetter;
-        private Func<DataBatch> _joinToColumnGetter;
+
+        private IDataBatchList _cachedJoinSource;
+        private IColumnReader _joinToColumnReader;
 
         private IJoinDictionary _joinDictionary;
 
@@ -48,24 +48,25 @@ namespace XForm.Verbs
         private List<int> _mappedColumnIndices;
 
         private RowRemapper _sourceJoinedRowsFilter;
+        private ArraySelector _currentRightSideSelector;
 
         public Join(IDataBatchEnumerator source, string joinFromColumn, IDataBatchEnumerator joinToSource, string joinToColumn, string joinSidePrefix)
         {
             _source = source;
 
-            IDataBatchList joinSourceList = joinToSource as IDataBatchList;
-            _cachedJoinSource = new MemoryCacher(joinSourceList, CacheLevel.Used);
+            _cachedJoinSource = joinToSource as IDataBatchList;
+            if (_cachedJoinSource == null) throw new ArgumentException($"Join right-hand-side must be a built binary table.");
 
             // Request the JoinFromColumn Getter
             _joinFromColumnIndex = source.Columns.IndexOfColumn(joinFromColumn);
             _joinFromColumnGetter = source.ColumnGetter(_joinFromColumnIndex);
             _joinColumnType = source.Columns[_joinFromColumnIndex].Type;
 
-            // Request the JoinToColumn Getter
+            // Request the JoinToColumn Reader (we'll need it cached)
             int joinToColumnIndex = _cachedJoinSource.Columns.IndexOfColumn(joinToColumn);
             Type joinToColumnType = _cachedJoinSource.Columns[joinToColumnIndex].Type;
             if (joinToColumnType != _joinColumnType) throw new ArgumentException($"Join requires columns of matching types; join from {_joinColumnType.Name} to {joinToColumnType.Name} not supported.");
-            _joinToColumnGetter = _cachedJoinSource.ColumnGetter(joinToColumnIndex);
+            _joinToColumnReader = _cachedJoinSource.CachedColumnReader(joinToColumnIndex);
 
             // All of the main source columns are passed through
             _columns = new List<ColumnDetails>(source.Columns);
@@ -91,9 +92,9 @@ namespace XForm.Verbs
             // If this is one of the joined in columns, return the rows which matched from the join
             if (columnIndex >= _source.Columns.Count)
             {
-                // Otherwise, return the join column (we'll seek to the matching rows on each Next)
                 int joinColumnIndex = _mappedColumnIndices[columnIndex - _source.Columns.Count];
-                return _cachedJoinSource.ColumnGetter(joinColumnIndex);
+                IColumnReader cachedColumnReader = _cachedJoinSource.CachedColumnReader(joinColumnIndex);
+                return () => cachedColumnReader.Read(_currentRightSideSelector);
             }
 
             // Otherwise, get the source getter
@@ -117,7 +118,6 @@ namespace XForm.Verbs
             // If this is the first call, fully cache the JoinToSource and build a lookup Dictionary
             if (_joinDictionary == null) BuildJoinDictionary();
 
-            DataBatch joinToRows = default(DataBatch);
             BitVector matchedRows = null;
 
             while (true)
@@ -134,27 +134,22 @@ namespace XForm.Verbs
                 DataBatch joinFromValues = _joinFromColumnGetter();
 
                 // Find which rows matched and to what right-side row indices
-                matchedRows = _joinDictionary.TryGetValues(joinFromValues, out joinToRows);
+                matchedRows = _joinDictionary.TryGetValues(joinFromValues, out _currentRightSideSelector);
 
                 // Filter left-side rows to the matches (inner join)
                 _sourceJoinedRowsFilter.SetMatches(matchedRows);
 
-                if (joinToRows.Count > 0) break;
+                if (_currentRightSideSelector.Count > 0) break;
             }
 
-            // 'Seek' the right-side rows which matched
-            _cachedJoinSource.Get(ArraySelector.Map((int[])joinToRows.Array, joinToRows.Count));
-
-            CurrentBatchRowCount = joinToRows.Count;
-            return joinToRows.Count;
+            CurrentBatchRowCount = _currentRightSideSelector.Count;
+            return _currentRightSideSelector.Count;
         }
 
         private void BuildJoinDictionary()
         {
-            int joinToTotalCount = _cachedJoinSource.Next(int.MaxValue);
-            DataBatch allJoinToValues = _joinToColumnGetter();
-
-            _joinDictionary = (IJoinDictionary)Allocator.ConstructGenericOf(typeof(JoinDictionary<>), _joinColumnType, joinToTotalCount);
+            DataBatch allJoinToValues = _joinToColumnReader.Read(ArraySelector.All(_cachedJoinSource.Count));
+            _joinDictionary = (IJoinDictionary)Allocator.ConstructGenericOf(typeof(JoinDictionary<>), _joinColumnType, allJoinToValues.Count);
             _joinDictionary.Add(allJoinToValues, 0);
         }
 
@@ -182,7 +177,7 @@ namespace XForm.Verbs
     public interface IJoinDictionary
     {
         void Add(DataBatch keys, int firstRowIndex);
-        BitVector TryGetValues(DataBatch keys, out DataBatch foundAtIndices);
+        BitVector TryGetValues(DataBatch keys, out ArraySelector rightSideSelector);
     }
 
     public class JoinDictionary<T> : IJoinDictionary
@@ -229,7 +224,7 @@ namespace XForm.Verbs
             }
         }
 
-        public BitVector TryGetValues(DataBatch keys, out DataBatch foundAtIndices)
+        public BitVector TryGetValues(DataBatch keys, out ArraySelector rightSideSelector)
         {
             Allocator.AllocateToSize(ref _returnedVector, keys.Count);
             Allocator.AllocateToSize(ref _returnedIndicesBuffer, keys.Count);
@@ -254,7 +249,7 @@ namespace XForm.Verbs
             }
 
             // Write out the indices of the joined rows for each value found
-            foundAtIndices = DataBatch.All(_returnedIndicesBuffer, countFound);
+            rightSideSelector = ArraySelector.Map(_returnedIndicesBuffer, countFound);
 
             // Return the vector of which input rows matched
             return _returnedVector;

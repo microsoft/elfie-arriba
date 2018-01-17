@@ -39,7 +39,7 @@ namespace XForm.IO
         private const string MetadataFileName = "Metadata.csv";
         private const string ConfigQueryPath = "Config.xql";
 
-        private static Cache<TableMetadata> s_Cache = new Cache<TableMetadata>(TimeSpan.FromMinutes(1));
+        private static Cache<TableMetadata> s_Cache = new Cache<TableMetadata>();
 
         public static void Write(IStreamProvider streamProvider, string tableRootPath, TableMetadata metadata)
         {

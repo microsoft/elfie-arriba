@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 
 using XForm.Data;
-using XForm.Extensions;
 using XForm.IO;
 using XForm.IO.StreamProvider;
 using XForm.Query;
@@ -41,11 +40,11 @@ namespace XForm.Verbs
             string tableName = (string)context.Parser.NextLiteralValue();
 
             // Add rows *just before* each full source in range (the previous full crawl and all incremental ones)
-            foreach (StreamAttributes fullSource in context.StreamProvider.VersionsInRange(LocationType.Source, tableName, CrawlType.Full, rangeStart, context.RequestedAsOfDateTime))
+            foreach (ItemVersion fullSource in context.StreamProvider.ItemVersions(LocationType.Source, tableName).VersionsInRange(CrawlType.Full, rangeStart, context.RequestedAsOfDateTime))
             {
                 // Ask for the state just before this source
                 XDatabaseContext historicalContext = new XDatabaseContext(context);
-                historicalContext.RequestedAsOfDateTime = fullSource.WhenModifiedUtc.AddSeconds(-1);
+                historicalContext.RequestedAsOfDateTime = fullSource.AsOfDate.AddSeconds(-1);
                 sources.Add(context.Runner.Build(tableName, historicalContext));
             }
 

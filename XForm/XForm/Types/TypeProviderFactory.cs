@@ -46,10 +46,10 @@ namespace XForm.Types
             return provider;
         }
 
-        public static IColumnReader TryGetColumn(Type type, IStreamProvider streamProvider, string columnPath)
+        public static IColumnReader TryGetColumn(Type type, IStreamProvider streamProvider, string columnPath, bool requireCached = false)
         {
-            IColumnReader column = Get(type).BinaryReader(streamProvider, columnPath);
-            column = new NullableReader(streamProvider, columnPath, column);
+            IColumnReader column = Get(type).BinaryReader(streamProvider, columnPath, requireCached);
+            column = new NullableReader(streamProvider, columnPath, column, requireCached);
             return column;
         }
 

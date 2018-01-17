@@ -14,9 +14,9 @@ namespace XForm.Types
         public string Name => "TimeSpan";
         public Type Type => typeof(TimeSpan);
 
-        public IColumnReader BinaryReader(IStreamProvider streamProvider, string columnPath)
+        public IColumnReader BinaryReader(IStreamProvider streamProvider, string columnPath, bool requireCached)
         {
-            return new ConvertingReader(TypeProviderFactory.Get(typeof(long)).BinaryReader(streamProvider, columnPath), TypeConverterFactory.GetConverter(typeof(long), typeof(TimeSpan)));
+            return new ConvertingReader(TypeProviderFactory.Get(typeof(long)).BinaryReader(streamProvider, columnPath, requireCached), TypeConverterFactory.GetConverter(typeof(long), typeof(TimeSpan)));
         }
 
         public IColumnWriter BinaryWriter(IStreamProvider streamProvider, string columnPath)

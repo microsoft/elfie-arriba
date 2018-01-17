@@ -22,7 +22,7 @@ namespace XForm
         {
             XDatabaseContext context = new XDatabaseContext();
             context.RequestedAsOfDateTime = DateTime.UtcNow;
-            context.StreamProvider = new LocalFileStreamProvider(Environment.CurrentDirectory);
+            context.StreamProvider = new StreamProviderCache(new LocalFileStreamProvider(Environment.CurrentDirectory));
             context.Runner = new WorkflowRunner(context);
 
             return Run(args, context);

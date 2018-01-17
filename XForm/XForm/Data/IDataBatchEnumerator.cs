@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using XForm.Types;
 
 namespace XForm.Data
 {
@@ -55,10 +56,7 @@ namespace XForm.Data
         /// </summary>
         int Count { get; }
 
-        /// <summary>
-        ///  Get a specific set of rows.
-        /// </summary>
-        /// <param name="selector">ArraySelector indicating which specific rows to get</param>
-        void Get(ArraySelector selector);
+        IColumnReader ColumnReader(int columnIndex);
+        IColumnReader CachedColumnReader(int columnIndex);
     }
 }

@@ -25,7 +25,7 @@ namespace XForm.Types
         string Name { get; }
         Type Type { get; }
 
-        IColumnReader BinaryReader(IStreamProvider streamProvider, string columnPath);
+        IColumnReader BinaryReader(IStreamProvider streamProvider, string columnPath, bool requireCached);
         IColumnWriter BinaryWriter(IStreamProvider streamProvider, string columnPath);
 
         NegatedTryConvert TryGetNegatedTryConvert(Type sourceType, Type targetType, object defaultValue);
