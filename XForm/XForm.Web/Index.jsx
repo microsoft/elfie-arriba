@@ -231,11 +231,8 @@ class Index extends React.Component {
             </div>
             <div id="results" onScroll={e => {
                     const element = e.target
-                    const pixelsFromBottom = (element.scrollHeight - element.clientHeight - element.scrollTop)
-                    if (pixelsFromBottom < 100) {
-                        this.refresh(50)
-                    }
-                    // TODO: Inc only if not currently fetching
+                    const pixelsFromLimitY = (element.scrollHeight - element.clientHeight - element.scrollTop)
+                    if (pixelsFromLimitY < 100) this.refresh(50)
                 }}>
                 <div className="resultsHeader">
                     <span>{this.state.status}</span>
