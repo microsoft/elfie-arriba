@@ -232,13 +232,7 @@ class Index extends React.Component {
                     </table>
                 </div>}
             </div>
-            <div id="results" onScroll={e => {
-                    const element = e.target
-                    const pixelsFromLimitX = (element.scrollWidth - element.clientWidth - element.scrollLeft)
-                    const pixelsFromLimitY = (element.scrollHeight - element.clientHeight - element.scrollTop)
-                    if (pixelsFromLimitX < 20) this.refresh(0, 10)
-                    if (pixelsFromLimitY < 100) this.refresh(50)
-                }}>
+            <div id="results">
                 <div className="resultsHeader">
                     <span>{this.state.status}</span>
                     <span className="flexFill"></span>
@@ -246,7 +240,14 @@ class Index extends React.Component {
                     {q && <a className="button" target="_blank" href={`http://localhost:5073/download?fmt=tsv&q=${q}`}>TSV</a>}
                     <span className={`loading ${ this.state.loading && 'loading-active' }`}></span>
                 </div>
-                <div className="tableWrapper">
+                <div className="tableWrapper" onScroll={e => {
+                        const element = e.target
+                        const pixelsFromLimitX = (element.scrollWidth - element.clientWidth - element.scrollLeft)
+                        const pixelsFromLimitY = (element.scrollHeight - element.clientHeight - element.scrollTop)
+                        log(element.scrollHeight, element.clientHeight, element.scrollTop)
+                        if (pixelsFromLimitX < 20) this.refresh(0, 10)
+                        if (pixelsFromLimitY < 100) this.refresh(50)
+                    }}>
                     <table>
                         <thead>
                             <tr>
