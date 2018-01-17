@@ -90,7 +90,7 @@ class Index extends React.Component {
                     })
                     return xhr(`suggest`, { q: textUntilPosition }).then(o => {
                         if (o.Usage !== this.state.usage) {
-                            this.setState({ usage: o.Usage.replace(/'/g, "") })
+                            this.setState({ usage: o.Usage.replace(/'/g, ""), queryHint: o.ItemCategory })
                         }
 
                         if (!o.Values) return []
@@ -125,7 +125,15 @@ class Index extends React.Component {
                 hideCursorInOverviewRuler: true,
     		});
 
-            this.editor.onDidChangeModelContent(() => this.debouncedQueryChanged())
+            this.editor.onDidChangeModelContent(() => {
+                this.debouncedQueryChanged()
+                setTimeout(() => {
+                    const ia = document.querySelector('.inputarea').style
+                    const qh = document.querySelector('.queryHint').style
+                    qh.top = parseInt(ia.top) + 1 + 'px'
+                    qh.left = ia.left
+                })
+            })
             this.queryChanged()
     	});
     }
@@ -203,7 +211,9 @@ class Index extends React.Component {
                     </select>
                 </div>
                 <div className="queryUsage">{ this.state.usage || `\u200B` }</div>
-                <div id="queryEditor"></div>
+                <div id="queryEditor">
+                    <div className="queryHint">{this.state.queryHint}</div>
+                </div>
             </div>
             <div id="schema">
                 <div className="schemaHeader">

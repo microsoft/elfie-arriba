@@ -119,6 +119,14 @@ body {
             .line-numbers { color: hsl(0, 0, 80%); }
             .current-line { border: 0; }
         }
+
+        position: relative;
+        .queryHint {
+            position: absolute;
+            z-index: -1;
+            font: 14px Consolas; // Manually match Monaco
+            color: hsl(0, 0, 90%);
+        }
     }
 
     .queryUsage {
