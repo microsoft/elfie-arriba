@@ -81,13 +81,17 @@ namespace XForm.Types
                     _array[i] = (sbyte)sourceArray[batch.Index(i)];
                 }
             }
-            else
+            else if (!batch.Selector.IsSingleValue)
             {
                 int offset = batch.Selector.StartIndexInclusive;
                 for (int i = 0; i < batch.Count; ++i)
                 {
                     _array[i] = (sbyte)sourceArray[i + offset];
                 }
+            }
+            else
+            {
+                _array[0] = (sbyte)sourceArray[0];
             }
 
             result = _array;
@@ -108,23 +112,31 @@ namespace XForm.Types
                     short value = sourceArray[batch.Index(i)];
                     bool outOfRange = value < (short)sbyte.MinValue || value > (short)sbyte.MaxValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (sbyte)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (sbyte)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    short value = sourceArray[i + offset];
+                    bool outOfRange = value < (short)sbyte.MinValue || value > (short)sbyte.MaxValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (sbyte)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    short value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value < (short)sbyte.MinValue || value > (short)sbyte.MaxValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (sbyte)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                short value = sourceArray[0];
+                bool outOfRange = value < (short)sbyte.MinValue || value > (short)sbyte.MaxValue;
+                _array[0] = (outOfRange ? _defaultValue : (sbyte)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
@@ -145,23 +157,31 @@ namespace XForm.Types
                     int value = sourceArray[batch.Index(i)];
                     bool outOfRange = value < (int)sbyte.MinValue || value > (int)sbyte.MaxValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (sbyte)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (sbyte)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    int value = sourceArray[i + offset];
+                    bool outOfRange = value < (int)sbyte.MinValue || value > (int)sbyte.MaxValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (sbyte)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    int value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value < (int)sbyte.MinValue || value > (int)sbyte.MaxValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (sbyte)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                int value = sourceArray[0];
+                bool outOfRange = value < (int)sbyte.MinValue || value > (int)sbyte.MaxValue;
+                _array[0] = (outOfRange ? _defaultValue : (sbyte)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
@@ -182,23 +202,31 @@ namespace XForm.Types
                     long value = sourceArray[batch.Index(i)];
                     bool outOfRange = value < (long)sbyte.MinValue || value > (long)sbyte.MaxValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (sbyte)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (sbyte)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    long value = sourceArray[i + offset];
+                    bool outOfRange = value < (long)sbyte.MinValue || value > (long)sbyte.MaxValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (sbyte)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    long value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value < (long)sbyte.MinValue || value > (long)sbyte.MaxValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (sbyte)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                long value = sourceArray[0];
+                bool outOfRange = value < (long)sbyte.MinValue || value > (long)sbyte.MaxValue;
+                _array[0] = (outOfRange ? _defaultValue : (sbyte)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
@@ -219,23 +247,31 @@ namespace XForm.Types
                     byte value = sourceArray[batch.Index(i)];
                     bool outOfRange = value > (byte)sbyte.MaxValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (sbyte)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (sbyte)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    byte value = sourceArray[i + offset];
+                    bool outOfRange = value > (byte)sbyte.MaxValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (sbyte)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    byte value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value > (byte)sbyte.MaxValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (sbyte)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                byte value = sourceArray[0];
+                bool outOfRange = value > (byte)sbyte.MaxValue;
+                _array[0] = (outOfRange ? _defaultValue : (sbyte)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
@@ -256,23 +292,31 @@ namespace XForm.Types
                     ushort value = sourceArray[batch.Index(i)];
                     bool outOfRange = value > (ushort)sbyte.MaxValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (sbyte)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (sbyte)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    ushort value = sourceArray[i + offset];
+                    bool outOfRange = value > (ushort)sbyte.MaxValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (sbyte)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    ushort value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value > (ushort)sbyte.MaxValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (sbyte)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                ushort value = sourceArray[0];
+                bool outOfRange = value > (ushort)sbyte.MaxValue;
+                _array[0] = (outOfRange ? _defaultValue : (sbyte)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
@@ -293,23 +337,31 @@ namespace XForm.Types
                     uint value = sourceArray[batch.Index(i)];
                     bool outOfRange = value > (uint)sbyte.MaxValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (sbyte)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (sbyte)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    uint value = sourceArray[i + offset];
+                    bool outOfRange = value > (uint)sbyte.MaxValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (sbyte)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    uint value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value > (uint)sbyte.MaxValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (sbyte)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                uint value = sourceArray[0];
+                bool outOfRange = value > (uint)sbyte.MaxValue;
+                _array[0] = (outOfRange ? _defaultValue : (sbyte)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
@@ -330,23 +382,31 @@ namespace XForm.Types
                     ulong value = sourceArray[batch.Index(i)];
                     bool outOfRange = value > (ulong)sbyte.MaxValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (sbyte)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (sbyte)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    ulong value = sourceArray[i + offset];
+                    bool outOfRange = value > (ulong)sbyte.MaxValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (sbyte)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    ulong value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value > (ulong)sbyte.MaxValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (sbyte)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                ulong value = sourceArray[0];
+                bool outOfRange = value > (ulong)sbyte.MaxValue;
+                _array[0] = (outOfRange ? _defaultValue : (sbyte)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
@@ -367,23 +427,31 @@ namespace XForm.Types
                     float value = sourceArray[batch.Index(i)];
                     bool outOfRange = value < (float)sbyte.MinValue || value > (float)sbyte.MaxValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (sbyte)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (sbyte)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    float value = sourceArray[i + offset];
+                    bool outOfRange = value < (float)sbyte.MinValue || value > (float)sbyte.MaxValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (sbyte)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    float value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value < (float)sbyte.MinValue || value > (float)sbyte.MaxValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (sbyte)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                float value = sourceArray[0];
+                bool outOfRange = value < (float)sbyte.MinValue || value > (float)sbyte.MaxValue;
+                _array[0] = (outOfRange ? _defaultValue : (sbyte)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
@@ -404,23 +472,31 @@ namespace XForm.Types
                     double value = sourceArray[batch.Index(i)];
                     bool outOfRange = value < (double)sbyte.MinValue || value > (double)sbyte.MaxValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (sbyte)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (sbyte)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    double value = sourceArray[i + offset];
+                    bool outOfRange = value < (double)sbyte.MinValue || value > (double)sbyte.MaxValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (sbyte)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    double value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value < (double)sbyte.MinValue || value > (double)sbyte.MaxValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (sbyte)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                double value = sourceArray[0];
+                bool outOfRange = value < (double)sbyte.MinValue || value > (double)sbyte.MaxValue;
+                _array[0] = (outOfRange ? _defaultValue : (sbyte)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
@@ -454,13 +530,17 @@ namespace XForm.Types
                     _array[i] = (short)sourceArray[batch.Index(i)];
                 }
             }
-            else
+            else if (!batch.Selector.IsSingleValue)
             {
                 int offset = batch.Selector.StartIndexInclusive;
                 for (int i = 0; i < batch.Count; ++i)
                 {
                     _array[i] = (short)sourceArray[i + offset];
                 }
+            }
+            else
+            {
+                _array[0] = (short)sourceArray[0];
             }
 
             result = _array;
@@ -479,13 +559,17 @@ namespace XForm.Types
                     _array[i] = (short)sourceArray[batch.Index(i)];
                 }
             }
-            else
+            else if (!batch.Selector.IsSingleValue)
             {
                 int offset = batch.Selector.StartIndexInclusive;
                 for (int i = 0; i < batch.Count; ++i)
                 {
                     _array[i] = (short)sourceArray[i + offset];
                 }
+            }
+            else
+            {
+                _array[0] = (short)sourceArray[0];
             }
 
             result = _array;
@@ -506,23 +590,31 @@ namespace XForm.Types
                     int value = sourceArray[batch.Index(i)];
                     bool outOfRange = value < (int)short.MinValue || value > (int)short.MaxValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (short)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (short)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    int value = sourceArray[i + offset];
+                    bool outOfRange = value < (int)short.MinValue || value > (int)short.MaxValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (short)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    int value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value < (int)short.MinValue || value > (int)short.MaxValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (short)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                int value = sourceArray[0];
+                bool outOfRange = value < (int)short.MinValue || value > (int)short.MaxValue;
+                _array[0] = (outOfRange ? _defaultValue : (short)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
@@ -543,23 +635,31 @@ namespace XForm.Types
                     long value = sourceArray[batch.Index(i)];
                     bool outOfRange = value < (long)short.MinValue || value > (long)short.MaxValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (short)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (short)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    long value = sourceArray[i + offset];
+                    bool outOfRange = value < (long)short.MinValue || value > (long)short.MaxValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (short)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    long value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value < (long)short.MinValue || value > (long)short.MaxValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (short)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                long value = sourceArray[0];
+                bool outOfRange = value < (long)short.MinValue || value > (long)short.MaxValue;
+                _array[0] = (outOfRange ? _defaultValue : (short)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
@@ -578,13 +678,17 @@ namespace XForm.Types
                     _array[i] = (short)sourceArray[batch.Index(i)];
                 }
             }
-            else
+            else if (!batch.Selector.IsSingleValue)
             {
                 int offset = batch.Selector.StartIndexInclusive;
                 for (int i = 0; i < batch.Count; ++i)
                 {
                     _array[i] = (short)sourceArray[i + offset];
                 }
+            }
+            else
+            {
+                _array[0] = (short)sourceArray[0];
             }
 
             result = _array;
@@ -605,23 +709,31 @@ namespace XForm.Types
                     ushort value = sourceArray[batch.Index(i)];
                     bool outOfRange = value > (ushort)short.MaxValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (short)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (short)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    ushort value = sourceArray[i + offset];
+                    bool outOfRange = value > (ushort)short.MaxValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (short)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    ushort value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value > (ushort)short.MaxValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (short)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                ushort value = sourceArray[0];
+                bool outOfRange = value > (ushort)short.MaxValue;
+                _array[0] = (outOfRange ? _defaultValue : (short)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
@@ -642,23 +754,31 @@ namespace XForm.Types
                     uint value = sourceArray[batch.Index(i)];
                     bool outOfRange = value > (uint)short.MaxValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (short)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (short)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    uint value = sourceArray[i + offset];
+                    bool outOfRange = value > (uint)short.MaxValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (short)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    uint value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value > (uint)short.MaxValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (short)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                uint value = sourceArray[0];
+                bool outOfRange = value > (uint)short.MaxValue;
+                _array[0] = (outOfRange ? _defaultValue : (short)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
@@ -679,23 +799,31 @@ namespace XForm.Types
                     ulong value = sourceArray[batch.Index(i)];
                     bool outOfRange = value > (ulong)short.MaxValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (short)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (short)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    ulong value = sourceArray[i + offset];
+                    bool outOfRange = value > (ulong)short.MaxValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (short)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    ulong value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value > (ulong)short.MaxValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (short)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                ulong value = sourceArray[0];
+                bool outOfRange = value > (ulong)short.MaxValue;
+                _array[0] = (outOfRange ? _defaultValue : (short)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
@@ -716,23 +844,31 @@ namespace XForm.Types
                     float value = sourceArray[batch.Index(i)];
                     bool outOfRange = value < (float)short.MinValue || value > (float)short.MaxValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (short)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (short)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    float value = sourceArray[i + offset];
+                    bool outOfRange = value < (float)short.MinValue || value > (float)short.MaxValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (short)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    float value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value < (float)short.MinValue || value > (float)short.MaxValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (short)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                float value = sourceArray[0];
+                bool outOfRange = value < (float)short.MinValue || value > (float)short.MaxValue;
+                _array[0] = (outOfRange ? _defaultValue : (short)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
@@ -753,23 +889,31 @@ namespace XForm.Types
                     double value = sourceArray[batch.Index(i)];
                     bool outOfRange = value < (double)short.MinValue || value > (double)short.MaxValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (short)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (short)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    double value = sourceArray[i + offset];
+                    bool outOfRange = value < (double)short.MinValue || value > (double)short.MaxValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (short)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    double value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value < (double)short.MinValue || value > (double)short.MaxValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (short)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                double value = sourceArray[0];
+                bool outOfRange = value < (double)short.MinValue || value > (double)short.MaxValue;
+                _array[0] = (outOfRange ? _defaultValue : (short)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
@@ -803,13 +947,17 @@ namespace XForm.Types
                     _array[i] = (int)sourceArray[batch.Index(i)];
                 }
             }
-            else
+            else if (!batch.Selector.IsSingleValue)
             {
                 int offset = batch.Selector.StartIndexInclusive;
                 for (int i = 0; i < batch.Count; ++i)
                 {
                     _array[i] = (int)sourceArray[i + offset];
                 }
+            }
+            else
+            {
+                _array[0] = (int)sourceArray[0];
             }
 
             result = _array;
@@ -828,13 +976,17 @@ namespace XForm.Types
                     _array[i] = (int)sourceArray[batch.Index(i)];
                 }
             }
-            else
+            else if (!batch.Selector.IsSingleValue)
             {
                 int offset = batch.Selector.StartIndexInclusive;
                 for (int i = 0; i < batch.Count; ++i)
                 {
                     _array[i] = (int)sourceArray[i + offset];
                 }
+            }
+            else
+            {
+                _array[0] = (int)sourceArray[0];
             }
 
             result = _array;
@@ -853,13 +1005,17 @@ namespace XForm.Types
                     _array[i] = (int)sourceArray[batch.Index(i)];
                 }
             }
-            else
+            else if (!batch.Selector.IsSingleValue)
             {
                 int offset = batch.Selector.StartIndexInclusive;
                 for (int i = 0; i < batch.Count; ++i)
                 {
                     _array[i] = (int)sourceArray[i + offset];
                 }
+            }
+            else
+            {
+                _array[0] = (int)sourceArray[0];
             }
 
             result = _array;
@@ -880,23 +1036,31 @@ namespace XForm.Types
                     long value = sourceArray[batch.Index(i)];
                     bool outOfRange = value < (long)int.MinValue || value > (long)int.MaxValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (int)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (int)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    long value = sourceArray[i + offset];
+                    bool outOfRange = value < (long)int.MinValue || value > (long)int.MaxValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (int)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    long value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value < (long)int.MinValue || value > (long)int.MaxValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (int)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                long value = sourceArray[0];
+                bool outOfRange = value < (long)int.MinValue || value > (long)int.MaxValue;
+                _array[0] = (outOfRange ? _defaultValue : (int)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
@@ -915,13 +1079,17 @@ namespace XForm.Types
                     _array[i] = (int)sourceArray[batch.Index(i)];
                 }
             }
-            else
+            else if (!batch.Selector.IsSingleValue)
             {
                 int offset = batch.Selector.StartIndexInclusive;
                 for (int i = 0; i < batch.Count; ++i)
                 {
                     _array[i] = (int)sourceArray[i + offset];
                 }
+            }
+            else
+            {
+                _array[0] = (int)sourceArray[0];
             }
 
             result = _array;
@@ -940,13 +1108,17 @@ namespace XForm.Types
                     _array[i] = (int)sourceArray[batch.Index(i)];
                 }
             }
-            else
+            else if (!batch.Selector.IsSingleValue)
             {
                 int offset = batch.Selector.StartIndexInclusive;
                 for (int i = 0; i < batch.Count; ++i)
                 {
                     _array[i] = (int)sourceArray[i + offset];
                 }
+            }
+            else
+            {
+                _array[0] = (int)sourceArray[0];
             }
 
             result = _array;
@@ -967,23 +1139,31 @@ namespace XForm.Types
                     uint value = sourceArray[batch.Index(i)];
                     bool outOfRange = value > (uint)int.MaxValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (int)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (int)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    uint value = sourceArray[i + offset];
+                    bool outOfRange = value > (uint)int.MaxValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (int)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    uint value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value > (uint)int.MaxValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (int)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                uint value = sourceArray[0];
+                bool outOfRange = value > (uint)int.MaxValue;
+                _array[0] = (outOfRange ? _defaultValue : (int)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
@@ -1004,23 +1184,31 @@ namespace XForm.Types
                     ulong value = sourceArray[batch.Index(i)];
                     bool outOfRange = value > (ulong)int.MaxValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (int)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (int)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    ulong value = sourceArray[i + offset];
+                    bool outOfRange = value > (ulong)int.MaxValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (int)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    ulong value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value > (ulong)int.MaxValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (int)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                ulong value = sourceArray[0];
+                bool outOfRange = value > (ulong)int.MaxValue;
+                _array[0] = (outOfRange ? _defaultValue : (int)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
@@ -1041,23 +1229,31 @@ namespace XForm.Types
                     float value = sourceArray[batch.Index(i)];
                     bool outOfRange = value < (float)int.MinValue || value > (float)int.MaxValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (int)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (int)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    float value = sourceArray[i + offset];
+                    bool outOfRange = value < (float)int.MinValue || value > (float)int.MaxValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (int)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    float value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value < (float)int.MinValue || value > (float)int.MaxValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (int)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                float value = sourceArray[0];
+                bool outOfRange = value < (float)int.MinValue || value > (float)int.MaxValue;
+                _array[0] = (outOfRange ? _defaultValue : (int)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
@@ -1078,23 +1274,31 @@ namespace XForm.Types
                     double value = sourceArray[batch.Index(i)];
                     bool outOfRange = value < (double)int.MinValue || value > (double)int.MaxValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (int)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (int)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    double value = sourceArray[i + offset];
+                    bool outOfRange = value < (double)int.MinValue || value > (double)int.MaxValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (int)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    double value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value < (double)int.MinValue || value > (double)int.MaxValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (int)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                double value = sourceArray[0];
+                bool outOfRange = value < (double)int.MinValue || value > (double)int.MaxValue;
+                _array[0] = (outOfRange ? _defaultValue : (int)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
@@ -1128,13 +1332,17 @@ namespace XForm.Types
                     _array[i] = (long)sourceArray[batch.Index(i)];
                 }
             }
-            else
+            else if (!batch.Selector.IsSingleValue)
             {
                 int offset = batch.Selector.StartIndexInclusive;
                 for (int i = 0; i < batch.Count; ++i)
                 {
                     _array[i] = (long)sourceArray[i + offset];
                 }
+            }
+            else
+            {
+                _array[0] = (long)sourceArray[0];
             }
 
             result = _array;
@@ -1153,13 +1361,17 @@ namespace XForm.Types
                     _array[i] = (long)sourceArray[batch.Index(i)];
                 }
             }
-            else
+            else if (!batch.Selector.IsSingleValue)
             {
                 int offset = batch.Selector.StartIndexInclusive;
                 for (int i = 0; i < batch.Count; ++i)
                 {
                     _array[i] = (long)sourceArray[i + offset];
                 }
+            }
+            else
+            {
+                _array[0] = (long)sourceArray[0];
             }
 
             result = _array;
@@ -1178,13 +1390,17 @@ namespace XForm.Types
                     _array[i] = (long)sourceArray[batch.Index(i)];
                 }
             }
-            else
+            else if (!batch.Selector.IsSingleValue)
             {
                 int offset = batch.Selector.StartIndexInclusive;
                 for (int i = 0; i < batch.Count; ++i)
                 {
                     _array[i] = (long)sourceArray[i + offset];
                 }
+            }
+            else
+            {
+                _array[0] = (long)sourceArray[0];
             }
 
             result = _array;
@@ -1203,13 +1419,17 @@ namespace XForm.Types
                     _array[i] = (long)sourceArray[batch.Index(i)];
                 }
             }
-            else
+            else if (!batch.Selector.IsSingleValue)
             {
                 int offset = batch.Selector.StartIndexInclusive;
                 for (int i = 0; i < batch.Count; ++i)
                 {
                     _array[i] = (long)sourceArray[i + offset];
                 }
+            }
+            else
+            {
+                _array[0] = (long)sourceArray[0];
             }
 
             result = _array;
@@ -1228,13 +1448,17 @@ namespace XForm.Types
                     _array[i] = (long)sourceArray[batch.Index(i)];
                 }
             }
-            else
+            else if (!batch.Selector.IsSingleValue)
             {
                 int offset = batch.Selector.StartIndexInclusive;
                 for (int i = 0; i < batch.Count; ++i)
                 {
                     _array[i] = (long)sourceArray[i + offset];
                 }
+            }
+            else
+            {
+                _array[0] = (long)sourceArray[0];
             }
 
             result = _array;
@@ -1253,13 +1477,17 @@ namespace XForm.Types
                     _array[i] = (long)sourceArray[batch.Index(i)];
                 }
             }
-            else
+            else if (!batch.Selector.IsSingleValue)
             {
                 int offset = batch.Selector.StartIndexInclusive;
                 for (int i = 0; i < batch.Count; ++i)
                 {
                     _array[i] = (long)sourceArray[i + offset];
                 }
+            }
+            else
+            {
+                _array[0] = (long)sourceArray[0];
             }
 
             result = _array;
@@ -1278,13 +1506,17 @@ namespace XForm.Types
                     _array[i] = (long)sourceArray[batch.Index(i)];
                 }
             }
-            else
+            else if (!batch.Selector.IsSingleValue)
             {
                 int offset = batch.Selector.StartIndexInclusive;
                 for (int i = 0; i < batch.Count; ++i)
                 {
                     _array[i] = (long)sourceArray[i + offset];
                 }
+            }
+            else
+            {
+                _array[0] = (long)sourceArray[0];
             }
 
             result = _array;
@@ -1305,23 +1537,31 @@ namespace XForm.Types
                     ulong value = sourceArray[batch.Index(i)];
                     bool outOfRange = value > (ulong)long.MaxValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (long)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (long)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    ulong value = sourceArray[i + offset];
+                    bool outOfRange = value > (ulong)long.MaxValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (long)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    ulong value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value > (ulong)long.MaxValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (long)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                ulong value = sourceArray[0];
+                bool outOfRange = value > (ulong)long.MaxValue;
+                _array[0] = (outOfRange ? _defaultValue : (long)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
@@ -1342,23 +1582,31 @@ namespace XForm.Types
                     float value = sourceArray[batch.Index(i)];
                     bool outOfRange = value < (float)long.MinValue || value > (float)long.MaxValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (long)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (long)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    float value = sourceArray[i + offset];
+                    bool outOfRange = value < (float)long.MinValue || value > (float)long.MaxValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (long)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    float value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value < (float)long.MinValue || value > (float)long.MaxValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (long)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                float value = sourceArray[0];
+                bool outOfRange = value < (float)long.MinValue || value > (float)long.MaxValue;
+                _array[0] = (outOfRange ? _defaultValue : (long)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
@@ -1379,23 +1627,31 @@ namespace XForm.Types
                     double value = sourceArray[batch.Index(i)];
                     bool outOfRange = value < (double)long.MinValue || value > (double)long.MaxValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (long)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (long)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    double value = sourceArray[i + offset];
+                    bool outOfRange = value < (double)long.MinValue || value > (double)long.MaxValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (long)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    double value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value < (double)long.MinValue || value > (double)long.MaxValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (long)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                double value = sourceArray[0];
+                bool outOfRange = value < (double)long.MinValue || value > (double)long.MaxValue;
+                _array[0] = (outOfRange ? _defaultValue : (long)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
@@ -1431,23 +1687,31 @@ namespace XForm.Types
                     sbyte value = sourceArray[batch.Index(i)];
                     bool outOfRange = value < (sbyte)byte.MinValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (byte)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (byte)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    sbyte value = sourceArray[i + offset];
+                    bool outOfRange = value < (sbyte)byte.MinValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (byte)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    sbyte value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value < (sbyte)byte.MinValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (byte)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                sbyte value = sourceArray[0];
+                bool outOfRange = value < (sbyte)byte.MinValue;
+                _array[0] = (outOfRange ? _defaultValue : (byte)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
@@ -1468,23 +1732,31 @@ namespace XForm.Types
                     short value = sourceArray[batch.Index(i)];
                     bool outOfRange = value < (short)byte.MinValue || value > (short)byte.MaxValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (byte)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (byte)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    short value = sourceArray[i + offset];
+                    bool outOfRange = value < (short)byte.MinValue || value > (short)byte.MaxValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (byte)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    short value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value < (short)byte.MinValue || value > (short)byte.MaxValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (byte)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                short value = sourceArray[0];
+                bool outOfRange = value < (short)byte.MinValue || value > (short)byte.MaxValue;
+                _array[0] = (outOfRange ? _defaultValue : (byte)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
@@ -1505,23 +1777,31 @@ namespace XForm.Types
                     int value = sourceArray[batch.Index(i)];
                     bool outOfRange = value < (int)byte.MinValue || value > (int)byte.MaxValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (byte)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (byte)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    int value = sourceArray[i + offset];
+                    bool outOfRange = value < (int)byte.MinValue || value > (int)byte.MaxValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (byte)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    int value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value < (int)byte.MinValue || value > (int)byte.MaxValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (byte)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                int value = sourceArray[0];
+                bool outOfRange = value < (int)byte.MinValue || value > (int)byte.MaxValue;
+                _array[0] = (outOfRange ? _defaultValue : (byte)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
@@ -1542,23 +1822,31 @@ namespace XForm.Types
                     long value = sourceArray[batch.Index(i)];
                     bool outOfRange = value < (long)byte.MinValue || value > (long)byte.MaxValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (byte)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (byte)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    long value = sourceArray[i + offset];
+                    bool outOfRange = value < (long)byte.MinValue || value > (long)byte.MaxValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (byte)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    long value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value < (long)byte.MinValue || value > (long)byte.MaxValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (byte)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                long value = sourceArray[0];
+                bool outOfRange = value < (long)byte.MinValue || value > (long)byte.MaxValue;
+                _array[0] = (outOfRange ? _defaultValue : (byte)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
@@ -1577,13 +1865,17 @@ namespace XForm.Types
                     _array[i] = (byte)sourceArray[batch.Index(i)];
                 }
             }
-            else
+            else if (!batch.Selector.IsSingleValue)
             {
                 int offset = batch.Selector.StartIndexInclusive;
                 for (int i = 0; i < batch.Count; ++i)
                 {
                     _array[i] = (byte)sourceArray[i + offset];
                 }
+            }
+            else
+            {
+                _array[0] = (byte)sourceArray[0];
             }
 
             result = _array;
@@ -1604,23 +1896,31 @@ namespace XForm.Types
                     ushort value = sourceArray[batch.Index(i)];
                     bool outOfRange = value > (ushort)byte.MaxValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (byte)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (byte)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    ushort value = sourceArray[i + offset];
+                    bool outOfRange = value > (ushort)byte.MaxValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (byte)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    ushort value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value > (ushort)byte.MaxValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (byte)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                ushort value = sourceArray[0];
+                bool outOfRange = value > (ushort)byte.MaxValue;
+                _array[0] = (outOfRange ? _defaultValue : (byte)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
@@ -1641,23 +1941,31 @@ namespace XForm.Types
                     uint value = sourceArray[batch.Index(i)];
                     bool outOfRange = value > (uint)byte.MaxValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (byte)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (byte)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    uint value = sourceArray[i + offset];
+                    bool outOfRange = value > (uint)byte.MaxValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (byte)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    uint value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value > (uint)byte.MaxValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (byte)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                uint value = sourceArray[0];
+                bool outOfRange = value > (uint)byte.MaxValue;
+                _array[0] = (outOfRange ? _defaultValue : (byte)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
@@ -1678,23 +1986,31 @@ namespace XForm.Types
                     ulong value = sourceArray[batch.Index(i)];
                     bool outOfRange = value > (ulong)byte.MaxValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (byte)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (byte)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    ulong value = sourceArray[i + offset];
+                    bool outOfRange = value > (ulong)byte.MaxValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (byte)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    ulong value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value > (ulong)byte.MaxValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (byte)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                ulong value = sourceArray[0];
+                bool outOfRange = value > (ulong)byte.MaxValue;
+                _array[0] = (outOfRange ? _defaultValue : (byte)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
@@ -1715,23 +2031,31 @@ namespace XForm.Types
                     float value = sourceArray[batch.Index(i)];
                     bool outOfRange = value < (float)byte.MinValue || value > (float)byte.MaxValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (byte)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (byte)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    float value = sourceArray[i + offset];
+                    bool outOfRange = value < (float)byte.MinValue || value > (float)byte.MaxValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (byte)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    float value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value < (float)byte.MinValue || value > (float)byte.MaxValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (byte)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                float value = sourceArray[0];
+                bool outOfRange = value < (float)byte.MinValue || value > (float)byte.MaxValue;
+                _array[0] = (outOfRange ? _defaultValue : (byte)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
@@ -1752,23 +2076,31 @@ namespace XForm.Types
                     double value = sourceArray[batch.Index(i)];
                     bool outOfRange = value < (double)byte.MinValue || value > (double)byte.MaxValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (byte)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (byte)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    double value = sourceArray[i + offset];
+                    bool outOfRange = value < (double)byte.MinValue || value > (double)byte.MaxValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (byte)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    double value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value < (double)byte.MinValue || value > (double)byte.MaxValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (byte)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                double value = sourceArray[0];
+                bool outOfRange = value < (double)byte.MinValue || value > (double)byte.MaxValue;
+                _array[0] = (outOfRange ? _defaultValue : (byte)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
@@ -1804,23 +2136,31 @@ namespace XForm.Types
                     sbyte value = sourceArray[batch.Index(i)];
                     bool outOfRange = value < (sbyte)ushort.MinValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (ushort)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (ushort)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    sbyte value = sourceArray[i + offset];
+                    bool outOfRange = value < (sbyte)ushort.MinValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (ushort)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    sbyte value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value < (sbyte)ushort.MinValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (ushort)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                sbyte value = sourceArray[0];
+                bool outOfRange = value < (sbyte)ushort.MinValue;
+                _array[0] = (outOfRange ? _defaultValue : (ushort)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
@@ -1841,23 +2181,31 @@ namespace XForm.Types
                     short value = sourceArray[batch.Index(i)];
                     bool outOfRange = value < (short)ushort.MinValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (ushort)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (ushort)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    short value = sourceArray[i + offset];
+                    bool outOfRange = value < (short)ushort.MinValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (ushort)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    short value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value < (short)ushort.MinValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (ushort)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                short value = sourceArray[0];
+                bool outOfRange = value < (short)ushort.MinValue;
+                _array[0] = (outOfRange ? _defaultValue : (ushort)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
@@ -1878,23 +2226,31 @@ namespace XForm.Types
                     int value = sourceArray[batch.Index(i)];
                     bool outOfRange = value < (int)ushort.MinValue || value > (int)ushort.MaxValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (ushort)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (ushort)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    int value = sourceArray[i + offset];
+                    bool outOfRange = value < (int)ushort.MinValue || value > (int)ushort.MaxValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (ushort)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    int value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value < (int)ushort.MinValue || value > (int)ushort.MaxValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (ushort)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                int value = sourceArray[0];
+                bool outOfRange = value < (int)ushort.MinValue || value > (int)ushort.MaxValue;
+                _array[0] = (outOfRange ? _defaultValue : (ushort)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
@@ -1915,23 +2271,31 @@ namespace XForm.Types
                     long value = sourceArray[batch.Index(i)];
                     bool outOfRange = value < (long)ushort.MinValue || value > (long)ushort.MaxValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (ushort)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (ushort)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    long value = sourceArray[i + offset];
+                    bool outOfRange = value < (long)ushort.MinValue || value > (long)ushort.MaxValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (ushort)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    long value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value < (long)ushort.MinValue || value > (long)ushort.MaxValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (ushort)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                long value = sourceArray[0];
+                bool outOfRange = value < (long)ushort.MinValue || value > (long)ushort.MaxValue;
+                _array[0] = (outOfRange ? _defaultValue : (ushort)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
@@ -1950,13 +2314,17 @@ namespace XForm.Types
                     _array[i] = (ushort)sourceArray[batch.Index(i)];
                 }
             }
-            else
+            else if (!batch.Selector.IsSingleValue)
             {
                 int offset = batch.Selector.StartIndexInclusive;
                 for (int i = 0; i < batch.Count; ++i)
                 {
                     _array[i] = (ushort)sourceArray[i + offset];
                 }
+            }
+            else
+            {
+                _array[0] = (ushort)sourceArray[0];
             }
 
             result = _array;
@@ -1975,13 +2343,17 @@ namespace XForm.Types
                     _array[i] = (ushort)sourceArray[batch.Index(i)];
                 }
             }
-            else
+            else if (!batch.Selector.IsSingleValue)
             {
                 int offset = batch.Selector.StartIndexInclusive;
                 for (int i = 0; i < batch.Count; ++i)
                 {
                     _array[i] = (ushort)sourceArray[i + offset];
                 }
+            }
+            else
+            {
+                _array[0] = (ushort)sourceArray[0];
             }
 
             result = _array;
@@ -2002,23 +2374,31 @@ namespace XForm.Types
                     uint value = sourceArray[batch.Index(i)];
                     bool outOfRange = value > (uint)ushort.MaxValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (ushort)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (ushort)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    uint value = sourceArray[i + offset];
+                    bool outOfRange = value > (uint)ushort.MaxValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (ushort)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    uint value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value > (uint)ushort.MaxValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (ushort)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                uint value = sourceArray[0];
+                bool outOfRange = value > (uint)ushort.MaxValue;
+                _array[0] = (outOfRange ? _defaultValue : (ushort)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
@@ -2039,23 +2419,31 @@ namespace XForm.Types
                     ulong value = sourceArray[batch.Index(i)];
                     bool outOfRange = value > (ulong)ushort.MaxValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (ushort)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (ushort)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    ulong value = sourceArray[i + offset];
+                    bool outOfRange = value > (ulong)ushort.MaxValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (ushort)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    ulong value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value > (ulong)ushort.MaxValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (ushort)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                ulong value = sourceArray[0];
+                bool outOfRange = value > (ulong)ushort.MaxValue;
+                _array[0] = (outOfRange ? _defaultValue : (ushort)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
@@ -2076,23 +2464,31 @@ namespace XForm.Types
                     float value = sourceArray[batch.Index(i)];
                     bool outOfRange = value < (float)ushort.MinValue || value > (float)ushort.MaxValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (ushort)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (ushort)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    float value = sourceArray[i + offset];
+                    bool outOfRange = value < (float)ushort.MinValue || value > (float)ushort.MaxValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (ushort)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    float value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value < (float)ushort.MinValue || value > (float)ushort.MaxValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (ushort)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                float value = sourceArray[0];
+                bool outOfRange = value < (float)ushort.MinValue || value > (float)ushort.MaxValue;
+                _array[0] = (outOfRange ? _defaultValue : (ushort)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
@@ -2113,23 +2509,31 @@ namespace XForm.Types
                     double value = sourceArray[batch.Index(i)];
                     bool outOfRange = value < (double)ushort.MinValue || value > (double)ushort.MaxValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (ushort)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (ushort)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    double value = sourceArray[i + offset];
+                    bool outOfRange = value < (double)ushort.MinValue || value > (double)ushort.MaxValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (ushort)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    double value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value < (double)ushort.MinValue || value > (double)ushort.MaxValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (ushort)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                double value = sourceArray[0];
+                bool outOfRange = value < (double)ushort.MinValue || value > (double)ushort.MaxValue;
+                _array[0] = (outOfRange ? _defaultValue : (ushort)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
@@ -2165,23 +2569,31 @@ namespace XForm.Types
                     sbyte value = sourceArray[batch.Index(i)];
                     bool outOfRange = value < (sbyte)uint.MinValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (uint)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (uint)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    sbyte value = sourceArray[i + offset];
+                    bool outOfRange = value < (sbyte)uint.MinValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (uint)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    sbyte value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value < (sbyte)uint.MinValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (uint)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                sbyte value = sourceArray[0];
+                bool outOfRange = value < (sbyte)uint.MinValue;
+                _array[0] = (outOfRange ? _defaultValue : (uint)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
@@ -2202,23 +2614,31 @@ namespace XForm.Types
                     short value = sourceArray[batch.Index(i)];
                     bool outOfRange = value < (short)uint.MinValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (uint)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (uint)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    short value = sourceArray[i + offset];
+                    bool outOfRange = value < (short)uint.MinValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (uint)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    short value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value < (short)uint.MinValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (uint)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                short value = sourceArray[0];
+                bool outOfRange = value < (short)uint.MinValue;
+                _array[0] = (outOfRange ? _defaultValue : (uint)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
@@ -2239,23 +2659,31 @@ namespace XForm.Types
                     int value = sourceArray[batch.Index(i)];
                     bool outOfRange = value < (int)uint.MinValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (uint)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (uint)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    int value = sourceArray[i + offset];
+                    bool outOfRange = value < (int)uint.MinValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (uint)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    int value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value < (int)uint.MinValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (uint)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                int value = sourceArray[0];
+                bool outOfRange = value < (int)uint.MinValue;
+                _array[0] = (outOfRange ? _defaultValue : (uint)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
@@ -2276,23 +2704,31 @@ namespace XForm.Types
                     long value = sourceArray[batch.Index(i)];
                     bool outOfRange = value < (long)uint.MinValue || value > (long)uint.MaxValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (uint)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (uint)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    long value = sourceArray[i + offset];
+                    bool outOfRange = value < (long)uint.MinValue || value > (long)uint.MaxValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (uint)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    long value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value < (long)uint.MinValue || value > (long)uint.MaxValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (uint)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                long value = sourceArray[0];
+                bool outOfRange = value < (long)uint.MinValue || value > (long)uint.MaxValue;
+                _array[0] = (outOfRange ? _defaultValue : (uint)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
@@ -2311,13 +2747,17 @@ namespace XForm.Types
                     _array[i] = (uint)sourceArray[batch.Index(i)];
                 }
             }
-            else
+            else if (!batch.Selector.IsSingleValue)
             {
                 int offset = batch.Selector.StartIndexInclusive;
                 for (int i = 0; i < batch.Count; ++i)
                 {
                     _array[i] = (uint)sourceArray[i + offset];
                 }
+            }
+            else
+            {
+                _array[0] = (uint)sourceArray[0];
             }
 
             result = _array;
@@ -2336,13 +2776,17 @@ namespace XForm.Types
                     _array[i] = (uint)sourceArray[batch.Index(i)];
                 }
             }
-            else
+            else if (!batch.Selector.IsSingleValue)
             {
                 int offset = batch.Selector.StartIndexInclusive;
                 for (int i = 0; i < batch.Count; ++i)
                 {
                     _array[i] = (uint)sourceArray[i + offset];
                 }
+            }
+            else
+            {
+                _array[0] = (uint)sourceArray[0];
             }
 
             result = _array;
@@ -2361,13 +2805,17 @@ namespace XForm.Types
                     _array[i] = (uint)sourceArray[batch.Index(i)];
                 }
             }
-            else
+            else if (!batch.Selector.IsSingleValue)
             {
                 int offset = batch.Selector.StartIndexInclusive;
                 for (int i = 0; i < batch.Count; ++i)
                 {
                     _array[i] = (uint)sourceArray[i + offset];
                 }
+            }
+            else
+            {
+                _array[0] = (uint)sourceArray[0];
             }
 
             result = _array;
@@ -2388,23 +2836,31 @@ namespace XForm.Types
                     ulong value = sourceArray[batch.Index(i)];
                     bool outOfRange = value > (ulong)uint.MaxValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (uint)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (uint)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    ulong value = sourceArray[i + offset];
+                    bool outOfRange = value > (ulong)uint.MaxValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (uint)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    ulong value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value > (ulong)uint.MaxValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (uint)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                ulong value = sourceArray[0];
+                bool outOfRange = value > (ulong)uint.MaxValue;
+                _array[0] = (outOfRange ? _defaultValue : (uint)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
@@ -2425,23 +2881,31 @@ namespace XForm.Types
                     float value = sourceArray[batch.Index(i)];
                     bool outOfRange = value < (float)uint.MinValue || value > (float)uint.MaxValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (uint)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (uint)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    float value = sourceArray[i + offset];
+                    bool outOfRange = value < (float)uint.MinValue || value > (float)uint.MaxValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (uint)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    float value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value < (float)uint.MinValue || value > (float)uint.MaxValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (uint)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                float value = sourceArray[0];
+                bool outOfRange = value < (float)uint.MinValue || value > (float)uint.MaxValue;
+                _array[0] = (outOfRange ? _defaultValue : (uint)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
@@ -2462,23 +2926,31 @@ namespace XForm.Types
                     double value = sourceArray[batch.Index(i)];
                     bool outOfRange = value < (double)uint.MinValue || value > (double)uint.MaxValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (uint)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (uint)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    double value = sourceArray[i + offset];
+                    bool outOfRange = value < (double)uint.MinValue || value > (double)uint.MaxValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (uint)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    double value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value < (double)uint.MinValue || value > (double)uint.MaxValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (uint)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                double value = sourceArray[0];
+                bool outOfRange = value < (double)uint.MinValue || value > (double)uint.MaxValue;
+                _array[0] = (outOfRange ? _defaultValue : (uint)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
@@ -2514,23 +2986,31 @@ namespace XForm.Types
                     sbyte value = sourceArray[batch.Index(i)];
                     bool outOfRange = value < (sbyte)ulong.MinValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (ulong)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (ulong)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    sbyte value = sourceArray[i + offset];
+                    bool outOfRange = value < (sbyte)ulong.MinValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (ulong)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    sbyte value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value < (sbyte)ulong.MinValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (ulong)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                sbyte value = sourceArray[0];
+                bool outOfRange = value < (sbyte)ulong.MinValue;
+                _array[0] = (outOfRange ? _defaultValue : (ulong)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
@@ -2551,23 +3031,31 @@ namespace XForm.Types
                     short value = sourceArray[batch.Index(i)];
                     bool outOfRange = value < (short)ulong.MinValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (ulong)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (ulong)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    short value = sourceArray[i + offset];
+                    bool outOfRange = value < (short)ulong.MinValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (ulong)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    short value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value < (short)ulong.MinValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (ulong)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                short value = sourceArray[0];
+                bool outOfRange = value < (short)ulong.MinValue;
+                _array[0] = (outOfRange ? _defaultValue : (ulong)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
@@ -2588,23 +3076,31 @@ namespace XForm.Types
                     int value = sourceArray[batch.Index(i)];
                     bool outOfRange = value < (int)ulong.MinValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (ulong)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (ulong)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    int value = sourceArray[i + offset];
+                    bool outOfRange = value < (int)ulong.MinValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (ulong)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    int value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value < (int)ulong.MinValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (ulong)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                int value = sourceArray[0];
+                bool outOfRange = value < (int)ulong.MinValue;
+                _array[0] = (outOfRange ? _defaultValue : (ulong)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
@@ -2625,23 +3121,31 @@ namespace XForm.Types
                     long value = sourceArray[batch.Index(i)];
                     bool outOfRange = value < (long)ulong.MinValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (ulong)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (ulong)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    long value = sourceArray[i + offset];
+                    bool outOfRange = value < (long)ulong.MinValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (ulong)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    long value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value < (long)ulong.MinValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (ulong)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                long value = sourceArray[0];
+                bool outOfRange = value < (long)ulong.MinValue;
+                _array[0] = (outOfRange ? _defaultValue : (ulong)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
@@ -2660,13 +3164,17 @@ namespace XForm.Types
                     _array[i] = (ulong)sourceArray[batch.Index(i)];
                 }
             }
-            else
+            else if (!batch.Selector.IsSingleValue)
             {
                 int offset = batch.Selector.StartIndexInclusive;
                 for (int i = 0; i < batch.Count; ++i)
                 {
                     _array[i] = (ulong)sourceArray[i + offset];
                 }
+            }
+            else
+            {
+                _array[0] = (ulong)sourceArray[0];
             }
 
             result = _array;
@@ -2685,13 +3193,17 @@ namespace XForm.Types
                     _array[i] = (ulong)sourceArray[batch.Index(i)];
                 }
             }
-            else
+            else if (!batch.Selector.IsSingleValue)
             {
                 int offset = batch.Selector.StartIndexInclusive;
                 for (int i = 0; i < batch.Count; ++i)
                 {
                     _array[i] = (ulong)sourceArray[i + offset];
                 }
+            }
+            else
+            {
+                _array[0] = (ulong)sourceArray[0];
             }
 
             result = _array;
@@ -2710,13 +3222,17 @@ namespace XForm.Types
                     _array[i] = (ulong)sourceArray[batch.Index(i)];
                 }
             }
-            else
+            else if (!batch.Selector.IsSingleValue)
             {
                 int offset = batch.Selector.StartIndexInclusive;
                 for (int i = 0; i < batch.Count; ++i)
                 {
                     _array[i] = (ulong)sourceArray[i + offset];
                 }
+            }
+            else
+            {
+                _array[0] = (ulong)sourceArray[0];
             }
 
             result = _array;
@@ -2735,13 +3251,17 @@ namespace XForm.Types
                     _array[i] = (ulong)sourceArray[batch.Index(i)];
                 }
             }
-            else
+            else if (!batch.Selector.IsSingleValue)
             {
                 int offset = batch.Selector.StartIndexInclusive;
                 for (int i = 0; i < batch.Count; ++i)
                 {
                     _array[i] = (ulong)sourceArray[i + offset];
                 }
+            }
+            else
+            {
+                _array[0] = (ulong)sourceArray[0];
             }
 
             result = _array;
@@ -2762,23 +3282,31 @@ namespace XForm.Types
                     float value = sourceArray[batch.Index(i)];
                     bool outOfRange = value < (float)ulong.MinValue || value > (float)ulong.MaxValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (ulong)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (ulong)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    float value = sourceArray[i + offset];
+                    bool outOfRange = value < (float)ulong.MinValue || value > (float)ulong.MaxValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (ulong)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    float value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value < (float)ulong.MinValue || value > (float)ulong.MaxValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (ulong)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                float value = sourceArray[0];
+                bool outOfRange = value < (float)ulong.MinValue || value > (float)ulong.MaxValue;
+                _array[0] = (outOfRange ? _defaultValue : (ulong)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
@@ -2799,23 +3327,31 @@ namespace XForm.Types
                     double value = sourceArray[batch.Index(i)];
                     bool outOfRange = value < (double)ulong.MinValue || value > (double)ulong.MaxValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (ulong)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (ulong)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    double value = sourceArray[i + offset];
+                    bool outOfRange = value < (double)ulong.MinValue || value > (double)ulong.MaxValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (ulong)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    double value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value < (double)ulong.MinValue || value > (double)ulong.MaxValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (ulong)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                double value = sourceArray[0];
+                bool outOfRange = value < (double)ulong.MinValue || value > (double)ulong.MaxValue;
+                _array[0] = (outOfRange ? _defaultValue : (ulong)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
@@ -2849,13 +3385,17 @@ namespace XForm.Types
                     _array[i] = (float)sourceArray[batch.Index(i)];
                 }
             }
-            else
+            else if (!batch.Selector.IsSingleValue)
             {
                 int offset = batch.Selector.StartIndexInclusive;
                 for (int i = 0; i < batch.Count; ++i)
                 {
                     _array[i] = (float)sourceArray[i + offset];
                 }
+            }
+            else
+            {
+                _array[0] = (float)sourceArray[0];
             }
 
             result = _array;
@@ -2874,13 +3414,17 @@ namespace XForm.Types
                     _array[i] = (float)sourceArray[batch.Index(i)];
                 }
             }
-            else
+            else if (!batch.Selector.IsSingleValue)
             {
                 int offset = batch.Selector.StartIndexInclusive;
                 for (int i = 0; i < batch.Count; ++i)
                 {
                     _array[i] = (float)sourceArray[i + offset];
                 }
+            }
+            else
+            {
+                _array[0] = (float)sourceArray[0];
             }
 
             result = _array;
@@ -2899,13 +3443,17 @@ namespace XForm.Types
                     _array[i] = (float)sourceArray[batch.Index(i)];
                 }
             }
-            else
+            else if (!batch.Selector.IsSingleValue)
             {
                 int offset = batch.Selector.StartIndexInclusive;
                 for (int i = 0; i < batch.Count; ++i)
                 {
                     _array[i] = (float)sourceArray[i + offset];
                 }
+            }
+            else
+            {
+                _array[0] = (float)sourceArray[0];
             }
 
             result = _array;
@@ -2924,13 +3472,17 @@ namespace XForm.Types
                     _array[i] = (float)sourceArray[batch.Index(i)];
                 }
             }
-            else
+            else if (!batch.Selector.IsSingleValue)
             {
                 int offset = batch.Selector.StartIndexInclusive;
                 for (int i = 0; i < batch.Count; ++i)
                 {
                     _array[i] = (float)sourceArray[i + offset];
                 }
+            }
+            else
+            {
+                _array[0] = (float)sourceArray[0];
             }
 
             result = _array;
@@ -2949,13 +3501,17 @@ namespace XForm.Types
                     _array[i] = (float)sourceArray[batch.Index(i)];
                 }
             }
-            else
+            else if (!batch.Selector.IsSingleValue)
             {
                 int offset = batch.Selector.StartIndexInclusive;
                 for (int i = 0; i < batch.Count; ++i)
                 {
                     _array[i] = (float)sourceArray[i + offset];
                 }
+            }
+            else
+            {
+                _array[0] = (float)sourceArray[0];
             }
 
             result = _array;
@@ -2974,13 +3530,17 @@ namespace XForm.Types
                     _array[i] = (float)sourceArray[batch.Index(i)];
                 }
             }
-            else
+            else if (!batch.Selector.IsSingleValue)
             {
                 int offset = batch.Selector.StartIndexInclusive;
                 for (int i = 0; i < batch.Count; ++i)
                 {
                     _array[i] = (float)sourceArray[i + offset];
                 }
+            }
+            else
+            {
+                _array[0] = (float)sourceArray[0];
             }
 
             result = _array;
@@ -2999,13 +3559,17 @@ namespace XForm.Types
                     _array[i] = (float)sourceArray[batch.Index(i)];
                 }
             }
-            else
+            else if (!batch.Selector.IsSingleValue)
             {
                 int offset = batch.Selector.StartIndexInclusive;
                 for (int i = 0; i < batch.Count; ++i)
                 {
                     _array[i] = (float)sourceArray[i + offset];
                 }
+            }
+            else
+            {
+                _array[0] = (float)sourceArray[0];
             }
 
             result = _array;
@@ -3024,13 +3588,17 @@ namespace XForm.Types
                     _array[i] = (float)sourceArray[batch.Index(i)];
                 }
             }
-            else
+            else if (!batch.Selector.IsSingleValue)
             {
                 int offset = batch.Selector.StartIndexInclusive;
                 for (int i = 0; i < batch.Count; ++i)
                 {
                     _array[i] = (float)sourceArray[i + offset];
                 }
+            }
+            else
+            {
+                _array[0] = (float)sourceArray[0];
             }
 
             result = _array;
@@ -3049,13 +3617,17 @@ namespace XForm.Types
                     _array[i] = (float)sourceArray[batch.Index(i)];
                 }
             }
-            else
+            else if (!batch.Selector.IsSingleValue)
             {
                 int offset = batch.Selector.StartIndexInclusive;
                 for (int i = 0; i < batch.Count; ++i)
                 {
                     _array[i] = (float)sourceArray[i + offset];
                 }
+            }
+            else
+            {
+                _array[0] = (float)sourceArray[0];
             }
 
             result = _array;
@@ -3076,23 +3648,31 @@ namespace XForm.Types
                     double value = sourceArray[batch.Index(i)];
                     bool outOfRange = value < (double)float.MinValue || value > (double)float.MaxValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (float)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (float)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    double value = sourceArray[i + offset];
+                    bool outOfRange = value < (double)float.MinValue || value > (double)float.MaxValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (float)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    double value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value < (double)float.MinValue || value > (double)float.MaxValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (float)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                double value = sourceArray[0];
+                bool outOfRange = value < (double)float.MinValue || value > (double)float.MaxValue;
+                _array[0] = (outOfRange ? _defaultValue : (float)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
@@ -3126,13 +3706,17 @@ namespace XForm.Types
                     _array[i] = (double)sourceArray[batch.Index(i)];
                 }
             }
-            else
+            else if (!batch.Selector.IsSingleValue)
             {
                 int offset = batch.Selector.StartIndexInclusive;
                 for (int i = 0; i < batch.Count; ++i)
                 {
                     _array[i] = (double)sourceArray[i + offset];
                 }
+            }
+            else
+            {
+                _array[0] = (double)sourceArray[0];
             }
 
             result = _array;
@@ -3151,13 +3735,17 @@ namespace XForm.Types
                     _array[i] = (double)sourceArray[batch.Index(i)];
                 }
             }
-            else
+            else if (!batch.Selector.IsSingleValue)
             {
                 int offset = batch.Selector.StartIndexInclusive;
                 for (int i = 0; i < batch.Count; ++i)
                 {
                     _array[i] = (double)sourceArray[i + offset];
                 }
+            }
+            else
+            {
+                _array[0] = (double)sourceArray[0];
             }
 
             result = _array;
@@ -3176,13 +3764,17 @@ namespace XForm.Types
                     _array[i] = (double)sourceArray[batch.Index(i)];
                 }
             }
-            else
+            else if (!batch.Selector.IsSingleValue)
             {
                 int offset = batch.Selector.StartIndexInclusive;
                 for (int i = 0; i < batch.Count; ++i)
                 {
                     _array[i] = (double)sourceArray[i + offset];
                 }
+            }
+            else
+            {
+                _array[0] = (double)sourceArray[0];
             }
 
             result = _array;
@@ -3201,13 +3793,17 @@ namespace XForm.Types
                     _array[i] = (double)sourceArray[batch.Index(i)];
                 }
             }
-            else
+            else if (!batch.Selector.IsSingleValue)
             {
                 int offset = batch.Selector.StartIndexInclusive;
                 for (int i = 0; i < batch.Count; ++i)
                 {
                     _array[i] = (double)sourceArray[i + offset];
                 }
+            }
+            else
+            {
+                _array[0] = (double)sourceArray[0];
             }
 
             result = _array;
@@ -3226,13 +3822,17 @@ namespace XForm.Types
                     _array[i] = (double)sourceArray[batch.Index(i)];
                 }
             }
-            else
+            else if (!batch.Selector.IsSingleValue)
             {
                 int offset = batch.Selector.StartIndexInclusive;
                 for (int i = 0; i < batch.Count; ++i)
                 {
                     _array[i] = (double)sourceArray[i + offset];
                 }
+            }
+            else
+            {
+                _array[0] = (double)sourceArray[0];
             }
 
             result = _array;
@@ -3251,13 +3851,17 @@ namespace XForm.Types
                     _array[i] = (double)sourceArray[batch.Index(i)];
                 }
             }
-            else
+            else if (!batch.Selector.IsSingleValue)
             {
                 int offset = batch.Selector.StartIndexInclusive;
                 for (int i = 0; i < batch.Count; ++i)
                 {
                     _array[i] = (double)sourceArray[i + offset];
                 }
+            }
+            else
+            {
+                _array[0] = (double)sourceArray[0];
             }
 
             result = _array;
@@ -3276,13 +3880,17 @@ namespace XForm.Types
                     _array[i] = (double)sourceArray[batch.Index(i)];
                 }
             }
-            else
+            else if (!batch.Selector.IsSingleValue)
             {
                 int offset = batch.Selector.StartIndexInclusive;
                 for (int i = 0; i < batch.Count; ++i)
                 {
                     _array[i] = (double)sourceArray[i + offset];
                 }
+            }
+            else
+            {
+                _array[0] = (double)sourceArray[0];
             }
 
             result = _array;
@@ -3301,13 +3909,17 @@ namespace XForm.Types
                     _array[i] = (double)sourceArray[batch.Index(i)];
                 }
             }
-            else
+            else if (!batch.Selector.IsSingleValue)
             {
                 int offset = batch.Selector.StartIndexInclusive;
                 for (int i = 0; i < batch.Count; ++i)
                 {
                     _array[i] = (double)sourceArray[i + offset];
                 }
+            }
+            else
+            {
+                _array[0] = (double)sourceArray[0];
             }
 
             result = _array;
@@ -3326,13 +3938,17 @@ namespace XForm.Types
                     _array[i] = (double)sourceArray[batch.Index(i)];
                 }
             }
-            else
+            else if (!batch.Selector.IsSingleValue)
             {
                 int offset = batch.Selector.StartIndexInclusive;
                 for (int i = 0; i < batch.Count; ++i)
                 {
                     _array[i] = (double)sourceArray[i + offset];
                 }
+            }
+            else
+            {
+                _array[0] = (double)sourceArray[0];
             }
 
             result = _array;
@@ -3351,13 +3967,17 @@ namespace XForm.Types
                     _array[i] = (double)sourceArray[batch.Index(i)];
                 }
             }
-            else
+            else if (!batch.Selector.IsSingleValue)
             {
                 int offset = batch.Selector.StartIndexInclusive;
                 for (int i = 0; i < batch.Count; ++i)
                 {
                     _array[i] = (double)sourceArray[i + offset];
                 }
+            }
+            else
+            {
+                _array[0] = (double)sourceArray[0];
             }
 
             result = _array;

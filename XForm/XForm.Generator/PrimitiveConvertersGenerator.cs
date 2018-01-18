@@ -55,13 +55,17 @@ namespace XForm.Types
                     _array[i] = (toType)sourceArray[batch.Index(i)];
                 }
             }
-            else
+            else if (!batch.Selector.IsSingleValue)
             {
                 int offset = batch.Selector.StartIndexInclusive;
                 for (int i = 0; i < batch.Count; ++i)
                 {
                     _array[i] = (toType)sourceArray[i + offset];
                 }
+            }
+            else
+            {
+                _array[0] = (toType)sourceArray[0];
             }
 
             result = _array;
@@ -84,23 +88,31 @@ namespace XForm.Types
                     fromType value = sourceArray[batch.Index(i)];
                     bool outOfRange = value < (fromType)toType.MinValue || value > (fromType)toType.MaxValue;
 
-                    _array[i] = (outOfRange ? _defaultValue : (toType)sourceArray[batch.Index(i)]);
+                    _array[i] = (outOfRange ? _defaultValue : (toType)value);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else if (!batch.Selector.IsSingleValue)
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    fromType value = sourceArray[i + offset];
+                    bool outOfRange = value < (fromType)toType.MinValue || value > (fromType)toType.MaxValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (toType)value);
                     _couldNotConvert[i] = outOfRange;
                     couldNotConvertAny |= outOfRange;
                 }
             }
             else
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    fromType value = sourceArray[batch.Index(i)];
-                    bool outOfRange = value < (fromType)toType.MinValue || value > (fromType)toType.MaxValue;
-
-                    _array[i] = (outOfRange ? _defaultValue : (toType)sourceArray[i + offset]);
-                    _couldNotConvert[i] = outOfRange;
-                    couldNotConvertAny |= outOfRange;
-                }
+                fromType value = sourceArray[0];
+                bool outOfRange = value < (fromType)toType.MinValue || value > (fromType)toType.MaxValue;
+                _array[0] = (outOfRange ? _defaultValue : (toType)value);
+                _couldNotConvert[0] = outOfRange;
+                couldNotConvertAny = outOfRange;
             }
 
             result = _array;
