@@ -116,7 +116,7 @@ namespace XForm.Query
             {
                 stage = builder.Build(source, _workflow);
             }
-            catch (Exception ex) when (!Debugger.IsAttached)
+            catch (Exception ex)
             {
                 Rethrow(ex);
             }
@@ -254,7 +254,7 @@ namespace XForm.Query
 
                 return result;
             }
-            catch (Exception ex) when (!Debugger.IsAttached)
+            catch (Exception ex)
             {
                 Rethrow(ex);
                 return null;
@@ -450,22 +450,20 @@ namespace XForm.Query
         {
             ErrorContext context = BuildErrorContext().Merge(new ErrorContext(_scanner.Current.Value, valueCategory, validValues));
 
-            if(_scanner.Current.Type == TokenType.End || _scanner.Current.Type == TokenType.NextTokenHint)
+            // Consume the bad token
+            _scanner.Next();
+
+            if(this.WasLastTokenInQuery)
             {
                 // If this was the last token, no error message (wait for it to be complete)
                 context.ErrorMessage = "";
             }
             else
             {
-                // If the
-                _scanner.Next();
-
-                if (_scanner.Current.Type != TokenType.End || _scanner.Current.Type == TokenType.NextTokenHint || _scanner.Current.WhitespacePrefix.Length > 0)
+                // If not, return the error message
+                if (String.IsNullOrEmpty(context.ErrorMessage))
                 {
-                    if (String.IsNullOrEmpty(context.ErrorMessage))
-                    {
-                        context.ErrorMessage = $"Invalid {context.InvalidValueCategory} \"{context.InvalidValue ?? "<null>"}\"";
-                    }
+                    context.ErrorMessage = $"Invalid {context.InvalidValueCategory} \"{context.InvalidValue ?? "<null>"}\"";
                 }
             }
 
@@ -476,7 +474,13 @@ namespace XForm.Query
         {
             if (ex is UsageException)
             {
-                throw new UsageException(BuildErrorContext().Merge(((UsageException)ex).Context), ex);
+                ErrorContext context = BuildErrorContext().Merge(((UsageException)ex).Context);
+                if (!this.WasLastTokenInQuery && String.IsNullOrEmpty(context.ErrorMessage))
+                {
+                    context.ErrorMessage = $"Invalid {context.InvalidValueCategory} \"{context.InvalidValue ?? "<null>"}\"";
+                }
+
+                throw new UsageException(context, ex);
             }
             else if (ex is ArgumentException)
             {
@@ -490,6 +494,7 @@ namespace XForm.Query
             }
         }
 
+        public bool WasLastTokenInQuery => (_scanner.Current.Type == TokenType.End && _scanner.Current.WhitespacePrefix.Length == 0) || _scanner.Current.Type == TokenType.NextTokenHint;
         public bool HasAnotherPart => _scanner.Current.Type != TokenType.Newline && _scanner.Current.Type != TokenType.End;
         public bool HasAnotherArgument => HasAnotherPart && _scanner.Current.Type != TokenType.CloseParen;
         public int CurrentLineNumber => _scanner.Current.LineNumber;

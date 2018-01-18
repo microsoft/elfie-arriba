@@ -97,9 +97,7 @@ namespace XForm.Query
 
         public UsageException(string invalidValue, string invalidValueCategory, IEnumerable<string> validValues)
             : this(new ErrorContext(invalidValue, invalidValueCategory, validValues))
-        {
-            Context.ErrorMessage = $"Invalid {invalidValueCategory} \"{invalidValue ?? "<null>"}\"";
-        }
+        { }
 
         public UsageException(ErrorContext context)
             : base(context.ToString())

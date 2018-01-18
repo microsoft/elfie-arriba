@@ -82,6 +82,9 @@ namespace XForm.Query
             TokenType lastType = this.Current.Type;
             bool result = false;
 
+            // If the caller advances the end again, report whitespace only once [easier logic for 'is last token' error message rules]
+            if (this.Current.Type == TokenType.End) this.Current.WhitespacePrefix = "";
+
             while (this.Current.Type != TokenType.End)
             {
                 // Get the next token

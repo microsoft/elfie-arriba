@@ -98,6 +98,8 @@ namespace XForm.Test.Query
             QuerySuggester suggester = new QuerySuggester(SampleDatabase.XDatabaseContext);
 
             // Verify errors only when token is complete and you've moved on
+            Assert.AreEqual("", suggester.Suggest("read BadTable").Context.ErrorMessage);
+            Assert.AreNotEqual("", suggester.Suggest("read BadTable\r\n").Context.ErrorMessage);
             Assert.AreEqual("", suggester.Suggest("read WebRequest\r\ncase").Context.ErrorMessage);
             Assert.AreNotEqual("", suggester.Suggest("read WebRequest\r\ncase ").Context.ErrorMessage, "Bad verb 'case' is now complete");
             Assert.AreEqual("", suggester.Suggest("read WebRequest\r\ncast ").Context.ErrorMessage);
@@ -106,7 +108,7 @@ namespace XForm.Test.Query
             Assert.AreEqual("", suggester.Suggest("read WebRequest\r\ncast [HttpStatus] Int").Context.ErrorMessage);
             Assert.AreEqual("", suggester.Suggest("read WebRequest\r\ncast [HttpStatus] Int33").Context.ErrorMessage);
             Assert.AreNotEqual("", suggester.Suggest("read WebRequest\r\ncast [HttpStatus] Int33 ").Context.ErrorMessage, "Bad Type name now complete");
-            Assert.AreEqual("", suggester.Suggest("read WebRequest\r\ncast [HttpStatus] Int32 ").Context.ErrorMessage, "All Valid");
+            Assert.AreEqual("", suggester.Suggest("read WebRequest\r\ncast [HttpStatus] Int32 ").Context.ErrorMessage, "All Valid, optional not provided");
             Assert.AreNotEqual("", suggester.Suggest("read WebRequest\r\ncast [HttpStatur] Int32").Context.ErrorMessage, "Bad column name isn't last argument");
             Assert.AreNotEqual("", suggester.Suggest("read WebRequest\r\ncase [HttpStatus] Int32").Context.ErrorMessage, "Bad verb isn't last argument");
             Assert.AreNotEqual("", suggester.Suggest("read BadTable\r\ncast [HttpStatus] Int32").Context.ErrorMessage, "Bad table isn't last argument");
