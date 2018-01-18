@@ -15,8 +15,8 @@ $bluehot: hsl(210, 90%, 90%);
 @mixin buttonActive {
     cursor: pointer;
     user-select: none;
-    &:hover { background-color: $blue; }
-    &:active { background-color: $bluehot; }
+    &:hover { background-color: hsla(0, 0, 0, 0.15); }
+    &:active { background-color: hsla(0, 0, 100%, 0.15); }
 }
 
 @mixin header {
@@ -55,16 +55,16 @@ body {
     }
 
     input, select {
-        color: $text;
+        color: inherit;
         font: inherit;
         background-color: inherit;
     }
 
     select {
-        border: 1px solid $line80;
+        border: 1px solid hsla(0, 0, 0, 0.15);
     }
 
-    ::placeholder { color: $line80; }
+    ::placeholder { color: hsla(0, 0, 100%, 0.5); }
 }
 
 .root {
@@ -152,6 +152,7 @@ body {
     .tableWrapper {
         overflow-x: hidden;
         overflow-y: auto;
+        flex: 1 1 auto;
     }
 
     table {
