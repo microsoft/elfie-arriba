@@ -90,7 +90,10 @@ class Index extends React.Component {
                     })
                     return xhr(`suggest`, { q: textUntilPosition }).then(o => {
                         if (o.Usage !== this.state.usage) {
-                            this.setState({ usage: o.Usage.replace(/'/g, ""), queryHint: o.ItemCategory })
+                            this.setState({ usage: o.Usage })
+                        }
+                        if (o.ItemCategory !== this.state.queryHint) {
+                            this.setState({ queryHint: o.ItemCategory })
                         }
 
                         if (!o.Values) return []
