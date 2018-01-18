@@ -55,7 +55,7 @@ namespace XForm.Types.Comparers
 
         // NOTE: Edit this in the 'long[]' copy and then copy and paste the code here once tested
         private static string s_compareMethodTemplate = @"
-		public void WhereEqual(DataBatch left, DataBatch right, BitVector vector)
+        public void WhereEqual(DataBatch left, DataBatch right, BitVector vector)
         {
             long[] leftArray = (long[])left.Array;
             long[] rightArray = (long[])right.Array;

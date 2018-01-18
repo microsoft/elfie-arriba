@@ -3689,7 +3689,6 @@ namespace XForm.Types
         private double _defaultValue;
         private double[] _array;
 
-
         public DoubleConverter(object defaultValue)
         {
             _defaultValue = (double)(TypeConverterFactory.ConvertSingle(defaultValue, typeof(double)) ?? default(double));
