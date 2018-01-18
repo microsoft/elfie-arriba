@@ -17,7 +17,6 @@ namespace XForm.IO
         DataBatch Values();
     }
 
-    // Nulls?
     // Sort values and remap on Dispose?
     public class EnumColumnDictionary<T> : HashCore, IEnumColumnDictionary
     {
@@ -25,7 +24,9 @@ namespace XForm.IO
         private IValueCopier<T> _copier;
         private T[] _keys;
         private byte[] _values;
+        private int _nullItemIndex;
 
+        private bool _currentIsNull;
         private T _currentKey;
         private byte _currentValue;
 
@@ -42,15 +43,17 @@ namespace XForm.IO
             base.Reset(size);
             _keys = new T[size];
             _values = new byte[size];
+            _nullItemIndex = -1;
         }
 
         private uint HashCurrent()
         {
-            return unchecked((uint)_comparer.GetHashCode(_currentKey));
+            return (_currentIsNull ? 0 : unchecked((uint)_comparer.GetHashCode(_currentKey)));
         }
 
         protected override bool EqualsCurrent(uint index)
         {
+            if (_currentIsNull) return _nullItemIndex == index;
             return _comparer.Equals(_keys[index], _currentKey);
         }
 
@@ -60,6 +63,7 @@ namespace XForm.IO
             T[] oldKeys = _keys;
             byte[] oldValues = _values;
             byte[] oldMetaData = this.Metadata;
+            int oldNullIndex = _nullItemIndex;
 
             // Expand the table
             Reset(HashCore.ResizeToSize(_keys.Length));
@@ -67,14 +71,15 @@ namespace XForm.IO
             // Add items to the enlarged table
             for (int i = 0; i < oldMetaData.Length; ++i)
             {
-                if (oldMetaData[i] > 0) Add(oldKeys[i], oldValues[i]);
+                if (oldMetaData[i] > 0) Add(oldKeys[i], oldValues[i], i == oldNullIndex);
             }
         }
 
-        private byte Add(T key)
+        private byte Add(T key, bool isNull)
         {
             byte valueIfAdded = (byte)this.Count;
             _currentKey = key;
+            _currentIsNull = isNull;
             _currentValue = valueIfAdded;
 
             uint hash = HashCurrent();
@@ -86,6 +91,7 @@ namespace XForm.IO
                 Expand();
 
                 _currentKey = key;
+                _currentIsNull = isNull;
                 _currentValue = valueIfAdded;
                 this.Add(HashCurrent());
             }
@@ -93,9 +99,10 @@ namespace XForm.IO
             return valueIfAdded;
         }
 
-        private void Add(T key, byte value)
+        private void Add(T key, byte value, bool isNull)
         {
             _currentKey = key;
+            _currentIsNull = isNull;
             _currentValue = value;
 
             if (!this.Add(HashCurrent()))
@@ -103,6 +110,7 @@ namespace XForm.IO
                 Expand();
 
                 _currentKey = key;
+                _currentIsNull = isNull;
                 _currentValue = value;
                 this.Add(HashCurrent());
             }
@@ -112,6 +120,10 @@ namespace XForm.IO
         {
             if (swapType == SwapType.Match) return;
             if (swapType == SwapType.Insert && _copier != null) _currentKey = _copier.Copy(_currentKey);
+            if (swapType == SwapType.Insert && _currentIsNull)
+            {
+                _nullItemIndex = (int)index;
+            }
 
             T swapKey = _keys[index];
             byte swapValue = _values[index];
@@ -134,7 +146,7 @@ namespace XForm.IO
                 bool isNull = (batch.IsNull != null && batch.IsNull[index]);
                 T value = array[index];
 
-                indicesFound[i] = Add(value);
+                indicesFound[i] = Add(value, isNull);
                 if (this.Count > 256) break;
             }
 
@@ -143,8 +155,14 @@ namespace XForm.IO
 
         public DataBatch Values()
         {
-            int[] indicesInOrder = new int[this.Count];
+            bool[] isNull = null;
+            if (_nullItemIndex != -1)
+            {
+                isNull = new bool[this.Metadata.Length];
+                isNull[_nullItemIndex] = true;
+            }
 
+            int[] indicesInOrder = new int[this.Count];
             for (int i = 0; i < this.Metadata.Length; ++i)
             {
                 if (this.Metadata[i] != 0)
@@ -153,7 +171,7 @@ namespace XForm.IO
                 }
             }
 
-            return DataBatch.All(_keys, this.Count).Reselect(ArraySelector.Map(indicesInOrder, this.Count));
+            return DataBatch.All(_keys, this.Count, isNull).Reselect(ArraySelector.Map(indicesInOrder, this.Count));
         }
     }
 

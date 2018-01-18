@@ -122,6 +122,19 @@ namespace XForm.Test
         }
 
         [TestMethod]
+        public void Database_RoundTrip()
+        {
+            XForm($"build WebRequest csv");
+
+            string webRequestPath = Path.Combine(SampleDatabase.s_RootPath, SampleDatabase.XDatabaseContext.StreamProvider.ItemVersions(LocationType.Source, "WebRequest").LatestBeforeCutoff(CrawlType.Full, DateTime.MaxValue).Path, "WebRequest.Full.20171203.r5.n1000.csv");
+            string webRequestSourceCsv = SampleDatabase.XDatabaseContext.StreamProvider.ReadAllText(webRequestPath);
+
+            string reportPath = Path.Combine(SampleDatabase.s_RootPath, SampleDatabase.XDatabaseContext.StreamProvider.ItemVersions(LocationType.Report, "WebRequest").LatestBeforeCutoff(CrawlType.Full, DateTime.MaxValue).Path, "Report.csv");
+            string reportCsv = SampleDatabase.XDatabaseContext.StreamProvider.ReadAllText(reportPath);
+            if (webRequestSourceCsv != reportCsv) Assert.Fail($"WebRequest source and report weren't equal.\r\nwindiff \"{webRequestPath}\" \"{reportPath}\"");
+        }
+
+        [TestMethod]
         public void Database_Sources()
         {
             SampleDatabase.EnsureBuilt();

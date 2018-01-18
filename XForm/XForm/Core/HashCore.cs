@@ -150,7 +150,7 @@ namespace XForm
             // up to the farthest any key had to be moved from the desired bucket.
             for (int probeLength = 1; probeLength <= this.MaxProbeLength; ++probeLength)
             {
-                if (EqualsCurrent(bucket)) return (int)bucket;
+                if (this.Metadata[bucket] != 0 && EqualsCurrent(bucket)) return (int)bucket;
 
                 bucket += increment;
                 if (bucket >= this.Metadata.Length) bucket -= (uint)this.Metadata.Length;
