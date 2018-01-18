@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 
@@ -70,7 +69,7 @@ namespace XForm.Types
             }
         }
 
-        public static IColumnWriter TryGetColumnWriter(IStreamProvider streamProvider, Type columnType, string columnPath, Type callingType = null)
+        public static IColumnWriter TryGetColumnWriter(IStreamProvider streamProvider, Type columnType, string columnPath)
         {
             IColumnWriter writer = null;
 

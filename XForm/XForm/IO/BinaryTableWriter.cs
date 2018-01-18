@@ -39,7 +39,6 @@ namespace XForm.IO
         private XDatabaseContext _xDatabaseContext;
         private string _tableRootPath;
 
-        private Func<DataBatch>[] _innerGetters;
         private Func<DataBatch>[] _getters;
         private DataBatch[] _currentBatches;
         private IColumnWriter[] _writers;
@@ -56,31 +55,13 @@ namespace XForm.IO
             _metadata = new TableMetadata();
             _metadata.Query = xDatabaseContext.CurrentQuery;
 
-            _innerGetters = new Func<DataBatch>[columnCount];
             _getters = new Func<DataBatch>[columnCount];
             _currentBatches = new DataBatch[columnCount];
 
+            // Subscribe to all of the columns
             for (int i = 0; i < columnCount; ++i)
             {
-                ColumnDetails column = source.Columns[i];
-
-                Func<DataBatch> directGetter = source.ColumnGetter(i);
-                Func<DataBatch> outputTypeGetter = directGetter;
-
-                // Build a direct writer for the column type, if available
-                ITypeProvider columnTypeProvider = TypeProviderFactory.TryGet(column.Type);
-
-                // If the column type doesn't have a provider or writer, convert to String8 and write that
-                if (columnTypeProvider == null)
-                {
-                    Func<DataBatch, DataBatch> converter = TypeConverterFactory.GetConverter(column.Type, typeof(String8));
-                    outputTypeGetter = () => converter(directGetter());
-                    column = column.ChangeType(typeof(String8));
-                }
-
-                _metadata.Schema.Add(column);
-                _innerGetters[i] = directGetter;
-                _getters[i] = outputTypeGetter;
+                _getters[i] = source.ColumnGetter(i);
             }
         }
 
@@ -96,14 +77,24 @@ namespace XForm.IO
             {
                 ColumnDetails column = _source.Columns[i];
                 string columnPath = Path.Combine(_tableRootPath, _source.Columns[i].Name);
+
+                // Build a writer for each column
                 _writers[i] = TypeProviderFactory.TryGetColumnWriter(_xDatabaseContext.StreamProvider, column.Type, columnPath);
                 if (_writers[i] == null) throw new ArgumentException($"No writer or String8 converter for {column.Type.Name} was available. Could not build column writer.");
+
+                // If the column was converted to String8, write String8 in the schema
+                if (column.Type != typeof(String8) && _writers[i].WritingAsType == typeof(String8))
+                {
+                    column = column.ChangeType(typeof(String8));
+                }
+
+                _metadata.Schema.Add(column);
             }
         }
 
         public override Func<DataBatch> ColumnGetter(int columnIndex)
         {
-            return _innerGetters[columnIndex];
+            return _getters[columnIndex];
         }
 
         public override int Next(int desiredCount)
@@ -125,11 +116,20 @@ namespace XForm.IO
             }
 
             // Write them out (Parallel safe)
-            //Parallel.For(0, _getters.Length, (i) =>
-            for (int i = 0; i < _getters.Length; ++i)
+            if (_xDatabaseContext.ForceSingleThreaded)
             {
-                _writers[i].Append(_currentBatches[i]);
-            }//);
+                for (int i = 0; i < _getters.Length; ++i)
+                {
+                    _writers[i].Append(_currentBatches[i]);
+                }
+            }
+            else
+            {
+                Parallel.For(0, _getters.Length, (i) =>
+                {
+                    _writers[i].Append(_currentBatches[i]);
+                });
+            }
 
             _metadata.RowCount += count;
             return count;

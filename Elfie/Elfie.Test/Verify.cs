@@ -69,7 +69,7 @@ namespace Elfie.Test
 
             if (!expected.Equals(actual))
             {
-                string message = $"Verify.FilesEqual failed; run windiff \"{expectedRooted}\" \"{actualRooted}\"";
+                string message = $"Verify.FilesEqual failed;\r\nwindiff \"{expectedRooted}\" \"{actualRooted}\"";
                 if (expected.Length < 1024 && actual.Length < 1024)
                 {
                     Assert.AreEqual(expected, actual, message);

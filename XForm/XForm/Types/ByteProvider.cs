@@ -100,6 +100,8 @@ namespace XForm.Types
             _stream = stream;
         }
 
+        public Type WritingAsType => typeof(byte);
+
         public void Append(DataBatch batch)
         {
             byte[] arrayToWrite = (byte[])batch.Array;

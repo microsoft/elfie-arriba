@@ -159,6 +159,8 @@ namespace XForm.Types
             _bytesPerItem = (typeof(T) == typeof(bool) ? 1 : Marshal.SizeOf<T>());
         }
 
+        public Type WritingAsType => typeof(T);
+
         public void Append(DataBatch batch)
         {
             Allocator.AllocateToSize(ref _bytesBuffer, _bytesPerItem * batch.Count);

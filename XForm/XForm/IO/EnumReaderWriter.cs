@@ -199,6 +199,8 @@ namespace XForm.IO
             _rowIndexWriter = new PrimitiveArrayWriter<byte>(streamProvider.OpenWrite(Path.Combine(_columnPath, RowIndexFileName)));
         }
 
+        public Type WritingAsType => _valueWriter.WritingAsType;
+
         public void Append(DataBatch batch)
         {
             // If we already had too many values, we're just writing them out normally

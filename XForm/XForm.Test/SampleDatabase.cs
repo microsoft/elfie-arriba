@@ -124,14 +124,18 @@ namespace XForm.Test
         [TestMethod]
         public void Database_RoundTrip()
         {
+            // Turn WebRequest.csv into a table and back
             XForm($"build WebRequest csv");
 
-            string webRequestPath = Path.Combine(SampleDatabase.s_RootPath, SampleDatabase.XDatabaseContext.StreamProvider.ItemVersions(LocationType.Source, "WebRequest").LatestBeforeCutoff(CrawlType.Full, DateTime.MaxValue).Path, "WebRequest.Full.20171203.r5.n1000.csv");
-            string webRequestSourceCsv = SampleDatabase.XDatabaseContext.StreamProvider.ReadAllText(webRequestPath);
+            // Verify the result csv exactly matches the input
+            string webRequestSourcePath = Path.Combine(SampleDatabase.s_RootPath, SampleDatabase.XDatabaseContext.StreamProvider.ItemVersions(LocationType.Source, "WebRequest").LatestBeforeCutoff(CrawlType.Full, DateTime.MaxValue).Path, "WebRequest.Full.20171203.r5.n1000.csv");
+            string webRequestCsvPath = Path.Combine(SampleDatabase.s_RootPath, SampleDatabase.XDatabaseContext.StreamProvider.ItemVersions(LocationType.Report, "WebRequest").LatestBeforeCutoff(CrawlType.Full, DateTime.MaxValue).Path, "Report.csv");
+            Verify.FilesEqual(webRequestSourcePath, webRequestCsvPath);
 
-            string reportPath = Path.Combine(SampleDatabase.s_RootPath, SampleDatabase.XDatabaseContext.StreamProvider.ItemVersions(LocationType.Report, "WebRequest").LatestBeforeCutoff(CrawlType.Full, DateTime.MaxValue).Path, "Report.csv");
-            string reportCsv = SampleDatabase.XDatabaseContext.StreamProvider.ReadAllText(reportPath);
-            if (webRequestSourceCsv != reportCsv) Assert.Fail($"WebRequest source and report weren't equal.\r\nwindiff \"{webRequestPath}\" \"{reportPath}\"");
+            // Cast WebRequest into typed, nullable columns and back to csv
+            XForm($"build WebRequest.Typed csv");
+            string webRequestTypedCsvPath = Path.Combine(SampleDatabase.s_RootPath, SampleDatabase.XDatabaseContext.StreamProvider.ItemVersions(LocationType.Report, "WebRequest.Typed").LatestBeforeCutoff(CrawlType.Full, DateTime.MaxValue).Path, "Report.csv");
+            Verify.FilesEqual(webRequestSourcePath, webRequestTypedCsvPath);
         }
 
         [TestMethod]

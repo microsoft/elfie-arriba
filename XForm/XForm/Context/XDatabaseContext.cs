@@ -72,6 +72,8 @@ namespace XForm
         /// </summary>
         public bool RebuiltSomething { get; set; }
 
+        public bool ForceSingleThreaded { get; set; }
+
         public XDatabaseContext()
         {
             this.RequestedAsOfDateTime = DateTime.UtcNow;

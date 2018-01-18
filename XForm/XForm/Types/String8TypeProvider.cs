@@ -251,6 +251,8 @@ namespace XForm.Types
             _positionsWriter = new PrimitiveArrayWriter<int>(streamProvider.OpenWrite(Path.Combine(columnPath, "Vp.i32.bin")));
         }
 
+        public Type WritingAsType => typeof(String8);
+
         public void Append(DataBatch batch)
         {
             Allocator.AllocateToSize(ref _positionsBuffer, batch.Count);

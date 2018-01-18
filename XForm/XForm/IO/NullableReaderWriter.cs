@@ -5,7 +5,6 @@ using System;
 using System.IO;
 
 using XForm.Data;
-using XForm.IO;
 using XForm.IO.StreamProvider;
 
 namespace XForm.Types
@@ -30,6 +29,8 @@ namespace XForm.Types
             _columnPath = columnPath;
             _valueWriter = valueWriter;
         }
+
+        public Type WritingAsType => _valueWriter.WritingAsType;
 
         public void Append(DataBatch batch)
         {

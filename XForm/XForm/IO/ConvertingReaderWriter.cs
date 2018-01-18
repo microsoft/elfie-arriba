@@ -22,6 +22,8 @@ namespace XForm.IO
             _convertedValueWriter = convertedValueWriter;
         }
 
+        public Type WritingAsType => _convertedValueWriter.WritingAsType;
+
         public void Append(DataBatch batch)
         {
             _convertedValueWriter.Append(_converter(batch));
