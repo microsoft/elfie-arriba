@@ -1,6 +1,7 @@
 $bg: #fffffe; // Matching Monaco (light)
 $text: hsl(0, 0, 30%);
 $line: hsl(0, 0, 92%);
+$line80: hsl(0, 0, 80%);
 $linedark: hsl(0, 0, 70%);
 $blue: hsl(220, 75%, 95%);
 $bluehot: hsl(210, 90%, 90%);
@@ -60,10 +61,10 @@ body {
     }
 
     select {
-        border: 1px solid hsl(0, 0, 80%);
+        border: 1px solid $line80;
     }
 
-    ::placeholder { color: $line; }
+    ::placeholder { color: $line80; }
 }
 
 .root {
