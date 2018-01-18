@@ -1,4 +1,4 @@
-$bg: #fffffe; // Matching Monaco (light)
+$bg: hsl(60, 20%, 99%);
 $text: hsl(0, 0, 30%);
 $line: hsl(0, 0, 92%);
 $line80: hsl(0, 0, 80%);
@@ -15,16 +15,20 @@ $bluehot: hsl(210, 90%, 90%);
 @mixin buttonActive {
     cursor: pointer;
     user-select: none;
-    &:hover { background-color: $blue; }
-    &:active { background-color: $bluehot; }
+    &:hover { background-color: hsla(0, 0, 0, 0.15); }
+    &:active { background-color: hsla(0, 0, 100%, 0.15); }
 }
 
 @mixin header {
     height: 50px;
-    border-bottom: 1px solid $linedark;
     display: flex;
     align-items: center;
-    padding: 0 12px;
+    padding: 0 10px;
+    font-size: 9pt;
+
+    background-color: hsl(205, 90%, 40%);
+    color: hsl(0, 0, 95%);
+    border-bottom: 1px solid hsl(205, 90%, 30%);
 
     & > :not(input):not(.loading) {
         @include buttonBase;
@@ -55,16 +59,16 @@ body {
     }
 
     input, select {
-        color: $text;
+        color: inherit;
         font: inherit;
         background-color: inherit;
     }
 
     select {
-        border: 1px solid $line80;
+        border: 1px solid hsla(0, 0, 0, 0.15);
     }
 
-    ::placeholder { color: $line80; }
+    ::placeholder { color: hsla(0, 0, 100%, 0.5); }
 }
 
 .root {
@@ -74,9 +78,17 @@ body {
 
     & > * {
         height: 100%;
+        box-shadow: 0px 0 10px 0 rgba(0, 0, 0, 0.2);
+        background: $bg;
     }
     & > :not(:first-child) {
-        border-left: 1px solid $linedark;
+    }
+    & > :nth-child(1) { z-index: 3; }
+    & > :nth-child(2) { z-index: 2; }
+    & > :nth-child(3) { z-index: 1; }
+
+    & > :not(:first-child) > :not(:first-child) {
+        border-left: 1px solid $line;
     }
 }
 
@@ -92,7 +104,7 @@ body {
             flex: 1 1 auto;
             font: inherit;
             border: 0;
-            padding: 18px;
+            padding: 17px;
         }
 
         span {
@@ -152,6 +164,7 @@ body {
     .tableWrapper {
         overflow-x: hidden;
         overflow-y: auto;
+        flex: 1 1 auto;
     }
 
     table {
@@ -241,7 +254,13 @@ body {
             white-space: nowrap;
         }
 
-        // tr:hover { background: hsl(220, 20%, 98%); }
+        :nth-child(2n) td {
+            border-bottom: 1px solid hsl(0, 0, 95%);
+        }
+
+        :nth-child(10n) td {
+            border-bottom: 1px solid hsl(0, 0, 80%);
+        }
     }
 }
 
