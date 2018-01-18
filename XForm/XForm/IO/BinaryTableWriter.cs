@@ -126,7 +126,7 @@ namespace XForm.IO
 
             // Write them out (Parallel safe)
             //Parallel.For(0, _getters.Length, (i) =>
-            for(int i = 0; i < _getters.Length; ++i)
+            for (int i = 0; i < _getters.Length; ++i)
             {
                 _writers[i].Append(_currentBatches[i]);
             }//);

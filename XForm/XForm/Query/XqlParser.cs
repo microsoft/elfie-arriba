@@ -453,7 +453,7 @@ namespace XForm.Query
             // Consume the bad token
             _scanner.Next();
 
-            if(this.WasLastTokenInQuery)
+            if (this.WasLastTokenInQuery)
             {
                 // If this was the last token, no error message (wait for it to be complete)
                 context.ErrorMessage = "";

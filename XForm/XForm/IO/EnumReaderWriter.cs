@@ -1,6 +1,10 @@
-﻿using System;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Collections.Generic;
 using System.IO;
+
 using XForm.Data;
 using XForm.IO.StreamProvider;
 using XForm.Types;
@@ -145,7 +149,7 @@ namespace XForm.IO
             {
                 if (this.Metadata[i] != 0)
                 {
-                    indicesInOrder[this._values[i]] = i;
+                    indicesInOrder[_values[i]] = i;
                 }
             }
 
@@ -293,13 +297,13 @@ namespace XForm.IO
 
         public void Dispose()
         {
-            if(_valueReader != null)
+            if (_valueReader != null)
             {
                 _valueReader.Dispose();
                 _valueReader = null;
             }
 
-            if(_rowIndexReader != null)
+            if (_rowIndexReader != null)
             {
                 _rowIndexReader.Dispose();
                 _rowIndexReader = null;

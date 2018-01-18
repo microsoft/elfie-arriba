@@ -11,10 +11,10 @@ using Microsoft.CodeAnalysis.Elfie.Serialization;
 
 using XForm.Data;
 using XForm.Extensions;
+using XForm.IO;
 using XForm.Query;
 using XForm.Types;
 using XForm.Verbs;
-using XForm.IO;
 
 namespace XForm
 {

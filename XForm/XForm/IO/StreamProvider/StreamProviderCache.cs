@@ -1,4 +1,7 @@
-﻿using System.Collections.Generic;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
@@ -95,7 +98,7 @@ namespace XForm.IO.StreamProvider
             string locationType = fullLogicalPath.Substring(0, firstBackslash);
             string subPath = fullLogicalPath.Substring(firstBackslash + 1);
 
-            while(true)
+            while (true)
             {
                 _versionCache.Remove($"{locationType}|{subPath}");
 

@@ -124,7 +124,7 @@ namespace XForm.Types
             // Get a null reader (or null if there's no nulls file)
             string nullsPath = Path.Combine(columnPath, "Vn.b8.bin");
             IColumnReader nullReader = TypeProviderFactory.TryGetColumnReader(streamProvider, typeof(bool), nullsPath, requireCached, typeof(NullableReader));
-            
+
             // If there are nulls, wrap in a NullableReader
             if (nullReader != null) return new NullableReader(valueReader, nullReader);
 

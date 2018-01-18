@@ -13,7 +13,7 @@ namespace XForm.IO.StreamProvider
 
         public DeflateStreamProvider(IStreamProvider inner)
         {
-            this._inner = inner;
+            _inner = inner;
         }
 
         public string Description => $"{_inner.Description}/ZIP";

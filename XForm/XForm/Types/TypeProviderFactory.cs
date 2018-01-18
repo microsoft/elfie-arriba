@@ -1,10 +1,12 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+
+using Microsoft.CodeAnalysis.Elfie.Model.Strings;
+
 using XForm.Data;
 using XForm.IO;
 using XForm.IO.StreamProvider;
@@ -81,7 +83,7 @@ namespace XForm.Types
             {
                 Func<DataBatch, DataBatch> converter = TypeConverterFactory.GetConverter(columnType, typeof(String8));
                 if (converter == null) return null;
-                
+
                 writer = TypeProviderFactory.TryGet(typeof(String8)).BinaryWriter(streamProvider, columnPath);
                 writer = new ConvertingWriter(writer, converter);
             }

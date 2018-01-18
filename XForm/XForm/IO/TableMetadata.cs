@@ -9,9 +9,9 @@ using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.CodeAnalysis.Elfie.Serialization;
 
 using XForm.Data;
+using XForm.Extensions;
 using XForm.IO.StreamProvider;
 using XForm.Types;
-using XForm.Extensions;
 
 namespace XForm.IO
 {

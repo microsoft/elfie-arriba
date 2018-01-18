@@ -33,7 +33,7 @@ namespace XForm.IO
 
             Reset();
         }
-        
+
         public string TablePath { get; private set; }
         public string Query => _metadata.Query;
         public int Count => _metadata.RowCount;

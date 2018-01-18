@@ -88,7 +88,6 @@ namespace XForm.Test.Query
             Assert.AreEqual(s_selectListOptions, Values(suggester.Suggest($@"
                 read WebRequest
                 select [HttpStatus]")));
-
         }
 
         [TestMethod]

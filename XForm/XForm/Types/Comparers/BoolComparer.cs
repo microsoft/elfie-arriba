@@ -1,4 +1,3 @@
-
 // Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
@@ -46,7 +45,7 @@ namespace XForm.Types.Comparers
             else if (!right.Selector.IsSingleValue)
             {
                 // Faster Path: Compare contiguous arrays. ~20ms for 16M
-                if(s_WhereNative != null)
+                if (s_WhereNative != null)
                 {
                     s_WhereNative(leftArray, left.Selector.StartIndexInclusive, (byte)CompareOperator.Equal, rightArray, right.Selector.StartIndexInclusive, left.Selector.Count, (byte)BooleanOperator.Or, vector.Array, 0);
                     return;
@@ -145,7 +144,7 @@ namespace XForm.Types.Comparers
             else if (!right.Selector.IsSingleValue)
             {
                 // Faster Path: Compare contiguous arrays. ~20ms for 16M
-                if(s_WhereNative != null)
+                if (s_WhereNative != null)
                 {
                     s_WhereNative(leftArray, left.Selector.StartIndexInclusive, (byte)CompareOperator.NotEqual, rightArray, right.Selector.StartIndexInclusive, left.Selector.Count, (byte)BooleanOperator.Or, vector.Array, 0);
                     return;
