@@ -86,14 +86,13 @@ namespace XForm.IO
             int index = this.IndexOf(hash);
             if (index != -1) return _values[index];
 
-            if (!this.Add(HashCurrent()))
+            if (!this.Add(hash))
             {
                 Expand();
-
                 _currentKey = key;
                 _currentIsNull = isNull;
                 _currentValue = valueIfAdded;
-                this.Add(HashCurrent());
+                this.Add(hash);
             }
 
             return valueIfAdded;
@@ -104,15 +103,16 @@ namespace XForm.IO
             _currentKey = key;
             _currentIsNull = isNull;
             _currentValue = value;
+            uint hash = HashCurrent();
 
-            if (!this.Add(HashCurrent()))
+            if (!this.Add(hash))
             {
                 Expand();
 
                 _currentKey = key;
                 _currentIsNull = isNull;
                 _currentValue = value;
-                this.Add(HashCurrent());
+                this.Add(hash);
             }
         }
 

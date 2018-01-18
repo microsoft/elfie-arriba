@@ -48,12 +48,12 @@ namespace XForm
         {
             //Current();
 
-            WhereUShortUnderConstant();
-            WhereUShortEqualsUshort();
-            ByteEqualsConstant();
-            DoubleWhere();
+            //WhereUShortUnderConstant();
+            //WhereUShortEqualsUshort();
+            //ByteEqualsConstant();
+            //DoubleWhere();
             //Join();
-            //Dictionary();
+            Dictionary();
             //Choose();
             //TsvSplit();
         }
