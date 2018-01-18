@@ -99,6 +99,8 @@
     <Compile Include="Core\Dictionary5.cs" />
     <Compile Include="Core\Hashing.cs" />
     <Compile Include="IO\ColumnCache.cs" />
+    <Compile Include="IO\ConvertingReaderWriter.cs" />
+    <Compile Include="IO\EnumReaderWriter.cs" />
     <Compile Include="IO\ItemVersions.cs" />
     <Compile Include="IO\StreamProvider\StreamProviderCache.cs" />
     <Compile Include="Types\Comparers\BoolComparer.cs" />
@@ -183,7 +185,7 @@
     <Compile Include="Types\Comparers\UlongComparer.cs" />
     <Compile Include="Types\Comparers\UshortComparer.cs" />
     <Compile Include="Types\IDataBatchComparer.cs" />
-    <Compile Include="Types\Nullable.cs" />
+    <Compile Include="IO\NullableReaderWriter.cs" />
     <Compile Include="Types\TypeConverterFactory.cs" />
     <Compile Include="Verbs\Join.cs" />
     <Compile Include="Verbs\Limit.cs" />
@@ -194,8 +196,6 @@
     <Compile Include="IO\BinaryTableWriter.cs" />
     <Compile Include="IO\TabularFileWriter.cs" />
     <Compile Include="Types\ByteProvider.cs" />
-    <Compile Include="Types\ConvertingReader.cs" />
-    <Compile Include="Types\ConvertingWriter.cs" />
     <Compile Include="Types\DateTimeTypeProvider.cs" />
     <Compile Include="Types\ITypeProvider.cs" />
     <Compile Include="Types\PrimitiveTypeProvider.cs" />

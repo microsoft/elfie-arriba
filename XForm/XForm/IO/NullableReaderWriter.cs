@@ -103,27 +103,33 @@ namespace XForm.Types
     /// </summary>
     public class NullableReader : IColumnReader
     {
-        private IStreamProvider _streamProvider;
-        private string _columnPath;
         private IColumnReader _valueReader;
         private IColumnReader _nullReader;
 
         private DataBatch _currentBatch;
         private ArraySelector _currentSelector;
 
-        public NullableReader(IStreamProvider streamProvider, string columnPath, IColumnReader valueReader, bool requireCached)
+        private NullableReader(IColumnReader valueReader, IColumnReader nullReader)
         {
-            _streamProvider = streamProvider;
-            _columnPath = columnPath;
             _valueReader = valueReader;
+            _nullReader = nullReader;
+        }
 
-            // NullableReader can't use TypeProviderFactory.TryGetColumn or it'll be recursively wrapped in a NullableReader also.
-            string nullsPath = Path.Combine(_columnPath, "Vn.b8.bin");
-            _nullReader = ColumnCache.Instance.GetOrBuild(nullsPath, requireCached, () =>
-            {
-                if (!streamProvider.Attributes(nullsPath).Exists) return null;
-                return new PrimitiveArrayReader<bool>(streamProvider.OpenRead(nullsPath));
-            });
+        public static IColumnReader Wrap(IStreamProvider streamProvider, Type columnType, string columnPath, bool requireCached)
+        {
+            // Get the underlying value column
+            IColumnReader valueReader = TypeProviderFactory.TryGetColumnReader(streamProvider, columnType, columnPath, requireCached, typeof(NullableReader));
+            if (valueReader == null) return null;
+
+            // Get a null reader (or null if there's no nulls file)
+            string nullsPath = Path.Combine(columnPath, "Vn.b8.bin");
+            IColumnReader nullReader = TypeProviderFactory.TryGetColumnReader(streamProvider, typeof(bool), nullsPath, requireCached, typeof(NullableReader));
+            
+            // If there are nulls, wrap in a NullableReader
+            if (nullReader != null) return new NullableReader(valueReader, nullReader);
+
+            // If not, return the underlying reader unwrapped
+            return valueReader;
         }
 
         public int Count => _valueReader.Count;
@@ -136,10 +142,7 @@ namespace XForm.Types
             // Read the values themselves
             DataBatch values = _valueReader.Read(selector);
 
-            // If there are no nulls, return as-is
-            if (_nullReader == null) return values;
-
-            // Otherwise, read the null markers
+            // Read the null markers
             DataBatch nulls = _nullReader.Read(selector);
 
             // Cache and return the values and null markers together

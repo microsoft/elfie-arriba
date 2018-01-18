@@ -4,6 +4,8 @@
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
+using XForm.Data;
 using XForm.IO;
 using XForm.IO.StreamProvider;
 
@@ -46,11 +48,54 @@ namespace XForm.Types
             return provider;
         }
 
-        public static IColumnReader TryGetColumn(Type type, IStreamProvider streamProvider, string columnPath, bool requireCached = false)
+        public static IColumnReader TryGetColumnReader(IStreamProvider streamProvider, Type columnType, string columnPath, bool requireCached = false, Type callingType = null)
         {
-            IColumnReader column = Get(type).BinaryReader(streamProvider, columnPath, requireCached);
-            column = new NullableReader(streamProvider, columnPath, column, requireCached);
-            return column;
+            // IColumnReaders are nested within each other. Each layer uses this factory method, which uses callingType to return the correct next layer down.
+            //  EnumColumnReader -> NullableReader -> PrimitiveReader
+            //  EnumColumnReader -> NullableReader -> String8Reader -> PrimitiveReader [byte and position]
+
+            if (callingType == null)
+            {
+                return EnumReader.Wrap(streamProvider, columnType, columnPath, requireCached);
+            }
+            else if (callingType == typeof(EnumReader))
+            {
+                return NullableReader.Wrap(streamProvider, columnType, columnPath, requireCached);
+            }
+            else // typeof(NullableReader) || typeof(String8ColumnReader)
+            {
+                return Get(columnType).BinaryReader(streamProvider, columnPath, requireCached);
+            }
+        }
+
+        public static IColumnWriter TryGetColumnWriter(IStreamProvider streamProvider, Type columnType, string columnPath, Type callingType = null)
+        {
+            IColumnWriter writer = null;
+
+            // Build a direct writer for the column type, if available
+            ITypeProvider columnTypeProvider = TryGet(columnType);
+            if (columnTypeProvider != null) writer = columnTypeProvider.BinaryWriter(streamProvider, columnPath);
+
+            // If the column type doesn't have a provider or writer, convert to String8 and write that
+            if (writer == null)
+            {
+                Func<DataBatch, DataBatch> converter = TypeConverterFactory.GetConverter(columnType, typeof(String8));
+                if (converter == null) return null;
+                
+                writer = TypeProviderFactory.TryGet(typeof(String8)).BinaryWriter(streamProvider, columnPath);
+                writer = new ConvertingWriter(writer, converter);
+            }
+
+            // Wrap with a NullableWriter to handle null persistence
+            writer = new NullableWriter(streamProvider, columnPath, writer);
+
+            // Wrap with an EnumWriter to write as an EnumColumn while possible (*for types worth compressing*)
+            if (columnType != typeof(bool) && columnType != typeof(byte) && columnType != typeof(sbyte) && columnType != typeof(ushort) && columnType != typeof(short))
+            {
+                writer = new EnumWriter(streamProvider, columnPath, columnType, writer);
+            }
+
+            return writer;
         }
 
         public static IEnumerable<string> SupportedTypes

@@ -17,6 +17,7 @@ namespace XForm.IO
         private TableMetadata _metadata;
 
         private IColumnReader[] _readers;
+        private bool[] _isCached;
 
         private ArraySelector _currentSelector;
         private ArraySelector _currentEnumerateSelector;
@@ -28,6 +29,8 @@ namespace XForm.IO
 
             _metadata = TableMetadataSerializer.Read(streamProvider, TablePath);
             _readers = new IColumnReader[_metadata.Schema.Count];
+            _isCached = new bool[_metadata.Schema.Count];
+
             Reset();
         }
         
@@ -54,7 +57,7 @@ namespace XForm.IO
                 string columnPath = Path.Combine(TablePath, column.Name);
 
                 // Read the column using the correct typed reader
-                _readers[columnIndex] = TypeProviderFactory.TryGetColumn(column.Type, _streamProvider, columnPath);
+                _readers[columnIndex] = TypeProviderFactory.TryGetColumnReader(_streamProvider, column.Type, columnPath, false);
             }
 
             return _readers[columnIndex];
@@ -62,9 +65,10 @@ namespace XForm.IO
 
         public IColumnReader CachedColumnReader(int columnIndex)
         {
-            if (_readers[columnIndex] == null || !(_readers[columnIndex] is CachedColumnReader))
+            if (_readers[columnIndex] == null || _isCached[columnIndex] == false)
             {
-                _readers[columnIndex] = TypeProviderFactory.TryGetColumn(Columns[columnIndex].Type, _streamProvider, Path.Combine(TablePath, Columns[columnIndex].Name), true);
+                _readers[columnIndex] = TypeProviderFactory.TryGetColumnReader(_streamProvider, Columns[columnIndex].Type, Path.Combine(TablePath, Columns[columnIndex].Name), true);
+                _isCached[columnIndex] = true;
             }
 
             return _readers[columnIndex];
