@@ -242,7 +242,13 @@ body {
             white-space: nowrap;
         }
 
-        // tr:hover { background: hsl(220, 20%, 98%); }
+        :nth-child(2n) td {
+            border-bottom: 1px solid hsl(0, 0, 95%);
+        }
+
+        :nth-child(10n) td {
+            border-bottom: 1px solid hsl(0, 0, 80%);
+        }
     }
 }
 
