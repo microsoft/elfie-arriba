@@ -48,9 +48,20 @@ namespace XForm.Types
             Allocator.AllocateToSize(ref _array, batch.Count);
 
             fromType[] sourceArray = (fromType[])batch.Array;
-            for (int i = 0; i < batch.Count; ++i)
+            if (batch.Selector.Indices != null)
             {
-                _array[i] = (toType)sourceArray[batch.Index(i)];
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    _array[i] = (toType)sourceArray[batch.Index(i)];
+                }
+            }
+            else
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    _array[i] = (toType)sourceArray[i + offset];
+                }
             }
 
             result = _array;
@@ -66,14 +77,30 @@ namespace XForm.Types
 
             bool couldNotConvertAny = false;
             fromType[] sourceArray = (fromType[])batch.Array;
-            for (int i = 0; i < batch.Count; ++i)
+            if (batch.Selector.Indices != null)
             {
-                fromType value = sourceArray[batch.Index(i)];
-                bool outOfRange = value < (fromType)toType.MinValue || value > (fromType)toType.MaxValue;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    fromType value = sourceArray[batch.Index(i)];
+                    bool outOfRange = value < (fromType)toType.MinValue || value > (fromType)toType.MaxValue;
 
-                _array[i] = (outOfRange ? _defaultValue : (toType)sourceArray[batch.Index(i)]);
-                _couldNotConvert[i] = outOfRange;
-                couldNotConvertAny |= outOfRange;
+                    _array[i] = (outOfRange ? _defaultValue : (toType)sourceArray[batch.Index(i)]);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
+            }
+            else
+            {
+                int offset = batch.Selector.StartIndexInclusive;
+                for (int i = 0; i < batch.Count; ++i)
+                {
+                    fromType value = sourceArray[batch.Index(i)];
+                    bool outOfRange = value < (fromType)toType.MinValue || value > (fromType)toType.MaxValue;
+
+                    _array[i] = (outOfRange ? _defaultValue : (toType)sourceArray[i + offset]);
+                    _couldNotConvert[i] = outOfRange;
+                    couldNotConvertAny |= outOfRange;
+                }
             }
 
             result = _array;
