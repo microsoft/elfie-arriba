@@ -89,13 +89,6 @@ class Index extends React.Component {
                         endColumn: position.column,
                     })
                     return xhr(`suggest`, { q: textUntilPosition }).then(o => {
-                        if (o.Usage !== this.state.usage) {
-                            this.setState({ usage: o.Usage })
-                        }
-                        if (o.ItemCategory !== this.state.queryHint) {
-                            this.setState({ queryHint: o.ItemCategory })
-                        }
-
                         if (!o.Values) return []
 
                         const kind = monaco.languages.CompletionItemKind;
@@ -129,7 +122,16 @@ class Index extends React.Component {
     		});
 
             this.editor.onDidChangeModelContent(() => {
-                this.debouncedQueryChanged()
+                xhr(`suggest`, { q: this.query }).then(info => {
+                    this.queryValid = info.Valid
+                    if (info.Valid) this.debouncedQueryChanged()
+
+                    const usage = info.ErrorMessage || info.Usage
+                    if (usage !== this.state.usage) this.setState({ usage })
+
+                    const queryHint = !info.InvalidToken && info.ItemCategory || ''
+                    if (queryHint != this.state.queryHint) this.setState({ queryHint })
+                })
                 setTimeout(() => {
                     const ia = document.querySelector('.inputarea').style
                     const qh = document.querySelector('.queryHint').style
@@ -137,10 +139,12 @@ class Index extends React.Component {
                     qh.left = ia.left
                 })
             })
+            this.queryValid = true
             this.queryChanged()
     	});
     }
     queryChanged() {
+        if (!this.queryValid) return
         this.count = this.baseCount
         this.cols = this.baseCols
         this.refresh()
@@ -171,16 +175,13 @@ class Index extends React.Component {
         const userCols = this.state.userCols.length && `\nselect ${this.state.userCols.map(c => `[${c}]`).join(', ')}` || ''
 
         xhr(`run`, { rowLimit: this.count, colLimit: this.cols, asof, q: `${q}${userCols}` }).then(o => {
-            if (o.Message || o.ErrorMessage) {
-                this.setState({ status: `Error: ${o.Message || o.ErrorMessage}`, loading: false })
-            } else {
-                this.setState({ results: o, loading: false })
+            if (o.Message || o.ErrorMessage) throw 'Error should have been caught before run.'
 
-                if (this.count === this.baseCount) { // No need to recount after the first page of results.
-                    xhr(`count`, { asof, q }).then(o => {
-                        this.setState({ status: typeof o === "number" && `${o.toLocaleString()} Results` || `Error: ${o.ErrorMessage}` })
-                    })
-                }
+            this.setState({ results: o, loading: false })
+            if (this.count === this.baseCount) { // No need to recount after the first page of results.
+                xhr(`count`, { asof, q }).then(o => {
+                    this.setState({ status: typeof o === "number" && `${o.toLocaleString()} Results` })
+                })
             }
         })
     }
