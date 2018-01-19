@@ -14,7 +14,7 @@ namespace XForm.Verbs
         public string Verb => "rename";
         public string Usage => "rename {Column} {NewName}, ...";
 
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, XDatabaseContext context)
+        public IXTable Build(IXTable source, XDatabaseContext context)
         {
             Dictionary<string, string> columnNameMappings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             while (context.Parser.HasAnotherPart)
@@ -26,11 +26,11 @@ namespace XForm.Verbs
         }
     }
 
-    public class Rename : DataBatchEnumeratorWrapper
+    public class Rename : XTableWrapper
     {
         private List<ColumnDetails> _mappedColumns;
 
-        public Rename(IDataBatchEnumerator source, Dictionary<string, string> columnNameMappings) : base(source)
+        public Rename(IXTable source, Dictionary<string, string> columnNameMappings) : base(source)
         {
             _mappedColumns = new List<ColumnDetails>();
 

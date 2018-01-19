@@ -12,7 +12,7 @@ using XForm.IO.StreamProvider;
 
 namespace XForm.IO
 {
-    public class TabularFileReader : IDataBatchEnumerator
+    public class TabularFileReader : IXTable
     {
         private IStreamProvider _streamProvider;
         private string _filePath;
@@ -34,21 +34,21 @@ namespace XForm.IO
         }
 
         public IReadOnlyList<ColumnDetails> Columns => _columns;
-        public int CurrentBatchRowCount { get; private set; }
+        public int CurrentRowCount { get; private set; }
 
-        public Func<DataBatch> ColumnGetter(int columnIndex)
+        public Func<XArray> ColumnGetter(int columnIndex)
         {
             //String8[] array = new String8[1];
 
             //return () =>
             //{
             //    array[0] = _reader.Current(columnIndex).ToString8();
-            //    return DataBatch.All(array, 1);
+            //    return XArray.All(array, 1);
             //};
 
             return () =>
             {
-                return DataBatch.All(_cells[columnIndex], CurrentBatchRowCount);
+                return XArray.All(_cells[columnIndex], CurrentRowCount);
             };
         }
 
@@ -76,20 +76,20 @@ namespace XForm.IO
             //return _reader.NextRow();
 
             _block.Clear();
-            CurrentBatchRowCount = 0;
+            CurrentRowCount = 0;
 
             while (_reader.NextRow())
             {
                 for (int i = 0; i < _cells.Length; ++i)
                 {
-                    _cells[i][CurrentBatchRowCount] = _block.GetCopy(_reader.Current(i).ToString8());
+                    _cells[i][CurrentRowCount] = _block.GetCopy(_reader.Current(i).ToString8());
                 }
 
-                CurrentBatchRowCount++;
-                if (CurrentBatchRowCount == desiredCount) break;
+                CurrentRowCount++;
+                if (CurrentRowCount == desiredCount) break;
             }
 
-            return CurrentBatchRowCount;
+            return CurrentRowCount;
         }
 
         public void Dispose()

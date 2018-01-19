@@ -11,16 +11,16 @@ using XForm.Extensions;
 namespace XForm.IO
 {
     /// <summary>
-    ///  ConcatenatingReader groups together multiple IDataBatchEnumerator sources and
+    ///  ConcatenatingReader groups together multiple IXTable sources and
     ///  returns the rows from them one by one, showing the union of all available columns.
     /// </summary>
-    public class ConcatenatingReader : IDataBatchEnumerator
+    public class ConcatenatingReader : IXTable
     {
-        private IDataBatchEnumerator[] _sources;
+        private IXTable[] _sources;
         private List<ColumnDetails> _columns;
         private int _currentSourceIndex;
 
-        public ConcatenatingReader(IEnumerable<IDataBatchEnumerator> sources)
+        public ConcatenatingReader(IEnumerable<IXTable> sources)
         {
             _sources = sources.ToArray();
             _columns = new List<ColumnDetails>();
@@ -33,7 +33,7 @@ namespace XForm.IO
         {
             // Find the union of all columns. Ensure the names match
             Dictionary<string, ColumnDetails> columns = new Dictionary<string, ColumnDetails>(StringComparer.OrdinalIgnoreCase);
-            foreach (IDataBatchEnumerator source in _sources)
+            foreach (IXTable source in _sources)
             {
                 foreach (ColumnDetails column in source.Columns)
                 {
@@ -55,12 +55,12 @@ namespace XForm.IO
         }
 
         public IReadOnlyList<ColumnDetails> Columns => _columns;
-        public int CurrentBatchRowCount { get; private set; }
+        public int CurrentRowCount { get; private set; }
 
-        public Func<DataBatch> ColumnGetter(int columnIndex)
+        public Func<XArray> ColumnGetter(int columnIndex)
         {
             ColumnDetails column = Columns[columnIndex];
-            Func<DataBatch>[] gettersPerSource = new Func<DataBatch>[_sources.Length];
+            Func<XArray>[] gettersPerSource = new Func<XArray>[_sources.Length];
             Array nullArray = null;
             Allocator.AllocateToSize(ref nullArray, 1, column.Type);
 
@@ -71,16 +71,16 @@ namespace XForm.IO
                 if (_sources[i].Columns.TryGetIndexOfColumn(column.Name, out sourceColumnIndex)) gettersPerSource[i] = _sources[i].ColumnGetter(sourceColumnIndex);
             }
 
-            // When called, return the batch from the active source for that column
+            // When called, return the xarray from the active source for that column
             return () =>
             {
                 // Find the getter for the current source
-                Func<DataBatch> getter = gettersPerSource[_currentSourceIndex];
+                Func<XArray> getter = gettersPerSource[_currentSourceIndex];
 
                 // If this source didn't have the column, return all null
-                if (getter == null) return DataBatch.Null(nullArray, CurrentBatchRowCount);
+                if (getter == null) return XArray.Null(nullArray, CurrentRowCount);
 
-                // Otherwise, return the current batch
+                // Otherwise, return the current xarray
                 return getter();
             };
         }
@@ -90,10 +90,10 @@ namespace XForm.IO
             while (_currentSourceIndex < _sources.Length)
             {
                 // Try to get rows from the next source
-                CurrentBatchRowCount = _sources[_currentSourceIndex].Next(desiredCount);
+                CurrentRowCount = _sources[_currentSourceIndex].Next(desiredCount);
 
                 // If it had rows left, return them
-                if (CurrentBatchRowCount > 0) return CurrentBatchRowCount;
+                if (CurrentRowCount > 0) return CurrentRowCount;
 
                 // If not, try the next source
                 _currentSourceIndex++;
@@ -107,7 +107,7 @@ namespace XForm.IO
         {
             _currentSourceIndex = 0;
 
-            foreach (IDataBatchEnumerator source in _sources)
+            foreach (IXTable source in _sources)
             {
                 source.Reset();
             }
@@ -117,7 +117,7 @@ namespace XForm.IO
         {
             if (_sources != null)
             {
-                foreach (IDataBatchEnumerator source in _sources)
+                foreach (IXTable source in _sources)
                 {
                     if (source != null) source.Dispose();
                 }

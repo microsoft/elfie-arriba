@@ -120,9 +120,9 @@
     <Compile Include="Core\Allocator.cs" />
     <Compile Include="Data\ArraySelector.cs" />
     <Compile Include="Data\ColumnDetails.cs" />
-    <Compile Include="Data\DataBatch.cs" />
-    <Compile Include="Data\DataBatchEnumeratorWrapper.cs" />
-    <Compile Include="Data\IDataBatchEnumerator.cs" />
+    <Compile Include="Data\XArray.cs" />
+    <Compile Include="Data\XTableWrapper.cs" />
+    <Compile Include="Data\IXTable.cs" />
     <Compile Include="Core\BitVector.cs" />
     <Compile Include="Data\SinglePageEnumerator.cs" />
     <Compile Include="Extensions\DataBatchEnumeratorExtensions.cs" />
@@ -135,7 +135,7 @@
     <Compile Include="Functions\Column.cs" />
     <Compile Include="Functions\Constant.cs" />
     <Compile Include="Functions\FunctionFactory.cs" />
-    <Compile Include="Data\IDataBatchColumn.cs" />
+    <Compile Include="Data\IXColumn.cs" />
     <Compile Include="Functions\IFunctionBuilder.cs" />
     <Compile Include="Functions\SimpleTransformFunction.cs" />
     <Compile Include="Functions\String\Trim.cs" />
@@ -185,7 +185,7 @@
     <Compile Include="Types\Comparers\UintComparer.cs" />
     <Compile Include="Types\Comparers\UlongComparer.cs" />
     <Compile Include="Types\Comparers\UshortComparer.cs" />
-    <Compile Include="Types\IDataBatchComparer.cs" />
+    <Compile Include="Types\IXArrayComparer.cs" />
     <Compile Include="IO\NullableReaderWriter.cs" />
     <Compile Include="Types\TypeConverterFactory.cs" />
     <Compile Include="Verbs\Join.cs" />

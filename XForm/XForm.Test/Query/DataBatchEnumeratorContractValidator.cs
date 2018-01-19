@@ -10,17 +10,17 @@ using XForm.Data;
 
 namespace XForm.Test.Query
 {
-    public class DataBatchEnumeratorContractValidator : IDataBatchEnumerator
+    public class XArrayEnumeratorContractValidator : IXTable
     {
-        private IDataBatchEnumerator _inner;
+        private IXTable _inner;
 
         public bool ColumnSetRequested;
         public List<string> ColumnGettersRequested;
         public bool NextCalled;
         public bool DisposeCalled;
-        public int CurrentBatchRowCount { get; private set; }
+        public int CurrentRowCount { get; private set; }
 
-        public DataBatchEnumeratorContractValidator(IDataBatchEnumerator inner)
+        public XArrayEnumeratorContractValidator(IXTable inner)
         {
             _inner = inner;
             this.ColumnGettersRequested = new List<string>();
@@ -35,7 +35,7 @@ namespace XForm.Test.Query
             }
         }
 
-        public Func<DataBatch> ColumnGetter(int columnIndex)
+        public Func<XArray> ColumnGetter(int columnIndex)
         {
             if (!ColumnSetRequested) throw new AssertFailedException("Columns must be retrieved before asking for specific column getters.");
             if (NextCalled) throw new AssertFailedException("Column Getters must all be requested before the first Next() call (so callees know what to retrieve).");
@@ -43,14 +43,14 @@ namespace XForm.Test.Query
             string columnName = _inner.Columns[columnIndex].Name;
             ColumnGettersRequested.Add(columnName);
 
-            Func<DataBatch> innerGetter = _inner.ColumnGetter(columnIndex);
+            Func<XArray> innerGetter = _inner.ColumnGetter(columnIndex);
             return () =>
             {
                 if (!NextCalled) throw new AssertFailedException($"ColumnGetter for {columnName} called before Next() was called.");
 
-                DataBatch batch = innerGetter();
-                if (batch.Count != CurrentBatchRowCount) throw new AssertFailedException($"Column {columnName} getter returned {batch.Count:n0} rows, but Next returned {CurrentBatchRowCount:n0} rows.");
-                return batch;
+                XArray xarray = innerGetter();
+                if (xarray.Count != CurrentRowCount) throw new AssertFailedException($"Column {columnName} getter returned {xarray.Count:n0} rows, but Next returned {CurrentRowCount:n0} rows.");
+                return xarray;
             };
         }
 
@@ -69,9 +69,9 @@ namespace XForm.Test.Query
         {
             NextCalled = true;
 
-            CurrentBatchRowCount = _inner.Next(desiredCount);
-            Assert.AreEqual(CurrentBatchRowCount, _inner.CurrentBatchRowCount, $"Enumerator must return the same row count from Next {CurrentBatchRowCount:n0} that it saves in CurrentRowBatchCount {_inner.CurrentBatchRowCount:n0}.");
-            return CurrentBatchRowCount;
+            CurrentRowCount = _inner.Next(desiredCount);
+            Assert.AreEqual(CurrentRowCount, _inner.CurrentRowCount, $"Enumerator must return the same row count from Next {CurrentRowCount:n0} that it saves in CurrentRowbatchCount {_inner.CurrentRowCount:n0}.");
+            return CurrentRowCount;
         }
 
         public void Reset()

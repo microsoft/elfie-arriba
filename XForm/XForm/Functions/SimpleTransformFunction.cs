@@ -14,14 +14,14 @@ namespace XForm.Functions
     ///  
     ///  If your function requires an addition buffer for transformation (like a String8Block
     ///  to hold changed copies of strings), you can declare it in a scope the Func can see
-    ///  and clear it in the 'beforeBatch' action. See XForm.Functions.String.ToUpper.
+    ///  and clear it in the 'beforexarray' action. See XForm.Functions.String.ToUpper.
     /// </summary>
     /// <typeparam name="T">Type of the source column</typeparam>
     /// <typeparam name="U">Type output by the function</typeparam>
-    public class SimpleTransformFunction<T, U> : IDataBatchColumn
+    public class SimpleTransformFunction<T, U> : IXColumn
     {
         private string _name;
-        private IDataBatchColumn _column;
+        private IXColumn _column;
         private Func<T, U> _function;
         private Action _beforeBatch;
         private U[] _buffer;
@@ -29,7 +29,7 @@ namespace XForm.Functions
 
         public ColumnDetails ColumnDetails { get; private set; }
 
-        private SimpleTransformFunction(string name, IDataBatchColumn column, Func<T, U> function, Action beforeBatch = null)
+        private SimpleTransformFunction(string name, IXColumn column, Func<T, U> function, Action beforeBatch = null)
         {
             this._name = name;
             this._column = column;
@@ -38,64 +38,64 @@ namespace XForm.Functions
             this.ColumnDetails = column.ColumnDetails.ChangeType(typeof(U));
         }
 
-        public static IDataBatchColumn Build(string name, IDataBatchEnumerator source, IDataBatchColumn column, Func<T, U> function, Action beforeBatch = null)
+        public static IXColumn Build(string name, IXTable source, IXColumn column, Func<T, U> function, Action beforexarray = null)
         {
             if (column.ColumnDetails.Type != typeof(T)) throw new ArgumentException($"Function required argument of type {typeof(T).Name}, but argument was {column.ColumnDetails.Type.Name} instead.");
 
             if (column is Constant)
             {
                 // If the input is a constant, only convert once
-                if (beforeBatch != null) beforeBatch();
+                if (beforexarray != null) beforexarray();
                 return new Constant(source, function((T)((Constant)column).Value), typeof(U));
             }
             else if(column is EnumColumn)
             {
                 // If the input is an enum, convert each value once
                 EnumColumn enumColumn = (EnumColumn)column;
-                if (beforeBatch != null) beforeBatch();
-                return new EnumColumn(enumColumn, new SimpleTransformFunction<T, U>(name, column, function, beforeBatch).Convert(enumColumn.Values()), typeof(U));
+                if (beforexarray != null) beforexarray();
+                return new EnumColumn(enumColumn, new SimpleTransformFunction<T, U>(name, column, function, beforexarray).Convert(enumColumn.Values()), typeof(U));
             }
             else
             {
-                return new SimpleTransformFunction<T, U>(name, column, function, beforeBatch);
+                return new SimpleTransformFunction<T, U>(name, column, function, beforexarray);
             }
         }
 
-        public Func<DataBatch> Getter()
+        public Func<XArray> Getter()
         {
-            Func<DataBatch> sourceGetter = _column.Getter();
+            Func<XArray> sourceGetter = _column.Getter();
 
             return () =>
             {
                 if (_beforeBatch != null) _beforeBatch();
-                DataBatch batch = sourceGetter();
-                return Convert(batch);
+                XArray xarray = sourceGetter();
+                return Convert(xarray);
             };
         }
 
-        private DataBatch Convert(DataBatch batch)
+        private XArray Convert(XArray xarray)
         {
             // If a single value was returned, only convert it
-            if (batch.Selector.IsSingleValue)
+            if (xarray.Selector.IsSingleValue)
             {
                 Allocator.AllocateToSize(ref _buffer, 1);
-                _buffer[0] = _function(((T[])batch.Array)[0]);
-                return DataBatch.Single(_buffer, batch.Count);
+                _buffer[0] = _function(((T[])xarray.Array)[0]);
+                return XArray.Single(_buffer, xarray.Count);
             }
 
             // Allocate for results
-            Allocator.AllocateToSize(ref _buffer, batch.Count);
+            Allocator.AllocateToSize(ref _buffer, xarray.Count);
 
             // Convert each non-null value
-            T[] array = (T[])batch.Array;
-            for (int i = 0; i < batch.Count; ++i)
+            T[] array = (T[])xarray.Array;
+            for (int i = 0; i < xarray.Count; ++i)
             {
-                int index = batch.Index(i);
-                bool rowIsNull = (batch.IsNull != null && batch.IsNull[index]);
+                int index = xarray.Index(i);
+                bool rowIsNull = (xarray.IsNull != null && xarray.IsNull[index]);
                 _buffer[i] = (rowIsNull ? default(U) : _function(array[index]));
             }
 
-            return DataBatch.All(_buffer, batch.Count, DataBatch.RemapNulls(batch, ref _isNull));
+            return XArray.All(_buffer, xarray.Count, XArray.RemapNulls(xarray, ref _isNull));
         }
 
         public override string ToString()

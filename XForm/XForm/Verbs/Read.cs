@@ -16,7 +16,7 @@ namespace XForm.Verbs
         public string Verb => "read";
         public string Usage => "read {Table|Query}";
 
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, XDatabaseContext context)
+        public IXTable Build(IXTable source, XDatabaseContext context)
         {
             if (source != null) throw new ArgumentException($"'read' must be the first stage in a pipeline.");
             return context.Parser.NextTableSource();
@@ -28,11 +28,11 @@ namespace XForm.Verbs
         public string Verb => "readrange";
         public string Usage => "readRange {TimeSpanUpToAsOfDate} {TableName}";
 
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, XDatabaseContext context)
+        public IXTable Build(IXTable source, XDatabaseContext context)
         {
             if (source != null) throw new ArgumentException($"'read' must be the first stage in a pipeline.");
 
-            List<IDataBatchEnumerator> sources = new List<IDataBatchEnumerator>();
+            List<IXTable> sources = new List<IXTable>();
 
             // Identify the interval and table name requested
             TimeSpan interval = context.Parser.NextTimeSpan();

@@ -48,7 +48,7 @@ namespace XForm.Transforms
 
         public int Count => _count;
 
-        public DataBatch Remap(DataBatch source, ref int[] remapArray)
+        public XArray Remap(XArray source, ref int[] remapArray)
         {
             // See if we have the remapping cached already
             ArraySelector cachedMapping;
@@ -63,7 +63,7 @@ namespace XForm.Transforms
             }
 
             // Remap the outer selector
-            DataBatch remapped = source.Select(ArraySelector.Map(_indices, _count), ref remapArray);
+            XArray remapped = source.Select(ArraySelector.Map(_indices, _count), ref remapArray);
 
             // Cache the remapping
             _cachedRemappings[source.Selector] = remapped.Selector;

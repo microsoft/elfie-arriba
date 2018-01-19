@@ -12,7 +12,7 @@ using XForm.Query;
 namespace XForm.Test.Query
 {
     [TestClass]
-    public class DataBatchEnumeratorTests
+    public class XArrayEnumeratorTests
     {
         public static void DataSourceEnumerator_All(string configurationLine, int expectedRowCount, string[] requiredColumns = null)
         {
@@ -21,12 +21,12 @@ namespace XForm.Test.Query
             int requiredColumnCount = (requiredColumns == null ? 0 : requiredColumns.Length);
             long actualRowCount;
 
-            IDataBatchEnumerator pipeline = null;
-            DataBatchEnumeratorContractValidator innerValidator = null;
+            IXTable pipeline = null;
+            XArrayEnumeratorContractValidator innerValidator = null;
             try
             {
                 pipeline = SampleDatabase.XDatabaseContext.Load("WebRequest");
-                innerValidator = new DataBatchEnumeratorContractValidator(pipeline);
+                innerValidator = new XArrayEnumeratorContractValidator(pipeline);
                 pipeline = SampleDatabase.XDatabaseContext.Query(configurationLine, innerValidator);
 
                 // Run without requesting any columns. Validate.

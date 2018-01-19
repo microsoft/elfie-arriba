@@ -57,7 +57,7 @@ namespace XForm.Query
             s_pipelineStageBuildersByName[builder.Verb] = builder;
         }
 
-        public static IDataBatchEnumerator Parse(string xqlQuery, IDataBatchEnumerator source, XDatabaseContext outerContext)
+        public static IXTable Parse(string xqlQuery, IXTable source, XDatabaseContext outerContext)
         {
             if (outerContext == null) throw new ArgumentNullException("outerContext");
             if (outerContext.StreamProvider == null) throw new ArgumentNullException("outerContext.StreamProvider");
@@ -70,7 +70,7 @@ namespace XForm.Query
             innerContext.Parser = parser;
 
             // Build the Pipeline
-            IDataBatchEnumerator result = parser.NextQuery(source);
+            IXTable result = parser.NextQuery(source);
 
             // Copy inner context results back out to the outer context
             innerContext.Pop(outerContext);
@@ -78,9 +78,9 @@ namespace XForm.Query
             return result;
         }
 
-        public IDataBatchEnumerator NextQuery(IDataBatchEnumerator source)
+        public IXTable NextQuery(IXTable source)
         {
-            IDataBatchEnumerator pipeline = source;
+            IXTable pipeline = source;
 
             // For nested pipelines, we should still be on the line for the stage which has a nested pipeline. Move forward.
             if (_scanner.Current.Type == TokenType.Newline) _scanner.Next();
@@ -101,7 +101,7 @@ namespace XForm.Query
             return pipeline;
         }
 
-        public IDataBatchEnumerator NextVerb(IDataBatchEnumerator source)
+        public IXTable NextVerb(IXTable source)
         {
             IVerbBuilder builder = null;
             ParseNextOrThrow(() => s_pipelineStageBuildersByName.TryGetValue(_scanner.Current.Value, out builder), "verb", TokenType.Value, SupportedVerbs);
@@ -110,7 +110,7 @@ namespace XForm.Query
             // Verify the Workflow Parser is this parser (need to use copy constructor on XDatabaseContext when recursing to avoid resuming by parsing the wrong query)
             Debug.Assert(_workflow.Parser == this);
 
-            IDataBatchEnumerator stage = null;
+            IXTable stage = null;
 
             try
             {
@@ -135,7 +135,7 @@ namespace XForm.Query
             return provider.Type;
         }
 
-        public string NextColumnName(IDataBatchEnumerator currentSource, Type requiredType = null)
+        public string NextColumnName(IXTable currentSource, Type requiredType = null)
         {
             int columnIndex = -1;
 
@@ -149,7 +149,7 @@ namespace XForm.Query
             return currentSource.Columns[columnIndex].Name;
         }
 
-        public string NextOutputColumnName(IDataBatchEnumerator currentSource)
+        public string NextOutputColumnName(IXTable currentSource)
         {
             string value = _scanner.Current.Value;
             ParseNextOrThrow(() => true, "[Column]", TokenType.ColumnName);
@@ -163,7 +163,7 @@ namespace XForm.Query
             return tableName;
         }
 
-        public IDataBatchEnumerator NextTableSource()
+        public IXTable NextTableSource()
         {
             string tableName = _scanner.Current.Value;
             ParseNextOrThrow(() => _scanner.Current.Type == TokenType.Value, "Table", TokenType.Value, _workflow.Runner.SourceNames);
@@ -180,9 +180,9 @@ namespace XForm.Query
             }
         }
 
-        public IDataBatchColumn NextColumn(IDataBatchEnumerator source, XDatabaseContext context, Type requiredType = null)
+        public IXColumn NextColumn(IXTable source, XDatabaseContext context, Type requiredType = null)
         {
-            IDataBatchColumn result = null;
+            IXColumn result = null;
 
             if (_scanner.Current.Type == TokenType.Value)
             {
@@ -220,7 +220,7 @@ namespace XForm.Query
             return result;
         }
 
-        public IDataBatchColumn NextFunction(IDataBatchEnumerator source, XDatabaseContext context, Type requiredType = null)
+        public IXColumn NextFunction(IXTable source, XDatabaseContext context, Type requiredType = null)
         {
             string value = _scanner.Current.Value;
 
@@ -240,7 +240,7 @@ namespace XForm.Query
             // Build the function (getting arguments for it)
             try
             {
-                IDataBatchColumn result = builder.Build(source, context);
+                IXColumn result = builder.Build(source, context);
 
                 // Ensure we've parsed all arguments, and consume the close paren
                 ParseNextOrThrow(() => true, ")", TokenType.CloseParen);
@@ -314,7 +314,7 @@ namespace XForm.Query
             return cOp;
         }
 
-        public IExpression NextExpression(IDataBatchEnumerator source, XDatabaseContext context)
+        public IExpression NextExpression(IXTable source, XDatabaseContext context)
         {
             List<IExpression> terms = new List<IExpression>();
 
@@ -338,7 +338,7 @@ namespace XForm.Query
             return new OrExpression(terms.ToArray());
         }
 
-        private IExpression NextAndExpression(IDataBatchEnumerator source, XDatabaseContext context)
+        private IExpression NextAndExpression(IXTable source, XDatabaseContext context)
         {
             List<IExpression> terms = new List<IExpression>();
 
@@ -372,7 +372,7 @@ namespace XForm.Query
             return new AndExpression(terms.ToArray());
         }
 
-        private IExpression NextTerm(IDataBatchEnumerator source, XDatabaseContext context)
+        private IExpression NextTerm(IXTable source, XDatabaseContext context)
         {
             IExpression term;
             bool negate = false;
@@ -421,7 +421,7 @@ namespace XForm.Query
             _scanner.Next();
         }
 
-        public static IEnumerable<string> EscapedColumnList(IDataBatchEnumerator source, Type requiredType = null)
+        public static IEnumerable<string> EscapedColumnList(IXTable source, Type requiredType = null)
         {
             return source.Columns
                 .Where((cd) => (requiredType == null || cd.Type == requiredType))

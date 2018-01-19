@@ -9,10 +9,10 @@ using XForm.Types;
 namespace XForm.Data
 {
     /// <summary>
-    ///  IDataBatchEnumerator is the interface type all XForm Pipeline stages must implement.
-    ///  It represents tabular data enumerable in batches of rows.
+    ///  IXTable is the interface type all XForm Pipeline stages must implement.
+    ///  It represents tabular data enumerable in arrays of rows.
     /// </summary>
-    public interface IDataBatchEnumerator : IDisposable
+    public interface IXTable : IDisposable
     {
         /// <summary>
         ///  Get the columns available from this source.
@@ -32,25 +32,25 @@ namespace XForm.Data
         int Next(int desiredCount);
 
         /// <summary>
-        ///  Return the row count in the current batch.
+        ///  Return the row count in the current array..
         /// </summary>
-        int CurrentBatchRowCount { get; }
+        int CurrentRowCount { get; }
 
         /// <summary>
-        ///  Return a function which returns the DataBatch for the desired column
+        ///  Return a function which returns the XArray for the desired column
         ///  for the current batch of rows.
         /// </summary>
         /// <param name="columnIndex">Index of column to provide a getter for</param>
-        /// <returns>Function which will return the DataBatch for columnName for the current row batch on each call</returns>
-        Func<DataBatch> ColumnGetter(int columnIndex);
+        /// <returns>Function which will return the XArray for columnName for the current row xarray on each call</returns>
+        Func<XArray> ColumnGetter(int columnIndex);
     }
 
     /// <summary>
-    ///  IDataBatchList is a seekable extension to IDataBatchEnumerator, exposed by
+    ///  IXArrayList is a seekable extension to IXTable, exposed by
     ///  sources and pipelines which are able to seek to specific rows in the set
     ///  efficiently.
     /// </summary>
-    public interface IDataBatchList : IDataBatchEnumerator
+    public interface ISeekableXTable : IXTable
     {
         /// <summary>
         ///  Get the total row count of this list.

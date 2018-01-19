@@ -25,13 +25,13 @@ namespace XForm.Types.Comparers
         /// <param name="leftColumn">EnumColumn being compared</param>
         /// <param name="currentComparer">Current Comparison function requested by TermExpression</param>
         /// <param name="rightColumn">Constant being compared against</param>
-        /// <param name="source">IDataBatchEnumerator containing comparison</param>
+        /// <param name="source">IXTable containing comparison</param>
         /// <returns>Comparer to compare the (updated) right Constant to the EnumColumn.Indices (rather than Values)</returns>
-        public static ComparerExtensions.Comparer ConvertToEnumIndexComparer(EnumColumn leftColumn, ComparerExtensions.Comparer currentComparer, ref Constant rightColumn, IDataBatchEnumerator source)
+        public static ComparerExtensions.Comparer ConvertToEnumIndexComparer(EnumColumn leftColumn, ComparerExtensions.Comparer currentComparer, ref Constant rightColumn, IXTable source)
         {
             // Get all distinct values from the left side and find matches
-            DataBatch left = leftColumn.Values();
-            DataBatch right = rightColumn.Getter()();
+            XArray left = leftColumn.Values();
+            XArray right = rightColumn.Getter()();
             BitVector set = new BitVector(left.Count);
             currentComparer(left, right, set);
 
@@ -70,19 +70,19 @@ namespace XForm.Types.Comparers
             }
         }
 
-        public static void All(DataBatch left, DataBatch unused, BitVector vector)
+        public static void All(XArray left, XArray unused, BitVector vector)
         {
             vector.All(left.Count);
         }
 
-        public static void None(DataBatch left, DataBatch unused, BitVector vector)
+        public static void None(XArray left, XArray unused, BitVector vector)
         { }
 
-        public void Evaluate(DataBatch left, DataBatch unused, BitVector vector)
+        public void Evaluate(XArray left, XArray unused, BitVector vector)
         {
             byte[] leftArray = (byte[])left.Array;
 
-            // Check how the DataBatches are configured and run the fastest loop possible for the configuration.
+            // Check how the arrays are configured and run the fastest loop possible for the configuration.
             if (left.IsNull != null)
             {
                 // Slowest Path: Null checks and look up indices on both sides

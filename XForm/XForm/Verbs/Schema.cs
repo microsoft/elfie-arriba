@@ -15,7 +15,7 @@ namespace XForm.Verbs
         public string Verb => "schema";
         public string Usage => "schema";
 
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, XDatabaseContext context)
+        public IXTable Build(IXTable source, XDatabaseContext context)
         {
             return new SchemaTransformer(source);
         }
@@ -24,12 +24,12 @@ namespace XForm.Verbs
     /// <summary>
     ///  Return the Schema of a Source (Column Name, Type, Nullable).
     /// </summary>
-    public class SchemaTransformer : DataBatchEnumeratorWrapper
+    public class SchemaTransformer : XTableWrapper
     {
         private ColumnDetails[] _columns;
-        private DataBatch[] _results;
+        private XArray[] _results;
 
-        public SchemaTransformer(IDataBatchEnumerator source) : base(source)
+        public SchemaTransformer(IXTable source) : base(source)
         {
             _columns = new ColumnDetails[2];
             _columns[0] = new ColumnDetails("Name", typeof(string));
@@ -38,7 +38,7 @@ namespace XForm.Verbs
 
         public override IReadOnlyList<ColumnDetails> Columns => _columns;
 
-        public override Func<DataBatch> ColumnGetter(int columnIndex)
+        public override Func<XArray> ColumnGetter(int columnIndex)
         {
             return () => _results[columnIndex];
         }
@@ -52,9 +52,9 @@ namespace XForm.Verbs
         {
             if (_results == null)
             {
-                _results = new DataBatch[3];
-                _results[0] = DataBatch.All(_source.Columns.Select((cd) => cd.Name).ToArray());
-                _results[1] = DataBatch.All(_source.Columns.Select((cd) => cd.Type.Name.ToString()).ToArray());
+                _results = new XArray[3];
+                _results[0] = XArray.All(_source.Columns.Select((cd) => cd.Name).ToArray());
+                _results[1] = XArray.All(_source.Columns.Select((cd) => cd.Type.Name.ToString()).ToArray());
 
                 return _source.Columns.Count;
             }

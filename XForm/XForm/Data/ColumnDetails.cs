@@ -6,7 +6,7 @@ using System;
 namespace XForm.Data
 {
     /// <summary>
-    ///  ColumnDetails provides column metadata for columns in a DataBatch.
+    ///  ColumnDetails provides column metadata for columns in an XArray.
     /// </summary>
     public class ColumnDetails
     {

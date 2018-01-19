@@ -12,29 +12,29 @@ using XForm.Types;
 namespace XForm.Functions
 {
     /// <summary>
-    ///  Column is an IDataBatchColumn used to contain regular columns in expressions
+    ///  Column is an IXColumn used to contain regular columns in expressions
     /// </summary>
-    public class Column : IDataBatchColumn
+    public class Column : IXColumn
     {
-        private IDataBatchEnumerator Source { get; set; }
+        private IXTable Source { get; set; }
         private string ColumnName { get; set; }
         private int ColumnIndex { get; set; }
 
         public ColumnDetails ColumnDetails => Source.Columns[ColumnIndex];
 
-        private Column(IDataBatchEnumerator source, string columnName, int columnIndex)
+        private Column(IXTable source, string columnName, int columnIndex)
         {
             Source = source;
             ColumnName = columnName;
             ColumnIndex = columnIndex;
         }
 
-        public static IDataBatchColumn Build(IDataBatchEnumerator source, XDatabaseContext context)
+        public static IXColumn Build(IXTable source, XDatabaseContext context)
         {
             string columnName = context.Parser.NextColumnName(source);
             int columnIndex = source.Columns.IndexOfColumn(columnName);
 
-            IDataBatchList sourceList = source as IDataBatchList;
+            ISeekableXTable sourceList = source as ISeekableXTable;
             if(sourceList != null)
             {
                 IColumnReader columnReader = sourceList.ColumnReader(columnIndex);
@@ -43,7 +43,7 @@ namespace XForm.Functions
             return new Column(source, columnName, columnIndex);
         }
 
-        public Func<DataBatch> Getter()
+        public Func<XArray> Getter()
         {
             return Source.ColumnGetter(ColumnIndex);
         }
@@ -55,21 +55,22 @@ namespace XForm.Functions
     }
 
     /// <summary>
-    ///  EnumColumn is an IDataBatchColumn used to indicate an enum column in Expressions,
+    ///  EnumColumn is an IXColumn used to indicate an enum column in Expressions,
     ///  which can be optimized by looking at the set of available values once instead of
     ///  resolving each row to a value and comparing it.
     /// </summary>
-    public class EnumColumn : IDataBatchEnumColumn
+    public class EnumColumn : IXEnumColumn
     {
-        private IDataBatchList _source;
+        private ISeekableXTable _source;
         private EnumReader _enumReader;
-        private DataBatch _values;
+        private XArray _values;
         private string _columnName;
         private int _columnIndex;
         
         public ColumnDetails ColumnDetails { get; private set; }
+        public Type IndicesType => typeof(byte);
 
-        internal EnumColumn(IDataBatchList source, EnumReader enumReader, string columnName, int columnIndex)
+        internal EnumColumn(ISeekableXTable source, EnumReader enumReader, string columnName, int columnIndex)
         {
             _source = source;
             _enumReader = enumReader;
@@ -79,7 +80,7 @@ namespace XForm.Functions
             ColumnDetails = _source.Columns[_columnIndex];
         }
 
-        internal EnumColumn(EnumColumn original, DataBatch mappedValues, Type newType)
+        internal EnumColumn(EnumColumn original, XArray mappedValues, Type newType)
         {
             _source = original._source;
             _enumReader = original._enumReader;
@@ -89,21 +90,21 @@ namespace XForm.Functions
             ColumnDetails = original.ColumnDetails.ChangeType(newType);
         }
 
-        internal EnumColumn(EnumColumn original, Func<DataBatch, DataBatch> converter, Type newType) : this(original, converter(original.Values()), newType)
+        internal EnumColumn(EnumColumn original, Func<XArray, XArray> converter, Type newType) : this(original, converter(original.Values()), newType)
         { }
 
-        public Func<DataBatch> Getter()
+        public Func<XArray> Getter()
         {
             // Remap _values instead of calling EnumReader.Getter so that casted or converted EnumColumns return the new values
             return () => _enumReader.Remap(_values, _source.EnumerateSelector);
         }
 
-        public DataBatch Values()
+        public XArray Values()
         {
             return _values;
         }
 
-        public Func<DataBatch> Indices()
+        public Func<XArray> Indices()
         {
             return () => _enumReader.Indices(_source.EnumerateSelector);
         }

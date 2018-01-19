@@ -14,15 +14,15 @@ namespace XForm.Query.Expression
 {
     internal class TermExpression : IExpression
     {
-        private IDataBatchColumn _left;
+        private IXColumn _left;
         private CompareOperator _cOp;
-        private IDataBatchColumn _right;
+        private IXColumn _right;
 
-        private Func<DataBatch> _leftGetter;
-        private Func<DataBatch> _rightGetter;
+        private Func<XArray> _leftGetter;
+        private Func<XArray> _rightGetter;
         private ComparerExtensions.Comparer _comparer;
 
-        public TermExpression(IDataBatchEnumerator source, IDataBatchColumn left, CompareOperator op, IDataBatchColumn right)
+        public TermExpression(IXTable source, IXColumn left, CompareOperator op, IXColumn right)
         {
             // Disallow constant <op> constant [likely error not wrapping column name]
             if (left is Constant && right is Constant) throw new ArgumentException($"({left} {op.ToQueryForm()} {right}) is comparing two constants. Wrap [ColumnNames] in braces.");
@@ -38,7 +38,7 @@ namespace XForm.Query.Expression
             {
                 if (op.TryInvertCompareOperator(out op))
                 {
-                    Func<DataBatch> swap = _leftGetter;
+                    Func<XArray> swap = _leftGetter;
                     _leftGetter = _rightGetter;
                     _rightGetter = swap;
                 }
@@ -100,16 +100,16 @@ namespace XForm.Query.Expression
         public void Evaluate(BitVector result)
         {
             // Get the pair of values to compare
-            DataBatch left = _leftGetter();
-            DataBatch right = _rightGetter();
+            XArray left = _leftGetter();
+            XArray right = _rightGetter();
 
             // Identify rows matching this criterion
             _comparer(left, right, result);
         }
 
-        private void WhereIsNull(DataBatch source, DataBatch unused, BitVector vector)
+        private void WhereIsNull(XArray source, XArray unused, BitVector vector)
         {
-            // If nothing was null in the source batch, there are no matches
+            // If nothing was null in the source xarray, there are no matches
             if (source.IsNull == null) return;
 
             // Otherwise, add rows where the value was marked null
@@ -120,9 +120,9 @@ namespace XForm.Query.Expression
             }
         }
 
-        private void WhereIsNotNull(DataBatch source, DataBatch unused, BitVector vector)
+        private void WhereIsNotNull(XArray source, XArray unused, BitVector vector)
         {
-            // If nothing was null in the source batch, every row matches
+            // If nothing was null in the source xarray, every row matches
             if (source.IsNull == null)
             {
                 vector.All(source.Count);

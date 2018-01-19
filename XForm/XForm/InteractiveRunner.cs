@@ -21,13 +21,13 @@ namespace XForm
     {
         private static string s_commandCachePath;
         private XDatabaseContext _xDatabaseContext;
-        private IDataBatchEnumerator _pipeline;
-        private List<IDataBatchEnumerator> _stages;
+        private IXTable _pipeline;
+        private List<IXTable> _stages;
         private List<string> _commands;
 
         public IEnumerable<string> SourceNames => _xDatabaseContext.Runner.SourceNames;
 
-        public IDataBatchEnumerator Build(string sourceName, XDatabaseContext context)
+        public IXTable Build(string sourceName, XDatabaseContext context)
         {
             return _xDatabaseContext.Runner.Build(sourceName, context);
         }
@@ -43,7 +43,7 @@ namespace XForm
             _xDatabaseContext = context;
 
             _pipeline = null;
-            _stages = new List<IDataBatchEnumerator>();
+            _stages = new List<IXTable>();
             _commands = new List<string>();
         }
 
@@ -78,7 +78,7 @@ namespace XForm
                             case "back":
                             case "undo":
                                 // Unwrap on "back" or "undo"
-                                IDataBatchEnumerator last = _stages.LastOrDefault();
+                                IXTable last = _stages.LastOrDefault();
                                 if (last != null)
                                 {
                                     _pipeline = last;
@@ -128,7 +128,7 @@ namespace XForm
                     SaveScript(s_commandCachePath);
 
                     // Get the first 10 results and 10 columns
-                    IDataBatchEnumerator firstTenWrapper = _pipeline;
+                    IXTable firstTenWrapper = _pipeline;
                     firstTenWrapper = _xDatabaseContext.Query("limit 10 10", firstTenWrapper);
                     firstTenWrapper = _xDatabaseContext.Query("write cout", firstTenWrapper);
                     lastCount = firstTenWrapper.RunWithoutDispose();
@@ -165,7 +165,7 @@ namespace XForm
             File.WriteAllLines(path, _commands);
         }
 
-        private IDataBatchEnumerator AddStage(string nextLine)
+        private IXTable AddStage(string nextLine)
         {
             // Save stages before the last one
             _stages.Add(_pipeline);

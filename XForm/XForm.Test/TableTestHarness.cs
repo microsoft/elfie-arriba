@@ -15,7 +15,7 @@ using XForm.Extensions;
 namespace XForm.Test
 {
     /// <summary>
-    ///  TableTestHarness has methods to compare DataBatches and IDataBatchEnumerators and to transform DataBatches
+    ///  TableTestHarness has methods to compare arrays and IXTables and to transform arrays
     ///  into the different valid forms they have (full array, array slice, indices, nulls, single value).
     /// </summary>
     public static class TableTestHarness
@@ -31,15 +31,15 @@ namespace XForm.Test
             }
         }
 
-        public static void AssertAreEqual(IDataBatchEnumerator expected, IDataBatchEnumerator actual, int pageSize)
+        public static void AssertAreEqual(IXTable expected, IXTable actual, int pageSize)
         {
             // Reset both tables (so they can be used for repeated scenarios)
             expected.Reset();
             actual.Reset();
 
             // Get the column getters for every expected column and the columns of the same names in actual
-            Func<DataBatch>[] expectedGetters = new Func<DataBatch>[expected.Columns.Count];
-            Func<DataBatch>[] actualGetters = new Func<DataBatch>[actual.Columns.Count];
+            Func<XArray>[] expectedGetters = new Func<XArray>[expected.Columns.Count];
+            Func<XArray>[] actualGetters = new Func<XArray>[actual.Columns.Count];
 
             for (int i = 0; i < expected.Columns.Count; ++i)
             {
@@ -51,8 +51,8 @@ namespace XForm.Test
             int totalRowCount = 0;
             int expectedCurrentCount = 0, expectedNextIndex = 0;
             int actualCurrentCount = 0, actualNextIndex = 0;
-            DataBatch[] expectedBatches = new DataBatch[expected.Columns.Count];
-            DataBatch[] actualBatches = new DataBatch[expected.Columns.Count];
+            XArray[] expectedarrays = new XArray[expected.Columns.Count];
+            XArray[] actualarrays = new XArray[expected.Columns.Count];
 
             while (true)
             {
@@ -64,7 +64,7 @@ namespace XForm.Test
 
                     for (int i = 0; i < expected.Columns.Count; ++i)
                     {
-                        expectedBatches[i] = expectedGetters[i]();
+                        expectedarrays[i] = expectedGetters[i]();
                     }
                 }
 
@@ -76,7 +76,7 @@ namespace XForm.Test
 
                     for (int i = 0; i < expected.Columns.Count; ++i)
                     {
-                        actualBatches[i] = actualGetters[i]();
+                        actualarrays[i] = actualGetters[i]();
                     }
                 }
 
@@ -97,13 +97,13 @@ namespace XForm.Test
                 }
                 else
                 {
-                    // Get the current batch for each column, slice to the set of rows to compare, and compare them
+                    // Get the current xarray for each column, slice to the set of rows to compare, and compare them
                     for (int i = 0; i < expected.Columns.Count; ++i)
                     {
-                        DataBatch expectedBatch = expectedBatches[i].Slice(expectedNextIndex, expectedNextIndex + countToCompare);
-                        DataBatch actualBatch = actualBatches[i].Slice(actualNextIndex, actualNextIndex + countToCompare);
+                        XArray expectedxarray = expectedarrays[i].Slice(expectedNextIndex, expectedNextIndex + countToCompare);
+                        XArray actualxarray = actualarrays[i].Slice(actualNextIndex, actualNextIndex + countToCompare);
 
-                        firstMismatchedRow = FirstMismatchedRow(expectedBatch, actualBatch, countToCompare, expected.Columns[i].Name, out errorMessage);
+                        firstMismatchedRow = FirstMismatchedRow(expectedxarray, actualxarray, countToCompare, expected.Columns[i].Name, out errorMessage);
                         if (!String.IsNullOrEmpty(errorMessage)) break;
                     }
                 }
@@ -112,10 +112,10 @@ namespace XForm.Test
                 if (!String.IsNullOrEmpty(errorMessage))
                 {
                     Trace.WriteLine("Expected:");
-                    TraceWrite(expectedBatches, expected.Columns, expectedNextIndex + firstMismatchedRow, expectedCurrentCount - (expectedNextIndex + firstMismatchedRow));
+                    TraceWrite(expectedarrays, expected.Columns, expectedNextIndex + firstMismatchedRow, expectedCurrentCount - (expectedNextIndex + firstMismatchedRow));
 
                     Trace.WriteLine("Actual:");
-                    TraceWrite(actualBatches, expected.Columns, actualNextIndex + firstMismatchedRow, actualCurrentCount - (actualNextIndex + firstMismatchedRow));
+                    TraceWrite(actualarrays, expected.Columns, actualNextIndex + firstMismatchedRow, actualCurrentCount - (actualNextIndex + firstMismatchedRow));
 
                     Assert.Fail(errorMessage);
                 }
@@ -126,7 +126,7 @@ namespace XForm.Test
             }
         }
 
-        public static void AssertAreEqual(DataBatch expected, DataBatch actual, int rowCount, string columnName = "")
+        public static void AssertAreEqual(XArray expected, XArray actual, int rowCount, string columnName = "")
         {
             string errorMessage = "";
             int firstMismatchedRow = FirstMismatchedRow(expected, actual, rowCount, columnName, out errorMessage);
@@ -143,7 +143,7 @@ namespace XForm.Test
             }
         }
 
-        public static int FirstMismatchedRow(DataBatch expected, DataBatch actual, int rowCount, string columnName, out string errorMessage)
+        public static int FirstMismatchedRow(XArray expected, XArray actual, int rowCount, string columnName, out string errorMessage)
         {
             errorMessage = "";
             AssertAreEqual(rowCount, expected.Count, "Expected Set RowCount", ref errorMessage);
@@ -198,18 +198,18 @@ namespace XForm.Test
         /// <summary>
         ///  Write a single column to the Tracing system for debugging.
         /// </summary>
-        public static void TraceWrite(DataBatch column, string columnName, int startRowIndexInclusive = 0, int endRowIndexExclusive = -1)
+        public static void TraceWrite(XArray column, string columnName, int startRowIndexInclusive = 0, int endRowIndexExclusive = -1)
         {
-            TraceWrite(new DataBatch[] { column }, new ColumnDetails[] { new ColumnDetails(columnName, typeof(String8)) }, startRowIndexInclusive, endRowIndexExclusive);
+            TraceWrite(new XArray[] { column }, new ColumnDetails[] { new ColumnDetails(columnName, typeof(String8)) }, startRowIndexInclusive, endRowIndexExclusive);
         }
 
         /// <summary>
         ///  Write a table to the Tracing system for debugging.
         /// </summary>
-        public static void TraceWrite(IDataBatchEnumerator table, int rowCount = DataBatchEnumeratorExtensions.DefaultBatchSize)
+        public static void TraceWrite(IXTable table, int rowCount = XArrayEnumeratorExtensions.DefaultxarraySize)
         {
-            Func<DataBatch>[] columnGetters = new Func<DataBatch>[table.Columns.Count];
-            DataBatch[] columns = new DataBatch[table.Columns.Count];
+            Func<XArray>[] columnGetters = new Func<XArray>[table.Columns.Count];
+            XArray[] columns = new XArray[table.Columns.Count];
 
             for (int i = 0; i < columns.Length; ++i)
             {
@@ -230,7 +230,7 @@ namespace XForm.Test
         /// <summary>
         ///  Write a table to the Tracing system for debugging.
         /// </summary>
-        public static void TraceWrite(DataBatch[] columns, IReadOnlyList<ColumnDetails> columnDetails, int startRowIndexInclusive = 0, int endRowIndexExclusive = -1)
+        public static void TraceWrite(XArray[] columns, IReadOnlyList<ColumnDetails> columnDetails, int startRowIndexInclusive = 0, int endRowIndexExclusive = -1)
         {
             StringBuilder row = new StringBuilder();
 
@@ -248,7 +248,7 @@ namespace XForm.Test
 
                 for (int columnIndex = 0; columnIndex < columns.Length; ++columnIndex)
                 {
-                    DataBatch column = columns[columnIndex];
+                    XArray column = columns[columnIndex];
                     int realRowIndex = column.Index(rowIndex);
 
                     // NOTE: Untyped Array access via object in XForm is very expensive. Don't do this in non-test code.
@@ -276,18 +276,18 @@ namespace XForm.Test
             if (asString.Length < length) output.Append(' ', length - asString.Length);
         }
 
-        // Return an IsSingleElement array with just the first value of the batch, but the same count
-        public static DataBatch First(DataBatch values)
+        // Return an IsSingleElement array with just the first value of the xarray, but the same count
+        public static XArray First(XArray values)
         {
             Array modifiedArray = null;
             Allocator.AllocateToSize(ref modifiedArray, 1, values.Array.GetType().GetElementType());
             modifiedArray.SetValue(values.Array.GetValue(values.Index(0)), 0);
 
-            return DataBatch.Single(modifiedArray, values.Count);
+            return XArray.Single(modifiedArray, values.Count);
         }
 
-        // Return a DataBatch with two empty array elements before and after the valid portion and indices pointing to the valid portion
-        public static DataBatch Pad(DataBatch values)
+        // Return an XArray with two empty array elements before and after the valid portion and indices pointing to the valid portion
+        public static XArray Pad(XArray values)
         {
             Array modifiedArray = null;
             Allocator.AllocateToSize(ref modifiedArray, values.Array.Length + 4, values.Array.GetType().GetElementType());
@@ -300,13 +300,13 @@ namespace XForm.Test
                 modifiedArray.SetValue(values.Array.GetValue(values.Index(i)), indices[i]);
             }
 
-            // Return a DataBatch with the padded array with the indices and shorter real length
+            // Return an XArray with the padded array with the indices and shorter real length
             int[] remapArray = null;
-            return DataBatch.All(modifiedArray, values.Count).Select(ArraySelector.Map(indices, values.Count), ref remapArray);
+            return XArray.All(modifiedArray, values.Count).Select(ArraySelector.Map(indices, values.Count), ref remapArray);
         }
 
-        // Return a DataBatch with nulls inserted for every other value
-        public static DataBatch Nulls(DataBatch values)
+        // Return an XArray with nulls inserted for every other value
+        public static XArray Nulls(XArray values)
         {
             Array modifiedArray = null;
             Allocator.AllocateToSize(ref modifiedArray, values.Array.Length * 2, values.Array.GetType().GetElementType());
@@ -319,12 +319,12 @@ namespace XForm.Test
                 modifiedArray.SetValue(values.Array.GetValue(values.Index(i / 2)), i);
             }
 
-            // Return a DataBatch with the doubled length and alternating nulls
-            return DataBatch.All(modifiedArray, modifiedArray.Length, isNull);
+            // Return an XArray with the doubled length and alternating nulls
+            return XArray.All(modifiedArray, modifiedArray.Length, isNull);
         }
 
-        // Return a DataBatch with a slice of the rows only
-        public static DataBatch Slice(DataBatch values, int startIndexInclusive, int endIndexExclusive)
+        // Return an XArray with a slice of the rows only
+        public static XArray Slice(XArray values, int startIndexInclusive, int endIndexExclusive)
         {
             int[] remapArray = null;
             return values.Select(values.Selector.Slice(startIndexInclusive, endIndexExclusive), ref remapArray);

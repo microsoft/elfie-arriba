@@ -44,22 +44,22 @@ namespace XForm.Types
 
         public const string SafeConversion = @"
 
-        public bool[] FromFromType(DataBatch batch, out Array result)
+        public bool[] FromFromType(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
 
-            fromType[] sourceArray = (fromType[])batch.Array;
-            if (batch.Selector.Indices != null)
+            fromType[] sourceArray = (fromType[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    _array[i] = (toType)sourceArray[batch.Index(i)];
+                    _array[i] = (toType)sourceArray[xarray.Index(i)];
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     _array[i] = (toType)sourceArray[i + offset];
                 }
@@ -75,18 +75,18 @@ namespace XForm.Types
 
         public const string CheckingConversion = @"
 
-        public bool[] FromFromType(DataBatch batch, out Array result)
+        public bool[] FromFromType(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            fromType[] sourceArray = (fromType[])batch.Array;
-            if (batch.Selector.Indices != null)
+            fromType[] sourceArray = (fromType[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    fromType value = sourceArray[batch.Index(i)];
+                    fromType value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value < (fromType)toType.MinValue || value > (fromType)toType.MaxValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (toType)value);
@@ -94,10 +94,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     fromType value = sourceArray[i + offset];
                     bool outOfRange = value < (fromType)toType.MinValue || value > (fromType)toType.MaxValue;
@@ -129,7 +129,7 @@ namespace XForm.Types
                 WriteLinePerType(writer, @"
     internal interface INumericConverter
     {", @"
-        bool[] FromTypeName(DataBatch batch, out Array result);",
+        bool[] FromTypeName(XArray xarray, out Array result);",
         @"
     }
 ");

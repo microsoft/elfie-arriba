@@ -22,7 +22,7 @@ namespace XForm.Test.Query
         public void XqlParser_QueryParsing()
         {
             XDatabaseContext context = SampleDatabase.XDatabaseContext;
-            IDataBatchEnumerator source = context.Query(@"
+            IXTable source = context.Query(@"
                 read WebRequest
                 cast [ServerPort], Int32
                 cast [ResponseBytes], Int32, None, 0, InvalidOrNull");
@@ -80,7 +80,7 @@ namespace XForm.Test.Query
             Assert.AreEqual("[ServerName] = \"80\"", ParseExpression("[ServerName] = \"80\"", source, context).ToString());
         }
 
-        private static IExpression ParseExpression(string query, IDataBatchEnumerator source, XDatabaseContext context)
+        private static IExpression ParseExpression(string query, IXTable source, XDatabaseContext context)
         {
             XqlParser parser = new XqlParser(query, context);
             context.Parser = parser;
@@ -91,7 +91,7 @@ namespace XForm.Test.Query
         public void XqlParser_QueryEvaluation()
         {
             XDatabaseContext context = SampleDatabase.XDatabaseContext;
-            IDataBatchEnumerator source = context.Query(@"
+            IXTable source = context.Query(@"
                 read WebRequest
                 cast [ServerPort], Int32
                 cast [ResponseBytes], Int32, None, 0, InvalidOrNull
@@ -114,7 +114,7 @@ namespace XForm.Test.Query
             Assert.AreEqual(22 + 95, RunAndCount("where [ServerPort] = 80 AND [ResponseBytes] > 1200 OR [ResponseBytes] < 900", source, context));
         }
 
-        private static int RunAndCount(string query, IDataBatchEnumerator source, XDatabaseContext context)
+        private static int RunAndCount(string query, IXTable source, XDatabaseContext context)
         {
             source.Reset();
             return (int)context.Query(query, source).RunWithoutDispose();

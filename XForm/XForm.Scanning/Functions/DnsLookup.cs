@@ -20,7 +20,7 @@ namespace XForm.Functions.String
         public string Usage => "DnsLookup({ComputerName})";
         public Type ReturnType => typeof(String8);
 
-        public IDataBatchColumn Build(IDataBatchEnumerator source, XDatabaseContext context)
+        public IXColumn Build(IXTable source, XDatabaseContext context)
         {
             // Strings in XForm are stored in the type 'String8'. 
             // Make a String8Block (like StringBuilder) to allocate space for the new strings for the resolved IP addresses.

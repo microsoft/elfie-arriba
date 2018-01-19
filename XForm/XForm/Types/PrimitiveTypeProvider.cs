@@ -48,7 +48,7 @@ namespace XForm.Types
             return null;
         }
 
-        public IDataBatchComparer TryGetComparer()
+        public IXArrayComparer TryGetComparer()
         {
             if (typeof(T) == typeof(sbyte)) return new SbyteComparer();
             if (typeof(T) == typeof(byte)) return new ByteComparer();
@@ -98,7 +98,7 @@ namespace XForm.Types
         private ByteReader _byteReader;
         private T[] _array;
 
-        private DataBatch _currentBatch;
+        private XArray _currentArray;
         private ArraySelector _currentSelector;
 
         public PrimitiveArrayReader(Stream stream)
@@ -109,12 +109,12 @@ namespace XForm.Types
 
         public int Count => (int)(_byteReader.Count / _bytesPerItem);
 
-        public DataBatch Read(ArraySelector selector)
+        public XArray Read(ArraySelector selector)
         {
             if (selector.Indices != null) throw new NotImplementedException();
 
-            // Return the previous batch if re-requested
-            if (selector.Equals(_currentSelector)) return _currentBatch;
+            // Return the previous xarray if re-requested
+            if (selector.Equals(_currentSelector)) return _currentArray;
 
             // Allocate the result array
             Allocator.AllocateToSize(ref _array, selector.Count);
@@ -126,15 +126,15 @@ namespace XForm.Types
             for (int currentByteIndex = byteStart; currentByteIndex < byteEnd; currentByteIndex += ReadPageSize)
             {
                 int currentByteEnd = Math.Min(byteEnd, currentByteIndex + ReadPageSize);
-                DataBatch byteBatch = _byteReader.Read(ArraySelector.All(int.MaxValue).Slice(currentByteIndex, currentByteEnd));
-                Buffer.BlockCopy(byteBatch.Array, 0, _array, bytesRead, byteBatch.Count);
+                XArray bytexarray = _byteReader.Read(ArraySelector.All(int.MaxValue).Slice(currentByteIndex, currentByteEnd));
+                Buffer.BlockCopy(bytexarray.Array, 0, _array, bytesRead, bytexarray.Count);
                 bytesRead += currentByteEnd - currentByteIndex;
             }
 
-            // Cache and return the current batch
-            _currentBatch = DataBatch.All(_array, selector.Count);
+            // Cache and return the current xarray
+            _currentArray = XArray.All(_array, selector.Count);
             _currentSelector = selector;
-            return _currentBatch;
+            return _currentArray;
         }
 
         public void Dispose()
@@ -161,24 +161,24 @@ namespace XForm.Types
 
         public Type WritingAsType => typeof(T);
 
-        public void Append(DataBatch batch)
+        public void Append(XArray xarray)
         {
-            Allocator.AllocateToSize(ref _bytesBuffer, _bytesPerItem * batch.Count);
+            Allocator.AllocateToSize(ref _bytesBuffer, _bytesPerItem * xarray.Count);
 
-            if (batch.Selector.Indices == null && batch.Selector.IsSingleValue == false)
+            if (xarray.Selector.Indices == null && xarray.Selector.IsSingleValue == false)
             {
-                Buffer.BlockCopy(batch.Array, _bytesPerItem * batch.Selector.StartIndexInclusive, _bytesBuffer, 0, _bytesPerItem * batch.Count);
+                Buffer.BlockCopy(xarray.Array, _bytesPerItem * xarray.Selector.StartIndexInclusive, _bytesBuffer, 0, _bytesPerItem * xarray.Count);
             }
             else
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    int index = batch.Index(i);
-                    Buffer.BlockCopy(batch.Array, _bytesPerItem * index, _bytesBuffer, i * _bytesPerItem, _bytesPerItem);
+                    int index = xarray.Index(i);
+                    Buffer.BlockCopy(xarray.Array, _bytesPerItem * index, _bytesBuffer, i * _bytesPerItem, _bytesPerItem);
                 }
             }
 
-            _stream.Write(_bytesBuffer, 0, _bytesPerItem * batch.Count);
+            _stream.Write(_bytesBuffer, 0, _bytesPerItem * xarray.Count);
         }
 
         public void Dispose()

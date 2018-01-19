@@ -17,12 +17,12 @@ namespace XForm.Verbs
         public string Verb => "choose";
         public string Usage => "choose {Max|Min} {RankColumn} {IdentityColumns}";
 
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, XDatabaseContext context)
+        public IXTable Build(IXTable source, XDatabaseContext context)
         {
             ChooseDirection direction = context.Parser.NextEnum<ChooseDirection>();
-            IDataBatchColumn rankColumn = context.Parser.NextColumn(source, context);
+            IXColumn rankColumn = context.Parser.NextColumn(source, context);
 
-            List<IDataBatchColumn> identityColumns = new List<IDataBatchColumn>();
+            List<IXColumn> identityColumns = new List<IXColumn>();
             do
             {
                 identityColumns.Add(context.Parser.NextColumn(source, context));
@@ -32,19 +32,19 @@ namespace XForm.Verbs
         }
     }
 
-    public class Choose : IDataBatchEnumerator
+    public class Choose : IXTable
     {
-        private IDataBatchEnumerator _source;
+        private IXTable _source;
 
         private RowRemapper _chosenRowsFilter;
         private ChooseDictionary _dictionary;
         private bool _isDictionaryBuilt;
         private int _totalRowsRead;
 
-        private Func<DataBatch>[] _keyColumnGetters;
-        private Func<DataBatch> _rankColumnGetter;
+        private Func<XArray>[] _keyColumnGetters;
+        private Func<XArray> _rankColumnGetter;
 
-        public Choose(IDataBatchEnumerator source, ChooseDirection direction, IDataBatchColumn rankColumn, IList<IDataBatchColumn> keyColumns)
+        public Choose(IXTable source, ChooseDirection direction, IXColumn rankColumn, IList<IXColumn> keyColumns)
         {
             _source = source;
 
@@ -60,23 +60,23 @@ namespace XForm.Verbs
 
         public IReadOnlyList<ColumnDetails> Columns => _source.Columns;
 
-        public int CurrentBatchRowCount { get; private set; }
+        public int CurrentRowCount { get; private set; }
 
-        public Func<DataBatch> ColumnGetter(int columnIndex)
+        public Func<XArray> ColumnGetter(int columnIndex)
         {
             // Get the source getter
-            Func<DataBatch> sourceGetter = _source.ColumnGetter(columnIndex);
+            Func<XArray> sourceGetter = _source.ColumnGetter(columnIndex);
 
             // Cache an array to remap rows which were chosen
             int[] remapArray = null;
 
             return () =>
             {
-                // Get the source values for this batch
-                DataBatch batch = sourceGetter();
+                // Get the source values for this xarray
+                XArray xarray = sourceGetter();
 
                 // Remap to just the rows chosen
-                return _chosenRowsFilter.Remap(batch, ref remapArray);
+                return _chosenRowsFilter.Remap(xarray, ref remapArray);
             };
         }
 
@@ -94,7 +94,7 @@ namespace XForm.Verbs
             while ((outerCount = _source.Next(desiredCount)) > 0)
             {
                 // Ask for the indices of rows which were chosen in this page
-                DataBatch chosenRows = _dictionary.GetChosenRows(_totalRowsRead, _totalRowsRead + outerCount, _totalRowsRead);
+                XArray chosenRows = _dictionary.GetChosenRows(_totalRowsRead, _totalRowsRead + outerCount, _totalRowsRead);
 
                 // Track the total row count (so we know which rows to ask for chosens each time)
                 _totalRowsRead += outerCount;
@@ -110,30 +110,30 @@ namespace XForm.Verbs
 
         private void BuildChooseDictionary()
         {
-            DataBatch[] keyBatches = new DataBatch[_keyColumnGetters.Length];
-            int[] rowIndices = new int[DataBatchEnumeratorExtensions.DefaultBatchSize];
+            XArray[] keyarrays = new XArray[_keyColumnGetters.Length];
+            int[] rowIndices = new int[XArrayEnumeratorExtensions.DefaultxarraySize];
 
             int totalSoFar = 0;
             int count;
-            while ((count = _source.Next(DataBatchEnumeratorExtensions.DefaultBatchSize)) != 0)
+            while ((count = _source.Next(XArrayEnumeratorExtensions.DefaultxarraySize)) != 0)
             {
-                // Get the rank and key column batches
-                DataBatch rankBatch = _rankColumnGetter();
-                for (int i = 0; i < keyBatches.Length; ++i)
+                // Get the rank and key column arrays
+                XArray rankxarray = _rankColumnGetter();
+                for (int i = 0; i < keyarrays.Length; ++i)
                 {
-                    keyBatches[i] = _keyColumnGetters[i]();
+                    keyarrays[i] = _keyColumnGetters[i]();
                 }
 
-                // Build a row index batch for these global row IDs
+                // Build a row index xarray for these global row IDs
                 for (int i = 0; i < count; ++i)
                 {
                     rowIndices[i] = totalSoFar + i;
                 }
-                DataBatch rowIndexBatch = DataBatch.All(rowIndices, count);
+                XArray rowIndexxarray = XArray.All(rowIndices, count);
                 totalSoFar += count;
 
                 // Add these to the choose dictionary
-                _dictionary.Add(keyBatches, rankBatch, rowIndexBatch);
+                _dictionary.Add(keyarrays, rankxarray, rowIndexxarray);
             }
         }
 

@@ -9,17 +9,17 @@ using XForm.Types;
 namespace XForm
 {
     /// <summary>
-    ///  EqualityComparerAdapter turns an IDataBatchComparer&lt;T&gt; into an IEqualityComparer&lt;T&gt;
+    ///  EqualityComparerAdapter turns an IXArrayComparer&lt;T&gt; into an IEqualityComparer&lt;T&gt;
     ///  for use with types which require one.
     /// </summary>
     /// <typeparam name="T">Type of values being compared</typeparam>
     public class EqualityComparerAdapter<T> : IEqualityComparer<T>
     {
-        private IDataBatchComparer<T> _inner;
+        private IXArrayComparer<T> _inner;
 
-        public EqualityComparerAdapter(IDataBatchComparer inner)
+        public EqualityComparerAdapter(IXArrayComparer inner)
         {
-            _inner = (IDataBatchComparer<T>)inner;
+            _inner = (IXArrayComparer<T>)inner;
         }
 
         public bool Equals(T left, T right)

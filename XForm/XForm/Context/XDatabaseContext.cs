@@ -144,8 +144,8 @@ namespace XForm
         /// </summary>
         /// <param name="tableName">Table Name to load</param>
         /// <param name="context">XDatabaseContext with where to load from, as-of-date of version to load, and other context</param>
-        /// <returns>IDataBatchEnumerator of table</returns>
-        public IDataBatchEnumerator Load(string tableName)
+        /// <returns>IXTable of table</returns>
+        public IXTable Load(string tableName)
         {
             return this.Runner.Build(tableName, this);
         }
@@ -155,8 +155,8 @@ namespace XForm
         /// </summary>
         /// <param name="xqlQuery">XQL Query to execute</param>
         /// <param name="source">Source to run query against (null if it</param>
-        /// <returns>IDataBatchEnumerator of query result</returns>
-        public IDataBatchEnumerator Query(string xqlQuery, IDataBatchEnumerator source = null)
+        /// <returns>IXTable of query result</returns>
+        public IXTable Query(string xqlQuery, IXTable source = null)
         {
             return XqlParser.Parse(xqlQuery, source, this);
         }

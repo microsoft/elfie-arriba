@@ -16,7 +16,7 @@ namespace XForm.Verbs
         public string Verb => "remove";
         public string Usage => "remove {Column}, ...";
 
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, XDatabaseContext context)
+        public IXTable Build(IXTable source, XDatabaseContext context)
         {
             List<string> columnNames = new List<string>();
             while (context.Parser.HasAnotherPart)
@@ -28,12 +28,12 @@ namespace XForm.Verbs
         }
     }
 
-    public class Remove : DataBatchEnumeratorWrapper
+    public class Remove : XTableWrapper
     {
         private List<ColumnDetails> _mappedColumns;
         private List<int> _columnInnerIndices;
 
-        public Remove(IDataBatchEnumerator source, IEnumerable<string> columnNames) : base(source)
+        public Remove(IXTable source, IEnumerable<string> columnNames) : base(source)
         {
             _mappedColumns = new List<ColumnDetails>();
             _columnInnerIndices = new List<int>();
@@ -59,7 +59,7 @@ namespace XForm.Verbs
 
         public override IReadOnlyList<ColumnDetails> Columns => _mappedColumns;
 
-        public override Func<DataBatch> ColumnGetter(int columnIndex)
+        public override Func<XArray> ColumnGetter(int columnIndex)
         {
             return _source.ColumnGetter(_columnInnerIndices[columnIndex]);
         }

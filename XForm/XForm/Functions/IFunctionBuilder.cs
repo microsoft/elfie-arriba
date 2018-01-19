@@ -29,7 +29,7 @@ namespace XForm.Functions
         /// </summary>
         /// <param name="source">IDataSourceEnumerator so far in this pipeline</param>
         /// <param name="context">XDatabaseContext to read arguments, get logger, and so on</param>
-        /// <returns>IDataBatchFunction as configured in query</returns>
-        IDataBatchColumn Build(IDataBatchEnumerator source, XDatabaseContext context);
+        /// <returns>IXArrayFunction as configured in query</returns>
+        IXColumn Build(IXTable source, XDatabaseContext context);
     }
 }

@@ -8,19 +8,19 @@ using XForm.Query;
 
 namespace XForm.Types
 {
-    public interface IDataBatchComparer
+    public interface IXArrayComparer
     {
-        void WhereEqual(DataBatch left, DataBatch right, BitVector vector);
-        void WhereNotEqual(DataBatch left, DataBatch right, BitVector vector);
-        void WhereLessThan(DataBatch left, DataBatch right, BitVector vector);
-        void WhereLessThanOrEqual(DataBatch left, DataBatch right, BitVector vector);
-        void WhereGreaterThan(DataBatch left, DataBatch right, BitVector vector);
-        void WhereGreaterThanOrEqual(DataBatch left, DataBatch right, BitVector vector);
+        void WhereEqual(XArray left, XArray right, BitVector vector);
+        void WhereNotEqual(XArray left, XArray right, BitVector vector);
+        void WhereLessThan(XArray left, XArray right, BitVector vector);
+        void WhereLessThanOrEqual(XArray left, XArray right, BitVector vector);
+        void WhereGreaterThan(XArray left, XArray right, BitVector vector);
+        void WhereGreaterThanOrEqual(XArray left, XArray right, BitVector vector);
 
-        void GetHashCodes(DataBatch values, int[] hashes);
+        void GetHashCodes(XArray values, int[] hashes);
     }
 
-    public interface IDataBatchComparer<T> : IDataBatchComparer
+    public interface IXArrayComparer<T> : IXArrayComparer
     {
         bool WhereEqual(T left, T right);
         bool WhereNotEqual(T left, T right);
@@ -32,24 +32,24 @@ namespace XForm.Types
         int GetHashCode(T value);
     }
 
-    public interface IDataBatchTextComparer : IDataBatchComparer
+    public interface IXArrayTextComparer : IXArrayComparer
     {
-        void WhereContains(DataBatch left, DataBatch right, BitVector vector);
-        void WhereContainsExact(DataBatch left, DataBatch right, BitVector vector);
-        void WhereStartsWith(DataBatch left, DataBatch right, BitVector vector);
+        void WhereContains(XArray left, XArray right, BitVector vector);
+        void WhereContainsExact(XArray left, XArray right, BitVector vector);
+        void WhereStartsWith(XArray left, XArray right, BitVector vector);
     }
 
     public static class ComparerExtensions
     {
-        public delegate void Comparer(DataBatch left, DataBatch right, BitVector vector);
+        public delegate void Comparer(XArray left, XArray right, BitVector vector);
 
         public delegate void WhereSingle<T>(T[] left, int index, int length, byte compareOperator, T right, byte booleanOperator, ulong[] vector, int vectorIndex);
         public delegate void Where<T>(T[] left, int leftIndex, byte compareOperator, T[] right, int rightIndex, int length, byte booleanOperator, ulong[] vector, int vectorIndex);
 
-        public static Comparer TryBuild(this IDataBatchComparer comparer, CompareOperator cOp)
+        public static Comparer TryBuild(this IXArrayComparer comparer, CompareOperator cOp)
         {
             // Return text comparisons if this is a text comparer only
-            IDataBatchTextComparer textComparer = comparer as IDataBatchTextComparer;
+            IXArrayTextComparer textComparer = comparer as IXArrayTextComparer;
             if (textComparer != null)
             {
                 switch (cOp)

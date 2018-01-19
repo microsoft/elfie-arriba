@@ -20,19 +20,19 @@ namespace XForm.Extensions
         public TimeSpan Elapsed { get; set; }
     }
 
-    public static class DataBatchEnumeratorExtensions
+    public static class XArrayEnumeratorExtensions
     {
-        public const int DefaultBatchSize = 10240;
+        public const int DefaultxarraySize = 10240;
 
         #region Query
         /// <summary>
         ///  Run an XQL Query on this source and return the query result.
         /// </summary>
-        /// <param name="source">IDataBatchEnumerator to query</param>
+        /// <param name="source">IXTable to query</param>
         /// <param name="xqlQuery">XQL query to run</param>
         /// <param name="context">XDatabaseContext for loading location, as-of-date, and other context</param>
-        /// <returns>IDataBatchEnumerator of result</returns>
-        public static IDataBatchEnumerator Query(this IDataBatchEnumerator source, string xqlQuery, XDatabaseContext context)
+        /// <returns>IXTable of result</returns>
+        public static IXTable Query(this IXTable source, string xqlQuery, XDatabaseContext context)
         {
             return XqlParser.Parse(xqlQuery, source, context);
         }
@@ -43,29 +43,29 @@ namespace XForm.Extensions
         /// <summary>
         ///  Run a Query, dispose the source, and return the count of rows from the query.
         /// </summary>
-        /// <param name="pipeline">IDataBatchEnumerator of source or query to run</param>
-        /// <param name="batchSize">Number of rows to process on each iteration</param>
+        /// <param name="pipeline">IXTable of source or query to run</param>
+        /// <param name="xarraySize">Number of rows to process on each iteration</param>
         /// <returns>Count of rows in this source or query.</returns>
-        public static long RunAndDispose(this IDataBatchEnumerator pipeline, int batchSize = DefaultBatchSize)
+        public static long RunAndDispose(this IXTable pipeline, int xarraySize = DefaultxarraySize)
         {
             using (pipeline)
             {
-                return RunWithoutDispose(pipeline, batchSize);
+                return RunWithoutDispose(pipeline, xarraySize);
             }
         }
 
         /// <summary>
         ///  Run a Query but don't dispose the source, and return the count of rows from the query.
         /// </summary>
-        /// <param name="pipeline">IDataBatchEnumerator of source or query to run</param>
-        /// <param name="batchSize">Number of rows to process on each iteration</param>
+        /// <param name="pipeline">IXTable of source or query to run</param>
+        /// <param name="xarraySize">Number of rows to process on each iteration</param>
         /// <returns>Count of rows in this source or query.</returns>
-        public static long RunWithoutDispose(this IDataBatchEnumerator pipeline, int batchSize = DefaultBatchSize)
+        public static long RunWithoutDispose(this IXTable pipeline, int xarraySize = DefaultxarraySize)
         {
             long rowsWritten = 0;
             while (true)
             {
-                int batchCount = pipeline.Next(batchSize);
+                int batchCount = pipeline.Next(xarraySize);
                 if (batchCount == 0) break;
                 rowsWritten += batchCount;
             }
@@ -78,11 +78,11 @@ namespace XForm.Extensions
         ///  
         ///  NOTE: Does not dispose the query; caller must do so.
         /// </summary>
-        /// <param name="pipeline">IDataBatchEnumerator of source or query to run</param>
+        /// <param name="pipeline">IXTable of source or query to run</param>
         /// <param name="timeout">Time limit for runtime</param>
-        /// <param name="batchSize">Number of rows to process in each iteration</param>
+        /// <param name="xarraySize">Number of rows to process in each iteration</param>
         /// <returns>RunResult with whether query completed, runtime so far, and row count so far</returns>
-        public static RunResult RunUntilTimeout(this IDataBatchEnumerator pipeline, TimeSpan timeout, int batchSize = DefaultBatchSize)
+        public static RunResult RunUntilTimeout(this IXTable pipeline, TimeSpan timeout, int xarraySize = DefaultxarraySize)
         {
             RunResult result = new RunResult();
             result.Timeout = timeout;
@@ -90,10 +90,10 @@ namespace XForm.Extensions
             Stopwatch w = Stopwatch.StartNew();
             while (true)
             {
-                int batch = pipeline.Next(batchSize);
-                result.RowCount += batch;
+                int xarray = pipeline.Next(xarraySize);
+                result.RowCount += xarray;
 
-                if (batch == 0)
+                if (xarray == 0)
                 {
                     result.IsComplete = true;
                     break;
@@ -111,30 +111,30 @@ namespace XForm.Extensions
         /// <summary>
         ///  Get the count of rows from the source.
         /// </summary>
-        /// <param name="pipeline">IDataBatchEnumerator to count</param>
-        /// <param name="batchSize">Number of rows to process on each iteration</param>
+        /// <param name="pipeline">IXTable to count</param>
+        /// <param name="xarraySize">Number of rows to process on each iteration</param>
         /// <returns>Count of rows in this source or query.</returns>
-        public static long Count(this IDataBatchEnumerator pipeline, int batchSize = DefaultBatchSize)
+        public static long Count(this IXTable pipeline, int xarraySize = DefaultxarraySize)
         {
-            return RunAndDispose(pipeline, batchSize);
+            return RunAndDispose(pipeline, xarraySize);
         }
 
         /// <summary>
         ///  Get a single value from the source (the first column in the first row).
         /// </summary>
         /// <typeparam name="T">Data Type of result</typeparam>
-        /// <param name="pipeline">IDatBatchEnumerator to run</param>
+        /// <param name="pipeline">IDatxarrayEnumerator to run</param>
         /// <returns>Single value result (first column, first row)</returns>
-        public static T Single<T>(this IDataBatchEnumerator pipeline)
+        public static T Single<T>(this IXTable pipeline)
         {
-            Func<DataBatch> getter = pipeline.ColumnGetter(0);
+            Func<XArray> getter = pipeline.ColumnGetter(0);
             using (pipeline)
             {
                 pipeline.Next(1);
 
-                DataBatch batch = getter();
+                XArray xarray = getter();
                 T[] array = (T[])(getter().Array);
-                return array[batch.Index(0)];
+                return array[xarray.Index(0)];
             }
         }
 
@@ -148,25 +148,25 @@ namespace XForm.Extensions
         ///  }
         /// </example>
         /// <typeparam name="T">Type of values in column</typeparam>
-        /// <param name="pipeline">IDataBatchEnumerator to run</param>
+        /// <param name="pipeline">IXTable to run</param>
         /// <param name="columnName">Column Name to retrieve values from</param>
-        /// <param name="batchSize">Maximum row count to retrieve per page</param>
+        /// <param name="xarraySize">Maximum row count to retrieve per page</param>
         /// <returns>Pages of the result column in a List</returns>
-        public static IEnumerable<List<T>> ToList<T>(this IDataBatchEnumerator pipeline, string columnName, int batchSize = DefaultBatchSize)
+        public static IEnumerable<List<T>> ToList<T>(this IXTable pipeline, string columnName, int xarraySize = DefaultxarraySize)
         {
-            List<T> result = new List<T>(batchSize);
+            List<T> result = new List<T>(xarraySize);
 
             using (pipeline)
             {
-                Func<DataBatch> getter = pipeline.ColumnGetter(pipeline.Columns.IndexOfColumn(columnName));
+                Func<XArray> getter = pipeline.ColumnGetter(pipeline.Columns.IndexOfColumn(columnName));
 
-                while (pipeline.Next(batchSize) != 0)
+                while (pipeline.Next(xarraySize) != 0)
                 {
-                    DataBatch batch = getter();
-                    T[] array = (T[])batch.Array;
-                    for (int i = 0; i < batch.Count; ++i)
+                    XArray xarray = getter();
+                    T[] array = (T[])xarray.Array;
+                    for (int i = 0; i < xarray.Count; ++i)
                     {
-                        result.Add(array[batch.Index(i)]);
+                        result.Add(array[xarray.Index(i)]);
                     }
 
                     yield return result;
@@ -180,12 +180,12 @@ namespace XForm.Extensions
         /// <summary>
         ///  Save the source or query as a binary format table with the given name.
         /// </summary>
-        /// <param name="source">IDataBatchEnumerator to save</param>
+        /// <param name="source">IXTable to save</param>
         /// <param name="tableName">Table Name to save table as</param>
         /// <param name="context">XDatabaseContext for location to save to, as-of-date of result, and other context</param>
-        /// <param name="batchSize">Number of rows to process in each iteration</param>
+        /// <param name="xarraySize">Number of rows to process in each iteration</param>
         /// <returns>Row Count Written</returns>
-        public static long Save(this IDataBatchEnumerator source, string tableName, XDatabaseContext context, int batchSize = DefaultBatchSize)
+        public static long Save(this IXTable source, string tableName, XDatabaseContext context, int xarraySize = DefaultxarraySize)
         {
             string tableRootPath = context.StreamProvider.Path(LocationType.Table, tableName, CrawlType.Full, context.RequestedAsOfDateTime);
             return new BinaryTableWriter(source, context, tableRootPath).RunAndDispose();

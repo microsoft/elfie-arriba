@@ -8,16 +8,16 @@ using XForm.Query;
 
 namespace XForm.Functions
 {
-    public class Constant : IDataBatchColumn
+    public class Constant : IXColumn
     {
         public bool IsNull { get; private set; }
         public bool WasUnwrappedLiteral { get; private set; }
         public ColumnDetails ColumnDetails { get; private set; }
 
         private Array _valueArray;
-        private IDataBatchEnumerator Source { get; set; }
+        private IXTable Source { get; set; }
 
-        public Constant(IDataBatchEnumerator source, object value, Type type, bool wasUnwrappedLiteral = false)
+        public Constant(IXTable source, object value, Type type, bool wasUnwrappedLiteral = false)
         {
             Source = source;
 
@@ -32,12 +32,12 @@ namespace XForm.Functions
 
         public object Value => _valueArray.GetValue(0);
 
-        public Func<DataBatch> Getter()
+        public Func<XArray> Getter()
         {
             return () =>
             {
-                if (IsNull) return DataBatch.Null(_valueArray, Source.CurrentBatchRowCount);
-                return DataBatch.Single(_valueArray, Source.CurrentBatchRowCount);
+                if (IsNull) return XArray.Null(_valueArray, Source.CurrentRowCount);
+                return XArray.Single(_valueArray, Source.CurrentRowCount);
             };
         }
 

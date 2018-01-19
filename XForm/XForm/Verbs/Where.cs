@@ -16,20 +16,20 @@ namespace XForm.Verbs
         public string Verb => "where";
         public string Usage => "where {Expression}";
 
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, XDatabaseContext context)
+        public IXTable Build(IXTable source, XDatabaseContext context)
         {
             return new Where(source, context.Parser.NextExpression(source, context));
         }
     }
 
-    public class Where : DataBatchEnumeratorWrapper
+    public class Where : XTableWrapper
     {
         private IExpression _expression;
         private BitVector _vector;
         private RowRemapper _mapper;
 
-        // Keep current filtered DataBatches from the source, to allow requesting more than the desired count
-        private DataBatch[] _currentBatches;
+        // Keep current filtered arrays from the source, to allow requesting more than the desired count
+        private XArray[] _currentArrays;
         private int _currentMatchesTotal;
         private int _currentMatchesReturned;
         private int _nextCountToReturn;
@@ -38,38 +38,38 @@ namespace XForm.Verbs
         private int _totalRowsRetrieved;
         private int _totalRowsMatched;
 
-        public Where(IDataBatchEnumerator source, IExpression expression) : base(source)
+        public Where(IXTable source, IExpression expression) : base(source)
         {
             _expression = expression;
 
-            // Build a mapper to hold matching rows and remap source batches
+            // Build a mapper to hold matching rows and remap source arrays
             _mapper = new RowRemapper();
 
-            // Allocate room to cache returned DataBatches
-            _currentBatches = new DataBatch[source.Columns.Count];
+            // Allocate room to cache returned arrays
+            _currentArrays = new XArray[source.Columns.Count];
         }
 
-        public override Func<DataBatch> ColumnGetter(int columnIndex)
+        public override Func<XArray> ColumnGetter(int columnIndex)
         {
             // Keep a column-specific array for remapping indices
             int[] remapArray = null;
 
             // Retrieve the column getter for this column
-            Func<DataBatch> getter = _source.ColumnGetter(columnIndex);
+            Func<XArray> getter = _source.ColumnGetter(columnIndex);
 
             return () =>
             {
-                // If we're done returning from the previous batch, ...
+                // If we're done returning from the previous xarray, ...
                 if (_currentMatchesReturned == 0)
                 {
-                    // Get the batch from the source for this column
-                    DataBatch batch = getter();
+                    // Get the xarray from the source for this column
+                    XArray xarray = getter();
 
-                    // Remap the DataBatch indices for this column for the rows which matched the clause
-                    _currentBatches[columnIndex] = _mapper.Remap(batch, ref remapArray);
+                    // Remap the XArray indices for this column for the rows which matched the clause
+                    _currentArrays[columnIndex] = _mapper.Remap(xarray, ref remapArray);
                 }
 
-                return _currentBatches[columnIndex].Slice(_currentMatchesReturned, _nextCountToReturn);
+                return _currentArrays[columnIndex].Slice(_currentMatchesReturned, _nextCountToReturn);
             };
         }
 
@@ -90,7 +90,7 @@ namespace XForm.Verbs
             else if(_totalRowsRetrieved > 1024)
             {
                 // If more than 1,024 rows were searched with no matches, revert to full page size
-                result = DataBatchEnumeratorExtensions.DefaultBatchSize;
+                result = XArrayEnumeratorExtensions.DefaultxarraySize;
             }
 
             // Always request at least 256 rows

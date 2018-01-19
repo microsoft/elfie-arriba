@@ -216,9 +216,9 @@ namespace XForm
             {
                 b.Measure("XForm Join", joinFromLength, () =>
                 {
-                    IDataBatchEnumerator joinToSource = Context.FromArrays(joinTo.Length).WithColumn("ID", joinTo);
+                    IXTable joinToSource = Context.FromArrays(joinTo.Length).WithColumn("ID", joinTo);
 
-                    IDataBatchEnumerator enumerator = Context.FromArrays(joinFromLength).WithColumn("Value", Values);
+                    IXTable enumerator = Context.FromArrays(joinFromLength).WithColumn("Value", Values);
                     enumerator = new Join(enumerator, "Value", joinToSource, "ID", "");
                     return (int)enumerator.Count();
                 });
@@ -292,7 +292,7 @@ namespace XForm
             {
                 b.Measure("Choose", length, () =>
                 {
-                    IDataBatchEnumerator actual = Context.FromArrays(length)
+                    IXTable actual = Context.FromArrays(length)
                         .WithColumn("ID", id)
                         .WithColumn("Rank", rank)
                         .WithColumn("Value", value)

@@ -7,18 +7,18 @@ using XForm.Data;
 
 namespace XForm.Functions
 {
-    public class Rename : IDataBatchColumn
+    public class Rename : IXColumn
     {
-        private IDataBatchColumn Column { get; set; }
+        private IXColumn Column { get; set; }
         public ColumnDetails ColumnDetails { get; private set; }
 
-        public Rename(IDataBatchColumn column, string newName)
+        public Rename(IXColumn column, string newName)
         {
             Column = column;
             ColumnDetails = column.ColumnDetails.Rename(newName);
         }
 
-        public Func<DataBatch> Getter()
+        public Func<XArray> Getter()
         {
             return Column.Getter();
         }

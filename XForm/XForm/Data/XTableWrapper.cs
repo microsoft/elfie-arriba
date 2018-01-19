@@ -6,28 +6,28 @@ using System.Collections.Generic;
 
 namespace XForm.Data
 {
-    public class DataBatchEnumeratorWrapper : IDataBatchEnumerator
+    public class XTableWrapper : IXTable
     {
-        protected IDataBatchEnumerator _source;
+        protected IXTable _source;
 
-        public DataBatchEnumeratorWrapper(IDataBatchEnumerator source)
+        public XTableWrapper(IXTable source)
         {
             _source = source;
         }
 
         public virtual IReadOnlyList<ColumnDetails> Columns => _source.Columns;
 
-        public int CurrentBatchRowCount { get; private set; }
+        public int CurrentRowCount { get; private set; }
 
-        public virtual Func<DataBatch> ColumnGetter(int columnIndex)
+        public virtual Func<XArray> ColumnGetter(int columnIndex)
         {
             return _source.ColumnGetter(columnIndex);
         }
 
         public virtual int Next(int desiredCount)
         {
-            CurrentBatchRowCount = _source.Next(desiredCount);
-            return CurrentBatchRowCount;
+            CurrentRowCount = _source.Next(desiredCount);
+            return CurrentRowCount;
         }
 
         public virtual void Reset()

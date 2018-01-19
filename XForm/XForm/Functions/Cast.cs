@@ -15,10 +15,10 @@ namespace XForm.Functions
         public string Usage => "Cast({Col|Func|Const}, {ToType}, {ErrorOn?}, {DefaultValue?}, {DefaultOn?})";
         public Type ReturnType => null;
 
-        public IDataBatchColumn Build(IDataBatchEnumerator source, XDatabaseContext context)
+        public IXColumn Build(IXTable source, XDatabaseContext context)
         {
             // Column and ToType are required
-            IDataBatchColumn column = context.Parser.NextColumn(source, context);
+            IXColumn column = context.Parser.NextColumn(source, context);
             Type toType = context.Parser.NextType();
 
             // ErrorOn, DefaultValue, and ChangeToDefaultOn are optional
@@ -54,18 +54,18 @@ namespace XForm.Functions
     ///    Cast([Column], [Type], None, [Default], Invalid)         -> Leave nulls alone but replaced invalid values with the default.
     ///    Cast([Column], [Type], None, [Default], NullOrInvalid)   -> 'Loose'. Convert Invalid, Null, and Empty to the default.
     /// </summary>
-    public class Cast : IDataBatchColumn
+    public class Cast : IXColumn
     {
         public ColumnDetails ColumnDetails { get; private set; }
-        private IDataBatchColumn Column { get; set; }
-        private Func<DataBatch, DataBatch> Converter { get; set; }
+        private IXColumn Column { get; set; }
+        private Func<XArray, XArray> Converter { get; set; }
 
         private Type TargetType { get; set; }
         private ValueKinds ErrorOnKinds { get; set; }
         private object DefaultValue { get; set; }
         private ValueKinds ChangeToDefaultKinds { get; set; }
 
-        private Cast(IDataBatchColumn column, Type targetType, ValueKinds errorOnKinds = ValueKindsDefaults.ErrorOn, object defaultValue = null, ValueKinds changeToDefaultKinds = ValueKindsDefaults.ChangeToDefault)
+        private Cast(IXColumn column, Type targetType, ValueKinds errorOnKinds = ValueKindsDefaults.ErrorOn, object defaultValue = null, ValueKinds changeToDefaultKinds = ValueKindsDefaults.ChangeToDefault)
         {
             Column = column;
             ColumnDetails = column.ColumnDetails.ChangeType(targetType);
@@ -77,7 +77,7 @@ namespace XForm.Functions
             ChangeToDefaultKinds = changeToDefaultKinds;
         }
 
-        public static IDataBatchColumn Build(IDataBatchEnumerator source, IDataBatchColumn column, Type targetType, ValueKinds errorOnKinds = ValueKindsDefaults.ErrorOn, object defaultValue = null, ValueKinds changeToDefaultKinds = ValueKindsDefaults.ChangeToDefault)
+        public static IXColumn Build(IXTable source, IXColumn column, Type targetType, ValueKinds errorOnKinds = ValueKindsDefaults.ErrorOn, object defaultValue = null, ValueKinds changeToDefaultKinds = ValueKindsDefaults.ChangeToDefault)
         {
             // If the column is already the right type, just return it
             if (column.ColumnDetails.Type == targetType) return column;
@@ -99,9 +99,9 @@ namespace XForm.Functions
             }
         }
 
-        public Func<DataBatch> Getter()
+        public Func<XArray> Getter()
         {
-            Func<DataBatch> sourceGetter = Column.Getter();
+            Func<XArray> sourceGetter = Column.Getter();
             return () => Converter(sourceGetter());
         }
 

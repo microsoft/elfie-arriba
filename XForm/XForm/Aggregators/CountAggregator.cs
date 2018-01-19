@@ -14,19 +14,19 @@ namespace XForm.Aggregators
         public string Verb => "count";
         public string Usage => "count";
 
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, XDatabaseContext context)
+        public IXTable Build(IXTable source, XDatabaseContext context)
         {
             return new CountAggregator(source);
         }
     }
 
-    public class CountAggregator : IDataBatchEnumerator
+    public class CountAggregator : IXTable
     {
         private List<ColumnDetails> _column;
-        private IDataBatchEnumerator _source;
+        private IXTable _source;
         private int _count;
 
-        public CountAggregator(IDataBatchEnumerator source)
+        public CountAggregator(IXTable source)
         {
             _source = source;
 
@@ -38,9 +38,9 @@ namespace XForm.Aggregators
 
         public IReadOnlyList<ColumnDetails> Columns => _column;
 
-        public int CurrentBatchRowCount { get; private set; }
+        public int CurrentRowCount { get; private set; }
 
-        public Func<DataBatch> ColumnGetter(int columnIndex)
+        public Func<XArray> ColumnGetter(int columnIndex)
         {
             if (columnIndex != 0) throw new ArgumentOutOfRangeException("columnIndex");
             int[] result = new int[1];
@@ -48,7 +48,7 @@ namespace XForm.Aggregators
             return () =>
             {
                 result[0] = _count;
-                return DataBatch.All(result, 1);
+                return XArray.All(result, 1);
             };
         }
 
@@ -63,14 +63,14 @@ namespace XForm.Aggregators
             // Return no more rows if this isn't the first call
             if (_count != -1)
             {
-                CurrentBatchRowCount = 0;
-                return CurrentBatchRowCount;
+                CurrentRowCount = 0;
+                return CurrentRowCount;
             }
 
             // If this is a List, just get the count
-            if (_source is IDataBatchList)
+            if (_source is ISeekableXTable)
             {
-                _count = ((IDataBatchList)_source).Count;
+                _count = ((ISeekableXTable)_source).Count;
             }
             else
             {
@@ -85,8 +85,8 @@ namespace XForm.Aggregators
             }
 
             // Return that there's one row (the count)
-            CurrentBatchRowCount = 1;
-            return CurrentBatchRowCount;
+            CurrentRowCount = 1;
+            return CurrentRowCount;
         }
 
         public void Dispose()

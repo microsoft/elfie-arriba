@@ -13,9 +13,9 @@ namespace XForm.Functions.Date
         public string Usage => "DateAdd({DateTime}, {TimeSpanToAdd})";
         public Type ReturnType => typeof(DateTime);
 
-        public IDataBatchColumn Build(IDataBatchEnumerator source, XDatabaseContext context)
+        public IXColumn Build(IXTable source, XDatabaseContext context)
         {
-            IDataBatchColumn baseDateTime = context.Parser.NextColumn(source, context, typeof(DateTime));
+            IXColumn baseDateTime = context.Parser.NextColumn(source, context, typeof(DateTime));
             TimeSpan offsetSpan = context.Parser.NextTimeSpan();
 
             return SimpleTransformFunction<DateTime, DateTime>.Build(

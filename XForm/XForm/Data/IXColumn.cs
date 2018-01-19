@@ -5,15 +5,16 @@ using System;
 
 namespace XForm.Data
 {
-    public interface IDataBatchColumn
+    public interface IXColumn
     {
         ColumnDetails ColumnDetails { get; }
-        Func<DataBatch> Getter();
+        Func<XArray> Getter();
     }
 
-    public interface IDataBatchEnumColumn : IDataBatchColumn
+    public interface IXEnumColumn : IXColumn
     {
-        DataBatch Values();
-        Func<DataBatch> Indices();
+        Type IndicesType { get;  }
+        XArray Values();
+        Func<XArray> Indices();
     }
 }

@@ -11,7 +11,7 @@ using XForm.Types;
 
 namespace XForm.IO
 {
-    public class BinaryTableReader : IDataBatchList
+    public class BinaryTableReader : ISeekableXTable
     {
         private IStreamProvider _streamProvider;
         private TableMetadata _metadata;
@@ -40,9 +40,9 @@ namespace XForm.IO
         public IReadOnlyList<ColumnDetails> Columns => _metadata.Schema;
         public ArraySelector EnumerateSelector => _currentEnumerateSelector;
 
-        public int CurrentBatchRowCount { get; private set; }
+        public int CurrentRowCount { get; private set; }
 
-        public Func<DataBatch> ColumnGetter(int columnIndex)
+        public Func<XArray> ColumnGetter(int columnIndex)
         {
             // Get and cache the reader
             ColumnReader(columnIndex);
@@ -79,8 +79,8 @@ namespace XForm.IO
         {
             _currentEnumerateSelector = _currentEnumerateSelector.NextPage(Count, desiredCount);
             _currentSelector = _currentEnumerateSelector;
-            CurrentBatchRowCount = _currentEnumerateSelector.Count;
-            return CurrentBatchRowCount;
+            CurrentRowCount = _currentEnumerateSelector.Count;
+            return CurrentRowCount;
         }
 
         public void Get(ArraySelector selector)

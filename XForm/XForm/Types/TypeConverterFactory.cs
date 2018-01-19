@@ -22,18 +22,18 @@ namespace XForm.Types
         public const ValueKinds ChangeToDefault = ValueKinds.None;
     }
 
-    public delegate bool[] NegatedTryConvert(DataBatch values, out Array result);
+    public delegate bool[] NegatedTryConvert(XArray values, out Array result);
 
     public static class TypeConverterFactory
     {
-        public static Func<DataBatch, DataBatch> GetConverter(Type sourceType, Type targetType, ValueKinds errorOn = ValueKindsDefaults.ErrorOn, object defaultValue = null, ValueKinds changeToDefault = ValueKindsDefaults.ChangeToDefault)
+        public static Func<XArray, XArray> GetConverter(Type sourceType, Type targetType, ValueKinds errorOn = ValueKindsDefaults.ErrorOn, object defaultValue = null, ValueKinds changeToDefault = ValueKindsDefaults.ChangeToDefault)
         {
-            Func<DataBatch, DataBatch> converter = TryGetConverter(sourceType, targetType, errorOn, defaultValue, changeToDefault);
+            Func<XArray, XArray> converter = TryGetConverter(sourceType, targetType, errorOn, defaultValue, changeToDefault);
             if (converter == null) throw new ArgumentException($"No converter available from {sourceType.Name} to {targetType.Name}.");
             return converter;
         }
 
-        public static Func<DataBatch, DataBatch> TryGetConverter(Type sourceType, Type targetType, ValueKinds errorOn = ValueKindsDefaults.ErrorOn, object defaultValue = null, ValueKinds changeToDefault = ValueKindsDefaults.ChangeToDefault)
+        public static Func<XArray, XArray> TryGetConverter(Type sourceType, Type targetType, ValueKinds errorOn = ValueKindsDefaults.ErrorOn, object defaultValue = null, ValueKinds changeToDefault = ValueKindsDefaults.ChangeToDefault)
         {
             // Error if there's a default but nothing will be changed to it
             if (defaultValue != null && changeToDefault == ValueKinds.None) throw new ArgumentException("Cast with a default value must have [ChangeToDefaultOn] not 'None'.");
@@ -41,7 +41,7 @@ namespace XForm.Types
             // Convert the defaultValue to the right type
             defaultValue = ConvertSingle(defaultValue, targetType);
 
-            Func<DataBatch, DataBatch> converter = null;
+            Func<XArray, XArray> converter = null;
 
             // See if the target type provides conversion
             ITypeProvider targetTypeProvider = TypeProviderFactory.TryGet(targetType);
@@ -67,8 +67,8 @@ namespace XForm.Types
                 // If found, encode the string to String8 conversion and then the String8 to target conversion
                 if (converter != null)
                 {
-                    Func<DataBatch, DataBatch> innerConverter = GetConverter(typeof(string), typeof(String8), errorOn, defaultValue, changeToDefault);
-                    return (batch) => converter(innerConverter(batch));
+                    Func<XArray, XArray> innerConverter = GetConverter(typeof(string), typeof(String8), errorOn, defaultValue, changeToDefault);
+                    return (xarray) => converter(innerConverter(xarray));
                 }
             }
 
@@ -103,16 +103,16 @@ namespace XForm.Types
             }
 
             // Get the converter for the desired type combination
-            Func<DataBatch, DataBatch> converter = GetConverter(sourceType, targetType);
+            Func<XArray, XArray> converter = GetConverter(sourceType, targetType);
 
             Array array = null;
             Allocator.AllocateToSize(ref array, 1, sourceType);
             array.SetValue(value, 0);
 
-            DataBatch resultBatch = converter(DataBatch.Single(array, 1));
+            XArray resultxarray = converter(XArray.Single(array, 1));
 
             // Verify the result was not null unless the input was "" or 'null'
-            if (resultBatch.IsNull != null && resultBatch.IsNull[resultBatch.Index(0)] == true)
+            if (resultxarray.IsNull != null && resultxarray.IsNull[resultxarray.Index(0)] == true)
             {
                 result = null;
 
@@ -121,11 +121,11 @@ namespace XForm.Types
                 return false;
             }
 
-            result = resultBatch.Array.GetValue(resultBatch.Index(0));
+            result = resultxarray.Array.GetValue(resultxarray.Index(0));
             return true;
         }
 
-        public static Func<DataBatch, DataBatch> NegatedTryConvertToConverter(NegatedTryConvert negatedTryConvert, string errorContextMessage, ValueKinds errorOn = ValueKindsDefaults.ErrorOn, ValueKinds changeToDefault = ValueKindsDefaults.ChangeToDefault)
+        public static Func<XArray, XArray> NegatedTryConvertToConverter(NegatedTryConvert negatedTryConvert, string errorContextMessage, ValueKinds errorOn = ValueKindsDefaults.ErrorOn, ValueKinds changeToDefault = ValueKindsDefaults.ChangeToDefault)
         {
             if (negatedTryConvert == null) return null;
 
@@ -140,7 +140,7 @@ namespace XForm.Types
                 {
                     couldNotConvert = negatedTryConvert(values, out result);
                     ErrorWhenSpecified(errorOn, values, couldNotConvert, errorContextMessage);
-                    return DataBatch.All(result, values.Count, MergeNulls(values, couldNotConvert, ref buffer));
+                    return XArray.All(result, values.Count, MergeNulls(values, couldNotConvert, ref buffer));
                 };
             }
             else if (changeToDefault == ValueKinds.Invalid)
@@ -150,7 +150,7 @@ namespace XForm.Types
                 {
                     couldNotConvert = negatedTryConvert(values, out result);
                     ErrorWhenSpecified(errorOn, values, couldNotConvert, errorContextMessage);
-                    return DataBatch.All(result, values.Count, DataBatch.RemapNulls(values, ref couldNotConvert));
+                    return XArray.All(result, values.Count, XArray.RemapNulls(values, ref couldNotConvert));
                 };
             }
             else if (changeToDefault == ValueKinds.InvalidOrNull)
@@ -160,7 +160,7 @@ namespace XForm.Types
                 {
                     couldNotConvert = negatedTryConvert(values, out result);
                     ErrorWhenSpecified(errorOn, values, couldNotConvert, errorContextMessage);
-                    return DataBatch.All(result, values.Count, null);
+                    return XArray.All(result, values.Count, null);
                 };
             }
             else
@@ -169,7 +169,7 @@ namespace XForm.Types
             }
         }
 
-        private static void ErrorWhenSpecified(ValueKinds errorOnKinds, DataBatch source, bool[] couldNotConvert, string errorContextMessage)
+        private static void ErrorWhenSpecified(ValueKinds errorOnKinds, XArray source, bool[] couldNotConvert, string errorContextMessage)
         {
             // If not erroring on anything, nothing to check
             if (errorOnKinds == ValueKinds.None) return;
@@ -198,27 +198,27 @@ namespace XForm.Types
             }
         }
 
-        private static bool[] MergeNulls(DataBatch batch, bool[] couldNotConvert, ref bool[] buffer)
+        private static bool[] MergeNulls(XArray xarray, bool[] couldNotConvert, ref bool[] buffer)
         {
             // No nulls? Just return the values which didn't convert
-            if (batch.IsNull == null) return couldNotConvert;
+            if (xarray.IsNull == null) return couldNotConvert;
 
-            if (couldNotConvert == null) return DataBatch.RemapNulls(batch, ref buffer);
+            if (couldNotConvert == null) return XArray.RemapNulls(xarray, ref buffer);
 
             // Or together the nulls and values which didn't convert
-            if (batch.Selector.Indices != null)
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    couldNotConvert[i] |= batch.IsNull[batch.Index(i)];
+                    couldNotConvert[i] |= xarray.IsNull[xarray.Index(i)];
                 }
             }
             else
             {
-                int start = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int start = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    couldNotConvert[i] |= batch.IsNull[i + start];
+                    couldNotConvert[i] |= xarray.IsNull[i + start];
                 }
             }
 

@@ -17,19 +17,19 @@ namespace XForm.Verbs
         public string Usage => "cast {Column} {ToType} {ErrorOn?} {DefaultValue?} {DefaultOn?}";
         private CastBuilder _castFunctionBuilder = new CastBuilder();
 
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, XDatabaseContext context)
+        public IXTable Build(IXTable source, XDatabaseContext context)
         {
             return new Cast(source, _castFunctionBuilder.Build(source, context));
         }
     }
 
-    public class Cast : DataBatchEnumeratorWrapper
+    public class Cast : XTableWrapper
     {
         private int _sourceColumnIndex;
-        private IDataBatchColumn _castedColumn;
+        private IXColumn _castedColumn;
         private List<ColumnDetails> _columns;
 
-        public Cast(IDataBatchEnumerator source, IDataBatchColumn castedColumn) : base(source)
+        public Cast(IXTable source, IXColumn castedColumn) : base(source)
         {
             _sourceColumnIndex = source.Columns.IndexOfColumn(castedColumn.ColumnDetails.Name);
             _castedColumn = castedColumn;
@@ -43,7 +43,7 @@ namespace XForm.Verbs
 
         public override IReadOnlyList<ColumnDetails> Columns => _columns;
 
-        public override Func<DataBatch> ColumnGetter(int columnIndex)
+        public override Func<XArray> ColumnGetter(int columnIndex)
         {
             // Pass through columns other than the one being converted
             if (columnIndex != _sourceColumnIndex) return _source.ColumnGetter(columnIndex);

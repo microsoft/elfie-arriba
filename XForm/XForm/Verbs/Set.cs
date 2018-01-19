@@ -15,7 +15,7 @@ namespace XForm.Verbs
         public string Verb => "set";
         public string Usage => "set {NewName} {Col|Func|Const}";
 
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, XDatabaseContext context)
+        public IXTable Build(IXTable source, XDatabaseContext context)
         {
             return new Set(source,
                 context.Parser.NextOutputColumnName(source),
@@ -23,13 +23,13 @@ namespace XForm.Verbs
         }
     }
 
-    public class Set : DataBatchEnumeratorWrapper
+    public class Set : XTableWrapper
     {
         private int _computedColumnIndex;
-        private IDataBatchColumn _calculatedColumn;
+        private IXColumn _calculatedColumn;
         private List<ColumnDetails> _columns;
 
-        public Set(IDataBatchEnumerator source, string outputColumnName, IDataBatchColumn column) : base(source)
+        public Set(IXTable source, string outputColumnName, IXColumn column) : base(source)
         {
             _calculatedColumn = column;
             _columns = new List<ColumnDetails>(source.Columns);
@@ -48,7 +48,7 @@ namespace XForm.Verbs
 
         public override IReadOnlyList<ColumnDetails> Columns => _columns;
 
-        public override Func<DataBatch> ColumnGetter(int columnIndex)
+        public override Func<XArray> ColumnGetter(int columnIndex)
         {
             // Pass through columns other than the one being calculated
             if (columnIndex != _computedColumnIndex) return _source.ColumnGetter(columnIndex);

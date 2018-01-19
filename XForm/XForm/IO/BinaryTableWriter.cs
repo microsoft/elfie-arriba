@@ -20,7 +20,7 @@ namespace XForm.IO
         public string Verb => "write";
         public string Usage => "write {Table}";
 
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, XDatabaseContext context)
+        public IXTable Build(IXTable source, XDatabaseContext context)
         {
             string filePath = context.Parser.NextOutputTableName();
             if (filePath.StartsWith("Table\\", StringComparison.OrdinalIgnoreCase) || filePath.EndsWith(".xform", StringComparison.OrdinalIgnoreCase))
@@ -34,18 +34,18 @@ namespace XForm.IO
         }
     }
 
-    public class BinaryTableWriter : DataBatchEnumeratorWrapper
+    public class BinaryTableWriter : XTableWrapper
     {
         private XDatabaseContext _xDatabaseContext;
         private string _tableRootPath;
 
-        private Func<DataBatch>[] _getters;
-        private DataBatch[] _currentBatches;
+        private Func<XArray>[] _getters;
+        private XArray[] _currentArrays;
         private IColumnWriter[] _writers;
 
         private TableMetadata _metadata;
 
-        public BinaryTableWriter(IDataBatchEnumerator source, XDatabaseContext xDatabaseContext, string tableRootPath) : base(source)
+        public BinaryTableWriter(IXTable source, XDatabaseContext xDatabaseContext, string tableRootPath) : base(source)
         {
             _xDatabaseContext = xDatabaseContext;
             _tableRootPath = tableRootPath;
@@ -55,8 +55,8 @@ namespace XForm.IO
             _metadata = new TableMetadata();
             _metadata.Query = xDatabaseContext.CurrentQuery;
 
-            _getters = new Func<DataBatch>[columnCount];
-            _currentBatches = new DataBatch[columnCount];
+            _getters = new Func<XArray>[columnCount];
+            _currentArrays = new XArray[columnCount];
 
             // Subscribe to all of the columns
             for (int i = 0; i < columnCount; ++i)
@@ -92,7 +92,7 @@ namespace XForm.IO
             }
         }
 
-        public override Func<DataBatch> ColumnGetter(int columnIndex)
+        public override Func<XArray> ColumnGetter(int columnIndex)
         {
             return _getters[columnIndex];
         }
@@ -109,10 +109,10 @@ namespace XForm.IO
                 return 0;
             }
 
-            // Get the next set of batches (parallel might not be safe)
+            // Get the next set of arrays (parallel might not be safe)
             for (int i = 0; i < _getters.Length; ++i)
             {
-                _currentBatches[i] = _getters[i]();
+                _currentArrays[i] = _getters[i]();
             }
 
             // Write them out (Parallel safe)
@@ -120,14 +120,14 @@ namespace XForm.IO
             {
                 for (int i = 0; i < _getters.Length; ++i)
                 {
-                    _writers[i].Append(_currentBatches[i]);
+                    _writers[i].Append(_currentArrays[i]);
                 }
             }
             else
             {
                 Parallel.For(0, _getters.Length, (i) =>
                 {
-                    _writers[i].Append(_currentBatches[i]);
+                    _writers[i].Append(_currentArrays[i]);
                 });
             }
 

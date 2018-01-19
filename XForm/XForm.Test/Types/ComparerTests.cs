@@ -56,23 +56,23 @@ namespace XForm.Test.Query
         private static void Comparer_VerifyWhereAll<T>(T[] left, T[] right, T value) where T : IComparable<T>
         {
             // Try operations between array and single value
-            Comparer_VerifyWhere<T>(DataBatch.All(left, left.Length), DataBatch.Single(new T[1] { value }, left.Length), CompareOperator.Equal);
-            Comparer_VerifyWhere<T>(DataBatch.All(left, left.Length), DataBatch.Single(new T[1] { value }, left.Length), CompareOperator.NotEqual);
-            Comparer_VerifyWhere<T>(DataBatch.All(left, left.Length), DataBatch.Single(new T[1] { value }, left.Length), CompareOperator.GreaterThan);
-            Comparer_VerifyWhere<T>(DataBatch.All(left, left.Length), DataBatch.Single(new T[1] { value }, left.Length), CompareOperator.GreaterThanOrEqual);
-            Comparer_VerifyWhere<T>(DataBatch.All(left, left.Length), DataBatch.Single(new T[1] { value }, left.Length), CompareOperator.LessThan);
-            Comparer_VerifyWhere<T>(DataBatch.All(left, left.Length), DataBatch.Single(new T[1] { value }, left.Length), CompareOperator.LessThanOrEqual);
+            Comparer_VerifyWhere<T>(XArray.All(left, left.Length), XArray.Single(new T[1] { value }, left.Length), CompareOperator.Equal);
+            Comparer_VerifyWhere<T>(XArray.All(left, left.Length), XArray.Single(new T[1] { value }, left.Length), CompareOperator.NotEqual);
+            Comparer_VerifyWhere<T>(XArray.All(left, left.Length), XArray.Single(new T[1] { value }, left.Length), CompareOperator.GreaterThan);
+            Comparer_VerifyWhere<T>(XArray.All(left, left.Length), XArray.Single(new T[1] { value }, left.Length), CompareOperator.GreaterThanOrEqual);
+            Comparer_VerifyWhere<T>(XArray.All(left, left.Length), XArray.Single(new T[1] { value }, left.Length), CompareOperator.LessThan);
+            Comparer_VerifyWhere<T>(XArray.All(left, left.Length), XArray.Single(new T[1] { value }, left.Length), CompareOperator.LessThanOrEqual);
 
             // Try operations between two arrays
-            Comparer_VerifyWhere<T>(DataBatch.All(left, left.Length), DataBatch.All(right, right.Length), CompareOperator.Equal);
-            Comparer_VerifyWhere<T>(DataBatch.All(left, left.Length), DataBatch.All(right, right.Length), CompareOperator.NotEqual);
-            Comparer_VerifyWhere<T>(DataBatch.All(left, left.Length), DataBatch.All(right, right.Length), CompareOperator.GreaterThan);
-            Comparer_VerifyWhere<T>(DataBatch.All(left, left.Length), DataBatch.All(right, right.Length), CompareOperator.GreaterThanOrEqual);
-            Comparer_VerifyWhere<T>(DataBatch.All(left, left.Length), DataBatch.All(right, right.Length), CompareOperator.LessThan);
-            Comparer_VerifyWhere<T>(DataBatch.All(left, left.Length), DataBatch.All(right, right.Length), CompareOperator.LessThanOrEqual);
+            Comparer_VerifyWhere<T>(XArray.All(left, left.Length), XArray.All(right, right.Length), CompareOperator.Equal);
+            Comparer_VerifyWhere<T>(XArray.All(left, left.Length), XArray.All(right, right.Length), CompareOperator.NotEqual);
+            Comparer_VerifyWhere<T>(XArray.All(left, left.Length), XArray.All(right, right.Length), CompareOperator.GreaterThan);
+            Comparer_VerifyWhere<T>(XArray.All(left, left.Length), XArray.All(right, right.Length), CompareOperator.GreaterThanOrEqual);
+            Comparer_VerifyWhere<T>(XArray.All(left, left.Length), XArray.All(right, right.Length), CompareOperator.LessThan);
+            Comparer_VerifyWhere<T>(XArray.All(left, left.Length), XArray.All(right, right.Length), CompareOperator.LessThanOrEqual);
         }
 
-        private static void Comparer_VerifyWhere<T>(DataBatch left, DataBatch right, CompareOperator cOp) where T : IComparable<T>
+        private static void Comparer_VerifyWhere<T>(XArray left, XArray right, CompareOperator cOp) where T : IComparable<T>
         {
             ComparerExtensions.Comparer comparer = TypeProviderFactory.Get(typeof(T).Name).TryGetComparer(cOp);
             BitVector vector = new BitVector(left.Count);
@@ -82,7 +82,7 @@ namespace XForm.Test.Query
             Comparer_VerifySetMatches<T>(vector, left, right, cOp);
         }
 
-        private static void Comparer_VerifySetMatches<T>(BitVector set, DataBatch left, DataBatch right, CompareOperator cOp) where T : IComparable<T>
+        private static void Comparer_VerifySetMatches<T>(BitVector set, XArray left, XArray right, CompareOperator cOp) where T : IComparable<T>
         {
             // Validate each array entry is included (or not) as the individual comparison would
             int expectedCount = 0;

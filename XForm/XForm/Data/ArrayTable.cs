@@ -9,10 +9,10 @@ using XForm.Types;
 
 namespace XForm.IO
 {
-    public class ArrayTable : IDataBatchList
+    public class ArrayTable : ISeekableXTable
     {
         private List<ColumnDetails> _columns;
-        private List<DataBatch> _columnArrays;
+        private List<XArray> _columnArrays;
         private int _rowCount;
 
         private ArraySelector _currentSelector;
@@ -21,12 +21,12 @@ namespace XForm.IO
         public ArrayTable(int rowCount)
         {
             _columns = new List<ColumnDetails>();
-            _columnArrays = new List<DataBatch>();
+            _columnArrays = new List<XArray>();
             _rowCount = rowCount;
             Reset();
         }
 
-        public ArrayTable WithColumn(ColumnDetails details, DataBatch fullColumn)
+        public ArrayTable WithColumn(ColumnDetails details, XArray fullColumn)
         {
             if (fullColumn.Count != _rowCount) throw new ArgumentException($"All columns passed to ArrayReader must have the configured row count. The configured row count is {_rowCount:n0}; this column has {fullColumn.Count:n0} rows.");
 
@@ -42,15 +42,15 @@ namespace XForm.IO
 
         public ArrayTable WithColumn(string columnName, Array array)
         {
-            return WithColumn(new ColumnDetails(columnName, array.GetType().GetElementType()), DataBatch.All(array, _rowCount));
+            return WithColumn(new ColumnDetails(columnName, array.GetType().GetElementType()), XArray.All(array, _rowCount));
         }
 
         public IReadOnlyList<ColumnDetails> Columns => _columns;
-        public int CurrentBatchRowCount { get; private set; }
+        public int CurrentRowCount { get; private set; }
         public int Count => _rowCount;
         public ArraySelector EnumerateSelector => _currentEnumerateSelector;
 
-        public Func<DataBatch> ColumnGetter(int columnIndex)
+        public Func<XArray> ColumnGetter(int columnIndex)
         {
             // Declare a remap array in case indices must be remapped
             int[] remapArray = null;
@@ -58,7 +58,7 @@ namespace XForm.IO
             return () =>
             {
                 if (columnIndex < 0 || columnIndex >= _columnArrays.Count) throw new IndexOutOfRangeException("columnIndex");
-                DataBatch raw = _columnArrays[columnIndex];
+                XArray raw = _columnArrays[columnIndex];
                 return raw.Select(_currentSelector, ref remapArray);
             };
         }
@@ -72,8 +72,8 @@ namespace XForm.IO
         {
             _currentEnumerateSelector = _currentEnumerateSelector.NextPage(_rowCount, desiredCount);
             _currentSelector = _currentEnumerateSelector;
-            CurrentBatchRowCount = _currentEnumerateSelector.Count;
-            return CurrentBatchRowCount;
+            CurrentRowCount = _currentEnumerateSelector.Count;
+            return CurrentRowCount;
         }
 
         public IColumnReader ColumnReader(int columnIndex)
