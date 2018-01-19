@@ -155,6 +155,9 @@ class Index extends React.Component {
                 })
             }
         })
+        xhr(`count`, { asof: this.state.asOf, q: this.query }).then(o => {
+            this.setState({ status: typeof o === "number" && `${o.toLocaleString()} Results` })
+        })
     }
     get query() {
         return this.editor && this.editor.getModel().getValue()
@@ -170,19 +173,10 @@ class Index extends React.Component {
         if (!q) return // Running with an empty query will return a "" instead of an empty object table.
 
         this.setState({ loading: true })
-
-        const asof = this.state.asOf
         const userCols = this.state.userCols.length && `\nselect ${this.state.userCols.map(c => `[${c}]`).join(', ')}` || ''
-
-        xhr(`run`, { rowLimit: this.count, colLimit: this.cols, asof, q: `${q}${userCols}` }).then(o => {
+        xhr(`run`, { rowLimit: this.count, colLimit: this.cols, asof: this.state.asOf, q: `${q}${userCols}` }).then(o => {
             if (o.Message || o.ErrorMessage) throw 'Error should have been caught before run.'
-
             this.setState({ results: o, loading: false })
-            if (this.count === this.baseCount) { // No need to recount after the first page of results.
-                xhr(`count`, { asof, q }).then(o => {
-                    this.setState({ status: typeof o === "number" && `${o.toLocaleString()} Results` })
-                })
-            }
         })
     }
     render() {
