@@ -133,6 +133,14 @@ body {
             .margin, .monaco-editor-background { background-color: transparent; }
             .line-numbers { color: hsl(0, 0, 80%); }
             .current-line { border: 0; }
+            .suggest-widget {
+                width: 230px;
+                & > .tree {
+                    background-color: $bg !important;
+                    border-style: none;
+                    box-shadow: 0 3px 10px 0 rgba(0,0,0,0.2), 0 0 0 1px rgba(0,0,0,0.05);
+                }
+            }
         }
 
         position: relative;
