@@ -242,22 +242,26 @@ namespace XForm
             {
                 b.Measure("System.Collections.Generic.Dictionary", count, () =>
                 {
+                    int containsCount = 0;
                     for (int i = 0; i < count; ++i)
                     {
                         expected[values[i]] = i;
+                        if (expected.ContainsKey(values[i])) containsCount++;
                     }
 
-                    return expected.Count;
+                    return expected.Count + containsCount;
                 });
 
                 b.Measure("XForm.Dictionary5", count, () =>
                 {
+                    int containsCount = 0;
                     for (int i = 0; i < count; ++i)
                     {
                         actual.Add(values[i], i);
+                        if (actual.ContainsKey(values[i])) containsCount++;
                     }
 
-                    return actual.Count;
+                    return actual.Count + containsCount;
                 });
 
                 b.AssertResultsEqual();
