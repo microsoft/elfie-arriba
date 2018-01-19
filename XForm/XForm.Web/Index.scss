@@ -69,6 +69,11 @@ body {
         border: 1px solid hsla(0, 0, 0, 0.15);
     }
 
+    option {
+        color: $text;
+        background: $bg;
+    }
+
     ::placeholder { color: hsla(0, 0, 100%, 0.5); }
 }
 
