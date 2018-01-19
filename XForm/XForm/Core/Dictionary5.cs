@@ -143,13 +143,14 @@ namespace XForm
             _currentKey = key;
             _currentValue = value;
 
-            if (!this.Add(HashCurrent()))
+            uint hash = HashCurrent();
+            if (!this.Add(hash))
             {
                 Expand();
 
                 _currentKey = key;
                 _currentValue = value;
-                this.Add(HashCurrent());
+                this.Add(hash);
             }
         }
 

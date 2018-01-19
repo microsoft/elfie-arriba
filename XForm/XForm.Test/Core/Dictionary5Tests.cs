@@ -28,11 +28,10 @@ namespace XForm.Core
                 int key = r.Next();
                 expected.Add(key, i);
                 actual.Add(key, i);
-                if (!actual.ContainsKey(key)) Debugger.Break();
                 Assert.IsTrue(actual.ContainsKey(key));
             }
 
-            //Trace.WriteLine($"Mean: {actual.DistanceMean():n2}, Max Probe: {(actual.MaxProbeLength)}");
+            Trace.WriteLine($"Mean: {actual.DistanceMean():n2}, Max Probe: {(actual.MaxProbeLength)}");
 
             // Verify counts match
             Assert.AreEqual(actual.Count, actual.AllKeys.Count());

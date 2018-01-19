@@ -148,9 +148,10 @@ namespace XForm
 
             // To find a key, just compare every key starting with the expected bucket
             // up to the farthest any key had to be moved from the desired bucket.
-            for (int probeLength = 1; probeLength <= this.MaxProbeLength; ++probeLength)
+            int limit = (byte)((this.MaxProbeLength << 4) + (15));
+            for (int matchingMetadata = (byte)((1 << 4) + (increment - 1)); matchingMetadata <= limit; matchingMetadata += 16)
             {
-                if (this.Metadata[bucket] != 0 && EqualsCurrent(bucket)) return (int)bucket;
+                if (this.Metadata[bucket] == matchingMetadata && EqualsCurrent(bucket)) return (int)bucket;
 
                 bucket += increment;
                 if (bucket >= this.Metadata.Length) bucket -= (uint)this.Metadata.Length;
@@ -187,39 +188,39 @@ namespace XForm
             uint bucket = Bucket(hash);
             uint increment = Increment(hash);
 
-            for (int probeLength = 1; probeLength <= ProbeLengthLimit; ++probeLength)
+            int limit = (byte)(((this.MaxProbeLength + 1) << 4) + (15));
+            for (int matchingMetadata = (byte)((1 << 4) + (increment - 1)); matchingMetadata <= limit; matchingMetadata += 16)
             {
                 int metadataFound = this.Metadata[bucket];
-                int probeLengthFound = (metadataFound >> 4);
 
-                if (probeLengthFound == 0)
+                if (metadataFound == 0)
                 {
                     // If we found an empty cell (probe zero), add the item and return
-                    this.Metadata[bucket] = (byte)((probeLength << 4) + increment - 1);
+                    this.Metadata[bucket] = (byte)matchingMetadata;
                     this.SwapWithCurrent(bucket, SwapType.Insert);
 
                     // Track the max probe length
-                    if (probeLength > this.MaxProbeLength) this.MaxProbeLength = probeLength;
+                    if ((matchingMetadata >> 4) > this.MaxProbeLength) this.MaxProbeLength++;
 
                     // Increment the count for the new item
                     this.Count++;
 
                     return true;
                 }
-                else if (probeLengthFound < probeLength)
+                else if (metadataFound < matchingMetadata)
                 {
                     // If we found an item with a higher wealth, put the new item here
                     this.SwapWithCurrent(bucket, SwapType.Move);
-                    this.Metadata[bucket] = (byte)((probeLength << 4) + increment - 1);
+                    this.Metadata[bucket] = (byte)matchingMetadata;
 
                     // Track the max probe length
-                    if (probeLength > this.MaxProbeLength) this.MaxProbeLength = probeLength;
+                    if ((matchingMetadata >> 4) > this.MaxProbeLength) this.MaxProbeLength++;
 
                     // Get the swapped out item probe length and increment and loop to insert it
-                    probeLength = probeLengthFound;
+                    matchingMetadata = metadataFound;
                     increment = Increment((uint)metadataFound);
                 }
-                else if (probeLengthFound == probeLength)
+                else if (metadataFound == matchingMetadata)
                 {
                     // If this is a duplicate of the new item, reset the value and stop
                     if (this.EqualsCurrent(bucket))
