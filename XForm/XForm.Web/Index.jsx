@@ -150,7 +150,7 @@ class Index extends React.Component {
         if (!this.queryValid) return
         this.count = this.baseCount
         this.cols = this.baseCols
-        this.refresh()
+        this.limitChanged()
         xhr(`run`, { asof: this.state.asOf, q: `${this.query}\nschema` }).then(o => {
             if (o.rows) {
                 this.setState({
@@ -162,7 +162,7 @@ class Index extends React.Component {
             this.setState({ status: typeof o === "number" && `${o.toLocaleString()} Results` })
         })
     }
-    refresh(addCount = 0, addCols = 0) {
+    limitChanged(addCount = 0, addCols = 0) {
         this.count += addCount
         this.cols += addCols
         const q = this.query
@@ -199,7 +199,7 @@ class Index extends React.Component {
                             setTimeout(() => this.setState({ saving: "Save" }), 3000)
                         })
                     }}>{ this.state.saving || "Save" }</span>
-                    <select onChange={e => this.setState({ asOf: e.target.value || undefined }, () => this.refresh())}>
+                    <select onChange={e => this.setState({ asOf: e.target.value || undefined }, () => this.limitChanged())}>
                         <option value="">As of Now</option>
                         <option value={Date.daysAgo(1).toXFormat()}>As of Yesterday</option>
                         <option value={Date.daysAgo(7).toXFormat()}>As of Last Week</option>
@@ -253,8 +253,8 @@ class Index extends React.Component {
                         const element = e.target
                         const pixelsFromLimitX = (element.scrollWidth - element.clientWidth - element.scrollLeft)
                         const pixelsFromLimitY = (element.scrollHeight - element.clientHeight - element.scrollTop)
-                        if (pixelsFromLimitX < 20) this.refresh(0, 10)
-                        if (pixelsFromLimitY < 100) this.refresh(50)
+                        if (pixelsFromLimitX < 20) this.limitChanged(0, 10)
+                        if (pixelsFromLimitY < 100) this.limitChanged(50)
                     }}>
                     <table>
                         <thead>
