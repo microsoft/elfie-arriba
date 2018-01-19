@@ -4,6 +4,7 @@
 using System;
 
 using XForm.Data;
+using XForm.Extensions;
 using XForm.Query;
 using XForm.Query.Expression;
 using XForm.Transforms;
@@ -82,13 +83,18 @@ namespace XForm.Verbs
             {
                 double rowsPerMatch = (double)_totalRowsRetrieved / (double)_totalRowsMatched;
                 result = (int)(desiredCount * rowsPerMatch);
+
+                // Never request more than 16x the match count
+                if (result > desiredCount * 16) result = desiredCount * 16;
+            }
+            else if(_totalRowsRetrieved > 1024)
+            {
+                // If more than 1,024 rows were searched with no matches, revert to full page size
+                result = DataBatchEnumeratorExtensions.DefaultBatchSize;
             }
 
-            // Never request more than 16x the match count
-            if (result > desiredCount * 16) result = desiredCount * 16;
-
-            // Always request at least 100 rows
-            if (result < 100) result = 100;
+            // Always request at least 256 rows
+            if (result < 256) result = 256;
 
             return result;
         }
@@ -129,6 +135,9 @@ namespace XForm.Verbs
                     _nextCountToReturn = Math.Min(desiredCount, _currentMatchesTotal - _currentMatchesReturned);
                     return _nextCountToReturn;
                 }
+
+                // Reconsider how many rows to request if no matches
+                countToRequest = CountToRequest(desiredCount);
             }
 
             return 0;
