@@ -143,6 +143,9 @@ class Index extends React.Component {
             this.queryChanged()
     	});
     }
+    get query() {
+        return this.editor && this.editor.getModel().getValue()
+    }
     queryChanged() {
         if (!this.queryValid) return
         this.count = this.baseCount
@@ -158,9 +161,6 @@ class Index extends React.Component {
         xhr(`count`, { asof: this.state.asOf, q: this.query }).then(o => {
             this.setState({ status: typeof o === "number" && `${o.toLocaleString()} Results` })
         })
-    }
-    get query() {
-        return this.editor && this.editor.getModel().getValue()
     }
     refresh(addCount = 0, addCols = 0) {
         this.count += addCount
