@@ -162,9 +162,6 @@ class Index extends React.Component {
     get query() {
         return this.editor && this.editor.getModel().getValue()
     }
-    get encodedQuery() {
-        return encodeURIComponent(this.query)
-    }
     refresh(addCount = 0, addCols = 0) {
         this.count += addCount
         this.cols += addCols
@@ -188,6 +185,7 @@ class Index extends React.Component {
         }
 
         const q = this.query
+        const encodedQuery = q
 
         return <div className={`root`}>
             <div className="query">
@@ -247,8 +245,8 @@ class Index extends React.Component {
                 <div className="resultsHeader">
                     <span>{this.state.status}</span>
                     <span className="flexFill"></span>
-                    {q && <a className="button" target="_blank" href={`http://localhost:5073/download?fmt=csv&q=${this.encodedQuery}`}>CSV</a>}
-                    {q && <a className="button" target="_blank" href={`http://localhost:5073/download?fmt=tsv&q=${this.encodedQuery}`}>TSV</a>}
+                    {q && <a className="button" target="_blank" href={`http://localhost:5073/download?fmt=csv&q=${encodedQuery}`}>CSV</a>}
+                    {q && <a className="button" target="_blank" href={`http://localhost:5073/download?fmt=tsv&q=${encodedQuery}`}>TSV</a>}
                     <span className={`loading ${ this.state.loading && 'loading-active' }`}></span>
                 </div>
                 <div className="tableWrapper" onScroll={e => {
