@@ -333,12 +333,17 @@ namespace XForm.IO
         // Read builds an indexed DataBatch pointing to the value for each row
         public DataBatch Read(ArraySelector selector)
         {
+            return Remap(Values(), selector);
+        }
+
+        public DataBatch Remap(DataBatch values, ArraySelector selector)
+        {
             // Read row indices and convert to int[]
             DataBatch indexByteBatch = _rowIndexReader.Read(selector);
             DataBatch indexIntBatch = _rowIndexToIntConverter(indexByteBatch);
 
             // Return the selected values
-            return Values().Reselect(ArraySelector.Map((int[])indexIntBatch.Array, indexIntBatch.Count));
+            return values.Reselect(ArraySelector.Map((int[])indexIntBatch.Array, indexIntBatch.Count));
         }
 
         // Values returns the set of distinct values themselves

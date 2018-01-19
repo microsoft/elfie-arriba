@@ -59,41 +59,58 @@ namespace XForm.Functions
     ///  which can be optimized by looking at the set of available values once instead of
     ///  resolving each row to a value and comparing it.
     /// </summary>
-    public class EnumColumn : IDataBatchColumn
+    public class EnumColumn : IDataBatchEnumColumn
     {
-        private IDataBatchList Source { get; set; }
-        private EnumReader EnumReader { get; set; }
-        private string ColumnName { get; set; }
-        private int ColumnIndex { get; set; }
+        private IDataBatchList _source;
+        private EnumReader _enumReader;
+        private DataBatch _values;
+        private string _columnName;
+        private int _columnIndex;
         
-        public ColumnDetails ColumnDetails => Source.Columns[ColumnIndex];
+        public ColumnDetails ColumnDetails { get; private set; }
 
         internal EnumColumn(IDataBatchList source, EnumReader enumReader, string columnName, int columnIndex)
         {
-            Source = source;
-            EnumReader = enumReader;
-            ColumnName = columnName;
-            ColumnIndex = columnIndex;
+            _source = source;
+            _enumReader = enumReader;
+            _columnName = columnName;
+            _columnIndex = columnIndex;
+            _values = enumReader.Values();
+            ColumnDetails = _source.Columns[_columnIndex];
         }
+
+        internal EnumColumn(EnumColumn original, DataBatch mappedValues, Type newType)
+        {
+            _source = original._source;
+            _enumReader = original._enumReader;
+            _columnName = original._columnName;
+            _columnIndex = original._columnIndex;
+            _values = mappedValues;
+            ColumnDetails = original.ColumnDetails.ChangeType(newType);
+        }
+
+        internal EnumColumn(EnumColumn original, Func<DataBatch, DataBatch> converter, Type newType) : this(original, converter(original.Values()), newType)
+        { }
 
         public Func<DataBatch> Getter()
         {
-            return () => EnumReader.Read(Source.EnumerateSelector);
+            // Remap _values instead of calling EnumReader.Getter so that casted or converted EnumColumns return the new values
+            return () => _enumReader.Remap(_values, _source.EnumerateSelector);
         }
 
         public DataBatch Values()
         {
-            return EnumReader.Values();
+            return _values;
         }
 
         public Func<DataBatch> Indices()
         {
-            return () => EnumReader.Indices(Source.EnumerateSelector);
+            return () => _enumReader.Indices(_source.EnumerateSelector);
         }
 
         public override string ToString()
         {
-            return XqlScanner.Escape(ColumnName, TokenType.ColumnName);
+            return XqlScanner.Escape(_columnName, TokenType.ColumnName);
         }
     }
 }

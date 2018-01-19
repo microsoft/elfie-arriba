@@ -87,6 +87,12 @@ namespace XForm.Functions
                 // If the inner value is a constant, convert once and store the new constant
                 return new Constant(source, TypeConverterFactory.ConvertSingle(((Constant)column).Value, targetType), targetType);
             }
+            else if(column is EnumColumn)
+            {
+                // If the inner value is an enum, convert each value once
+                EnumColumn enumColumn = (EnumColumn)column;
+                return new EnumColumn(enumColumn, TypeConverterFactory.GetConverter(column.ColumnDetails.Type, targetType, errorOnKinds, defaultValue, changeToDefaultKinds), targetType);
+            }
             else
             {
                 return new Cast(column, targetType, errorOnKinds, defaultValue, changeToDefaultKinds);

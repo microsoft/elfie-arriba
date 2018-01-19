@@ -20,18 +20,21 @@ namespace XForm.Functions
     /// <typeparam name="U">Type output by the function</typeparam>
     public class SimpleTransformFunction<T, U> : IDataBatchColumn
     {
-        private string Name { get; set; }
-        private IDataBatchColumn Column { get; set; }
-        private Func<T, U> Function { get; set; }
-        private Action BeforeBatch { get; set; }
+        private string _name;
+        private IDataBatchColumn _column;
+        private Func<T, U> _function;
+        private Action _beforeBatch;
+        private U[] _buffer;
+        private bool[] _isNull;
+
         public ColumnDetails ColumnDetails { get; private set; }
 
         private SimpleTransformFunction(string name, IDataBatchColumn column, Func<T, U> function, Action beforeBatch = null)
         {
-            this.Name = name;
-            this.Column = column;
-            this.Function = function;
-            this.BeforeBatch = beforeBatch;
+            this._name = name;
+            this._column = column;
+            this._function = function;
+            this._beforeBatch = beforeBatch;
             this.ColumnDetails = column.ColumnDetails.ChangeType(typeof(U));
         }
 
@@ -45,6 +48,13 @@ namespace XForm.Functions
                 if (beforeBatch != null) beforeBatch();
                 return new Constant(source, function((T)((Constant)column).Value), typeof(U));
             }
+            else if(column is EnumColumn)
+            {
+                // If the input is an enum, convert each value once
+                EnumColumn enumColumn = (EnumColumn)column;
+                if (beforeBatch != null) beforeBatch();
+                return new EnumColumn(enumColumn, new SimpleTransformFunction<T, U>(name, column, function, beforeBatch).Convert(enumColumn.Values()), typeof(U));
+            }
             else
             {
                 return new SimpleTransformFunction<T, U>(name, column, function, beforeBatch);
@@ -53,42 +63,44 @@ namespace XForm.Functions
 
         public Func<DataBatch> Getter()
         {
-            Func<DataBatch> sourceGetter = Column.Getter();
-            U[] buffer = null;
-            bool[] isNull = null;
+            Func<DataBatch> sourceGetter = _column.Getter();
 
             return () =>
             {
-                if (BeforeBatch != null) BeforeBatch();
+                if (_beforeBatch != null) _beforeBatch();
                 DataBatch batch = sourceGetter();
-
-                // If a single value was returned, only convert it
-                if (batch.Selector.IsSingleValue)
-                {
-                    Allocator.AllocateToSize(ref buffer, 1);
-                    buffer[0] = Function(((T[])batch.Array)[0]);
-                    return DataBatch.Single(buffer, batch.Count);
-                }
-
-                // Allocate for results
-                Allocator.AllocateToSize(ref buffer, batch.Count);
-
-                // Convert each non-null value
-                T[] array = (T[])batch.Array;
-                for (int i = 0; i < batch.Count; ++i)
-                {
-                    int index = batch.Index(i);
-                    bool rowIsNull = (batch.IsNull != null && batch.IsNull[index]);
-                    buffer[i] = (rowIsNull ? default(U) : Function(array[index]));
-                }
-
-                return DataBatch.All(buffer, batch.Count, DataBatch.RemapNulls(batch, ref isNull));
+                return Convert(batch);
             };
+        }
+
+        private DataBatch Convert(DataBatch batch)
+        {
+            // If a single value was returned, only convert it
+            if (batch.Selector.IsSingleValue)
+            {
+                Allocator.AllocateToSize(ref _buffer, 1);
+                _buffer[0] = _function(((T[])batch.Array)[0]);
+                return DataBatch.Single(_buffer, batch.Count);
+            }
+
+            // Allocate for results
+            Allocator.AllocateToSize(ref _buffer, batch.Count);
+
+            // Convert each non-null value
+            T[] array = (T[])batch.Array;
+            for (int i = 0; i < batch.Count; ++i)
+            {
+                int index = batch.Index(i);
+                bool rowIsNull = (batch.IsNull != null && batch.IsNull[index]);
+                _buffer[i] = (rowIsNull ? default(U) : _function(array[index]));
+            }
+
+            return DataBatch.All(_buffer, batch.Count, DataBatch.RemapNulls(batch, ref _isNull));
         }
 
         public override string ToString()
         {
-            return $"{Name}({Column})";
+            return $"{_name}({_column})";
         }
     }
 }
