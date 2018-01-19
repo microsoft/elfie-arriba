@@ -7,16 +7,20 @@ namespace XForm.IO
 {
     public static class DirectoryIO
     {
-        public static void DeleteAllContents(string directoryPath)
+        public static void DeleteAllContents(string directoryOrFilePath)
         {
-            if (!Directory.Exists(directoryPath)) return;
+            if (!Directory.Exists(directoryOrFilePath))
+            {
+                if (File.Exists(directoryOrFilePath)) File.Delete(directoryOrFilePath);
+                return;
+            }
 
-            foreach (string filePath in Directory.GetFiles(directoryPath))
+            foreach (string filePath in Directory.GetFiles(directoryOrFilePath))
             {
                 File.Delete(filePath);
             }
 
-            foreach (string subdirectoryPath in Directory.GetDirectories(directoryPath))
+            foreach (string subdirectoryPath in Directory.GetDirectories(directoryOrFilePath))
             {
                 Directory.Delete(subdirectoryPath, true);
             }

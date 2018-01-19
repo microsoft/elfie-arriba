@@ -25,9 +25,9 @@ namespace XForm
             context.StreamProvider = new StreamProviderCache(new LocalFileStreamProvider(Environment.CurrentDirectory));
             context.Runner = new WorkflowRunner(context);
 
-            foreach(string arg in args)
+            foreach (string arg in args)
             {
-                if(arg.Equals("+cache", StringComparison.OrdinalIgnoreCase)) ColumnCache.IsEnabled = true;
+                if (arg.Equals("+cache", StringComparison.OrdinalIgnoreCase)) ColumnCache.IsEnabled = true;
             }
 
             return Run(args, context);
@@ -39,7 +39,7 @@ namespace XForm
             {
                 // Enable native acceleration by default
                 NativeAccelerator.Enable();
-                
+
                 if (args == null || args.Length == 0)
                 {
                     return (int)new InteractiveRunner(context).Run();

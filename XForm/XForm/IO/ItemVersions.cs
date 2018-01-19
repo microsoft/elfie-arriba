@@ -1,7 +1,11 @@
-﻿using System;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+
 using XForm.Extensions;
 using XForm.IO.StreamProvider;
 
@@ -77,7 +81,7 @@ namespace XForm.IO
 
             return this.LocationType.Equals(other.LocationType)
                 && this.Name.Equals(other.Name)
-                && this.CrawlType.Equals(other.CrawlType) 
+                && this.CrawlType.Equals(other.CrawlType)
                 && this.AsOfDate.Equals(other.AsOfDate);
         }
 

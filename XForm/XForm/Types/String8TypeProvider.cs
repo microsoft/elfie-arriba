@@ -7,9 +7,9 @@ using System.IO;
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 
 using XForm.Data;
+using XForm.IO;
 using XForm.IO.StreamProvider;
 using XForm.Types.Comparers;
-using XForm.IO;
 
 namespace XForm.Types
 {
@@ -143,8 +143,8 @@ namespace XForm.Types
             _columnPath = columnPath;
 
             _streamProvider = streamProvider;
-            _bytesReader = TypeProviderFactory.TryGetColumn(typeof(byte), streamProvider, Path.Combine(columnPath, "V.s.bin"), requireCached);
-            _positionsReader = TypeProviderFactory.TryGetColumn(typeof(int), streamProvider, Path.Combine(columnPath, "Vp.i32.bin"), requireCached);
+            _bytesReader = TypeProviderFactory.TryGetColumnReader(streamProvider, typeof(byte), Path.Combine(columnPath, "V.s.bin"), requireCached, typeof(String8ColumnReader));
+            _positionsReader = TypeProviderFactory.TryGetColumnReader(streamProvider, typeof(int), Path.Combine(columnPath, "Vp.i32.bin"), requireCached, typeof(String8ColumnReader));
         }
 
         public int Count => _positionsReader.Count;
@@ -250,6 +250,8 @@ namespace XForm.Types
             _bytesWriter = _streamProvider.OpenWrite(Path.Combine(columnPath, "V.s.bin"));
             _positionsWriter = new PrimitiveArrayWriter<int>(streamProvider.OpenWrite(Path.Combine(columnPath, "Vp.i32.bin")));
         }
+
+        public Type WritingAsType => typeof(String8);
 
         public void Append(DataBatch batch)
         {

@@ -146,8 +146,8 @@ namespace XForm.Data
         /// <summary>
         ///  Replace the Selector on this DataBatch.
         ///  This does not merge with an existing selector.
-        ///  This is only have to use when the outer DataBatch is definitely not mapped (just created with DataBatch.All)
-        ///  or when the selector passed has already been remapped relative to any indirection on this DataBatch.
+        ///  This is only safe to use when the selector indices are relative to the real array positions and not any
+        ///  indexed positions from this ArraySelector.
         /// </summary>
         /// <param name="selector">ArraySelector to *replace* this one with, referring to actual array indices to return.</param>
         /// <returns>DataBatch containing the exact rows the selector specified</returns>

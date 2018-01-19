@@ -145,6 +145,20 @@ namespace XForm
             return this;
         }
 
+        /// <summary>
+        ///  Return the single matching index from this BitVector, or -1 if there
+        ///  wasn't exactly one match.
+        /// </summary>
+        /// <returns>Index of the only match or -1 if not exactly one match.</returns>
+        public int GetSingle()
+        {
+            int[] result = new int[2];
+            int fromIndex = 0;
+            int countFound = this.Page(result, ref fromIndex);
+
+            return (countFound == 1 ? result[0] : -1);
+        }
+
         public BitVector None()
         {
             return ClearAbove(0);

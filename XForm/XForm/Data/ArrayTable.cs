@@ -48,6 +48,7 @@ namespace XForm.IO
         public IReadOnlyList<ColumnDetails> Columns => _columns;
         public int CurrentBatchRowCount { get; private set; }
         public int Count => _rowCount;
+        public ArraySelector EnumerateSelector => _currentEnumerateSelector;
 
         public Func<DataBatch> ColumnGetter(int columnIndex)
         {

@@ -17,6 +17,7 @@ namespace XForm.Types
 
     public interface IColumnWriter : IDisposable
     {
+        Type WritingAsType { get; }
         void Append(DataBatch batch);
     }
 

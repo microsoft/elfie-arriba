@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+
 using XForm.Types;
 
 namespace XForm.Data
@@ -56,7 +57,24 @@ namespace XForm.Data
         /// </summary>
         int Count { get; }
 
+        /// <summary>
+        ///  Return the selector for the current row position
+        ///  (to get matching rows if using readers directly).
+        /// </summary>
+        ArraySelector EnumerateSelector { get; }
+
+        /// <summary>
+        ///  Get a column reader directly from the list
+        /// </summary>
+        /// <param name="columnIndex">Index of column for which to get reader</param>
+        /// <returns>IColumnReader for column</returns>
         IColumnReader ColumnReader(int columnIndex);
+
+        /// <summary>
+        ///  Get a memory cached column reader directly from the list
+        /// </summary>
+        /// <param name="columnIndex">Index of column for which to get reader</param>
+        /// <returns>IColumnReader which is cached in memory and seekable for column</returns>
         IColumnReader CachedColumnReader(int columnIndex);
     }
 }

@@ -202,7 +202,7 @@ namespace XForm.Query
             }
             else if (_scanner.Current.Type == TokenType.ColumnName)
             {
-                result = new Column(source, context);
+                result = Column.Build(source, context);
             }
 
             if (result == null || (requiredType != null && result.ColumnDetails.Type != requiredType))
@@ -453,7 +453,7 @@ namespace XForm.Query
             // Consume the bad token
             _scanner.Next();
 
-            if(this.WasLastTokenInQuery)
+            if (this.WasLastTokenInQuery)
             {
                 // If this was the last token, no error message (wait for it to be complete)
                 context.ErrorMessage = "";

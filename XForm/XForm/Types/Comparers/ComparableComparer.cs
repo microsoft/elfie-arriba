@@ -37,7 +37,7 @@ namespace XForm.Types.Comparers
             return unchecked((int)Hashing.Hash(value.GetHashCode(), 0));
         }
 
-		public void WhereEqual(DataBatch left, DataBatch right, BitVector vector)
+        public void WhereEqual(DataBatch left, DataBatch right, BitVector vector)
         {
             T[] leftArray = (T[])left.Array;
             T[] rightArray = (T[])right.Array;
@@ -111,7 +111,7 @@ namespace XForm.Types.Comparers
             return left.CompareTo(right) == 0;
         }
 
-		public void WhereNotEqual(DataBatch left, DataBatch right, BitVector vector)
+        public void WhereNotEqual(DataBatch left, DataBatch right, BitVector vector)
         {
             T[] leftArray = (T[])left.Array;
             T[] rightArray = (T[])right.Array;
@@ -185,7 +185,7 @@ namespace XForm.Types.Comparers
             return left.CompareTo(right) != 0;
         }
 
-		public void WhereLessThan(DataBatch left, DataBatch right, BitVector vector)
+        public void WhereLessThan(DataBatch left, DataBatch right, BitVector vector)
         {
             T[] leftArray = (T[])left.Array;
             T[] rightArray = (T[])right.Array;
@@ -259,7 +259,7 @@ namespace XForm.Types.Comparers
             return left.CompareTo(right) < 0;
         }
 
-		public void WhereLessThanOrEqual(DataBatch left, DataBatch right, BitVector vector)
+        public void WhereLessThanOrEqual(DataBatch left, DataBatch right, BitVector vector)
         {
             T[] leftArray = (T[])left.Array;
             T[] rightArray = (T[])right.Array;
@@ -333,7 +333,7 @@ namespace XForm.Types.Comparers
             return left.CompareTo(right) <= 0;
         }
 
-		public void WhereGreaterThan(DataBatch left, DataBatch right, BitVector vector)
+        public void WhereGreaterThan(DataBatch left, DataBatch right, BitVector vector)
         {
             T[] leftArray = (T[])left.Array;
             T[] rightArray = (T[])right.Array;
@@ -407,7 +407,7 @@ namespace XForm.Types.Comparers
             return left.CompareTo(right) > 0;
         }
 
-		public void WhereGreaterThanOrEqual(DataBatch left, DataBatch right, BitVector vector)
+        public void WhereGreaterThanOrEqual(DataBatch left, DataBatch right, BitVector vector)
         {
             T[] leftArray = (T[])left.Array;
             T[] rightArray = (T[])right.Array;

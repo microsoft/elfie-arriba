@@ -121,7 +121,7 @@ namespace XForm
             }
 
             // If we don't have the table or the source, we have to throw
-            if(latestTable == null && builder == null) throw new UsageException(tableName, "Table", innerContext.StreamProvider.Tables());
+            if (latestTable == null && builder == null) throw new UsageException(tableName, "Table", innerContext.StreamProvider.Tables());
 
             // Get the path we're either reading or building
             string tablePath = innerContext.StreamProvider.Path(LocationType.Table, tableName, CrawlType.Full, innerContext.NewestDependency);

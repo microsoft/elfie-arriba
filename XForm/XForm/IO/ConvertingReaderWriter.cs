@@ -4,14 +4,44 @@
 using System;
 
 using XForm.Data;
+using XForm.Types;
 
-namespace XForm.Types
+namespace XForm.IO
 {
+    /// <summary>
+    ///  ConvertingWriter converts the column to another type and writes as that type.
+    /// </summary>
+    public class ConvertingWriter : IColumnWriter
+    {
+        private Func<DataBatch, DataBatch> _converter;
+        private IColumnWriter _convertedValueWriter;
+
+        public ConvertingWriter(IColumnWriter convertedValueWriter, Func<DataBatch, DataBatch> converter)
+        {
+            _converter = converter;
+            _convertedValueWriter = convertedValueWriter;
+        }
+
+        public Type WritingAsType => _convertedValueWriter.WritingAsType;
+
+        public void Append(DataBatch batch)
+        {
+            _convertedValueWriter.Append(_converter(batch));
+        }
+
+        public void Dispose()
+        {
+            if (_convertedValueWriter != null)
+            {
+                _convertedValueWriter.Dispose();
+                _convertedValueWriter = null;
+            }
+        }
+    }
+
     /// <summary>
     ///  ConvertingReader wraps a type conversion function and an inner reader together to
     ///  allow reading types which can't be written directly.
-    ///  
-    ///  [DateTime is converted to a UTC Ticks long and written via the long array.]
     /// </summary>
     public class ConvertingReader : IColumnReader
     {
@@ -29,15 +59,6 @@ namespace XForm.Types
 
         public int Count => _innerReader.Count;
 
-        public void Dispose()
-        {
-            if (_innerReader != null)
-            {
-                _innerReader.Dispose();
-                _innerReader = null;
-            }
-        }
-
         public DataBatch Read(ArraySelector selector)
         {
             if (selector.Equals(_currentSelector)) return _currentBatch;
@@ -45,6 +66,15 @@ namespace XForm.Types
             _currentBatch = _converter(_innerReader.Read(selector));
             _currentSelector = selector;
             return _currentBatch;
+        }
+
+        public void Dispose()
+        {
+            if (_innerReader != null)
+            {
+                _innerReader.Dispose();
+                _innerReader = null;
+            }
         }
     }
 }

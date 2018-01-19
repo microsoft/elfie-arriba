@@ -4,6 +4,7 @@
 using System;
 
 using XForm.Data;
+using XForm.IO;
 using XForm.IO.StreamProvider;
 using XForm.Types.Comparers;
 

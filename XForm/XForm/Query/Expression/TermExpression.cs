@@ -8,6 +8,7 @@ using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using XForm.Data;
 using XForm.Functions;
 using XForm.Types;
+using XForm.Types.Comparers;
 
 namespace XForm.Query.Expression
 {
@@ -76,6 +77,23 @@ namespace XForm.Query.Expression
                 // Get a comparer which can compare the values
                 _comparer = TypeProviderFactory.Get(left.ColumnDetails.Type).TryGetComparer(op);
                 if (_comparer == null) throw new ArgumentException($"No comparer found for type {left.ColumnDetails.Type.Name}.");
+            }
+
+            // Optimize Enum to Constant comparisons to use the underlying indices
+            if (left is EnumColumn && right is Constant)
+            {
+                EnumColumn enumColumn = (EnumColumn)left;
+                Constant constant = (Constant)right;
+
+                // Get an optimized comparer against the indices rather than values
+                _comparer = SetComparer.ConvertToEnumIndexComparer(enumColumn, _comparer, ref constant, source);
+
+                // Get the indices on the left side
+                _leftGetter = enumColumn.Indices();
+
+                // Use the updated constant for the right side
+                right = constant;
+                _rightGetter = constant.Getter();
             }
         }
 

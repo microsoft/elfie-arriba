@@ -39,7 +39,7 @@ namespace XForm.Types.Comparers
             return unchecked((int)Hashing.Hash(value, 0));
         }
 
-		public void WhereEqual(DataBatch left, DataBatch right, BitVector vector)
+        public void WhereEqual(DataBatch left, DataBatch right, BitVector vector)
         {
             String8[] leftArray = (String8[])left.Array;
             String8[] rightArray = (String8[])right.Array;
@@ -113,7 +113,7 @@ namespace XForm.Types.Comparers
             return left.CompareTo(right) == 0;
         }
 
-		public void WhereNotEqual(DataBatch left, DataBatch right, BitVector vector)
+        public void WhereNotEqual(DataBatch left, DataBatch right, BitVector vector)
         {
             String8[] leftArray = (String8[])left.Array;
             String8[] rightArray = (String8[])right.Array;
@@ -187,7 +187,7 @@ namespace XForm.Types.Comparers
             return left.CompareTo(right) != 0;
         }
 
-		public void WhereLessThan(DataBatch left, DataBatch right, BitVector vector)
+        public void WhereLessThan(DataBatch left, DataBatch right, BitVector vector)
         {
             String8[] leftArray = (String8[])left.Array;
             String8[] rightArray = (String8[])right.Array;
@@ -261,7 +261,7 @@ namespace XForm.Types.Comparers
             return left.CompareTo(right) < 0;
         }
 
-		public void WhereLessThanOrEqual(DataBatch left, DataBatch right, BitVector vector)
+        public void WhereLessThanOrEqual(DataBatch left, DataBatch right, BitVector vector)
         {
             String8[] leftArray = (String8[])left.Array;
             String8[] rightArray = (String8[])right.Array;
@@ -335,7 +335,7 @@ namespace XForm.Types.Comparers
             return left.CompareTo(right) <= 0;
         }
 
-		public void WhereGreaterThan(DataBatch left, DataBatch right, BitVector vector)
+        public void WhereGreaterThan(DataBatch left, DataBatch right, BitVector vector)
         {
             String8[] leftArray = (String8[])left.Array;
             String8[] rightArray = (String8[])right.Array;
@@ -409,7 +409,7 @@ namespace XForm.Types.Comparers
             return left.CompareTo(right) > 0;
         }
 
-		public void WhereGreaterThanOrEqual(DataBatch left, DataBatch right, BitVector vector)
+        public void WhereGreaterThanOrEqual(DataBatch left, DataBatch right, BitVector vector)
         {
             String8[] leftArray = (String8[])left.Array;
             String8[] rightArray = (String8[])right.Array;
@@ -483,7 +483,7 @@ namespace XForm.Types.Comparers
             return left.CompareTo(right) >= 0;
         }
 
-		public void WhereContains(DataBatch left, DataBatch right, BitVector vector)
+        public void WhereContains(DataBatch left, DataBatch right, BitVector vector)
         {
             String8[] leftArray = (String8[])left.Array;
             String8[] rightArray = (String8[])right.Array;
@@ -557,7 +557,7 @@ namespace XForm.Types.Comparers
             return left.Contains(right) != -1;
         }
 
-		public void WhereContainsExact(DataBatch left, DataBatch right, BitVector vector)
+        public void WhereContainsExact(DataBatch left, DataBatch right, BitVector vector)
         {
             String8[] leftArray = (String8[])left.Array;
             String8[] rightArray = (String8[])right.Array;
@@ -631,7 +631,7 @@ namespace XForm.Types.Comparers
             return left.Contains(right) != -1;
         }
 
-		public void WhereStartsWith(DataBatch left, DataBatch right, BitVector vector)
+        public void WhereStartsWith(DataBatch left, DataBatch right, BitVector vector)
         {
             String8[] leftArray = (String8[])left.Array;
             String8[] rightArray = (String8[])right.Array;
