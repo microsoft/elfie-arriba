@@ -330,21 +330,34 @@ namespace XForm.IO
             }
         }
 
+        // Read builds an indexed DataBatch pointing to the value for each row
         public DataBatch Read(ArraySelector selector)
         {
-            // Read all values (if we haven't previously)
+            // Read row indices and convert to int[]
+            DataBatch indexByteBatch = _rowIndexReader.Read(selector);
+            DataBatch indexIntBatch = _rowIndexToIntConverter(indexByteBatch);
+
+            // Return the selected values
+            return Values().Reselect(ArraySelector.Map((int[])indexIntBatch.Array, indexIntBatch.Count));
+        }
+
+        // Values returns the set of distinct values themselves
+        public DataBatch Values()
+        {
+            // Read the values (if we haven't previously)
             if (_allValues.Array == null)
             {
                 _allValues = _valueReader.Read(ArraySelector.All(_valueReader.Count));
                 if (_allValues.Selector.Indices != null || _allValues.Selector.StartIndexInclusive != 0) throw new InvalidOperationException("EnumColumnReader values reader must read values contiguously.");
             }
 
-            // Read row indices and convert to int[]
-            DataBatch indexByteBatch = _rowIndexReader.Read(selector);
-            DataBatch indexIntBatch = _rowIndexToIntConverter(indexByteBatch);
+            return _allValues;
+        }
 
-            // Return the selected values
-            return _allValues.Reselect(ArraySelector.Map((int[])indexIntBatch.Array, indexIntBatch.Count));
+        // Indices returns the index of the value for each row in the selector
+        public DataBatch Indices(ArraySelector selector)
+        {
+            return _rowIndexReader.Read(selector);
         }
     }
 }

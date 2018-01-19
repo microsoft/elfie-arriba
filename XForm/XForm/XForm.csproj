@@ -105,6 +105,7 @@
     <Compile Include="IO\StreamProvider\StreamProviderCache.cs" />
     <Compile Include="Types\Comparers\BoolComparer.cs" />
     <Compile Include="Types\Comparers\DateTimeComparer.cs" />
+    <Compile Include="Types\Comparers\SetComparer.cs" />
     <Compile Include="Types\Comparers\String8Comparer.cs" />
     <Compile Include="Types\Comparers\TimeSpanComparer.cs" />
     <Compile Include="Types\IValueCopier.cs" />

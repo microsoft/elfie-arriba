@@ -38,6 +38,7 @@ namespace XForm.IO
         public string Query => _metadata.Query;
         public int Count => _metadata.RowCount;
         public IReadOnlyList<ColumnDetails> Columns => _metadata.Schema;
+        public ArraySelector EnumerateSelector => _currentEnumerateSelector;
 
         public int CurrentBatchRowCount { get; private set; }
 
