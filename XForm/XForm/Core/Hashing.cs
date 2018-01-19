@@ -85,6 +85,50 @@ namespace XForm
             }
         }
 
+        public static uint Murmur3(uint value, uint seed)
+        {
+            uint h = seed;
+
+            uint k = value;
+            k *= 0xcc9e2d51;
+            k = (k << 15) | (k >> 17);
+            k *= 0x1b873593;
+            h ^= k;
+            h = (h << 13) | (h >> 19);
+            h = (h * 5) + 0xe6546b64;
+
+            h ^= 4;
+            h ^= h >> 16;
+            h *= 0x85ebca6b;
+            h ^= h >> 13;
+            h *= 0xc2b2ae35;
+            h ^= h >> 16;
+
+            return h;
+        }
+
+        private const uint M = 0x5bd1e995;
+        private const int R = 24;
+
+        public static uint Murmur2(uint value, uint seed)
+        {
+            uint h = seed ^ 4;
+
+            uint k = value;
+            k *= M;
+            k ^= k >> R;
+            k *= M;
+
+            h *= M;
+            h ^= k;
+
+            h ^= h >> 13;
+            h *= M;
+            h ^= h >> 15;
+
+            return h;
+        }
+
         /// <summary>
         ///  Murmur3 Hash; see http://en.wikipedia.org/wiki/MurmurHash or http://code.google.com/p/smhasher/wiki/MurmurHash3
         ///  MIT License.
@@ -148,8 +192,8 @@ namespace XForm
             {
                 k1 = k1 << 8;
                 k1 ^= (ulong)(*tail);
-                tailLength--;
-                tail++;
+                tailLength -= 8;
+                tail += 8;
             }
 
             k1 *= c1;
