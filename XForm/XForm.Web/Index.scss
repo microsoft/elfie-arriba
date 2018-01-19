@@ -218,6 +218,14 @@ body {
     flex-direction: column;
     overflow: hidden;
 
+
+    .pulse { animation: pulse 1s ease-out 1; }
+    @keyframes pulse {
+        0%    { background-color: hsl(205, 90%, 45%); }
+        30%   { background-color: hsl(205, 90%, 65%); }
+        100%  { background-color: hsl(205, 90%, 45%); }
+    }
+
     .resultsHeader {
         @include header;
         flex-shrink: 0;

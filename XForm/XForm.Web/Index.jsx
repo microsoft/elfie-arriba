@@ -173,7 +173,8 @@ class Index extends React.Component {
         const userCols = this.state.userCols.length && `\nselect ${this.state.userCols.map(c => `[${c}]`).join(', ')}` || ''
         xhr(`run`, { rowLimit: this.count, colLimit: this.cols, asof: this.state.asOf, q: `${q}${userCols}` }).then(o => {
             if (o.Message || o.ErrorMessage) throw 'Error should have been caught before run.'
-            this.setState({ results: o, loading: false })
+            this.setState({ results: o, pausePulse: true, loading: false })
+            setTimeout(() => this.setState({ pausePulse: false }))
         })
     }
     render() {
@@ -242,7 +243,7 @@ class Index extends React.Component {
                 </div>}
             </div>
             <div id="results">
-                <div className="resultsHeader">
+                <div className="" className={`resultsHeader ${this.state.pausePulse ? '' : 'pulse'}`}>
                     <span>{this.state.resultCount}</span>
                     <span className="flexFill"></span>
                     {q && <a className="button" target="_blank" href={`http://localhost:5073/download?fmt=csv&q=${encodedQuery}`}>CSV</a>}
