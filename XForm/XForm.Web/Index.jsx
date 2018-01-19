@@ -126,8 +126,8 @@ class Index extends React.Component {
                     this.queryValid = info.Valid
                     if (info.Valid) this.debouncedQueryChanged()
 
-                    const usage = info.ErrorMessage || info.Usage
-                    if (usage !== this.state.usage) this.setState({ usage })
+                    const status = info.ErrorMessage || info.Usage
+                    if (status !== this.state.status) this.setState({ status })
 
                     const queryHint = !info.InvalidToken && info.ItemCategory || ''
                     if (queryHint != this.state.queryHint) this.setState({ queryHint })
@@ -206,7 +206,7 @@ class Index extends React.Component {
                         <option value={Date.firstOfMonth().toXFormat()}>As of {(new Date()).toLocaleString('en-us', { month: "long" })} 1st</option>
                     </select>
                 </div>
-                <div className="queryUsage">{ this.state.usage || `\u200B` }</div>
+                <div className="queryUsage">{ this.state.status || `\u200B` }</div>
                 <div id="queryEditor">
                     <div className="queryHint">{this.state.queryHint}</div>
                 </div>
