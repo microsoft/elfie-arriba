@@ -159,7 +159,7 @@ class Index extends React.Component {
             }
         })
         xhr(`count`, { asof: this.state.asOf, q: this.query }).then(o => {
-            this.setState({ status: typeof o === "number" && `${o.toLocaleString()} Results` })
+            this.setState({ resultCount: typeof o === "number" && `${o.toLocaleString()} Results` })
         })
     }
     limitChanged(addCount = 0, addCols = 0) {
@@ -243,7 +243,7 @@ class Index extends React.Component {
             </div>
             <div id="results">
                 <div className="resultsHeader">
-                    <span>{this.state.status}</span>
+                    <span>{this.state.resultCount}</span>
                     <span className="flexFill"></span>
                     {q && <a className="button" target="_blank" href={`http://localhost:5073/download?fmt=csv&q=${encodedQuery}`}>CSV</a>}
                     {q && <a className="button" target="_blank" href={`http://localhost:5073/download?fmt=tsv&q=${encodedQuery}`}>TSV</a>}
