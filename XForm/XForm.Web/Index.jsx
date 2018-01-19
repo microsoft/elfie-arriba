@@ -199,7 +199,7 @@ class Index extends React.Component {
                             setTimeout(() => this.setState({ saving: "Save" }), 3000)
                         })
                     }}>{ this.state.saving || "Save" }</span>
-                    <select onChange={e => this.setState({ asOf: e.target.value || undefined }, () => this.limitChanged())}>
+                    <select onChange={e => this.setState({ asOf: e.target.value || undefined }, () => this.queryChanged())}>
                         <option value="">As of Now</option>
                         <option value={Date.daysAgo(1).toXFormat()}>As of Yesterday</option>
                         <option value={Date.daysAgo(7).toXFormat()}>As of Last Week</option>
