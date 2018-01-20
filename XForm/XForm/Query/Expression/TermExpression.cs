@@ -58,7 +58,7 @@ namespace XForm.Query.Expression
             // This means constants will always be casted to the other side type.
             if (left.ColumnDetails.Type != right.ColumnDetails.Type)
             {
-                right = XForm.Functions.Cast.Build(source, right, left.ColumnDetails.Type, ValueKinds.Invalid);
+                right = XForm.Functions.CastedColumn.Build(source, right, left.ColumnDetails.Type, ValueKinds.Invalid);
             }
 
             // Get the left and right getters

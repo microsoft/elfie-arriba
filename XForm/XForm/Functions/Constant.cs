@@ -8,6 +8,9 @@ using XForm.Query;
 
 namespace XForm.Functions
 {
+    /// <summary>
+    ///  Constant implements IXColumn for a single constant value.
+    /// </summary>
     public class Constant : IXColumn
     {
         public bool IsNull { get; private set; }
@@ -30,15 +33,34 @@ namespace XForm.Functions
             ColumnDetails = new ColumnDetails(string.Empty, type);
         }
 
+        private XArray Get(ArraySelector selector)
+        {
+            if (IsNull) return XArray.Null(_valueArray, selector.Count);
+            return XArray.Single(_valueArray, selector.Count);
+        }
+
         public object Value => _valueArray.GetValue(0);
 
-        public Func<XArray> Getter()
+        public ArraySelector CurrentSelector => Source.CurrentSelector;
+
+        public Func<XArray> CurrentGetter()
         {
-            return () =>
-            {
-                if (IsNull) return XArray.Null(_valueArray, Source.CurrentRowCount);
-                return XArray.Single(_valueArray, Source.CurrentRowCount);
-            };
+            return () => Get(Source.CurrentSelector);
+        }
+
+        public Func<ArraySelector, XArray> SeekGetter()
+        {
+            return (selector) => Get(selector);
+        }
+
+        public Func<XArray> ValuesGetter()
+        {
+            return () => Get(ArraySelector.Single(1));
+        }
+
+        public Func<ArraySelector, XArray> IndicesGetter()
+        {
+            return (selector) => Get(ArraySelector.Single(selector.Count));
         }
 
         public override string ToString()

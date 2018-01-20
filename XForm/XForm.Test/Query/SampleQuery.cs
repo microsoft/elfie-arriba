@@ -35,7 +35,7 @@ namespace XForm.Test.Query
                 // Identify the columns you're consuming by requesting and caching the getter functions for them.
                 //  You must request the getters before the first call to Next().
                 //  This tells the caller which columns you care about and builds hardcoded logic to get the data you want.
-                Func<XArray> columnGetter = pipeline.ColumnGetter(pipeline.Columns.IndexOfColumn("ResponseBytes"));
+                Func<XArray> columnGetter = pipeline.ColumnGetter(pipeline.Columns.Find("ResponseBytes"));
 
                 // Call Next() to get an XArray of rows. Ask for only as many as you need. Ask for an XArray size convenient to work with.
                 // Next() may return fewer rows than you asked for, but will not return zero until the input has run out of rows.

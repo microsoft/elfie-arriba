@@ -27,29 +27,20 @@ namespace XForm.Verbs
     {
         private int _sourceColumnIndex;
         private IXColumn _castedColumn;
-        private List<ColumnDetails> _columns;
+        private List<IXColumn> _columns;
 
         public Cast(IXTable source, IXColumn castedColumn) : base(source)
         {
-            _sourceColumnIndex = source.Columns.IndexOfColumn(castedColumn.ColumnDetails.Name);
+            _sourceColumnIndex = source.Columns.Find(castedColumn.ColumnDetails.Name);
             _castedColumn = castedColumn;
 
-            _columns = new List<ColumnDetails>();
+            _columns = new List<IXColumn>();
             for (int i = 0; i < source.Columns.Count; ++i)
             {
-                _columns.Add((i == _sourceColumnIndex ? castedColumn.ColumnDetails : source.Columns[i]));
+                _columns.Add((i == _sourceColumnIndex ? castedColumn : source.Columns[i]));
             }
         }
 
-        public override IReadOnlyList<ColumnDetails> Columns => _columns;
-
-        public override Func<XArray> ColumnGetter(int columnIndex)
-        {
-            // Pass through columns other than the one being converted
-            if (columnIndex != _sourceColumnIndex) return _source.ColumnGetter(columnIndex);
-
-            // Pass through the cast for conversions
-            return _castedColumn.Getter();
-        }
+        public override IReadOnlyList<IXColumn> Columns => _columns;
     }
 }

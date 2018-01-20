@@ -6,6 +6,7 @@ using System.Collections.Generic;
 
 using XForm.Data;
 using XForm.Extensions;
+using XForm.Functions;
 using XForm.Query;
 
 namespace XForm.Verbs
@@ -27,34 +28,25 @@ namespace XForm.Verbs
     {
         private int _computedColumnIndex;
         private IXColumn _calculatedColumn;
-        private List<ColumnDetails> _columns;
+        private List<IXColumn> _columns;
 
         public Set(IXTable source, string outputColumnName, IXColumn column) : base(source)
         {
             _calculatedColumn = column;
-            _columns = new List<ColumnDetails>(source.Columns);
+            _columns = new List<IXColumn>(source.Columns);
 
             // Determine whether we're replacing or adding a column
             if (source.Columns.TryGetIndexOfColumn(outputColumnName, out _computedColumnIndex))
             {
-                _columns[_computedColumnIndex] = _calculatedColumn.ColumnDetails.Rename(outputColumnName);
+                _columns[_computedColumnIndex] = RenamedColumn.Build(_calculatedColumn, outputColumnName);
             }
             else
             {
-                _columns.Add(_calculatedColumn.ColumnDetails.Rename(outputColumnName));
+                _columns.Add(RenamedColumn.Build(_calculatedColumn, outputColumnName));
                 _computedColumnIndex = source.Columns.Count;
             }
         }
 
-        public override IReadOnlyList<ColumnDetails> Columns => _columns;
-
-        public override Func<XArray> ColumnGetter(int columnIndex)
-        {
-            // Pass through columns other than the one being calculated
-            if (columnIndex != _computedColumnIndex) return _source.ColumnGetter(columnIndex);
-
-            // Otherwise, pass on the calculation
-            return _calculatedColumn.Getter();
-        }
+        public override IReadOnlyList<IXColumn> Columns => _columns;
     }
 }

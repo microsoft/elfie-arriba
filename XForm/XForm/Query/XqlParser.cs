@@ -214,7 +214,7 @@ namespace XForm.Query
             {
                 _scanner.Next();
                 string columnName = NextOutputColumnName(source);
-                result = new Rename(result, columnName);
+                result = new RenamedColumn(result, columnName);
             }
 
             return result;

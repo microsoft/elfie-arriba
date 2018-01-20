@@ -15,9 +15,12 @@ namespace XForm.Data
     public interface IXTable : IDisposable
     {
         /// <summary>
-        ///  Get the columns available from this source.
+        ///  Return a function which returns the XArray for the desired column
+        ///  for the current batch of rows.
         /// </summary>
-        IReadOnlyList<ColumnDetails> Columns { get; }
+        /// <param name="columnIndex">Index of column to provide a getter for</param>
+        /// <returns>Function which will return the XArray for columnName for the current row xarray on each call</returns>
+        IReadOnlyList<IXColumn> Columns { get; }
 
         /// <summary>
         ///  Go back to the first rows from this source again.
@@ -37,12 +40,10 @@ namespace XForm.Data
         int CurrentRowCount { get; }
 
         /// <summary>
-        ///  Return a function which returns the XArray for the desired column
-        ///  for the current batch of rows.
+        ///  Return the selector for the current row position
+        ///  (to get matching rows if using readers directly).
         /// </summary>
-        /// <param name="columnIndex">Index of column to provide a getter for</param>
-        /// <returns>Function which will return the XArray for columnName for the current row xarray on each call</returns>
-        Func<XArray> ColumnGetter(int columnIndex);
+        ArraySelector CurrentSelector { get; }
     }
 
     /// <summary>
@@ -56,25 +57,5 @@ namespace XForm.Data
         ///  Get the total row count of this list.
         /// </summary>
         int Count { get; }
-
-        /// <summary>
-        ///  Return the selector for the current row position
-        ///  (to get matching rows if using readers directly).
-        /// </summary>
-        ArraySelector EnumerateSelector { get; }
-
-        /// <summary>
-        ///  Get a column reader directly from the list
-        /// </summary>
-        /// <param name="columnIndex">Index of column for which to get reader</param>
-        /// <returns>IColumnReader for column</returns>
-        IColumnReader ColumnReader(int columnIndex);
-
-        /// <summary>
-        ///  Get a memory cached column reader directly from the list
-        /// </summary>
-        /// <param name="columnIndex">Index of column for which to get reader</param>
-        /// <returns>IColumnReader which is cached in memory and seekable for column</returns>
-        IColumnReader CachedColumnReader(int columnIndex);
     }
 }

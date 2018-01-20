@@ -58,7 +58,7 @@ namespace XForm.Verbs
             _chosenRowsFilter = new RowRemapper();
         }
 
-        public IReadOnlyList<ColumnDetails> Columns => _source.Columns;
+        public IReadOnlyList<IXColumn> Columns => _source.Columns;
 
         public int CurrentRowCount { get; private set; }
 
@@ -111,11 +111,11 @@ namespace XForm.Verbs
         private void BuildChooseDictionary()
         {
             XArray[] keyarrays = new XArray[_keyColumnGetters.Length];
-            int[] rowIndices = new int[XArrayEnumeratorExtensions.DefaultxarraySize];
+            int[] rowIndices = new int[XTableExtensions.DefaultBatchSize];
 
             int totalSoFar = 0;
             int count;
-            while ((count = _source.Next(XArrayEnumeratorExtensions.DefaultxarraySize)) != 0)
+            while ((count = _source.Next(XTableExtensions.DefaultBatchSize)) != 0)
             {
                 // Get the rank and key column arrays
                 XArray rankxarray = _rankColumnGetter();

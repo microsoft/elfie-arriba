@@ -32,19 +32,12 @@ namespace XForm.Verbs
     public class Select : XTableWrapper
     {
         private List<IXColumn> _columns;
-        private List<ColumnDetails> _details;
 
         public Select(IXTable source, List<IXColumn> columns) : base(source)
         {
             _columns = columns;
-            _details = new List<ColumnDetails>(columns.Select((col) => col.ColumnDetails));
         }
 
-        public override IReadOnlyList<ColumnDetails> Columns => _details;
-
-        public override Func<XArray> ColumnGetter(int columnIndex)
-        {
-            return _columns[columnIndex].Getter();
-        }
+        public override IReadOnlyList<IXColumn> Columns => _columns;
     }
 }

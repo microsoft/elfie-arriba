@@ -206,7 +206,7 @@ namespace XForm.Test
         /// <summary>
         ///  Write a table to the Tracing system for debugging.
         /// </summary>
-        public static void TraceWrite(IXTable table, int rowCount = XArrayEnumeratorExtensions.DefaultxarraySize)
+        public static void TraceWrite(IXTable table, int rowCount = XTableExtensions.DefaultBatchSize)
         {
             Func<XArray>[] columnGetters = new Func<XArray>[table.Columns.Count];
             XArray[] columns = new XArray[table.Columns.Count];

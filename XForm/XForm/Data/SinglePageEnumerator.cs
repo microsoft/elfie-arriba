@@ -24,7 +24,6 @@ namespace XForm.Data
         private ArraySelector _currentSelector;
         private ArraySelector _currentEnumerateSelector;
 
-        public IReadOnlyList<ColumnDetails> Columns => _source.Columns;
         public int CurrentRowCount { get; private set; }
         public int Count => _currentPageCount;
 
@@ -34,6 +33,8 @@ namespace XForm.Data
             _requestedGetters = new Func<XArray>[source.Columns.Count];
             _columnarrays = new XArray[source.Columns.Count];
         }
+
+        public ArraySelector CurrentSelector => _currentEnumerateSelector;
 
         public int SourceNext(int desiredCount)
         {

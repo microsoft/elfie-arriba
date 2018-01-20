@@ -20,9 +20,9 @@ namespace XForm.Extensions
         public TimeSpan Elapsed { get; set; }
     }
 
-    public static class XArrayEnumeratorExtensions
+    public static class XTableExtensions
     {
-        public const int DefaultxarraySize = 10240;
+        public const int DefaultBatchSize = 10240;
 
         #region Query
         /// <summary>
@@ -46,7 +46,7 @@ namespace XForm.Extensions
         /// <param name="pipeline">IXTable of source or query to run</param>
         /// <param name="xarraySize">Number of rows to process on each iteration</param>
         /// <returns>Count of rows in this source or query.</returns>
-        public static long RunAndDispose(this IXTable pipeline, int xarraySize = DefaultxarraySize)
+        public static long RunAndDispose(this IXTable pipeline, int xarraySize = DefaultBatchSize)
         {
             using (pipeline)
             {
@@ -60,7 +60,7 @@ namespace XForm.Extensions
         /// <param name="pipeline">IXTable of source or query to run</param>
         /// <param name="xarraySize">Number of rows to process on each iteration</param>
         /// <returns>Count of rows in this source or query.</returns>
-        public static long RunWithoutDispose(this IXTable pipeline, int xarraySize = DefaultxarraySize)
+        public static long RunWithoutDispose(this IXTable pipeline, int xarraySize = DefaultBatchSize)
         {
             long rowsWritten = 0;
             while (true)
@@ -82,7 +82,7 @@ namespace XForm.Extensions
         /// <param name="timeout">Time limit for runtime</param>
         /// <param name="xarraySize">Number of rows to process in each iteration</param>
         /// <returns>RunResult with whether query completed, runtime so far, and row count so far</returns>
-        public static RunResult RunUntilTimeout(this IXTable pipeline, TimeSpan timeout, int xarraySize = DefaultxarraySize)
+        public static RunResult RunUntilTimeout(this IXTable pipeline, TimeSpan timeout, int xarraySize = DefaultBatchSize)
         {
             RunResult result = new RunResult();
             result.Timeout = timeout;
@@ -114,7 +114,7 @@ namespace XForm.Extensions
         /// <param name="pipeline">IXTable to count</param>
         /// <param name="xarraySize">Number of rows to process on each iteration</param>
         /// <returns>Count of rows in this source or query.</returns>
-        public static long Count(this IXTable pipeline, int xarraySize = DefaultxarraySize)
+        public static long Count(this IXTable pipeline, int xarraySize = DefaultBatchSize)
         {
             return RunAndDispose(pipeline, xarraySize);
         }
@@ -127,7 +127,7 @@ namespace XForm.Extensions
         /// <returns>Single value result (first column, first row)</returns>
         public static T Single<T>(this IXTable pipeline)
         {
-            Func<XArray> getter = pipeline.ColumnGetter(0);
+            Func<XArray> getter = pipeline.Columns[0].Getter();
             using (pipeline)
             {
                 pipeline.Next(1);
@@ -152,13 +152,13 @@ namespace XForm.Extensions
         /// <param name="columnName">Column Name to retrieve values from</param>
         /// <param name="xarraySize">Maximum row count to retrieve per page</param>
         /// <returns>Pages of the result column in a List</returns>
-        public static IEnumerable<List<T>> ToList<T>(this IXTable pipeline, string columnName, int xarraySize = DefaultxarraySize)
+        public static IEnumerable<List<T>> ToList<T>(this IXTable pipeline, string columnName, int xarraySize = DefaultBatchSize)
         {
             List<T> result = new List<T>(xarraySize);
 
             using (pipeline)
             {
-                Func<XArray> getter = pipeline.ColumnGetter(pipeline.Columns.IndexOfColumn(columnName));
+                Func<XArray> getter = pipeline.Columns[pipeline.Columns.Find(columnName)].Getter();
 
                 while (pipeline.Next(xarraySize) != 0)
                 {
@@ -185,7 +185,7 @@ namespace XForm.Extensions
         /// <param name="context">XDatabaseContext for location to save to, as-of-date of result, and other context</param>
         /// <param name="xarraySize">Number of rows to process in each iteration</param>
         /// <returns>Row Count Written</returns>
-        public static long Save(this IXTable source, string tableName, XDatabaseContext context, int xarraySize = DefaultxarraySize)
+        public static long Save(this IXTable source, string tableName, XDatabaseContext context, int xarraySize = DefaultBatchSize)
         {
             string tableRootPath = context.StreamProvider.Path(LocationType.Table, tableName, CrawlType.Full, context.RequestedAsOfDateTime);
             return new BinaryTableWriter(source, context, tableRootPath).RunAndDispose();

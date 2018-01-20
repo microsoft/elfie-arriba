@@ -58,12 +58,12 @@ namespace XForm.Verbs
             if (_cachedJoinSource == null) throw new ArgumentException($"Join right-hand-side must be a built binary table.");
 
             // Request the JoinFromColumn Getter
-            _joinFromColumnIndex = source.Columns.IndexOfColumn(joinFromColumn);
+            _joinFromColumnIndex = source.Columns.Find(joinFromColumn);
             _joinFromColumnGetter = source.ColumnGetter(_joinFromColumnIndex);
             _joinColumnType = source.Columns[_joinFromColumnIndex].Type;
 
             // Request the JoinToColumn Reader (we'll need it cached)
-            int joinToColumnIndex = _cachedJoinSource.Columns.IndexOfColumn(joinToColumn);
+            int joinToColumnIndex = _cachedJoinSource.Columns.Find(joinToColumn);
             Type joinToColumnType = _cachedJoinSource.Columns[joinToColumnIndex].Type;
             if (joinToColumnType != _joinColumnType) throw new ArgumentException($"Join requires columns of matching types; join from {_joinColumnType.Name} to {joinToColumnType.Name} not supported.");
             _joinToColumnReader = _cachedJoinSource.CachedColumnReader(joinToColumnIndex);

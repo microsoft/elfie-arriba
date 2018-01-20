@@ -55,7 +55,7 @@ namespace XForm.Test.Query
 
             // Run the join - verify the expected values without padding are found
             IXTable result = new Join(joinFromTable, "ServerID", joinToTable, "ID", "Server.");
-            Func<XArray> serverID = result.ColumnGetter(result.Columns.IndexOfColumn("Server.ID"));
+            Func<XArray> serverID = result.ColumnGetter(result.Columns.Find("Server.ID"));
 
             IXTable expectedTable = TableTestHarness.DatabaseContext.FromArrays(expected.Length).WithColumn("Server.ID", expected);
             TableTestHarness.AssertAreEqual(expectedTable, result, 2);

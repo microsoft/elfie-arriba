@@ -90,7 +90,7 @@ namespace XForm.Verbs
             else if(_totalRowsRetrieved > 1024)
             {
                 // If more than 1,024 rows were searched with no matches, revert to full page size
-                result = XArrayEnumeratorExtensions.DefaultxarraySize;
+                result = XTableExtensions.DefaultBatchSize;
             }
 
             // Always request at least 256 rows

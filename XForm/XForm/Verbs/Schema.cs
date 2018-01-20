@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 using XForm.Data;
+using XForm.IO;
 using XForm.Query;
 
 namespace XForm.Verbs
@@ -26,40 +27,27 @@ namespace XForm.Verbs
     /// </summary>
     public class SchemaTransformer : XTableWrapper
     {
-        private ColumnDetails[] _columns;
-        private XArray[] _results;
+        private IXColumn[] _columns;
+        private ArraySelector _enumerateSelector;
 
         public SchemaTransformer(IXTable source) : base(source)
         {
-            _columns = new ColumnDetails[2];
-            _columns[0] = new ColumnDetails("Name", typeof(string));
-            _columns[1] = new ColumnDetails("Type", typeof(string));
+            _columns = new IXColumn[2];
+            _columns[0] = new ArrayColumn(this, XArray.All(_source.Columns.Select((col) => col.ColumnDetails.Name).ToArray()), new ColumnDetails("Name", typeof(string)));
+            _columns[1] = new ArrayColumn(this, XArray.All(_source.Columns.Select((col) => col.ColumnDetails.Type.Name.ToString()).ToArray()), new ColumnDetails("Type", typeof(string)));
         }
 
-        public override IReadOnlyList<ColumnDetails> Columns => _columns;
-
-        public override Func<XArray> ColumnGetter(int columnIndex)
-        {
-            return () => _results[columnIndex];
-        }
+        public override IReadOnlyList<IXColumn> Columns => _columns;
 
         public override void Reset()
         {
-            _results = null;
+            _enumerateSelector = ArraySelector.All(0);
         }
 
         public override int Next(int desiredCount)
         {
-            if (_results == null)
-            {
-                _results = new XArray[3];
-                _results[0] = XArray.All(_source.Columns.Select((cd) => cd.Name).ToArray());
-                _results[1] = XArray.All(_source.Columns.Select((cd) => cd.Type.Name.ToString()).ToArray());
-
-                return _source.Columns.Count;
-            }
-
-            return 0;
+            _enumerateSelector = _enumerateSelector.NextPage(_source.Columns.Count, desiredCount);
+            return _enumerateSelector.Count;
         }
     }
 }

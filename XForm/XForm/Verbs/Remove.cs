@@ -30,38 +30,26 @@ namespace XForm.Verbs
 
     public class Remove : XTableWrapper
     {
-        private List<ColumnDetails> _mappedColumns;
-        private List<int> _columnInnerIndices;
+        private List<IXColumn> _remainingColumns;
 
         public Remove(IXTable source, IEnumerable<string> columnNames) : base(source)
         {
-            _mappedColumns = new List<ColumnDetails>();
-            _columnInnerIndices = new List<int>();
+            _remainingColumns = new List<IXColumn>();
 
             // Find the columns 
             HashSet<string> columnsToRemove = new HashSet<string>(columnNames, StringComparer.OrdinalIgnoreCase);
-            foreach (ColumnDetails column in _source.Columns)
+            foreach (IXColumn column in _source.Columns)
             {
-                if (columnsToRemove.Contains(column.Name))
+                if (!columnsToRemove.Contains(column.ColumnDetails.Name))
                 {
-                    columnsToRemove.Remove(column.Name);
-                }
-                else
-                {
-                    _columnInnerIndices.Add(_mappedColumns.Count);
-                    _mappedColumns.Add(column);
+                    _remainingColumns.Add(column);
                 }
             }
 
             // Validate all columns to remove were found
-            if (columnsToRemove.Count > 0) throw new ColumnNotFoundException($"Columns not found to remove: {string.Join(", ", columnsToRemove)}. Columns Available: {string.Join(", ", _mappedColumns.Select((cd) => cd.Name))}");
+            if (columnsToRemove.Count > 0) throw new ColumnNotFoundException($"Columns not found to remove: {string.Join(", ", columnsToRemove)}. Columns Available: {string.Join(", ", _remainingColumns.Select((col) => col.ColumnDetails.Name))}");
         }
 
-        public override IReadOnlyList<ColumnDetails> Columns => _mappedColumns;
-
-        public override Func<XArray> ColumnGetter(int columnIndex)
-        {
-            return _source.ColumnGetter(_columnInnerIndices[columnIndex]);
-        }
+        public override IReadOnlyList<IXColumn> Columns => _remainingColumns;
     }
 }

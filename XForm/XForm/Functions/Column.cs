@@ -32,7 +32,7 @@ namespace XForm.Functions
         public static IXColumn Build(IXTable source, XDatabaseContext context)
         {
             string columnName = context.Parser.NextColumnName(source);
-            int columnIndex = source.Columns.IndexOfColumn(columnName);
+            int columnIndex = source.Columns.Find(columnName);
 
             ISeekableXTable sourceList = source as ISeekableXTable;
             if(sourceList != null)
@@ -96,7 +96,7 @@ namespace XForm.Functions
         public Func<XArray> Getter()
         {
             // Remap _values instead of calling EnumReader.Getter so that casted or converted EnumColumns return the new values
-            return () => _enumReader.Remap(_values, _source.EnumerateSelector);
+            return () => _enumReader.Remap(_values, _source.CurrentSelector);
         }
 
         public XArray Values()
@@ -106,7 +106,7 @@ namespace XForm.Functions
 
         public Func<XArray> Indices()
         {
-            return () => _enumReader.Indices(_source.EnumerateSelector);
+            return () => _enumReader.Indices(_source.CurrentSelector);
         }
 
         public override string ToString()

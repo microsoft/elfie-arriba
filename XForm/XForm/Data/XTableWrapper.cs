@@ -15,14 +15,9 @@ namespace XForm.Data
             _source = source;
         }
 
-        public virtual IReadOnlyList<ColumnDetails> Columns => _source.Columns;
-
         public int CurrentRowCount { get; private set; }
-
-        public virtual Func<XArray> ColumnGetter(int columnIndex)
-        {
-            return _source.ColumnGetter(columnIndex);
-        }
+        public ArraySelector CurrentSelector => _source.CurrentSelector;
+        public virtual IReadOnlyList<IXColumn> Columns => _source.Columns;
 
         public virtual int Next(int desiredCount)
         {

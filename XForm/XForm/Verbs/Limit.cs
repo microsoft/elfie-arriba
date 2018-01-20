@@ -27,7 +27,7 @@ namespace XForm.Verbs
         private int _colCountLimit;
         private int _rowCountLimit;
         private int _rowCountSoFar;
-        private IReadOnlyList<ColumnDetails> _columns;
+        private IReadOnlyList<IXColumn> _columns;
 
         public Limit(IXTable source, int rowLimit, int colLimit = -1) : base(source)
         {
@@ -36,7 +36,7 @@ namespace XForm.Verbs
             _columns = (_colCountLimit > 0 ? base.Columns.Take(colLimit).ToList() : base.Columns);
         }
 
-        public override IReadOnlyList<ColumnDetails> Columns => _columns;
+        public override IReadOnlyList<IXColumn> Columns => _columns;
 
         public override void Reset()
         {

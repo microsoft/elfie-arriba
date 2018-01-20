@@ -11,23 +11,28 @@ using XForm.Query;
 
 namespace XForm.Extensions
 {
-    public static class ColumnsExtensions
+    public static class XColumnExtensions
     {
-        public static int IndexOfColumn(this IReadOnlyList<ColumnDetails> columns, string columnName)
+        public static IXColumn Find(this IReadOnlyList<IXColumn> columns, string columnName)
+        {
+            return columns[columns.IndexOfColumn(columnName)];
+        }
+
+        public static int IndexOfColumn(this IReadOnlyList<IXColumn> columns, string columnName)
         {
             int index;
             if (TryGetIndexOfColumn(columns, columnName, out index)) return index;
 
-            throw new ColumnNotFoundException(columnName, columns.Select((cd) => cd.Name));
+            throw new ColumnNotFoundException(columnName, columns.Select((cd) => cd.ColumnDetails.Name));
         }
 
-        public static bool TryGetIndexOfColumn(this IReadOnlyList<ColumnDetails> columns, string columnName, out int index)
+        public static bool TryGetIndexOfColumn(this IReadOnlyList<IXColumn> columns, string columnName, out int index)
         {
             index = -1;
 
             for (int i = 0; i < columns.Count; ++i)
             {
-                if (columns[i].Name.Equals(columnName, StringComparison.InvariantCultureIgnoreCase))
+                if (columns[i].ColumnDetails.Name.Equals(columnName, StringComparison.InvariantCultureIgnoreCase))
                 {
                     index = i;
                     return true;

@@ -27,7 +27,10 @@ namespace XForm.Functions
         private U[] _buffer;
         private bool[] _isNull;
 
+        private XArray _convertedValues;
+
         public ColumnDetails ColumnDetails { get; private set; }
+        public ArraySelector CurrentSelector => _column.CurrentSelector;
 
         private SimpleTransformFunction(string name, IXColumn column, Func<T, U> function, Action beforeBatch = null)
         {
@@ -38,39 +41,84 @@ namespace XForm.Functions
             this.ColumnDetails = column.ColumnDetails.ChangeType(typeof(U));
         }
 
-        public static IXColumn Build(string name, IXTable source, IXColumn column, Func<T, U> function, Action beforexarray = null)
+        public static IXColumn Build(string name, IXTable source, IXColumn column, Func<T, U> function, Action beforeBatch = null)
         {
             if (column.ColumnDetails.Type != typeof(T)) throw new ArgumentException($"Function required argument of type {typeof(T).Name}, but argument was {column.ColumnDetails.Type.Name} instead.");
+            return new SimpleTransformFunction<T, U>(name, column, function, beforeBatch);
+        }
 
-            if (column is Constant)
+        public Func<XArray> CurrentGetter()
+        {
+            Func<ArraySelector, XArray> indicesGetter = IndicesGetter();
+            if (indicesGetter != null)
             {
-                // If the input is a constant, only convert once
-                if (beforexarray != null) beforexarray();
-                return new Constant(source, function((T)((Constant)column).Value), typeof(U));
-            }
-            else if(column is EnumColumn)
-            {
-                // If the input is an enum, convert each value once
-                EnumColumn enumColumn = (EnumColumn)column;
-                if (beforexarray != null) beforexarray();
-                return new EnumColumn(enumColumn, new SimpleTransformFunction<T, U>(name, column, function, beforexarray).Convert(enumColumn.Values()), typeof(U));
+                // If the column has fixed values, convert them once and cache them
+                ValuesGetter();
+
+                // Get values an indices unmapped and replace the array with the converted array 
+                return () =>
+                {
+                    XArray unmapped = indicesGetter(CurrentSelector);
+                    return XArray.All(_convertedValues.Array, _convertedValues.Count).Reselect(unmapped.Selector);
+                };
             }
             else
             {
-                return new SimpleTransformFunction<T, U>(name, column, function, beforexarray);
+                // Otherwise, convert from the underlying current getter
+                Func<XArray> sourceGetter = _column.CurrentGetter();
+                return () =>
+                {
+                    _beforeBatch?.Invoke();
+                    return Convert(sourceGetter());
+                };
             }
         }
 
-        public Func<XArray> Getter()
+        public Func<ArraySelector, XArray> SeekGetter()
         {
-            Func<XArray> sourceGetter = _column.Getter();
-
-            return () =>
+            Func<ArraySelector, XArray> indicesGetter = IndicesGetter();
+            if (indicesGetter != null)
             {
-                if (_beforeBatch != null) _beforeBatch();
-                XArray xarray = sourceGetter();
-                return Convert(xarray);
-            };
+                // If the column has fixed values, convert them once and cache them
+                ValuesGetter();
+
+                // Get values an indices unmapped and replace the array with the converted array 
+                return (selector) =>
+                {
+                    XArray unmapped = indicesGetter(selector);
+                    return XArray.All(_convertedValues.Array, _convertedValues.Count).Reselect(unmapped.Selector);
+                };
+            }
+            else
+            {
+                // Otherwise, convert from the underlying seek getter
+                Func<ArraySelector, XArray> sourceGetter = _column.SeekGetter();
+                if (sourceGetter == null) return null;
+
+                return (selector) =>
+                {
+                    _beforeBatch?.Invoke();
+                    return Convert(sourceGetter(selector));
+                };
+            }
+        }
+
+        public Func<XArray> ValuesGetter()
+        {
+            if (_convertedValues.Array == null)
+            {
+                Func<XArray> innerGetter = _column.ValuesGetter();
+                if (innerGetter == null) return null;
+
+                _convertedValues = Convert(innerGetter());
+            }
+
+            return () => _convertedValues;
+        }
+
+        public Func<ArraySelector, XArray> IndicesGetter()
+        {
+            return _column.IndicesGetter();
         }
 
         private XArray Convert(XArray xarray)
@@ -102,5 +150,6 @@ namespace XForm.Functions
         {
             return $"{_name}({_column})";
         }
+
     }
 }

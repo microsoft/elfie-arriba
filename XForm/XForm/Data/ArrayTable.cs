@@ -9,10 +9,29 @@ using XForm.Types;
 
 namespace XForm.IO
 {
+    public class ArrayColumn : IXColumn
+    {
+        private IXTable Table { get; set; }
+        private XArray AllValues { get; set; }
+        public ColumnDetails ColumnDetails { get; private set; }
+        private int[] _remapArray;
+
+        public ArrayColumn(IXTable table, XArray allValues, ColumnDetails columnDetails)
+        {
+            Table = table;
+            AllValues = allValues;
+            ColumnDetails = columnDetails;
+        }
+
+        public Func<XArray> Getter()
+        {
+            return () => AllValues.Select(Table.CurrentSelector, ref _remapArray);
+        }
+    }
+
     public class ArrayTable : ISeekableXTable
     {
-        private List<ColumnDetails> _columns;
-        private List<XArray> _columnArrays;
+        private List<ArrayColumn> _columns;
         private int _rowCount;
 
         private ArraySelector _currentSelector;
@@ -20,8 +39,7 @@ namespace XForm.IO
 
         public ArrayTable(int rowCount)
         {
-            _columns = new List<ColumnDetails>();
-            _columnArrays = new List<XArray>();
+            _columns = new List<ArrayColumn>();
             _rowCount = rowCount;
             Reset();
         }
@@ -32,11 +50,10 @@ namespace XForm.IO
 
             for (int i = 0; i < _columns.Count; ++i)
             {
-                if (_columns[i].Name.Equals(details.Name, StringComparison.OrdinalIgnoreCase)) throw new ArgumentException($"Can't add duplicate column. ArrayReader already has a column {details.Name}.");
+                if (_columns[i].ColumnDetails.Name.Equals(details.Name, StringComparison.OrdinalIgnoreCase)) throw new ArgumentException($"Can't add duplicate column. ArrayReader already has a column {details.Name}.");
             }
 
-            _columns.Add(details);
-            _columnArrays.Add(fullColumn);
+            _columns.Add(new ArrayColumn(this, fullColumn, details));
             return this;
         }
 
@@ -45,22 +62,13 @@ namespace XForm.IO
             return WithColumn(new ColumnDetails(columnName, array.GetType().GetElementType()), XArray.All(array, _rowCount));
         }
 
-        public IReadOnlyList<ColumnDetails> Columns => _columns;
         public int CurrentRowCount { get; private set; }
         public int Count => _rowCount;
-        public ArraySelector EnumerateSelector => _currentEnumerateSelector;
+        public ArraySelector CurrentSelector => _currentEnumerateSelector;
 
-        public Func<XArray> ColumnGetter(int columnIndex)
+        public IXColumn ColumnGetter(int columnIndex)
         {
-            // Declare a remap array in case indices must be remapped
-            int[] remapArray = null;
-
-            return () =>
-            {
-                if (columnIndex < 0 || columnIndex >= _columnArrays.Count) throw new IndexOutOfRangeException("columnIndex");
-                XArray raw = _columnArrays[columnIndex];
-                return raw.Select(_currentSelector, ref remapArray);
-            };
+            return _columns[columnIndex];
         }
 
         public void Reset()
@@ -74,16 +82,6 @@ namespace XForm.IO
             _currentSelector = _currentEnumerateSelector;
             CurrentRowCount = _currentEnumerateSelector.Count;
             return CurrentRowCount;
-        }
-
-        public IColumnReader ColumnReader(int columnIndex)
-        {
-            return CachedColumnReader(columnIndex);
-        }
-
-        public IColumnReader CachedColumnReader(int columnIndex)
-        {
-            return new CachedColumnReader(_columnArrays[columnIndex]);
         }
 
         public void Dispose()
