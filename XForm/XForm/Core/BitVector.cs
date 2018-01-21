@@ -123,6 +123,17 @@ namespace XForm
             return countFound;
         }
 
+        public void ToArray(ref bool[] array, int startIndexInclusive = 0, int endIndexExclusive = -1)
+        {
+            if (endIndexExclusive == -1) endIndexExclusive = this.Capacity;
+            Allocator.AllocateToSize(ref array, (endIndexExclusive - startIndexInclusive));
+
+            for(int i = startIndexInclusive; i < endIndexExclusive; ++i)
+            {
+                array[i - startIndexInclusive] = this[i];
+            }
+        }
+
         public BitVector ClearAbove(int length)
         {
             if (length < 0 || length > this.Capacity) throw new ArgumentOutOfRangeException("length");

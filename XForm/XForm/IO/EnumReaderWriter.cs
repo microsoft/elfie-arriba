@@ -240,7 +240,7 @@ namespace XForm.IO
             using (IColumnReader rowIndexReader = new PrimitiveArrayReader<byte>(_streamProvider.OpenRead(Path.Combine(_columnPath, RowIndexFileName))))
             {
                 int rowCount = rowIndexReader.Count;
-                ArraySelector page = ArraySelector.All(rowCount).NextPage(rowCount, 10240);
+                ArraySelector page = ArraySelector.All(0).NextPage(rowCount, 10240);
                 while (page.Count > 0)
                 {
                     // Read an XArray of indices and convert to int[]

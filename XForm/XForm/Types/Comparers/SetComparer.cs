@@ -1,7 +1,6 @@
 ﻿using System;
 using XForm.Columns;
 using XForm.Data;
-using XForm.Functions;
 using XForm.Query;
 
 namespace XForm.Types.Comparers
@@ -14,10 +13,14 @@ namespace XForm.Types.Comparers
     internal class SetComparer
     {
         BitVector _set;
+        bool[] _array;
 
         private SetComparer(BitVector set)
         {
             _set = set;
+
+            _array = null;
+            _set.ToArray(ref _array);
         }
         
         /// <summary>
@@ -95,7 +98,7 @@ namespace XForm.Types.Comparers
                 {
                     int leftIndex = left.Index(i);
                     if (left.IsNull != null && left.IsNull[leftIndex]) continue;
-                    if (_set[leftArray[leftIndex]]) vector.Set(i);
+                    if (_array[leftArray[leftIndex]]) vector.Set(i);
                 }
             }
             else if (left.Selector.Indices != null)
@@ -103,7 +106,7 @@ namespace XForm.Types.Comparers
                 // Slow Path: Look up indices on both sides.
                 for (int i = 0; i < left.Count; ++i)
                 {
-                    if (_set[leftArray[left.Index(i)]]) vector.Set(i);
+                    if (_array[leftArray[left.Index(i)]]) vector.Set(i);
                 }
             }
             else if (!left.Selector.IsSingleValue)
@@ -112,13 +115,13 @@ namespace XForm.Types.Comparers
                 int zeroOffset = left.Selector.StartIndexInclusive;
                 for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
                 {
-                    if (_set[leftArray[i]]) vector.Set(i - zeroOffset);
+                    if (_array[leftArray[i]]) vector.Set(i - zeroOffset);
                 }
             }
             else
             {
                 // Single Static comparison.
-                if (_set[leftArray[left.Selector.StartIndexInclusive]])
+                if (_array[leftArray[left.Selector.StartIndexInclusive]])
                 {
                     vector.All(left.Count);
                 }

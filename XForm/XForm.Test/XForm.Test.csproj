@@ -104,7 +104,7 @@
     <Compile Include="Functions\FunctionsTests.cs" />
     <Compile Include="Types\ComparerTests.cs" />
     <Compile Include="Query\ValidatingTable.cs" />
-    <Compile Include="Query\DataBatchEnumeratorTests.cs" />
+    <Compile Include="Query\XTableBasicTests.cs" />
     <Compile Include="Verbs\VerbsTests.cs" />
     <Compile Include="Query\XqlParsingTests.cs" />
     <Compile Include="Query\SampleQuery.cs" />

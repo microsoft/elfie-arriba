@@ -101,6 +101,8 @@ namespace XForm
                 this.CurrentTable = copyFrom.CurrentTable;
                 this.CurrentQuery = copyFrom.CurrentQuery;
                 this.RequestedAsOfDateTime = copyFrom.RequestedAsOfDateTime;
+
+                this.ForceSingleThreaded = copyFrom.ForceSingleThreaded;
             }
         }
 
