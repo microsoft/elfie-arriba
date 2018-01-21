@@ -95,6 +95,7 @@ namespace XForm.Test.Query
 
         public void Reset()
         {
+            NextCalled = false;
             _inner.Reset();
         }
     }

@@ -40,7 +40,7 @@ namespace XForm.Verbs
             HashSet<string> columnsToRemove = new HashSet<string>(columnNames, StringComparer.OrdinalIgnoreCase);
             foreach (IXColumn column in _source.Columns)
             {
-                if (!columnsToRemove.Contains(column.ColumnDetails.Name))
+                if (!columnsToRemove.Remove(column.ColumnDetails.Name))
                 {
                     _remainingColumns.Add(column);
                 }
