@@ -189,8 +189,7 @@ namespace XForm
             // Return the source (if a single) or concatenated group (if multiple parts)
             if (sources.Count == 1) return sources[0];
 
-            throw new NotImplementedException("ConcatenatingReader");
-            //return new ConcatenatingReader(sources);
+            return new ConcatenatingReader(sources);
         }
 
         private bool IsOutOfDate(DateTime outputWhenModifiedUtc, DateTime inputsWhenModifiedUtc)
