@@ -34,6 +34,8 @@ namespace XForm.Verbs
             _columns = new ArrayColumn[2];
             _columns[0] = new ArrayColumn(XArray.All(_source.Columns.Select((col) => col.ColumnDetails.Name).ToArray()), new ColumnDetails("Name", typeof(string)));
             _columns[1] = new ArrayColumn(XArray.All(_source.Columns.Select((col) => col.ColumnDetails.Type.Name.ToString()).ToArray()), new ColumnDetails("Type", typeof(string)));
+
+            _enumerateSelector = ArraySelector.All(0);
         }
 
         public override IReadOnlyList<IXColumn> Columns => _columns;

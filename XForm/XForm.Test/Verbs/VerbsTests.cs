@@ -117,5 +117,26 @@ namespace XForm.Test.Query
                 actual.Query("select Cast([ID], String8), Cast([Rank], String8), Cast([Value], String8)", context).Query("choose Max [Rank] [ID]", context),
                 distinctCount);
         }
+
+        [TestMethod]
+        public void Verb_Schema()
+        {
+            int[] id = new int[0];
+            ushort[] size = new ushort[0];
+
+            string[] name = new string[] { "ID", "Size" };
+            string[] types = new string[] { "Int32", "UInt16" };
+
+            IXTable actual = TableTestHarness.DatabaseContext.FromArrays(0)
+                .WithColumn("ID", id)
+                .WithColumn("Size", size)
+                .Query("schema", TableTestHarness.DatabaseContext);
+
+            IXTable expected = TableTestHarness.DatabaseContext.FromArrays(2)
+                .WithColumn("Name", name)
+                .WithColumn("Type", types);
+
+            TableTestHarness.AssertAreEqual(expected, actual, 2);
+        }
     }
 }
