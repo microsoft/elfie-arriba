@@ -14,7 +14,7 @@ namespace XForm.Test.Query
     [TestClass]
     public class XArrayEnumeratorTests
     {
-        public static void DataSourceEnumerator_All(string configurationLine, int expectedRowCount, string[] requiredColumns = null)
+        public static void XTable_All(string configurationLine, int expectedRowCount, string[] requiredColumns = null)
         {
             SampleDatabase.EnsureBuilt();
 
@@ -31,7 +31,7 @@ namespace XForm.Test.Query
 
                 // Run without requesting any columns. Validate.
                 actualRowCount = pipeline.RunWithoutDispose();
-                Assert.AreEqual(expectedRowCount, actualRowCount, "DataSourceEnumerator should return correct count with no requested columns.");
+                Assert.AreEqual(expectedRowCount, actualRowCount, "XTable should return correct count with no requested columns.");
 
                 // Reset; Request all columns. Validate.
                 pipeline.Reset();
@@ -54,19 +54,19 @@ namespace XForm.Test.Query
         }
 
         [TestMethod]
-        public void DataSourceEnumerator_EndToEnd()
+        public void XTable_EndToEnd()
         {
-            DataSourceEnumerator_All("select [ID] [EventTime] [ServerPort] [HttpStatus] [ClientOs] [WasCachedResponse]", 1000);
-            DataSourceEnumerator_All("limit 10", 10);
-            DataSourceEnumerator_All("count", 1);
-            DataSourceEnumerator_All("where [ServerPort] = \"80\"", 423, new string[] { "ServerPort" });
-            DataSourceEnumerator_All("cast [EventTime] DateTime", 1000);
-            DataSourceEnumerator_All("remove [EventTime]", 1000);
-            DataSourceEnumerator_All("rename [ServerPort] [PortNumber], [HttpStatus] [HttpResult]", 1000);
+            XTable_All("select [ID] [EventTime] [ServerPort] [HttpStatus] [ClientOs] [WasCachedResponse]", 1000);
+            XTable_All("limit 10", 10);
+            XTable_All("count", 1);
+            XTable_All("where [ServerPort] = \"80\"", 423, new string[] { "ServerPort" });
+            XTable_All("cast [EventTime] DateTime", 1000);
+            XTable_All("remove [EventTime]", 1000);
+            XTable_All("rename [ServerPort] [PortNumber], [HttpStatus] [HttpResult]", 1000);
         }
 
         [TestMethod]
-        public void DataSourceEnumerator_Errors()
+        public void XTable_Errors()
         {
             Verify.Exception<UsageException>(() => SampleDatabase.XDatabaseContext.Query("read"));
             Verify.Exception<UsageException>(() => SampleDatabase.XDatabaseContext.Query("read NotFound.csv"));
