@@ -18,7 +18,6 @@ namespace XForm.IO
         private String8[] _currentArray;
 
         public ColumnDetails ColumnDetails { get; private set; }
-        public ArraySelector CurrentSelector => _table.CurrentSelector;
 
         public TabularColumn(TabularFileReader table, string columnName)
         {
@@ -26,7 +25,7 @@ namespace XForm.IO
             ColumnDetails = new ColumnDetails(columnName, typeof(String8));
         }
 
-        public void Set(String8[] currentArray)
+        public void SetValues(String8[] currentArray)
         {
             _currentArray = currentArray;
         }
@@ -80,7 +79,6 @@ namespace XForm.IO
 
         public IReadOnlyList<IXColumn> Columns => _columns;
         public int CurrentRowCount { get; private set; }
-        public ArraySelector CurrentSelector => ArraySelector.All(CurrentRowCount);
 
         public void Reset()
         {
@@ -122,7 +120,7 @@ namespace XForm.IO
 
             for(int i = 0; i < _columns.Length; ++i)
             {
-                _columns[i].Set(_cells[i]);
+                _columns[i].SetValues(_cells[i]);
             }
 
             return CurrentRowCount;

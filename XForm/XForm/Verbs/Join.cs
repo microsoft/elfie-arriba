@@ -50,9 +50,6 @@ namespace XForm.Verbs
         private RowRemapper _sourceJoinedRowsFilter;
         private ArraySelector _currentRightSideSelector;
 
-        // Not right
-        public ArraySelector CurrentSelector => _currentRightSideSelector;
-
         public Join(IXTable source, string joinFromColumn, IXTable joinToSource, string joinToColumn, string joinSidePrefix)
         {
             _source = source;
@@ -80,7 +77,7 @@ namespace XForm.Verbs
             // Left Side columns are filtered to rows that joined (inner join)
             for (int i = 0; i < source.Columns.Count; ++i)
             {
-                _columns[i] = new RemappedColumn(source, source.Columns[i], _sourceJoinedRowsFilter);
+                _columns[i] = new RemappedColumn(source.Columns[i], _sourceJoinedRowsFilter);
             }
 
             // Right side columns are seeked to the right side matching rows

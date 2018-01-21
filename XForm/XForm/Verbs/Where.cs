@@ -52,13 +52,12 @@ namespace XForm.Verbs
             _columns = new RemappedColumn[source.Columns.Count];
             for(int i = 0; i < _columns.Length; ++i)
             {
-                _columns[i] = new RemappedColumn(this, source.Columns[i], _mapper);
+                _columns[i] = new RemappedColumn(source.Columns[i], _mapper);
             }
         }
 
         public override IReadOnlyList<IXColumn> Columns => _columns;
         public override int CurrentRowCount => _nextCountToReturn;
-        public override ArraySelector CurrentSelector => base.CurrentSelector;
 
         private int CountToRequest(int desiredCount)
         {

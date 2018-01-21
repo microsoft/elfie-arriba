@@ -14,14 +14,12 @@ namespace XForm.Data
             _source = source;
         }
 
-        public virtual int CurrentRowCount { get; private set; }
-        public virtual ArraySelector CurrentSelector => _source.CurrentSelector;
+        public virtual int CurrentRowCount => _source.CurrentRowCount;
         public virtual IReadOnlyList<IXColumn> Columns => _source.Columns;
 
         public virtual int Next(int desiredCount)
         {
-            CurrentRowCount = _source.Next(desiredCount);
-            return CurrentRowCount;
+            return _source.Next(desiredCount);
         }
 
         public virtual void Reset()

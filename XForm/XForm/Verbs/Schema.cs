@@ -1,12 +1,11 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
+using XForm.Columns;
 using XForm.Data;
-using XForm.IO;
 using XForm.Query;
 
 namespace XForm.Verbs
@@ -27,14 +26,14 @@ namespace XForm.Verbs
     /// </summary>
     public class SchemaTransformer : XTableWrapper
     {
-        private IXColumn[] _columns;
+        private ArrayColumn[] _columns;
         private ArraySelector _enumerateSelector;
 
         public SchemaTransformer(IXTable source) : base(source)
         {
-            _columns = new IXColumn[2];
-            _columns[0] = new ArrayColumn(this, XArray.All(_source.Columns.Select((col) => col.ColumnDetails.Name).ToArray()), new ColumnDetails("Name", typeof(string)));
-            _columns[1] = new ArrayColumn(this, XArray.All(_source.Columns.Select((col) => col.ColumnDetails.Type.Name.ToString()).ToArray()), new ColumnDetails("Type", typeof(string)));
+            _columns = new ArrayColumn[2];
+            _columns[0] = new ArrayColumn(XArray.All(_source.Columns.Select((col) => col.ColumnDetails.Name).ToArray()), new ColumnDetails("Name", typeof(string)));
+            _columns[1] = new ArrayColumn(XArray.All(_source.Columns.Select((col) => col.ColumnDetails.Type.Name.ToString()).ToArray()), new ColumnDetails("Type", typeof(string)));
         }
 
         public override IReadOnlyList<IXColumn> Columns => _columns;
@@ -42,11 +41,18 @@ namespace XForm.Verbs
         public override void Reset()
         {
             _enumerateSelector = ArraySelector.All(0);
+
+            _columns[0].SetSelector(_enumerateSelector);
+            _columns[1].SetSelector(_enumerateSelector);
         }
 
         public override int Next(int desiredCount)
         {
             _enumerateSelector = _enumerateSelector.NextPage(_source.Columns.Count, desiredCount);
+
+            _columns[0].SetSelector(_enumerateSelector);
+            _columns[1].SetSelector(_enumerateSelector);
+
             return _enumerateSelector.Count;
         }
     }

@@ -62,22 +62,14 @@ namespace XForm.IO
         public Func<XArray> IndicesCurrentGetter()
         {
             GetReader();
-            if (_columnReader is EnumReader)
-            {
-                return () => ((EnumReader)_columnReader).Indices(_table.CurrentSelector);
-            }
-
+            if (_columnReader is EnumReader) return () => ((EnumReader)_columnReader).Indices(_table.CurrentSelector);
             return null;
         }
 
         public Func<ArraySelector, XArray> IndicesSeekGetter()
         {
             GetReader(true);
-            if (_columnReader is EnumReader)
-            {
-                return (selector) => ((EnumReader)_columnReader).Indices(selector);
-            }
-
+            if (_columnReader is EnumReader) return (selector) => ((EnumReader)_columnReader).Indices(selector);
             return null;
         }
 

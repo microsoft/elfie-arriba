@@ -4,52 +4,12 @@
 using System;
 using System.Collections.Generic;
 
+using XForm.Columns;
 using XForm.Data;
 
 namespace XForm.IO
 {
-    public class ArrayColumn : IXColumn
-    {
-        private IXTable _table { get; set; }
-        private XArray _allValues { get; set; }
-        public ColumnDetails ColumnDetails { get; private set; }
 
-        private int[] _remapArray;
-
-        public ArrayColumn(IXTable table, XArray allValues, ColumnDetails columnDetails)
-        {
-            _table = table;
-            _allValues = allValues;
-            ColumnDetails = columnDetails;
-        }
-
-        public Func<XArray> CurrentGetter()
-        {
-            return () => _allValues.Select(_table.CurrentSelector, ref _remapArray);
-        }
-
-        public Func<ArraySelector, XArray> SeekGetter()
-        {
-            return (selector) => _allValues.Reselect(selector);
-        }
-
-        public Func<XArray> ValuesGetter()
-        {
-            return null;
-        }
-
-        public Type IndicesType => null;
-
-        public Func<XArray> IndicesCurrentGetter()
-        {
-            return null;
-        }
-
-        public Func<ArraySelector, XArray> IndicesSeekGetter()
-        {
-            return null;
-        }
-    }
 
     public class ArrayTable : ISeekableXTable
     {
@@ -75,7 +35,7 @@ namespace XForm.IO
                 if (_columns[i].ColumnDetails.Name.Equals(details.Name, StringComparison.OrdinalIgnoreCase)) throw new ArgumentException($"Can't add duplicate column. ArrayReader already has a column {details.Name}.");
             }
 
-            _columns.Add(new ArrayColumn(this, fullColumn, details));
+            _columns.Add(new ArrayColumn(fullColumn, details));
             return this;
         }
 
@@ -86,18 +46,28 @@ namespace XForm.IO
 
         public int CurrentRowCount { get; private set; }
         public int Count => _rowCount;
-        public ArraySelector CurrentSelector => _currentEnumerateSelector;
         public IReadOnlyList<IXColumn> Columns => _columns;
 
         public void Reset()
         {
             _currentEnumerateSelector = ArraySelector.All(_rowCount).Slice(0, 0);
+
+            for (int i = 0; i < _columns.Count; ++i)
+            {
+                _columns[i].SetSelector(_currentEnumerateSelector);
+            }
         }
 
         public int Next(int desiredCount)
         {
             _currentEnumerateSelector = _currentEnumerateSelector.NextPage(_rowCount, desiredCount);
             _currentSelector = _currentEnumerateSelector;
+
+            for(int i = 0; i < _columns.Count; ++i)
+            {
+                _columns[i].SetSelector(_currentEnumerateSelector);
+            }
+
             CurrentRowCount = _currentEnumerateSelector.Count;
             return CurrentRowCount;
         }

@@ -33,11 +33,10 @@ namespace XForm.Aggregators
             _source = source;
             _count = -1;
             _countColumn = new SingleValueColumn[] { new SingleValueColumn(this, typeof(int)) };
-            CurrentSelector = ArraySelector.Single(1);
         }
+
         public IReadOnlyList<IXColumn> Columns => _countColumn;
         public int CurrentRowCount { get; private set; }
-        public ArraySelector CurrentSelector { get; private set; }
 
         public void Reset()
         {

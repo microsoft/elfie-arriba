@@ -4,8 +4,6 @@
 using System;
 using System.Collections.Generic;
 
-using XForm.Types;
-
 namespace XForm.Data
 {
     /// <summary>
@@ -38,12 +36,6 @@ namespace XForm.Data
         ///  Return the row count in the current array..
         /// </summary>
         int CurrentRowCount { get; }
-
-        /// <summary>
-        ///  Return the selector for the current row position
-        ///  (to get matching rows if using readers directly).
-        /// </summary>
-        ArraySelector CurrentSelector { get; }
     }
 
     /// <summary>

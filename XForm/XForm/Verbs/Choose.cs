@@ -59,13 +59,11 @@ namespace XForm.Verbs
 
             _chosenRowsFilter = new RowRemapper();
 
-            _columns = source.Columns.Select((col) => new RemappedColumn(this, col, _chosenRowsFilter)).ToArray();
+            _columns = source.Columns.Select((col) => new RemappedColumn(col, _chosenRowsFilter)).ToArray();
         }
 
         public IReadOnlyList<IXColumn> Columns => _columns;
-
         public int CurrentRowCount { get; private set; }
-        public ArraySelector CurrentSelector => ArraySelector.All(_totalRowsRead).Slice(_totalRowsRead - CurrentRowCount, CurrentRowCount);
 
         public int Next(int desiredCount)
         {

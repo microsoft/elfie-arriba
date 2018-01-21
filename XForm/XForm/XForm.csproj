@@ -93,6 +93,7 @@
   <ItemGroup>
     <Compile Include="Aggregators\CountAggregator.cs" />
     <Compile Include="BackgroundWebServer.cs" />
+    <Compile Include="Columns\ArrayColumn.cs" />
     <Compile Include="Columns\CastedColumn.cs" />
     <Compile Include="Columns\PagingColumn.cs" />
     <Compile Include="Columns\SeekedColumn.cs" />

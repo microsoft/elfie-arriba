@@ -60,7 +60,6 @@ namespace XForm.IO
         }
 
         public IReadOnlyList<IXColumn> Columns => _source.Columns;
-        public ArraySelector CurrentSelector => _source.CurrentSelector;
         public int CurrentRowCount => _source.CurrentRowCount;
 
         public void Reset()

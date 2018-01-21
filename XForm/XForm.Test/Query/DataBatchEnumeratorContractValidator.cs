@@ -71,7 +71,6 @@ namespace XForm.Test.Query
         }
 
         public IReadOnlyList<IXColumn> Columns => _columns;
-        public ArraySelector CurrentSelector => _inner.CurrentSelector;
 
         public void Dispose()
         {

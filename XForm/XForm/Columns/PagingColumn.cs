@@ -8,13 +8,17 @@ namespace XForm.Columns
     /// </summary>
     internal class PagingColumn : IXColumn
     {
-        private IXTable _table;
+        private ArraySelector _currentSelector;
         private IXColumn _column;
 
-        public PagingColumn(IXTable table, IXColumn column)
+        public PagingColumn(IXColumn column)
         {
-            _table = table;
             _column = column;
+        }
+
+        public void SetSelector(ArraySelector currentSelector)
+        {
+            _currentSelector = currentSelector;
         }
 
         public ColumnDetails ColumnDetails => _column.ColumnDetails;
@@ -24,7 +28,7 @@ namespace XForm.Columns
             Func<XArray> sourceGetter = _column.CurrentGetter();
             int[] remapArray = null;
 
-            return () => sourceGetter().Select(_table.CurrentSelector, ref remapArray);
+            return () => sourceGetter().Select(_currentSelector, ref remapArray);
         }
 
         public Func<ArraySelector, XArray> SeekGetter()
@@ -46,7 +50,7 @@ namespace XForm.Columns
             if (sourceGetter == null) return null;
 
             int[] remapArray = null;
-            return () => sourceGetter().Select(_table.CurrentSelector, ref remapArray);
+            return () => sourceGetter().Select(_currentSelector, ref remapArray);
         }
 
         public Func<ArraySelector, XArray> IndicesSeekGetter()

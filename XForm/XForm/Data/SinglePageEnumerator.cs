@@ -32,10 +32,9 @@ namespace XForm.Data
         public SinglePageEnumerator(IXTable source)
         {
             _source = source;
-            _columns = source.Columns.Select((col) => new PagingColumn(this, col)).ToArray();
+            _columns = source.Columns.Select((col) => new PagingColumn(col)).ToArray();
         }
 
-        public ArraySelector CurrentSelector => _currentEnumerateSelector;
         public IReadOnlyList<IXColumn> Columns => _columns;
 
         public int SourceNext(int desiredCount)
@@ -59,6 +58,12 @@ namespace XForm.Data
             // Iterate over the cached single page
             _currentEnumerateSelector = _currentEnumerateSelector.NextPage(_currentPageCount, desiredCount);
             _currentSelector = _currentEnumerateSelector;
+
+            for (int i = 0; i < _columns.Length; ++i)
+            {
+                _columns[i].SetSelector(_currentEnumerateSelector);
+            }
+
             return _currentEnumerateSelector.Count;
         }
 
