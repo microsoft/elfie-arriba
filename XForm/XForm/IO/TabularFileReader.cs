@@ -120,6 +120,11 @@ namespace XForm.IO
                 if (CurrentRowCount == desiredCount) break;
             }
 
+            for(int i = 0; i < _columns.Length; ++i)
+            {
+                _columns[i].Set(_cells[i]);
+            }
+
             return CurrentRowCount;
         }
 

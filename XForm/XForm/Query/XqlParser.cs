@@ -203,6 +203,7 @@ namespace XForm.Query
             else if (_scanner.Current.Type == TokenType.ColumnName)
             {
                 result = source.Columns.Find(_scanner.Current.Value);
+                _scanner.Next();
             }
 
             if (result == null || (requiredType != null && result.ColumnDetails.Type != requiredType))

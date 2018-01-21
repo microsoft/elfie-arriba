@@ -161,24 +161,24 @@ namespace XForm.Types
 
         public Type WritingAsType => typeof(T);
 
-        public void Append(XArray xarray)
+        public void Append(XArray array)
         {
-            Allocator.AllocateToSize(ref _bytesBuffer, _bytesPerItem * xarray.Count);
+            Allocator.AllocateToSize(ref _bytesBuffer, _bytesPerItem * array.Count);
 
-            if (xarray.Selector.Indices == null && xarray.Selector.IsSingleValue == false)
+            if (array.Selector.Indices == null && array.Selector.IsSingleValue == false)
             {
-                Buffer.BlockCopy(xarray.Array, _bytesPerItem * xarray.Selector.StartIndexInclusive, _bytesBuffer, 0, _bytesPerItem * xarray.Count);
+                Buffer.BlockCopy(array.Array, _bytesPerItem * array.Selector.StartIndexInclusive, _bytesBuffer, 0, _bytesPerItem * array.Count);
             }
             else
             {
-                for (int i = 0; i < xarray.Count; ++i)
+                for (int i = 0; i < array.Count; ++i)
                 {
-                    int index = xarray.Index(i);
-                    Buffer.BlockCopy(xarray.Array, _bytesPerItem * index, _bytesBuffer, i * _bytesPerItem, _bytesPerItem);
+                    int index = array.Index(i);
+                    Buffer.BlockCopy(array.Array, _bytesPerItem * index, _bytesBuffer, i * _bytesPerItem, _bytesPerItem);
                 }
             }
 
-            _stream.Write(_bytesBuffer, 0, _bytesPerItem * xarray.Count);
+            _stream.Write(_bytesBuffer, 0, _bytesPerItem * array.Count);
         }
 
         public void Dispose()

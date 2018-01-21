@@ -157,28 +157,39 @@ namespace XForm.Data
         }
 
         /// <summary>
-        ///  Remap the IsNull array from the source xarray, if any, to a non-indexed array.
-        ///  Used when the values in the xarray were converted into an in-order array but IsNull
+        ///  Replace the values in an XArray and return it with the same selector
+        /// </summary>
+        /// <param name="other">Replacement Array to use</param>
+        /// <returns>XArray with values replaced and Selector the same</returns>
+        public XArray ReplaceValues(XArray other)
+        {
+            if (this.Array.Length != other.Array.Length) throw new ArgumentException("XArray.ReplaceArray should be used for EnumColumns and array sizes should match.");
+            return new XArray(this) { Array = other.Array, IsNull = other.IsNull };
+        }
+
+        /// <summary>
+        ///  Remap the IsNull array from the source XArray, if any, to a non-indexed array.
+        ///  Used when the values in the XAray were converted into an in-order array but IsNull
         ///  from the source needs to be preserved.
         /// </summary>
-        /// <param name="xarray">XArray to remap nulls from</param>
+        /// <param name="array">XArray to remap nulls from</param>
         /// <param name="remapArray">bool[] to use to remap IsNull values, if needed</param>
         /// <returns>IsNull array to use in returned XArray</returns>
-        public static bool[] RemapNulls(XArray xarray, ref bool[] remapArray)
+        public static bool[] RemapNulls(XArray array, ref bool[] remapArray)
         {
             // If there were no source nulls, there are none for the output
-            if (xarray.IsNull == null) return null;
+            if (array.IsNull == null) return null;
 
             // If the source isn't indexed or shifted, the IsNull array may be reused
-            if (xarray.Selector.Indices == null && xarray.Selector.StartIndexInclusive == 0) return xarray.IsNull;
+            if (array.Selector.Indices == null && array.Selector.StartIndexInclusive == 0) return array.IsNull;
 
             // Otherwise, we must remap nulls
-            Allocator.AllocateToSize(ref remapArray, xarray.Count);
+            Allocator.AllocateToSize(ref remapArray, array.Count);
 
             bool areAnyNulls = false;
-            for (int i = 0; i < xarray.Count; ++i)
+            for (int i = 0; i < array.Count; ++i)
             {
-                areAnyNulls |= (remapArray[i] = xarray.IsNull[xarray.Index(i)]);
+                areAnyNulls |= (remapArray[i] = array.IsNull[array.Index(i)]);
             }
 
             return (areAnyNulls ? remapArray : null);

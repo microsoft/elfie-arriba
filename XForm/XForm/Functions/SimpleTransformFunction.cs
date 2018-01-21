@@ -48,23 +48,15 @@ namespace XForm.Functions
 
         public Func<XArray> CurrentGetter()
         {
-            Func<XArray> indicesGetter = IndicesCurrentGetter();
-            if (indicesGetter != null)
+            Func<XArray> sourceGetter = _column.CurrentGetter();
+            if (ValuesGetter() != null)
             {
-                // If the column has fixed values, convert them once and cache them
-                ValuesGetter();
-
-                // Get values an indices unmapped and replace the array with the converted array 
-                return () =>
-                {
-                    XArray unmapped = indicesGetter();
-                    return XArray.All(_convertedValues.Array, _convertedValues.Count).Reselect(unmapped.Selector);
-                };
+                // Get values mapped and replace values array with the converted array 
+                return () => sourceGetter().ReplaceValues(_convertedValues);
             }
             else
             {
                 // Otherwise, convert from the underlying current getter
-                Func<XArray> sourceGetter = _column.CurrentGetter();
                 return () =>
                 {
                     _beforeBatch?.Invoke();
@@ -75,25 +67,15 @@ namespace XForm.Functions
 
         public Func<ArraySelector, XArray> SeekGetter()
         {
-            Func<ArraySelector, XArray> indicesGetter = IndicesSeekGetter();
-            if (indicesGetter != null)
+            Func<ArraySelector, XArray> sourceGetter = _column.SeekGetter();
+            if (ValuesGetter() != null)
             {
-                // If the column has fixed values, convert them once and cache them
-                ValuesGetter();
-
-                // Get values an indices unmapped and replace the array with the converted array 
-                return (selector) =>
-                {
-                    XArray unmapped = indicesGetter(selector);
-                    return XArray.All(_convertedValues.Array, _convertedValues.Count).Reselect(unmapped.Selector);
-                };
+                // Get values mapped and replace values array with the converted array 
+                return (selector) => sourceGetter(selector).ReplaceValues(_convertedValues);
             }
             else
             {
-                // Otherwise, convert from the underlying seek getter
-                Func<ArraySelector, XArray> sourceGetter = _column.SeekGetter();
-                if (sourceGetter == null) return null;
-
+                // Otherwise, convert from the underlying current getter
                 return (selector) =>
                 {
                     _beforeBatch?.Invoke();
@@ -109,6 +91,7 @@ namespace XForm.Functions
                 Func<XArray> innerGetter = _column.ValuesGetter();
                 if (innerGetter == null) return null;
 
+                _beforeBatch?.Invoke();
                 _convertedValues = Convert(innerGetter());
             }
 
