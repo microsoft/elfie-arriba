@@ -6,7 +6,7 @@ using System;
 using XForm.Data;
 using XForm.Query;
 
-namespace XForm.Functions
+namespace XForm.Columns
 {
     /// <summary>
     ///  Rename an underlying column and pass through other members.

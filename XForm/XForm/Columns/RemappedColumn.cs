@@ -2,7 +2,7 @@
 using XForm.Data;
 using XForm.Transforms;
 
-namespace XForm.Functions
+namespace XForm.Columns
 {
     /// <summary>
     ///  RemappedColumn is an IXColumn wrapper which remaps the returned values based on

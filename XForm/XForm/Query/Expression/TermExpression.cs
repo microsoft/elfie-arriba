@@ -6,10 +6,10 @@ using System;
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 
 using XForm.Data;
-using XForm.Functions;
 using XForm.Types;
 using XForm.Types.Comparers;
 using XForm.Extensions;
+using XForm.Columns;
 
 namespace XForm.Query.Expression
 {
@@ -31,7 +31,7 @@ namespace XForm.Query.Expression
             _right = right;
 
             // Disallow constant <op> constant [likely error not wrapping column name]
-            if (_left is Constant && _right is Constant) throw new ArgumentException($"({left} {op.ToQueryForm()} {right}) is comparing two constants. Wrap [ColumnNames] in braces.");
+            if (_left is ConstantColumn && _right is ConstantColumn) throw new ArgumentException($"({left} {op.ToQueryForm()} {right}) is comparing two constants. Wrap [ColumnNames] in braces.");
 
             // If the left side is a constant and the operator can be swapped, move it to the right side.
             // Comparers can check if the right side is constant and run a faster loop when that's the case.
@@ -47,7 +47,7 @@ namespace XForm.Query.Expression
             // Disallow unquoted constants used as strings
             if (_right.IsConstantColumn() && _left.ColumnDetails.Type == typeof(String8) && _right.ColumnDetails.Type == typeof(String8))
             {
-                Constant cRight = _right as Constant;
+                ConstantColumn cRight = _right as ConstantColumn;
                 if (cRight != null && !cRight.IsNull && cRight.WasUnwrappedLiteral)
                 {
                     throw new ArgumentException($"{right} is compared to a string, but is unquoted. Strings must be quoted.");
@@ -58,7 +58,7 @@ namespace XForm.Query.Expression
             // This means constants will always be casted to the other side type.
             if (_left.ColumnDetails.Type != _right.ColumnDetails.Type)
             {
-                _right = XForm.Functions.CastedColumn.Build(source, _right, _left.ColumnDetails.Type, ValueKinds.Invalid);
+                _right = CastedColumn.Build(source, _right, _left.ColumnDetails.Type, ValueKinds.Invalid);
             }
 
             // Get the left and right getters

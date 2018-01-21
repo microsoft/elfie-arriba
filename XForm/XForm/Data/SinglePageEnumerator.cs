@@ -4,63 +4,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using XForm.Columns;
 
 namespace XForm.Data
 {
-    internal class ColumnPager : IXColumn
-    {
-        private IXTable _table;
-        private IXColumn _column;
-
-        public ColumnPager(IXTable table, IXColumn column)
-        {
-            _table = table;
-            _column = column;
-        }
-
-        public ColumnDetails ColumnDetails => _column.ColumnDetails;
-
-        public Func<XArray> CurrentGetter()
-        {
-            Func<XArray> sourceGetter = _column.CurrentGetter();
-            int[] remapArray = null;
-
-            return () => sourceGetter().Select(_table.CurrentSelector, ref remapArray);
-        }
-
-        public Func<ArraySelector, XArray> SeekGetter()
-        {
-            // Seek is blocked by SinglePageEnumerator
-            return null;
-        }
-
-        public Func<XArray> ValuesGetter()
-        {
-            return _column.ValuesGetter();
-        }
-
-        public Type IndicesType => _column.IndicesType;
-
-        public Func<XArray> IndicesCurrentGetter()
-        {
-            Func<XArray> sourceGetter = _column.IndicesCurrentGetter();
-            if (sourceGetter == null) return null;
-
-            int[] remapArray = null;
-            return () => sourceGetter().Select(_table.CurrentSelector, ref remapArray);
-        }
-
-        public Func<ArraySelector, XArray> IndicesSeekGetter()
-        {
-            // Seek is blocked by SinglePageEnumerator
-            return null;
-        }
-
-        public override string ToString()
-        {
-            return _column.ToString();
-        }
-    }
+    
 
     /// <summary>
     ///  SinglePageEnumerator is an IXArrayList which will only return the current single page
@@ -72,7 +20,7 @@ namespace XForm.Data
     public class SinglePageEnumerator : IXTable
     {
         private IXTable _source;
-        private ColumnPager[] _columns;
+        private PagingColumn[] _columns;
 
         private int _currentPageCount;
         private ArraySelector _currentSelector;
@@ -84,7 +32,7 @@ namespace XForm.Data
         public SinglePageEnumerator(IXTable source)
         {
             _source = source;
-            _columns = source.Columns.Select((col) => new ColumnPager(this, col)).ToArray();
+            _columns = source.Columns.Select((col) => new PagingColumn(this, col)).ToArray();
         }
 
         public ArraySelector CurrentSelector => _currentEnumerateSelector;

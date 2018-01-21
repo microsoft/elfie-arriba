@@ -3,7 +3,7 @@
 
 using System;
 using System.Collections.Generic;
-
+using XForm.Columns;
 using XForm.Data;
 using XForm.Extensions;
 using XForm.Functions;
@@ -24,7 +24,7 @@ namespace XForm.Aggregators
 
     public class CountAggregator : IXTable
     {
-        private Constant[] _countColumn;
+        private SingleValueColumn[] _countColumn;
         private IXTable _source;
         private int _count;
 
@@ -32,7 +32,7 @@ namespace XForm.Aggregators
         {
             _source = source;
             _count = -1;
-            _countColumn = new Constant[] { new Constant(this, -1, typeof(int)) };
+            _countColumn = new SingleValueColumn[] { new SingleValueColumn(this, typeof(int)) };
             CurrentSelector = ArraySelector.Single(1);
         }
         public IReadOnlyList<IXColumn> Columns => _countColumn;
@@ -72,7 +72,7 @@ namespace XForm.Aggregators
             }
 
             // Set the count on the constant
-            _countColumn[0].Value = _count;
+            _countColumn[0].Set(_count);
 
             // Return that there's one row (the count)
             CurrentRowCount = 1;

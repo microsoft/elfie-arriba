@@ -1,4 +1,5 @@
 ﻿using System;
+using XForm.Columns;
 using XForm.Data;
 using XForm.Functions;
 using XForm.Query;
@@ -54,7 +55,7 @@ namespace XForm.Types.Comparers
             else if (set.Count == 1)
             {
                 // Convert the constant to the one matching index and make the comparison for index equals that
-                rightColumn = new Constant(source, (byte)set.GetSingle(), typeof(byte));
+                rightColumn = new ConstantColumn(source, (byte)set.GetSingle(), typeof(byte));
 
                 return TypeProviderFactory.Get(typeof(byte)).TryGetComparer(CompareOperator.Equal);
             }
@@ -63,7 +64,7 @@ namespace XForm.Types.Comparers
                 set.Not(set.Count);
 
                 // Convert the constant to the one non-matching index and make the comparison for index doesn't equal that
-                rightColumn = new Constant(source, (byte)set.GetSingle(), typeof(byte));
+                rightColumn = new ConstantColumn(source, (byte)set.GetSingle(), typeof(byte));
 
                 return TypeProviderFactory.Get(typeof(byte)).TryGetComparer(CompareOperator.NotEqual);
             }

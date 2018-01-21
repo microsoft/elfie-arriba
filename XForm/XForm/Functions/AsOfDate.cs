@@ -3,6 +3,7 @@
 
 using System;
 
+using XForm.Columns;
 using XForm.Data;
 
 namespace XForm.Functions
@@ -15,7 +16,7 @@ namespace XForm.Functions
 
         public IXColumn Build(IXTable source, XDatabaseContext context)
         {
-            return new Constant(source, context.RequestedAsOfDateTime, typeof(DateTime));
+            return new ConstantColumn(source, context.RequestedAsOfDateTime, typeof(DateTime));
         }
     }
 }

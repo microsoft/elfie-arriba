@@ -13,6 +13,7 @@ using XForm.Extensions;
 using XForm.Functions;
 using XForm.Query.Expression;
 using XForm.Types;
+using XForm.Columns;
 
 namespace XForm.Query
 {
@@ -193,7 +194,7 @@ namespace XForm.Query
                     value = TypeConverterFactory.ConvertSingle(value, requiredType);
                 }
 
-                result = new Constant(source, value, (requiredType == null ? typeof(String8) : requiredType), !_scanner.Current.IsWrapped);
+                result = new ConstantColumn(source, value, (requiredType == null ? typeof(String8) : requiredType), !_scanner.Current.IsWrapped);
                 _scanner.Next();
             }
             else if (_scanner.Current.Type == TokenType.FunctionName)

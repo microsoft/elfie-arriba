@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-
+using XForm.Columns;
 using XForm.Data;
 using XForm.Extensions;
 using XForm.Functions;

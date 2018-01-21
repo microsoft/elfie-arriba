@@ -7,12 +7,12 @@ using System;
 using XForm.Data;
 using XForm.Query;
 
-namespace XForm.Functions
+namespace XForm.Columns
 {
     /// <summary>
-    ///  Constant implements IXColumn for a single constant value.
+    ///  ConstantColumn implements IXColumn for a single constant value.
     /// </summary>
-    public class Constant : IXColumn
+    public class ConstantColumn : IXColumn
     {
         public bool IsNull { get; private set; }
         public bool WasUnwrappedLiteral { get; private set; }
@@ -22,7 +22,7 @@ namespace XForm.Functions
         private XArray _xArray;
         private IXTable Source { get; set; }
 
-        public Constant(IXTable source, object value, Type type, bool wasUnwrappedLiteral = false)
+        public ConstantColumn(IXTable source, object value, Type type, bool wasUnwrappedLiteral = false)
         {
             Source = source;
 
@@ -36,10 +36,10 @@ namespace XForm.Functions
             ColumnDetails = new ColumnDetails(string.Empty, type);
         }
 
-        private XArray Get(ArraySelector selector)
+        private XArray Get(int count)
         {
-            if (IsNull) return XArray.Null(_array, selector.Count);
-            return XArray.Single(_array, selector.Count);
+            if (IsNull) return XArray.Null(_array, count);
+            return XArray.Single(_array, count);
         }
 
         public object Value
@@ -50,12 +50,12 @@ namespace XForm.Functions
 
         public Func<XArray> CurrentGetter()
         {
-            return () => Get(Source.CurrentSelector);
+            return () => Get(Source.CurrentRowCount);
         }
 
         public Func<ArraySelector, XArray> SeekGetter()
         {
-            return (selector) => Get(selector);
+            return (selector) => Get(selector.Count);
         }
 
         public Func<XArray> ValuesGetter()
