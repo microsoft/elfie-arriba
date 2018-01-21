@@ -28,13 +28,25 @@ namespace XForm.Test.Query
         public Func<XArray> CurrentGetter()
         {
             if(_table.NextCalled) throw new AssertFailedException("Column Getters must all be requested before the first Next() call (so callees know what to retrieve).");
-            return _column.CurrentGetter();
+            Func<XArray> getter = _column.CurrentGetter();
+            return () =>
+            {
+                XArray result = getter();
+                Assert.AreEqual(_table.CurrentRowCount, result.Count, "Getter must return count matching Table.Next() and Table.CurrentRowCount.");
+                return result;
+            };
         }
 
         public Func<ArraySelector, XArray> SeekGetter()
         {
             if (_table.NextCalled) throw new AssertFailedException("Column Getters must all be requested before the first Next() call (so callees know what to retrieve).");
-            return _column.SeekGetter();
+            Func<ArraySelector, XArray> getter = _column.SeekGetter();
+            return (selector) =>
+            {
+                XArray result = getter(selector);
+                Assert.AreEqual(selector.Count, result.Count, "Seek getters must return count matching requested ArraySelector count.");
+                return result;
+            };
         }
 
         public Func<XArray> ValuesGetter()
@@ -45,13 +57,25 @@ namespace XForm.Test.Query
         public Func<XArray> IndicesCurrentGetter()
         {
             if(_table.NextCalled) throw new AssertFailedException("Column Getters must all be requested before the first Next() call (so callees know what to retrieve).");
-            return _column.IndicesCurrentGetter();
+            Func<XArray> getter = _column.IndicesCurrentGetter();
+            return () =>
+            {
+                XArray result = getter();
+                Assert.AreEqual(_table.CurrentRowCount, result.Count, "Getter must return count matching Table.Next() and Table.CurrentRowCount.");
+                return result;
+            };
         }
 
         public Func<ArraySelector, XArray> IndicesSeekGetter()
         {
             if(_table.NextCalled) throw new AssertFailedException("Column Getters must all be requested before the first Next() call (so callees know what to retrieve).");
-            return _column.IndicesSeekGetter();
+            Func<ArraySelector, XArray> getter = _column.IndicesSeekGetter();
+            return (selector) =>
+            {
+                XArray result = getter(selector);
+                Assert.AreEqual(selector.Count, result.Count, "Seek getters must return count matching requested ArraySelector count.");
+                return result;
+            };
         }
     }
 
