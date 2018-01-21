@@ -12,7 +12,7 @@ using XForm.Query;
 namespace XForm.Test.Query
 {
     [TestClass]
-    public class XArrayEnumeratorTests
+    public class XTableBasicTests
     {
         public static void XTable_All(string configurationLine, int expectedRowCount, string[] requiredColumns = null)
         {
