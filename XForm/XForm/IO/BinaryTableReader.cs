@@ -14,9 +14,13 @@ namespace XForm.IO
 {
     public class BinaryReaderColumn : IXColumn, IDisposable
     {
+        private bool _isCached;
+
         private BinaryTableReader _table;
         private IStreamProvider _streamProvider;
         private IColumnReader _columnReader;
+        private EnumReader _enumReader;
+
         public ColumnDetails ColumnDetails { get; private set; }
 
         public BinaryReaderColumn(BinaryTableReader table, ColumnDetails details, IStreamProvider streamProvider)
@@ -41,12 +45,8 @@ namespace XForm.IO
         public Func<XArray> ValuesGetter()
         {
             GetReader();
-            if(_columnReader is EnumReader)
-            {
-                return () => ((EnumReader)_columnReader).Values();
-            }
-
-            return null;
+            if (_enumReader == null) return null;
+            return _enumReader.Values;
         }
 
         public Type IndicesType
@@ -54,29 +54,37 @@ namespace XForm.IO
             get
             {
                 GetReader();
-                if (_columnReader is EnumReader) return ((EnumReader)_columnReader).IndicesType;
-                return null;
+                if (_enumReader == null) return null;
+                return _enumReader.IndicesType;
             }
         }
 
         public Func<XArray> IndicesCurrentGetter()
         {
             GetReader();
-            if (_columnReader is EnumReader) return () => ((EnumReader)_columnReader).Indices(_table.CurrentSelector);
-            return null;
+            if (_enumReader == null) return null;
+            return () => _enumReader.Indices(_table.CurrentSelector);
         }
 
         public Func<ArraySelector, XArray> IndicesSeekGetter()
         {
             GetReader(true);
-            if (_columnReader is EnumReader) return (selector) => ((EnumReader)_columnReader).Indices(selector);
-            return null;
+            if (_enumReader == null) return null;
+            return (selector) => _enumReader.Indices(selector);
         }
 
         private void GetReader(bool requireCached = false)
         {
-            if (_columnReader != null) return;
+            // If we already have a reader with appropriate caching, keep using it
+            if (_columnReader != null && (requireCached == false || _isCached == true)) return;
+
+            // If we had a reader but need a cached one, Dispose the previous one
+            _isCached = requireCached;
+            if (_columnReader != null) _columnReader.Dispose();
+
+            // Build the new reader and store a typed EnumReader copy.
             _columnReader = TypeProviderFactory.TryGetColumnReader(_streamProvider, ColumnDetails.Type, Path.Combine(_table.TablePath, ColumnDetails.Name), requireCached);
+            _enumReader = _columnReader as EnumReader;
         }
 
         public override string ToString()
