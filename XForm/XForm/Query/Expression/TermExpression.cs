@@ -31,7 +31,7 @@ namespace XForm.Query.Expression
             _right = right;
 
             // Disallow constant <op> constant [likely error not wrapping column name]
-            if (_left.IsConstantColumn() && _right.IsConstantColumn()) throw new ArgumentException($"({left} {op.ToQueryForm()} {right}) is comparing two constants. Wrap [ColumnNames] in braces.");
+            if (_left is Constant && _right is Constant) throw new ArgumentException($"({left} {op.ToQueryForm()} {right}) is comparing two constants. Wrap [ColumnNames] in braces.");
 
             // If the left side is a constant and the operator can be swapped, move it to the right side.
             // Comparers can check if the right side is constant and run a faster loop when that's the case.
@@ -90,13 +90,14 @@ namespace XForm.Query.Expression
             if (_left.IsEnumColumn() && _right.IsConstantColumn())
             {
                 // Get an optimized comparer against the indices rather than values
-                _comparer = SetComparer.ConvertToEnumIndexComparer(_left, _comparer, ref _right, source);
+                IXColumn replacedRight = _right;
+                _comparer = SetComparer.ConvertToEnumIndexComparer(_left, _comparer, ref replacedRight, source);
 
                 // Get the indices on the left side
                 _leftGetter = _left.IndicesCurrentGetter();
 
                 // Use the updated value for the right side
-                _rightGetter = _right.CurrentGetter();
+                _rightGetter = replacedRight.CurrentGetter();
             }
         }
 

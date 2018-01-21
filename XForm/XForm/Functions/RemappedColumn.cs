@@ -86,5 +86,10 @@ namespace XForm.Functions
             // Seeking isn't supported on remapped columns
             return null;
         }
+
+        public override string ToString()
+        {
+            return _column.ToString();
+        }
     }
 }

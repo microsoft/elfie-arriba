@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using System;
 
 using XForm.Data;
@@ -17,32 +18,34 @@ namespace XForm.Functions
         public bool WasUnwrappedLiteral { get; private set; }
         public ColumnDetails ColumnDetails { get; private set; }
 
-        private Array _valueArray;
+        private Array _array;
+        private XArray _xArray;
         private IXTable Source { get; set; }
 
         public Constant(IXTable source, object value, Type type, bool wasUnwrappedLiteral = false)
         {
             Source = source;
 
-            _valueArray = null;
-            Allocator.AllocateToSize(ref _valueArray, 1, type);
-            _valueArray.SetValue(value, 0);
+            Allocator.AllocateToSize(ref _array, 1, type);
+            _array.SetValue(value, 0);
 
             IsNull = (value == null || value.Equals("null"));
+            _xArray = (IsNull ? XArray.Null(_array, 1) : XArray.Single(_array, 1));
+
             WasUnwrappedLiteral = wasUnwrappedLiteral;
             ColumnDetails = new ColumnDetails(string.Empty, type);
         }
 
         private XArray Get(ArraySelector selector)
         {
-            if (IsNull) return XArray.Null(_valueArray, selector.Count);
-            return XArray.Single(_valueArray, selector.Count);
+            if (IsNull) return XArray.Null(_array, selector.Count);
+            return XArray.Single(_array, selector.Count);
         }
 
         public object Value
         {
-            get { return _valueArray.GetValue(0); }
-            set { _valueArray.SetValue(value, 0); }
+            get { return _xArray.Array.GetValue(0); }
+            set { _xArray.Array.SetValue(value, 0); }
         }
 
         public Func<XArray> CurrentGetter()
@@ -57,7 +60,7 @@ namespace XForm.Functions
 
         public Func<XArray> ValuesGetter()
         {
-            return () => Get(ArraySelector.Single(1));
+            return () => _xArray;
         }
 
         public Type IndicesType => null;
@@ -74,7 +77,7 @@ namespace XForm.Functions
 
         public override string ToString()
         {
-            return XqlScanner.Escape(Value.ToString(), TokenType.Value, WasUnwrappedLiteral);
+            return XqlScanner.Escape(Value.ToString(), TokenType.Value, (IsNull || ColumnDetails.Type != typeof(String8)));
         }
     }
 }

@@ -61,61 +61,61 @@ namespace XForm.Test.Query
         //    TableTestHarness.AssertAreEqual(expectedTable, result, 2);
         //}
 
-        [TestMethod]
-        public void Verb_Choose()
-        {
-            XDatabaseContext context = new XDatabaseContext();
-            int[] rankPattern = new int[] { 2, 3, 1 };
+        //[TestMethod]
+        //public void Verb_Choose()
+        //{
+        //    XDatabaseContext context = new XDatabaseContext();
+        //    int[] rankPattern = new int[] { 2, 3, 1 };
 
-            // Build three arrays
-            int distinctCount = 100;
-            int length = 3 * distinctCount;
-            int[] id = new int[length];
-            int[] rank = new int[length];
-            int[] value = new int[length];
+        //    // Build three arrays
+        //    int distinctCount = 100;
+        //    int length = 3 * distinctCount;
+        //    int[] id = new int[length];
+        //    int[] rank = new int[length];
+        //    int[] value = new int[length];
 
-            for (int i = 0; i < length; ++i)
-            {
-                // ID is the same for three rows at a time
-                id[i] = i / 3;
+        //    for (int i = 0; i < length; ++i)
+        //    {
+        //        // ID is the same for three rows at a time
+        //        id[i] = i / 3;
 
-                // Rank is [2, 3, 1] repeating (so the middle is the biggest)
-                rank[i] = rankPattern[i % 3];
+        //        // Rank is [2, 3, 1] repeating (so the middle is the biggest)
+        //        rank[i] = rankPattern[i % 3];
 
-                // Value is the index of the real row
-                value[i] = i;
-            }
+        //        // Value is the index of the real row
+        //        value[i] = i;
+        //    }
 
-            // Build the expected results - one for each distinct ID, each with max rank and from the right row
-            int[] expectedIds = new int[distinctCount];
-            int[] expectedRanks = new int[distinctCount];
-            int[] expectedValues = new int[distinctCount];
+        //    // Build the expected results - one for each distinct ID, each with max rank and from the right row
+        //    int[] expectedIds = new int[distinctCount];
+        //    int[] expectedRanks = new int[distinctCount];
+        //    int[] expectedValues = new int[distinctCount];
 
-            for (int i = 0; i < distinctCount; ++i)
-            {
-                expectedIds[i] = i;
-                expectedRanks[i] = 3;
-                expectedValues[i] = 3 * i + 1;
-            }
+        //    for (int i = 0; i < distinctCount; ++i)
+        //    {
+        //        expectedIds[i] = i;
+        //        expectedRanks[i] = 3;
+        //        expectedValues[i] = 3 * i + 1;
+        //    }
 
-            IXTable expected = TableTestHarness.DatabaseContext.FromArrays(distinctCount)
-                .WithColumn("ID", expectedIds)
-                .WithColumn("Rank", expectedRanks)
-                .WithColumn("Value", expectedValues);
+        //    IXTable expected = TableTestHarness.DatabaseContext.FromArrays(distinctCount)
+        //        .WithColumn("ID", expectedIds)
+        //        .WithColumn("Rank", expectedRanks)
+        //        .WithColumn("Value", expectedValues);
 
-            IXTable actual = TableTestHarness.DatabaseContext.FromArrays(length)
-                .WithColumn("ID", id)
-                .WithColumn("Rank", rank)
-                .WithColumn("Value", value);
+        //    IXTable actual = TableTestHarness.DatabaseContext.FromArrays(length)
+        //        .WithColumn("ID", id)
+        //        .WithColumn("Rank", rank)
+        //        .WithColumn("Value", value);
 
-            // Run and compare (as integer)
-            TableTestHarness.AssertAreEqual(expected, actual.Query("choose Max [Rank] [ID]", context), distinctCount / 3);
+        //    // Run and compare (as integer)
+        //    TableTestHarness.AssertAreEqual(expected, actual.Query("choose Max [Rank] [ID]", context), distinctCount / 3);
 
-            // Run and compare (as String8)
-            TableTestHarness.AssertAreEqual(
-                expected.Query("select Cast([ID], String8), Cast([Rank], String8), Cast([Value], String8)", context),
-                actual.Query("select Cast([ID], String8), Cast([Rank], String8), Cast([Value], String8)", context).Query("choose Max [Rank] [ID]", context),
-                distinctCount);
-        }
+        //    // Run and compare (as String8)
+        //    TableTestHarness.AssertAreEqual(
+        //        expected.Query("select Cast([ID], String8), Cast([Rank], String8), Cast([Value], String8)", context),
+        //        actual.Query("select Cast([ID], String8), Cast([Rank], String8), Cast([Value], String8)", context).Query("choose Max [Rank] [ID]", context),
+        //        distinctCount);
+        //}
     }
 }

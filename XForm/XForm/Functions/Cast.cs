@@ -4,6 +4,7 @@
 using System;
 
 using XForm.Data;
+using XForm.Extensions;
 using XForm.Query;
 using XForm.Types;
 
@@ -84,7 +85,14 @@ namespace XForm.Functions
             // If the column is already the right type, just return it
             if (column.ColumnDetails.Type == targetType) return column;
 
-            // Otherwise, wrap in a CastedColumn [Constants and Enums are automatically converted just once]
+            // Convert constants individually
+            if (column.IsConstantColumn())
+            {
+                XArray array = column.ValuesGetter()();
+                return new Constant(source, TypeConverterFactory.ConvertSingle(array.Array.GetValue(0), targetType), targetType);
+            }
+
+            // Otherwise, wrap in a CastedColumn [Enums are automatically converted just once]
             return new CastedColumn(column, targetType, errorOnKinds, defaultValue, changeToDefaultKinds);
         }
 

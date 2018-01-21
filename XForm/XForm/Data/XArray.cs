@@ -163,8 +163,17 @@ namespace XForm.Data
         /// <returns>XArray with values replaced and Selector the same</returns>
         public XArray ReplaceValues(XArray other)
         {
-            if (this.Array.Length != other.Array.Length) throw new ArgumentException("XArray.ReplaceArray should be used for EnumColumns and array sizes should match.");
             return new XArray(this) { Array = other.Array, IsNull = other.IsNull };
+        }
+
+        /// <summary>
+        ///  Replace the values in an XArray and return it with the same selector
+        /// </summary>
+        /// <param name="other">Replacement Array to use</param>
+        /// <returns>XArray with values replaced and Selector the same</returns>
+        public XArray ReplaceValues(XArray other, bool[] isNull)
+        {
+            return new XArray(this) { Array = other.Array, IsNull = isNull };
         }
 
         /// <summary>

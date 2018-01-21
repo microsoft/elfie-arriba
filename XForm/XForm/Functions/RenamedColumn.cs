@@ -4,6 +4,7 @@
 using System;
 
 using XForm.Data;
+using XForm.Query;
 
 namespace XForm.Functions
 {
@@ -52,6 +53,11 @@ namespace XForm.Functions
         public Func<ArraySelector, XArray> IndicesSeekGetter()
         {
             return _column.IndicesSeekGetter();
+        }
+
+        public override string ToString()
+        {
+            return $"{_column} AS {XqlScanner.Escape(ColumnDetails.Name, TokenType.ColumnName)}";
         }
     }
 }

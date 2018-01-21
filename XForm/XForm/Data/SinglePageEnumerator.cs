@@ -55,6 +55,11 @@ namespace XForm.Data
             // Seek is blocked by SinglePageEnumerator
             return null;
         }
+
+        public override string ToString()
+        {
+            return _column.ToString();
+        }
     }
 
     /// <summary>

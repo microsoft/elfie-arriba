@@ -22,10 +22,7 @@ namespace XForm.Test.Query
         public void XqlParser_QueryParsing()
         {
             XDatabaseContext context = SampleDatabase.XDatabaseContext;
-            IXTable source = context.Query(@"
-                read WebRequest
-                cast [ServerPort], Int32
-                cast [ResponseBytes], Int32, None, 0, InvalidOrNull");
+            IXTable source = context.Query(@"read WebRequest.Typed");
 
             // Single Term
             Assert.AreEqual("[ServerPort] = 80", ParseExpression("[ServerPort] = 80", source, context).ToString());
@@ -33,8 +30,8 @@ namespace XForm.Test.Query
             // Column to Column
             Assert.AreEqual("[ServerPort] < [RequestBytes]", ParseExpression("[ServerPort] < [RequestBytes]", source, context).ToString());
 
-            // Column to Function(Constant) => Resolved
-            Assert.AreEqual("[ServerName] = \"WS-FRONT-4\"", ParseExpression("[ServerName] = ToUpper(\"ws-front-4\")", source, context).ToString());
+            // Column to Function(Constant)
+            Assert.AreEqual("[ServerName] = ToUpper(\"ws-front-4\")", ParseExpression("[ServerName] = ToUpper(\"ws-front-4\")", source, context).ToString());
 
             // Column to Function(Column)
             Assert.AreEqual("[ServerName] = ToUpper([ServerName])", ParseExpression("[ServerName] = ToUpper([ServerName])", source, context).ToString());
