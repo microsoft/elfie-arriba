@@ -1,4 +1,5 @@
-﻿using XForm.Data;
+﻿using System;
+using XForm.Data;
 using XForm.Functions;
 using XForm.Query;
 
@@ -27,11 +28,14 @@ namespace XForm.Types.Comparers
         /// <param name="rightColumn">Constant being compared against</param>
         /// <param name="source">IXTable containing comparison</param>
         /// <returns>Comparer to compare the (updated) right Constant to the EnumColumn.Indices (rather than Values)</returns>
-        public static ComparerExtensions.Comparer ConvertToEnumIndexComparer(EnumColumn leftColumn, ComparerExtensions.Comparer currentComparer, ref Constant rightColumn, IXTable source)
+        public static ComparerExtensions.Comparer ConvertToEnumIndexComparer(IXColumn leftColumn, ComparerExtensions.Comparer currentComparer, ref IXColumn rightColumn, IXTable source)
         {
+            Func<XArray> valuesGetter = leftColumn.ValuesGetter();
+            if (valuesGetter == null) throw new ArgumentException("ConvertToEnumIndexComparer is only valid for columns implementing Values.");
+
             // Get all distinct values from the left side and find matches
-            XArray left = leftColumn.Values();
-            XArray right = rightColumn.Getter()();
+            XArray left = leftColumn.ValuesGetter()();
+            XArray right = rightColumn.ValuesGetter()();
             BitVector set = new BitVector(left.Count);
             currentComparer(left, right, set);
 

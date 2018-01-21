@@ -173,7 +173,7 @@ namespace XForm.Test.Query
                 .WithColumn(new ColumnDetails(inputColumnName, input.Array.GetType().GetElementType()), input)
                 .Query(queryText, context);
 
-            Func<XArray> resultGetter = query.ColumnGetter(query.Columns.Find(outputColumnName));
+            Func<XArray> resultGetter = query.Columns.Find(outputColumnName).CurrentGetter();
             int pageCount;
 
             // Get one row only and verify

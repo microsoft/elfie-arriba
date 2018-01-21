@@ -16,9 +16,9 @@ namespace XForm.IO
 {
     public class TabularFileWriter : IXTable
     {
+        private IXTable _source;
         private IStreamProvider _streamProvider;
         private string _outputFilePath;
-        private IXTable _source;
         private ITabularWriter _writer;
 
         private Func<XArray>[] _stringColumnGetters;
@@ -35,7 +35,7 @@ namespace XForm.IO
         {
             _source = source;
             _writer = writer;
-            _writer.SetColumns(_source.Columns.Select((cd) => cd.Name));
+            _writer.SetColumns(_source.Columns.Select((col) => col.ColumnDetails.Name));
 
             Initialize();
         }
@@ -46,12 +46,12 @@ namespace XForm.IO
             _stringColumnGetters = new Func<XArray>[_source.Columns.Count];
             for (int i = 0; i < _source.Columns.Count; ++i)
             {
-                Func<XArray> rawGetter = _source.ColumnGetter(i);
+                Func<XArray> rawGetter = _source.Columns[i].CurrentGetter();
                 Func<XArray> stringGetter = rawGetter;
 
-                if (_source.Columns[i].Type != typeof(String8))
+                if (_source.Columns[i].ColumnDetails.Type != typeof(String8))
                 {
-                    Func<XArray, XArray> converter = TypeConverterFactory.GetConverter(_source.Columns[i].Type, typeof(String8));
+                    Func<XArray, XArray> converter = TypeConverterFactory.GetConverter(_source.Columns[i].ColumnDetails.Type, typeof(String8));
                     stringGetter = () => (converter(rawGetter()));
                 }
 
@@ -59,13 +59,9 @@ namespace XForm.IO
             }
         }
 
-        public IReadOnlyList<ColumnDetails> Columns => _source.Columns;
+        public IReadOnlyList<IXColumn> Columns => _source.Columns;
+        public ArraySelector CurrentSelector => _source.CurrentSelector;
         public int CurrentRowCount => _source.CurrentRowCount;
-
-        public Func<XArray> ColumnGetter(int columnIndex)
-        {
-            return _source.ColumnGetter(columnIndex);
-        }
 
         public void Reset()
         {
@@ -96,10 +92,11 @@ namespace XForm.IO
                 {
                     _writer = TabularFactory.BuildWriter(_streamProvider.OpenWrite(_outputFilePath), _outputFilePath);
                 }
-                _writer.SetColumns(_source.Columns.Select((cd) => cd.Name));
+
+                _writer.SetColumns(_source.Columns.Select((col) => col.ColumnDetails.Name));
             }
 
-            // Or smaller xarraysize?
+            // Or smaller batch?
             int rowCount = _source.Next(desiredCount);
             if (rowCount == 0) return 0;
 

@@ -1,7 +1,6 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System;
 using System.Collections.Generic;
 
 namespace XForm.Data
@@ -15,8 +14,8 @@ namespace XForm.Data
             _source = source;
         }
 
-        public int CurrentRowCount { get; private set; }
-        public ArraySelector CurrentSelector => _source.CurrentSelector;
+        public virtual int CurrentRowCount { get; private set; }
+        public virtual ArraySelector CurrentSelector => _source.CurrentSelector;
         public virtual IReadOnlyList<IXColumn> Columns => _source.Columns;
 
         public virtual int Next(int desiredCount)

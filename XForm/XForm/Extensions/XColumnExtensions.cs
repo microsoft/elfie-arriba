@@ -7,15 +7,47 @@ using System.Linq;
 using System.Runtime.Serialization;
 
 using XForm.Data;
+using XForm.Functions;
 using XForm.Query;
 
 namespace XForm.Extensions
 {
     public static class XColumnExtensions
     {
+        public static bool IsEnumColumn(this IXColumn column)
+        {
+            return column.IndicesType != null;
+        }
+
+        public static bool IsConstantColumn(this IXColumn column)
+        {
+            return (column.IndicesType == null && column.ValuesGetter() != null);
+        }
+
+        public static bool IsNullConstant(this IXColumn column)
+        {
+            if (!column.IsConstantColumn()) return false;
+
+            XArray value = column.ValuesGetter()();
+            return (value.IsNull != null && value.IsNull[value.Index(0)]);
+        }
+
         public static IXColumn Find(this IReadOnlyList<IXColumn> columns, string columnName)
         {
             return columns[columns.IndexOfColumn(columnName)];
+        }
+
+        public static bool TryFind(this IReadOnlyList<IXColumn> columns, string columnName, out IXColumn column)
+        {
+            int index;
+            if (columns.TryGetIndexOfColumn(columnName, out index))
+            {
+                column = columns[index];
+                return true;
+            }
+
+            column = null;
+            return false;
         }
 
         public static int IndexOfColumn(this IReadOnlyList<IXColumn> columns, string columnName)

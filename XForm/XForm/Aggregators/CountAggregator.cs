@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 
 using XForm.Data;
+using XForm.Extensions;
+using XForm.Functions;
 using XForm.Query;
 
 namespace XForm.Aggregators
@@ -22,35 +24,20 @@ namespace XForm.Aggregators
 
     public class CountAggregator : IXTable
     {
-        private List<ColumnDetails> _column;
+        private Constant[] _countColumn;
         private IXTable _source;
         private int _count;
 
         public CountAggregator(IXTable source)
         {
             _source = source;
-
             _count = -1;
-
-            _column = new List<ColumnDetails>();
-            _column.Add(new ColumnDetails("Count", typeof(int)));
+            _countColumn = new Constant[] { new Constant(this, -1, typeof(int)) };
+            CurrentSelector = ArraySelector.Single(1);
         }
-
-        public IReadOnlyList<ColumnDetails> Columns => _column;
-
+        public IReadOnlyList<IXColumn> Columns => _countColumn;
         public int CurrentRowCount { get; private set; }
-
-        public Func<XArray> ColumnGetter(int columnIndex)
-        {
-            if (columnIndex != 0) throw new ArgumentOutOfRangeException("columnIndex");
-            int[] result = new int[1];
-
-            return () =>
-            {
-                result[0] = _count;
-                return XArray.All(result, 1);
-            };
-        }
+        public ArraySelector CurrentSelector { get; private set; }
 
         public void Reset()
         {
@@ -78,11 +65,14 @@ namespace XForm.Aggregators
                 _count = 0;
                 while (true)
                 {
-                    int batchCount = _source.Next(desiredCount);
+                    int batchCount = _source.Next(Math.Max(desiredCount, XTableExtensions.DefaultBatchSize));
                     if (batchCount == 0) break;
                     _count += batchCount;
                 }
             }
+
+            // Set the count on the constant
+            _countColumn[0].Value = _count;
 
             // Return that there's one row (the count)
             CurrentRowCount = 1;

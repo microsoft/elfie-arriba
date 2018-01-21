@@ -12,12 +12,12 @@ namespace XForm.Functions
     /// </summary>
     public class RenamedColumn : IXColumn
     {
-        private IXColumn Column { get; set; }
+        private IXColumn _column;
         public ColumnDetails ColumnDetails { get; private set; }
 
         private RenamedColumn(IXColumn column, string newName)
         {
-            Column = column;
+            _column = column;
             ColumnDetails = column.ColumnDetails.Rename(newName);
         }
 
@@ -27,26 +27,31 @@ namespace XForm.Functions
             return new RenamedColumn(column, newName);
         }
 
-        public ArraySelector CurrentSelector => Column.CurrentSelector;
-
         public Func<XArray> CurrentGetter()
         {
-            return Column.CurrentGetter();
+            return _column.CurrentGetter();
         }
 
         public Func<ArraySelector, XArray> SeekGetter()
         {
-            return Column.SeekGetter();
+            return _column.SeekGetter();
         }
 
         public Func<XArray> ValuesGetter()
         {
-            return Column.ValuesGetter();
+            return _column.ValuesGetter();
         }
 
-        public Func<ArraySelector, XArray> IndicesGetter()
+        public Type IndicesType => _column.IndicesType;
+
+        public Func<XArray> IndicesCurrentGetter()
         {
-            return Column.IndicesGetter();
+            return _column.IndicesCurrentGetter();
+        }
+
+        public Func<ArraySelector, XArray> IndicesSeekGetter()
+        {
+            return _column.IndicesSeekGetter();
         }
     }
 }

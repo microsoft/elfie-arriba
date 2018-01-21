@@ -137,16 +137,16 @@ namespace XForm.Query
 
         public string NextColumnName(IXTable currentSource, Type requiredType = null)
         {
-            int columnIndex = -1;
+            IXColumn column = null;
 
             ParseNextOrThrow(
-                () => currentSource.Columns.TryGetIndexOfColumn(_scanner.Current.Value, out columnIndex)
-                && (requiredType == null || currentSource.Columns[columnIndex].Type == requiredType),
+                () => currentSource.Columns.TryFind(_scanner.Current.Value, out column)
+                && (requiredType == null || column.ColumnDetails.Type == requiredType),
                 "[Column]",
                 TokenType.ColumnName,
                 EscapedColumnList(currentSource, requiredType));
 
-            return currentSource.Columns[columnIndex].Name;
+            return column.ColumnDetails.Name;
         }
 
         public string NextOutputColumnName(IXTable currentSource)
@@ -202,7 +202,7 @@ namespace XForm.Query
             }
             else if (_scanner.Current.Type == TokenType.ColumnName)
             {
-                result = Column.Build(source, context);
+                result = source.Columns.Find(_scanner.Current.Value);
             }
 
             if (result == null || (requiredType != null && result.ColumnDetails.Type != requiredType))
@@ -214,7 +214,7 @@ namespace XForm.Query
             {
                 _scanner.Next();
                 string columnName = NextOutputColumnName(source);
-                result = new RenamedColumn(result, columnName);
+                result = RenamedColumn.Build(result, columnName);
             }
 
             return result;
@@ -424,8 +424,8 @@ namespace XForm.Query
         public static IEnumerable<string> EscapedColumnList(IXTable source, Type requiredType = null)
         {
             return source.Columns
-                .Where((cd) => (requiredType == null || cd.Type == requiredType))
-                .Select((cd) => XqlScanner.Escape(cd.Name, TokenType.ColumnName));
+                .Where((col) => (requiredType == null || col.ColumnDetails.Type == requiredType))
+                .Select((col) => XqlScanner.Escape(col.ColumnDetails.Name, TokenType.ColumnName));
         }
 
         public static IEnumerable<string> EscapedFunctionList(Type requiredType = null)

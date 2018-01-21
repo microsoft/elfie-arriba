@@ -9,6 +9,7 @@ using XForm.Data;
 using XForm.Functions;
 using XForm.Types;
 using XForm.Types.Comparers;
+using XForm.Extensions;
 
 namespace XForm.Query.Expression
 {
@@ -24,31 +25,30 @@ namespace XForm.Query.Expression
 
         public TermExpression(IXTable source, IXColumn left, CompareOperator op, IXColumn right)
         {
-            // Disallow constant <op> constant [likely error not wrapping column name]
-            if (left is Constant && right is Constant) throw new ArgumentException($"({left} {op.ToQueryForm()} {right}) is comparing two constants. Wrap [ColumnNames] in braces.");
-
             // Save arguments as-is for ToString()
             _left = left;
             _cOp = op;
             _right = right;
 
+            // Disallow constant <op> constant [likely error not wrapping column name]
+            if (_left.IsConstantColumn() && _right.IsConstantColumn()) throw new ArgumentException($"({left} {op.ToQueryForm()} {right}) is comparing two constants. Wrap [ColumnNames] in braces.");
+
             // If the left side is a constant and the operator can be swapped, move it to the right side.
             // Comparers can check if the right side is constant and run a faster loop when that's the case.
-            if (left is Constant && !(right is Constant))
+            if (_left.IsConstantColumn() && !(_right.IsConstantColumn()))
             {
                 if (op.TryInvertCompareOperator(out op))
                 {
-                    Func<XArray> swap = _leftGetter;
-                    _leftGetter = _rightGetter;
-                    _rightGetter = swap;
+                    _left = right;
+                    _right = left;
                 }
             }
 
             // Disallow unquoted constants used as strings
-            if (right is Constant && left.ColumnDetails.Type == typeof(String8) && right.ColumnDetails.Type == typeof(String8))
+            if (_right.IsConstantColumn() && _left.ColumnDetails.Type == typeof(String8) && _right.ColumnDetails.Type == typeof(String8))
             {
-                Constant cRight = (Constant)right;
-                if (!cRight.IsNull && cRight.WasUnwrappedLiteral)
+                Constant cRight = _right as Constant;
+                if (cRight != null && !cRight.IsNull && cRight.WasUnwrappedLiteral)
                 {
                     throw new ArgumentException($"{right} is compared to a string, but is unquoted. Strings must be quoted.");
                 }
@@ -56,18 +56,25 @@ namespace XForm.Query.Expression
 
             // Convert the right side to the left side type if required
             // This means constants will always be casted to the other side type.
-            if (left.ColumnDetails.Type != right.ColumnDetails.Type)
+            if (_left.ColumnDetails.Type != _right.ColumnDetails.Type)
             {
-                right = XForm.Functions.CastedColumn.Build(source, right, left.ColumnDetails.Type, ValueKinds.Invalid);
+                _right = XForm.Functions.CastedColumn.Build(source, _right, _left.ColumnDetails.Type, ValueKinds.Invalid);
             }
 
             // Get the left and right getters
-            _leftGetter = left.Getter();
-            _rightGetter = right.Getter();
+            _leftGetter = _left.CurrentGetter();
+            _rightGetter = _right.CurrentGetter();
 
             // Null comparison is generic
-            if ((right is Constant && ((Constant)right).IsNull) || (left is Constant && ((Constant)left).IsNull))
+            if (_right.IsNullConstant())
             {
+                if (op == CompareOperator.Equal) _comparer = WhereIsNull;
+                else if (op == CompareOperator.NotEqual) _comparer = WhereIsNotNull;
+                else throw new ArgumentException($"Only equals and not equals operators are supported against null.");
+            }
+            else if(_left.IsNullConstant())
+            {
+                _left = _right;
                 if (op == CompareOperator.Equal) _comparer = WhereIsNull;
                 else if (op == CompareOperator.NotEqual) _comparer = WhereIsNotNull;
                 else throw new ArgumentException($"Only equals and not equals operators are supported against null.");
@@ -80,20 +87,16 @@ namespace XForm.Query.Expression
             }
 
             // Optimize Enum to Constant comparisons to use the underlying indices
-            if (left is EnumColumn && right is Constant)
+            if (_left.IsEnumColumn() && _right.IsConstantColumn())
             {
-                EnumColumn enumColumn = (EnumColumn)left;
-                Constant constant = (Constant)right;
-
                 // Get an optimized comparer against the indices rather than values
-                _comparer = SetComparer.ConvertToEnumIndexComparer(enumColumn, _comparer, ref constant, source);
+                _comparer = SetComparer.ConvertToEnumIndexComparer(_left, _comparer, ref _right, source);
 
                 // Get the indices on the left side
-                _leftGetter = enumColumn.Indices();
+                _leftGetter = _left.IndicesCurrentGetter();
 
-                // Use the updated constant for the right side
-                right = constant;
-                _rightGetter = constant.Getter();
+                // Use the updated value for the right side
+                _rightGetter = _right.CurrentGetter();
             }
         }
 

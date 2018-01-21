@@ -98,6 +98,7 @@
     <Compile Include="Core\HashCore.cs" />
     <Compile Include="Core\Dictionary5.cs" />
     <Compile Include="Core\Hashing.cs" />
+    <Compile Include="Functions\RemappedColumn.cs" />
     <Compile Include="IO\ColumnCache.cs" />
     <Compile Include="IO\ConvertingReaderWriter.cs" />
     <Compile Include="IO\EnumReaderWriter.cs" />
@@ -132,7 +133,6 @@
     <Compile Include="Functions\Cast.cs" />
     <Compile Include="Functions\Date\DateAdd.cs" />
     <Compile Include="Functions\RenamedColumn.cs" />
-    <Compile Include="Functions\Column.cs" />
     <Compile Include="Functions\Constant.cs" />
     <Compile Include="Functions\FunctionFactory.cs" />
     <Compile Include="Data\IXColumn.cs" />

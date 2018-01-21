@@ -39,9 +39,11 @@ namespace XForm.Functions
             return XArray.Single(_valueArray, selector.Count);
         }
 
-        public object Value => _valueArray.GetValue(0);
-
-        public ArraySelector CurrentSelector => Source.CurrentSelector;
+        public object Value
+        {
+            get { return _valueArray.GetValue(0); }
+            set { _valueArray.SetValue(value, 0); }
+        }
 
         public Func<XArray> CurrentGetter()
         {
@@ -58,9 +60,16 @@ namespace XForm.Functions
             return () => Get(ArraySelector.Single(1));
         }
 
-        public Func<ArraySelector, XArray> IndicesGetter()
+        public Type IndicesType => null;
+
+        public Func<XArray> IndicesCurrentGetter()
         {
-            return (selector) => Get(ArraySelector.Single(selector.Count));
+            return null;
+        }
+
+        public Func<ArraySelector, XArray> IndicesSeekGetter()
+        {
+            return null;
         }
 
         public override string ToString()

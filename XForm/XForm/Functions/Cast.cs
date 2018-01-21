@@ -88,11 +88,9 @@ namespace XForm.Functions
             return new CastedColumn(column, targetType, errorOnKinds, defaultValue, changeToDefaultKinds);
         }
 
-        public ArraySelector CurrentSelector => _column.CurrentSelector;
-
         public Func<XArray> CurrentGetter()
         {
-            Func<ArraySelector, XArray> indicesGetter = IndicesGetter();
+            Func<XArray> indicesGetter = IndicesCurrentGetter();
             if (indicesGetter != null)
             {
                 // If the column has fixed values, convert them once and cache them
@@ -101,7 +99,7 @@ namespace XForm.Functions
                 // Get values an indices unmapped and replace the array with the converted array 
                 return () =>
                 {
-                    XArray unmapped = indicesGetter(CurrentSelector);
+                    XArray unmapped = indicesGetter();
                     return XArray.All(_convertedValues.Array, _convertedValues.Count).Reselect(unmapped.Selector);
                 };
             }
@@ -115,7 +113,7 @@ namespace XForm.Functions
 
         public Func<ArraySelector, XArray> SeekGetter()
         {
-            Func<ArraySelector, XArray> indicesGetter = IndicesGetter();
+            Func<ArraySelector, XArray> indicesGetter = IndicesSeekGetter();
             if(indicesGetter != null)
             {
                 // If the column has fixed values, convert them once and cache them
@@ -151,9 +149,16 @@ namespace XForm.Functions
             return () => _convertedValues;
         }
 
-        public Func<ArraySelector, XArray> IndicesGetter()
+        public Type IndicesType => _column.IndicesType;
+
+        public Func<XArray> IndicesCurrentGetter()
         {
-            return _column.IndicesGetter();
+            return _column.IndicesCurrentGetter();
+        }
+
+        public Func<ArraySelector, XArray> IndicesSeekGetter()
+        {
+            return _column.IndicesSeekGetter();
         }
 
         public override string ToString()

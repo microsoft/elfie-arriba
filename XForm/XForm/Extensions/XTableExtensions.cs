@@ -127,7 +127,7 @@ namespace XForm.Extensions
         /// <returns>Single value result (first column, first row)</returns>
         public static T Single<T>(this IXTable pipeline)
         {
-            Func<XArray> getter = pipeline.Columns[0].Getter();
+            Func<XArray> getter = pipeline.Columns[0].CurrentGetter();
             using (pipeline)
             {
                 pipeline.Next(1);
@@ -158,7 +158,7 @@ namespace XForm.Extensions
 
             using (pipeline)
             {
-                Func<XArray> getter = pipeline.Columns[pipeline.Columns.Find(columnName)].Getter();
+                Func<XArray> getter = pipeline.Columns.Find(columnName).CurrentGetter();
 
                 while (pipeline.Next(xarraySize) != 0)
                 {

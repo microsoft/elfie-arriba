@@ -207,23 +207,23 @@ namespace XForm
             }
         }
 
-        public void Join()
-        {
-            int joinFromLength = Math.Min(1000 * 1000, Values.Length);
-            ushort[] joinTo = Enumerable.Range(10, 1000).Select((i) => (ushort)i).ToArray();
+        //public void Join()
+        //{
+        //    int joinFromLength = Math.Min(1000 * 1000, Values.Length);
+        //    ushort[] joinTo = Enumerable.Range(10, 1000).Select((i) => (ushort)i).ToArray();
 
-            using (Benchmarker b = new Benchmarker($"ushort[{joinFromLength:n0}] | join [Value] | count", DefaultMeasureMilliseconds))
-            {
-                b.Measure("XForm Join", joinFromLength, () =>
-                {
-                    IXTable joinToSource = Context.FromArrays(joinTo.Length).WithColumn("ID", joinTo);
+        //    using (Benchmarker b = new Benchmarker($"ushort[{joinFromLength:n0}] | join [Value] | count", DefaultMeasureMilliseconds))
+        //    {
+        //        b.Measure("XForm Join", joinFromLength, () =>
+        //        {
+        //            IXTable joinToSource = Context.FromArrays(joinTo.Length).WithColumn("ID", joinTo);
 
-                    IXTable enumerator = Context.FromArrays(joinFromLength).WithColumn("Value", Values);
-                    enumerator = new Join(enumerator, "Value", joinToSource, "ID", "");
-                    return (int)enumerator.Count();
-                });
-            }
-        }
+        //            IXTable enumerator = Context.FromArrays(joinFromLength).WithColumn("Value", Values);
+        //            enumerator = new Join(enumerator, "Value", joinToSource, "ID", "");
+        //            return (int)enumerator.Count();
+        //        });
+        //    }
+        //}
 
         public void Dictionary()
         {

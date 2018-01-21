@@ -5,27 +5,49 @@ using System;
 using System.Collections.Generic;
 
 using XForm.Data;
-using XForm.Types;
 
 namespace XForm.IO
 {
     public class ArrayColumn : IXColumn
     {
-        private IXTable Table { get; set; }
-        private XArray AllValues { get; set; }
+        private IXTable _table { get; set; }
+        private XArray _allValues { get; set; }
         public ColumnDetails ColumnDetails { get; private set; }
+
         private int[] _remapArray;
 
         public ArrayColumn(IXTable table, XArray allValues, ColumnDetails columnDetails)
         {
-            Table = table;
-            AllValues = allValues;
+            _table = table;
+            _allValues = allValues;
             ColumnDetails = columnDetails;
         }
 
-        public Func<XArray> Getter()
+        public Func<XArray> CurrentGetter()
         {
-            return () => AllValues.Select(Table.CurrentSelector, ref _remapArray);
+            return () => _allValues.Select(_table.CurrentSelector, ref _remapArray);
+        }
+
+        public Func<ArraySelector, XArray> SeekGetter()
+        {
+            return (selector) => _allValues.Reselect(selector);
+        }
+
+        public Func<XArray> ValuesGetter()
+        {
+            return null;
+        }
+
+        public Type IndicesType => null;
+
+        public Func<XArray> IndicesCurrentGetter()
+        {
+            return null;
+        }
+
+        public Func<ArraySelector, XArray> IndicesSeekGetter()
+        {
+            return null;
         }
     }
 
@@ -65,11 +87,7 @@ namespace XForm.IO
         public int CurrentRowCount { get; private set; }
         public int Count => _rowCount;
         public ArraySelector CurrentSelector => _currentEnumerateSelector;
-
-        public IXColumn ColumnGetter(int columnIndex)
-        {
-            return _columns[columnIndex];
-        }
+        public IReadOnlyList<IXColumn> Columns => _columns;
 
         public void Reset()
         {

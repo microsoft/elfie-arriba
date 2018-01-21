@@ -17,11 +17,6 @@ namespace XForm.Data
         ColumnDetails ColumnDetails { get; }
 
         /// <summary>
-        ///  ArraySelector for the current enumeration position of the column.
-        /// </summary>
-        ArraySelector CurrentSelector { get; }
-
-        /// <summary>
         ///  Call to subscribe to the column and get a function which returns an XArray for the
         ///  values of this column for the rows currently enumerated to.
         /// </summary>
@@ -45,11 +40,24 @@ namespace XForm.Data
         Func<XArray> ValuesGetter();
 
         /// <summary>
+        ///  Return the type of the indices for this column, or null if there aren't indices.
+        /// </summary>
+        Type IndicesType { get; }
+
+        /// <summary>
         ///  Call to subscribe to the column and get a function to get an XArray of the value index for
         ///  each row currently enumerated to. 
         ///  Returns null if the column doesn't have a restricted set of values.
         /// </summary>
         /// <returns>Func&lt;XArray&gt; to get current row value indices, or null if values aren't constrained.</returns>
-        Func<ArraySelector, XArray> IndicesGetter();
+        Func<XArray> IndicesCurrentGetter();
+
+        /// <summary>
+        ///  Call to subscribe to the column and get a function to seek to specific row indices.
+        ///  Returns null if the column doesn't have a restricted set of values.
+        /// </summary>
+        /// <returns>Func&lt;ArraySelector, XArray&gt; to get row value indices, or null if values aren't constrained.</returns>
+        Func<ArraySelector, XArray> IndicesSeekGetter();
+
     }
 }

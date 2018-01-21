@@ -61,7 +61,7 @@ namespace XForm.IO
             // Subscribe to all of the columns
             for (int i = 0; i < columnCount; ++i)
             {
-                _getters[i] = source.ColumnGetter(i);
+                _getters[i] = source.Columns[i].CurrentGetter();
             }
         }
 
@@ -75,8 +75,8 @@ namespace XForm.IO
 
             for (int i = 0; i < columnCount; ++i)
             {
-                ColumnDetails column = _source.Columns[i];
-                string columnPath = Path.Combine(_tableRootPath, _source.Columns[i].Name);
+                ColumnDetails column = _source.Columns[i].ColumnDetails;
+                string columnPath = Path.Combine(_tableRootPath, column.Name);
 
                 // Build a writer for each column
                 _writers[i] = TypeProviderFactory.TryGetColumnWriter(_xDatabaseContext.StreamProvider, column.Type, columnPath);
@@ -90,11 +90,6 @@ namespace XForm.IO
 
                 _metadata.Schema.Add(column);
             }
-        }
-
-        public override Func<XArray> ColumnGetter(int columnIndex)
-        {
-            return _getters[columnIndex];
         }
 
         public override int Next(int desiredCount)

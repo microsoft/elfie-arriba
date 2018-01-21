@@ -22,18 +22,16 @@ namespace XForm.Test.Query
             long actualRowCount;
 
             IXTable pipeline = null;
-            XArrayEnumeratorContractValidator innerValidator = null;
+            ValidatingTable innerValidator = null;
             try
             {
                 pipeline = SampleDatabase.XDatabaseContext.Load("WebRequest");
-                innerValidator = new XArrayEnumeratorContractValidator(pipeline);
+                innerValidator = new ValidatingTable(pipeline);
                 pipeline = SampleDatabase.XDatabaseContext.Query(configurationLine, innerValidator);
 
                 // Run without requesting any columns. Validate.
-                Assert.AreEqual(requiredColumnCount, innerValidator.ColumnGettersRequested.Count);
                 actualRowCount = pipeline.RunWithoutDispose();
                 Assert.AreEqual(expectedRowCount, actualRowCount, "DataSourceEnumerator should return correct count with no requested columns.");
-                Assert.AreEqual(requiredColumnCount, innerValidator.ColumnGettersRequested.Count, "No extra columns requested after Run");
 
                 // Reset; Request all columns. Validate.
                 pipeline.Reset();

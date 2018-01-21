@@ -7,52 +7,71 @@ using System.Collections.Generic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using XForm.Data;
+using System.Linq;
 
 namespace XForm.Test.Query
 {
-    public class XArrayEnumeratorContractValidator : IXTable
+    internal class ValidatingColumn : IXColumn
+    {
+        private ValidatingTable _table;
+        private IXColumn _column;
+
+        public ValidatingColumn(ValidatingTable table, IXColumn column)
+        {
+            _table = table;
+            _column = column;
+        }
+
+        public ColumnDetails ColumnDetails => _column.ColumnDetails;
+        public Type IndicesType => _column.IndicesType;
+
+        public Func<XArray> CurrentGetter()
+        {
+            if(_table.NextCalled) throw new AssertFailedException("Column Getters must all be requested before the first Next() call (so callees know what to retrieve).");
+            return _column.CurrentGetter();
+        }
+
+        public Func<ArraySelector, XArray> SeekGetter()
+        {
+            if (_table.NextCalled) throw new AssertFailedException("Column Getters must all be requested before the first Next() call (so callees know what to retrieve).");
+            return _column.SeekGetter();
+        }
+
+        public Func<XArray> ValuesGetter()
+        {
+            return _column.ValuesGetter();
+        }
+
+        public Func<XArray> IndicesCurrentGetter()
+        {
+            if(_table.NextCalled) throw new AssertFailedException("Column Getters must all be requested before the first Next() call (so callees know what to retrieve).");
+            return _column.IndicesCurrentGetter();
+        }
+
+        public Func<ArraySelector, XArray> IndicesSeekGetter()
+        {
+            if(_table.NextCalled) throw new AssertFailedException("Column Getters must all be requested before the first Next() call (so callees know what to retrieve).");
+            return _column.IndicesSeekGetter();
+        }
+    }
+
+    public class ValidatingTable : IXTable
     {
         private IXTable _inner;
+        private ValidatingColumn[] _columns;
 
-        public bool ColumnSetRequested;
-        public List<string> ColumnGettersRequested;
         public bool NextCalled;
         public bool DisposeCalled;
         public int CurrentRowCount { get; private set; }
 
-        public XArrayEnumeratorContractValidator(IXTable inner)
+        public ValidatingTable(IXTable inner)
         {
             _inner = inner;
-            this.ColumnGettersRequested = new List<string>();
+            _columns = inner.Columns.Select((col) => new ValidatingColumn(this, col)).ToArray();
         }
 
-        public IReadOnlyList<ColumnDetails> Columns
-        {
-            get
-            {
-                ColumnSetRequested = true;
-                return _inner.Columns;
-            }
-        }
-
-        public Func<XArray> ColumnGetter(int columnIndex)
-        {
-            if (!ColumnSetRequested) throw new AssertFailedException("Columns must be retrieved before asking for specific column getters.");
-            if (NextCalled) throw new AssertFailedException("Column Getters must all be requested before the first Next() call (so callees know what to retrieve).");
-
-            string columnName = _inner.Columns[columnIndex].Name;
-            ColumnGettersRequested.Add(columnName);
-
-            Func<XArray> innerGetter = _inner.ColumnGetter(columnIndex);
-            return () =>
-            {
-                if (!NextCalled) throw new AssertFailedException($"ColumnGetter for {columnName} called before Next() was called.");
-
-                XArray xarray = innerGetter();
-                if (xarray.Count != CurrentRowCount) throw new AssertFailedException($"Column {columnName} getter returned {xarray.Count:n0} rows, but Next returned {CurrentRowCount:n0} rows.");
-                return xarray;
-            };
-        }
+        public IReadOnlyList<IXColumn> Columns => _columns;
+        public ArraySelector CurrentSelector => _inner.CurrentSelector;
 
         public void Dispose()
         {
@@ -76,8 +95,6 @@ namespace XForm.Test.Query
 
         public void Reset()
         {
-            NextCalled = false;
-
             _inner.Reset();
         }
     }

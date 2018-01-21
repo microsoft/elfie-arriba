@@ -31,7 +31,7 @@ namespace XForm.Verbs
 
         public Cast(IXTable source, IXColumn castedColumn) : base(source)
         {
-            _sourceColumnIndex = source.Columns.Find(castedColumn.ColumnDetails.Name);
+            _sourceColumnIndex = source.Columns.IndexOfColumn(castedColumn.ColumnDetails.Name);
             _castedColumn = castedColumn;
 
             _columns = new List<IXColumn>();

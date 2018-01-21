@@ -315,6 +315,8 @@ namespace XForm.IO
 
         public int Count => _rowIndexReader.Count;
 
+        public Type IndicesType => typeof(byte);
+
         public void Dispose()
         {
             if (_valueReader != null)
@@ -339,11 +341,11 @@ namespace XForm.IO
         public XArray Remap(XArray values, ArraySelector selector)
         {
             // Read row indices and convert to int[]
-            XArray indexBytexarray = _rowIndexReader.Read(selector);
-            XArray indexIntxarray = _rowIndexToIntConverter(indexBytexarray);
+            XArray indexByteArray = _rowIndexReader.Read(selector);
+            XArray indexIntArray = _rowIndexToIntConverter(indexByteArray);
 
             // Return the selected values
-            return values.Reselect(ArraySelector.Map((int[])indexIntxarray.Array, indexIntxarray.Count));
+            return values.Reselect(ArraySelector.Map((int[])indexIntArray.Array, indexIntArray.Count));
         }
 
         // Values returns the set of distinct values themselves

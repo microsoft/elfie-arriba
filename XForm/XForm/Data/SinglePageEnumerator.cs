@@ -3,9 +3,60 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace XForm.Data
 {
+    internal class ColumnPager : IXColumn
+    {
+        private IXTable _table;
+        private IXColumn _column;
+
+        public ColumnPager(IXTable table, IXColumn column)
+        {
+            _table = table;
+            _column = column;
+        }
+
+        public ColumnDetails ColumnDetails => _column.ColumnDetails;
+
+        public Func<XArray> CurrentGetter()
+        {
+            Func<XArray> sourceGetter = _column.CurrentGetter();
+            int[] remapArray = null;
+
+            return () => sourceGetter().Select(_table.CurrentSelector, ref remapArray);
+        }
+
+        public Func<ArraySelector, XArray> SeekGetter()
+        {
+            // Seek is blocked by SinglePageEnumerator
+            return null;
+        }
+
+        public Func<XArray> ValuesGetter()
+        {
+            return _column.ValuesGetter();
+        }
+
+        public Type IndicesType => _column.IndicesType;
+
+        public Func<XArray> IndicesCurrentGetter()
+        {
+            Func<XArray> sourceGetter = _column.IndicesCurrentGetter();
+            if (sourceGetter == null) return null;
+
+            int[] remapArray = null;
+            return () => sourceGetter().Select(_table.CurrentSelector, ref remapArray);
+        }
+
+        public Func<ArraySelector, XArray> IndicesSeekGetter()
+        {
+            // Seek is blocked by SinglePageEnumerator
+            return null;
+        }
+    }
+
     /// <summary>
     ///  SinglePageEnumerator is an IXArrayList which will only return the current single page
     ///  from the source to pipeline stages referencing it. Call 'SourceNext' to advance which page
@@ -16,9 +67,7 @@ namespace XForm.Data
     public class SinglePageEnumerator : IXTable
     {
         private IXTable _source;
-
-        private Func<XArray>[] _requestedGetters;
-        private XArray[] _columnarrays;
+        private ColumnPager[] _columns;
 
         private int _currentPageCount;
         private ArraySelector _currentSelector;
@@ -30,11 +79,11 @@ namespace XForm.Data
         public SinglePageEnumerator(IXTable source)
         {
             _source = source;
-            _requestedGetters = new Func<XArray>[source.Columns.Count];
-            _columnarrays = new XArray[source.Columns.Count];
+            _columns = source.Columns.Select((col) => new ColumnPager(this, col)).ToArray();
         }
 
         public ArraySelector CurrentSelector => _currentEnumerateSelector;
+        public IReadOnlyList<IXColumn> Columns => _columns;
 
         public int SourceNext(int desiredCount)
         {
@@ -43,30 +92,7 @@ namespace XForm.Data
             // Get a page from the real source
             _currentPageCount = _source.Next(desiredCount);
 
-            // Clear cached arrays from last page
-            Array.Clear(_columnarrays, 0, _columnarrays.Length);
-
             return _currentPageCount;
-        }
-
-        public Func<XArray> ColumnGetter(int columnIndex)
-        {
-            // Get and cache the real getter for this column, so the source knows to retrieve it
-            if (_requestedGetters[columnIndex] == null) _requestedGetters[columnIndex] = _source.ColumnGetter(columnIndex);
-
-            // Declare a remap array in case it's needed
-            int[] remapArray = null;
-
-            // Return the previously retrieved XArray for this page only
-            return () =>
-            {
-                // Get the XArray for these rows, if we haven't before
-                if (_columnarrays[columnIndex].Array == null) _columnarrays[columnIndex] = _requestedGetters[columnIndex]();
-
-                // Get the values for the slice of rows currently being returned
-                XArray raw = _columnarrays[columnIndex];
-                return raw.Select(_currentSelector, ref remapArray);
-            };
         }
 
         public void Reset()

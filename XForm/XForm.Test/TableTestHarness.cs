@@ -11,6 +11,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using XForm.Data;
 using XForm.Extensions;
+using System.Linq;
 
 namespace XForm.Test
 {
@@ -43,16 +44,16 @@ namespace XForm.Test
 
             for (int i = 0; i < expected.Columns.Count; ++i)
             {
-                expectedGetters[i] = expected.ColumnGetter(i);
-                actualGetters[i] = actual.ColumnGetter(actual.Columns.IndexOfColumn(expected.Columns[i].Name));
+                expectedGetters[i] = expected.Columns[i].CurrentGetter();
+                actualGetters[i] = actual.Columns.Find(expected.Columns[i].ColumnDetails.Name).CurrentGetter();
             }
 
             // Loop over rows, comparing as many rows as available each time
             int totalRowCount = 0;
             int expectedCurrentCount = 0, expectedNextIndex = 0;
             int actualCurrentCount = 0, actualNextIndex = 0;
-            XArray[] expectedarrays = new XArray[expected.Columns.Count];
-            XArray[] actualarrays = new XArray[expected.Columns.Count];
+            XArray[] expectedArrays = new XArray[expected.Columns.Count];
+            XArray[] actualArrays = new XArray[expected.Columns.Count];
 
             while (true)
             {
@@ -64,7 +65,7 @@ namespace XForm.Test
 
                     for (int i = 0; i < expected.Columns.Count; ++i)
                     {
-                        expectedarrays[i] = expectedGetters[i]();
+                        expectedArrays[i] = expectedGetters[i]();
                     }
                 }
 
@@ -76,7 +77,7 @@ namespace XForm.Test
 
                     for (int i = 0; i < expected.Columns.Count; ++i)
                     {
-                        actualarrays[i] = actualGetters[i]();
+                        actualArrays[i] = actualGetters[i]();
                     }
                 }
 
@@ -100,10 +101,10 @@ namespace XForm.Test
                     // Get the current xarray for each column, slice to the set of rows to compare, and compare them
                     for (int i = 0; i < expected.Columns.Count; ++i)
                     {
-                        XArray expectedxarray = expectedarrays[i].Slice(expectedNextIndex, expectedNextIndex + countToCompare);
-                        XArray actualxarray = actualarrays[i].Slice(actualNextIndex, actualNextIndex + countToCompare);
+                        XArray expectedArray = expectedArrays[i].Slice(expectedNextIndex, expectedNextIndex + countToCompare);
+                        XArray actualArray = actualArrays[i].Slice(actualNextIndex, actualNextIndex + countToCompare);
 
-                        firstMismatchedRow = FirstMismatchedRow(expectedxarray, actualxarray, countToCompare, expected.Columns[i].Name, out errorMessage);
+                        firstMismatchedRow = FirstMismatchedRow(expectedArray, actualArray, countToCompare, expected.Columns[i].ColumnDetails.Name, out errorMessage);
                         if (!String.IsNullOrEmpty(errorMessage)) break;
                     }
                 }
@@ -112,10 +113,10 @@ namespace XForm.Test
                 if (!String.IsNullOrEmpty(errorMessage))
                 {
                     Trace.WriteLine("Expected:");
-                    TraceWrite(expectedarrays, expected.Columns, expectedNextIndex + firstMismatchedRow, expectedCurrentCount - (expectedNextIndex + firstMismatchedRow));
+                    TraceWrite(expectedArrays, expected.Columns.Select((col) => col.ColumnDetails).ToArray(), expectedNextIndex + firstMismatchedRow, expectedCurrentCount - (expectedNextIndex + firstMismatchedRow));
 
                     Trace.WriteLine("Actual:");
-                    TraceWrite(actualarrays, expected.Columns, actualNextIndex + firstMismatchedRow, actualCurrentCount - (actualNextIndex + firstMismatchedRow));
+                    TraceWrite(actualArrays, expected.Columns.Select((col) => col.ColumnDetails).ToArray(), actualNextIndex + firstMismatchedRow, actualCurrentCount - (actualNextIndex + firstMismatchedRow));
 
                     Assert.Fail(errorMessage);
                 }
@@ -213,7 +214,7 @@ namespace XForm.Test
 
             for (int i = 0; i < columns.Length; ++i)
             {
-                columnGetters[i] = table.ColumnGetter(i);
+                columnGetters[i] = table.Columns[i].CurrentGetter();
             }
 
             table.Next(rowCount);
@@ -223,32 +224,32 @@ namespace XForm.Test
                 columns[i] = columnGetters[i]();
             }
 
-            TraceWrite(columns, table.Columns);
+            TraceWrite(columns, table.Columns.Select((col) => col.ColumnDetails).ToArray());
             table.Reset();
         }
 
         /// <summary>
         ///  Write a table to the Tracing system for debugging.
         /// </summary>
-        public static void TraceWrite(XArray[] columns, IReadOnlyList<ColumnDetails> columnDetails, int startRowIndexInclusive = 0, int endRowIndexExclusive = -1)
+        public static void TraceWrite(XArray[] arrays, ColumnDetails[] columnDetails, int startRowIndexInclusive = 0, int endRowIndexExclusive = -1)
         {
             StringBuilder row = new StringBuilder();
 
-            for (int columnIndex = 0; columnIndex < columns.Length; ++columnIndex)
+            for (int columnIndex = 0; columnIndex < arrays.Length; ++columnIndex)
             {
                 AppendWithPadding(columnDetails[columnIndex].Name, 10, row);
             }
 
             Trace.WriteLine(row.ToString());
 
-            if (endRowIndexExclusive == -1 || endRowIndexExclusive > columns[0].Count) endRowIndexExclusive = columns[0].Count;
+            if (endRowIndexExclusive == -1 || endRowIndexExclusive > arrays[0].Count) endRowIndexExclusive = arrays[0].Count;
             for (int rowIndex = startRowIndexInclusive; rowIndex < endRowIndexExclusive; ++rowIndex)
             {
                 row.Clear();
 
-                for (int columnIndex = 0; columnIndex < columns.Length; ++columnIndex)
+                for (int columnIndex = 0; columnIndex < arrays.Length; ++columnIndex)
                 {
-                    XArray column = columns[columnIndex];
+                    XArray column = arrays[columnIndex];
                     int realRowIndex = column.Index(rowIndex);
 
                     // NOTE: Untyped Array access via object in XForm is very expensive. Don't do this in non-test code.

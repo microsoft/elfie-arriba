@@ -2,9 +2,10 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
-
+using System.Collections.Generic;
 using XForm.Data;
 using XForm.Extensions;
+using XForm.Functions;
 using XForm.Query;
 using XForm.Query.Expression;
 using XForm.Transforms;
@@ -28,8 +29,9 @@ namespace XForm.Verbs
         private BitVector _vector;
         private RowRemapper _mapper;
 
+        private RemappedColumn[] _columns;
+
         // Keep current filtered arrays from the source, to allow requesting more than the desired count
-        private XArray[] _currentArrays;
         private int _currentMatchesTotal;
         private int _currentMatchesReturned;
         private int _nextCountToReturn;
@@ -45,33 +47,17 @@ namespace XForm.Verbs
             // Build a mapper to hold matching rows and remap source arrays
             _mapper = new RowRemapper();
 
-            // Allocate room to cache returned arrays
-            _currentArrays = new XArray[source.Columns.Count];
-        }
-
-        public override Func<XArray> ColumnGetter(int columnIndex)
-        {
-            // Keep a column-specific array for remapping indices
-            int[] remapArray = null;
-
-            // Retrieve the column getter for this column
-            Func<XArray> getter = _source.ColumnGetter(columnIndex);
-
-            return () =>
+            // Build wrapper columns
+            _columns = new RemappedColumn[source.Columns.Count];
+            for(int i = 0; i < _columns.Length; ++i)
             {
-                // If we're done returning from the previous xarray, ...
-                if (_currentMatchesReturned == 0)
-                {
-                    // Get the xarray from the source for this column
-                    XArray xarray = getter();
-
-                    // Remap the XArray indices for this column for the rows which matched the clause
-                    _currentArrays[columnIndex] = _mapper.Remap(xarray, ref remapArray);
-                }
-
-                return _currentArrays[columnIndex].Slice(_currentMatchesReturned, _nextCountToReturn);
-            };
+                _columns[i] = new RemappedColumn(this, source.Columns[i], _mapper);
+            }
         }
+
+        public override IReadOnlyList<IXColumn> Columns => _columns;
+        public override int CurrentRowCount => _nextCountToReturn;
+        public override ArraySelector CurrentSelector => base.CurrentSelector;
 
         private int CountToRequest(int desiredCount)
         {
