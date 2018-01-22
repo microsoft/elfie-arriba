@@ -165,6 +165,7 @@ body {
     }
 }
 
+.flexFill { flex: 1 }
 #schema {
     min-width: 150px;
     display: flex;
@@ -218,7 +219,6 @@ body {
     flex-direction: column;
     overflow: hidden;
 
-
     .pulse { animation: pulse 1s ease-out 1; }
     @keyframes pulse {
         0%    { background-color: hsl(205, 90%, 45%); }
@@ -230,8 +230,6 @@ body {
         @include header;
         flex-shrink: 0;
         position: relative; // For .loading
-
-        .flexFill { flex: 1 }
 
         .loading {
             display: none;

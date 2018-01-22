@@ -216,6 +216,7 @@ class Index extends React.Component {
                 <div className="schemaHeader">
                     {!this.state.userCols.length && this.state.schemaBody && <span>{this.state.schemaBody.length} Columns</span>}
                     {!!this.state.userCols.length && <span className="button" onClick={e => this.setState({ userCols: [] }, () => this.limitChanged())}>Reset</span>}
+                    <span className="flexFill"></span>
                     {!!this.state.userCols.length && <span className="button" onClick={e => {
                         const newLine = this.query.endsWith('\n') ? '' : '\n'
                         const userCols = this.state.userCols.length && `${newLine}select ${this.state.userCols.map(c => `[${c}]`).join(', ')}` || ''
@@ -227,7 +228,7 @@ class Index extends React.Component {
                                 forceMoveMarkers: true,
                             }])
                         this.setState({ userCols: [] }, () => this.limitChanged())
-                    }}>Append to Query</span>}
+                    }}>Apply</span>}
                 </div>
                 {this.state.schemaBody && <div className="tableWrapper">
                     <table>
