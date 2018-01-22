@@ -159,7 +159,8 @@ class Index extends React.Component {
             }
         })
         xhr(`count`, { asof: this.state.asOf, q: this.query }).then(o => {
-            this.setState({ resultCount: typeof o === "number" && `${o.toLocaleString()} Results` })
+            this.setState({ resultCount: typeof o === "number" && `${o.toLocaleString()} Results`, pausePulse: true })
+            setTimeout(() => this.setState({ pausePulse: false }))
         })
     }
     limitChanged(addCount = 0, addCols = 0) {
@@ -173,8 +174,7 @@ class Index extends React.Component {
         const userCols = this.state.userCols.length && `\nselect ${this.state.userCols.map(c => `[${c}]`).join(', ')}` || ''
         xhr(`run`, { rowLimit: this.count, colLimit: this.cols, asof: this.state.asOf, q: `${q}${userCols}` }).then(o => {
             if (o.Message || o.ErrorMessage) throw 'Error should have been caught before run.'
-            this.setState({ results: o, pausePulse: true, loading: false })
-            setTimeout(() => this.setState({ pausePulse: false }))
+            this.setState({ results: o, loading: false })
         })
     }
     render() {
