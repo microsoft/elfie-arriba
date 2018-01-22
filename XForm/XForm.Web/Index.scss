@@ -238,12 +238,12 @@ body {
             position: absolute;
             left: 0;
             bottom: 0;
-            height: 3px;
+            height: 4px;
             width: 100%;
 
             &.loading-active {
                 display: block;
-                background: linear-gradient(90deg, transparent 70%, hsl(210, 75%, 50%) 85%, transparent);
+                background: linear-gradient(90deg, transparent 70%, $bg 85%, transparent);
                 background-size: 200%;
                 animation: wave 1.5s linear 500ms infinite;
 

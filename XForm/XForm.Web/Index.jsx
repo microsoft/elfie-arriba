@@ -186,7 +186,7 @@ class Index extends React.Component {
         }
 
         const q = this.query
-        const encodedQuery = q
+        const encodedQuery = encodeURIComponent(q)
 
         return <div className={`root`}>
             <div className="query">
