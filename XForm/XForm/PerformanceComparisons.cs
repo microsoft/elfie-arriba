@@ -50,10 +50,10 @@ namespace XForm
 
             //WhereUShortUnderConstant();
             //WhereUShortEqualsUshort();
-            //ByteEqualsConstant();
+            ByteEqualsConstant();
             //DoubleWhere();
             //Join();
-            Dictionary();
+            //Dictionary();
             //Choose();
             //TsvSplit();
         }
@@ -193,6 +193,11 @@ namespace XForm
                         if (bytes[i] < 16) count++;
                     }
                     return count;
+                });
+
+                b.Measure("Linq Count", bytes.Length, () =>
+                {
+                    return bytes.Where((i) => i < 16).Count();
                 });
 
                 b.Measure("XForm Count", bytes.Length, () =>
