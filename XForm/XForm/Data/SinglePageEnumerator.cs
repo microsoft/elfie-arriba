@@ -3,37 +3,39 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using XForm.Columns;
 
 namespace XForm.Data
 {
+    
+
     /// <summary>
-    ///  SinglePageEnumerator is an IDataBatchList which will only return the current single page
+    ///  SinglePageEnumerator is an IXArrayList which will only return the current single page
     ///  from the source to pipeline stages referencing it. Call 'SourceNext' to advance which page
     ///  the SinglePageEnumerator returns.
     ///  
-    ///  Used to share an IDataBatchEnumerator source with a second pipeline.
+    ///  Used to share an IXTable source with a second pipeline.
     /// </summary>
-    public class SinglePageEnumerator : IDataBatchEnumerator
+    public class SinglePageEnumerator : IXTable
     {
-        private IDataBatchEnumerator _source;
-
-        private Func<DataBatch>[] _requestedGetters;
-        private DataBatch[] _columnBatches;
+        private IXTable _source;
+        private PagingColumn[] _columns;
 
         private int _currentPageCount;
         private ArraySelector _currentSelector;
         private ArraySelector _currentEnumerateSelector;
 
-        public IReadOnlyList<ColumnDetails> Columns => _source.Columns;
-        public int CurrentBatchRowCount { get; private set; }
+        public int CurrentRowCount { get; private set; }
         public int Count => _currentPageCount;
 
-        public SinglePageEnumerator(IDataBatchEnumerator source)
+        public SinglePageEnumerator(IXTable source)
         {
             _source = source;
-            _requestedGetters = new Func<DataBatch>[source.Columns.Count];
-            _columnBatches = new DataBatch[source.Columns.Count];
+            _columns = source.Columns.Select((col) => new PagingColumn(col)).ToArray();
         }
+
+        public IReadOnlyList<IXColumn> Columns => _columns;
 
         public int SourceNext(int desiredCount)
         {
@@ -42,30 +44,7 @@ namespace XForm.Data
             // Get a page from the real source
             _currentPageCount = _source.Next(desiredCount);
 
-            // Clear cached DataBatches from last page
-            Array.Clear(_columnBatches, 0, _columnBatches.Length);
-
             return _currentPageCount;
-        }
-
-        public Func<DataBatch> ColumnGetter(int columnIndex)
-        {
-            // Get and cache the real getter for this column, so the source knows to retrieve it
-            if (_requestedGetters[columnIndex] == null) _requestedGetters[columnIndex] = _source.ColumnGetter(columnIndex);
-
-            // Declare a remap array in case it's needed
-            int[] remapArray = null;
-
-            // Return the previously retrieved DataBatch for this page only
-            return () =>
-            {
-                // Get the DataBatch for these rows, if we haven't before
-                if (_columnBatches[columnIndex].Array == null) _columnBatches[columnIndex] = _requestedGetters[columnIndex]();
-
-                // Get the values for the slice of rows currently being returned
-                DataBatch raw = _columnBatches[columnIndex];
-                return raw.Select(_currentSelector, ref remapArray);
-            };
         }
 
         public void Reset()
@@ -79,6 +58,12 @@ namespace XForm.Data
             // Iterate over the cached single page
             _currentEnumerateSelector = _currentEnumerateSelector.NextPage(_currentPageCount, desiredCount);
             _currentSelector = _currentEnumerateSelector;
+
+            for (int i = 0; i < _columns.Length; ++i)
+            {
+                _columns[i].SetSelector(_currentEnumerateSelector);
+            }
+
             return _currentEnumerateSelector.Count;
         }
 

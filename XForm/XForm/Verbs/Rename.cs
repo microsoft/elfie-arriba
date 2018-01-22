@@ -3,7 +3,7 @@
 
 using System;
 using System.Collections.Generic;
-
+using XForm.Columns;
 using XForm.Data;
 using XForm.Query;
 
@@ -14,7 +14,7 @@ namespace XForm.Verbs
         public string Verb => "rename";
         public string Usage => "rename {Column} {NewName}, ...";
 
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, XDatabaseContext context)
+        public IXTable Build(IXTable source, XDatabaseContext context)
         {
             Dictionary<string, string> columnNameMappings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             while (context.Parser.HasAnotherPart)
@@ -26,24 +26,25 @@ namespace XForm.Verbs
         }
     }
 
-    public class Rename : DataBatchEnumeratorWrapper
+    public class Rename : XTableWrapper
     {
-        private List<ColumnDetails> _mappedColumns;
+        private List<IXColumn> _mappedColumns;
 
-        public Rename(IDataBatchEnumerator source, Dictionary<string, string> columnNameMappings) : base(source)
+        public Rename(IXTable source, Dictionary<string, string> columnNameMappings) : base(source)
         {
-            _mappedColumns = new List<ColumnDetails>();
+            _mappedColumns = new List<IXColumn>();
 
-            foreach (ColumnDetails column in _source.Columns)
+            foreach (IXColumn column in _source.Columns)
             {
-                ColumnDetails mapped = column;
+                IXColumn mapped = column;
+
                 string newName;
-                if (columnNameMappings.TryGetValue(column.Name, out newName)) mapped = column.Rename(newName);
+                if (columnNameMappings.TryGetValue(column.ColumnDetails.Name, out newName)) mapped = RenamedColumn.Build(column, newName);
 
                 _mappedColumns.Add(mapped);
             }
         }
 
-        public override IReadOnlyList<ColumnDetails> Columns => _mappedColumns;
+        public override IReadOnlyList<IXColumn> Columns => _mappedColumns;
     }
 }

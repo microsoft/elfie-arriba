@@ -4,8 +4,6 @@
 using System;
 using System.Collections.Generic;
 
-using XForm.Extensions;
-
 namespace XForm.Functions
 {
     public static class FunctionFactory

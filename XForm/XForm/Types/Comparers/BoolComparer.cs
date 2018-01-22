@@ -9,19 +9,19 @@ using XForm.Query;
 namespace XForm.Types.Comparers
 {
     /// <summary>
-    ///  IDataBatchComparer for bool[]. NOT GENERATED.
+    ///  IXArrayComparer for bool[]. NOT GENERATED.
     /// </summary>
-    internal class BoolComparer : IDataBatchComparer, IDataBatchComparer<bool>
+    internal class BoolComparer : IXArrayComparer, IXArrayComparer<bool>
     {
         internal static ComparerExtensions.WhereSingle<bool> s_WhereSingleNative = null;
         internal static ComparerExtensions.Where<bool> s_WhereNative = null;
 
-        public void WhereEqual(DataBatch left, DataBatch right, BitVector vector)
+        public void WhereEqual(XArray left, XArray right, BitVector vector)
         {
             bool[] leftArray = (bool[])left.Array;
             bool[] rightArray = (bool[])right.Array;
 
-            // Check how the DataBatches are configured and run the fastest loop possible for the configuration.
+            // Check how the arrays are configured and run the fastest loop possible for the configuration.
             if (left.IsNull != null || right.IsNull != null)
             {
                 // Slowest Path: Null checks and look up indices on both sides. ~65ms for 16M
@@ -90,37 +90,37 @@ namespace XForm.Types.Comparers
             return left == right;
         }
 
-        public void GetHashCodes(DataBatch values, int[] hashes)
+        public void GetHashCodes(XArray values, int[] hashes)
         {
             throw new ArgumentException("Operator is not valid for boolean");
         }
 
-        public void WhereGreaterThan(DataBatch left, DataBatch right, BitVector vector)
+        public void WhereGreaterThan(XArray left, XArray right, BitVector vector)
         {
             throw new ArgumentException("Operator is not valid for boolean");
         }
 
-        public void WhereGreaterThanOrEqual(DataBatch left, DataBatch right, BitVector vector)
+        public void WhereGreaterThanOrEqual(XArray left, XArray right, BitVector vector)
         {
             throw new ArgumentException("Operator is not valid for boolean");
         }
 
-        public void WhereLessThan(DataBatch left, DataBatch right, BitVector vector)
+        public void WhereLessThan(XArray left, XArray right, BitVector vector)
         {
             throw new ArgumentException("Operator is not valid for boolean");
         }
 
-        public void WhereLessThanOrEqual(DataBatch left, DataBatch right, BitVector vector)
+        public void WhereLessThanOrEqual(XArray left, XArray right, BitVector vector)
         {
             throw new ArgumentException("Operator is not valid for boolean");
         }
 
-        public void WhereNotEqual(DataBatch left, DataBatch right, BitVector vector)
+        public void WhereNotEqual(XArray left, XArray right, BitVector vector)
         {
             bool[] leftArray = (bool[])left.Array;
             bool[] rightArray = (bool[])right.Array;
 
-            // Check how the DataBatches are configured and run the fastest loop possible for the configuration.
+            // Check how the arrays are configured and run the fastest loop possible for the configuration.
             if (left.IsNull != null || right.IsNull != null)
             {
                 // Slowest Path: Null checks and look up indices on both sides. ~65ms for 16M

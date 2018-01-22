@@ -15,7 +15,7 @@ namespace XForm.Functions.String
         public string Usage => "Trim({String8})";
         public Type ReturnType => typeof(String8);
 
-        public IDataBatchColumn Build(IDataBatchEnumerator source, XDatabaseContext context)
+        public IXColumn Build(IXTable source, XDatabaseContext context)
         {
             return SimpleTransformFunction<String8, String8>.Build(
                 Name,

@@ -2,8 +2,9 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
-
+using XForm.Columns;
 using XForm.Data;
+using XForm.Extensions;
 using XForm.Query;
 using XForm.Types;
 
@@ -15,10 +16,10 @@ namespace XForm.Functions
         public string Usage => "Cast({Col|Func|Const}, {ToType}, {ErrorOn?}, {DefaultValue?}, {DefaultOn?})";
         public Type ReturnType => null;
 
-        public IDataBatchColumn Build(IDataBatchEnumerator source, XDatabaseContext context)
+        public IXColumn Build(IXTable source, XDatabaseContext context)
         {
             // Column and ToType are required
-            IDataBatchColumn column = context.Parser.NextColumn(source, context);
+            IXColumn column = context.Parser.NextColumn(source, context);
             Type toType = context.Parser.NextType();
 
             // ErrorOn, DefaultValue, and ChangeToDefaultOn are optional
@@ -39,86 +40,7 @@ namespace XForm.Functions
                 }
             }
 
-            return Cast.Build(source, column, toType, errorOn, defaultValue, changeToDefaultOn);
-        }
-    }
-
-    /// <summary>
-    ///  Cast converts values from one type to another.
-    ///  If passed only a column and target type, it will convert valid values and turn invalid values, empty strings, and nulls into Null.
-    ///  
-    ///  Likely Desired Forms:
-    ///    Cast([Column], [Type])                                   -> 'Safe'. Invalid/Null/Empty turn into Null.
-    ///    Cast([Column], [Type], NullOrInvalid)                    -> 'Strict'. Error on Invalid, Null, or Empty values.
-    ///    Cast([Column], [Type], Invalid)                          -> Throw on invalid values, but all empty/null to pass through.
-    ///    Cast([Column], [Type], None, [Default], Invalid)         -> Leave nulls alone but replaced invalid values with the default.
-    ///    Cast([Column], [Type], None, [Default], NullOrInvalid)   -> 'Loose'. Convert Invalid, Null, and Empty to the default.
-    /// </summary>
-    public class Cast : IDataBatchColumn
-    {
-        public ColumnDetails ColumnDetails { get; private set; }
-        private IDataBatchColumn Column { get; set; }
-        private Func<DataBatch, DataBatch> Converter { get; set; }
-
-        private Type TargetType { get; set; }
-        private ValueKinds ErrorOnKinds { get; set; }
-        private object DefaultValue { get; set; }
-        private ValueKinds ChangeToDefaultKinds { get; set; }
-
-        private Cast(IDataBatchColumn column, Type targetType, ValueKinds errorOnKinds = ValueKindsDefaults.ErrorOn, object defaultValue = null, ValueKinds changeToDefaultKinds = ValueKindsDefaults.ChangeToDefault)
-        {
-            Column = column;
-            ColumnDetails = column.ColumnDetails.ChangeType(targetType);
-            Converter = TypeConverterFactory.GetConverter(column.ColumnDetails.Type, targetType, errorOnKinds, defaultValue, changeToDefaultKinds);
-
-            TargetType = targetType;
-            ErrorOnKinds = errorOnKinds;
-            DefaultValue = defaultValue;
-            ChangeToDefaultKinds = changeToDefaultKinds;
-        }
-
-        public static IDataBatchColumn Build(IDataBatchEnumerator source, IDataBatchColumn column, Type targetType, ValueKinds errorOnKinds = ValueKindsDefaults.ErrorOn, object defaultValue = null, ValueKinds changeToDefaultKinds = ValueKindsDefaults.ChangeToDefault)
-        {
-            // If the column is already the right type, just return it
-            if (column.ColumnDetails.Type == targetType) return column;
-
-            if (column is Constant)
-            {
-                // If the inner value is a constant, convert once and store the new constant
-                return new Constant(source, TypeConverterFactory.ConvertSingle(((Constant)column).Value, targetType), targetType);
-            }
-            else if(column is EnumColumn)
-            {
-                // If the inner value is an enum, convert each value once
-                EnumColumn enumColumn = (EnumColumn)column;
-                return new EnumColumn(enumColumn, TypeConverterFactory.GetConverter(column.ColumnDetails.Type, targetType, errorOnKinds, defaultValue, changeToDefaultKinds), targetType);
-            }
-            else
-            {
-                return new Cast(column, targetType, errorOnKinds, defaultValue, changeToDefaultKinds);
-            }
-        }
-
-        public Func<DataBatch> Getter()
-        {
-            Func<DataBatch> sourceGetter = Column.Getter();
-            return () => Converter(sourceGetter());
-        }
-
-        public override string ToString()
-        {
-            if (DefaultValue != null && ChangeToDefaultKinds != ValueKinds.InvalidOrNull)
-            {
-                return $"Cast({Column}, {TargetType.Name}, {ErrorOnKinds}, {XqlScanner.Escape(DefaultValue, TokenType.Value)}, {ChangeToDefaultKinds})";
-            }
-            else if (ErrorOnKinds != ValueKinds.None)
-            {
-                return $"Cast({Column}, {TargetType.Name}, {ErrorOnKinds})";
-            }
-            else
-            {
-                return $"Cast({Column}, {TargetType.Name})";
-            }
+            return CastedColumn.Build(source, column, toType, errorOn, defaultValue, changeToDefaultOn);
         }
     }
 }

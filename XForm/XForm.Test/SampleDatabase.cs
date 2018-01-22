@@ -92,7 +92,7 @@ namespace XForm.Test
                 context = SampleDatabase.XDatabaseContext;
 
                 // Ensure the as-of DateTime is reset for each operation
-                context.RequestedAsOfDateTime = DateTime.UtcNow;
+                context.RequestedAsOfDateTime = DateTime.MaxValue;
             }
 
             List<string> args = new List<string>();
@@ -300,10 +300,23 @@ namespace XForm.Test
             SampleDatabase.EnsureBuilt();
 
             // To debug Main() error handling or argument parsing, run like this:
-            //XForm("build WebRequest.NullableHandling");
+            //XForm("build WebRequest");
 
             // To debug engine execution, run like this:
-            XqlParser.Parse("read WebRequest.NullableHandling", null, SampleDatabase.XDatabaseContext).RunAndDispose();
+            XqlParser.Parse("read webrequest", null, SampleDatabase.XDatabaseContext).RunAndDispose();
+        }
+
+        [TestMethod]
+        public void Database_CaseInsensitive()
+        {
+            // Verify WorkflowRunner handles case insensitive table names
+            XForm("build WebRequest");
+            XForm("build webrequest");
+
+            // Verify table and column name accesses work case insensitive
+            Assert.AreEqual((long)1000, SampleDatabase.XDatabaseContext.Query(@"
+                read webrequest
+                select [id]").RunAndDispose());
         }
 
         private static int ExpectedResult(string sourceName)

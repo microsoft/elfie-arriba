@@ -14,16 +14,16 @@ using XForm.Types;
 
 namespace XForm.IO
 {
-    public class TabularFileWriter : IDataBatchEnumerator
+    public class TabularFileWriter : IXTable
     {
+        private IXTable _source;
         private IStreamProvider _streamProvider;
         private string _outputFilePath;
-        private IDataBatchEnumerator _source;
         private ITabularWriter _writer;
 
-        private Func<DataBatch>[] _stringColumnGetters;
+        private Func<XArray>[] _stringColumnGetters;
 
-        public TabularFileWriter(IDataBatchEnumerator source, IStreamProvider streamProvider, string outputFilePath)
+        public TabularFileWriter(IXTable source, IStreamProvider streamProvider, string outputFilePath)
         {
             _source = source;
             _streamProvider = streamProvider;
@@ -31,11 +31,11 @@ namespace XForm.IO
             Initialize();
         }
 
-        public TabularFileWriter(IDataBatchEnumerator source, ITabularWriter writer)
+        public TabularFileWriter(IXTable source, ITabularWriter writer)
         {
             _source = source;
             _writer = writer;
-            _writer.SetColumns(_source.Columns.Select((cd) => cd.Name));
+            _writer.SetColumns(_source.Columns.Select((col) => col.ColumnDetails.Name));
 
             Initialize();
         }
@@ -43,15 +43,15 @@ namespace XForm.IO
         private void Initialize()
         {
             // Subscribe to all columns and cache converters for them
-            _stringColumnGetters = new Func<DataBatch>[_source.Columns.Count];
+            _stringColumnGetters = new Func<XArray>[_source.Columns.Count];
             for (int i = 0; i < _source.Columns.Count; ++i)
             {
-                Func<DataBatch> rawGetter = _source.ColumnGetter(i);
-                Func<DataBatch> stringGetter = rawGetter;
+                Func<XArray> rawGetter = _source.Columns[i].CurrentGetter();
+                Func<XArray> stringGetter = rawGetter;
 
-                if (_source.Columns[i].Type != typeof(String8))
+                if (_source.Columns[i].ColumnDetails.Type != typeof(String8))
                 {
-                    Func<DataBatch, DataBatch> converter = TypeConverterFactory.GetConverter(_source.Columns[i].Type, typeof(String8));
+                    Func<XArray, XArray> converter = TypeConverterFactory.GetConverter(_source.Columns[i].ColumnDetails.Type, typeof(String8));
                     stringGetter = () => (converter(rawGetter()));
                 }
 
@@ -59,13 +59,8 @@ namespace XForm.IO
             }
         }
 
-        public IReadOnlyList<ColumnDetails> Columns => _source.Columns;
-        public int CurrentBatchRowCount => _source.CurrentBatchRowCount;
-
-        public Func<DataBatch> ColumnGetter(int columnIndex)
-        {
-            return _source.ColumnGetter(columnIndex);
-        }
+        public IReadOnlyList<IXColumn> Columns => _source.Columns;
+        public int CurrentRowCount => _source.CurrentRowCount;
 
         public void Reset()
         {
@@ -96,24 +91,25 @@ namespace XForm.IO
                 {
                     _writer = TabularFactory.BuildWriter(_streamProvider.OpenWrite(_outputFilePath), _outputFilePath);
                 }
-                _writer.SetColumns(_source.Columns.Select((cd) => cd.Name));
+
+                _writer.SetColumns(_source.Columns.Select((col) => col.ColumnDetails.Name));
             }
 
-            // Or smaller batchsize?
+            // Or smaller batch?
             int rowCount = _source.Next(desiredCount);
             if (rowCount == 0) return 0;
 
-            DataBatch[] batches = new DataBatch[_stringColumnGetters.Length];
+            XArray[] arrays = new XArray[_stringColumnGetters.Length];
             for (int i = 0; i < _stringColumnGetters.Length; ++i)
             {
-                batches[i] = _stringColumnGetters[i]();
+                arrays[i] = _stringColumnGetters[i]();
             }
 
             for (int rowIndex = 0; rowIndex < rowCount; ++rowIndex)
             {
                 for (int colIndex = 0; colIndex < _stringColumnGetters.Length; ++colIndex)
                 {
-                    String8 value = ((String8[])batches[colIndex].Array)[batches[colIndex].Index(rowIndex)];
+                    String8 value = ((String8[])arrays[colIndex].Array)[arrays[colIndex].Index(rowIndex)];
                     _writer.Write(value);
                 }
 

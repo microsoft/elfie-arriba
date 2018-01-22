@@ -45,19 +45,19 @@ namespace XForm.Test.Query
             Type t = joinTo.GetType().GetElementType();
 
             // Build a table with padded nulls to join from (so we see nulls are also filtered out)
-            DataBatch joinFromBatch = TableTestHarness.Nulls(DataBatch.All(joinFrom));
-            IDataBatchEnumerator joinFromTable = TableTestHarness.DatabaseContext.FromArrays(joinFromBatch.Count)
-                .WithColumn(new ColumnDetails("ServerID", t), joinFromBatch);
+            XArray joinFromxarray = TableTestHarness.Nulls(XArray.All(joinFrom));
+            IXTable joinFromTable = TableTestHarness.DatabaseContext.FromArrays(joinFromxarray.Count)
+                .WithColumn(new ColumnDetails("ServerID", t), joinFromxarray);
 
             // Build the table to join to
-            IDataBatchEnumerator joinToTable = TableTestHarness.DatabaseContext.FromArrays(joinTo.Length)
-               .WithColumn(new ColumnDetails("ID", t), DataBatch.All(joinTo));
+            IXTable joinToTable = TableTestHarness.DatabaseContext.FromArrays(joinTo.Length)
+               .WithColumn(new ColumnDetails("ID", t), XArray.All(joinTo));
 
             // Run the join - verify the expected values without padding are found
-            IDataBatchEnumerator result = new Join(joinFromTable, "ServerID", joinToTable, "ID", "Server.");
-            Func<DataBatch> serverID = result.ColumnGetter(result.Columns.IndexOfColumn("Server.ID"));
+            IXTable result = new Join(joinFromTable, "ServerID", joinToTable, "ID", "Server.");
+            Func<XArray> serverID = result.Columns.Find("Server.ID").CurrentGetter();
 
-            IDataBatchEnumerator expectedTable = TableTestHarness.DatabaseContext.FromArrays(expected.Length).WithColumn("Server.ID", expected);
+            IXTable expectedTable = TableTestHarness.DatabaseContext.FromArrays(expected.Length).WithColumn("Server.ID", expected);
             TableTestHarness.AssertAreEqual(expectedTable, result, 2);
         }
 
@@ -98,12 +98,12 @@ namespace XForm.Test.Query
                 expectedValues[i] = 3 * i + 1;
             }
 
-            IDataBatchEnumerator expected = TableTestHarness.DatabaseContext.FromArrays(distinctCount)
+            IXTable expected = TableTestHarness.DatabaseContext.FromArrays(distinctCount)
                 .WithColumn("ID", expectedIds)
                 .WithColumn("Rank", expectedRanks)
                 .WithColumn("Value", expectedValues);
 
-            IDataBatchEnumerator actual = TableTestHarness.DatabaseContext.FromArrays(length)
+            IXTable actual = TableTestHarness.DatabaseContext.FromArrays(length)
                 .WithColumn("ID", id)
                 .WithColumn("Rank", rank)
                 .WithColumn("Value", value);
@@ -116,6 +116,27 @@ namespace XForm.Test.Query
                 expected.Query("select Cast([ID], String8), Cast([Rank], String8), Cast([Value], String8)", context),
                 actual.Query("select Cast([ID], String8), Cast([Rank], String8), Cast([Value], String8)", context).Query("choose Max [Rank] [ID]", context),
                 distinctCount);
+        }
+
+        [TestMethod]
+        public void Verb_Schema()
+        {
+            int[] id = new int[0];
+            ushort[] size = new ushort[0];
+
+            string[] name = new string[] { "ID", "Size" };
+            string[] types = new string[] { "Int32", "UInt16" };
+
+            IXTable actual = TableTestHarness.DatabaseContext.FromArrays(0)
+                .WithColumn("ID", id)
+                .WithColumn("Size", size)
+                .Query("schema", TableTestHarness.DatabaseContext);
+
+            IXTable expected = TableTestHarness.DatabaseContext.FromArrays(2)
+                .WithColumn("Name", name)
+                .WithColumn("Type", types);
+
+            TableTestHarness.AssertAreEqual(expected, actual, 2);
         }
     }
 }

@@ -25,7 +25,7 @@ namespace XForm.Types
             return new ConvertingWriter(TypeProviderFactory.Get(typeof(long)).BinaryWriter(streamProvider, columnPath), TypeConverterFactory.GetConverter(typeof(TimeSpan), typeof(long)));
         }
 
-        public IDataBatchComparer TryGetComparer()
+        public IXArrayComparer TryGetComparer()
         {
             // TimeSpanComparer is generated
             return new TimeSpanComparer();
@@ -72,44 +72,44 @@ namespace XForm.Types
             _defaultValue = (TimeSpan)(TypeConverterFactory.ConvertSingle(defaultValue, typeof(TimeSpan)) ?? default(TimeSpan));
         }
 
-        public bool[] TimeSpanToLong(DataBatch batch, out Array result)
+        public bool[] TimeSpanToLong(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _longArray, batch.Count);
+            Allocator.AllocateToSize(ref _longArray, xarray.Count);
 
-            TimeSpan[] sourceArray = (TimeSpan[])batch.Array;
-            for (int i = 0; i < batch.Count; ++i)
+            TimeSpan[] sourceArray = (TimeSpan[])xarray.Array;
+            for (int i = 0; i < xarray.Count; ++i)
             {
-                _longArray[i] = sourceArray[batch.Index(i)].Ticks;
+                _longArray[i] = sourceArray[xarray.Index(i)].Ticks;
             }
 
             result = _longArray;
             return null;
         }
 
-        public bool[] LongToTimeSpan(DataBatch batch, out Array result)
+        public bool[] LongToTimeSpan(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _timeSpanArray, batch.Count);
+            Allocator.AllocateToSize(ref _timeSpanArray, xarray.Count);
 
-            long[] sourceArray = (long[])batch.Array;
-            for (int i = 0; i < batch.Count; ++i)
+            long[] sourceArray = (long[])xarray.Array;
+            for (int i = 0; i < xarray.Count; ++i)
             {
-                _timeSpanArray[i] = TimeSpan.FromTicks(sourceArray[batch.Index(i)]);
+                _timeSpanArray[i] = TimeSpan.FromTicks(sourceArray[xarray.Index(i)]);
             }
 
             result = _timeSpanArray;
             return null;
         }
 
-        public bool[] StringToTimeSpan(DataBatch batch, out Array result)
+        public bool[] StringToTimeSpan(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _timeSpanArray, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvertArray, batch.Count);
+            Allocator.AllocateToSize(ref _timeSpanArray, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvertArray, xarray.Count);
 
             bool anyCouldNotConvert = false;
-            string[] sourceArray = (string[])batch.Array;
-            for (int i = 0; i < batch.Count; ++i)
+            string[] sourceArray = (string[])xarray.Array;
+            for (int i = 0; i < xarray.Count; ++i)
             {
-                string value = sourceArray[batch.Index(i)];
+                string value = sourceArray[xarray.Index(i)];
 
                 bool couldNotConvert = !TryParseTimeSpanFriendly(value, out _timeSpanArray[i]);
                 if (couldNotConvert) couldNotConvert = String.IsNullOrEmpty(value) || !TimeSpan.TryParse(value, out _timeSpanArray[i]);

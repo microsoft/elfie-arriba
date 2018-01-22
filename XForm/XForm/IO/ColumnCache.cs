@@ -50,10 +50,10 @@ namespace XForm.IO
     /// </summary>
     public class CachedColumnReader : IColumnReader
     {
-        private DataBatch _column;
+        private XArray _column;
         private int[] _remapArray;
 
-        public CachedColumnReader(DataBatch column)
+        public CachedColumnReader(XArray column)
         {
             _column = column;
         }
@@ -68,7 +68,7 @@ namespace XForm.IO
 
         public int Count => _column.Count;
 
-        public DataBatch Read(ArraySelector selector)
+        public XArray Read(ArraySelector selector)
         {
             return _column.Select(selector, ref _remapArray);
         }

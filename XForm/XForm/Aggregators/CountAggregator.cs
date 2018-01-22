@@ -3,8 +3,10 @@
 
 using System;
 using System.Collections.Generic;
-
+using XForm.Columns;
 using XForm.Data;
+using XForm.Extensions;
+using XForm.Functions;
 using XForm.Query;
 
 namespace XForm.Aggregators
@@ -14,43 +16,27 @@ namespace XForm.Aggregators
         public string Verb => "count";
         public string Usage => "count";
 
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, XDatabaseContext context)
+        public IXTable Build(IXTable source, XDatabaseContext context)
         {
             return new CountAggregator(source);
         }
     }
 
-    public class CountAggregator : IDataBatchEnumerator
+    public class CountAggregator : IXTable
     {
-        private List<ColumnDetails> _column;
-        private IDataBatchEnumerator _source;
+        private SingleValueColumn[] _countColumn;
+        private IXTable _source;
         private int _count;
 
-        public CountAggregator(IDataBatchEnumerator source)
+        public CountAggregator(IXTable source)
         {
             _source = source;
-
             _count = -1;
-
-            _column = new List<ColumnDetails>();
-            _column.Add(new ColumnDetails("Count", typeof(int)));
+            _countColumn = new SingleValueColumn[] { new SingleValueColumn(this, typeof(int)) };
         }
 
-        public IReadOnlyList<ColumnDetails> Columns => _column;
-
-        public int CurrentBatchRowCount { get; private set; }
-
-        public Func<DataBatch> ColumnGetter(int columnIndex)
-        {
-            if (columnIndex != 0) throw new ArgumentOutOfRangeException("columnIndex");
-            int[] result = new int[1];
-
-            return () =>
-            {
-                result[0] = _count;
-                return DataBatch.All(result, 1);
-            };
-        }
+        public IReadOnlyList<IXColumn> Columns => _countColumn;
+        public int CurrentRowCount { get; private set; }
 
         public void Reset()
         {
@@ -63,14 +49,14 @@ namespace XForm.Aggregators
             // Return no more rows if this isn't the first call
             if (_count != -1)
             {
-                CurrentBatchRowCount = 0;
-                return CurrentBatchRowCount;
+                CurrentRowCount = 0;
+                return CurrentRowCount;
             }
 
             // If this is a List, just get the count
-            if (_source is IDataBatchList)
+            if (_source is ISeekableXTable)
             {
-                _count = ((IDataBatchList)_source).Count;
+                _count = ((ISeekableXTable)_source).Count;
             }
             else
             {
@@ -78,15 +64,18 @@ namespace XForm.Aggregators
                 _count = 0;
                 while (true)
                 {
-                    int batchCount = _source.Next(desiredCount);
+                    int batchCount = _source.Next(Math.Max(desiredCount, XTableExtensions.DefaultBatchSize));
                     if (batchCount == 0) break;
                     _count += batchCount;
                 }
             }
 
+            // Set the count on the constant
+            _countColumn[0].Set(_count);
+
             // Return that there's one row (the count)
-            CurrentBatchRowCount = 1;
-            return CurrentBatchRowCount;
+            CurrentRowCount = 1;
+            return CurrentRowCount;
         }
 
         public void Dispose()

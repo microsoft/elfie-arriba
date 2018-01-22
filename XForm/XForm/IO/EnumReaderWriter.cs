@@ -13,8 +13,8 @@ namespace XForm.IO
 {
     public interface IEnumColumnDictionary
     {
-        bool Add(DataBatch values, ref byte[] valueIndices);
-        DataBatch Values();
+        bool Add(XArray values, ref byte[] valueIndices);
+        XArray Values();
     }
 
     // Sort values and remap on Dispose?
@@ -33,7 +33,7 @@ namespace XForm.IO
         public EnumColumnDictionary()
         {
             ITypeProvider typeProvider = TypeProviderFactory.Get(typeof(T));
-            _comparer = new EqualityComparerAdapter<T>((IDataBatchComparer<T>)typeProvider.TryGetComparer());
+            _comparer = new EqualityComparerAdapter<T>((IXArrayComparer<T>)typeProvider.TryGetComparer());
             _copier = (IValueCopier<T>)typeProvider.TryGetCopier();
             Reset(HashCore.SizeForCapacity(256));
         }
@@ -135,15 +135,15 @@ namespace XForm.IO
             _currentValue = swapValue;
         }
 
-        public bool Add(DataBatch batch, ref byte[] indicesFound)
+        public bool Add(XArray xarray, ref byte[] indicesFound)
         {
-            Allocator.AllocateToSize(ref indicesFound, batch.Count);
+            Allocator.AllocateToSize(ref indicesFound, xarray.Count);
 
-            T[] array = (T[])batch.Array;
-            for (int i = 0; i < batch.Count; ++i)
+            T[] array = (T[])xarray.Array;
+            for (int i = 0; i < xarray.Count; ++i)
             {
-                int index = batch.Index(i);
-                bool isNull = (batch.IsNull != null && batch.IsNull[index]);
+                int index = xarray.Index(i);
+                bool isNull = (xarray.IsNull != null && xarray.IsNull[index]);
                 T value = array[index];
 
                 indicesFound[i] = Add(value, isNull);
@@ -153,7 +153,7 @@ namespace XForm.IO
             return this.Count <= 256;
         }
 
-        public DataBatch Values()
+        public XArray Values()
         {
             bool[] isNull = null;
             if (_nullItemIndex != -1)
@@ -171,7 +171,7 @@ namespace XForm.IO
                 }
             }
 
-            return DataBatch.All(_keys, this.Count, isNull).Reselect(ArraySelector.Map(indicesInOrder, this.Count));
+            return XArray.All(_keys, this.Count, isNull).Reselect(ArraySelector.Map(indicesInOrder, this.Count));
         }
     }
 
@@ -187,7 +187,7 @@ namespace XForm.IO
         private IColumnWriter _valueWriter;
         private IColumnWriter _rowIndexWriter;
 
-        private byte[] _currentBatchIndices;
+        private byte[] _currentArrayIndices;
 
         public EnumWriter(IStreamProvider streamProvider, string columnPath, Type columnType, IColumnWriter valueWriter)
         {
@@ -201,26 +201,26 @@ namespace XForm.IO
 
         public Type WritingAsType => _valueWriter.WritingAsType;
 
-        public void Append(DataBatch batch)
+        public void Append(XArray xarray)
         {
             // If we already had too many values, we're just writing them out normally
             if (_dictionary == null)
             {
-                _valueWriter.Append(batch);
+                _valueWriter.Append(xarray);
                 return;
             }
 
             // Otherwise, find the index of each value added
-            if (_dictionary.Add(batch, ref _currentBatchIndices))
+            if (_dictionary.Add(xarray, ref _currentArrayIndices))
             {
                 // If we're still under 256 values, write the indices
-                _rowIndexWriter.Append(DataBatch.All(_currentBatchIndices, batch.Count));
+                _rowIndexWriter.Append(XArray.All(_currentArrayIndices, xarray.Count));
             }
             else
             {
                 // If we went over 256 values, convert to writing the values directly
                 Convert();
-                _valueWriter.Append(batch);
+                _valueWriter.Append(xarray);
                 return;
             }
         }
@@ -232,7 +232,7 @@ namespace XForm.IO
             _rowIndexWriter = null;
 
             // Get the set of unique values and get rid of the value dictionary
-            DataBatch values = _dictionary.Values();
+            XArray values = _dictionary.Values();
             _dictionary = null;
 
             // Convert the indices previously written into raw values
@@ -240,19 +240,19 @@ namespace XForm.IO
             using (IColumnReader rowIndexReader = new PrimitiveArrayReader<byte>(_streamProvider.OpenRead(Path.Combine(_columnPath, RowIndexFileName))))
             {
                 int rowCount = rowIndexReader.Count;
-                ArraySelector page = ArraySelector.All(rowCount).NextPage(rowCount, 10240);
+                ArraySelector page = ArraySelector.All(0).NextPage(rowCount, 10240);
                 while (page.Count > 0)
                 {
-                    // Read a batch of indices and convert to int[]
-                    DataBatch batch = rowIndexReader.Read(page);
-                    byte[] array = (byte[])batch.Array;
-                    for (int i = 0; i < batch.Count; ++i)
+                    // Read an XArray of indices and convert to int[]
+                    XArray xarray = rowIndexReader.Read(page);
+                    byte[] array = (byte[])xarray.Array;
+                    for (int i = 0; i < xarray.Count; ++i)
                     {
-                        valueIndices[i] = array[batch.Index(i)];
+                        valueIndices[i] = array[xarray.Index(i)];
                     }
 
                     // Write the corresponding values
-                    _valueWriter.Append(values.Reselect(ArraySelector.Map(valueIndices, batch.Count)));
+                    _valueWriter.Append(values.Reselect(ArraySelector.Map(valueIndices, xarray.Count)));
 
                     page = page.NextPage(rowCount, 10240);
                 }
@@ -289,9 +289,9 @@ namespace XForm.IO
     {
         private IColumnReader _valueReader;
         private IColumnReader _rowIndexReader;
-        private Func<DataBatch, DataBatch> _rowIndexToIntConverter;
+        private Func<XArray, XArray> _rowIndexToIntConverter;
 
-        private DataBatch _allValues;
+        private XArray _allValues;
 
         private EnumReader(IColumnReader valueReader, IColumnReader rowIndexReader)
         {
@@ -315,6 +315,8 @@ namespace XForm.IO
 
         public int Count => _rowIndexReader.Count;
 
+        public Type IndicesType => typeof(byte);
+
         public void Dispose()
         {
             if (_valueReader != null)
@@ -330,24 +332,24 @@ namespace XForm.IO
             }
         }
 
-        // Read builds an indexed DataBatch pointing to the value for each row
-        public DataBatch Read(ArraySelector selector)
+        // Read builds an indexed XArray pointing to the value for each row
+        public XArray Read(ArraySelector selector)
         {
             return Remap(Values(), selector);
         }
 
-        public DataBatch Remap(DataBatch values, ArraySelector selector)
+        public XArray Remap(XArray values, ArraySelector selector)
         {
             // Read row indices and convert to int[]
-            DataBatch indexByteBatch = _rowIndexReader.Read(selector);
-            DataBatch indexIntBatch = _rowIndexToIntConverter(indexByteBatch);
+            XArray indexByteArray = _rowIndexReader.Read(selector);
+            XArray indexIntArray = _rowIndexToIntConverter(indexByteArray);
 
             // Return the selected values
-            return values.Reselect(ArraySelector.Map((int[])indexIntBatch.Array, indexIntBatch.Count));
+            return values.Reselect(ArraySelector.Map((int[])indexIntArray.Array, indexIntArray.Count));
         }
 
         // Values returns the set of distinct values themselves
-        public DataBatch Values()
+        public XArray Values()
         {
             // Read the values (if we haven't previously)
             if (_allValues.Array == null)
@@ -360,7 +362,7 @@ namespace XForm.IO
         }
 
         // Indices returns the index of the value for each row in the selector
-        public DataBatch Indices(ArraySelector selector)
+        public XArray Indices(ArraySelector selector)
         {
             return _rowIndexReader.Read(selector);
         }

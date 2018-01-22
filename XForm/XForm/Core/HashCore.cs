@@ -9,17 +9,17 @@ using XForm.Types;
 namespace XForm
 {
     /// <summary>
-    ///  EqualityComparerAdapter turns an IDataBatchComparer&lt;T&gt; into an IEqualityComparer&lt;T&gt;
+    ///  EqualityComparerAdapter turns an IXArrayComparer&lt;T&gt; into an IEqualityComparer&lt;T&gt;
     ///  for use with types which require one.
     /// </summary>
     /// <typeparam name="T">Type of values being compared</typeparam>
     public class EqualityComparerAdapter<T> : IEqualityComparer<T>
     {
-        private IDataBatchComparer<T> _inner;
+        private IXArrayComparer<T> _inner;
 
-        public EqualityComparerAdapter(IDataBatchComparer inner)
+        public EqualityComparerAdapter(IXArrayComparer inner)
         {
-            _inner = (IDataBatchComparer<T>)inner;
+            _inner = (IXArrayComparer<T>)inner;
         }
 
         public bool Equals(T left, T right)
@@ -148,7 +148,7 @@ namespace XForm
 
             // To find a key, just compare every key starting with the expected bucket
             // up to the farthest any key had to be moved from the desired bucket.
-            int limit = (byte)((this.MaxProbeLength << 4) + (15));
+            int limit = (byte)(((this.MaxProbeLength + 1) << 4) + 15);
             for (int matchingMetadata = (byte)((1 << 4) + (increment - 1)); matchingMetadata <= limit; matchingMetadata += 16)
             {
                 if (this.Metadata[bucket] == matchingMetadata && EqualsCurrent(bucket)) return (int)bucket;
@@ -188,7 +188,7 @@ namespace XForm
             uint bucket = Bucket(hash);
             uint increment = Increment(hash);
 
-            int limit = (byte)(((this.MaxProbeLength + 1) << 4) + (15));
+            int limit = (byte)((ProbeLengthLimit << 4) + 15);
             for (int matchingMetadata = (byte)((1 << 4) + (increment - 1)); matchingMetadata <= limit; matchingMetadata += 16)
             {
                 int metadataFound = this.Metadata[bucket];
@@ -236,6 +236,7 @@ namespace XForm
             }
 
             // If we couldn't find a place for this item, a resize is required
+            if (((double)this.Count / (double)this.Metadata.Length) < 0.9) throw new InvalidOperationException($"HashCore was unable to place an item when under 90% full. Is the hash function working correctly? {this.Count:n0} items, {this.Metadata.Length:n0} capacity.");
             return false;
         }
     }

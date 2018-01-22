@@ -11,16 +11,16 @@ namespace XForm.Types
 {
     internal interface INumericConverter
     {
-        bool[] FromSbyte(DataBatch batch, out Array result);
-        bool[] FromByte(DataBatch batch, out Array result);
-        bool[] FromShort(DataBatch batch, out Array result);
-        bool[] FromUshort(DataBatch batch, out Array result);
-        bool[] FromInt(DataBatch batch, out Array result);
-        bool[] FromUint(DataBatch batch, out Array result);
-        bool[] FromLong(DataBatch batch, out Array result);
-        bool[] FromUlong(DataBatch batch, out Array result);
-        bool[] FromFloat(DataBatch batch, out Array result);
-        bool[] FromDouble(DataBatch batch, out Array result);
+        bool[] FromSbyte(XArray xarray, out Array result);
+        bool[] FromByte(XArray xarray, out Array result);
+        bool[] FromShort(XArray xarray, out Array result);
+        bool[] FromUshort(XArray xarray, out Array result);
+        bool[] FromInt(XArray xarray, out Array result);
+        bool[] FromUint(XArray xarray, out Array result);
+        bool[] FromLong(XArray xarray, out Array result);
+        bool[] FromUlong(XArray xarray, out Array result);
+        bool[] FromFloat(XArray xarray, out Array result);
+        bool[] FromDouble(XArray xarray, out Array result);
     }
 
     internal static class PrimitiveConverterFactory
@@ -70,22 +70,22 @@ namespace XForm.Types
             _defaultValue = (sbyte)(TypeConverterFactory.ConvertSingle(defaultValue, typeof(sbyte)) ?? default(sbyte));
         }
 
-        public bool[] FromSbyte(DataBatch batch, out Array result)
+        public bool[] FromSbyte(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
 
-            sbyte[] sourceArray = (sbyte[])batch.Array;
-            if (batch.Selector.Indices != null)
+            sbyte[] sourceArray = (sbyte[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    _array[i] = (sbyte)sourceArray[batch.Index(i)];
+                    _array[i] = (sbyte)sourceArray[xarray.Index(i)];
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     _array[i] = (sbyte)sourceArray[i + offset];
                 }
@@ -99,18 +99,18 @@ namespace XForm.Types
             return null;
         }
 
-        public bool[] FromShort(DataBatch batch, out Array result)
+        public bool[] FromShort(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            short[] sourceArray = (short[])batch.Array;
-            if (batch.Selector.Indices != null)
+            short[] sourceArray = (short[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    short value = sourceArray[batch.Index(i)];
+                    short value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value < (short)sbyte.MinValue || value > (short)sbyte.MaxValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (sbyte)value);
@@ -118,10 +118,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     short value = sourceArray[i + offset];
                     bool outOfRange = value < (short)sbyte.MinValue || value > (short)sbyte.MaxValue;
@@ -144,18 +144,18 @@ namespace XForm.Types
             return (couldNotConvertAny ? _couldNotConvert : null);
         }
 
-        public bool[] FromInt(DataBatch batch, out Array result)
+        public bool[] FromInt(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            int[] sourceArray = (int[])batch.Array;
-            if (batch.Selector.Indices != null)
+            int[] sourceArray = (int[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    int value = sourceArray[batch.Index(i)];
+                    int value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value < (int)sbyte.MinValue || value > (int)sbyte.MaxValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (sbyte)value);
@@ -163,10 +163,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     int value = sourceArray[i + offset];
                     bool outOfRange = value < (int)sbyte.MinValue || value > (int)sbyte.MaxValue;
@@ -189,18 +189,18 @@ namespace XForm.Types
             return (couldNotConvertAny ? _couldNotConvert : null);
         }
 
-        public bool[] FromLong(DataBatch batch, out Array result)
+        public bool[] FromLong(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            long[] sourceArray = (long[])batch.Array;
-            if (batch.Selector.Indices != null)
+            long[] sourceArray = (long[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    long value = sourceArray[batch.Index(i)];
+                    long value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value < (long)sbyte.MinValue || value > (long)sbyte.MaxValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (sbyte)value);
@@ -208,10 +208,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     long value = sourceArray[i + offset];
                     bool outOfRange = value < (long)sbyte.MinValue || value > (long)sbyte.MaxValue;
@@ -234,18 +234,18 @@ namespace XForm.Types
             return (couldNotConvertAny ? _couldNotConvert : null);
         }
 
-        public bool[] FromByte(DataBatch batch, out Array result)
+        public bool[] FromByte(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            byte[] sourceArray = (byte[])batch.Array;
-            if (batch.Selector.Indices != null)
+            byte[] sourceArray = (byte[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    byte value = sourceArray[batch.Index(i)];
+                    byte value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value > (byte)sbyte.MaxValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (sbyte)value);
@@ -253,10 +253,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     byte value = sourceArray[i + offset];
                     bool outOfRange = value > (byte)sbyte.MaxValue;
@@ -279,18 +279,18 @@ namespace XForm.Types
             return (couldNotConvertAny ? _couldNotConvert : null);
         }
 
-        public bool[] FromUshort(DataBatch batch, out Array result)
+        public bool[] FromUshort(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            ushort[] sourceArray = (ushort[])batch.Array;
-            if (batch.Selector.Indices != null)
+            ushort[] sourceArray = (ushort[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    ushort value = sourceArray[batch.Index(i)];
+                    ushort value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value > (ushort)sbyte.MaxValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (sbyte)value);
@@ -298,10 +298,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     ushort value = sourceArray[i + offset];
                     bool outOfRange = value > (ushort)sbyte.MaxValue;
@@ -324,18 +324,18 @@ namespace XForm.Types
             return (couldNotConvertAny ? _couldNotConvert : null);
         }
 
-        public bool[] FromUint(DataBatch batch, out Array result)
+        public bool[] FromUint(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            uint[] sourceArray = (uint[])batch.Array;
-            if (batch.Selector.Indices != null)
+            uint[] sourceArray = (uint[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    uint value = sourceArray[batch.Index(i)];
+                    uint value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value > (uint)sbyte.MaxValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (sbyte)value);
@@ -343,10 +343,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     uint value = sourceArray[i + offset];
                     bool outOfRange = value > (uint)sbyte.MaxValue;
@@ -369,18 +369,18 @@ namespace XForm.Types
             return (couldNotConvertAny ? _couldNotConvert : null);
         }
 
-        public bool[] FromUlong(DataBatch batch, out Array result)
+        public bool[] FromUlong(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            ulong[] sourceArray = (ulong[])batch.Array;
-            if (batch.Selector.Indices != null)
+            ulong[] sourceArray = (ulong[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    ulong value = sourceArray[batch.Index(i)];
+                    ulong value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value > (ulong)sbyte.MaxValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (sbyte)value);
@@ -388,10 +388,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     ulong value = sourceArray[i + offset];
                     bool outOfRange = value > (ulong)sbyte.MaxValue;
@@ -414,18 +414,18 @@ namespace XForm.Types
             return (couldNotConvertAny ? _couldNotConvert : null);
         }
 
-        public bool[] FromFloat(DataBatch batch, out Array result)
+        public bool[] FromFloat(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            float[] sourceArray = (float[])batch.Array;
-            if (batch.Selector.Indices != null)
+            float[] sourceArray = (float[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    float value = sourceArray[batch.Index(i)];
+                    float value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value < (float)sbyte.MinValue || value > (float)sbyte.MaxValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (sbyte)value);
@@ -433,10 +433,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     float value = sourceArray[i + offset];
                     bool outOfRange = value < (float)sbyte.MinValue || value > (float)sbyte.MaxValue;
@@ -459,18 +459,18 @@ namespace XForm.Types
             return (couldNotConvertAny ? _couldNotConvert : null);
         }
 
-        public bool[] FromDouble(DataBatch batch, out Array result)
+        public bool[] FromDouble(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            double[] sourceArray = (double[])batch.Array;
-            if (batch.Selector.Indices != null)
+            double[] sourceArray = (double[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    double value = sourceArray[batch.Index(i)];
+                    double value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value < (double)sbyte.MinValue || value > (double)sbyte.MaxValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (sbyte)value);
@@ -478,10 +478,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     double value = sourceArray[i + offset];
                     bool outOfRange = value < (double)sbyte.MinValue || value > (double)sbyte.MaxValue;
@@ -519,22 +519,22 @@ namespace XForm.Types
             _defaultValue = (short)(TypeConverterFactory.ConvertSingle(defaultValue, typeof(short)) ?? default(short));
         }
 
-        public bool[] FromSbyte(DataBatch batch, out Array result)
+        public bool[] FromSbyte(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
 
-            sbyte[] sourceArray = (sbyte[])batch.Array;
-            if (batch.Selector.Indices != null)
+            sbyte[] sourceArray = (sbyte[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    _array[i] = (short)sourceArray[batch.Index(i)];
+                    _array[i] = (short)sourceArray[xarray.Index(i)];
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     _array[i] = (short)sourceArray[i + offset];
                 }
@@ -548,22 +548,22 @@ namespace XForm.Types
             return null;
         }
 
-        public bool[] FromShort(DataBatch batch, out Array result)
+        public bool[] FromShort(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
 
-            short[] sourceArray = (short[])batch.Array;
-            if (batch.Selector.Indices != null)
+            short[] sourceArray = (short[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    _array[i] = (short)sourceArray[batch.Index(i)];
+                    _array[i] = (short)sourceArray[xarray.Index(i)];
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     _array[i] = (short)sourceArray[i + offset];
                 }
@@ -577,18 +577,18 @@ namespace XForm.Types
             return null;
         }
 
-        public bool[] FromInt(DataBatch batch, out Array result)
+        public bool[] FromInt(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            int[] sourceArray = (int[])batch.Array;
-            if (batch.Selector.Indices != null)
+            int[] sourceArray = (int[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    int value = sourceArray[batch.Index(i)];
+                    int value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value < (int)short.MinValue || value > (int)short.MaxValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (short)value);
@@ -596,10 +596,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     int value = sourceArray[i + offset];
                     bool outOfRange = value < (int)short.MinValue || value > (int)short.MaxValue;
@@ -622,18 +622,18 @@ namespace XForm.Types
             return (couldNotConvertAny ? _couldNotConvert : null);
         }
 
-        public bool[] FromLong(DataBatch batch, out Array result)
+        public bool[] FromLong(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            long[] sourceArray = (long[])batch.Array;
-            if (batch.Selector.Indices != null)
+            long[] sourceArray = (long[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    long value = sourceArray[batch.Index(i)];
+                    long value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value < (long)short.MinValue || value > (long)short.MaxValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (short)value);
@@ -641,10 +641,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     long value = sourceArray[i + offset];
                     bool outOfRange = value < (long)short.MinValue || value > (long)short.MaxValue;
@@ -667,22 +667,22 @@ namespace XForm.Types
             return (couldNotConvertAny ? _couldNotConvert : null);
         }
 
-        public bool[] FromByte(DataBatch batch, out Array result)
+        public bool[] FromByte(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
 
-            byte[] sourceArray = (byte[])batch.Array;
-            if (batch.Selector.Indices != null)
+            byte[] sourceArray = (byte[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    _array[i] = (short)sourceArray[batch.Index(i)];
+                    _array[i] = (short)sourceArray[xarray.Index(i)];
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     _array[i] = (short)sourceArray[i + offset];
                 }
@@ -696,18 +696,18 @@ namespace XForm.Types
             return null;
         }
 
-        public bool[] FromUshort(DataBatch batch, out Array result)
+        public bool[] FromUshort(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            ushort[] sourceArray = (ushort[])batch.Array;
-            if (batch.Selector.Indices != null)
+            ushort[] sourceArray = (ushort[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    ushort value = sourceArray[batch.Index(i)];
+                    ushort value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value > (ushort)short.MaxValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (short)value);
@@ -715,10 +715,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     ushort value = sourceArray[i + offset];
                     bool outOfRange = value > (ushort)short.MaxValue;
@@ -741,18 +741,18 @@ namespace XForm.Types
             return (couldNotConvertAny ? _couldNotConvert : null);
         }
 
-        public bool[] FromUint(DataBatch batch, out Array result)
+        public bool[] FromUint(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            uint[] sourceArray = (uint[])batch.Array;
-            if (batch.Selector.Indices != null)
+            uint[] sourceArray = (uint[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    uint value = sourceArray[batch.Index(i)];
+                    uint value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value > (uint)short.MaxValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (short)value);
@@ -760,10 +760,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     uint value = sourceArray[i + offset];
                     bool outOfRange = value > (uint)short.MaxValue;
@@ -786,18 +786,18 @@ namespace XForm.Types
             return (couldNotConvertAny ? _couldNotConvert : null);
         }
 
-        public bool[] FromUlong(DataBatch batch, out Array result)
+        public bool[] FromUlong(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            ulong[] sourceArray = (ulong[])batch.Array;
-            if (batch.Selector.Indices != null)
+            ulong[] sourceArray = (ulong[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    ulong value = sourceArray[batch.Index(i)];
+                    ulong value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value > (ulong)short.MaxValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (short)value);
@@ -805,10 +805,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     ulong value = sourceArray[i + offset];
                     bool outOfRange = value > (ulong)short.MaxValue;
@@ -831,18 +831,18 @@ namespace XForm.Types
             return (couldNotConvertAny ? _couldNotConvert : null);
         }
 
-        public bool[] FromFloat(DataBatch batch, out Array result)
+        public bool[] FromFloat(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            float[] sourceArray = (float[])batch.Array;
-            if (batch.Selector.Indices != null)
+            float[] sourceArray = (float[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    float value = sourceArray[batch.Index(i)];
+                    float value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value < (float)short.MinValue || value > (float)short.MaxValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (short)value);
@@ -850,10 +850,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     float value = sourceArray[i + offset];
                     bool outOfRange = value < (float)short.MinValue || value > (float)short.MaxValue;
@@ -876,18 +876,18 @@ namespace XForm.Types
             return (couldNotConvertAny ? _couldNotConvert : null);
         }
 
-        public bool[] FromDouble(DataBatch batch, out Array result)
+        public bool[] FromDouble(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            double[] sourceArray = (double[])batch.Array;
-            if (batch.Selector.Indices != null)
+            double[] sourceArray = (double[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    double value = sourceArray[batch.Index(i)];
+                    double value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value < (double)short.MinValue || value > (double)short.MaxValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (short)value);
@@ -895,10 +895,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     double value = sourceArray[i + offset];
                     bool outOfRange = value < (double)short.MinValue || value > (double)short.MaxValue;
@@ -936,22 +936,22 @@ namespace XForm.Types
             _defaultValue = (int)(TypeConverterFactory.ConvertSingle(defaultValue, typeof(int)) ?? default(int));
         }
 
-        public bool[] FromSbyte(DataBatch batch, out Array result)
+        public bool[] FromSbyte(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
 
-            sbyte[] sourceArray = (sbyte[])batch.Array;
-            if (batch.Selector.Indices != null)
+            sbyte[] sourceArray = (sbyte[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    _array[i] = (int)sourceArray[batch.Index(i)];
+                    _array[i] = (int)sourceArray[xarray.Index(i)];
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     _array[i] = (int)sourceArray[i + offset];
                 }
@@ -965,22 +965,22 @@ namespace XForm.Types
             return null;
         }
 
-        public bool[] FromShort(DataBatch batch, out Array result)
+        public bool[] FromShort(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
 
-            short[] sourceArray = (short[])batch.Array;
-            if (batch.Selector.Indices != null)
+            short[] sourceArray = (short[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    _array[i] = (int)sourceArray[batch.Index(i)];
+                    _array[i] = (int)sourceArray[xarray.Index(i)];
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     _array[i] = (int)sourceArray[i + offset];
                 }
@@ -994,22 +994,22 @@ namespace XForm.Types
             return null;
         }
 
-        public bool[] FromInt(DataBatch batch, out Array result)
+        public bool[] FromInt(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
 
-            int[] sourceArray = (int[])batch.Array;
-            if (batch.Selector.Indices != null)
+            int[] sourceArray = (int[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    _array[i] = (int)sourceArray[batch.Index(i)];
+                    _array[i] = (int)sourceArray[xarray.Index(i)];
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     _array[i] = (int)sourceArray[i + offset];
                 }
@@ -1023,18 +1023,18 @@ namespace XForm.Types
             return null;
         }
 
-        public bool[] FromLong(DataBatch batch, out Array result)
+        public bool[] FromLong(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            long[] sourceArray = (long[])batch.Array;
-            if (batch.Selector.Indices != null)
+            long[] sourceArray = (long[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    long value = sourceArray[batch.Index(i)];
+                    long value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value < (long)int.MinValue || value > (long)int.MaxValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (int)value);
@@ -1042,10 +1042,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     long value = sourceArray[i + offset];
                     bool outOfRange = value < (long)int.MinValue || value > (long)int.MaxValue;
@@ -1068,22 +1068,22 @@ namespace XForm.Types
             return (couldNotConvertAny ? _couldNotConvert : null);
         }
 
-        public bool[] FromByte(DataBatch batch, out Array result)
+        public bool[] FromByte(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
 
-            byte[] sourceArray = (byte[])batch.Array;
-            if (batch.Selector.Indices != null)
+            byte[] sourceArray = (byte[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    _array[i] = (int)sourceArray[batch.Index(i)];
+                    _array[i] = (int)sourceArray[xarray.Index(i)];
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     _array[i] = (int)sourceArray[i + offset];
                 }
@@ -1097,22 +1097,22 @@ namespace XForm.Types
             return null;
         }
 
-        public bool[] FromUshort(DataBatch batch, out Array result)
+        public bool[] FromUshort(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
 
-            ushort[] sourceArray = (ushort[])batch.Array;
-            if (batch.Selector.Indices != null)
+            ushort[] sourceArray = (ushort[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    _array[i] = (int)sourceArray[batch.Index(i)];
+                    _array[i] = (int)sourceArray[xarray.Index(i)];
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     _array[i] = (int)sourceArray[i + offset];
                 }
@@ -1126,18 +1126,18 @@ namespace XForm.Types
             return null;
         }
 
-        public bool[] FromUint(DataBatch batch, out Array result)
+        public bool[] FromUint(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            uint[] sourceArray = (uint[])batch.Array;
-            if (batch.Selector.Indices != null)
+            uint[] sourceArray = (uint[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    uint value = sourceArray[batch.Index(i)];
+                    uint value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value > (uint)int.MaxValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (int)value);
@@ -1145,10 +1145,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     uint value = sourceArray[i + offset];
                     bool outOfRange = value > (uint)int.MaxValue;
@@ -1171,18 +1171,18 @@ namespace XForm.Types
             return (couldNotConvertAny ? _couldNotConvert : null);
         }
 
-        public bool[] FromUlong(DataBatch batch, out Array result)
+        public bool[] FromUlong(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            ulong[] sourceArray = (ulong[])batch.Array;
-            if (batch.Selector.Indices != null)
+            ulong[] sourceArray = (ulong[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    ulong value = sourceArray[batch.Index(i)];
+                    ulong value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value > (ulong)int.MaxValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (int)value);
@@ -1190,10 +1190,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     ulong value = sourceArray[i + offset];
                     bool outOfRange = value > (ulong)int.MaxValue;
@@ -1216,18 +1216,18 @@ namespace XForm.Types
             return (couldNotConvertAny ? _couldNotConvert : null);
         }
 
-        public bool[] FromFloat(DataBatch batch, out Array result)
+        public bool[] FromFloat(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            float[] sourceArray = (float[])batch.Array;
-            if (batch.Selector.Indices != null)
+            float[] sourceArray = (float[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    float value = sourceArray[batch.Index(i)];
+                    float value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value < (float)int.MinValue || value > (float)int.MaxValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (int)value);
@@ -1235,10 +1235,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     float value = sourceArray[i + offset];
                     bool outOfRange = value < (float)int.MinValue || value > (float)int.MaxValue;
@@ -1261,18 +1261,18 @@ namespace XForm.Types
             return (couldNotConvertAny ? _couldNotConvert : null);
         }
 
-        public bool[] FromDouble(DataBatch batch, out Array result)
+        public bool[] FromDouble(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            double[] sourceArray = (double[])batch.Array;
-            if (batch.Selector.Indices != null)
+            double[] sourceArray = (double[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    double value = sourceArray[batch.Index(i)];
+                    double value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value < (double)int.MinValue || value > (double)int.MaxValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (int)value);
@@ -1280,10 +1280,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     double value = sourceArray[i + offset];
                     bool outOfRange = value < (double)int.MinValue || value > (double)int.MaxValue;
@@ -1321,22 +1321,22 @@ namespace XForm.Types
             _defaultValue = (long)(TypeConverterFactory.ConvertSingle(defaultValue, typeof(long)) ?? default(long));
         }
 
-        public bool[] FromSbyte(DataBatch batch, out Array result)
+        public bool[] FromSbyte(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
 
-            sbyte[] sourceArray = (sbyte[])batch.Array;
-            if (batch.Selector.Indices != null)
+            sbyte[] sourceArray = (sbyte[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    _array[i] = (long)sourceArray[batch.Index(i)];
+                    _array[i] = (long)sourceArray[xarray.Index(i)];
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     _array[i] = (long)sourceArray[i + offset];
                 }
@@ -1350,22 +1350,22 @@ namespace XForm.Types
             return null;
         }
 
-        public bool[] FromShort(DataBatch batch, out Array result)
+        public bool[] FromShort(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
 
-            short[] sourceArray = (short[])batch.Array;
-            if (batch.Selector.Indices != null)
+            short[] sourceArray = (short[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    _array[i] = (long)sourceArray[batch.Index(i)];
+                    _array[i] = (long)sourceArray[xarray.Index(i)];
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     _array[i] = (long)sourceArray[i + offset];
                 }
@@ -1379,22 +1379,22 @@ namespace XForm.Types
             return null;
         }
 
-        public bool[] FromInt(DataBatch batch, out Array result)
+        public bool[] FromInt(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
 
-            int[] sourceArray = (int[])batch.Array;
-            if (batch.Selector.Indices != null)
+            int[] sourceArray = (int[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    _array[i] = (long)sourceArray[batch.Index(i)];
+                    _array[i] = (long)sourceArray[xarray.Index(i)];
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     _array[i] = (long)sourceArray[i + offset];
                 }
@@ -1408,22 +1408,22 @@ namespace XForm.Types
             return null;
         }
 
-        public bool[] FromLong(DataBatch batch, out Array result)
+        public bool[] FromLong(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
 
-            long[] sourceArray = (long[])batch.Array;
-            if (batch.Selector.Indices != null)
+            long[] sourceArray = (long[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    _array[i] = (long)sourceArray[batch.Index(i)];
+                    _array[i] = (long)sourceArray[xarray.Index(i)];
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     _array[i] = (long)sourceArray[i + offset];
                 }
@@ -1437,22 +1437,22 @@ namespace XForm.Types
             return null;
         }
 
-        public bool[] FromByte(DataBatch batch, out Array result)
+        public bool[] FromByte(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
 
-            byte[] sourceArray = (byte[])batch.Array;
-            if (batch.Selector.Indices != null)
+            byte[] sourceArray = (byte[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    _array[i] = (long)sourceArray[batch.Index(i)];
+                    _array[i] = (long)sourceArray[xarray.Index(i)];
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     _array[i] = (long)sourceArray[i + offset];
                 }
@@ -1466,22 +1466,22 @@ namespace XForm.Types
             return null;
         }
 
-        public bool[] FromUshort(DataBatch batch, out Array result)
+        public bool[] FromUshort(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
 
-            ushort[] sourceArray = (ushort[])batch.Array;
-            if (batch.Selector.Indices != null)
+            ushort[] sourceArray = (ushort[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    _array[i] = (long)sourceArray[batch.Index(i)];
+                    _array[i] = (long)sourceArray[xarray.Index(i)];
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     _array[i] = (long)sourceArray[i + offset];
                 }
@@ -1495,22 +1495,22 @@ namespace XForm.Types
             return null;
         }
 
-        public bool[] FromUint(DataBatch batch, out Array result)
+        public bool[] FromUint(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
 
-            uint[] sourceArray = (uint[])batch.Array;
-            if (batch.Selector.Indices != null)
+            uint[] sourceArray = (uint[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    _array[i] = (long)sourceArray[batch.Index(i)];
+                    _array[i] = (long)sourceArray[xarray.Index(i)];
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     _array[i] = (long)sourceArray[i + offset];
                 }
@@ -1524,18 +1524,18 @@ namespace XForm.Types
             return null;
         }
 
-        public bool[] FromUlong(DataBatch batch, out Array result)
+        public bool[] FromUlong(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            ulong[] sourceArray = (ulong[])batch.Array;
-            if (batch.Selector.Indices != null)
+            ulong[] sourceArray = (ulong[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    ulong value = sourceArray[batch.Index(i)];
+                    ulong value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value > (ulong)long.MaxValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (long)value);
@@ -1543,10 +1543,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     ulong value = sourceArray[i + offset];
                     bool outOfRange = value > (ulong)long.MaxValue;
@@ -1569,18 +1569,18 @@ namespace XForm.Types
             return (couldNotConvertAny ? _couldNotConvert : null);
         }
 
-        public bool[] FromFloat(DataBatch batch, out Array result)
+        public bool[] FromFloat(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            float[] sourceArray = (float[])batch.Array;
-            if (batch.Selector.Indices != null)
+            float[] sourceArray = (float[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    float value = sourceArray[batch.Index(i)];
+                    float value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value < (float)long.MinValue || value > (float)long.MaxValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (long)value);
@@ -1588,10 +1588,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     float value = sourceArray[i + offset];
                     bool outOfRange = value < (float)long.MinValue || value > (float)long.MaxValue;
@@ -1614,18 +1614,18 @@ namespace XForm.Types
             return (couldNotConvertAny ? _couldNotConvert : null);
         }
 
-        public bool[] FromDouble(DataBatch batch, out Array result)
+        public bool[] FromDouble(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            double[] sourceArray = (double[])batch.Array;
-            if (batch.Selector.Indices != null)
+            double[] sourceArray = (double[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    double value = sourceArray[batch.Index(i)];
+                    double value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value < (double)long.MinValue || value > (double)long.MaxValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (long)value);
@@ -1633,10 +1633,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     double value = sourceArray[i + offset];
                     bool outOfRange = value < (double)long.MinValue || value > (double)long.MaxValue;
@@ -1674,18 +1674,18 @@ namespace XForm.Types
             _defaultValue = (byte)(TypeConverterFactory.ConvertSingle(defaultValue, typeof(byte)) ?? default(byte));
         }
 
-        public bool[] FromSbyte(DataBatch batch, out Array result)
+        public bool[] FromSbyte(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            sbyte[] sourceArray = (sbyte[])batch.Array;
-            if (batch.Selector.Indices != null)
+            sbyte[] sourceArray = (sbyte[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    sbyte value = sourceArray[batch.Index(i)];
+                    sbyte value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value < (sbyte)byte.MinValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (byte)value);
@@ -1693,10 +1693,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     sbyte value = sourceArray[i + offset];
                     bool outOfRange = value < (sbyte)byte.MinValue;
@@ -1719,18 +1719,18 @@ namespace XForm.Types
             return (couldNotConvertAny ? _couldNotConvert : null);
         }
 
-        public bool[] FromShort(DataBatch batch, out Array result)
+        public bool[] FromShort(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            short[] sourceArray = (short[])batch.Array;
-            if (batch.Selector.Indices != null)
+            short[] sourceArray = (short[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    short value = sourceArray[batch.Index(i)];
+                    short value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value < (short)byte.MinValue || value > (short)byte.MaxValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (byte)value);
@@ -1738,10 +1738,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     short value = sourceArray[i + offset];
                     bool outOfRange = value < (short)byte.MinValue || value > (short)byte.MaxValue;
@@ -1764,18 +1764,18 @@ namespace XForm.Types
             return (couldNotConvertAny ? _couldNotConvert : null);
         }
 
-        public bool[] FromInt(DataBatch batch, out Array result)
+        public bool[] FromInt(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            int[] sourceArray = (int[])batch.Array;
-            if (batch.Selector.Indices != null)
+            int[] sourceArray = (int[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    int value = sourceArray[batch.Index(i)];
+                    int value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value < (int)byte.MinValue || value > (int)byte.MaxValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (byte)value);
@@ -1783,10 +1783,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     int value = sourceArray[i + offset];
                     bool outOfRange = value < (int)byte.MinValue || value > (int)byte.MaxValue;
@@ -1809,18 +1809,18 @@ namespace XForm.Types
             return (couldNotConvertAny ? _couldNotConvert : null);
         }
 
-        public bool[] FromLong(DataBatch batch, out Array result)
+        public bool[] FromLong(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            long[] sourceArray = (long[])batch.Array;
-            if (batch.Selector.Indices != null)
+            long[] sourceArray = (long[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    long value = sourceArray[batch.Index(i)];
+                    long value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value < (long)byte.MinValue || value > (long)byte.MaxValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (byte)value);
@@ -1828,10 +1828,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     long value = sourceArray[i + offset];
                     bool outOfRange = value < (long)byte.MinValue || value > (long)byte.MaxValue;
@@ -1854,22 +1854,22 @@ namespace XForm.Types
             return (couldNotConvertAny ? _couldNotConvert : null);
         }
 
-        public bool[] FromByte(DataBatch batch, out Array result)
+        public bool[] FromByte(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
 
-            byte[] sourceArray = (byte[])batch.Array;
-            if (batch.Selector.Indices != null)
+            byte[] sourceArray = (byte[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    _array[i] = (byte)sourceArray[batch.Index(i)];
+                    _array[i] = (byte)sourceArray[xarray.Index(i)];
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     _array[i] = (byte)sourceArray[i + offset];
                 }
@@ -1883,18 +1883,18 @@ namespace XForm.Types
             return null;
         }
 
-        public bool[] FromUshort(DataBatch batch, out Array result)
+        public bool[] FromUshort(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            ushort[] sourceArray = (ushort[])batch.Array;
-            if (batch.Selector.Indices != null)
+            ushort[] sourceArray = (ushort[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    ushort value = sourceArray[batch.Index(i)];
+                    ushort value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value > (ushort)byte.MaxValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (byte)value);
@@ -1902,10 +1902,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     ushort value = sourceArray[i + offset];
                     bool outOfRange = value > (ushort)byte.MaxValue;
@@ -1928,18 +1928,18 @@ namespace XForm.Types
             return (couldNotConvertAny ? _couldNotConvert : null);
         }
 
-        public bool[] FromUint(DataBatch batch, out Array result)
+        public bool[] FromUint(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            uint[] sourceArray = (uint[])batch.Array;
-            if (batch.Selector.Indices != null)
+            uint[] sourceArray = (uint[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    uint value = sourceArray[batch.Index(i)];
+                    uint value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value > (uint)byte.MaxValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (byte)value);
@@ -1947,10 +1947,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     uint value = sourceArray[i + offset];
                     bool outOfRange = value > (uint)byte.MaxValue;
@@ -1973,18 +1973,18 @@ namespace XForm.Types
             return (couldNotConvertAny ? _couldNotConvert : null);
         }
 
-        public bool[] FromUlong(DataBatch batch, out Array result)
+        public bool[] FromUlong(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            ulong[] sourceArray = (ulong[])batch.Array;
-            if (batch.Selector.Indices != null)
+            ulong[] sourceArray = (ulong[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    ulong value = sourceArray[batch.Index(i)];
+                    ulong value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value > (ulong)byte.MaxValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (byte)value);
@@ -1992,10 +1992,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     ulong value = sourceArray[i + offset];
                     bool outOfRange = value > (ulong)byte.MaxValue;
@@ -2018,18 +2018,18 @@ namespace XForm.Types
             return (couldNotConvertAny ? _couldNotConvert : null);
         }
 
-        public bool[] FromFloat(DataBatch batch, out Array result)
+        public bool[] FromFloat(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            float[] sourceArray = (float[])batch.Array;
-            if (batch.Selector.Indices != null)
+            float[] sourceArray = (float[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    float value = sourceArray[batch.Index(i)];
+                    float value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value < (float)byte.MinValue || value > (float)byte.MaxValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (byte)value);
@@ -2037,10 +2037,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     float value = sourceArray[i + offset];
                     bool outOfRange = value < (float)byte.MinValue || value > (float)byte.MaxValue;
@@ -2063,18 +2063,18 @@ namespace XForm.Types
             return (couldNotConvertAny ? _couldNotConvert : null);
         }
 
-        public bool[] FromDouble(DataBatch batch, out Array result)
+        public bool[] FromDouble(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            double[] sourceArray = (double[])batch.Array;
-            if (batch.Selector.Indices != null)
+            double[] sourceArray = (double[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    double value = sourceArray[batch.Index(i)];
+                    double value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value < (double)byte.MinValue || value > (double)byte.MaxValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (byte)value);
@@ -2082,10 +2082,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     double value = sourceArray[i + offset];
                     bool outOfRange = value < (double)byte.MinValue || value > (double)byte.MaxValue;
@@ -2123,18 +2123,18 @@ namespace XForm.Types
             _defaultValue = (ushort)(TypeConverterFactory.ConvertSingle(defaultValue, typeof(ushort)) ?? default(ushort));
         }
 
-        public bool[] FromSbyte(DataBatch batch, out Array result)
+        public bool[] FromSbyte(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            sbyte[] sourceArray = (sbyte[])batch.Array;
-            if (batch.Selector.Indices != null)
+            sbyte[] sourceArray = (sbyte[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    sbyte value = sourceArray[batch.Index(i)];
+                    sbyte value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value < (sbyte)ushort.MinValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (ushort)value);
@@ -2142,10 +2142,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     sbyte value = sourceArray[i + offset];
                     bool outOfRange = value < (sbyte)ushort.MinValue;
@@ -2168,18 +2168,18 @@ namespace XForm.Types
             return (couldNotConvertAny ? _couldNotConvert : null);
         }
 
-        public bool[] FromShort(DataBatch batch, out Array result)
+        public bool[] FromShort(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            short[] sourceArray = (short[])batch.Array;
-            if (batch.Selector.Indices != null)
+            short[] sourceArray = (short[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    short value = sourceArray[batch.Index(i)];
+                    short value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value < (short)ushort.MinValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (ushort)value);
@@ -2187,10 +2187,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     short value = sourceArray[i + offset];
                     bool outOfRange = value < (short)ushort.MinValue;
@@ -2213,18 +2213,18 @@ namespace XForm.Types
             return (couldNotConvertAny ? _couldNotConvert : null);
         }
 
-        public bool[] FromInt(DataBatch batch, out Array result)
+        public bool[] FromInt(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            int[] sourceArray = (int[])batch.Array;
-            if (batch.Selector.Indices != null)
+            int[] sourceArray = (int[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    int value = sourceArray[batch.Index(i)];
+                    int value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value < (int)ushort.MinValue || value > (int)ushort.MaxValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (ushort)value);
@@ -2232,10 +2232,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     int value = sourceArray[i + offset];
                     bool outOfRange = value < (int)ushort.MinValue || value > (int)ushort.MaxValue;
@@ -2258,18 +2258,18 @@ namespace XForm.Types
             return (couldNotConvertAny ? _couldNotConvert : null);
         }
 
-        public bool[] FromLong(DataBatch batch, out Array result)
+        public bool[] FromLong(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            long[] sourceArray = (long[])batch.Array;
-            if (batch.Selector.Indices != null)
+            long[] sourceArray = (long[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    long value = sourceArray[batch.Index(i)];
+                    long value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value < (long)ushort.MinValue || value > (long)ushort.MaxValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (ushort)value);
@@ -2277,10 +2277,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     long value = sourceArray[i + offset];
                     bool outOfRange = value < (long)ushort.MinValue || value > (long)ushort.MaxValue;
@@ -2303,22 +2303,22 @@ namespace XForm.Types
             return (couldNotConvertAny ? _couldNotConvert : null);
         }
 
-        public bool[] FromByte(DataBatch batch, out Array result)
+        public bool[] FromByte(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
 
-            byte[] sourceArray = (byte[])batch.Array;
-            if (batch.Selector.Indices != null)
+            byte[] sourceArray = (byte[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    _array[i] = (ushort)sourceArray[batch.Index(i)];
+                    _array[i] = (ushort)sourceArray[xarray.Index(i)];
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     _array[i] = (ushort)sourceArray[i + offset];
                 }
@@ -2332,22 +2332,22 @@ namespace XForm.Types
             return null;
         }
 
-        public bool[] FromUshort(DataBatch batch, out Array result)
+        public bool[] FromUshort(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
 
-            ushort[] sourceArray = (ushort[])batch.Array;
-            if (batch.Selector.Indices != null)
+            ushort[] sourceArray = (ushort[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    _array[i] = (ushort)sourceArray[batch.Index(i)];
+                    _array[i] = (ushort)sourceArray[xarray.Index(i)];
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     _array[i] = (ushort)sourceArray[i + offset];
                 }
@@ -2361,18 +2361,18 @@ namespace XForm.Types
             return null;
         }
 
-        public bool[] FromUint(DataBatch batch, out Array result)
+        public bool[] FromUint(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            uint[] sourceArray = (uint[])batch.Array;
-            if (batch.Selector.Indices != null)
+            uint[] sourceArray = (uint[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    uint value = sourceArray[batch.Index(i)];
+                    uint value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value > (uint)ushort.MaxValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (ushort)value);
@@ -2380,10 +2380,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     uint value = sourceArray[i + offset];
                     bool outOfRange = value > (uint)ushort.MaxValue;
@@ -2406,18 +2406,18 @@ namespace XForm.Types
             return (couldNotConvertAny ? _couldNotConvert : null);
         }
 
-        public bool[] FromUlong(DataBatch batch, out Array result)
+        public bool[] FromUlong(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            ulong[] sourceArray = (ulong[])batch.Array;
-            if (batch.Selector.Indices != null)
+            ulong[] sourceArray = (ulong[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    ulong value = sourceArray[batch.Index(i)];
+                    ulong value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value > (ulong)ushort.MaxValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (ushort)value);
@@ -2425,10 +2425,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     ulong value = sourceArray[i + offset];
                     bool outOfRange = value > (ulong)ushort.MaxValue;
@@ -2451,18 +2451,18 @@ namespace XForm.Types
             return (couldNotConvertAny ? _couldNotConvert : null);
         }
 
-        public bool[] FromFloat(DataBatch batch, out Array result)
+        public bool[] FromFloat(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            float[] sourceArray = (float[])batch.Array;
-            if (batch.Selector.Indices != null)
+            float[] sourceArray = (float[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    float value = sourceArray[batch.Index(i)];
+                    float value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value < (float)ushort.MinValue || value > (float)ushort.MaxValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (ushort)value);
@@ -2470,10 +2470,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     float value = sourceArray[i + offset];
                     bool outOfRange = value < (float)ushort.MinValue || value > (float)ushort.MaxValue;
@@ -2496,18 +2496,18 @@ namespace XForm.Types
             return (couldNotConvertAny ? _couldNotConvert : null);
         }
 
-        public bool[] FromDouble(DataBatch batch, out Array result)
+        public bool[] FromDouble(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            double[] sourceArray = (double[])batch.Array;
-            if (batch.Selector.Indices != null)
+            double[] sourceArray = (double[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    double value = sourceArray[batch.Index(i)];
+                    double value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value < (double)ushort.MinValue || value > (double)ushort.MaxValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (ushort)value);
@@ -2515,10 +2515,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     double value = sourceArray[i + offset];
                     bool outOfRange = value < (double)ushort.MinValue || value > (double)ushort.MaxValue;
@@ -2556,18 +2556,18 @@ namespace XForm.Types
             _defaultValue = (uint)(TypeConverterFactory.ConvertSingle(defaultValue, typeof(uint)) ?? default(uint));
         }
 
-        public bool[] FromSbyte(DataBatch batch, out Array result)
+        public bool[] FromSbyte(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            sbyte[] sourceArray = (sbyte[])batch.Array;
-            if (batch.Selector.Indices != null)
+            sbyte[] sourceArray = (sbyte[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    sbyte value = sourceArray[batch.Index(i)];
+                    sbyte value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value < (sbyte)uint.MinValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (uint)value);
@@ -2575,10 +2575,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     sbyte value = sourceArray[i + offset];
                     bool outOfRange = value < (sbyte)uint.MinValue;
@@ -2601,18 +2601,18 @@ namespace XForm.Types
             return (couldNotConvertAny ? _couldNotConvert : null);
         }
 
-        public bool[] FromShort(DataBatch batch, out Array result)
+        public bool[] FromShort(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            short[] sourceArray = (short[])batch.Array;
-            if (batch.Selector.Indices != null)
+            short[] sourceArray = (short[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    short value = sourceArray[batch.Index(i)];
+                    short value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value < (short)uint.MinValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (uint)value);
@@ -2620,10 +2620,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     short value = sourceArray[i + offset];
                     bool outOfRange = value < (short)uint.MinValue;
@@ -2646,18 +2646,18 @@ namespace XForm.Types
             return (couldNotConvertAny ? _couldNotConvert : null);
         }
 
-        public bool[] FromInt(DataBatch batch, out Array result)
+        public bool[] FromInt(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            int[] sourceArray = (int[])batch.Array;
-            if (batch.Selector.Indices != null)
+            int[] sourceArray = (int[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    int value = sourceArray[batch.Index(i)];
+                    int value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value < (int)uint.MinValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (uint)value);
@@ -2665,10 +2665,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     int value = sourceArray[i + offset];
                     bool outOfRange = value < (int)uint.MinValue;
@@ -2691,18 +2691,18 @@ namespace XForm.Types
             return (couldNotConvertAny ? _couldNotConvert : null);
         }
 
-        public bool[] FromLong(DataBatch batch, out Array result)
+        public bool[] FromLong(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            long[] sourceArray = (long[])batch.Array;
-            if (batch.Selector.Indices != null)
+            long[] sourceArray = (long[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    long value = sourceArray[batch.Index(i)];
+                    long value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value < (long)uint.MinValue || value > (long)uint.MaxValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (uint)value);
@@ -2710,10 +2710,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     long value = sourceArray[i + offset];
                     bool outOfRange = value < (long)uint.MinValue || value > (long)uint.MaxValue;
@@ -2736,22 +2736,22 @@ namespace XForm.Types
             return (couldNotConvertAny ? _couldNotConvert : null);
         }
 
-        public bool[] FromByte(DataBatch batch, out Array result)
+        public bool[] FromByte(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
 
-            byte[] sourceArray = (byte[])batch.Array;
-            if (batch.Selector.Indices != null)
+            byte[] sourceArray = (byte[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    _array[i] = (uint)sourceArray[batch.Index(i)];
+                    _array[i] = (uint)sourceArray[xarray.Index(i)];
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     _array[i] = (uint)sourceArray[i + offset];
                 }
@@ -2765,22 +2765,22 @@ namespace XForm.Types
             return null;
         }
 
-        public bool[] FromUshort(DataBatch batch, out Array result)
+        public bool[] FromUshort(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
 
-            ushort[] sourceArray = (ushort[])batch.Array;
-            if (batch.Selector.Indices != null)
+            ushort[] sourceArray = (ushort[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    _array[i] = (uint)sourceArray[batch.Index(i)];
+                    _array[i] = (uint)sourceArray[xarray.Index(i)];
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     _array[i] = (uint)sourceArray[i + offset];
                 }
@@ -2794,22 +2794,22 @@ namespace XForm.Types
             return null;
         }
 
-        public bool[] FromUint(DataBatch batch, out Array result)
+        public bool[] FromUint(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
 
-            uint[] sourceArray = (uint[])batch.Array;
-            if (batch.Selector.Indices != null)
+            uint[] sourceArray = (uint[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    _array[i] = (uint)sourceArray[batch.Index(i)];
+                    _array[i] = (uint)sourceArray[xarray.Index(i)];
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     _array[i] = (uint)sourceArray[i + offset];
                 }
@@ -2823,18 +2823,18 @@ namespace XForm.Types
             return null;
         }
 
-        public bool[] FromUlong(DataBatch batch, out Array result)
+        public bool[] FromUlong(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            ulong[] sourceArray = (ulong[])batch.Array;
-            if (batch.Selector.Indices != null)
+            ulong[] sourceArray = (ulong[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    ulong value = sourceArray[batch.Index(i)];
+                    ulong value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value > (ulong)uint.MaxValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (uint)value);
@@ -2842,10 +2842,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     ulong value = sourceArray[i + offset];
                     bool outOfRange = value > (ulong)uint.MaxValue;
@@ -2868,18 +2868,18 @@ namespace XForm.Types
             return (couldNotConvertAny ? _couldNotConvert : null);
         }
 
-        public bool[] FromFloat(DataBatch batch, out Array result)
+        public bool[] FromFloat(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            float[] sourceArray = (float[])batch.Array;
-            if (batch.Selector.Indices != null)
+            float[] sourceArray = (float[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    float value = sourceArray[batch.Index(i)];
+                    float value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value < (float)uint.MinValue || value > (float)uint.MaxValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (uint)value);
@@ -2887,10 +2887,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     float value = sourceArray[i + offset];
                     bool outOfRange = value < (float)uint.MinValue || value > (float)uint.MaxValue;
@@ -2913,18 +2913,18 @@ namespace XForm.Types
             return (couldNotConvertAny ? _couldNotConvert : null);
         }
 
-        public bool[] FromDouble(DataBatch batch, out Array result)
+        public bool[] FromDouble(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            double[] sourceArray = (double[])batch.Array;
-            if (batch.Selector.Indices != null)
+            double[] sourceArray = (double[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    double value = sourceArray[batch.Index(i)];
+                    double value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value < (double)uint.MinValue || value > (double)uint.MaxValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (uint)value);
@@ -2932,10 +2932,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     double value = sourceArray[i + offset];
                     bool outOfRange = value < (double)uint.MinValue || value > (double)uint.MaxValue;
@@ -2973,18 +2973,18 @@ namespace XForm.Types
             _defaultValue = (ulong)(TypeConverterFactory.ConvertSingle(defaultValue, typeof(ulong)) ?? default(ulong));
         }
 
-        public bool[] FromSbyte(DataBatch batch, out Array result)
+        public bool[] FromSbyte(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            sbyte[] sourceArray = (sbyte[])batch.Array;
-            if (batch.Selector.Indices != null)
+            sbyte[] sourceArray = (sbyte[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    sbyte value = sourceArray[batch.Index(i)];
+                    sbyte value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value < (sbyte)ulong.MinValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (ulong)value);
@@ -2992,10 +2992,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     sbyte value = sourceArray[i + offset];
                     bool outOfRange = value < (sbyte)ulong.MinValue;
@@ -3018,18 +3018,18 @@ namespace XForm.Types
             return (couldNotConvertAny ? _couldNotConvert : null);
         }
 
-        public bool[] FromShort(DataBatch batch, out Array result)
+        public bool[] FromShort(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            short[] sourceArray = (short[])batch.Array;
-            if (batch.Selector.Indices != null)
+            short[] sourceArray = (short[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    short value = sourceArray[batch.Index(i)];
+                    short value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value < (short)ulong.MinValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (ulong)value);
@@ -3037,10 +3037,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     short value = sourceArray[i + offset];
                     bool outOfRange = value < (short)ulong.MinValue;
@@ -3063,18 +3063,18 @@ namespace XForm.Types
             return (couldNotConvertAny ? _couldNotConvert : null);
         }
 
-        public bool[] FromInt(DataBatch batch, out Array result)
+        public bool[] FromInt(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            int[] sourceArray = (int[])batch.Array;
-            if (batch.Selector.Indices != null)
+            int[] sourceArray = (int[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    int value = sourceArray[batch.Index(i)];
+                    int value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value < (int)ulong.MinValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (ulong)value);
@@ -3082,10 +3082,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     int value = sourceArray[i + offset];
                     bool outOfRange = value < (int)ulong.MinValue;
@@ -3108,18 +3108,18 @@ namespace XForm.Types
             return (couldNotConvertAny ? _couldNotConvert : null);
         }
 
-        public bool[] FromLong(DataBatch batch, out Array result)
+        public bool[] FromLong(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            long[] sourceArray = (long[])batch.Array;
-            if (batch.Selector.Indices != null)
+            long[] sourceArray = (long[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    long value = sourceArray[batch.Index(i)];
+                    long value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value < (long)ulong.MinValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (ulong)value);
@@ -3127,10 +3127,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     long value = sourceArray[i + offset];
                     bool outOfRange = value < (long)ulong.MinValue;
@@ -3153,22 +3153,22 @@ namespace XForm.Types
             return (couldNotConvertAny ? _couldNotConvert : null);
         }
 
-        public bool[] FromByte(DataBatch batch, out Array result)
+        public bool[] FromByte(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
 
-            byte[] sourceArray = (byte[])batch.Array;
-            if (batch.Selector.Indices != null)
+            byte[] sourceArray = (byte[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    _array[i] = (ulong)sourceArray[batch.Index(i)];
+                    _array[i] = (ulong)sourceArray[xarray.Index(i)];
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     _array[i] = (ulong)sourceArray[i + offset];
                 }
@@ -3182,22 +3182,22 @@ namespace XForm.Types
             return null;
         }
 
-        public bool[] FromUshort(DataBatch batch, out Array result)
+        public bool[] FromUshort(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
 
-            ushort[] sourceArray = (ushort[])batch.Array;
-            if (batch.Selector.Indices != null)
+            ushort[] sourceArray = (ushort[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    _array[i] = (ulong)sourceArray[batch.Index(i)];
+                    _array[i] = (ulong)sourceArray[xarray.Index(i)];
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     _array[i] = (ulong)sourceArray[i + offset];
                 }
@@ -3211,22 +3211,22 @@ namespace XForm.Types
             return null;
         }
 
-        public bool[] FromUint(DataBatch batch, out Array result)
+        public bool[] FromUint(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
 
-            uint[] sourceArray = (uint[])batch.Array;
-            if (batch.Selector.Indices != null)
+            uint[] sourceArray = (uint[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    _array[i] = (ulong)sourceArray[batch.Index(i)];
+                    _array[i] = (ulong)sourceArray[xarray.Index(i)];
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     _array[i] = (ulong)sourceArray[i + offset];
                 }
@@ -3240,22 +3240,22 @@ namespace XForm.Types
             return null;
         }
 
-        public bool[] FromUlong(DataBatch batch, out Array result)
+        public bool[] FromUlong(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
 
-            ulong[] sourceArray = (ulong[])batch.Array;
-            if (batch.Selector.Indices != null)
+            ulong[] sourceArray = (ulong[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    _array[i] = (ulong)sourceArray[batch.Index(i)];
+                    _array[i] = (ulong)sourceArray[xarray.Index(i)];
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     _array[i] = (ulong)sourceArray[i + offset];
                 }
@@ -3269,18 +3269,18 @@ namespace XForm.Types
             return null;
         }
 
-        public bool[] FromFloat(DataBatch batch, out Array result)
+        public bool[] FromFloat(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            float[] sourceArray = (float[])batch.Array;
-            if (batch.Selector.Indices != null)
+            float[] sourceArray = (float[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    float value = sourceArray[batch.Index(i)];
+                    float value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value < (float)ulong.MinValue || value > (float)ulong.MaxValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (ulong)value);
@@ -3288,10 +3288,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     float value = sourceArray[i + offset];
                     bool outOfRange = value < (float)ulong.MinValue || value > (float)ulong.MaxValue;
@@ -3314,18 +3314,18 @@ namespace XForm.Types
             return (couldNotConvertAny ? _couldNotConvert : null);
         }
 
-        public bool[] FromDouble(DataBatch batch, out Array result)
+        public bool[] FromDouble(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            double[] sourceArray = (double[])batch.Array;
-            if (batch.Selector.Indices != null)
+            double[] sourceArray = (double[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    double value = sourceArray[batch.Index(i)];
+                    double value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value < (double)ulong.MinValue || value > (double)ulong.MaxValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (ulong)value);
@@ -3333,10 +3333,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     double value = sourceArray[i + offset];
                     bool outOfRange = value < (double)ulong.MinValue || value > (double)ulong.MaxValue;
@@ -3374,22 +3374,22 @@ namespace XForm.Types
             _defaultValue = (float)(TypeConverterFactory.ConvertSingle(defaultValue, typeof(float)) ?? default(float));
         }
 
-        public bool[] FromSbyte(DataBatch batch, out Array result)
+        public bool[] FromSbyte(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
 
-            sbyte[] sourceArray = (sbyte[])batch.Array;
-            if (batch.Selector.Indices != null)
+            sbyte[] sourceArray = (sbyte[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    _array[i] = (float)sourceArray[batch.Index(i)];
+                    _array[i] = (float)sourceArray[xarray.Index(i)];
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     _array[i] = (float)sourceArray[i + offset];
                 }
@@ -3403,22 +3403,22 @@ namespace XForm.Types
             return null;
         }
 
-        public bool[] FromShort(DataBatch batch, out Array result)
+        public bool[] FromShort(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
 
-            short[] sourceArray = (short[])batch.Array;
-            if (batch.Selector.Indices != null)
+            short[] sourceArray = (short[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    _array[i] = (float)sourceArray[batch.Index(i)];
+                    _array[i] = (float)sourceArray[xarray.Index(i)];
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     _array[i] = (float)sourceArray[i + offset];
                 }
@@ -3432,22 +3432,22 @@ namespace XForm.Types
             return null;
         }
 
-        public bool[] FromInt(DataBatch batch, out Array result)
+        public bool[] FromInt(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
 
-            int[] sourceArray = (int[])batch.Array;
-            if (batch.Selector.Indices != null)
+            int[] sourceArray = (int[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    _array[i] = (float)sourceArray[batch.Index(i)];
+                    _array[i] = (float)sourceArray[xarray.Index(i)];
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     _array[i] = (float)sourceArray[i + offset];
                 }
@@ -3461,22 +3461,22 @@ namespace XForm.Types
             return null;
         }
 
-        public bool[] FromLong(DataBatch batch, out Array result)
+        public bool[] FromLong(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
 
-            long[] sourceArray = (long[])batch.Array;
-            if (batch.Selector.Indices != null)
+            long[] sourceArray = (long[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    _array[i] = (float)sourceArray[batch.Index(i)];
+                    _array[i] = (float)sourceArray[xarray.Index(i)];
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     _array[i] = (float)sourceArray[i + offset];
                 }
@@ -3490,22 +3490,22 @@ namespace XForm.Types
             return null;
         }
 
-        public bool[] FromByte(DataBatch batch, out Array result)
+        public bool[] FromByte(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
 
-            byte[] sourceArray = (byte[])batch.Array;
-            if (batch.Selector.Indices != null)
+            byte[] sourceArray = (byte[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    _array[i] = (float)sourceArray[batch.Index(i)];
+                    _array[i] = (float)sourceArray[xarray.Index(i)];
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     _array[i] = (float)sourceArray[i + offset];
                 }
@@ -3519,22 +3519,22 @@ namespace XForm.Types
             return null;
         }
 
-        public bool[] FromUshort(DataBatch batch, out Array result)
+        public bool[] FromUshort(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
 
-            ushort[] sourceArray = (ushort[])batch.Array;
-            if (batch.Selector.Indices != null)
+            ushort[] sourceArray = (ushort[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    _array[i] = (float)sourceArray[batch.Index(i)];
+                    _array[i] = (float)sourceArray[xarray.Index(i)];
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     _array[i] = (float)sourceArray[i + offset];
                 }
@@ -3548,22 +3548,22 @@ namespace XForm.Types
             return null;
         }
 
-        public bool[] FromUint(DataBatch batch, out Array result)
+        public bool[] FromUint(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
 
-            uint[] sourceArray = (uint[])batch.Array;
-            if (batch.Selector.Indices != null)
+            uint[] sourceArray = (uint[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    _array[i] = (float)sourceArray[batch.Index(i)];
+                    _array[i] = (float)sourceArray[xarray.Index(i)];
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     _array[i] = (float)sourceArray[i + offset];
                 }
@@ -3577,22 +3577,22 @@ namespace XForm.Types
             return null;
         }
 
-        public bool[] FromUlong(DataBatch batch, out Array result)
+        public bool[] FromUlong(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
 
-            ulong[] sourceArray = (ulong[])batch.Array;
-            if (batch.Selector.Indices != null)
+            ulong[] sourceArray = (ulong[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    _array[i] = (float)sourceArray[batch.Index(i)];
+                    _array[i] = (float)sourceArray[xarray.Index(i)];
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     _array[i] = (float)sourceArray[i + offset];
                 }
@@ -3606,22 +3606,22 @@ namespace XForm.Types
             return null;
         }
 
-        public bool[] FromFloat(DataBatch batch, out Array result)
+        public bool[] FromFloat(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
 
-            float[] sourceArray = (float[])batch.Array;
-            if (batch.Selector.Indices != null)
+            float[] sourceArray = (float[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    _array[i] = (float)sourceArray[batch.Index(i)];
+                    _array[i] = (float)sourceArray[xarray.Index(i)];
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     _array[i] = (float)sourceArray[i + offset];
                 }
@@ -3635,18 +3635,18 @@ namespace XForm.Types
             return null;
         }
 
-        public bool[] FromDouble(DataBatch batch, out Array result)
+        public bool[] FromDouble(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
 
             bool couldNotConvertAny = false;
-            double[] sourceArray = (double[])batch.Array;
-            if (batch.Selector.Indices != null)
+            double[] sourceArray = (double[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    double value = sourceArray[batch.Index(i)];
+                    double value = sourceArray[xarray.Index(i)];
                     bool outOfRange = value < (double)float.MinValue || value > (double)float.MaxValue;
 
                     _array[i] = (outOfRange ? _defaultValue : (float)value);
@@ -3654,10 +3654,10 @@ namespace XForm.Types
                     couldNotConvertAny |= outOfRange;
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     double value = sourceArray[i + offset];
                     bool outOfRange = value < (double)float.MinValue || value > (double)float.MaxValue;
@@ -3694,22 +3694,22 @@ namespace XForm.Types
             _defaultValue = (double)(TypeConverterFactory.ConvertSingle(defaultValue, typeof(double)) ?? default(double));
         }
 
-        public bool[] FromSbyte(DataBatch batch, out Array result)
+        public bool[] FromSbyte(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
 
-            sbyte[] sourceArray = (sbyte[])batch.Array;
-            if (batch.Selector.Indices != null)
+            sbyte[] sourceArray = (sbyte[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    _array[i] = (double)sourceArray[batch.Index(i)];
+                    _array[i] = (double)sourceArray[xarray.Index(i)];
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     _array[i] = (double)sourceArray[i + offset];
                 }
@@ -3723,22 +3723,22 @@ namespace XForm.Types
             return null;
         }
 
-        public bool[] FromShort(DataBatch batch, out Array result)
+        public bool[] FromShort(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
 
-            short[] sourceArray = (short[])batch.Array;
-            if (batch.Selector.Indices != null)
+            short[] sourceArray = (short[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    _array[i] = (double)sourceArray[batch.Index(i)];
+                    _array[i] = (double)sourceArray[xarray.Index(i)];
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     _array[i] = (double)sourceArray[i + offset];
                 }
@@ -3752,22 +3752,22 @@ namespace XForm.Types
             return null;
         }
 
-        public bool[] FromInt(DataBatch batch, out Array result)
+        public bool[] FromInt(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
 
-            int[] sourceArray = (int[])batch.Array;
-            if (batch.Selector.Indices != null)
+            int[] sourceArray = (int[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    _array[i] = (double)sourceArray[batch.Index(i)];
+                    _array[i] = (double)sourceArray[xarray.Index(i)];
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     _array[i] = (double)sourceArray[i + offset];
                 }
@@ -3781,22 +3781,22 @@ namespace XForm.Types
             return null;
         }
 
-        public bool[] FromLong(DataBatch batch, out Array result)
+        public bool[] FromLong(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
 
-            long[] sourceArray = (long[])batch.Array;
-            if (batch.Selector.Indices != null)
+            long[] sourceArray = (long[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    _array[i] = (double)sourceArray[batch.Index(i)];
+                    _array[i] = (double)sourceArray[xarray.Index(i)];
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     _array[i] = (double)sourceArray[i + offset];
                 }
@@ -3810,22 +3810,22 @@ namespace XForm.Types
             return null;
         }
 
-        public bool[] FromByte(DataBatch batch, out Array result)
+        public bool[] FromByte(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
 
-            byte[] sourceArray = (byte[])batch.Array;
-            if (batch.Selector.Indices != null)
+            byte[] sourceArray = (byte[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    _array[i] = (double)sourceArray[batch.Index(i)];
+                    _array[i] = (double)sourceArray[xarray.Index(i)];
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     _array[i] = (double)sourceArray[i + offset];
                 }
@@ -3839,22 +3839,22 @@ namespace XForm.Types
             return null;
         }
 
-        public bool[] FromUshort(DataBatch batch, out Array result)
+        public bool[] FromUshort(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
 
-            ushort[] sourceArray = (ushort[])batch.Array;
-            if (batch.Selector.Indices != null)
+            ushort[] sourceArray = (ushort[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    _array[i] = (double)sourceArray[batch.Index(i)];
+                    _array[i] = (double)sourceArray[xarray.Index(i)];
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     _array[i] = (double)sourceArray[i + offset];
                 }
@@ -3868,22 +3868,22 @@ namespace XForm.Types
             return null;
         }
 
-        public bool[] FromUint(DataBatch batch, out Array result)
+        public bool[] FromUint(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
 
-            uint[] sourceArray = (uint[])batch.Array;
-            if (batch.Selector.Indices != null)
+            uint[] sourceArray = (uint[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    _array[i] = (double)sourceArray[batch.Index(i)];
+                    _array[i] = (double)sourceArray[xarray.Index(i)];
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     _array[i] = (double)sourceArray[i + offset];
                 }
@@ -3897,22 +3897,22 @@ namespace XForm.Types
             return null;
         }
 
-        public bool[] FromUlong(DataBatch batch, out Array result)
+        public bool[] FromUlong(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
 
-            ulong[] sourceArray = (ulong[])batch.Array;
-            if (batch.Selector.Indices != null)
+            ulong[] sourceArray = (ulong[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    _array[i] = (double)sourceArray[batch.Index(i)];
+                    _array[i] = (double)sourceArray[xarray.Index(i)];
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     _array[i] = (double)sourceArray[i + offset];
                 }
@@ -3926,22 +3926,22 @@ namespace XForm.Types
             return null;
         }
 
-        public bool[] FromFloat(DataBatch batch, out Array result)
+        public bool[] FromFloat(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
 
-            float[] sourceArray = (float[])batch.Array;
-            if (batch.Selector.Indices != null)
+            float[] sourceArray = (float[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    _array[i] = (double)sourceArray[batch.Index(i)];
+                    _array[i] = (double)sourceArray[xarray.Index(i)];
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     _array[i] = (double)sourceArray[i + offset];
                 }
@@ -3955,22 +3955,22 @@ namespace XForm.Types
             return null;
         }
 
-        public bool[] FromDouble(DataBatch batch, out Array result)
+        public bool[] FromDouble(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
 
-            double[] sourceArray = (double[])batch.Array;
-            if (batch.Selector.Indices != null)
+            double[] sourceArray = (double[])xarray.Array;
+            if (xarray.Selector.Indices != null)
             {
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    _array[i] = (double)sourceArray[batch.Index(i)];
+                    _array[i] = (double)sourceArray[xarray.Index(i)];
                 }
             }
-            else if (!batch.Selector.IsSingleValue)
+            else if (!xarray.Selector.IsSingleValue)
             {
-                int offset = batch.Selector.StartIndexInclusive;
-                for (int i = 0; i < batch.Count; ++i)
+                int offset = xarray.Selector.StartIndexInclusive;
+                for (int i = 0; i < xarray.Count; ++i)
                 {
                     _array[i] = (double)sourceArray[i + offset];
                 }

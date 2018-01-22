@@ -26,7 +26,7 @@ namespace XForm.Types
             return new ConvertingWriter(TypeProviderFactory.Get(typeof(long)).BinaryWriter(streamProvider, columnPath), TypeConverterFactory.GetConverter(typeof(DateTime), typeof(long)));
         }
 
-        public IDataBatchComparer TryGetComparer()
+        public IXArrayComparer TryGetComparer()
         {
             // DateTimeComparer is generated
             return new DateTimeComparer();
@@ -61,28 +61,28 @@ namespace XForm.Types
         private DateTime[] _dateTimeArray;
         private long[] _longArray;
 
-        public bool[] DateTimeToLong(DataBatch batch, out Array result)
+        public bool[] DateTimeToLong(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _longArray, batch.Count);
+            Allocator.AllocateToSize(ref _longArray, xarray.Count);
 
-            DateTime[] sourceArray = (DateTime[])batch.Array;
-            for (int i = 0; i < batch.Count; ++i)
+            DateTime[] sourceArray = (DateTime[])xarray.Array;
+            for (int i = 0; i < xarray.Count; ++i)
             {
-                _longArray[i] = sourceArray[batch.Index(i)].ToUniversalTime().Ticks;
+                _longArray[i] = sourceArray[xarray.Index(i)].ToUniversalTime().Ticks;
             }
 
             result = _longArray;
             return null;
         }
 
-        public bool[] LongToDateTime(DataBatch batch, out Array result)
+        public bool[] LongToDateTime(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _dateTimeArray, batch.Count);
+            Allocator.AllocateToSize(ref _dateTimeArray, xarray.Count);
 
-            long[] sourceArray = (long[])batch.Array;
-            for (int i = 0; i < batch.Count; ++i)
+            long[] sourceArray = (long[])xarray.Array;
+            for (int i = 0; i < xarray.Count; ++i)
             {
-                _dateTimeArray[i] = new DateTime(sourceArray[batch.Index(i)], DateTimeKind.Utc);
+                _dateTimeArray[i] = new DateTime(sourceArray[xarray.Index(i)], DateTimeKind.Utc);
             }
 
             result = _dateTimeArray;

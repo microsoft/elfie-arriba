@@ -32,24 +32,24 @@ namespace XForm.Types
 
         public Type WritingAsType => _valueWriter.WritingAsType;
 
-        public void Append(DataBatch batch)
+        public void Append(XArray xarray)
         {
             // Write the values
-            _valueWriter.Append(batch);
+            _valueWriter.Append(xarray);
 
             // Track the row count written so we know how many null=false values to write when we first see a null
-            _rowCountSoFar += batch.Count;
+            _rowCountSoFar += xarray.Count;
 
             // If there are no nulls in this set and none previously, no null markers need to be written
-            if (batch.IsNull == null && _nullWriter == null) return;
+            if (xarray.IsNull == null && _nullWriter == null) return;
 
             if (_nullWriter == null)
             {
                 // Check whether any rows in the set are actually null; the source may contain nulls but the filtered rows might not
                 bool areAnyNulls = false;
-                for (int i = 0; i < batch.Count && !areAnyNulls; ++i)
+                for (int i = 0; i < xarray.Count && !areAnyNulls; ++i)
                 {
-                    areAnyNulls |= batch.IsNull[batch.Index(i)];
+                    areAnyNulls |= xarray.IsNull[xarray.Index(i)];
                 }
 
                 // If there are not actually any null rows in this set, don't write null output yet
@@ -60,25 +60,25 @@ namespace XForm.Types
                 _nullWriter = new PrimitiveArrayWriter<bool>(_streamProvider.OpenWrite(nullsPath));
 
                 // Write false for every value so far
-                int previousCount = _rowCountSoFar - batch.Count;
+                int previousCount = _rowCountSoFar - xarray.Count;
                 Allocator.AllocateToSize(ref _falseArray, 1024);
                 for (int i = 0; i < previousCount; i += 1024)
                 {
                     int rowCount = Math.Min(1024, previousCount - i);
-                    _nullWriter.Append(DataBatch.All(_falseArray, rowCount));
+                    _nullWriter.Append(XArray.All(_falseArray, rowCount));
                 }
             }
 
-            if (batch.IsNull == null)
+            if (xarray.IsNull == null)
             {
-                // If this batch doesn't have any nulls, write false for every value in this page
-                Allocator.AllocateToSize(ref _falseArray, batch.Count);
-                _nullWriter.Append(DataBatch.All(_falseArray, batch.Count));
+                // If this xarray doesn't have any nulls, write false for every value in this page
+                Allocator.AllocateToSize(ref _falseArray, xarray.Count);
+                _nullWriter.Append(XArray.All(_falseArray, xarray.Count));
             }
             else
             {
                 // Write the actual true/false values for this page
-                _nullWriter.Append(DataBatch.All(batch.IsNull).Reselect(batch.Selector));
+                _nullWriter.Append(XArray.All(xarray.IsNull).Reselect(xarray.Selector));
             }
         }
 
@@ -107,7 +107,7 @@ namespace XForm.Types
         private IColumnReader _valueReader;
         private IColumnReader _nullReader;
 
-        private DataBatch _currentBatch;
+        private XArray _currentArray;
         private ArraySelector _currentSelector;
 
         private NullableReader(IColumnReader valueReader, IColumnReader nullReader)
@@ -135,21 +135,21 @@ namespace XForm.Types
 
         public int Count => _valueReader.Count;
 
-        public DataBatch Read(ArraySelector selector)
+        public XArray Read(ArraySelector selector)
         {
-            // Return the cached batch if re-requested
-            if (selector.Equals(_currentSelector)) return _currentBatch;
+            // Return the cached xarray if re-requested
+            if (selector.Equals(_currentSelector)) return _currentArray;
 
             // Read the values themselves
-            DataBatch values = _valueReader.Read(selector);
+            XArray values = _valueReader.Read(selector);
 
             // Read the null markers
-            DataBatch nulls = _nullReader.Read(selector);
+            XArray nulls = _nullReader.Read(selector);
 
             // Cache and return the values and null markers together
-            _currentBatch = DataBatch.All(values.Array, -1, (bool[])nulls.Array).Reselect(values.Selector);
+            _currentArray = XArray.All(values.Array, -1, (bool[])nulls.Array).Reselect(values.Selector);
             _currentSelector = selector;
-            return _currentBatch;
+            return _currentArray;
         }
 
         public void Dispose()

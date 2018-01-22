@@ -1,33 +1,25 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System;
 using System.Collections.Generic;
 
 namespace XForm.Data
 {
-    public class DataBatchEnumeratorWrapper : IDataBatchEnumerator
+    public class XTableWrapper : IXTable
     {
-        protected IDataBatchEnumerator _source;
+        protected IXTable _source;
 
-        public DataBatchEnumeratorWrapper(IDataBatchEnumerator source)
+        public XTableWrapper(IXTable source)
         {
             _source = source;
         }
 
-        public virtual IReadOnlyList<ColumnDetails> Columns => _source.Columns;
-
-        public int CurrentBatchRowCount { get; private set; }
-
-        public virtual Func<DataBatch> ColumnGetter(int columnIndex)
-        {
-            return _source.ColumnGetter(columnIndex);
-        }
+        public virtual int CurrentRowCount => _source.CurrentRowCount;
+        public virtual IReadOnlyList<IXColumn> Columns => _source.Columns;
 
         public virtual int Next(int desiredCount)
         {
-            CurrentBatchRowCount = _source.Next(desiredCount);
-            return CurrentBatchRowCount;
+            return _source.Next(desiredCount);
         }
 
         public virtual void Reset()

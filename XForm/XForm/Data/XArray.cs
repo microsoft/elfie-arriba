@@ -7,7 +7,7 @@ using System.Runtime.CompilerServices;
 namespace XForm.Data
 {
     /// <summary>
-    ///  DataBatch is the fundamental unit XForm is built on.
+    ///  XArray is the fundamental unit XForm is built on.
     ///  It represents a set of rows for a single column in a strongly typed array,
     ///    which avoids casting, boxing, or copying individual values.    
     ///  It provides indirection on the Array through ArraySelector, allowing filtering, 
@@ -16,20 +16,20 @@ namespace XForm.Data
     ///    via an optional IsNull array.
     ///    
     ///  Usage:
-    ///     T[] realArray = (T[])batch.Array;                                                   // Array is of ColumnDetails.Type. Only one cast for the whole array.
-    ///     for(int i = 0; i &lt; batch.Count; ++i)                                             // Always loop from zero to batch.Count - 1.
+    ///     T[] realArray = (T[])xarray.Array;                                                   // Array is of ColumnDetails.Type. Only one cast for the whole array.
+    ///     for(int i = 0; i &lt; xarray.Count; ++i)                                             // Always loop from zero to xarray.Count - 1.
     ///     {
-    ///         int realIndex = batch.Index(i);                                                 // Index() is an inlined method which returns the real index of a row
-    ///         bool valueIsNull = (batch.IsNull != null &amp;&amp; batch.IsNull[realIndex]);   // IsNull, if provided, indicates whether the row is null
+    ///         int realIndex = xarray.Index(i);                                                 // Index() is an inlined method which returns the real index of a row
+    ///         bool valueIsNull = (xarray.IsNull != null &amp;&amp; xarray.IsNull[realIndex]);   // IsNull, if provided, indicates whether the row is null
     ///         T rowValue = realArray[realIndex];
     ///     }
     /// </summary>
-    public struct DataBatch
+    public struct XArray
     {
         private static bool[] s_NullSingle;
 
         /// <summary>
-        ///  Optional array when DataBatch may contain null values indicating which
+        ///  Optional array when XArray may contain null values indicating which
         ///  are null. If the array itself is null, none of the values are null.
         ///  Avoids using Nullable which keeps the values back-to-back for bulk serialization.
         /// </summary>
@@ -49,12 +49,12 @@ namespace XForm.Data
         public ArraySelector Selector { get; private set; }
 
         /// <summary>
-        ///  Return the row count in this batch.
+        ///  Return the row count in this xarray.
         ///  This may not be the full size of the array, but only this count should be accessed
         /// </summary>
         public int Count => Selector.Count;
 
-        static DataBatch()
+        static XArray()
         {
             s_NullSingle = new bool[1];
             s_NullSingle[0] = true;
@@ -76,7 +76,7 @@ namespace XForm.Data
             return Selector.Index(logicalRowIndex);
         }
 
-        private DataBatch(DataBatch copyFrom)
+        private XArray(XArray copyFrom)
         {
             this.Array = copyFrom.Array;
             this.IsNull = copyFrom.IsNull;
@@ -84,101 +84,121 @@ namespace XForm.Data
         }
 
         /// <summary>
-        ///  Build a DataBatch referring to [0, Count) in the array with the optional given null array.
+        ///  Build an XArray referring to [0, Count) in the array with the optional given null array.
         /// </summary>
         /// <param name="array">Array containing values</param>
         /// <param name="count">Count of valid Array values</param>
         /// <param name="isNullArray">bool[] true for rows which have a null value</param>
-        /// <returns>DataBatch wrapping the array from [0, Count)</returns>
-        public static DataBatch All(Array array, int count = -1, bool[] isNullArray = null)
+        /// <returns>XArray wrapping the array from [0, Count)</returns>
+        public static XArray All(Array array, int count = -1, bool[] isNullArray = null)
         {
             if (count == -1) count = array.Length;
             if (count > array.Length) throw new ArgumentOutOfRangeException("length");
             if (isNullArray != null && count > isNullArray.Length) throw new ArgumentOutOfRangeException("length");
 
-            return new DataBatch() { Array = array, IsNull = isNullArray, Selector = ArraySelector.All(count) };
+            return new XArray() { Array = array, IsNull = isNullArray, Selector = ArraySelector.All(count) };
         }
 
         /// <summary>
-        ///  Build a DataBatch with only the value 'null' for the logical row count.
+        ///  Build an XArray with only the value 'null' for the logical row count.
         /// </summary>
         /// <param name="count">Row Count to return 'null' for</param>
-        /// <returns>DataBatch with a null Array and a single value indicating null for everything</returns>
-        public static DataBatch Null(Array singleNullValueArray, int count)
+        /// <returns>XArray with a null Array and a single value indicating null for everything</returns>
+        public static XArray Null(Array singleNullValueArray, int count)
         {
-            return new DataBatch() { Array = singleNullValueArray, IsNull = s_NullSingle, Selector = ArraySelector.Single(count) };
+            return new XArray() { Array = singleNullValueArray, IsNull = s_NullSingle, Selector = ArraySelector.Single(count) };
         }
 
         /// <summary>
-        ///  Build a DataBatch referring to the first element only in an array.
+        ///  Build an XArray referring to the first element only in an array.
         /// </summary>
         /// <param name="array">Array to use first element from</param>
-        /// <returns>DataBatch wrapping first array value as a Single</returns>
-        public static DataBatch Single(Array array, int count)
+        /// <returns>XArray wrapping first array value as a Single</returns>
+        public static XArray Single(Array array, int count)
         {
-            return new DataBatch() { Array = array, Selector = ArraySelector.Single(count) };
+            return new XArray() { Array = array, Selector = ArraySelector.Single(count) };
         }
 
         /// <summary>
-        ///  Return a DataBatch matching the rows from this batch identified in an inner selector.
-        ///  If this DataBatch already uses shifting or indirection, this will look up the real index
+        ///  Return an XArray matching the rows from this xarray identified in an inner selector.
+        ///  If this XArray already uses shifting or indirection, this will look up the real index
         ///  of each row in the innerSelector.
         /// </summary>
-        /// <param name="innerSelector">ArraySelector referring to the logical [0, Count) rows in this DataBatch to return</param>
+        /// <param name="innerSelector">ArraySelector referring to the logical [0, Count) rows in this XArray to return</param>
         /// <param name="remapArray">A buffer to hold remapped indices if they're required</param>
-        /// <returns>DataBatch containing the remapped rows identified by the innerSelector on the real array</returns>
-        public DataBatch Select(ArraySelector innerSelector, ref int[] remapArray)
+        /// <returns>XArray containing the remapped rows identified by the innerSelector on the real array</returns>
+        public XArray Select(ArraySelector innerSelector, ref int[] remapArray)
         {
-            return new DataBatch(this) { Selector = this.Selector.Select(innerSelector, ref remapArray) };
+            return new XArray(this) { Selector = this.Selector.Select(innerSelector, ref remapArray) };
         }
 
         /// <summary>
-        ///  Return a DataBatch matching the slice of rows from the current one specified.
+        ///  Return an XArray matching the slice of rows from the current one specified.
         /// </summary>
         /// <param name="startIndexInclusive">Index of first row to include [ex: 10 to skip first 10 rows]</param>
         /// <param name="endIndexExclusive">Index of first row to exclude [ex: 20 to get rows before index 20]</param>
-        /// <returns>DataBatch containing the slice of rows specified</returns>
-        public DataBatch Slice(int startIndexInclusive, int endIndexExclusive)
+        /// <returns>XArray containing the slice of rows specified</returns>
+        public XArray Slice(int startIndexInclusive, int endIndexExclusive)
         {
-            return new DataBatch(this) { Selector = this.Selector.Slice(startIndexInclusive, endIndexExclusive) };
+            return new XArray(this) { Selector = this.Selector.Slice(startIndexInclusive, endIndexExclusive) };
         }
 
         /// <summary>
-        ///  Replace the Selector on this DataBatch.
+        ///  Replace the Selector on this XArray.
         ///  This does not merge with an existing selector.
         ///  This is only safe to use when the selector indices are relative to the real array positions and not any
         ///  indexed positions from this ArraySelector.
         /// </summary>
         /// <param name="selector">ArraySelector to *replace* this one with, referring to actual array indices to return.</param>
-        /// <returns>DataBatch containing the exact rows the selector specified</returns>
-        public DataBatch Reselect(ArraySelector selector)
+        /// <returns>XArray containing the exact rows the selector specified</returns>
+        public XArray Reselect(ArraySelector selector)
         {
-            return new DataBatch(this) { Selector = selector };
+            return new XArray(this) { Selector = selector };
         }
 
         /// <summary>
-        ///  Remap the IsNull array from the source batch, if any, to a non-indexed array.
-        ///  Used when the values in the batch were converted into an in-order array but IsNull
+        ///  Replace the values in an XArray and return it with the same selector
+        /// </summary>
+        /// <param name="other">Replacement Array to use</param>
+        /// <returns>XArray with values replaced and Selector the same</returns>
+        public XArray ReplaceValues(XArray other)
+        {
+            return new XArray(this) { Array = other.Array, IsNull = other.IsNull };
+        }
+
+        /// <summary>
+        ///  Replace the values in an XArray and return it with the same selector
+        /// </summary>
+        /// <param name="other">Replacement Array to use</param>
+        /// <returns>XArray with values replaced and Selector the same</returns>
+        public XArray ReplaceValues(XArray other, bool[] isNull)
+        {
+            return new XArray(this) { Array = other.Array, IsNull = isNull };
+        }
+
+        /// <summary>
+        ///  Remap the IsNull array from the source XArray, if any, to a non-indexed array.
+        ///  Used when the values in the XAray were converted into an in-order array but IsNull
         ///  from the source needs to be preserved.
         /// </summary>
-        /// <param name="batch">DataBatch to remap nulls from</param>
+        /// <param name="array">XArray to remap nulls from</param>
         /// <param name="remapArray">bool[] to use to remap IsNull values, if needed</param>
-        /// <returns>IsNull array to use in returned DataBatch</returns>
-        public static bool[] RemapNulls(DataBatch batch, ref bool[] remapArray)
+        /// <returns>IsNull array to use in returned XArray</returns>
+        public static bool[] RemapNulls(XArray array, ref bool[] remapArray)
         {
             // If there were no source nulls, there are none for the output
-            if (batch.IsNull == null) return null;
+            if (array.IsNull == null) return null;
 
             // If the source isn't indexed or shifted, the IsNull array may be reused
-            if (batch.Selector.Indices == null && batch.Selector.StartIndexInclusive == 0) return batch.IsNull;
+            if (array.Selector.Indices == null && array.Selector.StartIndexInclusive == 0) return array.IsNull;
 
             // Otherwise, we must remap nulls
-            Allocator.AllocateToSize(ref remapArray, batch.Count);
+            Allocator.AllocateToSize(ref remapArray, array.Count);
 
             bool areAnyNulls = false;
-            for (int i = 0; i < batch.Count; ++i)
+            for (int i = 0; i < array.Count; ++i)
             {
-                areAnyNulls |= (remapArray[i] = batch.IsNull[batch.Index(i)]);
+                areAnyNulls |= (remapArray[i] = array.IsNull[array.Index(i)]);
             }
 
             return (areAnyNulls ? remapArray : null);

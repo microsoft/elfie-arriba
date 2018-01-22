@@ -20,7 +20,7 @@ namespace XForm
         Array Values { get; }
         void Reset(int size);
         int HashCurrent(int hash);
-        void SetBatch(DataBatch batch);
+        void SetArray(XArray xarray);
         void SetCurrent(uint index);
         void SwapCurrent(uint index);
         bool EqualsCurrent(uint index);
@@ -29,20 +29,20 @@ namespace XForm
 
     internal class DictionaryColumn<TColumnType> : IDictionaryColumn
     {
-        private IDataBatchComparer<TColumnType> _comparer;
+        private IXArrayComparer<TColumnType> _comparer;
         private IValueCopier<TColumnType> _copier;
 
         private TColumnType[] _values;
         private TColumnType _current;
         private bool _currentIsNewValue;
 
-        private DataBatch _currentBatch;
-        private TColumnType[] _currentBatchArray;
+        private XArray _currentArray;
+        private TColumnType[] _currentTypedArray;
 
         public DictionaryColumn()
         {
             ITypeProvider typeProvider = TypeProviderFactory.Get(typeof(TColumnType));
-            _comparer = (IDataBatchComparer<TColumnType>)typeProvider.TryGetComparer();
+            _comparer = (IXArrayComparer<TColumnType>)typeProvider.TryGetComparer();
             _copier = (IValueCopier<TColumnType>)typeProvider.TryGetCopier();
         }
 
@@ -59,24 +59,24 @@ namespace XForm
             return (hash << 5) - hash + _comparer.GetHashCode(_current);
         }
 
-        public void SetBatch(DataBatch batch)
+        public void SetArray(XArray xarray)
         {
-            _currentBatch = batch;
-            _currentBatchArray = (TColumnType[])batch.Array;
+            _currentArray = xarray;
+            _currentTypedArray = (TColumnType[])xarray.Array;
         }
 
         public void SetCurrent(uint index)
         {
             _currentIsNewValue = true;
 
-            int realIndex = _currentBatch.Index((int)index);
-            if (_currentBatch.IsNull != null && _currentBatch.IsNull[realIndex])
+            int realIndex = _currentArray.Index((int)index);
+            if (_currentArray.IsNull != null && _currentArray.IsNull[realIndex])
             {
                 _current = default(TColumnType);
             }
             else
             {
-                _current = _currentBatchArray[realIndex];
+                _current = _currentTypedArray[realIndex];
             }
         }
 
@@ -147,20 +147,20 @@ namespace XForm
             Reset(HashCore.SizeForCapacity(initialCapacity));
         }
 
-        public void Add(DataBatch[] keys, DataBatch rankValues, DataBatch rowIndexBatch)
+        public void Add(XArray[] keys, XArray rankValues, XArray rowIndexxarray)
         {
-            Add(keys, rankValues, rowIndexBatch, false);
+            Add(keys, rankValues, rowIndexxarray, false);
         }
 
-        private void Add(DataBatch[] keys, DataBatch rankValues, DataBatch rowIndexBatch, bool isResize)
+        private void Add(XArray[] keys, XArray rankValues, XArray rowIndexxarray, bool isResize)
         {
             if (keys.Length != _keys.Length) throw new ArgumentOutOfRangeException("keys.Length");
 
             // Keep the total of rows added (don't count resizes; to know the vector size to make)
             if (!isResize) _totalRowCount += rankValues.Count;
 
-            // Give the DataBatches to the keys and rank columns
-            SetCurrentBatches(keys, rankValues, rowIndexBatch);
+            // Give the arrays to the keys and rank columns
+            SetCurrentarrays(keys, rankValues, rowIndexxarray);
 
             for (uint rowIndex = 0; rowIndex < rankValues.Count; ++rowIndex)
             {
@@ -175,15 +175,15 @@ namespace XForm
                 {
                     Expand();
 
-                    // Reset current to the batch we're trying to add
-                    SetCurrentBatches(keys, rankValues, rowIndexBatch);
+                    // Reset current to the xarray we're trying to add
+                    SetCurrentarrays(keys, rankValues, rowIndexxarray);
                     SetCurrent(rowIndex);
                     Add(hash);
                 }
             }
         }
 
-        public DataBatch GetChosenRows(int startIndexInclusive, int endIndexExclusive, int startIndexInSet)
+        public XArray GetChosenRows(int startIndexInclusive, int endIndexExclusive, int startIndexInSet)
         {
             // Allocate a buffer to hold matching rows in the range
             Allocator.AllocateToSize(ref _rowBuffer, endIndexExclusive - startIndexInclusive);
@@ -191,7 +191,7 @@ namespace XForm
             // If we haven't converted best rows to a vector, do so (one time)
             if (_bestRowVector == null) ConvertChosenToVector();
 
-            // Get rows matching the query and map them from global row IDs to DataBatch-relative indices
+            // Get rows matching the query and map them from global row IDs to XArray-relative indices
             // Likely better than BitVector.Page because we can't ask it to subtract or to stop by endIndex.
             int count = 0;
             for (int i = startIndexInclusive; i < endIndexExclusive; ++i)
@@ -200,7 +200,7 @@ namespace XForm
             }
 
             // Return the matches
-            return DataBatch.All(_rowBuffer, count);
+            return XArray.All(_rowBuffer, count);
         }
 
         private void ConvertChosenToVector()
@@ -232,19 +232,19 @@ namespace XForm
             _bestRowIndices.Reset(size);
         }
 
-        private void SetCurrentBatches(DataBatch[] keys, DataBatch rankValues, DataBatch rowIndexBatch)
+        private void SetCurrentarrays(XArray[] keys, XArray rankValues, XArray rowIndexxarray)
         {
             for (int keyIndex = 0; keyIndex < keys.Length; ++keyIndex)
             {
-                _keys[keyIndex].SetBatch(keys[keyIndex]);
+                _keys[keyIndex].SetArray(keys[keyIndex]);
             }
-            _ranks.SetBatch(rankValues);
-            _bestRowIndices.SetBatch(rowIndexBatch);
+            _ranks.SetArray(rankValues);
+            _bestRowIndices.SetArray(rowIndexxarray);
         }
 
         private void SetCurrent(uint index)
         {
-            // Set the row in each DataBatch as current
+            // Set the row in each XArray as current
             for (int keyIndex = 0; keyIndex < _keys.Length; ++keyIndex)
             {
                 _keys[keyIndex].SetCurrent(index);
@@ -312,21 +312,21 @@ namespace XForm
                 if (metadata[i] != 0) indices[count++] = i;
             }
 
-            // Save the old keys, ranks, and row indices in DataBatches
-            DataBatch[] keyBatches = new DataBatch[_keys.Length];
+            // Save the old keys, ranks, and row indices in arrays
+            XArray[] keyarrays = new XArray[_keys.Length];
             for (int i = 0; i < _keys.Length; ++i)
             {
-                keyBatches[i] = DataBatch.All(_keys[i].Values).Reselect(ArraySelector.Map(indices, count));
+                keyarrays[i] = XArray.All(_keys[i].Values).Reselect(ArraySelector.Map(indices, count));
             }
 
-            DataBatch rankBatch = DataBatch.All(_ranks.Values).Reselect(ArraySelector.Map(indices, count));
-            DataBatch bestRowBatch = DataBatch.All(_bestRowIndices.Values).Reselect(ArraySelector.Map(indices, count));
+            XArray rankxarray = XArray.All(_ranks.Values).Reselect(ArraySelector.Map(indices, count));
+            XArray bestRowxarray = XArray.All(_bestRowIndices.Values).Reselect(ArraySelector.Map(indices, count));
 
             // Expand the table
             Reset(HashCore.ResizeToSize(_bestRowIndices.Length));
 
             // Add items to the enlarged table
-            Add(keyBatches, rankBatch, bestRowBatch, true);
+            Add(keyarrays, rankxarray, bestRowxarray, true);
         }
     }
 }

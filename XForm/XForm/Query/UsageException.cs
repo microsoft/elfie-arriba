@@ -80,7 +80,7 @@ namespace XForm.Query
             if (ValidValues != null)
             {
                 message.AppendLine("Valid Options:");
-                foreach (string value in ValidValues)
+                foreach (string value in ValidValues.OrderBy((s) => s))
                 {
                     message.AppendLine(value);
                 }
@@ -97,6 +97,9 @@ namespace XForm.Query
 
         public UsageException(string invalidValue, string invalidValueCategory, IEnumerable<string> validValues)
             : this(new ErrorContext(invalidValue, invalidValueCategory, validValues))
+        { }
+
+        public UsageException(string errorMessage, IEnumerable<string> validValues) : this(new ErrorContext() { ErrorMessage = errorMessage, ValidValues = validValues })
         { }
 
         public UsageException(ErrorContext context)

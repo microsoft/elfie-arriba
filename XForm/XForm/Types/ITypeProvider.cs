@@ -12,13 +12,13 @@ namespace XForm.Types
     public interface IColumnReader : IDisposable
     {
         int Count { get; }
-        DataBatch Read(ArraySelector selector);
+        XArray Read(ArraySelector selector);
     }
 
     public interface IColumnWriter : IDisposable
     {
         Type WritingAsType { get; }
-        void Append(DataBatch batch);
+        void Append(XArray xarray);
     }
 
     public interface ITypeProvider
@@ -31,7 +31,7 @@ namespace XForm.Types
 
         NegatedTryConvert TryGetNegatedTryConvert(Type sourceType, Type targetType, object defaultValue);
 
-        IDataBatchComparer TryGetComparer();
+        IXArrayComparer TryGetComparer();
 
         IValueCopier TryGetCopier();
     }
@@ -40,12 +40,12 @@ namespace XForm.Types
     {
         public static ComparerExtensions.Comparer TryGetComparer(this ITypeProvider typeProvider, CompareOperator op)
         {
-            IDataBatchComparer comparer = typeProvider.TryGetComparer();
+            IXArrayComparer comparer = typeProvider.TryGetComparer();
             if (comparer == null) return null;
             return comparer.TryBuild(op);
         }
 
-        public static Func<DataBatch, DataBatch> TryGetConverter(Type sourceType, Type targetType, ValueKinds errorOnKinds, object defaultValue, ValueKinds changeToDefaultKinds)
+        public static Func<XArray, XArray> TryGetConverter(Type sourceType, Type targetType, ValueKinds errorOnKinds, object defaultValue, ValueKinds changeToDefaultKinds)
         {
             return TypeConverterFactory.TryGetConverter(sourceType, targetType, errorOnKinds, defaultValue, changeToDefaultKinds);
         }

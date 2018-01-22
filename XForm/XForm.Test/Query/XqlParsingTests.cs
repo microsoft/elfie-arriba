@@ -22,10 +22,7 @@ namespace XForm.Test.Query
         public void XqlParser_QueryParsing()
         {
             XDatabaseContext context = SampleDatabase.XDatabaseContext;
-            IDataBatchEnumerator source = context.Query(@"
-                read WebRequest
-                cast [ServerPort], Int32
-                cast [ResponseBytes], Int32, None, 0, InvalidOrNull");
+            IXTable source = context.Query(@"read WebRequest.Typed");
 
             // Single Term
             Assert.AreEqual("[ServerPort] = 80", ParseExpression("[ServerPort] = 80", source, context).ToString());
@@ -33,8 +30,8 @@ namespace XForm.Test.Query
             // Column to Column
             Assert.AreEqual("[ServerPort] < [RequestBytes]", ParseExpression("[ServerPort] < [RequestBytes]", source, context).ToString());
 
-            // Column to Function(Constant) => Resolved
-            Assert.AreEqual("[ServerName] = \"WS-FRONT-4\"", ParseExpression("[ServerName] = ToUpper(\"ws-front-4\")", source, context).ToString());
+            // Column to Function(Constant)
+            Assert.AreEqual("[ServerName] = ToUpper(\"ws-front-4\")", ParseExpression("[ServerName] = ToUpper(\"ws-front-4\")", source, context).ToString());
 
             // Column to Function(Column)
             Assert.AreEqual("[ServerName] = ToUpper([ServerName])", ParseExpression("[ServerName] = ToUpper([ServerName])", source, context).ToString());
@@ -80,7 +77,7 @@ namespace XForm.Test.Query
             Assert.AreEqual("[ServerName] = \"80\"", ParseExpression("[ServerName] = \"80\"", source, context).ToString());
         }
 
-        private static IExpression ParseExpression(string query, IDataBatchEnumerator source, XDatabaseContext context)
+        private static IExpression ParseExpression(string query, IXTable source, XDatabaseContext context)
         {
             XqlParser parser = new XqlParser(query, context);
             context.Parser = parser;
@@ -91,7 +88,7 @@ namespace XForm.Test.Query
         public void XqlParser_QueryEvaluation()
         {
             XDatabaseContext context = SampleDatabase.XDatabaseContext;
-            IDataBatchEnumerator source = context.Query(@"
+            IXTable source = context.Query(@"
                 read WebRequest
                 cast [ServerPort], Int32
                 cast [ResponseBytes], Int32, None, 0, InvalidOrNull
@@ -114,7 +111,7 @@ namespace XForm.Test.Query
             Assert.AreEqual(22 + 95, RunAndCount("where [ServerPort] = 80 AND [ResponseBytes] > 1200 OR [ResponseBytes] < 900", source, context));
         }
 
-        private static int RunAndCount(string query, IDataBatchEnumerator source, XDatabaseContext context)
+        private static int RunAndCount(string query, IXTable source, XDatabaseContext context)
         {
             source.Reset();
             return (int)context.Query(query, source).RunWithoutDispose();

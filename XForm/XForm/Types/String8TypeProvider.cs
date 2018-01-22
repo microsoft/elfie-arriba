@@ -28,7 +28,7 @@ namespace XForm.Types
             return new String8ColumnWriter(streamProvider, columnPath);
         }
 
-        public IDataBatchComparer TryGetComparer()
+        public IXArrayComparer TryGetComparer()
         {
             // String8Comparer is generated
             return new String8Comparer();
@@ -133,7 +133,7 @@ namespace XForm.Types
         private IColumnReader _bytesReader;
         private IColumnReader _positionsReader;
 
-        private DataBatch _currentBatch;
+        private XArray _currentArray;
         private ArraySelector _currentSelector;
 
         private String8[] _resultArray;
@@ -149,34 +149,34 @@ namespace XForm.Types
 
         public int Count => _positionsReader.Count;
 
-        public DataBatch Read(ArraySelector selector)
+        public XArray Read(ArraySelector selector)
         {
             if (selector.Indices != null) return ReadIndices(selector);
-            if (selector.Count == 0) return DataBatch.All(_resultArray, 0);
+            if (selector.Count == 0) return XArray.All(_resultArray, 0);
 
-            // Return previous batch if re-requested
-            if (selector.Equals(_currentSelector)) return _currentBatch;
+            // Return previous xarray if re-requested
+            if (selector.Equals(_currentSelector)) return _currentArray;
 
             Allocator.AllocateToSize(ref _resultArray, selector.Count);
             bool includesFirstString = (selector.StartIndexInclusive == 0);
 
             // Read the string positions
-            DataBatch positionBatch = _positionsReader.Read(ArraySelector.All(Count).Slice((includesFirstString ? 0 : selector.StartIndexInclusive - 1), selector.EndIndexExclusive));
-            if (positionBatch.Selector.Indices != null) throw new NotImplementedException("String8TypeProvider requires positions to be read contiguously.");
-            int[] positionArray = (int[])positionBatch.Array;
+            XArray positionxarray = _positionsReader.Read(ArraySelector.All(Count).Slice((includesFirstString ? 0 : selector.StartIndexInclusive - 1), selector.EndIndexExclusive));
+            if (positionxarray.Selector.Indices != null) throw new NotImplementedException("String8TypeProvider requires positions to be read contiguously.");
+            int[] positionArray = (int[])positionxarray.Array;
 
             // Get the full byte range of all of the strings
-            int firstStringStart = (includesFirstString ? 0 : positionArray[positionBatch.Index(0)]);
-            int lastStringEnd = positionArray[positionBatch.Index(positionBatch.Count - 1)];
+            int firstStringStart = (includesFirstString ? 0 : positionArray[positionxarray.Index(0)]);
+            int lastStringEnd = positionArray[positionxarray.Index(positionxarray.Count - 1)];
 
             // Read the raw string bytes
-            DataBatch textBatch = _bytesReader.Read(ArraySelector.All(int.MaxValue).Slice(firstStringStart, lastStringEnd));
-            if (textBatch.Selector.Indices != null) throw new NotImplementedException("String8TypeProvider requires positions to be read contiguously.");
-            byte[] textArray = (byte[])textBatch.Array;
+            XArray textxarray = _bytesReader.Read(ArraySelector.All(int.MaxValue).Slice(firstStringStart, lastStringEnd));
+            if (textxarray.Selector.Indices != null) throw new NotImplementedException("String8TypeProvider requires positions to be read contiguously.");
+            byte[] textArray = (byte[])textxarray.Array;
 
             // Update the String8 array to point to them
-            int positionOffset = positionBatch.Index((includesFirstString ? 0 : 1));
-            int textOffset = firstStringStart - textBatch.Index(0);
+            int positionOffset = positionxarray.Index((includesFirstString ? 0 : 1));
+            int textOffset = firstStringStart - textxarray.Index(0);
 
             int previousStringEnd = firstStringStart - textOffset;
             for (int i = 0; i < selector.Count; ++i)
@@ -186,23 +186,23 @@ namespace XForm.Types
                 previousStringEnd = valueEnd;
             }
 
-            // Cache the batch and return it
-            _currentBatch = DataBatch.All(_resultArray, selector.Count);
+            // Cache the xarray and return it
+            _currentArray = XArray.All(_resultArray, selector.Count);
             _currentSelector = selector;
-            return _currentBatch;
+            return _currentArray;
         }
 
-        private DataBatch ReadIndices(ArraySelector selector)
+        private XArray ReadIndices(ArraySelector selector)
         {
             Allocator.AllocateToSize(ref _resultArray, selector.Count);
 
             // Read all string positions
-            DataBatch positionBatch = _positionsReader.Read(ArraySelector.All(_positionsReader.Count));
-            int[] positionArray = (int[])positionBatch.Array;
+            XArray positionxarray = _positionsReader.Read(ArraySelector.All(_positionsReader.Count));
+            int[] positionArray = (int[])positionxarray.Array;
 
             // Read all raw string bytes
-            DataBatch textBatch = _bytesReader.Read(ArraySelector.All(_bytesReader.Count));
-            byte[] textArray = (byte[])textBatch.Array;
+            XArray textxarray = _bytesReader.Read(ArraySelector.All(_bytesReader.Count));
+            byte[] textArray = (byte[])textxarray.Array;
 
             // Update the String8 array to point to them
             for (int i = 0; i < selector.Count; ++i)
@@ -213,10 +213,10 @@ namespace XForm.Types
                 _resultArray[i] = new String8(textArray, valueStart, valueEnd - valueStart);
             }
 
-            // Cache the batch and return it
-            _currentBatch = DataBatch.All(_resultArray, selector.Count);
+            // Cache the xarray and return it
+            _currentArray = XArray.All(_resultArray, selector.Count);
             _currentSelector = selector;
-            return _currentBatch;
+            return _currentArray;
         }
 
         public void Dispose()
@@ -253,20 +253,20 @@ namespace XForm.Types
 
         public Type WritingAsType => typeof(String8);
 
-        public void Append(DataBatch batch)
+        public void Append(XArray xarray)
         {
-            Allocator.AllocateToSize(ref _positionsBuffer, batch.Count);
+            Allocator.AllocateToSize(ref _positionsBuffer, xarray.Count);
 
-            String8[] array = (String8[])batch.Array;
-            for (int i = 0; i < batch.Count; ++i)
+            String8[] array = (String8[])xarray.Array;
+            for (int i = 0; i < xarray.Count; ++i)
             {
-                String8 value = array[batch.Index(i)];
+                String8 value = array[xarray.Index(i)];
                 value.WriteTo(_bytesWriter);
                 _position += value.Length;
                 _positionsBuffer[i] = _position;
             }
 
-            _positionsWriter.Append(DataBatch.All(_positionsBuffer, batch.Count));
+            _positionsWriter.Append(XArray.All(_positionsBuffer, xarray.Count));
         }
 
         public void Dispose()
@@ -314,17 +314,17 @@ namespace XForm.Types
             _bytesPerItem = bytesPerItem;
         }
 
-        public bool[] Convert(DataBatch batch, out Array result)
+        public bool[] Convert(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _string8Array, batch.Count);
-            Allocator.AllocateToSize(ref _buffer, batch.Count * _bytesPerItem);
+            Allocator.AllocateToSize(ref _string8Array, xarray.Count);
+            Allocator.AllocateToSize(ref _buffer, xarray.Count * _bytesPerItem);
 
             int bufferBytesUsed = 0;
-            T[] sourceArray = (T[])batch.Array;
-            for (int i = 0; i < batch.Count; ++i)
+            T[] sourceArray = (T[])xarray.Array;
+            for (int i = 0; i < xarray.Count; ++i)
             {
-                int index = batch.Index(i);
-                if (batch.IsNull != null && batch.IsNull[index])
+                int index = xarray.Index(i);
+                if (xarray.IsNull != null && xarray.IsNull[index])
                 {
                     // Always turn nulls into the default value rather than converting default of other type
                     _string8Array[i] = _defaultValue;
@@ -367,22 +367,22 @@ namespace XForm.Types
             }
         }
 
-        public bool[] StringToString8(DataBatch batch, out Array result)
+        public bool[] StringToString8(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _string8Array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvertArray, batch.Count);
+            Allocator.AllocateToSize(ref _string8Array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvertArray, xarray.Count);
 
             if (_block == null) _block = new String8Block();
             _block.Clear();
 
             bool anyCouldNotConvert = false;
-            string[] sourceArray = (string[])batch.Array;
-            for (int i = 0; i < batch.Count; ++i)
+            string[] sourceArray = (string[])xarray.Array;
+            for (int i = 0; i < xarray.Count; ++i)
             {
-                int index = batch.Index(i);
+                int index = xarray.Index(i);
                 string value = sourceArray[index];
 
-                if (value == null || (batch.IsNull != null && batch.IsNull[index]))
+                if (value == null || (xarray.IsNull != null && xarray.IsNull[index]))
                 {
                     // Always turn nulls into the default value rather than converting string default
                     _string8Array[i] = _defaultValue;
@@ -417,16 +417,16 @@ namespace XForm.Types
             _defaultValue = (T)(TypeConverterFactory.ConvertSingle(defaultValue, typeof(T)) ?? default(T));
         }
 
-        public bool[] Convert(DataBatch batch, out Array result)
+        public bool[] Convert(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, batch.Count);
-            Allocator.AllocateToSize(ref _couldNotConvertArray, batch.Count);
+            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _couldNotConvertArray, xarray.Count);
 
             bool anyCouldNotConvert = false;
-            String8[] sourceArray = (String8[])batch.Array;
-            for (int i = 0; i < batch.Count; ++i)
+            String8[] sourceArray = (String8[])xarray.Array;
+            for (int i = 0; i < xarray.Count; ++i)
             {
-                _couldNotConvertArray[i] = !_tryConvert(sourceArray[batch.Index(i)], out _array[i]);
+                _couldNotConvertArray[i] = !_tryConvert(sourceArray[xarray.Index(i)], out _array[i]);
 
                 if (_couldNotConvertArray[i])
                 {

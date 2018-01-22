@@ -14,7 +14,7 @@ namespace XForm.Verbs
         public string Verb => "limit";
         public string Usage => "limit {RowLimit} {ColLimit?}";
 
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, XDatabaseContext context)
+        public IXTable Build(IXTable source, XDatabaseContext context)
         {
             int rowLimit = context.Parser.NextInteger();
             int colLimit = (context.Parser.HasAnotherArgument ? context.Parser.NextInteger() : -1);
@@ -22,21 +22,21 @@ namespace XForm.Verbs
         }
     }
 
-    public class Limit : DataBatchEnumeratorWrapper
+    public class Limit : XTableWrapper
     {
         private int _colCountLimit;
         private int _rowCountLimit;
         private int _rowCountSoFar;
-        private IReadOnlyList<ColumnDetails> _columns;
+        private IReadOnlyList<IXColumn> _columns;
 
-        public Limit(IDataBatchEnumerator source, int rowLimit, int colLimit = -1) : base(source)
+        public Limit(IXTable source, int rowLimit, int colLimit = -1) : base(source)
         {
             _rowCountLimit = (rowLimit > 0 ? rowLimit : int.MaxValue);
             _colCountLimit = colLimit;
             _columns = (_colCountLimit > 0 ? base.Columns.Take(colLimit).ToList() : base.Columns);
         }
 
-        public override IReadOnlyList<ColumnDetails> Columns => _columns;
+        public override IReadOnlyList<IXColumn> Columns => _columns;
 
         public override void Reset()
         {

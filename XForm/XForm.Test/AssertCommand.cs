@@ -20,7 +20,7 @@ namespace XForm.Test
         public string Verb => "assert";
         public string Usage => "assert {none|all}\r\n  {subquery}\r\n  end";
 
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, XDatabaseContext context)
+        public IXTable Build(IXTable source, XDatabaseContext context)
         {
             return new AssertCommand(source,
                 context.Parser.NextEnum<AssertType>(),
@@ -28,16 +28,16 @@ namespace XForm.Test
         }
     }
 
-    public class AssertCommand : DataBatchEnumeratorWrapper
+    public class AssertCommand : XTableWrapper
     {
         private AssertType _type;
         private SinglePageEnumerator _singlePageSource;
-        private IDataBatchEnumerator _assertPipeline;
+        private IXTable _assertPipeline;
 
         private long _sourceRowsTotal;
         private long _assertRowsTotal;
 
-        public AssertCommand(IDataBatchEnumerator source, AssertType type, XDatabaseContext context) : base(source)
+        public AssertCommand(IXTable source, AssertType type, XDatabaseContext context) : base(source)
         {
             _type = type;
             _singlePageSource = new SinglePageEnumerator(source);
@@ -73,7 +73,7 @@ namespace XForm.Test
         public string Verb => "assertCount";
         public string Usage => "assertCount {rowCount}";
 
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, XDatabaseContext context)
+        public IXTable Build(IXTable source, XDatabaseContext context)
         {
             return new AssertCountCommand(source,
                 context.Parser.NextInteger(),
@@ -81,13 +81,13 @@ namespace XForm.Test
         }
     }
 
-    public class AssertCountCommand : DataBatchEnumeratorWrapper
+    public class AssertCountCommand : XTableWrapper
     {
         private int _actualCount;
         private int _expectedCount;
         private QueryDebuggingContext _debuggingContext;
 
-        public AssertCountCommand(IDataBatchEnumerator source, int count, XDatabaseContext context) : base(source)
+        public AssertCountCommand(IXTable source, int count, XDatabaseContext context) : base(source)
         {
             _expectedCount = count;
             _debuggingContext = new QueryDebuggingContext(context);
