@@ -38,7 +38,7 @@ namespace XForm.Types
             return new ByteWriter(streamProvider.OpenWrite(Path.Combine(columnPath, "V.u8.bin")));
         }
 
-        public IDataBatchComparer TryGetComparer()
+        public IXArrayComparer TryGetComparer()
         {
             return new ByteComparer();
         }
@@ -68,7 +68,7 @@ namespace XForm.Types
 
         public int Count => (int)_stream.Length;
 
-        public DataBatch Read(ArraySelector selector)
+        public XArray Read(ArraySelector selector)
         {
             if (selector.Indices != null) throw new NotImplementedException();
 
@@ -77,7 +77,7 @@ namespace XForm.Types
             _stream.Seek(selector.StartIndexInclusive, SeekOrigin.Begin);
             _stream.Read(_array, 0, selector.Count);
 
-            return DataBatch.All(_array, selector.Count);
+            return XArray.All(_array, selector.Count);
         }
 
         public void Dispose()
@@ -102,24 +102,24 @@ namespace XForm.Types
 
         public Type WritingAsType => typeof(byte);
 
-        public void Append(DataBatch batch)
+        public void Append(XArray xarray)
         {
-            byte[] arrayToWrite = (byte[])batch.Array;
+            byte[] arrayToWrite = (byte[])xarray.Array;
 
-            if (batch.Selector.Indices != null)
+            if (xarray.Selector.Indices != null)
             {
-                Allocator.AllocateToSize(ref _buffer, batch.Count);
+                Allocator.AllocateToSize(ref _buffer, xarray.Count);
 
-                for (int i = 0; i < batch.Count; ++i)
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    int index = batch.Index(i);
+                    int index = xarray.Index(i);
                     _buffer[i] = arrayToWrite[index];
                 }
 
                 arrayToWrite = _buffer;
             }
 
-            _stream.Write((byte[])batch.Array, batch.Selector.StartIndexInclusive, batch.Count);
+            _stream.Write((byte[])xarray.Array, xarray.Selector.StartIndexInclusive, xarray.Count);
         }
 
         public void Dispose()

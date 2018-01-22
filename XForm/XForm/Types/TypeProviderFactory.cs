@@ -80,7 +80,7 @@ namespace XForm.Types
             // If the column type doesn't have a provider or writer, convert to String8 and write that
             if (writer == null)
             {
-                Func<DataBatch, DataBatch> converter = TypeConverterFactory.GetConverter(columnType, typeof(String8));
+                Func<XArray, XArray> converter = TypeConverterFactory.GetConverter(columnType, typeof(String8));
                 if (converter == null) return null;
 
                 writer = TypeProviderFactory.TryGet(typeof(String8)).BinaryWriter(streamProvider, columnPath);

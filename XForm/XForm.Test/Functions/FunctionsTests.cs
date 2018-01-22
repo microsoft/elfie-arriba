@@ -141,39 +141,39 @@ namespace XForm.Test.Query
             DateTime[] expected = new DateTime[] { TestAsOfDateTime, TestAsOfDateTime, TestAsOfDateTime, TestAsOfDateTime, TestAsOfDateTime };
 
             // Can't try other scenarios with AsOfDate because it doesn't care of the inputs are null or indirect
-            RunAndCompare(DataBatch.All(values), "RowNumber", DataBatch.All(expected), "Result", "set [Result] AsOfDate()");
+            RunAndCompare(XArray.All(values), "RowNumber", XArray.All(expected), "Result", "set [Result] AsOfDate()");
         }
 
         public static void RunQueryAndVerify(Array values, string inputColumnName, Array expected, string outputColumnName, string queryText)
         {
             Assert.IsTrue(expected.Length > 3, "Must have at least four values for a proper test.");
 
-            DataBatch inputBatch = DataBatch.All(values, values.Length);
-            DataBatch expectedBatch = DataBatch.All(expected, expected.Length);
+            XArray inputxarray = XArray.All(values, values.Length);
+            XArray expectedxarray = XArray.All(expected, expected.Length);
 
-            // Run with full array DataBatches
-            RunAndCompare(inputBatch, inputColumnName, expectedBatch, outputColumnName, queryText);
+            // Run with full array arrays
+            RunAndCompare(inputxarray, inputColumnName, expectedxarray, outputColumnName, queryText);
 
             // Add indices and gaps and verify against original set
-            RunAndCompare(TableTestHarness.Pad(inputBatch), inputColumnName, expectedBatch, outputColumnName, queryText);
+            RunAndCompare(TableTestHarness.Pad(inputxarray), inputColumnName, expectedxarray, outputColumnName, queryText);
 
             // Add alternating nulls and verify alternating null/expected
-            RunAndCompare(TableTestHarness.Nulls(inputBatch), inputColumnName, TableTestHarness.Nulls(expectedBatch), outputColumnName, queryText);
+            RunAndCompare(TableTestHarness.Nulls(inputxarray), inputColumnName, TableTestHarness.Nulls(expectedxarray), outputColumnName, queryText);
 
             // Test a single value by itself
-            RunAndCompare(TableTestHarness.First(inputBatch), inputColumnName, TableTestHarness.First(expectedBatch), outputColumnName, queryText);
+            RunAndCompare(TableTestHarness.First(inputxarray), inputColumnName, TableTestHarness.First(expectedxarray), outputColumnName, queryText);
         }
 
-        public static void RunAndCompare(DataBatch input, string inputColumnName, DataBatch expected, string outputColumnName, string queryText)
+        public static void RunAndCompare(XArray input, string inputColumnName, XArray expected, string outputColumnName, string queryText)
         {
             XDatabaseContext context = new XDatabaseContext();
             context.RequestedAsOfDateTime = TestAsOfDateTime;
 
-            IDataBatchEnumerator query = TableTestHarness.DatabaseContext.FromArrays(input.Count)
+            IXTable query = TableTestHarness.DatabaseContext.FromArrays(input.Count)
                 .WithColumn(new ColumnDetails(inputColumnName, input.Array.GetType().GetElementType()), input)
                 .Query(queryText, context);
 
-            Func<DataBatch> resultGetter = query.ColumnGetter(query.Columns.IndexOfColumn(outputColumnName));
+            Func<XArray> resultGetter = query.Columns.Find(outputColumnName).CurrentGetter();
             int pageCount;
 
             // Get one row only and verify

@@ -7,7 +7,7 @@ using System.Runtime.CompilerServices;
 namespace XForm.Data
 {
     /// <summary>
-    ///  ArraySelectors describe the items in an associated DataBatch which each logical row
+    ///  ArraySelectors describe the items in an associated XArray which each logical row
     ///  corresponds to.
     ///  
     ///  Selectors can specify:
@@ -39,8 +39,8 @@ namespace XForm.Data
         public int EndIndexExclusive { get; private set; }
 
         /// <summary>
-        ///  IsSingleValue denotes whether this batch contains a single value for each logical row.
-        ///  SingleValue batches are used for constants or column rows which all happen to share one value.
+        ///  IsSingleValue denotes whether this xarray contains a single value for each logical row.
+        ///  SingleValue arrays are used for constants or column rows which all happen to share one value.
         /// </summary>
         public bool IsSingleValue { get; private set; }
 

@@ -51,12 +51,12 @@ namespace XForm
             }
         }
 
-        public IDataBatchEnumerator Build(string tableName, XDatabaseContext outerContext)
+        public IXTable Build(string tableName, XDatabaseContext outerContext)
         {
             return Build(tableName, outerContext, false);
         }
 
-        public IDataBatchEnumerator Build(string tableName, XDatabaseContext outerContext, bool deferred)
+        public IXTable Build(string tableName, XDatabaseContext outerContext, bool deferred)
         {
             // If we previously found the latest for this table, just return it again
             LatestTableForCutoff previousLatest;
@@ -77,7 +77,7 @@ namespace XForm
             StreamAttributes queryAttributes = innerContext.StreamProvider.Attributes(innerContext.StreamProvider.Path(LocationType.Query, tableName, ".xql"));
             if (queryAttributes.Exists)
             {
-                IDataBatchEnumerator queryPipeline = innerContext.Query(innerContext.StreamProvider.ReadAllText(queryAttributes.Path));
+                IXTable queryPipeline = innerContext.Query(innerContext.StreamProvider.ReadAllText(queryAttributes.Path));
                 innerContext.Pop(outerContext);
                 return queryPipeline;
             }
@@ -99,7 +99,7 @@ namespace XForm
 
             // Determine the XQL to build the table and construct a builder which can do so
             string xql;
-            IDataBatchEnumerator builder;
+            IXTable builder;
 
             // Find the config to build the table
             StreamAttributes configAttributes = innerContext.StreamProvider.Attributes(innerContext.StreamProvider.Path(LocationType.Config, tableName, ".xql"));
@@ -146,9 +146,9 @@ namespace XForm
             return new BinaryTableReader(innerContext.StreamProvider, tablePath);
         }
 
-        public IDataBatchEnumerator ReadSource(string tableName, XDatabaseContext context)
+        public IXTable ReadSource(string tableName, XDatabaseContext context)
         {
-            List<IDataBatchEnumerator> sources = new List<IDataBatchEnumerator>();
+            List<IXTable> sources = new List<IXTable>();
 
             // Find the latest source of this type
             ItemVersions sourceVersions = context.StreamProvider.ItemVersions(LocationType.Source, tableName);
@@ -188,6 +188,7 @@ namespace XForm
 
             // Return the source (if a single) or concatenated group (if multiple parts)
             if (sources.Count == 1) return sources[0];
+
             return new ConcatenatingReader(sources);
         }
 
@@ -237,7 +238,7 @@ namespace XForm
 
         public IEnumerable<string> SourceNames => _inner.SourceNames;
 
-        public IDataBatchEnumerator Build(string tableName, XDatabaseContext context)
+        public IXTable Build(string tableName, XDatabaseContext context)
         {
             // Ask the workflow runner to defer computing dependencies now
             return _inner.Build(tableName, context, true);
@@ -253,7 +254,7 @@ namespace XForm
     {
         public static string Build(string tableName, XDatabaseContext context, string outputFormat)
         {
-            IDataBatchEnumerator builder = null;
+            IXTable builder = null;
 
             try
             {

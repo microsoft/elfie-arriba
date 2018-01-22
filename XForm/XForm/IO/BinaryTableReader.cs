@@ -7,80 +7,140 @@ using System.IO;
 
 using XForm.Data;
 using XForm.IO.StreamProvider;
+using XForm.Query;
 using XForm.Types;
 
 namespace XForm.IO
 {
-    public class BinaryTableReader : IDataBatchList
+    public class BinaryReaderColumn : IXColumn, IDisposable
     {
-        private IStreamProvider _streamProvider;
-        private TableMetadata _metadata;
+        private bool _isCached;
 
-        private IColumnReader[] _readers;
-        private bool[] _isCached;
+        private BinaryTableReader _table;
+        private IStreamProvider _streamProvider;
+        private IColumnReader _columnReader;
+        private EnumReader _enumReader;
+
+        public ColumnDetails ColumnDetails { get; private set; }
+
+        public BinaryReaderColumn(BinaryTableReader table, ColumnDetails details, IStreamProvider streamProvider)
+        {
+            _table = table;
+            _streamProvider = streamProvider;
+            ColumnDetails = details;
+        }
+
+        public Func<XArray> CurrentGetter()
+        {
+            GetReader();
+            return () => _columnReader.Read(_table.CurrentSelector);
+        }
+
+        public Func<ArraySelector, XArray> SeekGetter()
+        {
+            GetReader(true);
+            return (selector) => _columnReader.Read(selector);
+        }
+
+        public Func<XArray> ValuesGetter()
+        {
+            GetReader();
+            if (_enumReader == null) return null;
+            return _enumReader.Values;
+        }
+
+        public Type IndicesType
+        {
+            get
+            {
+                GetReader();
+                if (_enumReader == null) return null;
+                return _enumReader.IndicesType;
+            }
+        }
+
+        public Func<XArray> IndicesCurrentGetter()
+        {
+            GetReader();
+            if (_enumReader == null) return null;
+            return () => _enumReader.Indices(_table.CurrentSelector);
+        }
+
+        public Func<ArraySelector, XArray> IndicesSeekGetter()
+        {
+            GetReader(true);
+            if (_enumReader == null) return null;
+            return (selector) => _enumReader.Indices(selector);
+        }
+
+        private void GetReader(bool requireCached = false)
+        {
+            // If we already have a reader with appropriate caching, keep using it
+            if (_columnReader != null && (requireCached == false || _isCached == true)) return;
+
+            // If we had a reader but need a cached one, Dispose the previous one
+            _isCached = requireCached;
+            if (_columnReader != null) _columnReader.Dispose();
+
+            // Build the new reader and store a typed EnumReader copy.
+            _columnReader = TypeProviderFactory.TryGetColumnReader(_streamProvider, ColumnDetails.Type, Path.Combine(_table.TablePath, ColumnDetails.Name), requireCached);
+            _enumReader = _columnReader as EnumReader;
+        }
+
+        public override string ToString()
+        {
+            return XqlScanner.Escape(this.ColumnDetails.Name, TokenType.ColumnName);
+        }
+
+        public void Dispose()
+        {
+            if(_columnReader != null)
+            {
+                _columnReader.Dispose();
+                _columnReader = null;
+            }
+        }
+    }
+
+    public class BinaryTableReader : ISeekableXTable
+    {
+        private TableMetadata _metadata;
+        private BinaryReaderColumn[] _columns;
 
         private ArraySelector _currentSelector;
         private ArraySelector _currentEnumerateSelector;
 
         public BinaryTableReader(IStreamProvider streamProvider, string tableRootPath)
         {
-            _streamProvider = streamProvider;
             TablePath = tableRootPath;
 
+            // Read metadata
             _metadata = TableMetadataSerializer.Read(streamProvider, TablePath);
-            _readers = new IColumnReader[_metadata.Schema.Count];
-            _isCached = new bool[_metadata.Schema.Count];
+
+            // Construct columns (files aren't opened until columns are subscribed to)
+            _columns = new BinaryReaderColumn[_metadata.Schema.Count];
+            for(int i = 0; i < _columns.Length; ++i)
+            {
+                _columns[i] = new BinaryReaderColumn(this, _metadata.Schema[i], streamProvider);
+            }
 
             Reset();
         }
 
+        public ArraySelector CurrentSelector => _currentEnumerateSelector;
+        public IReadOnlyList<IXColumn> Columns => _columns;
+
         public string TablePath { get; private set; }
         public string Query => _metadata.Query;
         public int Count => _metadata.RowCount;
-        public IReadOnlyList<ColumnDetails> Columns => _metadata.Schema;
-        public ArraySelector EnumerateSelector => _currentEnumerateSelector;
-
-        public int CurrentBatchRowCount { get; private set; }
-
-        public Func<DataBatch> ColumnGetter(int columnIndex)
-        {
-            // Get and cache the reader
-            ColumnReader(columnIndex);
-
-            return () => _readers[columnIndex].Read(_currentSelector);
-        }
-
-        public IColumnReader ColumnReader(int columnIndex)
-        {
-            if (_readers[columnIndex] == null)
-            {
-                ColumnDetails column = Columns[columnIndex];
-                string columnPath = Path.Combine(TablePath, column.Name);
-
-                // Read the column using the correct typed reader
-                _readers[columnIndex] = TypeProviderFactory.TryGetColumnReader(_streamProvider, column.Type, columnPath, false);
-            }
-
-            return _readers[columnIndex];
-        }
-
-        public IColumnReader CachedColumnReader(int columnIndex)
-        {
-            if (_readers[columnIndex] == null || _isCached[columnIndex] == false)
-            {
-                _readers[columnIndex] = TypeProviderFactory.TryGetColumnReader(_streamProvider, Columns[columnIndex].Type, Path.Combine(TablePath, Columns[columnIndex].Name), true);
-                _isCached[columnIndex] = true;
-            }
-
-            return _readers[columnIndex];
-        }
+        public int CurrentRowCount { get; private set; }
 
         public int Next(int desiredCount)
         {
             _currentEnumerateSelector = _currentEnumerateSelector.NextPage(Count, desiredCount);
             _currentSelector = _currentEnumerateSelector;
-            CurrentBatchRowCount = _currentEnumerateSelector.Count;
-            return CurrentBatchRowCount;
+            CurrentRowCount = _currentEnumerateSelector.Count;
+            return CurrentRowCount;
         }
 
         public void Get(ArraySelector selector)
@@ -96,14 +156,14 @@ namespace XForm.IO
 
         public void Dispose()
         {
-            if (_readers != null)
+            if (_columns != null)
             {
-                foreach (IColumnReader reader in _readers)
+                foreach (BinaryReaderColumn column in _columns)
                 {
-                    if (reader != null) reader.Dispose();
+                    if (column != null) column.Dispose();
                 }
 
-                _readers = null;
+                _columns = null;
             }
         }
     }

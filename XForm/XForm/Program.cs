@@ -62,7 +62,7 @@ namespace XForm
 
                         return 0;
                     case "build":
-                        if (args.Length < 2) throw new UsageException("'build' [DesiredOutputName] [DesiredOutputFormat?] [AsOfDateTimeUtc?]");
+                        if (args.Length < 2) throw new UsageException($"'build' [Table] [OutputFormat?] [AsOfDateTimeUtc?]", context.Runner.SourceNames);
                         context.RequestedAsOfDateTime = ParseDateTimeOrDefault(args, 3, context.RequestedAsOfDateTime);
                         string outputPath = ReportWriter.Build(
                             args[1],
@@ -125,7 +125,7 @@ namespace XForm
             long rowsWritten = 0;
             using (new TraceWatch(query))
             {
-                using (IDataBatchEnumerator source = context.Query(query))
+                using (IXTable source = context.Query(query))
                 {
                     rowsWritten = source.RunWithoutDispose();
                 }

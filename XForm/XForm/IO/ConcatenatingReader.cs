@@ -10,21 +10,87 @@ using XForm.Extensions;
 
 namespace XForm.IO
 {
+    public class ConcatenatingColumn : IXColumn
+    {
+        private IXTable _table;
+
+        private bool _isSubscribed;
+        private List<IXColumn> _sources;
+        private Func<XArray> _currentGetter;
+
+        Array _nullArray = null;
+
+        public ColumnDetails ColumnDetails { get; private set; }
+
+        public ConcatenatingColumn(IXTable table, ColumnDetails columnDetails)
+        {
+            _table = table;
+            _sources = new List<IXColumn>();
+
+            ColumnDetails = columnDetails;
+            Allocator.AllocateToSize(ref _nullArray, 1, columnDetails.Type);
+        }
+
+        public void AddSource(IXColumn sourceColumn)
+        {
+            _sources.Add(sourceColumn);
+        }
+
+        public void SetCurrentSourceIndex(int index)
+        {
+            IXColumn source = _sources[index];
+            if (_isSubscribed && source != null) _currentGetter = source.CurrentGetter();
+        }
+
+        public Func<XArray> CurrentGetter()
+        {
+            _isSubscribed = true;
+
+            return () =>
+            {
+                if (_currentGetter != null) return _currentGetter();
+                return XArray.Null(_nullArray, _table.CurrentRowCount);
+            };
+        }
+
+        public Func<ArraySelector, XArray> SeekGetter()
+        {
+            return null;
+        }
+
+        public Type IndicesType => null;
+
+        public Func<XArray> ValuesGetter()
+        {
+            return null;
+        }
+
+        public Func<XArray> IndicesCurrentGetter()
+        {
+            return null;
+        }
+
+        public Func<ArraySelector, XArray> IndicesSeekGetter()
+        {
+            return null;
+        }
+    }
+
     /// <summary>
-    ///  ConcatenatingReader groups together multiple IDataBatchEnumerator sources and
+    ///  ConcatenatingReader groups together multiple IXTable sources and
     ///  returns the rows from them one by one, showing the union of all available columns.
     /// </summary>
-    public class ConcatenatingReader : IDataBatchEnumerator
+    public class ConcatenatingReader : IXTable
     {
-        private IDataBatchEnumerator[] _sources;
-        private List<ColumnDetails> _columns;
+        private IXTable[] _sources;
+        private List<ConcatenatingColumn> _columns;
         private int _currentSourceIndex;
 
-        public ConcatenatingReader(IEnumerable<IDataBatchEnumerator> sources)
+        public ConcatenatingReader(IEnumerable<IXTable> sources)
         {
             _sources = sources.ToArray();
-            _columns = new List<ColumnDetails>();
-            _currentSourceIndex = 0;
+            _columns = new List<ConcatenatingColumn>();
+            _currentSourceIndex = -1;
 
             IdentifyColumns();
         }
@@ -32,82 +98,84 @@ namespace XForm.IO
         private void IdentifyColumns()
         {
             // Find the union of all columns. Ensure the names match
-            Dictionary<string, ColumnDetails> columns = new Dictionary<string, ColumnDetails>(StringComparer.OrdinalIgnoreCase);
-            foreach (IDataBatchEnumerator source in _sources)
+            Dictionary<string, ColumnDetails> columnCollection = new Dictionary<string, ColumnDetails>(StringComparer.OrdinalIgnoreCase);
+            foreach (IXTable source in _sources)
             {
-                foreach (ColumnDetails column in source.Columns)
+                foreach (IXColumn sourceColumn in source.Columns)
                 {
-                    ColumnDetails existingColumn;
-                    if (columns.TryGetValue(column.Name, out existingColumn))
+                    ColumnDetails existingColumnDetails;
+                    if (columnCollection.TryGetValue(sourceColumn.ColumnDetails.Name, out existingColumnDetails))
                     {
-                        if (!column.Equals(existingColumn))
+                        if (!sourceColumn.ColumnDetails.Equals(existingColumnDetails))
                         {
-                            throw new ArgumentException($"ConcatenatingReader couldn't combine sources because column {column.Name} had different types from different sources.");
+                            throw new ArgumentException($"ConcatenatingReader couldn't combine sources because column {sourceColumn.ColumnDetails.Name} had different types from different sources.");
                         }
                     }
                     else
                     {
-                        columns.Add(column.Name, column);
-                        _columns.Add(column);
+                        columnCollection.Add(sourceColumn.ColumnDetails.Name, sourceColumn.ColumnDetails);
                     }
                 }
             }
-        }
-
-        public IReadOnlyList<ColumnDetails> Columns => _columns;
-        public int CurrentBatchRowCount { get; private set; }
-
-        public Func<DataBatch> ColumnGetter(int columnIndex)
-        {
-            ColumnDetails column = Columns[columnIndex];
-            Func<DataBatch>[] gettersPerSource = new Func<DataBatch>[_sources.Length];
-            Array nullArray = null;
-            Allocator.AllocateToSize(ref nullArray, 1, column.Type);
-
-            // Get and cache the corresponding column getter from each source (null if the source doesn't have that column)
-            for (int i = 0; i < _sources.Length; ++i)
+            
+            // Create a column for each, adding each source to it (or null for sources which didn't have it)
+            foreach(string columnName in columnCollection.Keys)
             {
-                int sourceColumnIndex;
-                if (_sources[i].Columns.TryGetIndexOfColumn(column.Name, out sourceColumnIndex)) gettersPerSource[i] = _sources[i].ColumnGetter(sourceColumnIndex);
+                ConcatenatingColumn column = new ConcatenatingColumn(this, columnCollection[columnName]);
+
+                foreach(IXTable source in _sources)
+                {
+                    IXColumn sourceColumn;
+                    source.Columns.TryFind(columnName, out sourceColumn);
+                    column.AddSource(sourceColumn);
+                }
+
+                _columns.Add(column);
             }
-
-            // When called, return the batch from the active source for that column
-            return () =>
-            {
-                // Find the getter for the current source
-                Func<DataBatch> getter = gettersPerSource[_currentSourceIndex];
-
-                // If this source didn't have the column, return all null
-                if (getter == null) return DataBatch.Null(nullArray, CurrentBatchRowCount);
-
-                // Otherwise, return the current batch
-                return getter();
-            };
         }
+
+        public IReadOnlyList<IXColumn> Columns => _columns;
+        public int CurrentRowCount { get; private set; }
 
         public int Next(int desiredCount)
         {
+            if (_currentSourceIndex == -1) NextSource();
+
             while (_currentSourceIndex < _sources.Length)
             {
                 // Try to get rows from the next source
-                CurrentBatchRowCount = _sources[_currentSourceIndex].Next(desiredCount);
+                CurrentRowCount = _sources[_currentSourceIndex].Next(desiredCount);
 
                 // If it had rows left, return them
-                if (CurrentBatchRowCount > 0) return CurrentBatchRowCount;
+                if (CurrentRowCount > 0) return CurrentRowCount;
 
                 // If not, try the next source
-                _currentSourceIndex++;
+                NextSource();
             }
 
             // If out of sources, return no rows
             return 0;
         }
 
+        private void NextSource()
+        {
+            _currentSourceIndex++;
+
+            if (_currentSourceIndex < _sources.Length)
+            {
+                // Update the source for each column
+                for (int i = 0; i < _columns.Count; ++i)
+                {
+                    _columns[i].SetCurrentSourceIndex(_currentSourceIndex);
+                }
+            }
+        }
+
         public void Reset()
         {
-            _currentSourceIndex = 0;
+            _currentSourceIndex = -1;
 
-            foreach (IDataBatchEnumerator source in _sources)
+            foreach (IXTable source in _sources)
             {
                 source.Reset();
             }
@@ -117,7 +185,7 @@ namespace XForm.IO
         {
             if (_sources != null)
             {
-                foreach (IDataBatchEnumerator source in _sources)
+                foreach (IXTable source in _sources)
                 {
                     if (source != null) source.Dispose();
                 }

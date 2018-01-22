@@ -3,7 +3,7 @@
 
 using System;
 using System.Collections.Generic;
-
+using XForm.Columns;
 using XForm.Data;
 using XForm.Extensions;
 using XForm.Query;
@@ -17,10 +17,10 @@ namespace XForm.Verbs
         public string Verb => "join";
         public string Usage => "join {FromColumn} {ToTable} {ToColumn} {NewColPrefix}";
 
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, XDatabaseContext context)
+        public IXTable Build(IXTable source, XDatabaseContext context)
         {
             string sourceColumnName = context.Parser.NextColumnName(source);
-            IDataBatchEnumerator joinToSource = context.Parser.NextTableSource();
+            IXTable joinToSource = context.Parser.NextTableSource();
             string joinToColumn = context.Parser.NextColumnName(joinToSource);
 
             return new Join(
@@ -32,86 +32,66 @@ namespace XForm.Verbs
         }
     }
 
-    public class Join : IDataBatchEnumerator
+    public class Join : IXTable
     {
-        private IDataBatchEnumerator _source;
-        private Type _joinColumnType;
-        private int _joinFromColumnIndex;
-        private Func<DataBatch> _joinFromColumnGetter;
+        private IXTable _source;
+        private IXColumn[] _columns;
+        private SeekedColumn[] _rightSideColumns;
 
-        private IDataBatchList _cachedJoinSource;
-        private IColumnReader _joinToColumnReader;
+        private Type _joinColumnType;
+        private Func<XArray> _joinFromColumnGetter;
+
+        private ISeekableXTable _joinToSource;
+        private IXColumn _joinToColumn;
+        private Func<ArraySelector, XArray> _joinToSeekGetter;
 
         private IJoinDictionary _joinDictionary;
-
-        private List<ColumnDetails> _columns;
-        private List<int> _mappedColumnIndices;
 
         private RowRemapper _sourceJoinedRowsFilter;
         private ArraySelector _currentRightSideSelector;
 
-        public Join(IDataBatchEnumerator source, string joinFromColumn, IDataBatchEnumerator joinToSource, string joinToColumn, string joinSidePrefix)
+        public Join(IXTable source, string joinFromColumn, IXTable joinToSource, string joinToColumn, string joinSidePrefix)
         {
             _source = source;
-
-            _cachedJoinSource = joinToSource as IDataBatchList;
-            if (_cachedJoinSource == null) throw new ArgumentException($"Join right-hand-side must be a built binary table.");
+            _joinToSource = joinToSource as ISeekableXTable;
+            if (_joinToSource == null) throw new ArgumentException($"Join requires a single built Binary Table as the right side table.");
 
             // Request the JoinFromColumn Getter
-            _joinFromColumnIndex = source.Columns.IndexOfColumn(joinFromColumn);
-            _joinFromColumnGetter = source.ColumnGetter(_joinFromColumnIndex);
-            _joinColumnType = source.Columns[_joinFromColumnIndex].Type;
+            IXColumn joinFrom = source.Columns.Find(joinFromColumn);
+            _joinColumnType = joinFrom.ColumnDetails.Type;
+            _joinFromColumnGetter = joinFrom.CurrentGetter();
 
             // Request the JoinToColumn Reader (we'll need it cached)
-            int joinToColumnIndex = _cachedJoinSource.Columns.IndexOfColumn(joinToColumn);
-            Type joinToColumnType = _cachedJoinSource.Columns[joinToColumnIndex].Type;
+            _joinToColumn = _joinToSource.Columns.Find(joinToColumn);
+            Type joinToColumnType = _joinToColumn.ColumnDetails.Type;
             if (joinToColumnType != _joinColumnType) throw new ArgumentException($"Join requires columns of matching types; join from {_joinColumnType.Name} to {joinToColumnType.Name} not supported.");
-            _joinToColumnReader = _cachedJoinSource.CachedColumnReader(joinToColumnIndex);
+            _joinToSeekGetter = _joinToColumn.SeekGetter();
 
-            // All of the main source columns are passed through
-            _columns = new List<ColumnDetails>(source.Columns);
-
-            // Find and map the columns coming from the join
-            _mappedColumnIndices = new List<int>();
-            for (int i = 0; i < _cachedJoinSource.Columns.Count; ++i)
-            {
-                ColumnDetails column = _cachedJoinSource.Columns[i];
-                _columns.Add(column.Rename(joinSidePrefix + column.Name));
-                _mappedColumnIndices.Add(i);
-            }
-
+            // Build a remapper for left side columns
             _sourceJoinedRowsFilter = new RowRemapper();
-        }
 
-        public IReadOnlyList<ColumnDetails> Columns => _columns;
+            // Build column wrappers
+            _columns = new IXColumn[source.Columns.Count + joinToSource.Columns.Count];
+            _rightSideColumns = new SeekedColumn[joinToSource.Columns.Count];
 
-        public int CurrentBatchRowCount { get; private set; }
-
-        public Func<DataBatch> ColumnGetter(int columnIndex)
-        {
-            // If this is one of the joined in columns, return the rows which matched from the join
-            if (columnIndex >= _source.Columns.Count)
+            // Left Side columns are filtered to rows that joined (inner join)
+            for (int i = 0; i < source.Columns.Count; ++i)
             {
-                int joinColumnIndex = _mappedColumnIndices[columnIndex - _source.Columns.Count];
-                IColumnReader cachedColumnReader = _cachedJoinSource.CachedColumnReader(joinColumnIndex);
-                return () => cachedColumnReader.Read(_currentRightSideSelector);
+                _columns[i] = new RemappedColumn(source.Columns[i], _sourceJoinedRowsFilter);
             }
 
-            // Otherwise, get the source getter
-            Func<DataBatch> sourceGetter = (columnIndex == _joinFromColumnIndex ? _joinFromColumnGetter : _source.ColumnGetter(columnIndex));
-
-            // Cache an array to remap rows which joined
-            int[] remapArray = null;
-
-            return () =>
+            // Right side columns are seeked to the right side matching rows
+            for(int i = 0; i < joinToSource.Columns.Count; ++i)
             {
-                // Get the source values for this batch
-                DataBatch batch = sourceGetter();
-
-                // Remap to just the rows which joined
-                return _sourceJoinedRowsFilter.Remap(batch, ref remapArray);
-            };
+                SeekedColumn column = new SeekedColumn(RenamedColumn.Build(joinToSource.Columns[i], joinSidePrefix + joinToSource.Columns[i].ColumnDetails.Name));
+                _rightSideColumns[i] = column;
+                _columns[i + source.Columns.Count] = column;
+            }
         }
+
+        public IReadOnlyList<IXColumn> Columns => _columns;
+
+        public int CurrentRowCount { get; private set; }
 
         public int Next(int desiredCount)
         {
@@ -126,29 +106,35 @@ namespace XForm.Verbs
                 int count = _source.Next(desiredCount);
                 if (count == 0)
                 {
-                    CurrentBatchRowCount = 0;
+                    CurrentRowCount = 0;
                     return 0;
                 }
 
                 // Get values to join from
-                DataBatch joinFromValues = _joinFromColumnGetter();
+                XArray joinFromValues = _joinFromColumnGetter();
 
                 // Find which rows matched and to what right-side row indices
                 matchedRows = _joinDictionary.TryGetValues(joinFromValues, out _currentRightSideSelector);
 
-                // Filter left-side rows to the matches (inner join)
-                _sourceJoinedRowsFilter.SetMatches(matchedRows);
-
                 if (_currentRightSideSelector.Count > 0) break;
             }
 
-            CurrentBatchRowCount = _currentRightSideSelector.Count;
+            // Filter left-side rows to the matches (inner join)
+            _sourceJoinedRowsFilter.SetMatches(matchedRows);
+
+            // Seek right-side rows to the matches
+            for(int i = 0; i < _rightSideColumns.Length; ++i)
+            {
+                _rightSideColumns[i].Set(_currentRightSideSelector);
+            }
+
+            CurrentRowCount = _currentRightSideSelector.Count;
             return _currentRightSideSelector.Count;
         }
 
         private void BuildJoinDictionary()
         {
-            DataBatch allJoinToValues = _joinToColumnReader.Read(ArraySelector.All(_cachedJoinSource.Count));
+            XArray allJoinToValues = _joinToSeekGetter(ArraySelector.All(_joinToSource.Count));
             _joinDictionary = (IJoinDictionary)Allocator.ConstructGenericOf(typeof(JoinDictionary<>), _joinColumnType, allJoinToValues.Count);
             _joinDictionary.Add(allJoinToValues, 0);
         }
@@ -166,18 +152,18 @@ namespace XForm.Verbs
                 _source = null;
             }
 
-            if (_cachedJoinSource != null)
+            if (_joinToSource != null)
             {
-                _cachedJoinSource.Dispose();
-                _cachedJoinSource = null;
+                _joinToSource.Dispose();
+                _joinToSource = null;
             }
         }
     }
 
     public interface IJoinDictionary
     {
-        void Add(DataBatch keys, int firstRowIndex);
-        BitVector TryGetValues(DataBatch keys, out ArraySelector rightSideSelector);
+        void Add(XArray keys, int firstRowIndex);
+        BitVector TryGetValues(XArray keys, out ArraySelector rightSideSelector);
     }
 
     public class JoinDictionary<T> : IJoinDictionary
@@ -198,7 +184,7 @@ namespace XForm.Verbs
             _valueCopier = (IValueCopier<T>)(typeProvider.TryGetCopier());
         }
 
-        public void Add(DataBatch keys, int firstRowIndex)
+        public void Add(XArray keys, int firstRowIndex)
         {
             T[] keyArray = (T[])keys.Array;
 
@@ -224,7 +210,7 @@ namespace XForm.Verbs
             }
         }
 
-        public BitVector TryGetValues(DataBatch keys, out ArraySelector rightSideSelector)
+        public BitVector TryGetValues(XArray keys, out ArraySelector rightSideSelector)
         {
             Allocator.AllocateToSize(ref _returnedVector, keys.Count);
             Allocator.AllocateToSize(ref _returnedIndicesBuffer, keys.Count);

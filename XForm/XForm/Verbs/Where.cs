@@ -2,8 +2,11 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
-
+using System.Collections.Generic;
+using XForm.Columns;
 using XForm.Data;
+using XForm.Extensions;
+using XForm.Functions;
 using XForm.Query;
 using XForm.Query.Expression;
 using XForm.Transforms;
@@ -15,20 +18,21 @@ namespace XForm.Verbs
         public string Verb => "where";
         public string Usage => "where {Expression}";
 
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, XDatabaseContext context)
+        public IXTable Build(IXTable source, XDatabaseContext context)
         {
             return new Where(source, context.Parser.NextExpression(source, context));
         }
     }
 
-    public class Where : DataBatchEnumeratorWrapper
+    public class Where : XTableWrapper
     {
         private IExpression _expression;
         private BitVector _vector;
         private RowRemapper _mapper;
 
-        // Keep current filtered DataBatches from the source, to allow requesting more than the desired count
-        private DataBatch[] _currentBatches;
+        private RemappedColumn[] _columns;
+
+        // Keep current filtered arrays from the source, to allow requesting more than the desired count
         private int _currentMatchesTotal;
         private int _currentMatchesReturned;
         private int _nextCountToReturn;
@@ -37,40 +41,23 @@ namespace XForm.Verbs
         private int _totalRowsRetrieved;
         private int _totalRowsMatched;
 
-        public Where(IDataBatchEnumerator source, IExpression expression) : base(source)
+        public Where(IXTable source, IExpression expression) : base(source)
         {
             _expression = expression;
 
-            // Build a mapper to hold matching rows and remap source batches
+            // Build a mapper to hold matching rows and remap source arrays
             _mapper = new RowRemapper();
 
-            // Allocate room to cache returned DataBatches
-            _currentBatches = new DataBatch[source.Columns.Count];
-        }
-
-        public override Func<DataBatch> ColumnGetter(int columnIndex)
-        {
-            // Keep a column-specific array for remapping indices
-            int[] remapArray = null;
-
-            // Retrieve the column getter for this column
-            Func<DataBatch> getter = _source.ColumnGetter(columnIndex);
-
-            return () =>
+            // Build wrapper columns
+            _columns = new RemappedColumn[source.Columns.Count];
+            for(int i = 0; i < _columns.Length; ++i)
             {
-                // If we're done returning from the previous batch, ...
-                if (_currentMatchesReturned == 0)
-                {
-                    // Get the batch from the source for this column
-                    DataBatch batch = getter();
-
-                    // Remap the DataBatch indices for this column for the rows which matched the clause
-                    _currentBatches[columnIndex] = _mapper.Remap(batch, ref remapArray);
-                }
-
-                return _currentBatches[columnIndex].Slice(_currentMatchesReturned, _nextCountToReturn);
-            };
+                _columns[i] = new RemappedColumn(source.Columns[i], _mapper);
+            }
         }
+
+        public override IReadOnlyList<IXColumn> Columns => _columns;
+        public override int CurrentRowCount => _nextCountToReturn;
 
         private int CountToRequest(int desiredCount)
         {
@@ -82,13 +69,18 @@ namespace XForm.Verbs
             {
                 double rowsPerMatch = (double)_totalRowsRetrieved / (double)_totalRowsMatched;
                 result = (int)(desiredCount * rowsPerMatch);
+
+                // Never request more than 16x the match count
+                if (result > desiredCount * 16) result = desiredCount * 16;
+            }
+            else if(_totalRowsRetrieved > 1024)
+            {
+                // If more than 1,024 rows were searched with no matches, revert to full page size
+                result = XTableExtensions.DefaultBatchSize;
             }
 
-            // Never request more than 16x the match count
-            if (result > desiredCount * 16) result = desiredCount * 16;
-
-            // Always request at least 100 rows
-            if (result < 100) result = 100;
+            // Always request at least 256 rows
+            if (result < 256) result = 256;
 
             return result;
         }
@@ -129,6 +121,9 @@ namespace XForm.Verbs
                     _nextCountToReturn = Math.Min(desiredCount, _currentMatchesTotal - _currentMatchesReturned);
                     return _nextCountToReturn;
                 }
+
+                // Reconsider how many rows to request if no matches
+                countToRequest = CountToRequest(desiredCount);
             }
 
             return 0;

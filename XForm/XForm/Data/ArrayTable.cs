@@ -4,15 +4,16 @@
 using System;
 using System.Collections.Generic;
 
+using XForm.Columns;
 using XForm.Data;
-using XForm.Types;
 
 namespace XForm.IO
 {
-    public class ArrayTable : IDataBatchList
+
+
+    public class ArrayTable : ISeekableXTable
     {
-        private List<ColumnDetails> _columns;
-        private List<DataBatch> _columnArrays;
+        private List<ArrayColumn> _columns;
         private int _rowCount;
 
         private ArraySelector _currentSelector;
@@ -20,70 +21,55 @@ namespace XForm.IO
 
         public ArrayTable(int rowCount)
         {
-            _columns = new List<ColumnDetails>();
-            _columnArrays = new List<DataBatch>();
+            _columns = new List<ArrayColumn>();
             _rowCount = rowCount;
             Reset();
         }
 
-        public ArrayTable WithColumn(ColumnDetails details, DataBatch fullColumn)
+        public ArrayTable WithColumn(ColumnDetails details, XArray fullColumn)
         {
             if (fullColumn.Count != _rowCount) throw new ArgumentException($"All columns passed to ArrayReader must have the configured row count. The configured row count is {_rowCount:n0}; this column has {fullColumn.Count:n0} rows.");
 
             for (int i = 0; i < _columns.Count; ++i)
             {
-                if (_columns[i].Name.Equals(details.Name, StringComparison.OrdinalIgnoreCase)) throw new ArgumentException($"Can't add duplicate column. ArrayReader already has a column {details.Name}.");
+                if (_columns[i].ColumnDetails.Name.Equals(details.Name, StringComparison.OrdinalIgnoreCase)) throw new ArgumentException($"Can't add duplicate column. ArrayReader already has a column {details.Name}.");
             }
 
-            _columns.Add(details);
-            _columnArrays.Add(fullColumn);
+            _columns.Add(new ArrayColumn(fullColumn, details));
             return this;
         }
 
         public ArrayTable WithColumn(string columnName, Array array)
         {
-            return WithColumn(new ColumnDetails(columnName, array.GetType().GetElementType()), DataBatch.All(array, _rowCount));
+            return WithColumn(new ColumnDetails(columnName, array.GetType().GetElementType()), XArray.All(array, _rowCount));
         }
 
-        public IReadOnlyList<ColumnDetails> Columns => _columns;
-        public int CurrentBatchRowCount { get; private set; }
+        public int CurrentRowCount { get; private set; }
         public int Count => _rowCount;
-        public ArraySelector EnumerateSelector => _currentEnumerateSelector;
-
-        public Func<DataBatch> ColumnGetter(int columnIndex)
-        {
-            // Declare a remap array in case indices must be remapped
-            int[] remapArray = null;
-
-            return () =>
-            {
-                if (columnIndex < 0 || columnIndex >= _columnArrays.Count) throw new IndexOutOfRangeException("columnIndex");
-                DataBatch raw = _columnArrays[columnIndex];
-                return raw.Select(_currentSelector, ref remapArray);
-            };
-        }
+        public IReadOnlyList<IXColumn> Columns => _columns;
 
         public void Reset()
         {
             _currentEnumerateSelector = ArraySelector.All(_rowCount).Slice(0, 0);
+
+            for (int i = 0; i < _columns.Count; ++i)
+            {
+                _columns[i].SetSelector(_currentEnumerateSelector);
+            }
         }
 
         public int Next(int desiredCount)
         {
             _currentEnumerateSelector = _currentEnumerateSelector.NextPage(_rowCount, desiredCount);
             _currentSelector = _currentEnumerateSelector;
-            CurrentBatchRowCount = _currentEnumerateSelector.Count;
-            return CurrentBatchRowCount;
-        }
 
-        public IColumnReader ColumnReader(int columnIndex)
-        {
-            return CachedColumnReader(columnIndex);
-        }
+            for(int i = 0; i < _columns.Count; ++i)
+            {
+                _columns[i].SetSelector(_currentEnumerateSelector);
+            }
 
-        public IColumnReader CachedColumnReader(int columnIndex)
-        {
-            return new CachedColumnReader(_columnArrays[columnIndex]);
+            CurrentRowCount = _currentEnumerateSelector.Count;
+            return CurrentRowCount;
         }
 
         public void Dispose()

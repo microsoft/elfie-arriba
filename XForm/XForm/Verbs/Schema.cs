@@ -1,10 +1,10 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
+using XForm.Columns;
 using XForm.Data;
 using XForm.Query;
 
@@ -15,7 +15,7 @@ namespace XForm.Verbs
         public string Verb => "schema";
         public string Usage => "schema";
 
-        public IDataBatchEnumerator Build(IDataBatchEnumerator source, XDatabaseContext context)
+        public IXTable Build(IXTable source, XDatabaseContext context)
         {
             return new SchemaTransformer(source);
         }
@@ -24,42 +24,38 @@ namespace XForm.Verbs
     /// <summary>
     ///  Return the Schema of a Source (Column Name, Type, Nullable).
     /// </summary>
-    public class SchemaTransformer : DataBatchEnumeratorWrapper
+    public class SchemaTransformer : XTableWrapper
     {
-        private ColumnDetails[] _columns;
-        private DataBatch[] _results;
+        private ArrayColumn[] _columns;
+        private ArraySelector _enumerateSelector;
 
-        public SchemaTransformer(IDataBatchEnumerator source) : base(source)
+        public SchemaTransformer(IXTable source) : base(source)
         {
-            _columns = new ColumnDetails[2];
-            _columns[0] = new ColumnDetails("Name", typeof(string));
-            _columns[1] = new ColumnDetails("Type", typeof(string));
+            _columns = new ArrayColumn[2];
+            _columns[0] = new ArrayColumn(XArray.All(_source.Columns.Select((col) => col.ColumnDetails.Name).ToArray()), new ColumnDetails("Name", typeof(string)));
+            _columns[1] = new ArrayColumn(XArray.All(_source.Columns.Select((col) => col.ColumnDetails.Type.Name.ToString()).ToArray()), new ColumnDetails("Type", typeof(string)));
+
+            _enumerateSelector = ArraySelector.All(0);
         }
 
-        public override IReadOnlyList<ColumnDetails> Columns => _columns;
-
-        public override Func<DataBatch> ColumnGetter(int columnIndex)
-        {
-            return () => _results[columnIndex];
-        }
+        public override IReadOnlyList<IXColumn> Columns => _columns;
 
         public override void Reset()
         {
-            _results = null;
+            _enumerateSelector = ArraySelector.All(0);
+
+            _columns[0].SetSelector(_enumerateSelector);
+            _columns[1].SetSelector(_enumerateSelector);
         }
 
         public override int Next(int desiredCount)
         {
-            if (_results == null)
-            {
-                _results = new DataBatch[3];
-                _results[0] = DataBatch.All(_source.Columns.Select((cd) => cd.Name).ToArray());
-                _results[1] = DataBatch.All(_source.Columns.Select((cd) => cd.Type.Name.ToString()).ToArray());
+            _enumerateSelector = _enumerateSelector.NextPage(_source.Columns.Count, desiredCount);
 
-                return _source.Columns.Count;
-            }
+            _columns[0].SetSelector(_enumerateSelector);
+            _columns[1].SetSelector(_enumerateSelector);
 
-            return 0;
+            return _enumerateSelector.Count;
         }
     }
 }

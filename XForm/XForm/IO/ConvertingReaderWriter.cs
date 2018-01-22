@@ -13,10 +13,10 @@ namespace XForm.IO
     /// </summary>
     public class ConvertingWriter : IColumnWriter
     {
-        private Func<DataBatch, DataBatch> _converter;
+        private Func<XArray, XArray> _converter;
         private IColumnWriter _convertedValueWriter;
 
-        public ConvertingWriter(IColumnWriter convertedValueWriter, Func<DataBatch, DataBatch> converter)
+        public ConvertingWriter(IColumnWriter convertedValueWriter, Func<XArray, XArray> converter)
         {
             _converter = converter;
             _convertedValueWriter = convertedValueWriter;
@@ -24,9 +24,9 @@ namespace XForm.IO
 
         public Type WritingAsType => _convertedValueWriter.WritingAsType;
 
-        public void Append(DataBatch batch)
+        public void Append(XArray xarray)
         {
-            _convertedValueWriter.Append(_converter(batch));
+            _convertedValueWriter.Append(_converter(xarray));
         }
 
         public void Dispose()
@@ -46,12 +46,12 @@ namespace XForm.IO
     public class ConvertingReader : IColumnReader
     {
         private IColumnReader _innerReader;
-        private Func<DataBatch, DataBatch> _converter;
+        private Func<XArray, XArray> _converter;
 
-        private DataBatch _currentBatch;
+        private XArray _currentArray;
         private ArraySelector _currentSelector;
 
-        public ConvertingReader(IColumnReader innerReader, Func<DataBatch, DataBatch> converter)
+        public ConvertingReader(IColumnReader innerReader, Func<XArray, XArray> converter)
         {
             _innerReader = innerReader;
             _converter = converter;
@@ -59,13 +59,13 @@ namespace XForm.IO
 
         public int Count => _innerReader.Count;
 
-        public DataBatch Read(ArraySelector selector)
+        public XArray Read(ArraySelector selector)
         {
-            if (selector.Equals(_currentSelector)) return _currentBatch;
+            if (selector.Equals(_currentSelector)) return _currentArray;
 
-            _currentBatch = _converter(_innerReader.Read(selector));
+            _currentArray = _converter(_innerReader.Read(selector));
             _currentSelector = selector;
-            return _currentBatch;
+            return _currentArray;
         }
 
         public void Dispose()

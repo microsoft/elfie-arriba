@@ -12,13 +12,59 @@ using XForm.IO.StreamProvider;
 
 namespace XForm.IO
 {
-    public class TabularFileReader : IDataBatchEnumerator
+    internal class TabularColumn : IXColumn
+    {
+        private TabularFileReader _table;
+        private String8[] _currentArray;
+
+        public ColumnDetails ColumnDetails { get; private set; }
+
+        public TabularColumn(TabularFileReader table, string columnName)
+        {
+            _table = table;
+            ColumnDetails = new ColumnDetails(columnName, typeof(String8));
+        }
+
+        public void SetValues(String8[] currentArray)
+        {
+            _currentArray = currentArray;
+        }
+
+        public Func<XArray> CurrentGetter()
+        {
+            return () => XArray.All(_currentArray, _table.CurrentRowCount);
+        }
+
+        public Func<ArraySelector, XArray> SeekGetter()
+        {
+            return null;
+        }
+
+        public Func<XArray> ValuesGetter()
+        {
+            return null;
+        }
+
+        public Type IndicesType => null;
+
+        public Func<XArray> IndicesCurrentGetter()
+        {
+            return null;
+        }
+
+        public Func<ArraySelector, XArray> IndicesSeekGetter()
+        {
+            return null;
+        }
+    }
+
+    public class TabularFileReader : IXTable
     {
         private IStreamProvider _streamProvider;
         private string _filePath;
 
         private ITabularReader _reader;
-        private List<ColumnDetails> _columns;
+        private TabularColumn[] _columns;
 
         private String8Block _block;
         private String8[][] _cells;
@@ -27,39 +73,22 @@ namespace XForm.IO
         {
             _streamProvider = streamProvider;
             _filePath = filePath;
-            Reset();
-
             _block = new String8Block();
-            _cells = new String8[_columns.Count][];
+            Reset();
         }
 
-        public IReadOnlyList<ColumnDetails> Columns => _columns;
-        public int CurrentBatchRowCount { get; private set; }
-
-        public Func<DataBatch> ColumnGetter(int columnIndex)
-        {
-            //String8[] array = new String8[1];
-
-            //return () =>
-            //{
-            //    array[0] = _reader.Current(columnIndex).ToString8();
-            //    return DataBatch.All(array, 1);
-            //};
-
-            return () =>
-            {
-                return DataBatch.All(_cells[columnIndex], CurrentBatchRowCount);
-            };
-        }
+        public IReadOnlyList<IXColumn> Columns => _columns;
+        public int CurrentRowCount { get; private set; }
 
         public void Reset()
         {
             _reader = TabularFactory.BuildReader(_streamProvider.OpenRead(_filePath), _filePath);
 
-            _columns = new List<ColumnDetails>();
-            foreach (string columnName in _reader.Columns)
+            _columns = new TabularColumn[_reader.Columns.Count];
+            _cells = new String8[_reader.Columns.Count][];
+            for(int i = 0; i < _reader.Columns.Count; ++i)
             {
-                _columns.Add(new ColumnDetails(columnName, typeof(String8)));
+                _columns[i] = new TabularColumn(this, _reader.Columns[i]);
             }
         }
 
@@ -76,20 +105,25 @@ namespace XForm.IO
             //return _reader.NextRow();
 
             _block.Clear();
-            CurrentBatchRowCount = 0;
+            CurrentRowCount = 0;
 
             while (_reader.NextRow())
             {
                 for (int i = 0; i < _cells.Length; ++i)
                 {
-                    _cells[i][CurrentBatchRowCount] = _block.GetCopy(_reader.Current(i).ToString8());
+                    _cells[i][CurrentRowCount] = _block.GetCopy(_reader.Current(i).ToString8());
                 }
 
-                CurrentBatchRowCount++;
-                if (CurrentBatchRowCount == desiredCount) break;
+                CurrentRowCount++;
+                if (CurrentRowCount == desiredCount) break;
             }
 
-            return CurrentBatchRowCount;
+            for(int i = 0; i < _columns.Length; ++i)
+            {
+                _columns[i].SetValues(_cells[i]);
+            }
+
+            return CurrentRowCount;
         }
 
         public void Dispose()

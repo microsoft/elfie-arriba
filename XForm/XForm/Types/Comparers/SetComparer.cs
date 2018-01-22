@@ -1,5 +1,6 @@
-﻿using XForm.Data;
-using XForm.Functions;
+﻿using System;
+using XForm.Columns;
+using XForm.Data;
 using XForm.Query;
 
 namespace XForm.Types.Comparers
@@ -12,10 +13,14 @@ namespace XForm.Types.Comparers
     internal class SetComparer
     {
         BitVector _set;
+        bool[] _array;
 
         private SetComparer(BitVector set)
         {
             _set = set;
+
+            _array = null;
+            _set.ToArray(ref _array);
         }
         
         /// <summary>
@@ -25,13 +30,16 @@ namespace XForm.Types.Comparers
         /// <param name="leftColumn">EnumColumn being compared</param>
         /// <param name="currentComparer">Current Comparison function requested by TermExpression</param>
         /// <param name="rightColumn">Constant being compared against</param>
-        /// <param name="source">IDataBatchEnumerator containing comparison</param>
+        /// <param name="source">IXTable containing comparison</param>
         /// <returns>Comparer to compare the (updated) right Constant to the EnumColumn.Indices (rather than Values)</returns>
-        public static ComparerExtensions.Comparer ConvertToEnumIndexComparer(EnumColumn leftColumn, ComparerExtensions.Comparer currentComparer, ref Constant rightColumn, IDataBatchEnumerator source)
+        public static ComparerExtensions.Comparer ConvertToEnumIndexComparer(IXColumn leftColumn, ComparerExtensions.Comparer currentComparer, ref IXColumn rightColumn, IXTable source)
         {
+            Func<XArray> valuesGetter = leftColumn.ValuesGetter();
+            if (valuesGetter == null) throw new ArgumentException("ConvertToEnumIndexComparer is only valid for columns implementing Values.");
+
             // Get all distinct values from the left side and find matches
-            DataBatch left = leftColumn.Values();
-            DataBatch right = rightColumn.Getter()();
+            XArray left = leftColumn.ValuesGetter()();
+            XArray right = rightColumn.ValuesGetter()();
             BitVector set = new BitVector(left.Count);
             currentComparer(left, right, set);
 
@@ -50,7 +58,7 @@ namespace XForm.Types.Comparers
             else if (set.Count == 1)
             {
                 // Convert the constant to the one matching index and make the comparison for index equals that
-                rightColumn = new Constant(source, (byte)set.GetSingle(), typeof(byte));
+                rightColumn = new ConstantColumn(source, (byte)set.GetSingle(), typeof(byte));
 
                 return TypeProviderFactory.Get(typeof(byte)).TryGetComparer(CompareOperator.Equal);
             }
@@ -59,7 +67,7 @@ namespace XForm.Types.Comparers
                 set.Not(set.Count);
 
                 // Convert the constant to the one non-matching index and make the comparison for index doesn't equal that
-                rightColumn = new Constant(source, (byte)set.GetSingle(), typeof(byte));
+                rightColumn = new ConstantColumn(source, (byte)set.GetSingle(), typeof(byte));
 
                 return TypeProviderFactory.Get(typeof(byte)).TryGetComparer(CompareOperator.NotEqual);
             }
@@ -70,19 +78,19 @@ namespace XForm.Types.Comparers
             }
         }
 
-        public static void All(DataBatch left, DataBatch unused, BitVector vector)
+        public static void All(XArray left, XArray unused, BitVector vector)
         {
             vector.All(left.Count);
         }
 
-        public static void None(DataBatch left, DataBatch unused, BitVector vector)
+        public static void None(XArray left, XArray unused, BitVector vector)
         { }
 
-        public void Evaluate(DataBatch left, DataBatch unused, BitVector vector)
+        public void Evaluate(XArray left, XArray unused, BitVector vector)
         {
             byte[] leftArray = (byte[])left.Array;
 
-            // Check how the DataBatches are configured and run the fastest loop possible for the configuration.
+            // Check how the arrays are configured and run the fastest loop possible for the configuration.
             if (left.IsNull != null)
             {
                 // Slowest Path: Null checks and look up indices on both sides
@@ -90,7 +98,7 @@ namespace XForm.Types.Comparers
                 {
                     int leftIndex = left.Index(i);
                     if (left.IsNull != null && left.IsNull[leftIndex]) continue;
-                    if (_set[leftArray[leftIndex]]) vector.Set(i);
+                    if (_array[leftArray[leftIndex]]) vector.Set(i);
                 }
             }
             else if (left.Selector.Indices != null)
@@ -98,7 +106,7 @@ namespace XForm.Types.Comparers
                 // Slow Path: Look up indices on both sides.
                 for (int i = 0; i < left.Count; ++i)
                 {
-                    if (_set[leftArray[left.Index(i)]]) vector.Set(i);
+                    if (_array[leftArray[left.Index(i)]]) vector.Set(i);
                 }
             }
             else if (!left.Selector.IsSingleValue)
@@ -107,13 +115,13 @@ namespace XForm.Types.Comparers
                 int zeroOffset = left.Selector.StartIndexInclusive;
                 for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
                 {
-                    if (_set[leftArray[i]]) vector.Set(i - zeroOffset);
+                    if (_array[leftArray[i]]) vector.Set(i - zeroOffset);
                 }
             }
             else
             {
                 // Single Static comparison.
-                if (_set[leftArray[left.Selector.StartIndexInclusive]])
+                if (_array[leftArray[left.Selector.StartIndexInclusive]])
                 {
                     vector.All(left.Count);
                 }

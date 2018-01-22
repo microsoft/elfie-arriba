@@ -20,7 +20,7 @@ namespace XForm
 {
     public class PerformanceComparisons
     {
-        private const int DefaultMeasureMilliseconds = 2000;
+        private const int DefaultMeasureMilliseconds = 3000;
 
         private XDatabaseContext Context { get; set; }
         private int Count { get; set; }
@@ -60,7 +60,7 @@ namespace XForm
 
         public void Current()
         {
-            ColumnCache.IsEnabled = true;
+            //ColumnCache.IsEnabled = true;
 
             string query;
             // Still want to tune schema requests. Current bottleneck: LatestBeforeCutoff
@@ -69,13 +69,18 @@ namespace XForm
             //    schema
             //";
 
-            query = @"
-                read Asset.Extended.Release.Typed
-                where [Asset_SourceID] = 29 AND [IsBaseline] = 0";
+            //query = @"
+            //    read Asset.Extended.Release.Typed
+            //    where [Asset_SourceID] = 29 AND [IsBaseline] = 0";
 
             //query = @"
             //    read Identity.StandingAdmins.AssetAdminSummary.V0
             //    join [Name] Asset.Extended.Release [Name] Asset. ";
+
+            query = @"
+                read WebRequestHuge
+                where [ServerPort] = ""443"" AND [WasEncrypted] = ""false""
+                limit 50";
 
             string singleLineQuery = XqlScanner.QueryToSingleLineStyle(query);
 
@@ -202,27 +207,27 @@ namespace XForm
             }
         }
 
-        public void Join()
-        {
-            int joinFromLength = Math.Min(1000 * 1000, Values.Length);
-            ushort[] joinTo = Enumerable.Range(10, 1000).Select((i) => (ushort)i).ToArray();
+        //public void Join()
+        //{
+        //    int joinFromLength = Math.Min(1000 * 1000, Values.Length);
+        //    ushort[] joinTo = Enumerable.Range(10, 1000).Select((i) => (ushort)i).ToArray();
 
-            using (Benchmarker b = new Benchmarker($"ushort[{joinFromLength:n0}] | join [Value] | count", DefaultMeasureMilliseconds))
-            {
-                b.Measure("XForm Join", joinFromLength, () =>
-                {
-                    IDataBatchEnumerator joinToSource = Context.FromArrays(joinTo.Length).WithColumn("ID", joinTo);
+        //    using (Benchmarker b = new Benchmarker($"ushort[{joinFromLength:n0}] | join [Value] | count", DefaultMeasureMilliseconds))
+        //    {
+        //        b.Measure("XForm Join", joinFromLength, () =>
+        //        {
+        //            IXTable joinToSource = Context.FromArrays(joinTo.Length).WithColumn("ID", joinTo);
 
-                    IDataBatchEnumerator enumerator = Context.FromArrays(joinFromLength).WithColumn("Value", Values);
-                    enumerator = new Join(enumerator, "Value", joinToSource, "ID", "");
-                    return (int)enumerator.Count();
-                });
-            }
-        }
+        //            IXTable enumerator = Context.FromArrays(joinFromLength).WithColumn("Value", Values);
+        //            enumerator = new Join(enumerator, "Value", joinToSource, "ID", "");
+        //            return (int)enumerator.Count();
+        //        });
+        //    }
+        //}
 
         public void Dictionary()
         {
-            int count = 1000 * 1000;
+            int count = 4 * 1000 * 1000;
             Dictionary<int, int> expected = new Dictionary<int, int>();
             Dictionary5<int, int> actual = new Dictionary5<int, int>(new EqualityComparerAdapter<int>(TypeProviderFactory.Get(typeof(int)).TryGetComparer()));
 
@@ -237,22 +242,26 @@ namespace XForm
             {
                 b.Measure("System.Collections.Generic.Dictionary", count, () =>
                 {
+                    int containsCount = 0;
                     for (int i = 0; i < count; ++i)
                     {
                         expected[values[i]] = i;
+                        if (expected.ContainsKey(values[i])) containsCount++;
                     }
 
-                    return expected.Count;
+                    return expected.Count + containsCount;
                 });
 
                 b.Measure("XForm.Dictionary5", count, () =>
                 {
+                    int containsCount = 0;
                     for (int i = 0; i < count; ++i)
                     {
                         actual.Add(values[i], i);
+                        if (actual.ContainsKey(values[i])) containsCount++;
                     }
 
-                    return actual.Count;
+                    return actual.Count + containsCount;
                 });
 
                 b.AssertResultsEqual();
@@ -283,7 +292,7 @@ namespace XForm
             {
                 b.Measure("Choose", length, () =>
                 {
-                    IDataBatchEnumerator actual = Context.FromArrays(length)
+                    IXTable actual = Context.FromArrays(length)
                         .WithColumn("ID", id)
                         .WithColumn("Rank", rank)
                         .WithColumn("Value", value)

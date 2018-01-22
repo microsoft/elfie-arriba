@@ -137,7 +137,7 @@ namespace XForm
 
         private void CountWithinTimeout(string query, TimeSpan timeout, DateTime asOfDate, HttpListenerResponse response)
         {
-            IDataBatchEnumerator pipeline = null;
+            IXTable pipeline = null;
 
             try
             {
@@ -176,7 +176,7 @@ namespace XForm
 
         private void Run(string query, string format, int rowCountLimit, int colCountLimit, DateTime asOfDate, HttpListenerResponse response)
         {
-            IDataBatchEnumerator pipeline = null;
+            IXTable pipeline = null;
 
             try
             {
