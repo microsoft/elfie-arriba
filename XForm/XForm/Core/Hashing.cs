@@ -190,8 +190,8 @@ namespace XForm
 
             while (tailLength > 8)
             {
-                k1 = k1 << 8;
-                k1 ^= (ulong)(*tail);
+                k1 = k1 << 64;
+                k1 ^= (*(ulong*)tail);
                 tailLength -= 8;
                 tail += 8;
             }
