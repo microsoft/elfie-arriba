@@ -215,7 +215,7 @@ class Index extends React.Component {
             <div id="schema">
                 <div className="schemaHeader">
                     {!this.state.userCols.length && this.state.schemaBody && <span>{this.state.schemaBody.length} Columns</span>}
-                    {!!this.state.userCols.length && <span className="button" onClick={e => this.setState({ userCols: [] }, () => this.queryChanged())}>Reset</span>}
+                    {!!this.state.userCols.length && <span className="button" onClick={e => this.setState({ userCols: [] }, () => this.limitChanged())}>Reset</span>}
                     {!!this.state.userCols.length && <span className="button" onClick={e => {
                         const newLine = this.query.endsWith('\n') ? '' : '\n'
                         const userCols = this.state.userCols.length && `${newLine}select ${this.state.userCols.map(c => `[${c}]`).join(', ')}` || ''
@@ -226,7 +226,7 @@ class Index extends React.Component {
                                 text: userCols,
                                 forceMoveMarkers: true,
                             }])
-                        this.setState({ userCols: [] }, () => this.queryChanged())
+                        this.setState({ userCols: [] }, () => this.limitChanged())
                     }}>Append to Query</span>}
                 </div>
                 {this.state.schemaBody && <div className="tableWrapper">
@@ -234,7 +234,7 @@ class Index extends React.Component {
                         <tbody>
                             {this.state.schemaBody && this.state.schemaBody.map((r, i) => <tr key={i}>
                                 <td><label><input type="checkbox" checked={this.state.userCols.includes(r.name)} onChange={e => {
-                                    this.setState({ userCols: [...this.state.userCols].toggle(r.name) }, () => this.queryChanged())
+                                    this.setState({ userCols: [...this.state.userCols].toggle(r.name) }, () => this.limitChanged())
                                 }}/>{r.name}</label></td>
                                 <td>{r.type}</td>
                             </tr>)}
