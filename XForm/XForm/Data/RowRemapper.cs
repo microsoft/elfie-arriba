@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System;
 using System.Collections.Generic;
 
 using XForm.Data;
@@ -33,6 +34,8 @@ namespace XForm.Transforms
         {
             _vector = vector;
             _count = (count == -1 ? vector.Count : count);
+
+            // Set that we need indices again starting from the vector start
             _indicesFound = false;
             _nextVectorIndex = 0;
 
@@ -46,10 +49,16 @@ namespace XForm.Transforms
             if (!_indicesFound)
             {
                 Allocator.AllocateToSize(ref _indices, _count);
-                _vector.Page(_indices, ref _nextVectorIndex);
+                int countFound = _vector.Page(_indices, ref _nextVectorIndex);
+                if (countFound != _count) System.Diagnostics.Debugger.Break();
             }
 
+            // Set that we need indices again and the next expected count
+            _indicesFound = false;
             _count = countLimit;
+
+            // Clear cached remappings (they will need to be recomputed)
+            _cachedRemappings.Clear();
 
             return _nextVectorIndex != -1;
         }
@@ -73,13 +82,13 @@ namespace XForm.Transforms
             ArraySelector cachedMapping;
             if (_cachedRemappings.TryGetValue(source.Selector, out cachedMapping)) return source.Reselect(cachedMapping);
 
-            // Convert the BitVector to indices
+            // Convert the BitVector to indices if we haven't yet (deferred to first column wanting values)
             if (!_indicesFound)
             {
                 _indicesFound = true;
                 Allocator.AllocateToSize(ref _indices, _count);
                 int countFound = _vector.Page(_indices, ref _nextVectorIndex, _count);
-                if (countFound != _count) System.Diagnostics.Debugger.Break();
+                if (countFound != _count) throw new InvalidOperationException($"RowRemapper found {countFound:n0} rows when {_count:n0} expected paging in Vector with {_vector.Count:n0} total matches up to index {_nextVectorIndex:n0}.");
             }
 
             // Remap the outer selector

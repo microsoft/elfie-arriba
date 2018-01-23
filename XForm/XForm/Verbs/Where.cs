@@ -128,6 +128,8 @@ namespace XForm.Verbs
 
             return 0;
 
+            // Where.Next implementation which doesn't request excess results and page through them.
+            // Use instead to diagnose "wrong row count" problems which might be due to paging problems.
             //int outerCount;
             //while ((outerCount = _source.Next(desiredCount)) > 0)
             //{
@@ -143,7 +145,7 @@ namespace XForm.Verbs
             //    _totalRowsMatched += _currentMatchesTotal;
 
             //    _mapper.SetMatches(_vector);
-            //    if(_currentMatchesTotal > 0) return _currentMatchesTotal;
+            //    if (_currentMatchesTotal > 0) return _currentMatchesTotal;
             //}
 
             //return 0;
