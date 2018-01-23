@@ -53,7 +53,7 @@ namespace XForm
                     string query = Require(context, "q");
 
                     DateTime asOfDate = ParseOrDefault(context.Request.QueryString["asof"], _xDatabaseContext.RequestedAsOfDateTime);
-                    SuggestResult result = _suggester.Suggest(query);
+                    SuggestResult result = _suggester.Suggest(query, asOfDate);
 
                     // If the query is valid and there are no extra values valid next, just return valid
                     if (result.IsValid == true && result.Context == null)
