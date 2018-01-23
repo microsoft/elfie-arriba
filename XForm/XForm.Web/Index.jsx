@@ -88,6 +88,7 @@ class Index extends React.Component {
                         endLineNumber: position.lineNumber,
                         endColumn: position.column,
                     })
+                    const lastChar = textUntilPosition[textUntilPosition.length - 1]
                     return xhr(`suggest`, { q: textUntilPosition }).then(o => {
                         if (!o.Values) return []
 
@@ -99,7 +100,7 @@ class Index extends React.Component {
                                 columnName: kind.Field,
                             }[o.ItemCategory] || kind.Text,
                             label: s,
-                            insertText: s,
+                            insertText: lastChar === '[' && o.ItemCategory === '[Column]' ? s.slice(1) : s,
                         }))
                         return suggestions
                     })
@@ -108,7 +109,7 @@ class Index extends React.Component {
 
     		this.editor = monaco.editor.create(document.getElementById('queryEditor'), {
     			value: [
-    				'read WebRequest',
+    				'read WebRequestHuge',
                     'where [HttpStatus] != "200"',
     			].join('\n'),
     			language: 'xform',
@@ -122,7 +123,7 @@ class Index extends React.Component {
     		});
 
             this.editor.onDidChangeModelContent(() => this.queryTextChanged())
-            this.queryValid = true
+            this.validQuery = this.query
             this.queryChanged()
     	});
     }
@@ -131,8 +132,11 @@ class Index extends React.Component {
     }
     queryTextChanged() {
         xhr(`suggest`, { asof: this.state.asOf, q: this.query }).then(info => {
-            this.queryValid = info.Valid
-            if (info.Valid) this.debouncedQueryChanged()
+            const trimmedQuery = this.query.trim()
+            if (info.Valid && this.validQuery !== trimmedQuery) {
+                this.validQuery = trimmedQuery
+                this.debouncedQueryChanged()
+            }
 
             const status = info.ErrorMessage || info.Usage
             if (status !== this.state.status) this.setState({ status })
@@ -148,34 +152,41 @@ class Index extends React.Component {
         })
     }
     queryChanged() {
-        if (!this.queryValid) return
         this.count = this.baseCount
         this.cols = this.baseCols
         this.limitChanged()
-        xhr(`run`, { asof: this.state.asOf, q: `${this.query}\nschema` }).then(o => {
+        xhr(`run`, { asof: this.state.asOf, q: `${this.validQuery}\nschema` }).then(o => {
             if (o.rows) {
                 this.setState({
                     schemaBody: o.rows.map(r => ({ name: r[0], type: `${r[1]}` })),
                 })
             }
         })
-        xhr(`count`, { asof: this.state.asOf, q: this.query }).then(o => {
-            this.setState({ resultCount: typeof o.Count === "number" && `${o.Count.toLocaleString()} Results (${o.RuntimeMs} ms)`, pausePulse: true })
-            setTimeout(() => this.setState({ pausePulse: false }))
-        })
     }
     limitChanged(addCount = 0, addCols = 0) {
         this.count += addCount
         this.cols += addCols
-        const q = this.query
+        const q = this.validQuery
 
         if (!q) return // Running with an empty query will return a "" instead of an empty object table.
 
-        this.setState({ loading: true })
         const userCols = this.state.userCols.length && `\nselect ${this.state.userCols.map(c => `[${c}]`).join(', ')}` || ''
+        const firstRun = this.count === this.baseCount && this.cols === this.baseCols // firstRun... of the this specific query
+        this.setState({ loading: true, pausePulse: firstRun })
         xhr(`run`, { rowLimit: this.count, colLimit: this.cols, asof: this.state.asOf, q: `${q}${userCols}` }).then(o => {
             if (o.Message || o.ErrorMessage) throw 'Error should have been caught before run.'
-            this.setState({ results: o, loading: false })
+            if (firstRun) {
+                this.setState({ results: o })
+                xhr(`count`, { asof: this.state.asOf, q: this.validQuery }).then(o => {
+                    this.setState({
+                        resultCount: typeof o.Count === "number" && `${o.Count.toLocaleString()} Results (${o.RuntimeMs} ms)`,
+                        loading: false,
+                        pausePulse: false,
+                    })
+                })
+            } else {
+                this.setState({ results: o, loading: false })
+            }
         })
     }
     render() {
@@ -186,14 +197,14 @@ class Index extends React.Component {
             rows = results.rows
         }
 
-        const q = this.query
-        const encodedQuery = encodeURIComponent(q)
+        const encodedQuery = encodeURIComponent(this.validQuery)
 
         return <div className={`root`}>
             <div className="query">
                 <div className="queryHeader">
                     <input ref="name" type="text" placeholder="Add Title to Save" />
                     <span onClick={e => {
+                        const q = this.query
                         const name = this.refs.name.value
                         if (!name || !q) return
                         xhr(`save`, { name, q }).then(o => {
@@ -248,8 +259,8 @@ class Index extends React.Component {
                 <div className="" className={`resultsHeader ${this.state.pausePulse ? '' : 'pulse'}`}>
                     <span>{this.state.resultCount}</span>
                     <span className="flexFill"></span>
-                    {q && <a className="button" target="_blank" href={`http://localhost:5073/download?fmt=csv&q=${encodedQuery}`}>CSV</a>}
-                    {q && <a className="button" target="_blank" href={`http://localhost:5073/download?fmt=tsv&q=${encodedQuery}`}>TSV</a>}
+                    {encodedQuery && <a className="button" target="_blank" href={`http://localhost:5073/download?fmt=csv&q=${encodedQuery}`}>CSV</a>}
+                    {encodedQuery && <a className="button" target="_blank" href={`http://localhost:5073/download?fmt=tsv&q=${encodedQuery}`}>TSV</a>}
                     <span className={`loading ${ this.state.loading && 'loading-active' }`}></span>
                 </div>
                 <div className="tableWrapper" onScroll={e => {

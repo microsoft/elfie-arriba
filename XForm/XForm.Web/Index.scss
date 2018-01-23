@@ -219,18 +219,29 @@ body {
     flex-direction: column;
     overflow: hidden;
 
-    .pulse { animation: pulse 1s ease-out 1; }
-    @keyframes pulse {
-        0%    { background-color: hsl(205, 90%, 45%); }
-        30%   { background-color: hsl(205, 90%, 65%); }
-        100%  { background-color: hsl(205, 90%, 45%); }
-    }
-
     .resultsHeader {
         @include header;
         flex-shrink: 0;
-        position: relative; // For .loading
 
+        &.pulse {
+            @keyframes pulse {
+                0%    { background-color: hsl(205, 90%, 45%); }
+                30%   { background-color: hsl(205, 90%, 55%); }
+                100%  { background-color: hsl(205, 90%, 45%); }
+            }
+            animation: pulse 1s ease-out 1;
+            span:first-child {
+                opacity: 1;
+                transition: opacity 1.5s;
+            }
+        }
+
+        span:first-child {
+            opacity: 0;
+            transition: opacity 1s;
+        }
+
+        position: relative; // For .loading
         .loading {
             display: none;
             position: absolute;
@@ -243,7 +254,7 @@ body {
                 display: block;
                 background: linear-gradient(90deg, transparent 70%, $bg 85%, transparent);
                 background-size: 200%;
-                animation: wave 1.5s linear 500ms infinite;
+                animation: wave 1.5s linear infinite;
 
                 @keyframes wave {
                     0%    { background-position: 200% 50% }
