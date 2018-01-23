@@ -92,6 +92,7 @@ namespace XForm.Verbs
             if (_currentMatchesTotal > _currentMatchesReturned)
             {
                 _nextCountToReturn = Math.Min(desiredCount, _currentMatchesTotal - _currentMatchesReturned);
+                _mapper.NextMatchPage(_nextCountToReturn);
                 return _nextCountToReturn;
             }
 
@@ -108,16 +109,16 @@ namespace XForm.Verbs
                 Allocator.AllocateToSize(ref _vector, outerCount);
                 _vector.None();
 
-                // Match the query expression and count matches
+                // Match the query expression and count all matches
                 _expression.Evaluate(_vector);
-                _mapper.SetMatches(_vector);
-                _currentMatchesTotal = _mapper.Count;
+                _currentMatchesTotal = _vector.Count;
                 _totalRowsMatched += _currentMatchesTotal;
 
                 // If we got matches, return the first set requested, otherwise ask for more
                 if (_currentMatchesTotal > 0)
                 {
                     _nextCountToReturn = Math.Min(desiredCount, _currentMatchesTotal - _currentMatchesReturned);
+                    _mapper.SetMatches(_vector, _nextCountToReturn);
                     return _nextCountToReturn;
                 }
 
@@ -126,6 +127,26 @@ namespace XForm.Verbs
             }
 
             return 0;
+
+            //int outerCount;
+            //while ((outerCount = _source.Next(desiredCount)) > 0)
+            //{
+            //    // Track the total retrieved from the source
+            //    _totalRowsRetrieved += outerCount;
+
+            //    Allocator.AllocateToSize(ref _vector, outerCount);
+            //    _vector.None();
+
+            //    // Match the query expression and count all matches
+            //    _expression.Evaluate(_vector);
+            //    _currentMatchesTotal = _vector.Count;
+            //    _totalRowsMatched += _currentMatchesTotal;
+
+            //    _mapper.SetMatches(_vector);
+            //    if(_currentMatchesTotal > 0) return _currentMatchesTotal;
+            //}
+
+            //return 0;
         }
     }
 }

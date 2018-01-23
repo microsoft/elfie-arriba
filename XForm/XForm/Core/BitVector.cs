@@ -24,7 +24,7 @@ namespace XForm
         private ulong[] _bitVector;
         internal static Func<ulong[], int> s_nativeCount;
         internal static PageSignature s_nativePage;
-        internal delegate int PageSignature(ulong[] vector, int[] indicesFound, ref int nextIndex);
+        internal delegate int PageSignature(ulong[] vector, int[] indicesFound, ref int nextIndex, int countLimit);
 
         public BitVector(int length)
         {
@@ -102,9 +102,11 @@ namespace XForm
             }
         }
 
-        public int Page(int[] indicesFound, ref int fromIndex)
+        public int Page(int[] indicesFound, ref int fromIndex, int countLimit = -1)
         {
-            if (s_nativePage != null) return s_nativePage(_bitVector, indicesFound, ref fromIndex);
+            if (countLimit > indicesFound.Length) throw new ArgumentOutOfRangeException("countLimit");
+            if (countLimit == -1) countLimit = indicesFound.Length;
+            if (s_nativePage != null) return s_nativePage(_bitVector, indicesFound, ref fromIndex, countLimit);
 
             int countFound = 0;
             int i;
@@ -115,7 +117,7 @@ namespace XForm
                     indicesFound[countFound] = i;
                     countFound++;
 
-                    if (countFound == indicesFound.Length) break;
+                    if (countFound == countLimit) break;
                 }
             }
 
