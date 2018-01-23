@@ -121,30 +121,31 @@ class Index extends React.Component {
                 hideCursorInOverviewRuler: true,
     		});
 
-            this.editor.onDidChangeModelContent(() => {
-                xhr(`suggest`, { q: this.query }).then(info => {
-                    this.queryValid = info.Valid
-                    if (info.Valid) this.debouncedQueryChanged()
-
-                    const status = info.ErrorMessage || info.Usage
-                    if (status !== this.state.status) this.setState({ status })
-
-                    const queryHint = !info.InvalidToken && info.ItemCategory || ''
-                    if (queryHint != this.state.queryHint) this.setState({ queryHint })
-                })
-                setTimeout(() => {
-                    const ia = document.querySelector('.inputarea').style
-                    const qh = document.querySelector('.queryHint').style
-                    qh.top = parseInt(ia.top) + 1 + 'px'
-                    qh.left = ia.left
-                })
-            })
+            this.editor.onDidChangeModelContent(() => this.queryTextChanged())
             this.queryValid = true
             this.queryChanged()
     	});
     }
     get query() {
         return this.editor && this.editor.getModel().getValue()
+    }
+    queryTextChanged() {
+        xhr(`suggest`, { asof: this.state.asOf, q: this.query }).then(info => {
+            this.queryValid = info.Valid
+            if (info.Valid) this.debouncedQueryChanged()
+
+            const status = info.ErrorMessage || info.Usage
+            if (status !== this.state.status) this.setState({ status })
+
+            const queryHint = !info.InvalidToken && info.ItemCategory || ''
+            if (queryHint != this.state.queryHint) this.setState({ queryHint })
+        })
+        setTimeout(() => {
+            const ia = document.querySelector('.inputarea').style
+            const qh = document.querySelector('.queryHint').style
+            qh.top = parseInt(ia.top) + 1 + 'px'
+            qh.left = ia.left
+        })
     }
     queryChanged() {
         if (!this.queryValid) return
@@ -200,7 +201,7 @@ class Index extends React.Component {
                             setTimeout(() => this.setState({ saving: "Save" }), 3000)
                         })
                     }}>{ this.state.saving || "Save" }</span>
-                    <select onChange={e => this.setState({ asOf: e.target.value || undefined }, () => this.queryChanged())}>
+                    <select onChange={e => this.setState({ asOf: e.target.value || undefined }, () => this.queryTextChanged())}>
                         <option value="">As of Now</option>
                         <option value={Date.daysAgo(1).toXFormat()}>As of Yesterday</option>
                         <option value={Date.daysAgo(7).toXFormat()}>As of Last Week</option>
