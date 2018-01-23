@@ -104,7 +104,7 @@ namespace XForm
             string xql;
             IXTable builder;
 
-            // Find the config to build the table
+            // Find the config to build the table and scan dependency versions to determine whether table is out-of-date
             StreamAttributes configAttributes = innerContext.StreamProvider.Attributes(innerContext.StreamProvider.Path(LocationType.Config, tableName, ".xql"));
             if (!configAttributes.Exists)
             {
