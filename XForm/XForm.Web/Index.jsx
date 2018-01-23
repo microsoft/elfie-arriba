@@ -160,7 +160,7 @@ class Index extends React.Component {
             }
         })
         xhr(`count`, { asof: this.state.asOf, q: this.query }).then(o => {
-            this.setState({ resultCount: typeof o === "number" && `${o.toLocaleString()} Results`, pausePulse: true })
+            this.setState({ resultCount: typeof o.Count === "number" && `${o.Count.toLocaleString()} Results (${o.RuntimeMs} ms)`, pausePulse: true })
             setTimeout(() => this.setState({ pausePulse: false }))
         })
     }
