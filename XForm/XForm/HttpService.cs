@@ -12,6 +12,7 @@ using XForm.Data;
 using XForm.Extensions;
 using XForm.IO;
 using XForm.Query;
+using System.Diagnostics;
 
 namespace XForm
 {
@@ -153,6 +154,7 @@ namespace XForm
                 pipeline = context.Query(query);
 
                 // Try to get the count up to the timeout
+                if (Debugger.IsAttached) timeout = TimeSpan.MaxValue;
                 RunResult result = pipeline.RunUntilTimeout(timeout);
 
                 using (ITabularWriter writer = WriterForFormat("json", response))

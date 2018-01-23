@@ -113,32 +113,12 @@ namespace XForm.Query.Expression
 
         private void WhereIsNull(XArray source, XArray unused, BitVector vector)
         {
-            // If nothing was null in the source xarray, there are no matches
-            if (source.IsNull == null) return;
-
-            // Otherwise, add rows where the value was marked null
-            for (int i = 0; i < source.Count; ++i)
-            {
-                int index = source.Index(i);
-                if (source.IsNull[index]) vector.Set(i);
-            }
+            BoolComparer.WhereNull(source, true, vector);
         }
 
         private void WhereIsNotNull(XArray source, XArray unused, BitVector vector)
         {
-            // If nothing was null in the source xarray, every row matches
-            if (source.IsNull == null)
-            {
-                vector.All(source.Count);
-                return;
-            }
-
-            // Otherwise, add rows where the value was marked null
-            for (int i = 0; i < source.Count; ++i)
-            {
-                int index = source.Index(i);
-                if (!source.IsNull[index]) vector.Set(i);
-            }
+            BoolComparer.WhereNull(source, false, vector);
         }
 
         public override string ToString()

@@ -45,19 +45,7 @@ namespace XForm.Types.Comparers
             String8[] rightArray = (String8[])right.Array;
 
             // Check how the XArrays are configured and run the fastest loop possible for the configuration.
-            if (left.IsNull != null || right.IsNull != null)
-            {
-                // Slowest Path: Null checks and look up indices on both sides. ~65ms for 16M
-                for (int i = 0; i < left.Count; ++i)
-                {
-                    int leftIndex = left.Index(i);
-                    int rightIndex = right.Index(i);
-                    if (left.IsNull != null && left.IsNull[leftIndex]) continue;
-                    if (right.IsNull != null && right.IsNull[rightIndex]) continue;
-                    if (leftArray[leftIndex].CompareTo(rightArray[rightIndex]) == 0) vector.Set(i);
-                }
-            }
-            else if (left.Selector.Indices != null || right.Selector.Indices != null)
+            if (left.Selector.Indices != null || right.Selector.Indices != null)
             {
                 // Slow Path: Look up indices on both sides. ~55ms for 16M
                 for (int i = 0; i < left.Count; ++i)
@@ -71,14 +59,15 @@ namespace XForm.Types.Comparers
                 if (s_WhereNative != null)
                 {
                     s_WhereNative(leftArray, left.Selector.StartIndexInclusive, (byte)CompareOperator.Equal, rightArray, right.Selector.StartIndexInclusive, left.Selector.Count, (byte)BooleanOperator.Or, vector.Array, 0);
-                    return;
                 }
-
-                int zeroOffset = left.Selector.StartIndexInclusive;
-                int leftIndexToRightIndex = right.Selector.StartIndexInclusive - left.Selector.StartIndexInclusive;
-                for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
+                else
                 {
-                    if (leftArray[i].CompareTo(rightArray[i + leftIndexToRightIndex]) == 0) vector.Set(i - zeroOffset);
+                    int zeroOffset = left.Selector.StartIndexInclusive;
+                    int leftIndexToRightIndex = right.Selector.StartIndexInclusive - left.Selector.StartIndexInclusive;
+                    for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
+                    {
+                        if (leftArray[i].CompareTo(rightArray[i + leftIndexToRightIndex]) == 0) vector.Set(i - zeroOffset);
+                    }
                 }
             }
             else if (!left.Selector.IsSingleValue)
@@ -90,12 +79,13 @@ namespace XForm.Types.Comparers
                 if (s_WhereSingleNative != null)
                 {
                     s_WhereSingleNative(leftArray, left.Selector.StartIndexInclusive, left.Selector.Count, (byte)CompareOperator.Equal, rightValue, (byte)BooleanOperator.Or, vector.Array, 0);
-                    return;
                 }
-
-                for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
+                else
                 {
-                    if (leftArray[i].CompareTo(rightValue) == 0) vector.Set(i - zeroOffset);
+                    for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
+                    {
+                        if (leftArray[i].CompareTo(rightValue) == 0) vector.Set(i - zeroOffset);
+                    }
                 }
             }
             else
@@ -106,6 +96,10 @@ namespace XForm.Types.Comparers
                     vector.All(left.Count);
                 }
             }
+
+            // Remove nulls from matches
+            BoolComparer.AndNotNull(left, vector);
+            BoolComparer.AndNotNull(right, vector);
         }
 
         public bool WhereEqual(String8 left, String8 right)
@@ -119,19 +113,7 @@ namespace XForm.Types.Comparers
             String8[] rightArray = (String8[])right.Array;
 
             // Check how the XArrays are configured and run the fastest loop possible for the configuration.
-            if (left.IsNull != null || right.IsNull != null)
-            {
-                // Slowest Path: Null checks and look up indices on both sides. ~65ms for 16M
-                for (int i = 0; i < left.Count; ++i)
-                {
-                    int leftIndex = left.Index(i);
-                    int rightIndex = right.Index(i);
-                    if (left.IsNull != null && left.IsNull[leftIndex]) continue;
-                    if (right.IsNull != null && right.IsNull[rightIndex]) continue;
-                    if (leftArray[leftIndex].CompareTo(rightArray[rightIndex]) != 0) vector.Set(i);
-                }
-            }
-            else if (left.Selector.Indices != null || right.Selector.Indices != null)
+            if (left.Selector.Indices != null || right.Selector.Indices != null)
             {
                 // Slow Path: Look up indices on both sides. ~55ms for 16M
                 for (int i = 0; i < left.Count; ++i)
@@ -145,14 +127,15 @@ namespace XForm.Types.Comparers
                 if (s_WhereNative != null)
                 {
                     s_WhereNative(leftArray, left.Selector.StartIndexInclusive, (byte)CompareOperator.NotEqual, rightArray, right.Selector.StartIndexInclusive, left.Selector.Count, (byte)BooleanOperator.Or, vector.Array, 0);
-                    return;
                 }
-
-                int zeroOffset = left.Selector.StartIndexInclusive;
-                int leftIndexToRightIndex = right.Selector.StartIndexInclusive - left.Selector.StartIndexInclusive;
-                for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
+                else
                 {
-                    if (leftArray[i].CompareTo(rightArray[i + leftIndexToRightIndex]) != 0) vector.Set(i - zeroOffset);
+                    int zeroOffset = left.Selector.StartIndexInclusive;
+                    int leftIndexToRightIndex = right.Selector.StartIndexInclusive - left.Selector.StartIndexInclusive;
+                    for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
+                    {
+                        if (leftArray[i].CompareTo(rightArray[i + leftIndexToRightIndex]) != 0) vector.Set(i - zeroOffset);
+                    }
                 }
             }
             else if (!left.Selector.IsSingleValue)
@@ -164,12 +147,13 @@ namespace XForm.Types.Comparers
                 if (s_WhereSingleNative != null)
                 {
                     s_WhereSingleNative(leftArray, left.Selector.StartIndexInclusive, left.Selector.Count, (byte)CompareOperator.NotEqual, rightValue, (byte)BooleanOperator.Or, vector.Array, 0);
-                    return;
                 }
-
-                for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
+                else
                 {
-                    if (leftArray[i].CompareTo(rightValue) != 0) vector.Set(i - zeroOffset);
+                    for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
+                    {
+                        if (leftArray[i].CompareTo(rightValue) != 0) vector.Set(i - zeroOffset);
+                    }
                 }
             }
             else
@@ -180,6 +164,10 @@ namespace XForm.Types.Comparers
                     vector.All(left.Count);
                 }
             }
+
+            // Remove nulls from matches
+            BoolComparer.AndNotNull(left, vector);
+            BoolComparer.AndNotNull(right, vector);
         }
 
         public bool WhereNotEqual(String8 left, String8 right)
@@ -193,19 +181,7 @@ namespace XForm.Types.Comparers
             String8[] rightArray = (String8[])right.Array;
 
             // Check how the XArrays are configured and run the fastest loop possible for the configuration.
-            if (left.IsNull != null || right.IsNull != null)
-            {
-                // Slowest Path: Null checks and look up indices on both sides. ~65ms for 16M
-                for (int i = 0; i < left.Count; ++i)
-                {
-                    int leftIndex = left.Index(i);
-                    int rightIndex = right.Index(i);
-                    if (left.IsNull != null && left.IsNull[leftIndex]) continue;
-                    if (right.IsNull != null && right.IsNull[rightIndex]) continue;
-                    if (leftArray[leftIndex].CompareTo(rightArray[rightIndex]) < 0) vector.Set(i);
-                }
-            }
-            else if (left.Selector.Indices != null || right.Selector.Indices != null)
+            if (left.Selector.Indices != null || right.Selector.Indices != null)
             {
                 // Slow Path: Look up indices on both sides. ~55ms for 16M
                 for (int i = 0; i < left.Count; ++i)
@@ -219,14 +195,15 @@ namespace XForm.Types.Comparers
                 if (s_WhereNative != null)
                 {
                     s_WhereNative(leftArray, left.Selector.StartIndexInclusive, (byte)CompareOperator.LessThan, rightArray, right.Selector.StartIndexInclusive, left.Selector.Count, (byte)BooleanOperator.Or, vector.Array, 0);
-                    return;
                 }
-
-                int zeroOffset = left.Selector.StartIndexInclusive;
-                int leftIndexToRightIndex = right.Selector.StartIndexInclusive - left.Selector.StartIndexInclusive;
-                for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
+                else
                 {
-                    if (leftArray[i].CompareTo(rightArray[i + leftIndexToRightIndex]) < 0) vector.Set(i - zeroOffset);
+                    int zeroOffset = left.Selector.StartIndexInclusive;
+                    int leftIndexToRightIndex = right.Selector.StartIndexInclusive - left.Selector.StartIndexInclusive;
+                    for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
+                    {
+                        if (leftArray[i].CompareTo(rightArray[i + leftIndexToRightIndex]) < 0) vector.Set(i - zeroOffset);
+                    }
                 }
             }
             else if (!left.Selector.IsSingleValue)
@@ -238,12 +215,13 @@ namespace XForm.Types.Comparers
                 if (s_WhereSingleNative != null)
                 {
                     s_WhereSingleNative(leftArray, left.Selector.StartIndexInclusive, left.Selector.Count, (byte)CompareOperator.LessThan, rightValue, (byte)BooleanOperator.Or, vector.Array, 0);
-                    return;
                 }
-
-                for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
+                else
                 {
-                    if (leftArray[i].CompareTo(rightValue) < 0) vector.Set(i - zeroOffset);
+                    for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
+                    {
+                        if (leftArray[i].CompareTo(rightValue) < 0) vector.Set(i - zeroOffset);
+                    }
                 }
             }
             else
@@ -254,6 +232,10 @@ namespace XForm.Types.Comparers
                     vector.All(left.Count);
                 }
             }
+
+            // Remove nulls from matches
+            BoolComparer.AndNotNull(left, vector);
+            BoolComparer.AndNotNull(right, vector);
         }
 
         public bool WhereLessThan(String8 left, String8 right)
@@ -267,19 +249,7 @@ namespace XForm.Types.Comparers
             String8[] rightArray = (String8[])right.Array;
 
             // Check how the XArrays are configured and run the fastest loop possible for the configuration.
-            if (left.IsNull != null || right.IsNull != null)
-            {
-                // Slowest Path: Null checks and look up indices on both sides. ~65ms for 16M
-                for (int i = 0; i < left.Count; ++i)
-                {
-                    int leftIndex = left.Index(i);
-                    int rightIndex = right.Index(i);
-                    if (left.IsNull != null && left.IsNull[leftIndex]) continue;
-                    if (right.IsNull != null && right.IsNull[rightIndex]) continue;
-                    if (leftArray[leftIndex].CompareTo(rightArray[rightIndex]) <= 0) vector.Set(i);
-                }
-            }
-            else if (left.Selector.Indices != null || right.Selector.Indices != null)
+            if (left.Selector.Indices != null || right.Selector.Indices != null)
             {
                 // Slow Path: Look up indices on both sides. ~55ms for 16M
                 for (int i = 0; i < left.Count; ++i)
@@ -293,14 +263,15 @@ namespace XForm.Types.Comparers
                 if (s_WhereNative != null)
                 {
                     s_WhereNative(leftArray, left.Selector.StartIndexInclusive, (byte)CompareOperator.LessThanOrEqual, rightArray, right.Selector.StartIndexInclusive, left.Selector.Count, (byte)BooleanOperator.Or, vector.Array, 0);
-                    return;
                 }
-
-                int zeroOffset = left.Selector.StartIndexInclusive;
-                int leftIndexToRightIndex = right.Selector.StartIndexInclusive - left.Selector.StartIndexInclusive;
-                for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
+                else
                 {
-                    if (leftArray[i].CompareTo(rightArray[i + leftIndexToRightIndex]) <= 0) vector.Set(i - zeroOffset);
+                    int zeroOffset = left.Selector.StartIndexInclusive;
+                    int leftIndexToRightIndex = right.Selector.StartIndexInclusive - left.Selector.StartIndexInclusive;
+                    for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
+                    {
+                        if (leftArray[i].CompareTo(rightArray[i + leftIndexToRightIndex]) <= 0) vector.Set(i - zeroOffset);
+                    }
                 }
             }
             else if (!left.Selector.IsSingleValue)
@@ -312,12 +283,13 @@ namespace XForm.Types.Comparers
                 if (s_WhereSingleNative != null)
                 {
                     s_WhereSingleNative(leftArray, left.Selector.StartIndexInclusive, left.Selector.Count, (byte)CompareOperator.LessThanOrEqual, rightValue, (byte)BooleanOperator.Or, vector.Array, 0);
-                    return;
                 }
-
-                for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
+                else
                 {
-                    if (leftArray[i].CompareTo(rightValue) <= 0) vector.Set(i - zeroOffset);
+                    for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
+                    {
+                        if (leftArray[i].CompareTo(rightValue) <= 0) vector.Set(i - zeroOffset);
+                    }
                 }
             }
             else
@@ -328,6 +300,10 @@ namespace XForm.Types.Comparers
                     vector.All(left.Count);
                 }
             }
+
+            // Remove nulls from matches
+            BoolComparer.AndNotNull(left, vector);
+            BoolComparer.AndNotNull(right, vector);
         }
 
         public bool WhereLessThanOrEqual(String8 left, String8 right)
@@ -341,19 +317,7 @@ namespace XForm.Types.Comparers
             String8[] rightArray = (String8[])right.Array;
 
             // Check how the XArrays are configured and run the fastest loop possible for the configuration.
-            if (left.IsNull != null || right.IsNull != null)
-            {
-                // Slowest Path: Null checks and look up indices on both sides. ~65ms for 16M
-                for (int i = 0; i < left.Count; ++i)
-                {
-                    int leftIndex = left.Index(i);
-                    int rightIndex = right.Index(i);
-                    if (left.IsNull != null && left.IsNull[leftIndex]) continue;
-                    if (right.IsNull != null && right.IsNull[rightIndex]) continue;
-                    if (leftArray[leftIndex].CompareTo(rightArray[rightIndex]) > 0) vector.Set(i);
-                }
-            }
-            else if (left.Selector.Indices != null || right.Selector.Indices != null)
+            if (left.Selector.Indices != null || right.Selector.Indices != null)
             {
                 // Slow Path: Look up indices on both sides. ~55ms for 16M
                 for (int i = 0; i < left.Count; ++i)
@@ -367,14 +331,15 @@ namespace XForm.Types.Comparers
                 if (s_WhereNative != null)
                 {
                     s_WhereNative(leftArray, left.Selector.StartIndexInclusive, (byte)CompareOperator.GreaterThan, rightArray, right.Selector.StartIndexInclusive, left.Selector.Count, (byte)BooleanOperator.Or, vector.Array, 0);
-                    return;
                 }
-
-                int zeroOffset = left.Selector.StartIndexInclusive;
-                int leftIndexToRightIndex = right.Selector.StartIndexInclusive - left.Selector.StartIndexInclusive;
-                for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
+                else
                 {
-                    if (leftArray[i].CompareTo(rightArray[i + leftIndexToRightIndex]) > 0) vector.Set(i - zeroOffset);
+                    int zeroOffset = left.Selector.StartIndexInclusive;
+                    int leftIndexToRightIndex = right.Selector.StartIndexInclusive - left.Selector.StartIndexInclusive;
+                    for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
+                    {
+                        if (leftArray[i].CompareTo(rightArray[i + leftIndexToRightIndex]) > 0) vector.Set(i - zeroOffset);
+                    }
                 }
             }
             else if (!left.Selector.IsSingleValue)
@@ -386,12 +351,13 @@ namespace XForm.Types.Comparers
                 if (s_WhereSingleNative != null)
                 {
                     s_WhereSingleNative(leftArray, left.Selector.StartIndexInclusive, left.Selector.Count, (byte)CompareOperator.GreaterThan, rightValue, (byte)BooleanOperator.Or, vector.Array, 0);
-                    return;
                 }
-
-                for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
+                else
                 {
-                    if (leftArray[i].CompareTo(rightValue) > 0) vector.Set(i - zeroOffset);
+                    for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
+                    {
+                        if (leftArray[i].CompareTo(rightValue) > 0) vector.Set(i - zeroOffset);
+                    }
                 }
             }
             else
@@ -402,6 +368,10 @@ namespace XForm.Types.Comparers
                     vector.All(left.Count);
                 }
             }
+
+            // Remove nulls from matches
+            BoolComparer.AndNotNull(left, vector);
+            BoolComparer.AndNotNull(right, vector);
         }
 
         public bool WhereGreaterThan(String8 left, String8 right)
@@ -415,19 +385,7 @@ namespace XForm.Types.Comparers
             String8[] rightArray = (String8[])right.Array;
 
             // Check how the XArrays are configured and run the fastest loop possible for the configuration.
-            if (left.IsNull != null || right.IsNull != null)
-            {
-                // Slowest Path: Null checks and look up indices on both sides. ~65ms for 16M
-                for (int i = 0; i < left.Count; ++i)
-                {
-                    int leftIndex = left.Index(i);
-                    int rightIndex = right.Index(i);
-                    if (left.IsNull != null && left.IsNull[leftIndex]) continue;
-                    if (right.IsNull != null && right.IsNull[rightIndex]) continue;
-                    if (leftArray[leftIndex].CompareTo(rightArray[rightIndex]) >= 0) vector.Set(i);
-                }
-            }
-            else if (left.Selector.Indices != null || right.Selector.Indices != null)
+            if (left.Selector.Indices != null || right.Selector.Indices != null)
             {
                 // Slow Path: Look up indices on both sides. ~55ms for 16M
                 for (int i = 0; i < left.Count; ++i)
@@ -441,14 +399,15 @@ namespace XForm.Types.Comparers
                 if (s_WhereNative != null)
                 {
                     s_WhereNative(leftArray, left.Selector.StartIndexInclusive, (byte)CompareOperator.GreaterThanOrEqual, rightArray, right.Selector.StartIndexInclusive, left.Selector.Count, (byte)BooleanOperator.Or, vector.Array, 0);
-                    return;
                 }
-
-                int zeroOffset = left.Selector.StartIndexInclusive;
-                int leftIndexToRightIndex = right.Selector.StartIndexInclusive - left.Selector.StartIndexInclusive;
-                for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
+                else
                 {
-                    if (leftArray[i].CompareTo(rightArray[i + leftIndexToRightIndex]) >= 0) vector.Set(i - zeroOffset);
+                    int zeroOffset = left.Selector.StartIndexInclusive;
+                    int leftIndexToRightIndex = right.Selector.StartIndexInclusive - left.Selector.StartIndexInclusive;
+                    for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
+                    {
+                        if (leftArray[i].CompareTo(rightArray[i + leftIndexToRightIndex]) >= 0) vector.Set(i - zeroOffset);
+                    }
                 }
             }
             else if (!left.Selector.IsSingleValue)
@@ -460,12 +419,13 @@ namespace XForm.Types.Comparers
                 if (s_WhereSingleNative != null)
                 {
                     s_WhereSingleNative(leftArray, left.Selector.StartIndexInclusive, left.Selector.Count, (byte)CompareOperator.GreaterThanOrEqual, rightValue, (byte)BooleanOperator.Or, vector.Array, 0);
-                    return;
                 }
-
-                for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
+                else
                 {
-                    if (leftArray[i].CompareTo(rightValue) >= 0) vector.Set(i - zeroOffset);
+                    for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
+                    {
+                        if (leftArray[i].CompareTo(rightValue) >= 0) vector.Set(i - zeroOffset);
+                    }
                 }
             }
             else
@@ -476,6 +436,10 @@ namespace XForm.Types.Comparers
                     vector.All(left.Count);
                 }
             }
+
+            // Remove nulls from matches
+            BoolComparer.AndNotNull(left, vector);
+            BoolComparer.AndNotNull(right, vector);
         }
 
         public bool WhereGreaterThanOrEqual(String8 left, String8 right)
@@ -489,19 +453,7 @@ namespace XForm.Types.Comparers
             String8[] rightArray = (String8[])right.Array;
 
             // Check how the XArrays are configured and run the fastest loop possible for the configuration.
-            if (left.IsNull != null || right.IsNull != null)
-            {
-                // Slowest Path: Null checks and look up indices on both sides. ~65ms for 16M
-                for (int i = 0; i < left.Count; ++i)
-                {
-                    int leftIndex = left.Index(i);
-                    int rightIndex = right.Index(i);
-                    if (left.IsNull != null && left.IsNull[leftIndex]) continue;
-                    if (right.IsNull != null && right.IsNull[rightIndex]) continue;
-                    if (leftArray[leftIndex].Contains(rightArray[rightIndex]) != -1) vector.Set(i);
-                }
-            }
-            else if (left.Selector.Indices != null || right.Selector.Indices != null)
+            if (left.Selector.Indices != null || right.Selector.Indices != null)
             {
                 // Slow Path: Look up indices on both sides. ~55ms for 16M
                 for (int i = 0; i < left.Count; ++i)
@@ -515,14 +467,15 @@ namespace XForm.Types.Comparers
                 if (s_WhereNative != null)
                 {
                     s_WhereNative(leftArray, left.Selector.StartIndexInclusive, (byte)CompareOperator.Contains, rightArray, right.Selector.StartIndexInclusive, left.Selector.Count, (byte)BooleanOperator.Or, vector.Array, 0);
-                    return;
                 }
-
-                int zeroOffset = left.Selector.StartIndexInclusive;
-                int leftIndexToRightIndex = right.Selector.StartIndexInclusive - left.Selector.StartIndexInclusive;
-                for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
+                else
                 {
-                    if (leftArray[i].Contains(rightArray[i + leftIndexToRightIndex]) != -1) vector.Set(i - zeroOffset);
+                    int zeroOffset = left.Selector.StartIndexInclusive;
+                    int leftIndexToRightIndex = right.Selector.StartIndexInclusive - left.Selector.StartIndexInclusive;
+                    for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
+                    {
+                        if (leftArray[i].Contains(rightArray[i + leftIndexToRightIndex]) != -1) vector.Set(i - zeroOffset);
+                    }
                 }
             }
             else if (!left.Selector.IsSingleValue)
@@ -534,12 +487,13 @@ namespace XForm.Types.Comparers
                 if (s_WhereSingleNative != null)
                 {
                     s_WhereSingleNative(leftArray, left.Selector.StartIndexInclusive, left.Selector.Count, (byte)CompareOperator.Contains, rightValue, (byte)BooleanOperator.Or, vector.Array, 0);
-                    return;
                 }
-
-                for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
+                else
                 {
-                    if (leftArray[i].Contains(rightValue) != -1) vector.Set(i - zeroOffset);
+                    for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
+                    {
+                        if (leftArray[i].Contains(rightValue) != -1) vector.Set(i - zeroOffset);
+                    }
                 }
             }
             else
@@ -550,6 +504,10 @@ namespace XForm.Types.Comparers
                     vector.All(left.Count);
                 }
             }
+
+            // Remove nulls from matches
+            BoolComparer.AndNotNull(left, vector);
+            BoolComparer.AndNotNull(right, vector);
         }
 
         public bool WhereContains(String8 left, String8 right)
@@ -563,19 +521,7 @@ namespace XForm.Types.Comparers
             String8[] rightArray = (String8[])right.Array;
 
             // Check how the XArrays are configured and run the fastest loop possible for the configuration.
-            if (left.IsNull != null || right.IsNull != null)
-            {
-                // Slowest Path: Null checks and look up indices on both sides. ~65ms for 16M
-                for (int i = 0; i < left.Count; ++i)
-                {
-                    int leftIndex = left.Index(i);
-                    int rightIndex = right.Index(i);
-                    if (left.IsNull != null && left.IsNull[leftIndex]) continue;
-                    if (right.IsNull != null && right.IsNull[rightIndex]) continue;
-                    if (leftArray[leftIndex].Contains(rightArray[rightIndex]) != -1) vector.Set(i);
-                }
-            }
-            else if (left.Selector.Indices != null || right.Selector.Indices != null)
+            if (left.Selector.Indices != null || right.Selector.Indices != null)
             {
                 // Slow Path: Look up indices on both sides. ~55ms for 16M
                 for (int i = 0; i < left.Count; ++i)
@@ -589,14 +535,15 @@ namespace XForm.Types.Comparers
                 if (s_WhereNative != null)
                 {
                     s_WhereNative(leftArray, left.Selector.StartIndexInclusive, (byte)CompareOperator.ContainsExact, rightArray, right.Selector.StartIndexInclusive, left.Selector.Count, (byte)BooleanOperator.Or, vector.Array, 0);
-                    return;
                 }
-
-                int zeroOffset = left.Selector.StartIndexInclusive;
-                int leftIndexToRightIndex = right.Selector.StartIndexInclusive - left.Selector.StartIndexInclusive;
-                for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
+                else
                 {
-                    if (leftArray[i].Contains(rightArray[i + leftIndexToRightIndex]) != -1) vector.Set(i - zeroOffset);
+                    int zeroOffset = left.Selector.StartIndexInclusive;
+                    int leftIndexToRightIndex = right.Selector.StartIndexInclusive - left.Selector.StartIndexInclusive;
+                    for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
+                    {
+                        if (leftArray[i].Contains(rightArray[i + leftIndexToRightIndex]) != -1) vector.Set(i - zeroOffset);
+                    }
                 }
             }
             else if (!left.Selector.IsSingleValue)
@@ -608,12 +555,13 @@ namespace XForm.Types.Comparers
                 if (s_WhereSingleNative != null)
                 {
                     s_WhereSingleNative(leftArray, left.Selector.StartIndexInclusive, left.Selector.Count, (byte)CompareOperator.ContainsExact, rightValue, (byte)BooleanOperator.Or, vector.Array, 0);
-                    return;
                 }
-
-                for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
+                else
                 {
-                    if (leftArray[i].Contains(rightValue) != -1) vector.Set(i - zeroOffset);
+                    for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
+                    {
+                        if (leftArray[i].Contains(rightValue) != -1) vector.Set(i - zeroOffset);
+                    }
                 }
             }
             else
@@ -624,6 +572,10 @@ namespace XForm.Types.Comparers
                     vector.All(left.Count);
                 }
             }
+
+            // Remove nulls from matches
+            BoolComparer.AndNotNull(left, vector);
+            BoolComparer.AndNotNull(right, vector);
         }
 
         public bool WhereContainsExact(String8 left, String8 right)
@@ -637,19 +589,7 @@ namespace XForm.Types.Comparers
             String8[] rightArray = (String8[])right.Array;
 
             // Check how the XArrays are configured and run the fastest loop possible for the configuration.
-            if (left.IsNull != null || right.IsNull != null)
-            {
-                // Slowest Path: Null checks and look up indices on both sides. ~65ms for 16M
-                for (int i = 0; i < left.Count; ++i)
-                {
-                    int leftIndex = left.Index(i);
-                    int rightIndex = right.Index(i);
-                    if (left.IsNull != null && left.IsNull[leftIndex]) continue;
-                    if (right.IsNull != null && right.IsNull[rightIndex]) continue;
-                    if (leftArray[leftIndex].StartsWith(rightArray[rightIndex], true)) vector.Set(i);
-                }
-            }
-            else if (left.Selector.Indices != null || right.Selector.Indices != null)
+            if (left.Selector.Indices != null || right.Selector.Indices != null)
             {
                 // Slow Path: Look up indices on both sides. ~55ms for 16M
                 for (int i = 0; i < left.Count; ++i)
@@ -663,14 +603,15 @@ namespace XForm.Types.Comparers
                 if (s_WhereNative != null)
                 {
                     s_WhereNative(leftArray, left.Selector.StartIndexInclusive, (byte)CompareOperator.StartsWith, rightArray, right.Selector.StartIndexInclusive, left.Selector.Count, (byte)BooleanOperator.Or, vector.Array, 0);
-                    return;
                 }
-
-                int zeroOffset = left.Selector.StartIndexInclusive;
-                int leftIndexToRightIndex = right.Selector.StartIndexInclusive - left.Selector.StartIndexInclusive;
-                for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
+                else
                 {
-                    if (leftArray[i].StartsWith(rightArray[i + leftIndexToRightIndex], true)) vector.Set(i - zeroOffset);
+                    int zeroOffset = left.Selector.StartIndexInclusive;
+                    int leftIndexToRightIndex = right.Selector.StartIndexInclusive - left.Selector.StartIndexInclusive;
+                    for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
+                    {
+                        if (leftArray[i].StartsWith(rightArray[i + leftIndexToRightIndex], true)) vector.Set(i - zeroOffset);
+                    }
                 }
             }
             else if (!left.Selector.IsSingleValue)
@@ -682,12 +623,13 @@ namespace XForm.Types.Comparers
                 if (s_WhereSingleNative != null)
                 {
                     s_WhereSingleNative(leftArray, left.Selector.StartIndexInclusive, left.Selector.Count, (byte)CompareOperator.StartsWith, rightValue, (byte)BooleanOperator.Or, vector.Array, 0);
-                    return;
                 }
-
-                for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
+                else
                 {
-                    if (leftArray[i].StartsWith(rightValue, true)) vector.Set(i - zeroOffset);
+                    for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
+                    {
+                        if (leftArray[i].StartsWith(rightValue, true)) vector.Set(i - zeroOffset);
+                    }
                 }
             }
             else
@@ -698,6 +640,10 @@ namespace XForm.Types.Comparers
                     vector.All(left.Count);
                 }
             }
+
+            // Remove nulls from matches
+            BoolComparer.AndNotNull(left, vector);
+            BoolComparer.AndNotNull(right, vector);
         }
 
         public bool WhereStartsWith(String8 left, String8 right)

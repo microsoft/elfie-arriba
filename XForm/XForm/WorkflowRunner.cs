@@ -58,6 +58,9 @@ namespace XForm
 
         public IXTable Build(string tableName, XDatabaseContext outerContext, bool deferred)
         {
+            // Disallow tables ending with '.' (the file system maps them to folders with the same name)
+            if (tableName.EndsWith(".")) throw new UsageException(tableName, "Table", outerContext.StreamProvider.Tables());
+
             // If we previously found the latest for this table, just return it again
             LatestTableForCutoff previousLatest;
             if (_currentTableVersions.TryGet(tableName, out previousLatest)

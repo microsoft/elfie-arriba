@@ -68,12 +68,12 @@ namespace XForm.IO
 
             streamProvider.WriteAllText(Path.Combine(tableRootPath, ConfigQueryPath), metadata.Query);
 
-            s_Cache.Add(tableRootPath, metadata);
+            s_Cache.Add($"{streamProvider}|{tableRootPath}", metadata);
         }
 
         public static TableMetadata Read(IStreamProvider streamProvider, string tableRootPath)
         {
-            return s_Cache.GetOrBuild(tableRootPath,
+            return s_Cache.GetOrBuild($"{streamProvider}|{tableRootPath}",
                 () => streamProvider.Attributes(Path.Combine(tableRootPath, MetadataFileName)).WhenModifiedUtc,
                 () => Build(streamProvider, tableRootPath));
         }

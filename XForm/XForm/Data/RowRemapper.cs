@@ -1,8 +1,8 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 
 using XForm.Data;
 
@@ -20,6 +20,9 @@ namespace XForm.Transforms
         private int[] _indices;
         private int _count;
 
+        private bool _indicesFound;
+        private int _nextVectorIndex;
+
         private Dictionary<ArraySelector, ArraySelector> _cachedRemappings;
 
         public RowRemapper()
@@ -27,13 +30,37 @@ namespace XForm.Transforms
             _cachedRemappings = new Dictionary<ArraySelector, ArraySelector>();
         }
 
-        public void SetMatches(BitVector vector)
+        public void SetMatches(BitVector vector, int count = -1)
         {
             _vector = vector;
-            _count = vector.Count;
+            _count = (count == -1 ? vector.Count : count);
+
+            // Set that we need indices again starting from the vector start
+            _indicesFound = false;
+            _nextVectorIndex = 0;
 
             // Clear cached remappings (they will need to be recomputed)
             _cachedRemappings.Clear();
+        }
+
+        public bool NextMatchPage(int countLimit)
+        {
+            // If we didn't page the previous set, skip past them
+            if (!_indicesFound)
+            {
+                Allocator.AllocateToSize(ref _indices, _count);
+                int countFound = _vector.Page(_indices, ref _nextVectorIndex);
+                if (countFound != _count) System.Diagnostics.Debugger.Break();
+            }
+
+            // Set that we need indices again and the next expected count
+            _indicesFound = false;
+            _count = countLimit;
+
+            // Clear cached remappings (they will need to be recomputed)
+            _cachedRemappings.Clear();
+
+            return _nextVectorIndex != -1;
         }
 
         public void SetMatches(int[] indices, int count)
@@ -41,6 +68,7 @@ namespace XForm.Transforms
             _vector = null;
             _indices = indices;
             _count = count;
+            _indicesFound = true;
 
             // Clear cached remappings (they will need to be recomputed)
             _cachedRemappings.Clear();
@@ -54,12 +82,13 @@ namespace XForm.Transforms
             ArraySelector cachedMapping;
             if (_cachedRemappings.TryGetValue(source.Selector, out cachedMapping)) return source.Reselect(cachedMapping);
 
-            // Convert the BitVector to indices
-            if (_vector != null)
+            // Convert the BitVector to indices if we haven't yet (deferred to first column wanting values)
+            if (!_indicesFound)
             {
+                _indicesFound = true;
                 Allocator.AllocateToSize(ref _indices, _count);
-                int start = 0;
-                _vector.Page(_indices, ref start);
+                int countFound = _vector.Page(_indices, ref _nextVectorIndex, _count);
+                if (countFound != _count) throw new InvalidOperationException($"RowRemapper found {countFound:n0} rows when {_count:n0} expected paging in Vector with {_vector.Count:n0} total matches up to index {_nextVectorIndex:n0}.");
             }
 
             // Remap the outer selector

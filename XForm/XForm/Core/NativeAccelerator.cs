@@ -58,6 +58,7 @@ namespace XForm
             ShortComparer.s_WhereSingleNative = GetMethod<ComparerExtensions.WhereSingle<short>>("XForm.Native.Comparer", "Where");
             ByteComparer.s_WhereSingleNative = GetMethod<ComparerExtensions.WhereSingle<byte>>("XForm.Native.Comparer", "Where");
             SbyteComparer.s_WhereSingleNative = GetMethod<ComparerExtensions.WhereSingle<sbyte>>("XForm.Native.Comparer", "Where");
+            BoolComparer.s_WhereSingleNative = GetMethod<ComparerExtensions.WhereSingle<bool>>("XForm.Native.Comparer", "Where");
         }
     }
 }

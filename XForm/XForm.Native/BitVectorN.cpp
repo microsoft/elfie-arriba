@@ -92,13 +92,14 @@ namespace XForm
 			return CountN(pVector, vector->Length);
 		}
 
-		Int32 BitVectorN::Page(array<UInt64>^ vector, array<Int32>^ indicesFound, Int32% fromIndex)
+		Int32 BitVectorN::Page(array<UInt64>^ vector, array<Int32>^ indicesFound, Int32% fromIndex, Int32 countLimit)
 		{
 			pin_ptr<UInt64> pVector = &vector[0];
 			pin_ptr<Int32> pIndices = &indicesFound[0];
+			if (countLimit > indicesFound->Length) throw gcnew ArgumentOutOfRangeException("countLimit");
 
 			int nextIndex = fromIndex;
-			int countFound = PageN(pVector, vector->Length, &nextIndex, pIndices, indicesFound->Length);
+			int countFound = PageN(pVector, vector->Length, &nextIndex, pIndices, countLimit);
 			fromIndex = nextIndex;
 			return countFound;  
 		}
