@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using XForm.Columns;
 using XForm.Data;
 using XForm.Extensions;
-using XForm.Functions;
 using XForm.Query;
 using XForm.Query.Expression;
 using XForm.Transforms;

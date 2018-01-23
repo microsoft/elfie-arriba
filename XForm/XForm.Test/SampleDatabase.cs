@@ -223,7 +223,7 @@ namespace XForm.Test
             IStreamProvider mainStreamProvider = SampleDatabase.XDatabaseContext.StreamProvider;
 
             XDatabaseContext branchedContext = new XDatabaseContext(SampleDatabase.XDatabaseContext);
-            branchedContext.StreamProvider = new MultipleSourceStreamProvider(branchedStreamProvider, branchedContext.StreamProvider, MultipleSourceStreamConfiguration.LocalBranch);
+            branchedContext.StreamProvider = new MultipleSourceStreamProvider(branchedStreamProvider, mainStreamProvider, MultipleSourceStreamConfiguration.LocalBranch);
             branchedContext.Runner = new WorkflowRunner(branchedContext);
 
             // Ask for WebRequest in the main database; verify built
