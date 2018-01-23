@@ -7,6 +7,7 @@ using System.Linq;
 using System.Runtime.Serialization;
 
 using XForm.Data;
+using XForm.IO;
 using XForm.Query;
 
 namespace XForm.Extensions

@@ -21,6 +21,9 @@ namespace XForm.IO
         private IColumnReader _columnReader;
         private EnumReader _enumReader;
 
+        private Type _indicesType;
+        private bool _loadedIndicesType;
+
         public ColumnDetails ColumnDetails { get; private set; }
 
         public BinaryReaderColumn(BinaryTableReader table, ColumnDetails details, IStreamProvider streamProvider)
@@ -44,8 +47,8 @@ namespace XForm.IO
 
         public Func<XArray> ValuesGetter()
         {
+            if (IndicesType == null) return null;
             GetReader();
-            if (_enumReader == null) return null;
             return _enumReader.Values;
         }
 
@@ -53,23 +56,28 @@ namespace XForm.IO
         {
             get
             {
-                GetReader();
-                if (_enumReader == null) return null;
-                return _enumReader.IndicesType;
+                // Important: Don't load the column reader itself to get the Indices type - this shouldn't trigger column caching
+                if (!_loadedIndicesType)
+                {
+                    _indicesType = EnumReader.CheckIndicesType(_streamProvider, ColumnDetails.Type, Path.Combine(_table.TablePath, ColumnDetails.Name));
+                    _loadedIndicesType = true;
+                }
+
+                return _indicesType;
             }
         }
 
         public Func<XArray> IndicesCurrentGetter()
         {
+            if (IndicesType == null) return null;
             GetReader();
-            if (_enumReader == null) return null;
             return () => _enumReader.Indices(_table.CurrentSelector);
         }
 
         public Func<ArraySelector, XArray> IndicesSeekGetter()
         {
+            if (IndicesType == null) return null;
             GetReader(CachingOption.Always);
-            if (_enumReader == null) return null;
             return (selector) => _enumReader.Indices(selector);
         }
 
