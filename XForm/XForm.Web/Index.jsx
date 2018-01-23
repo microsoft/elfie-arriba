@@ -162,10 +162,6 @@ class Index extends React.Component {
                 })
             }
         })
-        xhr(`count`, { asof: this.state.asOf, q: this.validQuery }).then(o => {
-            this.setState({ resultCount: typeof o.Count === "number" && `${o.Count.toLocaleString()} Results (${o.RuntimeMs} ms)`, pausePulse: true })
-            setTimeout(() => this.setState({ pausePulse: false }))
-        })
     }
     limitChanged(addCount = 0, addCols = 0) {
         this.count += addCount
@@ -174,11 +170,23 @@ class Index extends React.Component {
 
         if (!q) return // Running with an empty query will return a "" instead of an empty object table.
 
-        this.setState({ loading: true })
         const userCols = this.state.userCols.length && `\nselect ${this.state.userCols.map(c => `[${c}]`).join(', ')}` || ''
+        const firstRun = this.count === this.baseCount && this.cols === this.baseCols // firstRun... of the this specific query
+        this.setState({ loading: true, pausePulse: firstRun })
         xhr(`run`, { rowLimit: this.count, colLimit: this.cols, asof: this.state.asOf, q: `${q}${userCols}` }).then(o => {
             if (o.Message || o.ErrorMessage) throw 'Error should have been caught before run.'
-            this.setState({ results: o, loading: false })
+            if (firstRun) {
+                this.setState({ results: o })
+                xhr(`count`, { asof: this.state.asOf, q: this.validQuery }).then(o => {
+                    this.setState({
+                        resultCount: typeof o.Count === "number" && `${o.Count.toLocaleString()} Results (${o.RuntimeMs} ms)`,
+                        loading: false,
+                        pausePulse: false,
+                    })
+                })
+            } else {
+                this.setState({ results: o, loading: false })
+            }
         })
     }
     render() {
