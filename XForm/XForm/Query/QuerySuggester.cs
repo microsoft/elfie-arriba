@@ -42,7 +42,7 @@ namespace XForm.Query
                 }
 
                 // Parse the query as-is to see if it's valid
-                IXTable pipeline = _xDatabaseContext.Query(partialXqlQuery);
+                IXTable pipeline = context.Query(partialXqlQuery);
                 result.IsValid = true;
 
                 // Parse the query with an extra argument on the last line to see what would be suggested
