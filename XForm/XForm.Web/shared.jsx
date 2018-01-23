@@ -18,9 +18,7 @@ window.xhr = (path, params) => {
 
                     // Custom logic for XForm
                     function sugar() {
-                        if (o.colIndex.Count === 0) {
-                            return o.rows[0][0];
-                        } else if (o.colIndex.Valid === 0) {
+                        if (o.colIndex.Count === 0 || o.colIndex.Valid === 0) {
                             const dict = {};
                             Object.keys(o.colIndex).forEach(k => dict[k] = o.rows[0][o.colIndex[k]])
                             return dict
