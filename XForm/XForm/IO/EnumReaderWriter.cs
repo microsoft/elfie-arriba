@@ -300,13 +300,13 @@ namespace XForm.IO
             _rowIndexToIntConverter = TypeConverterFactory.GetConverter(typeof(byte), typeof(int));
         }
 
-        public static IColumnReader Wrap(IStreamProvider streamProvider, Type columnType, string columnPath, bool requireCached)
+        public static IColumnReader Wrap(IStreamProvider streamProvider, Type columnType, string columnPath, CachingOption option)
         {
             // Build a reader for the row indices (will be null if the 'VR.u8.bin' file isn't there)
-            IColumnReader rowIndexReader = TypeProviderFactory.TryGetColumnReader(streamProvider, typeof(byte), Path.Combine(columnPath, EnumWriter.RowIndexFileName), requireCached, typeof(EnumReader));
+            IColumnReader rowIndexReader = TypeProviderFactory.TryGetColumnReader(streamProvider, typeof(byte), Path.Combine(columnPath, EnumWriter.RowIndexFileName), option, typeof(EnumReader));
 
             // Build a reader for the values (require caching if we we have row indices)
-            IColumnReader valueReader = TypeProviderFactory.TryGetColumnReader(streamProvider, columnType, columnPath, requireCached || (rowIndexReader != null), typeof(EnumReader));
+            IColumnReader valueReader = TypeProviderFactory.TryGetColumnReader(streamProvider, columnType, columnPath, (rowIndexReader != null ? CachingOption.Always : option), typeof(EnumReader));
 
             // If there were row indices, wrap the column. Otherwise, return as-is.
             if (rowIndexReader != null) return new EnumReader(valueReader, rowIndexReader);

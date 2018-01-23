@@ -51,10 +51,18 @@ namespace XForm.IO
         private XArray _currentArray;
         private ArraySelector _currentSelector;
 
-        public ConvertingReader(IColumnReader innerReader, Func<XArray, XArray> converter)
+        private ConvertingReader(IColumnReader innerReader, Func<XArray, XArray> converter)
         {
             _innerReader = innerReader;
             _converter = converter;
+        }
+
+        public static IColumnReader Build(IColumnReader innerReader, Func<XArray, XArray> converter)
+        {
+            // If the inner column is null, return null (so the column cache can track columns which aren't present)
+            if (innerReader == null) return null;
+
+            return new ConvertingReader(innerReader, converter);
         }
 
         public int Count => _innerReader.Count;

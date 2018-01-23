@@ -80,7 +80,10 @@ namespace XForm.Transforms
         {
             // See if we have the remapping cached already
             ArraySelector cachedMapping;
-            if (_cachedRemappings.TryGetValue(source.Selector, out cachedMapping)) return source.Reselect(cachedMapping);
+            if (_cachedRemappings.TryGetValue(source.Selector, out cachedMapping))
+            {
+                return source.Reselect(cachedMapping);
+            }
 
             // Convert the BitVector to indices if we haven't yet (deferred to first column wanting values)
             if (!_indicesFound)

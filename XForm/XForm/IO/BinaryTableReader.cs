@@ -38,7 +38,7 @@ namespace XForm.IO
 
         public Func<ArraySelector, XArray> SeekGetter()
         {
-            GetReader(true);
+            GetReader(CachingOption.Always);
             return (selector) => _columnReader.Read(selector);
         }
 
@@ -68,23 +68,23 @@ namespace XForm.IO
 
         public Func<ArraySelector, XArray> IndicesSeekGetter()
         {
-            GetReader(true);
+            GetReader(CachingOption.Always);
             if (_enumReader == null) return null;
             return (selector) => _enumReader.Indices(selector);
         }
 
-        private void GetReader(bool requireCached = false)
+        private void GetReader(CachingOption option = CachingOption.AsConfigured)
         {
             // If we already have a reader with appropriate caching, keep using it
-            if (_columnReader != null && (requireCached == false || _isCached == true)) return;
+            if (_columnReader != null && (option != CachingOption.Always || _isCached == true)) return;
 
             // If we had a reader but need a cached one, Dispose the previous one
-            _isCached = requireCached;
             if (_columnReader != null) _columnReader.Dispose();
 
             // Build the new reader and store a typed EnumReader copy.
-            _columnReader = TypeProviderFactory.TryGetColumnReader(_streamProvider, ColumnDetails.Type, Path.Combine(_table.TablePath, ColumnDetails.Name), requireCached);
+            _columnReader = TypeProviderFactory.TryGetColumnReader(_streamProvider, ColumnDetails.Type, Path.Combine(_table.TablePath, ColumnDetails.Name), option);
             _enumReader = _columnReader as EnumReader;
+            _isCached = (option == CachingOption.Always || (option == CachingOption.AsConfigured && ColumnCache.IsEnabled));
         }
 
         public override string ToString()

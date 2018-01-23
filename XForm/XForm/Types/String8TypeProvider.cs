@@ -11,6 +11,7 @@ using XForm.IO;
 using XForm.IO.StreamProvider;
 using XForm.Types.Comparers;
 
+
 namespace XForm.Types
 {
     public class String8TypeProvider : ITypeProvider
@@ -18,9 +19,10 @@ namespace XForm.Types
         public string Name => "String8";
         public Type Type => typeof(String8);
 
-        public IColumnReader BinaryReader(IStreamProvider streamProvider, string columnPath, bool requireCached)
+        public IColumnReader BinaryReader(IStreamProvider streamProvider, string columnPath, CachingOption option)
         {
-            return new String8ColumnReader(streamProvider, columnPath, requireCached);
+            // Cache the byte[] and int[], not the String8[] (much lower overhead; fast to construct String8 pages)
+            return new String8ColumnReader(streamProvider, columnPath, option);
         }
 
         public IColumnWriter BinaryWriter(IStreamProvider streamProvider, string columnPath)
@@ -138,13 +140,13 @@ namespace XForm.Types
 
         private String8[] _resultArray;
 
-        public String8ColumnReader(IStreamProvider streamProvider, string columnPath, bool requireCached)
+        public String8ColumnReader(IStreamProvider streamProvider, string columnPath, CachingOption option)
         {
             _columnPath = columnPath;
 
             _streamProvider = streamProvider;
-            _bytesReader = TypeProviderFactory.TryGetColumnReader(streamProvider, typeof(byte), Path.Combine(columnPath, "V.s.bin"), requireCached, typeof(String8ColumnReader));
-            _positionsReader = TypeProviderFactory.TryGetColumnReader(streamProvider, typeof(int), Path.Combine(columnPath, "Vp.i32.bin"), requireCached, typeof(String8ColumnReader));
+            _bytesReader = TypeProviderFactory.TryGetColumnReader(streamProvider, typeof(byte), Path.Combine(columnPath, "V.s.bin"), option, typeof(String8ColumnReader));
+            _positionsReader = TypeProviderFactory.TryGetColumnReader(streamProvider, typeof(int), Path.Combine(columnPath, "Vp.i32.bin"), option, typeof(String8ColumnReader));
         }
 
         public int Count => _positionsReader.Count;
