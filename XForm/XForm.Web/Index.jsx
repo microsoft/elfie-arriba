@@ -156,8 +156,10 @@ class Index extends React.Component {
         this.cols = this.baseCols
         xhr(`run`, { asof: this.state.asOf, q: `${this.validQuery}\nschema` }).then(o => {
             const schemaBody = o.rows.map(r => ({ name: r[0], type: `${r[1]}` }))
+            const colNames = new Set(schemaBody.map(r => r.name))
             this.setState({
                 schemaBody,
+                userCols: this.state.userCols.filter(c => colNames.has(c)),
             })
             this.limitChanged(0, 0, true)
         })
