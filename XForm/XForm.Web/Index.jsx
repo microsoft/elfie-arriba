@@ -88,7 +88,6 @@ class Index extends React.Component {
                         endLineNumber: position.lineNumber,
                         endColumn: position.column,
                     })
-                    const lastChar = textUntilPosition[textUntilPosition.length - 1]
                     return xhr(`suggest`, { q: textUntilPosition }).then(o => {
                         if (!o.Values) return []
 
@@ -100,7 +99,7 @@ class Index extends React.Component {
                                 columnName: kind.Field,
                             }[o.ItemCategory] || kind.Text,
                             label: s,
-                            insertText: lastChar === '[' && o.ItemCategory === '[Column]' ? s.slice(1) : s,
+                            insertText: /\[\w*$/.test(textUntilPosition) && o.ItemCategory === '[Column]' ? s.slice(1) : s,
                         }))
                         return suggestions
                     })
