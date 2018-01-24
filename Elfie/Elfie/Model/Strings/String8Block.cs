@@ -119,7 +119,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             BlockPart targetBlock = null;
 
             // If "first" is the last thing on the last block...
-            if(_blocks.Count > 0)
+            if (_blocks.Count > 0)
             {
                 targetBlock = _blocks[_blocks.Count - 1];
                 if (targetBlock.Block == first.Array && targetBlock.LengthUsed == first.Index + first.Length)

@@ -50,6 +50,14 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="Generator\Extensions\RandomExtensions.cs" />
+    <Compile Include="Generator\Generators\DataCenterMapper.cs" />
+    <Compile Include="Generator\Generators\EmailAddressMapper.cs" />
+    <Compile Include="Generator\Generators\FrequencyMapper.cs" />
+    <Compile Include="Generator\Generators\ServerNameMapper.cs" />
+    <Compile Include="Generator\Generators\UriStemMapper.cs" />
+    <Compile Include="Generator\Model\WebRequest.cs" />
+    <Compile Include="Generator\Model\WebRequestGenerator.cs" />
     <Compile Include="OnlyLatest\OnlyLatestTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Sanitize\SampleMappers.cs" />

@@ -1,0 +1,2 @@
+read WebRequest
+where [UserName] != ""

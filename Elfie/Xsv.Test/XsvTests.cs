@@ -1,14 +1,27 @@
-﻿using Microsoft.CodeAnalysis.Elfie.Serialization;
+﻿using Microsoft.CodeAnalysis.Elfie.Model.Strings;
+using Microsoft.CodeAnalysis.Elfie.Serialization;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
-using Microsoft.CodeAnalysis.Elfie.Model.Strings;
+using Xsv.Test.Model;
 
 namespace Xsv.Test
 {
     [TestClass]
     public class XsvTests
     {
+        [TestMethod]
+        public void Generate_WebRequestSample()
+        {
+            DateTime when = new DateTime(2017, 12, 01, 12, 00, 00, DateTimeKind.Utc);
+            for (int i = 0; i < 10; ++i)
+            {
+                WebRequestGenerator generator = new WebRequestGenerator(new Random(5), when, 10);
+                generator.WriteTo(TabularFactory.BuildWriter($@"C:\Download\WebRequestSample.{when:yyyyMMdd}.r5.n1000.csv"), 1000);
+                when = when.AddDays(1);
+            }
+        }
+
         [TestMethod]
         public void Xsv_HtmlInnerText()
         {
