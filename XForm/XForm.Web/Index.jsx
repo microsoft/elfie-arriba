@@ -265,9 +265,10 @@ class Index extends React.Component {
                 </div>
                 <div className="tableWrapper" onScroll={e => {
                         const element = e.target
+                        log(element.scrollWidth, element.clientWidth, element.scrollLeft)
                         const pixelsFromLimitX = (element.scrollWidth - element.clientWidth - element.scrollLeft)
                         const pixelsFromLimitY = (element.scrollHeight - element.clientHeight - element.scrollTop)
-                        if (pixelsFromLimitX < 20) this.limitChanged(0, 10)
+                        if (pixelsFromLimitX < 20 && this.colLimit < this.state.schemaBody.length ) this.limitChanged(0, 10)
                         if (pixelsFromLimitY < 100) this.limitChanged(50)
                     }}>
                     <table>
