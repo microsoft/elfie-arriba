@@ -174,7 +174,8 @@ namespace XForm
 
         public BitVector None()
         {
-            return ClearAbove(0);
+            System.Array.Clear(_bitVector, 0, _bitVector.Length);
+            return this;
         }
 
         public BitVector All(int length)

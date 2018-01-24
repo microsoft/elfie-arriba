@@ -46,11 +46,11 @@ namespace XForm
 
         public void Run()
         {
-            //Current();
+            Current();
 
             //WhereUShortUnderConstant();
             //WhereUShortEqualsUshort();
-            ByteEqualsConstant();
+            //ByteEqualsConstant();
             //DoubleWhere();
             //Join();
             //Dictionary();
@@ -60,7 +60,7 @@ namespace XForm
 
         public void Current()
         {
-            //ColumnCache.IsEnabled = true;
+            ColumnCache.IsEnabled = true;
 
             string query;
             // Still want to tune schema requests. Current bottleneck: LatestBeforeCutoff
@@ -78,9 +78,14 @@ namespace XForm
             //    join [Name] Asset.Extended.Release [Name] Asset. ";
 
             query = @"
-                read WebRequestHuge
-                where [ServerPort] = ""443"" AND [WasEncrypted] = ""false""
-                limit 50";
+                read WebRequestHuge.Typed     
+                where [ClientBrowser] : ""Edge""
+                count";
+
+            //query = @"
+            //    read WebRequestHuge.Typed     
+            //    where [EventTime] = null
+            //    count";
 
             string singleLineQuery = XqlScanner.QueryToSingleLineStyle(query);
 

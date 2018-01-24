@@ -182,10 +182,10 @@ namespace XForm
 			switch ((CompareOperatorN)cOp)
 			{
 			case CompareOperatorN::Equal:
-				WhereN<CompareOperatorN::Equal, SigningN::Signed>((unsigned __int8*)pLeft, length, (unsigned __int8)right, (BooleanOperatorN)bOp, pVector);
+				WhereN<CompareOperatorN::Equal, SigningN::Unsigned>((unsigned __int8*)pLeft, length, (unsigned __int8)right, (BooleanOperatorN)bOp, pVector);
 				break;
 			case CompareOperatorN::NotEqual:
-				WhereN<CompareOperatorN::NotEqual, SigningN::Signed>((unsigned __int8*)pLeft, length, (unsigned __int8)right, (BooleanOperatorN)bOp, pVector);
+				WhereN<CompareOperatorN::NotEqual, SigningN::Unsigned>((unsigned __int8*)pLeft, length, (unsigned __int8)right, (BooleanOperatorN)bOp, pVector);
 				break;
 			default:
 				throw gcnew ArgumentException("cOp");
