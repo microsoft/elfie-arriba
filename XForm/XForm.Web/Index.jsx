@@ -53,7 +53,7 @@ class Index extends React.Component {
         this.count = this.baseCount = 50
         this.cols = this.baseCols = 20
         this.debouncedQueryChanged = debounce(this.queryChanged, 500)
-        this.state = { query: this.query, userCols: [] }
+        this.state = { query: this.query, userCols: [], pausePulse: true }
     }
     componentDidMount() {
         window.require.config({ paths: { 'vs': 'node_modules/monaco-editor/min/vs' }});
