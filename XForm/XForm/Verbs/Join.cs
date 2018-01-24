@@ -52,6 +52,8 @@ namespace XForm.Verbs
 
         public Join(IXTable source, string joinFromColumn, IXTable joinToSource, string joinToColumn, string joinSidePrefix)
         {
+            if (source == null) throw new ArgumentNullException("source");
+
             _source = source;
             _joinToSource = joinToSource as ISeekableXTable;
             if (_joinToSource == null) throw new ArgumentException($"Join requires a single built Binary Table as the right side table.");
