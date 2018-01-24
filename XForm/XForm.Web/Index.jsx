@@ -53,7 +53,7 @@ class Index extends React.Component {
         this.count = this.baseCount = 50
         this.cols = this.baseCols = 20
         this.debouncedQueryChanged = debounce(this.queryChanged, 500)
-        this.state = { query: this.query, userCols: [] }
+        this.state = { query: this.query, userCols: [], pausePulse: true }
     }
     componentDidMount() {
         window.require.config({ paths: { 'vs': 'node_modules/monaco-editor/min/vs' }});
@@ -154,16 +154,17 @@ class Index extends React.Component {
     queryChanged() {
         this.count = this.baseCount
         this.cols = this.baseCols
-        this.limitChanged()
         xhr(`run`, { asof: this.state.asOf, q: `${this.validQuery}\nschema` }).then(o => {
-            if (o.rows) {
-                this.setState({
-                    schemaBody: o.rows.map(r => ({ name: r[0], type: `${r[1]}` })),
-                })
-            }
+            const schemaBody = o.rows.map(r => ({ name: r[0], type: `${r[1]}` }))
+            const colNames = new Set(schemaBody.map(r => r.name))
+            this.setState({
+                schemaBody,
+                userCols: this.state.userCols.filter(c => colNames.has(c)),
+            })
+            this.limitChanged(0, 0, true)
         })
     }
-    limitChanged(addCount = 0, addCols = 0) {
+    limitChanged(addCount = 0, addCols = 0, firstRun) { // firstRun... of the this specific query
         this.count += addCount
         this.cols += addCols
         const q = this.validQuery
@@ -171,7 +172,6 @@ class Index extends React.Component {
         if (!q) return // Running with an empty query will return a "" instead of an empty object table.
 
         const userCols = this.state.userCols.length && `\nselect ${this.state.userCols.map(c => `[${c}]`).join(', ')}` || ''
-        const firstRun = this.count === this.baseCount && this.cols === this.baseCols // firstRun... of the this specific query
         this.setState({ loading: true, pausePulse: firstRun })
         xhr(`run`, { rowLimit: this.count, colLimit: this.cols, asof: this.state.asOf, q: `${q}${userCols}` }).then(o => {
             if (o.Message || o.ErrorMessage) throw 'Error should have been caught before run.'
@@ -265,9 +265,10 @@ class Index extends React.Component {
                 </div>
                 <div className="tableWrapper" onScroll={e => {
                         const element = e.target
+                        log(element.scrollWidth, element.clientWidth, element.scrollLeft)
                         const pixelsFromLimitX = (element.scrollWidth - element.clientWidth - element.scrollLeft)
                         const pixelsFromLimitY = (element.scrollHeight - element.clientHeight - element.scrollTop)
-                        if (pixelsFromLimitX < 20) this.limitChanged(0, 10)
+                        if (pixelsFromLimitX < 20 && this.colLimit < this.state.schemaBody.length ) this.limitChanged(0, 10)
                         if (pixelsFromLimitY < 100) this.limitChanged(50)
                     }}>
                     <table>
