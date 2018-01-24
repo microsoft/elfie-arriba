@@ -108,7 +108,7 @@ class Index extends React.Component {
 
     		this.editor = monaco.editor.create(document.getElementById('queryEditor'), {
     			value: [
-    				'read WebRequestHuge',
+    				'read WebRequest',
                     'where [HttpStatus] != "200"',
     			].join('\n'),
     			language: 'xform',
