@@ -153,6 +153,8 @@ body {
             z-index: -1;
             font: 14px Consolas; // Manually match Monaco
             color: hsl(0, 0, 90%);
+            white-space: pre;
+            display: none;
         }
     }
 
