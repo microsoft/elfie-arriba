@@ -71,6 +71,9 @@ namespace XForm.Verbs
 
                 // Never request more than 16x the match count
                 if (result > desiredCount * 16) result = desiredCount * 16;
+
+                // Never request more than 2x DefaultBatchSize
+                if (result > XTableExtensions.DefaultBatchSize) result = XTableExtensions.DefaultBatchSize;
             }
             else if(_totalRowsRetrieved > 1024)
             {
