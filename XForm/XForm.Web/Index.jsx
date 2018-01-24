@@ -154,13 +154,12 @@ class Index extends React.Component {
     queryChanged() {
         this.count = this.baseCount
         this.cols = this.baseCols
-        this.limitChanged(0, 0, true)
         xhr(`run`, { asof: this.state.asOf, q: `${this.validQuery}\nschema` }).then(o => {
-            if (o.rows) {
-                this.setState({
-                    schemaBody: o.rows.map(r => ({ name: r[0], type: `${r[1]}` })),
-                })
-            }
+            const schemaBody = o.rows.map(r => ({ name: r[0], type: `${r[1]}` }))
+            this.setState({
+                schemaBody,
+            })
+            this.limitChanged(0, 0, true)
         })
     }
     limitChanged(addCount = 0, addCols = 0, firstRun) { // firstRun... of the this specific query
