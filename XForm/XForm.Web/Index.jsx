@@ -154,7 +154,7 @@ class Index extends React.Component {
     queryChanged() {
         this.count = this.baseCount
         this.cols = this.baseCols
-        this.limitChanged()
+        this.limitChanged(0, 0, true)
         xhr(`run`, { asof: this.state.asOf, q: `${this.validQuery}\nschema` }).then(o => {
             if (o.rows) {
                 this.setState({
@@ -163,7 +163,7 @@ class Index extends React.Component {
             }
         })
     }
-    limitChanged(addCount = 0, addCols = 0) {
+    limitChanged(addCount = 0, addCols = 0, firstRun) { // firstRun... of the this specific query
         this.count += addCount
         this.cols += addCols
         const q = this.validQuery
@@ -171,7 +171,6 @@ class Index extends React.Component {
         if (!q) return // Running with an empty query will return a "" instead of an empty object table.
 
         const userCols = this.state.userCols.length && `\nselect ${this.state.userCols.map(c => `[${c}]`).join(', ')}` || ''
-        const firstRun = this.count === this.baseCount && this.cols === this.baseCols // firstRun... of the this specific query
         this.setState({ loading: true, pausePulse: firstRun })
         xhr(`run`, { rowLimit: this.count, colLimit: this.cols, asof: this.state.asOf, q: `${q}${userCols}` }).then(o => {
             if (o.Message || o.ErrorMessage) throw 'Error should have been caught before run.'
