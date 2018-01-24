@@ -8,6 +8,13 @@ using XForm.Types;
 
 namespace XForm.IO
 {
+    public enum CachingOption
+    {
+        Always,         // Cache this item unconditionally (joins and seeks)
+        AsConfigured,   // Cache this item if the column cache is enabled
+        Never           // Don't cache this item ever (a container of it will be cached)
+    }
+
     /// <summary>
     ///  ColumnCache provides optional in-memory caching for columns in typed arrays.
     ///  If ColumnCache.IsEnabled = true, columns using the ColumnCache are fully read in advance and served from CachedColumnReaders.
@@ -23,9 +30,9 @@ namespace XForm.IO
             _cache = new Cache<IColumnReader>();
         }
 
-        public IColumnReader GetOrBuild(string key, bool requireCached, Func<IColumnReader> build)
+        public IColumnReader GetOrBuild(string key, CachingOption option, Func<IColumnReader> build)
         {
-            if (requireCached || IsEnabled)
+            if (option == CachingOption.Always || (ColumnCache.IsEnabled && option == CachingOption.AsConfigured))
             {
                 return _cache.GetOrBuild(key, null, () =>
                 {

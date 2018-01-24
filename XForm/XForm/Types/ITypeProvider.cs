@@ -4,6 +4,7 @@
 using System;
 
 using XForm.Data;
+using XForm.IO;
 using XForm.IO.StreamProvider;
 using XForm.Query;
 
@@ -26,7 +27,7 @@ namespace XForm.Types
         string Name { get; }
         Type Type { get; }
 
-        IColumnReader BinaryReader(IStreamProvider streamProvider, string columnPath, bool requireCached);
+        IColumnReader BinaryReader(IStreamProvider streamProvider, string columnPath, CachingOption option);
         IColumnWriter BinaryWriter(IStreamProvider streamProvider, string columnPath);
 
         NegatedTryConvert TryGetNegatedTryConvert(Type sourceType, Type targetType, object defaultValue);

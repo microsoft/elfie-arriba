@@ -49,7 +49,7 @@ namespace XForm.Types
             return provider;
         }
 
-        public static IColumnReader TryGetColumnReader(IStreamProvider streamProvider, Type columnType, string columnPath, bool requireCached = false, Type callingType = null)
+        public static IColumnReader TryGetColumnReader(IStreamProvider streamProvider, Type columnType, string columnPath, CachingOption option = CachingOption.AsConfigured, Type callingType = null)
         {
             // IColumnReaders are nested within each other. Each layer uses this factory method, which uses callingType to return the correct next layer down.
             //  EnumColumnReader -> NullableReader -> PrimitiveReader
@@ -57,15 +57,15 @@ namespace XForm.Types
 
             if (callingType == null)
             {
-                return EnumReader.Wrap(streamProvider, columnType, columnPath, requireCached);
+                return EnumReader.Wrap(streamProvider, columnType, columnPath, option);
             }
             else if (callingType == typeof(EnumReader))
             {
-                return NullableReader.Wrap(streamProvider, columnType, columnPath, requireCached);
+                return NullableReader.Wrap(streamProvider, columnType, columnPath, option);
             }
             else // typeof(NullableReader) || typeof(String8ColumnReader)
             {
-                return Get(columnType).BinaryReader(streamProvider, columnPath, requireCached);
+                return Get(columnType).BinaryReader(streamProvider, columnPath, option);
             }
         }
 

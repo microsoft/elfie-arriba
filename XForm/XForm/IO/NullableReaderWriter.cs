@@ -5,6 +5,7 @@ using System;
 using System.IO;
 
 using XForm.Data;
+using XForm.IO;
 using XForm.IO.StreamProvider;
 
 namespace XForm.Types
@@ -116,15 +117,15 @@ namespace XForm.Types
             _nullReader = nullReader;
         }
 
-        public static IColumnReader Wrap(IStreamProvider streamProvider, Type columnType, string columnPath, bool requireCached)
+        public static IColumnReader Wrap(IStreamProvider streamProvider, Type columnType, string columnPath, CachingOption option)
         {
             // Get the underlying value column
-            IColumnReader valueReader = TypeProviderFactory.TryGetColumnReader(streamProvider, columnType, columnPath, requireCached, typeof(NullableReader));
+            IColumnReader valueReader = TypeProviderFactory.TryGetColumnReader(streamProvider, columnType, columnPath, option, typeof(NullableReader));
             if (valueReader == null) return null;
 
             // Get a null reader (or null if there's no nulls file)
             string nullsPath = Path.Combine(columnPath, "Vn.b8.bin");
-            IColumnReader nullReader = TypeProviderFactory.TryGetColumnReader(streamProvider, typeof(bool), nullsPath, requireCached, typeof(NullableReader));
+            IColumnReader nullReader = TypeProviderFactory.TryGetColumnReader(streamProvider, typeof(bool), nullsPath, option, typeof(NullableReader));
 
             // If there are nulls, wrap in a NullableReader
             if (nullReader != null) return new NullableReader(valueReader, nullReader);

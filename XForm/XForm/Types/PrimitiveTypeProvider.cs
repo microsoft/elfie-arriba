@@ -22,9 +22,9 @@ namespace XForm.Types
             if (!typeof(T).IsPrimitive) throw new ArgumentException($"PrimitiveTypeProvider does not support non-primitive type {typeof(T).Name}");
         }
 
-        public IColumnReader BinaryReader(IStreamProvider streamProvider, string columnPath, bool requireCached)
+        public IColumnReader BinaryReader(IStreamProvider streamProvider, string columnPath, CachingOption option)
         {
-            return ColumnCache.Instance.GetOrBuild(columnPath, requireCached, () =>
+            return ColumnCache.Instance.GetOrBuild(columnPath, option, () =>
             {
                 string filePath = ValuesFilePath(columnPath);
                 if (!streamProvider.Attributes(filePath).Exists) return null;
