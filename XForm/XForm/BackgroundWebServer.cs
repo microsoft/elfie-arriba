@@ -11,6 +11,16 @@ using System.Threading;
 
 namespace XForm
 {
+    /// <summary>
+    ///  BackgroundWebServer handles Http Requests for the XForm engine on a background thread.
+    /// </summary>
+    /// <remarks>
+    ///   Access Rules:
+    ///     - HttpListener cannot register for any host name [http://+:5073] unless a URL ACL has been set first.
+    ///     - HttpListener *can* register for localhost only unelevated [http://localhost:5073].
+    ///     - Register for a URL ACL by running elevated: 'netsh http add urlacl url="http://+:5073" user=[DOMAIN\User]'
+    ///     - Delete the URL ACL with: 'netsh http delete urlacl url="http://+:5073"'
+    /// </remarks>
     public class BackgroundWebServer : IDisposable
     {
         private bool IsRunning { get; set; }
@@ -51,24 +61,56 @@ namespace XForm
         }
 
         #region Start/Stop
-        public void Start()
+        public void Run()
         {
             this.IsRunning = true;
 
-            this.Listener = new HttpListener();
-            this.Listener.Prefixes.Add("http://+:80/");
-            this.Listener.Prefixes.Add("http://+:5073/");
-
+            // Start the background thread (it'll write a running message)
             this.ListenerThread = new Thread(StartWithinThread);
             this.ListenerThread.IsBackground = true;
             this.ListenerThread.Start();
+
+            // Wait for a newline on this thread and then stop
+            Console.ReadLine();
+            this.Stop();
+        }
+
+        private void StartForBinding(params string[] urls)
+        {
+            this.Listener = new HttpListener();
+
+            foreach(string url in urls)
+            {
+                this.Listener.Prefixes.Add(url);
+            }
+
+            this.Listener.Start();
         }
 
         private void StartWithinThread()
         {
             try
             {
-                this.Listener.Start();
+                try
+                {
+                    // Try binding for all names on port 5073
+                    StartForBinding("http://+:5073/");
+                    Console.WriteLine("Http Server running; browse to http://localhost:5073. [Local and Remote]\r\nPress enter to stop server.");
+                }
+                catch (HttpListenerException ex) when (ex.ErrorCode == 5)
+                {
+                    // If we couldn't get the binding, there's no URL ACL set yet
+                    this.Listener = null;
+                }
+
+                if (this.Listener == null)
+                {
+                    // Try binding to just localhost:5073
+                    StartForBinding("http://localhost:5073/");
+                    Console.WriteLine("Http Server running; browse to http://localhost:5073. [Local Only]");
+                    Console.WriteLine(" To enable remote: https://github.com/Microsoft/elfie-arriba/wiki/XForm-Http-Remote-Access");
+                    Console.WriteLine("Press enter to stop server.");
+                }
             }
             catch (Exception ex)
             {
