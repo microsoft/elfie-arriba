@@ -60,6 +60,7 @@ namespace XForm
                             ParseCrawlTypeOrDefault(args, 3, CrawlType.Full),
                             ParseDateTimeOrDefault(args, 4, DateTime.MinValue));
 
+                        Console.WriteLine($"Done. \"{args[1]}\" added as Source \"{args[2]}\".");
                         return 0;
                     case "build":
                         if (args.Length < 2) throw new UsageException($"'build' [Table] [OutputFormat?] [AsOfDateTimeUtc?]", context.Runner.SourceNames);
