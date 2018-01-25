@@ -164,6 +164,9 @@ body {
         padding: 10px 5px 10px 30px;
         padding-right: 0;
         overflow-x: hidden;
+        span.errorMessage {
+            color: hsl(5, 80%, 65%);
+        }
     }
 }
 
