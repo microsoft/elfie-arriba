@@ -91,6 +91,10 @@ class Index extends React.Component {
                     return xhr(`suggest`, { q: textUntilPosition }).then(o => {
                         if (!o.Values) return []
 
+                        const trunate = o.ItemCategory === '[Column]' && /\[\w*$/.test(textUntilPosition)
+                            || o.ItemCategory === 'CompareOperator' && /!$/.test(textUntilPosition)
+                            || o.ItemCategory === 'CompareOperator' && /\|$/.test(textUntilPosition)
+
                         const kind = monaco.languages.CompletionItemKind;
                         const suggestions = !o.Values.length ? [] : o.Values.split(";").map(s => ({
                             kind: {
@@ -99,7 +103,7 @@ class Index extends React.Component {
                                 columnName: kind.Field,
                             }[o.ItemCategory] || kind.Text,
                             label: s,
-                            insertText: /\[\w*$/.test(textUntilPosition) && o.ItemCategory === '[Column]' ? s.slice(1) : s,
+                            insertText: trunate ? s.slice(1) : s,
                         }))
                         return suggestions
                     })
