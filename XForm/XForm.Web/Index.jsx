@@ -133,10 +133,10 @@ class Index extends React.Component {
     get query() {
         return this.editor && this.editor.getModel().getValue()
     }
-    queryTextChanged() {
+    queryTextChanged(force) {
         xhr(`suggest`, { asof: this.state.asOf, q: this.query }).then(info => {
             const trimmedQuery = this.query.trim()
-            if (info.Valid && this.validQuery !== trimmedQuery) {
+            if (info.Valid && (force || this.validQuery !== trimmedQuery)) {
                 this.validQuery = trimmedQuery
                 this.debouncedQueryChanged()
             }
@@ -218,7 +218,7 @@ class Index extends React.Component {
                             setTimeout(() => this.setState({ saving: "Save" }), 3000)
                         })
                     }}>{ this.state.saving || "Save" }</span>
-                    <select onChange={e => this.setState({ asOf: e.target.value || undefined }, () => this.queryTextChanged())}>
+                    <select onChange={e => this.setState({ asOf: e.target.value || undefined }, () => this.queryTextChanged(true))}>
                         <option value="">As of Now</option>
                         <option value={Date.daysAgo(1).toXFormat()}>As of Yesterday</option>
                         <option value={Date.daysAgo(7).toXFormat()}>As of Last Week</option>
