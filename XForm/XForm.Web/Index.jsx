@@ -91,6 +91,10 @@ class Index extends React.Component {
                     return xhr(`suggest`, { q: textUntilPosition }).then(o => {
                         if (!o.Values) return []
 
+                        const trunate = o.ItemCategory === '[Column]' && /\[\w*$/.test(textUntilPosition)
+                            || o.ItemCategory === 'CompareOperator' && /!$/.test(textUntilPosition)
+                            || o.ItemCategory === 'CompareOperator' && /\|$/.test(textUntilPosition)
+
                         const kind = monaco.languages.CompletionItemKind;
                         const suggestions = !o.Values.length ? [] : o.Values.split(";").map(s => ({
                             kind: {
@@ -99,7 +103,7 @@ class Index extends React.Component {
                                 columnName: kind.Field,
                             }[o.ItemCategory] || kind.Text,
                             label: s,
-                            insertText: /\[\w*$/.test(textUntilPosition) && o.ItemCategory === '[Column]' ? s.slice(1) : s,
+                            insertText: trunate ? s.slice(1) : s,
                         }))
                         return suggestions
                     })
@@ -137,8 +141,11 @@ class Index extends React.Component {
                 this.debouncedQueryChanged()
             }
 
-            const status = info.ErrorMessage || info.Usage
-            if (status !== this.state.status) this.setState({ status })
+            const errorMessage = info.ErrorMessage
+            if (errorMessage !== this.state.errorMessage) this.setState({ errorMessage })
+
+            const usage = info.Usage
+            if (usage !== this.state.usage) this.setState({ usage })
 
             const queryHint = !info.InvalidToken && info.ItemCategory || ''
             if (queryHint != this.state.queryHint) this.setState({ queryHint })
@@ -218,7 +225,10 @@ class Index extends React.Component {
                         <option value={Date.firstOfMonth().toXFormat()}>As of {(new Date()).toLocaleString('en-us', { month: "long" })} 1st</option>
                     </select>
                 </div>
-                <div className="queryUsage">{ this.state.status || `\u200B` }</div>
+                <div className="queryUsage">{
+                    this.state.errorMessage && <span className="errorMessage">{this.state.errorMessage}</span>
+                    || this.state.usage || `\u200B`
+                }</div>
                 <div id="queryEditor">
                     <div className="queryHint">{this.state.queryHint}</div>
                 </div>
