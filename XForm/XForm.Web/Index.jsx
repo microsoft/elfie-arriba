@@ -60,6 +60,22 @@ import ReactDOM from "react-dom"
                 endColumn: position.column,
             })
         }
+        editor.decorate = function(newDecorations) {
+            const old = this._oldDecorations || []
+            if (old.length || newDecorations.length) {
+                this._oldDecorations = this.deltaDecorations(old, newDecorations)
+            }
+        }
+        editor.indexToPosition = function(i) {
+            const lines = this.getValue().slice(0, i).split('\n')
+            const col = lines.last().length + 1
+            return new monaco.Position(lines.length, col)
+        }
+
+        // Assumes monaco is loaded
+        monaco.Position.prototype.toRange = function(length) {
+            return new monaco.Range(this.lineNumber, this.column, this.lineNumber, this.column + length)
+        }
     }
 })()
 
@@ -170,16 +186,12 @@ class Index extends React.Component {
             const queryHint = !info.InvalidToken && info.ItemCategory || ''
             if (queryHint != this.state.queryHint) this.setState({ queryHint })
 
-            const newDecorations = []
-            if (info.ErrorMessage) { // Need to verify info.InvalidTokenIndex < this.query.length?
-                const lines = this.query.slice(0, info.InvalidTokenIndex).split('\n')
-                const col = lines.last().length + 1
-                newDecorations.push({ range: new monaco.Range(lines.length, col, lines.length, col + info.InvalidToken.length), options: { inlineClassName: 'validationError' }})
-            }
-            if (this.oldDecorations && this.oldDecorations.length || newDecorations.length) {
-                const oldDecorations = this.editor.deltaDecorations(this.oldDecorations || [], newDecorations)
-                this.oldDecorations = oldDecorations
-            }
+            this.editor.decorate(info.ErrorMessage // Need to verify info.InvalidTokenIndex < this.query.length?
+                ? [{
+                    range: this.editor.indexToPosition(info.InvalidTokenIndex).toRange(info.InvalidToken.length),
+                    options: { inlineClassName: 'validationError' },
+                }]
+                : [])
         })
         setTimeout(() => {
             const ia = document.querySelector('.inputarea').style
