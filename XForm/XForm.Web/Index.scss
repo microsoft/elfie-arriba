@@ -75,6 +75,15 @@ body {
     }
 
     ::placeholder { color: hsla(0, 0, 100%, 0.5); }
+
+    ::-webkit-scrollbar {
+        height: 12px;
+        width: 6px;
+    }
+    ::-webkit-scrollbar-thumb {
+        background: hsla(0, 0, 0, 0.1);
+        &:hover { background: hsla(0, 0, 0, 0.2); }
+    }
 }
 
 .root {
