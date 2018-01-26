@@ -146,8 +146,8 @@ class Index extends React.Component {
     }
     queryTextChanged() {
         this.textJustChanged = true
+        const trimmedQuery = this.query.trim() // Pre async capture
         xhr(`suggest`, { asof: this.state.asOf, q: this.query }).then(info => {
-            const trimmedQuery = this.query.trim()
             if (info.Valid && this.validQuery !== trimmedQuery) {
                 this.validQuery = trimmedQuery
                 this.debouncedQueryChanged()
