@@ -146,7 +146,7 @@ class Index extends React.Component {
         return xhr(`suggest`, { asof: this.state.asOf, q: this.queryUntilPosition })
     }
     get query() {
-        return this.editor && this.editor.getModel().getValue()
+        return this.editor && this.editor.getValue()
     }
     queryTextChanged(force) {
         this.textJustChanged = true
