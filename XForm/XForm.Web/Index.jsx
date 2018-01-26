@@ -49,6 +49,18 @@ import ReactDOM from "react-dom"
         const dd = this.toLocaleString('en-US', { day: '2-digit' })
         return `${this.getFullYear()}-${mm}-${dd}`
     }
+
+    window.extendEditor = function(editor) {
+        editor.valueUntilPosition = function() {
+            const position = this.getPosition()
+            return this.getModel().getValueInRange({
+                startLineNumber: 1,
+                startColumn: 1,
+                endLineNumber: position.lineNumber,
+                endColumn: position.column,
+            })
+        }
+    }
 })()
 
 class Index extends React.Component {
@@ -90,7 +102,7 @@ class Index extends React.Component {
 
                         if (!o.Values) return []
 
-                        const textUntilPosition = this.queryUntilPosition
+                        const textUntilPosition = this.editor.valueUntilPosition()
                         const trunate = o.ItemCategory === '[Column]' && /\[\w*$/.test(textUntilPosition)
                             || o.ItemCategory === 'CompareOperator' && /!$/.test(textUntilPosition)
                             || o.ItemCategory === 'CompareOperator' && /\|$/.test(textUntilPosition)
@@ -122,6 +134,7 @@ class Index extends React.Component {
                 occurrencesHighlight: false,
                 hideCursorInOverviewRuler: true,
     		});
+            extendEditor(this.editor)
 
             this.editor.onDidChangeModelContent(this.queryTextChanged.bind(this))
             this.editor.onDidChangeCursorPosition(e => {
@@ -133,17 +146,8 @@ class Index extends React.Component {
             this.queryChanged()
     	});
     }
-    get queryUntilPosition() {
-        const position = this.editor.getPosition()
-        return this.editor.getModel().getValueInRange({
-            startLineNumber: 1,
-            startColumn: 1,
-            endLineNumber: position.lineNumber,
-            endColumn: position.column,
-        })
-    }
     get suggest() {
-        return xhr(`suggest`, { asof: this.state.asOf, q: this.queryUntilPosition })
+        return xhr(`suggest`, { asof: this.state.asOf, q: this.editor.valueUntilPosition() })
     }
     get query() {
         return this.editor && this.editor.getValue()
@@ -185,9 +189,9 @@ class Index extends React.Component {
         })
     }
     queryAndCursorChanged() {
-        const queryUntilPosition = this.queryUntilPosition
+        const q = this.editor.valueUntilPosition()
         this.suggest.then(suggestions => {
-            if (suggestions.Values && (suggestions.InvalidTokenIndex < queryUntilPosition.length || /[\s\(]$/.test(queryUntilPosition))) {
+            if (suggestions.Values && (suggestions.InvalidTokenIndex < q.length || /[\s\(]$/.test(q))) {
                 this.suggestions = suggestions
                 this.editor.trigger('source', 'editor.action.triggerSuggest', {});
             }
