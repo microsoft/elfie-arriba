@@ -80,23 +80,19 @@ class Index extends React.Component {
                 ]
             })
             monaco.languages.registerCompletionItemProvider('xform', {
-                triggerCharacters: [' ', '\n', '('],
-                provideCompletionItems: (model, position) => {
-                    const textUntilPosition = model.getValueInRange({
-                        startLineNumber: 1,
-                        startColumn: 1,
-                        endLineNumber: position.lineNumber,
-                        endColumn: position.column,
-                    })
-                    return xhr(`suggest`, { q: textUntilPosition }).then(o => {
+                provideCompletionItems: (model, position) =>
+                    (this.suggestions && Promise.resolve(this.suggestions) || this.suggest).then(o => {
+                        this.suggestions = undefined
+
                         if (!o.Values) return []
 
+                        const textUntilPosition = this.queryUntilPosition
                         const trunate = o.ItemCategory === '[Column]' && /\[\w*$/.test(textUntilPosition)
                             || o.ItemCategory === 'CompareOperator' && /!$/.test(textUntilPosition)
                             || o.ItemCategory === 'CompareOperator' && /\|$/.test(textUntilPosition)
 
                         const kind = monaco.languages.CompletionItemKind;
-                        const suggestions = !o.Values.length ? [] : o.Values.split(";").map(s => ({
+                        return !o.Values.length ? [] : o.Values.split(";").map(s => ({
                             kind: {
                                 verb: kind.Keyword,
                                 compareOperator: kind.Keyword,
@@ -105,9 +101,7 @@ class Index extends React.Component {
                             label: s,
                             insertText: trunate ? s.slice(1) : s,
                         }))
-                        return suggestions
                     })
-                }
             })
 
     		this.editor = monaco.editor.create(document.getElementById('queryEditor'), {
@@ -125,15 +119,33 @@ class Index extends React.Component {
                 hideCursorInOverviewRuler: true,
     		});
 
-            this.editor.onDidChangeModelContent(() => this.queryTextChanged())
+            this.editor.onDidChangeModelContent(this.queryTextChanged.bind(this))
+            this.editor.onDidChangeCursorPosition(e => {
+                if (this.textJustChanged) this.queryAndCursorChanged()
+                this.textJustChanged = false
+            })
+
             this.validQuery = this.query
             this.queryChanged()
     	});
+    }
+    get queryUntilPosition() {
+        const position = this.editor.getPosition()
+        return this.editor.getModel().getValueInRange({
+            startLineNumber: 1,
+            startColumn: 1,
+            endLineNumber: position.lineNumber,
+            endColumn: position.column,
+        })
+    }
+    get suggest() {
+        return xhr(`suggest`, { asof: this.state.asOf, q: this.queryUntilPosition })
     }
     get query() {
         return this.editor && this.editor.getModel().getValue()
     }
     queryTextChanged() {
+        this.textJustChanged = true
         xhr(`suggest`, { asof: this.state.asOf, q: this.query }).then(info => {
             const trimmedQuery = this.query.trim()
             if (info.Valid && this.validQuery !== trimmedQuery) {
@@ -155,6 +167,15 @@ class Index extends React.Component {
             const qh = document.querySelector('.queryHint').style
             qh.top = parseInt(ia.top) + 1 + 'px'
             qh.left = ia.left
+        })
+    }
+    queryAndCursorChanged() {
+        const queryUntilPosition = this.queryUntilPosition
+        this.suggest.then(suggestions => {
+            if (suggestions.Values && (suggestions.InvalidTokenIndex < queryUntilPosition.length || /[\s\(]$/.test(queryUntilPosition))) {
+                this.suggestions = suggestions
+                this.editor.trigger('source', 'editor.action.triggerSuggest', {});
+            }
         })
     }
     queryChanged() {
