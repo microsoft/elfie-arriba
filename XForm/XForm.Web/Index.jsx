@@ -29,6 +29,10 @@ import ReactDOM from "react-dom"
         return this;
     }
 
+    Array.prototype.last = function() {
+        return this[this.length - 1]
+    }
+
     Date.daysAgo = function(n) {
         const d = new Date()
         d.setDate(d.getDate() - (n || 0))
@@ -161,6 +165,17 @@ class Index extends React.Component {
 
             const queryHint = !info.InvalidToken && info.ItemCategory || ''
             if (queryHint != this.state.queryHint) this.setState({ queryHint })
+
+            const newDecorations = []
+            if (info.ErrorMessage) { // Need to verify info.InvalidTokenIndex < this.query.length?
+                const lines = this.query.slice(0, info.InvalidTokenIndex).split('\n')
+                const col = lines.last().length + 1
+                newDecorations.push({ range: new monaco.Range(lines.length, col, lines.length, col + info.InvalidToken.length), options: { inlineClassName: 'validationError' }})
+            }
+            if (this.oldDecorations && this.oldDecorations.length || newDecorations.length) {
+                const oldDecorations = this.editor.deltaDecorations(this.oldDecorations || [], newDecorations)
+                this.oldDecorations = oldDecorations
+            }
         })
         setTimeout(() => {
             const ia = document.querySelector('.inputarea').style
