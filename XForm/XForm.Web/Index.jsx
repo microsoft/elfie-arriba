@@ -148,11 +148,11 @@ class Index extends React.Component {
     get query() {
         return this.editor && this.editor.getModel().getValue()
     }
-    queryTextChanged() {
+    queryTextChanged(force) {
         this.textJustChanged = true
         const trimmedQuery = this.query.trim() // Pre async capture
         xhr(`suggest`, { asof: this.state.asOf, q: this.query }).then(info => {
-            if (info.Valid && this.validQuery !== trimmedQuery) {
+            if (info.Valid && (force || this.validQuery !== trimmedQuery)) {
                 this.validQuery = trimmedQuery
                 this.debouncedQueryChanged()
             }
@@ -196,6 +196,9 @@ class Index extends React.Component {
     queryChanged() {
         this.count = this.baseCount
         this.cols = this.baseCols
+
+        if(!!this.validQuery) this.setState({ loading: true, pausePulse: true })
+
         xhr(`run`, { asof: this.state.asOf, q: `${this.validQuery}\nschema` }).then(o => {
             const schemaBody = (o.rows || []).map(r => ({ name: r[0], type: `${r[1]}` }))
             const colNames = new Set(schemaBody.map(r => r.name))
@@ -261,7 +264,7 @@ class Index extends React.Component {
                             setTimeout(() => this.setState({ saving: "Save" }), 3000)
                         })
                     }}>{ this.state.saving || "Save" }</span>
-                    <select onChange={e => this.setState({ asOf: e.target.value || undefined }, () => this.queryTextChanged())}>
+                    <select onChange={e => this.setState({ asOf: e.target.value || undefined }, () => this.queryTextChanged(true))}>
                         <option value="">As of Now</option>
                         <option value={Date.daysAgo(1).toXFormat()}>As of Yesterday</option>
                         <option value={Date.daysAgo(7).toXFormat()}>As of Last Week</option>

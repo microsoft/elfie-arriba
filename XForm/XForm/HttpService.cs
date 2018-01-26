@@ -38,10 +38,7 @@ namespace XForm
                 server.AddResponder("count", CountWithinTimeout);
                 server.AddResponder("save", Save);
 
-                server.Start();
-                Console.WriteLine("Http Server running; browse http://localhost:5073. Press enter to stop server.");
-                Console.ReadLine();
-                server.Stop();
+                server.Run();
             }
         }
 
