@@ -106,9 +106,9 @@ class Index extends React.Component {
                 inherit: false,
                 rules: [
                     // https://github.com/Microsoft/vscode/blob/bef497ff82391f4f29ea52f532d896a6903f6ff6/src/vs/editor/standalone/common/themes.ts
-                    { token: 'verb', foreground: '569cd6' }, // Atom dark: 44C0C6
-                    { token: 'column', foreground: '4ec9b0' }, // Atom dark: D1BC92
-                    { token: 'string', foreground: 'd69d85' }, // Atom dark: FC8458
+                    { token: 'verb',   foreground: '5c99d6' }, // hsa(210, 60%, 60%), Atom dark: 44C0C6
+                    { token: 'column', foreground: '40bfbf' }, // hsl(180, 50%, 50%), Atom dark: D1BC92
+                    { token: 'string', foreground: 'bf5540' }, // hsl( 10, 50%, 50%), Atom dark: FC8458
                 ]
             })
             monaco.languages.registerCompletionItemProvider('xform', {
