@@ -211,11 +211,18 @@ class Index extends React.Component {
         this.cols += addCols
         const q = this.validQuery
 
-        if (!q) return // Running with an empty query will return a "" instead of an empty object table.
-
         const userCols = this.state.userCols.length && `\nselect ${this.state.userCols.map(c => `[${c}]`).join(', ')}` || ''
         this.setState({ loading: true, pausePulse: firstRun })
         xhr(`run`, { rowLimit: this.count, colLimit: this.cols, asof: this.state.asOf, q: `${q}${userCols}` }).then(o => {
+            if (o.Valid === false) {
+                this.setState({
+                    results: [],
+                    resultCount: undefined,
+                    loading: false,
+                    pausePulse: false,
+                })
+                return
+            }
             if (o.Message || o.ErrorMessage) throw 'Error should have been caught before run.'
             if (firstRun) {
                 this.setState({ results: o })
