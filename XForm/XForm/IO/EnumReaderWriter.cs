@@ -328,7 +328,7 @@ namespace XForm.IO
             if (rowIndexReader != null) return new EnumReader(valueReader, rowIndexReader);
             return valueReader;
         }
-        
+
         public static Type CheckIndicesType(IStreamProvider streamProvider, Type columnType, string columnPath)
         {
             if (streamProvider.Attributes(Path.Combine(columnPath, EnumWriter.RowIndexFileName)).Exists) return typeof(byte);

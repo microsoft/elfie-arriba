@@ -8,12 +8,12 @@ using System.Linq;
 
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 
+using XForm.Columns;
 using XForm.Data;
 using XForm.Extensions;
 using XForm.Functions;
 using XForm.Query.Expression;
 using XForm.Types;
-using XForm.Columns;
 
 namespace XForm.Query
 {
@@ -486,7 +486,7 @@ namespace XForm.Query
 
                 throw new UsageException(context, ex);
             }
-            else if(ex is ArgumentNullException && ((ArgumentNullException)ex).ParamName.Equals("source", StringComparison.OrdinalIgnoreCase))
+            else if (ex is ArgumentNullException && ((ArgumentNullException)ex).ParamName.Equals("source", StringComparison.OrdinalIgnoreCase))
             {
                 ErrorContext context = BuildErrorContext();
                 context.ErrorMessage = "read must be called before any other query verbs.";

@@ -39,7 +39,7 @@ namespace XForm.Functions.Date
 
         private static Func<DateTime, ushort> DatePartMethod(DatePart part)
         {
-            switch(part)
+            switch (part)
             {
                 case DatePart.Year:
                     return Year;
