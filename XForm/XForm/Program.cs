@@ -28,6 +28,7 @@ namespace XForm
             foreach (string arg in args)
             {
                 if (arg.Equals("+cache", StringComparison.OrdinalIgnoreCase)) ColumnCache.IsEnabled = true;
+                if (arg.Equals("-parallel", StringComparison.OrdinalIgnoreCase)) context.ForceSingleThreaded = true;
             }
 
             return Run(args, context);
