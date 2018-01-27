@@ -29,6 +29,10 @@ import ReactDOM from "react-dom"
         return this;
     }
 
+    Array.prototype.last = function() {
+        return this[this.length - 1]
+    }
+
     Date.daysAgo = function(n) {
         const d = new Date()
         d.setDate(d.getDate() - (n || 0))
@@ -80,23 +84,19 @@ class Index extends React.Component {
                 ]
             })
             monaco.languages.registerCompletionItemProvider('xform', {
-                triggerCharacters: [' ', '\n', '('],
-                provideCompletionItems: (model, position) => {
-                    const textUntilPosition = model.getValueInRange({
-                        startLineNumber: 1,
-                        startColumn: 1,
-                        endLineNumber: position.lineNumber,
-                        endColumn: position.column,
-                    })
-                    return xhr(`suggest`, { q: textUntilPosition }).then(o => {
+                provideCompletionItems: (model, position) =>
+                    (this.suggestions && Promise.resolve(this.suggestions) || this.suggest).then(o => {
+                        this.suggestions = undefined
+
                         if (!o.Values) return []
 
+                        const textUntilPosition = this.queryUntilPosition
                         const trunate = o.ItemCategory === '[Column]' && /\[\w*$/.test(textUntilPosition)
                             || o.ItemCategory === 'CompareOperator' && /!$/.test(textUntilPosition)
                             || o.ItemCategory === 'CompareOperator' && /\|$/.test(textUntilPosition)
 
                         const kind = monaco.languages.CompletionItemKind;
-                        const suggestions = !o.Values.length ? [] : o.Values.split(";").map(s => ({
+                        return !o.Values.length ? [] : o.Values.split(";").map(s => ({
                             kind: {
                                 verb: kind.Keyword,
                                 compareOperator: kind.Keyword,
@@ -105,9 +105,7 @@ class Index extends React.Component {
                             label: s,
                             insertText: trunate ? s.slice(1) : s,
                         }))
-                        return suggestions
                     })
-                }
             })
 
     		this.editor = monaco.editor.create(document.getElementById('queryEditor'), {
@@ -125,17 +123,35 @@ class Index extends React.Component {
                 hideCursorInOverviewRuler: true,
     		});
 
-            this.editor.onDidChangeModelContent(() => this.queryTextChanged())
+            this.editor.onDidChangeModelContent(this.queryTextChanged.bind(this))
+            this.editor.onDidChangeCursorPosition(e => {
+                if (this.textJustChanged) this.queryAndCursorChanged()
+                this.textJustChanged = false
+            })
+
             this.validQuery = this.query
             this.queryChanged()
     	});
+    }
+    get queryUntilPosition() {
+        const position = this.editor.getPosition()
+        return this.editor.getModel().getValueInRange({
+            startLineNumber: 1,
+            startColumn: 1,
+            endLineNumber: position.lineNumber,
+            endColumn: position.column,
+        })
+    }
+    get suggest() {
+        return xhr(`suggest`, { asof: this.state.asOf, q: this.queryUntilPosition })
     }
     get query() {
         return this.editor && this.editor.getModel().getValue()
     }
     queryTextChanged(force) {
+        this.textJustChanged = true
+        const trimmedQuery = this.query.trim() // Pre async capture
         xhr(`suggest`, { asof: this.state.asOf, q: this.query }).then(info => {
-            const trimmedQuery = this.query.trim()
             if (info.Valid && (force || this.validQuery !== trimmedQuery)) {
                 this.validQuery = trimmedQuery
                 this.debouncedQueryChanged()
@@ -149,12 +165,32 @@ class Index extends React.Component {
 
             const queryHint = !info.InvalidToken && info.ItemCategory || ''
             if (queryHint != this.state.queryHint) this.setState({ queryHint })
+
+            const newDecorations = []
+            if (info.ErrorMessage) { // Need to verify info.InvalidTokenIndex < this.query.length?
+                const lines = this.query.slice(0, info.InvalidTokenIndex).split('\n')
+                const col = lines.last().length + 1
+                newDecorations.push({ range: new monaco.Range(lines.length, col, lines.length, col + info.InvalidToken.length), options: { inlineClassName: 'validationError' }})
+            }
+            if (this.oldDecorations && this.oldDecorations.length || newDecorations.length) {
+                const oldDecorations = this.editor.deltaDecorations(this.oldDecorations || [], newDecorations)
+                this.oldDecorations = oldDecorations
+            }
         })
         setTimeout(() => {
             const ia = document.querySelector('.inputarea').style
             const qh = document.querySelector('.queryHint').style
             qh.top = parseInt(ia.top) + 1 + 'px'
             qh.left = ia.left
+        })
+    }
+    queryAndCursorChanged() {
+        const queryUntilPosition = this.queryUntilPosition
+        this.suggest.then(suggestions => {
+            if (suggestions.Values && (suggestions.InvalidTokenIndex < queryUntilPosition.length || /[\s\(]$/.test(queryUntilPosition))) {
+                this.suggestions = suggestions
+                this.editor.trigger('source', 'editor.action.triggerSuggest', {});
+            }
         })
     }
     queryChanged() {
@@ -178,11 +214,18 @@ class Index extends React.Component {
         this.cols += addCols
         const q = this.validQuery
 
-        if (!q) return // Running with an empty query will return a "" instead of an empty object table.
-
         const userCols = this.state.userCols.length && `\nselect ${this.state.userCols.map(c => `[${c}]`).join(', ')}` || ''
         this.setState({ loading: true, pausePulse: firstRun })
         xhr(`run`, { rowLimit: this.count, colLimit: this.cols, asof: this.state.asOf, q: `${q}${userCols}` }).then(o => {
+            if (o.Valid === false) {
+                this.setState({
+                    results: [],
+                    resultCount: undefined,
+                    loading: false,
+                    pausePulse: false,
+                })
+                return
+            }
             if (o.Message || o.ErrorMessage) throw 'Error should have been caught before run.'
             if (firstRun) {
                 this.setState({ results: o })

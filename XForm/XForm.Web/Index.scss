@@ -145,6 +145,11 @@ body {
                     box-shadow: 0 3px 10px 0 rgba(0,0,0,0.2), 0 0 0 1px rgba(0,0,0,0.05);
                 }
             }
+
+            .validationError {
+            	text-decoration: underline;
+                text-decoration-color: hsl(5, 80%, 65%);
+            }
         }
 
         position: relative;
