@@ -5,11 +5,11 @@ using System;
 
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 
+using XForm.Columns;
 using XForm.Data;
+using XForm.Extensions;
 using XForm.Types;
 using XForm.Types.Comparers;
-using XForm.Extensions;
-using XForm.Columns;
 
 namespace XForm.Query.Expression
 {
@@ -72,7 +72,7 @@ namespace XForm.Query.Expression
                 else if (op == CompareOperator.NotEqual) _comparer = WhereIsNotNull;
                 else throw new ArgumentException($"Only equals and not equals operators are supported against null.");
             }
-            else if(_left.IsNullConstant())
+            else if (_left.IsNullConstant())
             {
                 _left = _right;
                 if (op == CompareOperator.Equal) _comparer = WhereIsNull;

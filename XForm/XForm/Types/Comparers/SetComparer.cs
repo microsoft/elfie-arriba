@@ -1,4 +1,8 @@
-﻿using System;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
+
 using XForm.Columns;
 using XForm.Data;
 using XForm.Query;
@@ -12,8 +16,8 @@ namespace XForm.Types.Comparers
     /// </summary>
     internal class SetComparer
     {
-        BitVector _set;
-        bool[] _array;
+        private BitVector _set;
+        private bool[] _array;
 
         private SetComparer(BitVector set)
         {
@@ -22,7 +26,7 @@ namespace XForm.Types.Comparers
             _array = null;
             _set.ToArray(ref _array);
         }
-        
+
         /// <summary>
         ///  ConvertToEnumIndexComparer takes a comparer on the values of the enum and translates it to a comparer
         ///  which can operate on the byte[] indices instead.
@@ -45,12 +49,12 @@ namespace XForm.Types.Comparers
 
             // NOTE: When EnumColumn values are sorted, can convert comparisons to non-equality native accelerated compare.
 
-            if(set.Count == 0)
+            if (set.Count == 0)
             {
                 // If there were no matches, always return none
                 return None;
             }
-            else if(set.Count == left.Count)
+            else if (set.Count == left.Count)
             {
                 // If everything matched, always return everything
                 return All;

@@ -20,15 +20,17 @@ namespace XForm.IO
     // Sort values and remap on Dispose?
     public class EnumColumnDictionary<T> : HashCore, IEnumColumnDictionary
     {
+        private const int DistinctValueCountLimit = 256;
+
         private IEqualityComparer<T> _comparer;
         private IValueCopier<T> _copier;
         private T[] _keys;
-        private byte[] _values;
+        private int[] _values;
         private int _nullItemIndex;
 
         private bool _currentIsNull;
         private T _currentKey;
-        private byte _currentValue;
+        private int _currentValue;
 
         public EnumColumnDictionary()
         {
@@ -42,7 +44,7 @@ namespace XForm.IO
         {
             base.Reset(size);
             _keys = new T[size];
-            _values = new byte[size];
+            _values = new int[size];
             _nullItemIndex = -1;
         }
 
@@ -61,7 +63,7 @@ namespace XForm.IO
         {
             // Save the current Keys/Values/Metadata
             T[] oldKeys = _keys;
-            byte[] oldValues = _values;
+            int[] oldValues = _values;
             byte[] oldMetaData = this.Metadata;
             int oldNullIndex = _nullItemIndex;
 
@@ -75,9 +77,9 @@ namespace XForm.IO
             }
         }
 
-        private byte Add(T key, bool isNull)
+        private int Add(T key, bool isNull)
         {
-            byte valueIfAdded = (byte)this.Count;
+            int valueIfAdded = this.Count;
             _currentKey = key;
             _currentIsNull = isNull;
             _currentValue = valueIfAdded;
@@ -85,6 +87,7 @@ namespace XForm.IO
             uint hash = HashCurrent();
             int index = this.IndexOf(hash);
             if (index != -1) return _values[index];
+            if (valueIfAdded == DistinctValueCountLimit) return -1;
 
             if (!this.Add(hash))
             {
@@ -98,7 +101,7 @@ namespace XForm.IO
             return valueIfAdded;
         }
 
-        private void Add(T key, byte value, bool isNull)
+        private void Add(T key, int value, bool isNull)
         {
             _currentKey = key;
             _currentIsNull = isNull;
@@ -126,7 +129,7 @@ namespace XForm.IO
             }
 
             T swapKey = _keys[index];
-            byte swapValue = _values[index];
+            int swapValue = _values[index];
 
             _keys[index] = _currentKey;
             _values[index] = _currentValue;
@@ -146,11 +149,12 @@ namespace XForm.IO
                 bool isNull = (xarray.IsNull != null && xarray.IsNull[index]);
                 T value = array[index];
 
-                indicesFound[i] = Add(value, isNull);
-                if (this.Count > 256) break;
+                int indexFound = Add(value, isNull);
+                if (indexFound == -1) return false;
+                indicesFound[i] = (byte)indexFound;
             }
 
-            return this.Count <= 256;
+            return true;
         }
 
         public XArray Values()
@@ -171,7 +175,13 @@ namespace XForm.IO
                 }
             }
 
-            return XArray.All(_keys, this.Count, isNull).Reselect(ArraySelector.Map(indicesInOrder, this.Count));
+            // Build an indexed XArray pointing to the keys in insertion order
+            XArray keysInOrder = XArray.All(_keys, this.Count, isNull).Reselect(ArraySelector.Map(indicesInOrder, this.Count));
+
+            // Convert it to a contiguous, 0-based XArray
+            T[] contiguousCopy = null;
+            bool[] contiguousIsNull = null;
+            return keysInOrder.ToContiguous<T>(ref contiguousCopy, ref contiguousIsNull);
         }
     }
 
@@ -186,6 +196,7 @@ namespace XForm.IO
 
         private IColumnWriter _valueWriter;
         private IColumnWriter _rowIndexWriter;
+        private int _rowCountWritten;
 
         private byte[] _currentArrayIndices;
 
@@ -207,6 +218,7 @@ namespace XForm.IO
             if (_dictionary == null)
             {
                 _valueWriter.Append(xarray);
+                _rowCountWritten += xarray.Count;
                 return;
             }
 
@@ -215,12 +227,14 @@ namespace XForm.IO
             {
                 // If we're still under 256 values, write the indices
                 _rowIndexWriter.Append(XArray.All(_currentArrayIndices, xarray.Count));
+                _rowCountWritten += xarray.Count;
             }
             else
             {
                 // If we went over 256 values, convert to writing the values directly
                 Convert();
                 _valueWriter.Append(xarray);
+                _rowCountWritten += xarray.Count;
                 return;
             }
         }
@@ -231,32 +245,34 @@ namespace XForm.IO
             _rowIndexWriter.Dispose();
             _rowIndexWriter = null;
 
-            // Get the set of unique values and get rid of the value dictionary
-            XArray values = _dictionary.Values();
-            _dictionary = null;
-
-            // Convert the indices previously written into raw values
-            int[] valueIndices = new int[10240];
-            using (IColumnReader rowIndexReader = new PrimitiveArrayReader<byte>(_streamProvider.OpenRead(Path.Combine(_columnPath, RowIndexFileName))))
+            // If we wrote any rows we need to convert...
+            if (_rowCountWritten > 0)
             {
-                int rowCount = rowIndexReader.Count;
-                ArraySelector page = ArraySelector.All(0).NextPage(rowCount, 10240);
-                while (page.Count > 0)
+                // Get the set of unique values and get rid of the value dictionary
+                XArray values = _dictionary.Values();
+
+                // Convert the indices previously written into raw values
+                Func<XArray, XArray> converter = TypeConverterFactory.GetConverter(typeof(byte), typeof(int));
+                using (IColumnReader rowIndexReader = new PrimitiveArrayReader<byte>(_streamProvider.OpenRead(Path.Combine(_columnPath, RowIndexFileName))))
                 {
-                    // Read an XArray of indices and convert to int[]
-                    XArray xarray = rowIndexReader.Read(page);
-                    byte[] array = (byte[])xarray.Array;
-                    for (int i = 0; i < xarray.Count; ++i)
+                    int rowCount = rowIndexReader.Count;
+                    ArraySelector page = ArraySelector.All(0).NextPage(rowCount, 10240);
+                    while (page.Count > 0)
                     {
-                        valueIndices[i] = array[xarray.Index(i)];
+                        // Read an XArray of indices and convert to int[]
+                        XArray rowIndices = converter(rowIndexReader.Read(page));
+
+                        // Write the corresponding values
+                        // Reselect is safe because 'values' are converted to a contiguous array
+                        _valueWriter.Append(values.Reselect(ArraySelector.Map((int[])rowIndices.Array, rowIndices.Count)));
+
+                        page = page.NextPage(rowCount, 10240);
                     }
-
-                    // Write the corresponding values
-                    _valueWriter.Append(values.Reselect(ArraySelector.Map(valueIndices, xarray.Count)));
-
-                    page = page.NextPage(rowCount, 10240);
                 }
             }
+
+            // Remove the Dictionary (so future rows are streamed out as-is)
+            _dictionary = null;
 
             // Delete the row index file
             _streamProvider.Delete(Path.Combine(_columnPath, RowIndexFileName));
@@ -312,7 +328,7 @@ namespace XForm.IO
             if (rowIndexReader != null) return new EnumReader(valueReader, rowIndexReader);
             return valueReader;
         }
-        
+
         public static Type CheckIndicesType(IStreamProvider streamProvider, Type columnType, string columnPath)
         {
             if (streamProvider.Attributes(Path.Combine(columnPath, EnumWriter.RowIndexFileName)).Exists) return typeof(byte);

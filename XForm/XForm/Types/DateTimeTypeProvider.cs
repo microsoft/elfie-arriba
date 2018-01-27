@@ -22,7 +22,7 @@ namespace XForm.Types
             return ColumnCache.Instance.GetOrBuild(columnPath, requireCached, () =>
             {
                 return ConvertingReader.Build(
-                    TypeProviderFactory.Get(typeof(long)).BinaryReader(streamProvider, columnPath, CachingOption.Never), 
+                    TypeProviderFactory.Get(typeof(long)).BinaryReader(streamProvider, columnPath, CachingOption.Never),
                     TypeConverterFactory.GetConverter(typeof(long), typeof(DateTime)));
             });
         }

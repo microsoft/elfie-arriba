@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+
 using XForm.Columns;
 using XForm.Data;
 using XForm.Extensions;
@@ -83,7 +84,7 @@ namespace XForm.Verbs
             }
 
             // Right side columns are seeked to the right side matching rows
-            for(int i = 0; i < joinToSource.Columns.Count; ++i)
+            for (int i = 0; i < joinToSource.Columns.Count; ++i)
             {
                 SeekedColumn column = new SeekedColumn(RenamedColumn.Build(joinToSource.Columns[i], joinSidePrefix + joinToSource.Columns[i].ColumnDetails.Name));
                 _rightSideColumns[i] = column;
@@ -125,7 +126,7 @@ namespace XForm.Verbs
             _sourceJoinedRowsFilter.SetMatches(matchedRows);
 
             // Seek right-side rows to the matches
-            for(int i = 0; i < _rightSideColumns.Length; ++i)
+            for (int i = 0; i < _rightSideColumns.Length; ++i)
             {
                 _rightSideColumns[i].Set(_currentRightSideSelector);
             }

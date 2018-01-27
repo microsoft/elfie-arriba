@@ -203,5 +203,45 @@ namespace XForm.Data
 
             return (areAnyNulls ? remapArray : null);
         }
+
+        /// <summary>
+        ///  Convert an XArray which uses indices into a contiguous, zero-based array.
+        ///  This allows using (fast) Reselect once converted.
+        /// </summary>
+        /// <param name="array">Buffer to use to write contiguous values</param>
+        /// <param name="isNull">Buffer to use for new null array</param>
+        /// <returns>XArray of values written contiguously</returns>
+        public XArray ToContiguous<T>(ref T[] array, ref bool[] isNull)
+        {
+            // If this XArray isn't shifted or indirected, we can use it as-is
+            if (this.Selector.Indices == null && this.Selector.StartIndexInclusive == 0) return this;
+
+            T[] thisArray = (T[])this.Array;
+            Allocator.AllocateToSize(ref array, this.Count);
+
+            if (this.IsNull == null)
+            {
+                for (int i = 0; i < this.Count; ++i)
+                {
+                    int index = this.Index(i);
+                    array[i] = thisArray[index];
+                }
+
+                return XArray.All(array, this.Count);
+            }
+            else
+            {
+                Allocator.AllocateToSize(ref isNull, this.Count);
+
+                for (int i = 0; i < this.Count; ++i)
+                {
+                    int index = this.Index(i);
+                    array[i] = thisArray[index];
+                    isNull[i] = this.IsNull[index];
+                }
+
+                return XArray.All(array, this.Count, isNull);
+            }
+        }
     }
 }

@@ -58,6 +58,5 @@ namespace XForm.Data
         /// </summary>
         /// <returns>Func&lt;ArraySelector, XArray&gt; to get row value indices, or null if values aren't constrained.</returns>
         Func<ArraySelector, XArray> IndicesSeekGetter();
-
     }
 }

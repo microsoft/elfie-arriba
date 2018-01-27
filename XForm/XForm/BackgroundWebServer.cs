@@ -79,7 +79,7 @@ namespace XForm
         {
             this.Listener = new HttpListener();
 
-            foreach(string url in urls)
+            foreach (string url in urls)
             {
                 this.Listener.Prefixes.Add(url);
             }

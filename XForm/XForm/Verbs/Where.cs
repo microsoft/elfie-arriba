@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+
 using XForm.Columns;
 using XForm.Data;
 using XForm.Extensions;
@@ -49,7 +50,7 @@ namespace XForm.Verbs
 
             // Build wrapper columns
             _columns = new RemappedColumn[source.Columns.Count];
-            for(int i = 0; i < _columns.Length; ++i)
+            for (int i = 0; i < _columns.Length; ++i)
             {
                 _columns[i] = new RemappedColumn(source.Columns[i], _mapper);
             }
@@ -75,7 +76,7 @@ namespace XForm.Verbs
                 // Never request more than 2x DefaultBatchSize
                 if (result > XTableExtensions.DefaultBatchSize) result = XTableExtensions.DefaultBatchSize;
             }
-            else if(_totalRowsRetrieved > 1024)
+            else if (_totalRowsRetrieved > 1024)
             {
                 // If more than 1,024 rows were searched with no matches, revert to full page size
                 result = XTableExtensions.DefaultBatchSize;

@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 using Elfie.Test;
 
@@ -12,7 +13,6 @@ using XForm.Data;
 using XForm.Extensions;
 using XForm.Query;
 using XForm.Query.Expression;
-using System.Diagnostics;
 
 namespace XForm.Test.Query
 {
