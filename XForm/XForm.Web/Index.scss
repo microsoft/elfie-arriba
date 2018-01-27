@@ -81,6 +81,7 @@ body {
     & > :not(input):not(.loading) {
         @include buttonBase;
         &.button { @include buttonActive; }
+        transition: opacity 1s;
     }
 
     & > a { color: inherit; }
@@ -127,9 +128,17 @@ body {
             &:hover { @include buttonActive; }
         }
 
+        span.save {
+            color: adjust-color($blue, $lightness : -25%);
+            text-shadow: initial !important;
+            background-color: hsla(0, 0, 100%, 0.8);
+            padding: 7px 9px; // 1px less than normal each side, optical.
+            &:hover { background-color: hsla(0, 0, 100%, 0.6); }
+        }
+
         select {
             padding: 6px 4px !important;
-            margin-left: 4px;
+            margin-left: 10px;
             option { padding: 6px 4px; }
         }
     }

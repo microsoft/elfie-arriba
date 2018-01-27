@@ -85,7 +85,7 @@ class Index extends React.Component {
         this.count = this.baseCount = 50
         this.cols = this.baseCols = 20
         this.debouncedQueryChanged = debounce(this.queryChanged, 500)
-        this.state = { query: this.query, userCols: [], pausePulse: true }
+        this.state = { query: this.query, userCols: [], saveAs: '', pausePulse: true }
     }
     componentDidMount() {
         window.require.config({ paths: { 'vs': 'node_modules/monaco-editor/min/vs' }});
@@ -270,10 +270,11 @@ class Index extends React.Component {
         return <div className={`root`}>
             <div className="query">
                 <div className="queryHeader">
-                    <input ref="name" type="text" placeholder="Add Title to Save" />
-                    <span onClick={e => {
+                    <input type="text" placeholder="Save As"
+                        value={this.state.saveAs} onChange={e => this.setState({ saveAs: e.target.value })}/>
+                    <span className="save" style={{ opacity: +!!this.state.saveAs }} onClick={e => {
                         const q = this.query
-                        const name = this.refs.name.value
+                        const name = this.state.saveAs
                         if (!name || !q) return
                         xhr(`save`, { name, q }).then(o => {
                             this.setState({ saving: "Saved" })
