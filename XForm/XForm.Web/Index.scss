@@ -3,7 +3,7 @@ $text: hsl(0, 0, 30%);
 $line: hsl(0, 0, 92%);
 $line80: hsl(0, 0, 80%);
 $linedark: hsl(0, 0, 70%);
-$blue: hsl(220, 75%, 95%);
+$blue: hsl(205, 90%, 45%);
 
 html, #app {
     height: 100%;
@@ -74,9 +74,9 @@ body {
     font-size: 9pt;
     text-shadow: 0 1px 2px hsla(0, 0, 0, 0.2);
 
-    background-color: hsl(205, 90%, 45%);
+    background-color: $blue;
     color: hsl(0, 0, 95%);
-    border-bottom: 1px solid hsl(205, 90%, 35%);
+    border-bottom: 1px solid adjust-color($blue, $lightness: -10%);
 
     & > :not(input):not(.loading) {
         @include buttonBase;
@@ -225,7 +225,7 @@ body {
                 padding-right: 20px;
             }
         }
-        tr:hover { background: $blue; }
+        tr:hover { background: change-color($blue, $alpha: 0.1); }
         :nth-child(5n) td {
             padding-bottom: 20px;
         }
@@ -244,9 +244,9 @@ body {
 
         &.pulse {
             @keyframes pulse {
-                0%    { background-color: hsl(205, 90%, 45%); }
-                30%   { background-color: hsl(205, 90%, 55%); }
-                100%  { background-color: hsl(205, 90%, 45%); }
+                0%    { background-color: $blue; }
+                30%   { background-color: adjust-color($blue, $lightness: 10%); }
+                100%  { background-color: $blue; }
             }
             animation: pulse 1s ease-out 1;
             span:first-child {
