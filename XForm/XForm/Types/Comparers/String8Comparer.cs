@@ -23,7 +23,6 @@ namespace XForm.Types.Comparers
         internal static IndexOfAll s_IndexOfAllNative = null;
 
         internal int[] _indicesBuffer;
-        internal int[] _indicesBuffer2;
 
         public void GetHashCodes(XArray xarray, int[] hashes)
         {
