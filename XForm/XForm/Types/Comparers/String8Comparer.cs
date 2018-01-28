@@ -677,54 +677,55 @@ namespace XForm.Types.Comparers
             String8 all = new String8(first.Array, 0, last.Index + last.Length);
             Allocator.AllocateToSize(ref _indicesBuffer, 1024);
 
-            int textIndex = first.Index;
-            int rowIndex = left.Selector.StartIndexInclusive + 1;
+            int nextIndex = first.Index;
+            int nextRowIndex = left.Selector.StartIndexInclusive + 1;
 
             while (true)
             {
                 // Find a batch of matches
-                int countFound = 0;
-
+                int countFound;
                 if (s_IndexOfAllNative != null)
                 {
-                    countFound = s_IndexOfAllNative(all.Array, textIndex, all.Length - textIndex, rightValue.Array, rightValue.Index, rightValue.Length, true, _indicesBuffer);
+                    countFound = s_IndexOfAllNative(all.Array, nextIndex, all.Length - nextIndex, rightValue.Array, rightValue.Index, rightValue.Length, true, _indicesBuffer);
                 }
                 else
                 {
-                    countFound = all.IndexOfAll(rightValue, textIndex, true, _indicesBuffer);
+                    countFound = all.IndexOfAll(rightValue, nextIndex, true, _indicesBuffer);
                 }
 
-                if (countFound == 0) break;
-                textIndex = (countFound < _indicesBuffer.Length ? _indicesBuffer[countFound - 1] + 1 : int.MaxValue);
-
-                // Find the rows which contain them
+                // Find the row containing each match
                 int countMatched = 0;
-                int indexToFind = _indicesBuffer[countMatched];
-                    
-                for (; rowIndex < left.Selector.EndIndexExclusive; ++rowIndex)
+                for (; countMatched < countFound; ++countMatched)
                 {
-                    // If the next match is before this row...
-                    if (indexToFind < leftArray[rowIndex].Index)
+                    int indexToFind = _indicesBuffer[countMatched];
+
+                    for (; nextRowIndex < left.Selector.EndIndexExclusive; ++nextRowIndex)
                     {
-                        // If it's fully within the previous row, add it
-                        int endIndex = indexToFind + rightValue.Length;
-                        if (endIndex >= leftArray[rowIndex - 1].Index) vector.Set(rowIndex - zeroOffset - 1);
-                            
-                        // Look for the next match (again in this row)
-                        countMatched++;
-                        rowIndex--;
+                        // If the next match is before this row...
+                        if (indexToFind < leftArray[nextRowIndex].Index)
+                        {
+                            // If it's fully within the previous row, add it
+                            int endIndex = indexToFind + rightValue.Length;
+                            if (endIndex >= leftArray[nextRowIndex - 1].Index) vector.Set(nextRowIndex - zeroOffset - 1);
 
-                        // If we're out of matches to find, stop
-                        if (countMatched == countFound) break;
-
-                        indexToFind = _indicesBuffer[countMatched];
+                            // Look for the next match (in this row again)
+                            break;
+                        }
                     }
+
+                    // If we're out of rows, stop
+                    if (nextRowIndex == left.Selector.EndIndexExclusive) break;
                 }
 
-                if(countMatched != countFound)
+                // If there were matches left, they must be in the last row
+                if (countMatched != countFound)
                 {
-                    vector.Set(rowIndex - zeroOffset - 1);
+                    vector.Set(nextRowIndex - zeroOffset - 1);
                 }
+
+                // Find the next index to search for matches from
+                if (countFound < _indicesBuffer.Length) break;
+                nextIndex = _indicesBuffer[countFound - 1] + 1;
             }
         }
     }
