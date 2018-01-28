@@ -670,14 +670,11 @@ namespace XForm.Types.Comparers
             if (rightValue.Length == 0) return;
 
             String8[] leftArray = (String8[])left.Array;
-            int zeroOffset = left.Selector.StartIndexInclusive;
-
-            String8 first = leftArray[left.Selector.StartIndexInclusive];
             String8 last = leftArray[left.Selector.EndIndexExclusive - 1];
-            String8 all = new String8(first.Array, 0, last.Index + last.Length);
+            String8 all = new String8(last.Array, 0, last.Index + last.Length);
             Allocator.AllocateToSize(ref _indicesBuffer, 1024);
 
-            int nextIndex = first.Index;
+            int nextIndex = leftArray[left.Selector.StartIndexInclusive].Index;
             int nextRowIndex = left.Selector.StartIndexInclusive + 1;
 
             while (true)
@@ -693,39 +690,45 @@ namespace XForm.Types.Comparers
                     countFound = all.IndexOfAll(rightValue, nextIndex, true, _indicesBuffer);
                 }
 
-                // Find the row containing each match
-                int countMatched = 0;
-                for (; countMatched < countFound; ++countMatched)
-                {
-                    int indexToFind = _indicesBuffer[countMatched];
-
-                    for (; nextRowIndex < left.Selector.EndIndexExclusive; ++nextRowIndex)
-                    {
-                        // If the next match is before this row...
-                        if (indexToFind < leftArray[nextRowIndex].Index)
-                        {
-                            // If it's fully within the previous row, add it
-                            int endIndex = indexToFind + rightValue.Length;
-                            if (endIndex >= leftArray[nextRowIndex - 1].Index) vector.Set(nextRowIndex - zeroOffset - 1);
-
-                            // Look for the next match (in this row again)
-                            break;
-                        }
-                    }
-
-                    // If we're out of rows, stop
-                    if (nextRowIndex == left.Selector.EndIndexExclusive) break;
-                }
-
-                // If there were matches left, they must be in the last row
-                if (countMatched != countFound)
-                {
-                    vector.Set(nextRowIndex - zeroOffset - 1);
-                }
+                // Map the indices found to rows
+                IndicesToContainsRows(leftArray, rightValue.Length, ref nextRowIndex, left.Selector.StartIndexInclusive, left.Selector.EndIndexExclusive, countFound, vector);
 
                 // Find the next index to search for matches from
                 if (countFound < _indicesBuffer.Length) break;
                 nextIndex = _indicesBuffer[countFound - 1] + 1;
+            }
+        }
+
+        private void IndicesToContainsRows(String8[] leftArray, int rightLength, ref int nextRowIndex, int startRowIndex, int endRowIndex, int countFound, BitVector vector)
+        {
+            // Find the row containing each match
+            int countMatched = 0;
+            for (; countMatched < countFound; ++countMatched)
+            {
+                int indexToFind = _indicesBuffer[countMatched];
+
+                for (; nextRowIndex < endRowIndex; ++nextRowIndex)
+                {
+                    // If the next match is before this row...
+                    if (indexToFind < leftArray[nextRowIndex].Index)
+                    {
+                        // If it's fully within the previous row, add it
+                        int endIndex = indexToFind + rightLength;
+                        if (endIndex >= leftArray[nextRowIndex - 1].Index) vector.Set(nextRowIndex - 1 - startRowIndex);
+
+                        // Look for the next match (in this row again)
+                        break;
+                    }
+                }
+
+                // If we're out of rows, stop
+                if (nextRowIndex == endRowIndex) break;
+            }
+
+            // If there were matches left, they must be in the last row
+            if (countMatched != countFound)
+            {
+                vector.Set(nextRowIndex - 1 - startRowIndex);
             }
         }
     }
