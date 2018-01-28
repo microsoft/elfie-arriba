@@ -49,6 +49,34 @@ import ReactDOM from "react-dom"
         const dd = this.toLocaleString('en-US', { day: '2-digit' })
         return `${this.getFullYear()}-${mm}-${dd}`
     }
+
+    window.extendEditor = function(editor) {
+        editor.valueUntilPosition = function() {
+            const position = this.getPosition()
+            return this.getModel().getValueInRange({
+                startLineNumber: 1,
+                startColumn: 1,
+                endLineNumber: position.lineNumber,
+                endColumn: position.column,
+            })
+        }
+        editor.decorate = function(newDecorations) {
+            const old = this._oldDecorations || []
+            if (old.length || newDecorations.length) {
+                this._oldDecorations = this.deltaDecorations(old, newDecorations)
+            }
+        }
+        editor.indexToPosition = function(i) {
+            const lines = this.getValue().slice(0, i).split('\n')
+            const col = lines.last().length + 1
+            return new monaco.Position(lines.length, col)
+        }
+
+        // Assumes monaco is loaded
+        monaco.Position.prototype.toRange = function(length) {
+            return new monaco.Range(this.lineNumber, this.column, this.lineNumber, this.column + length)
+        }
+    }
 })()
 
 class Index extends React.Component {
@@ -57,7 +85,7 @@ class Index extends React.Component {
         this.count = this.baseCount = 50
         this.cols = this.baseCols = 20
         this.debouncedQueryChanged = debounce(this.queryChanged, 500)
-        this.state = { query: this.query, userCols: [], pausePulse: true }
+        this.state = { query: this.query, userCols: [], saveAs: '', pausePulse: true }
     }
     componentDidMount() {
         window.require.config({ paths: { 'vs': 'node_modules/monaco-editor/min/vs' }});
@@ -78,9 +106,9 @@ class Index extends React.Component {
                 inherit: false,
                 rules: [
                     // https://github.com/Microsoft/vscode/blob/bef497ff82391f4f29ea52f532d896a6903f6ff6/src/vs/editor/standalone/common/themes.ts
-                    { token: 'verb', foreground: '569cd6' }, // Atom dark: 44C0C6
-                    { token: 'column', foreground: '4ec9b0' }, // Atom dark: D1BC92
-                    { token: 'string', foreground: 'd69d85' }, // Atom dark: FC8458
+                    { token: 'verb',   foreground: '5c99d6' }, // hsa(210, 60%, 60%), Atom dark: 44C0C6
+                    { token: 'column', foreground: '40bfbf' }, // hsl(180, 50%, 50%), Atom dark: D1BC92
+                    { token: 'string', foreground: 'bf5540' }, // hsl( 10, 50%, 50%), Atom dark: FC8458
                 ]
             })
             monaco.languages.registerCompletionItemProvider('xform', {
@@ -90,7 +118,7 @@ class Index extends React.Component {
 
                         if (!o.Values) return []
 
-                        const textUntilPosition = this.queryUntilPosition
+                        const textUntilPosition = this.editor.valueUntilPosition()
                         const trunate = o.ItemCategory === '[Column]' && /\[\w*$/.test(textUntilPosition)
                             || o.ItemCategory === 'CompareOperator' && /!$/.test(textUntilPosition)
                             || o.ItemCategory === 'CompareOperator' && /\|$/.test(textUntilPosition)
@@ -122,6 +150,7 @@ class Index extends React.Component {
                 occurrencesHighlight: false,
                 hideCursorInOverviewRuler: true,
     		});
+            extendEditor(this.editor)
 
             this.editor.onDidChangeModelContent(this.queryTextChanged.bind(this))
             this.editor.onDidChangeCursorPosition(e => {
@@ -133,20 +162,11 @@ class Index extends React.Component {
             this.queryChanged()
     	});
     }
-    get queryUntilPosition() {
-        const position = this.editor.getPosition()
-        return this.editor.getModel().getValueInRange({
-            startLineNumber: 1,
-            startColumn: 1,
-            endLineNumber: position.lineNumber,
-            endColumn: position.column,
-        })
-    }
     get suggest() {
-        return xhr(`suggest`, { asof: this.state.asOf, q: this.queryUntilPosition })
+        return xhr(`suggest`, { asof: this.state.asOf, q: this.editor.valueUntilPosition() })
     }
     get query() {
-        return this.editor && this.editor.getModel().getValue()
+        return this.editor && this.editor.getValue()
     }
     queryTextChanged(force) {
         this.textJustChanged = true
@@ -166,16 +186,12 @@ class Index extends React.Component {
             const queryHint = !info.InvalidToken && info.ItemCategory || ''
             if (queryHint != this.state.queryHint) this.setState({ queryHint })
 
-            const newDecorations = []
-            if (info.ErrorMessage) { // Need to verify info.InvalidTokenIndex < this.query.length?
-                const lines = this.query.slice(0, info.InvalidTokenIndex).split('\n')
-                const col = lines.last().length + 1
-                newDecorations.push({ range: new monaco.Range(lines.length, col, lines.length, col + info.InvalidToken.length), options: { inlineClassName: 'validationError' }})
-            }
-            if (this.oldDecorations && this.oldDecorations.length || newDecorations.length) {
-                const oldDecorations = this.editor.deltaDecorations(this.oldDecorations || [], newDecorations)
-                this.oldDecorations = oldDecorations
-            }
+            this.editor.decorate(info.ErrorMessage // Need to verify info.InvalidTokenIndex < this.query.length?
+                ? [{
+                    range: this.editor.indexToPosition(info.InvalidTokenIndex).toRange(info.InvalidToken.length),
+                    options: { inlineClassName: 'validationError' },
+                }]
+                : [])
         })
         setTimeout(() => {
             const ia = document.querySelector('.inputarea').style
@@ -185,9 +201,9 @@ class Index extends React.Component {
         })
     }
     queryAndCursorChanged() {
-        const queryUntilPosition = this.queryUntilPosition
+        const q = this.editor.valueUntilPosition()
         this.suggest.then(suggestions => {
-            if (suggestions.Values && (suggestions.InvalidTokenIndex < queryUntilPosition.length || /[\s\(]$/.test(queryUntilPosition))) {
+            if (suggestions.Values && (suggestions.InvalidTokenIndex < q.length || /[\s\(]$/.test(q))) {
                 this.suggestions = suggestions
                 this.editor.trigger('source', 'editor.action.triggerSuggest', {});
             }
@@ -254,10 +270,11 @@ class Index extends React.Component {
         return <div className={`root`}>
             <div className="query">
                 <div className="queryHeader">
-                    <input ref="name" type="text" placeholder="Add Title to Save" />
-                    <span onClick={e => {
+                    <input type="text" placeholder="Save As"
+                        value={this.state.saveAs} onChange={e => this.setState({ saveAs: e.target.value })}/>
+                    <span className="save" style={{ opacity: +!!this.state.saveAs }} onClick={e => {
                         const q = this.query
-                        const name = this.refs.name.value
+                        const name = this.state.saveAs
                         if (!name || !q) return
                         xhr(`save`, { name, q }).then(o => {
                             this.setState({ saving: "Saved" })
@@ -320,7 +337,6 @@ class Index extends React.Component {
                 </div>
                 <div className="tableWrapper" onScroll={e => {
                         const element = e.target
-                        log(element.scrollWidth, element.clientWidth, element.scrollLeft)
                         const pixelsFromLimitX = (element.scrollWidth - element.clientWidth - element.scrollLeft)
                         const pixelsFromLimitY = (element.scrollHeight - element.clientHeight - element.scrollTop)
                         if (pixelsFromLimitX < 20 && this.colLimit < this.state.schemaBody.length ) this.limitChanged(0, 10)

@@ -3,40 +3,7 @@ $text: hsl(0, 0, 30%);
 $line: hsl(0, 0, 92%);
 $line80: hsl(0, 0, 80%);
 $linedark: hsl(0, 0, 70%);
-$blue: hsl(220, 75%, 95%);
-
-@mixin buttonBase {
-    padding: 8px 10px;
-    padding-right: 12px; // Optical
-    border-radius: 3px;
-}
-
-@mixin buttonActive {
-    cursor: pointer;
-    user-select: none;
-    &:hover { background-color: hsla(0, 0, 0, 0.15); }
-    &:active { background-color: hsla(0, 0, 100%, 0.15); }
-}
-
-@mixin header {
-    height: 50px;
-    display: flex;
-    align-items: center;
-    padding: 0 10px;
-    font-size: 9pt;
-    text-shadow: 0 1px 2px hsla(0, 0, 0, 0.2);
-
-    background-color: hsl(205, 90%, 45%);
-    color: hsl(0, 0, 95%);
-    border-bottom: 1px solid hsl(205, 90%, 35%);
-
-    & > :not(input):not(.loading) {
-        @include buttonBase;
-        &.button { @include buttonActive; }
-    }
-
-    & > a { color: inherit; }
-}
+$blue: hsl(205, 90%, 45%);
 
 html, #app {
     height: 100%;
@@ -75,6 +42,49 @@ body {
     }
 
     ::placeholder { color: hsla(0, 0, 100%, 0.5); }
+
+    ::-webkit-scrollbar {
+        height: 12px;
+        width: 6px;
+    }
+    ::-webkit-scrollbar-thumb {
+        background: hsla(0, 0, 0, 0.1);
+        &:hover { background: hsla(0, 0, 0, 0.2); }
+    }
+}
+
+@mixin buttonBase {
+    padding: 8px 10px;
+    padding-right: 12px; // Optical
+    border-radius: 3px;
+}
+
+@mixin buttonActive {
+    cursor: pointer;
+    user-select: none;
+    &:hover { background-color: hsla(0, 0, 0, 0.15); }
+    &:active { background-color: hsla(0, 0, 100%, 0.15); }
+}
+
+@mixin header {
+    height: 50px;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    font-size: 9pt;
+    text-shadow: 0 1px 2px hsla(0, 0, 0, 0.2);
+
+    background-color: $blue;
+    color: hsl(0, 0, 95%);
+    border-bottom: 1px solid adjust-color($blue, $lightness: -10%);
+
+    & > :not(input):not(.loading) {
+        @include buttonBase;
+        &.button { @include buttonActive; }
+        transition: opacity 1s;
+    }
+
+    & > a { color: inherit; }
 }
 
 .root {
@@ -118,9 +128,17 @@ body {
             &:hover { @include buttonActive; }
         }
 
+        span.save {
+            color: adjust-color($blue, $lightness : -25%);
+            text-shadow: initial !important;
+            background-color: hsla(0, 0, 100%, 0.8);
+            padding: 7px 9px; // 1px less than normal each side, optical.
+            &:hover { background-color: hsla(0, 0, 100%, 0.6); }
+        }
+
         select {
             padding: 6px 4px !important;
-            margin-left: 4px;
+            margin-left: 10px;
             option { padding: 6px 4px; }
         }
     }
@@ -216,7 +234,7 @@ body {
                 padding-right: 20px;
             }
         }
-        tr:hover { background: $blue; }
+        tr:hover { background: change-color($blue, $alpha: 0.1); }
         :nth-child(5n) td {
             padding-bottom: 20px;
         }
@@ -235,9 +253,9 @@ body {
 
         &.pulse {
             @keyframes pulse {
-                0%    { background-color: hsl(205, 90%, 45%); }
-                30%   { background-color: hsl(205, 90%, 55%); }
-                100%  { background-color: hsl(205, 90%, 45%); }
+                0%    { background-color: $blue; }
+                30%   { background-color: adjust-color($blue, $lightness: 10%); }
+                100%  { background-color: $blue; }
             }
             animation: pulse 1s ease-out 1;
             span:first-child {
