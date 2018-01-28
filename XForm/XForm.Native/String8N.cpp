@@ -51,6 +51,7 @@ static int SplitTsvN(unsigned __int8* content, int contentIndex, int contentEnd,
 	return rowCount;
 }
 
+template<bool ignoreCase>
 static bool EqualsShortInternal(Byte* left, Byte* right, Int32 length)
 {
 	__m128i uppercaseMask;
@@ -59,21 +60,39 @@ static bool EqualsShortInternal(Byte* left, Byte* right, Int32 length)
 	__m128i leftBlock = _mm_loadu_si128((__m128i*)(&left[0]));
 	__m128i rightBlock = _mm_loadu_si128((__m128i*)(&right[0]));
 
-	// Left ToLowerInvariant
-	uppercaseMask = _mm_cmpistrm(uppercaseRange, leftBlock, Utf8RangeMaskMode);
-	corrector = _mm_and_si128(uppercaseMask, caseConvert);
-	leftBlock = _mm_xor_si128(leftBlock, corrector);
+	if (ignoreCase)
+	{
+		// Left ToLowerInvariant
+		uppercaseMask = _mm_cmpistrm(uppercaseRange, leftBlock, Utf8RangeMaskMode);
+		corrector = _mm_and_si128(uppercaseMask, caseConvert);
+		leftBlock = _mm_xor_si128(leftBlock, corrector);
 
-	// Right ToLowerInvariant
-	uppercaseMask = _mm_cmpistrm(uppercaseRange, rightBlock, Utf8RangeMaskMode);
-	corrector = _mm_and_si128(uppercaseMask, caseConvert);
-	rightBlock = _mm_xor_si128(rightBlock, corrector);
+		// Right ToLowerInvariant
+		uppercaseMask = _mm_cmpistrm(uppercaseRange, rightBlock, Utf8RangeMaskMode);
+		corrector = _mm_and_si128(uppercaseMask, caseConvert);
+		rightBlock = _mm_xor_si128(rightBlock, corrector);
+	}
 
 	int matchOffset = _mm_cmpestri(leftBlock, length, rightBlock, length, Utf8FirstDifferentCharacterMode);
 
 	return (matchOffset >= length);
 }
 
+template<bool ignoreCase>
+static bool EqualsInternal(Byte* left, Byte* right, Int32 length)
+{
+	int i = 0;
+	while (i < length - 16)
+	{
+		if (!EqualsShortInternal<ignoreCase>(left + i, right + i, 16)) return false;
+		i += 16;
+	}
+
+	if (i >= length) return false;
+	return EqualsShortInternal<ignoreCase>(left + i, right + i, length - i);
+}
+
+template<bool ignoreCase>
 static int IndexOfAllInternal(Byte* text, Int32 textIndex, Int32 textLength, Byte* value, Int32 valueLength, Int32* result, Int32 resultLimit)
 {
 	int resultCount = 0;
@@ -83,10 +102,15 @@ static int IndexOfAllInternal(Byte* text, Int32 textIndex, Int32 textLength, Byt
 
 	// Load the text we're searching for
 	__m128i searchForBlock = _mm_loadu_si128((__m128i*)(&value[0]));
-	uppercaseMask = _mm_cmpistrm(uppercaseRange, searchForBlock, Utf8RangeMaskMode);
-	corrector = _mm_and_si128(uppercaseMask, caseConvert);
-	searchForBlock = _mm_xor_si128(searchForBlock, corrector);
-	
+
+	// Value ToLowerInvariant
+	if (ignoreCase)
+	{
+		uppercaseMask = _mm_cmpistrm(uppercaseRange, searchForBlock, Utf8RangeMaskMode);
+		corrector = _mm_and_si128(uppercaseMask, caseConvert);
+		searchForBlock = _mm_xor_si128(searchForBlock, corrector);
+	}
+
 	// Compute the last position at which a match would fit
 	int lastMatchPosition = textLength - valueLength;
 
@@ -103,10 +127,13 @@ static int IndexOfAllInternal(Byte* text, Int32 textIndex, Int32 textLength, Byt
 		// Load 16 bytes to scan
 		__m128i textBlock = _mm_loadu_si128((__m128i*)(&text[i]));
 
-		// Left ToLowerInvariant
-		uppercaseMask = _mm_cmpistrm(uppercaseRange, textBlock, Utf8RangeMaskMode);
-		corrector = _mm_and_si128(uppercaseMask, caseConvert);
-		textBlock = _mm_xor_si128(textBlock, corrector);
+		// Text ToLowerInvariant
+		if (ignoreCase)
+		{
+			uppercaseMask = _mm_cmpistrm(uppercaseRange, textBlock, Utf8RangeMaskMode);
+			corrector = _mm_and_si128(uppercaseMask, caseConvert);
+			textBlock = _mm_xor_si128(textBlock, corrector);
+		}
 
 		// Look for searchFor with cmp*i*stri [performance]
 		int matchOffset = _mm_cmpistri(searchForBlock, textBlock, Utf8IndexOfMode);
@@ -114,7 +141,7 @@ static int IndexOfAllInternal(Byte* text, Int32 textIndex, Int32 textLength, Byt
 		if (matchOffset < 16)
 		{
 			int matchIndex = i + matchOffset;
-			if (matchOffset <= isFullyMatchedAtIndex || EqualsShortInternal(text + matchIndex, value, valueLength))
+			if (matchOffset <= isFullyMatchedAtIndex || EqualsInternal<ignoreCase>(text + matchIndex, value, valueLength))
 			{
 				result[resultCount++] = matchIndex;
 				if (resultCount == resultLimit) return resultCount;
@@ -124,8 +151,9 @@ static int IndexOfAllInternal(Byte* text, Int32 textIndex, Int32 textLength, Byt
 			i = matchIndex + 1 - 16;
 		}
 	}
-	
-	while(i < textLength)
+
+	// Match the suffix of the string (won't trigger if valueLength >= 16)
+	while (i < lastMatchPosition)
 	{
 		int lengthLeft = textLength - i;
 		__m128i textBlock = _mm_loadu_si128((__m128i*)(&text[i]));
@@ -167,13 +195,20 @@ namespace XForm
 			return SplitTsvN(pContent, index, index + length, pCellVector, pRowVector);
 		}
 
-		Int32 String8N::IndexOfAll(array<Byte>^ content, Int32 index, Int32 length, array<Byte>^ value, Int32 valueIndex, Int32 valueLength, array<Int32>^ matchArray)
+		Int32 String8N::IndexOfAll(array<Byte>^ content, Int32 index, Int32 length, array<Byte>^ value, Int32 valueIndex, Int32 valueLength, Boolean ignoreCase, array<Int32>^ matchArray)
 		{
 			pin_ptr<Byte> pContent = &content[0];
 			pin_ptr<Byte> pValue = &value[valueIndex];
 			pin_ptr<Int32> pMatchArray = &matchArray[0];
 
-			return IndexOfAllInternal(pContent, index, index + length, pValue, valueLength, pMatchArray, matchArray->Length);
+			if (ignoreCase)
+			{
+				return IndexOfAllInternal<true>(pContent, index, index + length, pValue, valueLength, pMatchArray, matchArray->Length);
+			}
+			else
+			{
+				return IndexOfAllInternal<false>(pContent, index, index + length, pValue, valueLength, pMatchArray, matchArray->Length);
+			}
 		}
 	}
 }

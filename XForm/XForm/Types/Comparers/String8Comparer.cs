@@ -19,7 +19,7 @@ namespace XForm.Types.Comparers
         internal static ComparerExtensions.WhereSingle<String8> s_WhereSingleNative = null;
         internal static ComparerExtensions.Where<String8> s_WhereNative = null;
 
-        public delegate int IndexOfAll(byte[] text, int textIndex, int textLength, byte[] value, int valueIndex, int valueLength, int[] resultArray);
+        public delegate int IndexOfAll(byte[] text, int textIndex, int textLength, byte[] value, int valueIndex, int valueLength, bool ignoreCase, int[] resultArray);
         internal static IndexOfAll s_IndexOfAllNative = null;
 
         internal int[] _indicesBuffer;
@@ -665,24 +665,6 @@ namespace XForm.Types.Comparers
             return left.StartsWith(right, true);
         }
 
-        private static int IndexOfAllM(String8 text, int textIndex, String8 value, int[] results)
-        {
-            int countFound = 0;
-
-            // Find a batch of matches
-            while (true)
-            {
-                int foundIndex = text.IndexOf(value, textIndex);
-                if (foundIndex == -1) break;
-
-                results[countFound++] = foundIndex;
-                textIndex = foundIndex + 1;
-                if (countFound == results.Length) break;
-            }
-
-            return countFound;
-        }
-
         public void WhereContainsBlock(XArray left, String8 rightValue, BitVector vector)
         {
             if (rightValue.Length == 0) return;
@@ -705,15 +687,15 @@ namespace XForm.Types.Comparers
 
                 if (s_IndexOfAllNative != null)
                 {
-                    countFound = s_IndexOfAllNative(all.Array, textIndex, all.Length - textIndex, rightValue.Array, rightValue.Index, rightValue.Length, _indicesBuffer);
+                    countFound = s_IndexOfAllNative(all.Array, textIndex, all.Length - textIndex, rightValue.Array, rightValue.Index, rightValue.Length, true, _indicesBuffer);
                 }
                 else
                 {
-                    countFound = IndexOfAllM(all, textIndex, rightValue, _indicesBuffer);
+                    countFound = all.IndexOfAll(rightValue, textIndex, true, _indicesBuffer);
                 }
 
                 if (countFound == 0) break;
-                textIndex = _indicesBuffer[countFound - 1] + 1;
+                textIndex = (countFound < _indicesBuffer.Length ? _indicesBuffer[countFound - 1] + 1 : int.MaxValue);
 
                 // Find the rows which contain them
                 int countMatched = 0;
