@@ -49,6 +49,8 @@ namespace XForm
             BitVector.s_nativeCount = GetMethod<Func<ulong[], int>>("XForm.Native.BitVectorN", "Count");
             BitVector.s_nativePage = GetMethod<BitVector.PageSignature>("XForm.Native.BitVectorN", "Page");
 
+            String8Comparer.s_IndexOfAllNative = GetMethod<String8Comparer.IndexOfAll>("XForm.Native.String8N", "IndexOfAll");
+
             UshortComparer.s_WhereNative = GetMethod<ComparerExtensions.Where<ushort>>("XForm.Native.Comparer", "Where");
             ShortComparer.s_WhereNative = GetMethod<ComparerExtensions.Where<short>>("XForm.Native.Comparer", "Where");
             //ByteComparer.s_WhereNative = GetMethod<ComparerExtensions.Where<byte>>("XForm.Native.Comparer", "Where");

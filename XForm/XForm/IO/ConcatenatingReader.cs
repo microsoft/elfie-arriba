@@ -74,6 +74,11 @@ namespace XForm.IO
         {
             return null;
         }
+
+        public Func<object> ComponentGetter(string componentName)
+        {
+            return null;
+        }
     }
 
     /// <summary>

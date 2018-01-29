@@ -57,6 +57,12 @@ namespace XForm.Columns
             return () => sourceSeeker(_currentSelector);
         }
 
+        public Func<object> ComponentGetter(string componentName)
+        {
+            // Components in underlying column won't be seeked
+            return null;
+        }
+
         public Func<ArraySelector, XArray> IndicesSeekGetter()
         {
             // Seek is disabled by a Seeking column (can't double seek)

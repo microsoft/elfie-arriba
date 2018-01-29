@@ -10,6 +10,7 @@ using XForm.Data;
 using XForm.Extensions;
 using XForm.Types;
 using XForm.Types.Comparers;
+using XForm.IO;
 
 namespace XForm.Query.Expression
 {
@@ -22,9 +23,12 @@ namespace XForm.Query.Expression
         private Func<XArray> _leftGetter;
         private Func<XArray> _rightGetter;
         private ComparerExtensions.Comparer _comparer;
-
+        private Action<BitVector> _evaluate;
+        
         public TermExpression(IXTable source, IXColumn left, CompareOperator op, IXColumn right)
         {
+            _evaluate = EvaluateNormal;
+
             // Save arguments as-is for ToString()
             _left = left;
             _cOp = op;
@@ -99,9 +103,32 @@ namespace XForm.Query.Expression
                 // Use the updated value for the right side
                 _rightGetter = replacedRight.CurrentGetter();
             }
+
+            // Allow String8 to constant Contains queries to compare on the raw byte[] and int[]
+            if (op == CompareOperator.Contains && _right.IsConstantColumn() && _left.ColumnDetails.Type == typeof(String8) && !_left.IsEnumColumn())
+            {
+                Func<object> rawGetter = _left.ComponentGetter("String8Raw");
+
+                if (rawGetter != null)
+                {
+                    String8 rightValue = (String8)_right.ValuesGetter()().Array.GetValue(0);
+                    String8Comparer string8Comparer = new String8Comparer();
+
+                    _evaluate = (vector) =>
+                    {
+                        String8Raw raw = (String8Raw)rawGetter();
+                        string8Comparer.WhereContains(raw, rightValue, vector);
+                    };
+                }
+            }
         }
 
         public void Evaluate(BitVector result)
+        {
+            _evaluate(result);
+        }
+
+        private void EvaluateNormal(BitVector result)
         {
             // Get the pair of values to compare
             XArray left = _leftGetter();

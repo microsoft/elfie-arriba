@@ -77,6 +77,11 @@ namespace XForm.Test.Query
                 return result;
             };
         }
+
+        public Func<object> ComponentGetter(string componentName)
+        {
+            return null;
+        }
     }
 
     public class ValidatingTable : IXTable

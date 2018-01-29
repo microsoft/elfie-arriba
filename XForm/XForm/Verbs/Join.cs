@@ -42,7 +42,7 @@ namespace XForm.Verbs
         private Type _joinColumnType;
         private Func<XArray> _joinFromColumnGetter;
 
-        private ISeekableXTable _joinToSource;
+        private IXTable _joinToSource;
         private IXColumn _joinToColumn;
         private Func<ArraySelector, XArray> _joinToSeekGetter;
 
@@ -56,8 +56,7 @@ namespace XForm.Verbs
             if (source == null) throw new ArgumentNullException("source");
 
             _source = source;
-            _joinToSource = joinToSource as ISeekableXTable;
-            if (_joinToSource == null) throw new ArgumentException($"Join requires a single built Binary Table as the right side table.");
+            _joinToSource = joinToSource;
 
             // Request the JoinFromColumn Getter
             IXColumn joinFrom = source.Columns.Find(joinFromColumn);
@@ -137,7 +136,11 @@ namespace XForm.Verbs
 
         private void BuildJoinDictionary()
         {
-            XArray allJoinToValues = _joinToSeekGetter(ArraySelector.All(_joinToSource.Count));
+            // Validate the RHS is a seekable table (only on build, so that Suggest doesn't fail)
+            ISeekableXTable joinToSource = _joinToSource as ISeekableXTable;
+            if (joinToSource == null) throw new ArgumentException($"Join requires a single built Binary Table as the right side table.");
+
+            XArray allJoinToValues = _joinToSeekGetter(ArraySelector.All(joinToSource.Count));
             _joinDictionary = (IJoinDictionary)Allocator.ConstructGenericOf(typeof(JoinDictionary<>), _joinColumnType, allJoinToValues.Count);
             _joinDictionary.Add(allJoinToValues, 0);
         }
