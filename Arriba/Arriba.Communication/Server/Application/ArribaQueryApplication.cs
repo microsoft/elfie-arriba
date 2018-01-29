@@ -22,6 +22,7 @@ using Arriba.Serialization.Csv;
 using Arriba.Server.Authentication;
 using Arriba.Server.Hosting;
 using Arriba.Structures;
+using System.Collections.Specialized;
 
 namespace Arriba.Server
 {
@@ -49,8 +50,8 @@ namespace Arriba.Server
             this.GetAsync(new RouteSpecification("/table/:tableName", new UrlParameter("action", "aggregate")), this.ValidateReadAccessAsync, this.Aggregate);
             this.PostAsync(new RouteSpecification("/table/:tableName", new UrlParameter("action", "aggregate")), this.ValidateReadAccessAsync, this.Aggregate);
 
-            this.Get(new RouteSpecification("/allCount"), this.AllCount);
-            this.Get(new RouteSpecification("/suggest"), this.Suggest);
+            this.GetAsync(new RouteSpecification("/allCount"), this.AllCount);
+            this.GetAsync(new RouteSpecification("/suggest"), this.Suggest);
         }
 
         private async Task<IResponse> Select(IRequestContext ctx, Route route)
@@ -63,7 +64,8 @@ namespace Arriba.Server
 
             string outputFormat = ctx.Request.ResourceParameters["fmt"];
 
-            SelectQuery query = await SelectQueryFromRequest(this.Database, ctx);
+            NameValueCollection p = await ParametersFromQueryStringAndBody(ctx);
+            SelectQuery query = SelectQueryFromRequest(this.Database, p);
             query.TableName = tableName;
 
             Table table = this.Database[tableName];
@@ -76,7 +78,7 @@ namespace Arriba.Server
             }
 
             // Read Joins, if passed
-            IQuery<SelectResult> wrappedQuery = WrapInJoinQueryIfFound(query, this.Database, ctx);
+            IQuery<SelectResult> wrappedQuery = WrapInJoinQueryIfFound(query, this.Database, p);
 
             ICorrector correctors = this.CurrentCorrectors(ctx);
             using (ctx.Monitor(MonitorEventLevel.Verbose, "Correct", type: "Table", identity: tableName, detail: query.Where.ToString()))
@@ -112,24 +114,18 @@ namespace Arriba.Server
             }
         }
 
-        private async static Task<SelectQuery> SelectQueryFromRequest(Database db, IRequestContext ctx)
+        private SelectQuery SelectQueryFromRequest(Database db, NameValueCollection p)
         {
             SelectQuery query = new SelectQuery();
 
-            // Post with body - only SelectQuery supported
-            if (ctx.Request.Method == RequestVerb.Post && ctx.Request.HasBody)
-            {
-                return await ctx.Request.ReadBodyAsync<SelectQuery>();
-            }
+            query.Where = SelectQuery.ParseWhere(p["q"]);
+            query.OrderByColumn = p["ob"];
+            query.Columns = ReadParameterSet(p, "c", "cols");
 
-            query.Where = SelectQuery.ParseWhere(ctx.Request.ResourceParameters["q"]);
-            query.OrderByColumn = ctx.Request.ResourceParameters["ob"];
-            query.Columns = ReadParameterSet(ctx.Request, "c", "cols");
-
-            string take = ctx.Request.ResourceParameters["t"];
+            string take = p["t"];
             if (!String.IsNullOrEmpty(take)) query.Count = UInt16.Parse(take);
 
-            string sortOrder = ctx.Request.ResourceParameters["so"] ?? "";
+            string sortOrder = p["so"] ?? "";
             switch (sortOrder.ToLowerInvariant())
             {
                 case "":
@@ -143,11 +139,11 @@ namespace Arriba.Server
                     throw new ArgumentException($"SortOrder [so] passed, '{sortOrder}' was not 'asc' or 'desc'.");
             }
 
-            string highlightString = ctx.Request.ResourceParameters["h"];
+            string highlightString = p["h"];
             if (!String.IsNullOrEmpty(highlightString))
             {
                 // Set the end highlight string to the start highlight string if it is not set. 
-                query.Highlighter = new Highlighter(highlightString, ctx.Request.ResourceParameters["h2"] ?? highlightString);
+                query.Highlighter = new Highlighter(highlightString, p["h2"] ?? highlightString);
             }
 
             return query;
@@ -159,14 +155,14 @@ namespace Arriba.Server
         /// <param name="request">IRequest to read from</param>
         /// <param name="baseName">Parameter name before numbered suffix ('C' -> look for 'C1', 'C2', ...)</param>
         /// <returns>List&lt;string&gt; containing values for the parameter set, if any are found, otherwise an empty list.</returns>
-        protected static List<string> ReadParameterSet(IRequest request, string baseName)
+        protected static List<string> ReadParameterSet(NameValueCollection parameters, string baseName)
         {
             List<string> result = new List<string>();
 
             int i = 1;
             while (true)
             {
-                string value = request.ResourceParameters[baseName + i.ToString()];
+                string value = parameters[baseName + i.ToString()];
                 if (String.IsNullOrEmpty(value)) break;
 
                 result.Add(value);
@@ -184,13 +180,13 @@ namespace Arriba.Server
         /// <param name="nameIfSeparate">Parameter name prefix if parameters are passed separately ('C' -> look for 'C1', 'C2', ...)</param>
         /// <param name="nameIfDelimited">Parameter name if parameters are passed together comma delimited ('Cols')</param>
         /// <returns>List&lt;string&gt; containing values for the parameter set, if any are found, otherwise an empty list.</returns>
-        protected static List<string> ReadParameterSet(IRequest request, string nameIfSeparate, string nameIfDelimited)
+        protected static List<string> ReadParameterSet(NameValueCollection parameters, string nameIfSeparate, string nameIfDelimited)
         {
-            List<string> result = ReadParameterSet(request, nameIfSeparate);
+            List<string> result = ReadParameterSet(parameters, nameIfSeparate);
 
             if (result.Count == 0)
             {
-                string delimitedValue = request.ResourceParameters[nameIfDelimited];
+                string delimitedValue = parameters[nameIfDelimited];
                 if (!String.IsNullOrEmpty(delimitedValue))
                 {
                     result = new List<string>(delimitedValue.Split(','));
@@ -200,12 +196,12 @@ namespace Arriba.Server
             return result;
         }
 
-        private static IQuery<T> WrapInJoinQueryIfFound<T>(IQuery<T> primaryQuery, Database db, IRequestContext ctx)
+        private static IQuery<T> WrapInJoinQueryIfFound<T>(IQuery<T> primaryQuery, Database db, NameValueCollection p)
         {
             List<SelectQuery> joins = new List<SelectQuery>();
 
-            List<string> joinQueries = ReadParameterSet(ctx.Request, "q");
-            List<string> joinTables = ReadParameterSet(ctx.Request, "t");
+            List<string> joinQueries = ReadParameterSet(p, "q");
+            List<string> joinTables = ReadParameterSet(p, "t");
 
             for (int queryIndex = 0; queryIndex < Math.Min(joinQueries.Count, joinTables.Count); ++queryIndex)
             {
@@ -323,16 +319,18 @@ namespace Arriba.Server
             }
         }
 
-        private IResponse AllCount(IRequestContext ctx, Route route)
+        private async Task<IResponse> AllCount(IRequestContext ctx, Route route)
         {
-            string queryString = ctx.Request.ResourceParameters["q"] ?? "";
+            NameValueCollection p = await ParametersFromQueryStringAndBody(ctx);
+
+            string queryString = p["q"] ?? "";
             AllCountResult result = new AllCountResult(queryString);
 
             // Build a Count query
             IQuery<AggregationResult> query = new AggregationQuery("count", null, queryString);
 
             // Wrap in Joins, if found
-            query = WrapInJoinQueryIfFound(query, this.Database, ctx);
+            query = WrapInJoinQueryIfFound(query, this.Database, p);
 
             // Run server correctors
             using (ctx.Monitor(MonitorEventLevel.Verbose, "Correct", type: "AllCount", detail: query.Where.ToString()))
@@ -415,10 +413,12 @@ namespace Arriba.Server
             }
         }
 
-        private IResponse Suggest(IRequestContext ctx, Route route)
+        private async Task<IResponse> Suggest(IRequestContext ctx, Route route)
         {
-            string query = ctx.Request.ResourceParameters["q"];
-            string selectedTable = ctx.Request.ResourceParameters["t"];
+            NameValueCollection p = await ParametersFromQueryStringAndBody(ctx);
+
+            string query = p["q"];
+            string selectedTable = p["t"];
             IPrincipal user = ctx.Request.User;
 
             IntelliSenseResult result = null;
@@ -446,9 +446,9 @@ namespace Arriba.Server
             return ArribaResponse.Ok(result);
         }
 
-        private IResponse Query<T>(IRequestContext ctx, Route route, IQuery<T> query)
+        private IResponse Query<T>(IRequestContext ctx, Route route, IQuery<T> query, NameValueCollection p)
         {
-            IQuery<T> wrappedQuery = WrapInJoinQueryIfFound(query, this.Database, ctx);
+            IQuery<T> wrappedQuery = WrapInJoinQueryIfFound(query, this.Database, p);
 
             // Ensure the table exists and set it on the query
             string tableName = GetAndValidateTableName(route);
@@ -475,20 +475,16 @@ namespace Arriba.Server
 
         private async Task<IResponse> Aggregate(IRequestContext ctx, Route route)
         {
-            IQuery<AggregationResult> query = await BuildAggregateFromContext(ctx);
-            return Query(ctx, route, query);
+            NameValueCollection p = await ParametersFromQueryStringAndBody(ctx);
+            IQuery<AggregationResult> query = BuildAggregateFromContext(ctx, p);
+            return Query(ctx, route, query, p);
         }
 
-        private static async Task<AggregationQuery> BuildAggregateFromContext(IRequestContext ctx)
+        private AggregationQuery BuildAggregateFromContext(IRequestContext ctx, NameValueCollection p)
         {
-            if (ctx.Request.Method == RequestVerb.Post && ctx.Request.HasBody)
-            {
-                return await ctx.Request.ReadBodyAsync<AggregationQuery>();
-            }
-
-            string aggregationFunction = ctx.Request.ResourceParameters["a"] ?? "count";
-            string columnName = ctx.Request.ResourceParameters["col"];
-            string queryString = ctx.Request.ResourceParameters["q"];
+            string aggregationFunction = p["a"] ?? "count";
+            string columnName = p["col"];
+            string queryString = p["q"];
 
             AggregationQuery query = new AggregationQuery();
             query.Aggregator = AggregationQuery.BuildAggregator(aggregationFunction);
@@ -499,9 +495,10 @@ namespace Arriba.Server
                 query.Where = String.IsNullOrEmpty(queryString) ? new AllExpression() : SelectQuery.ParseWhere(queryString);
             }
 
-            for (char dimensionPrefix = 'd'; ctx.Request.ResourceParameters.Contains(dimensionPrefix.ToString() + "1"); ++dimensionPrefix)
+            for (char dimensionPrefix = 'd'; true; ++dimensionPrefix)
             {
-                List<string> dimensionParts = ReadParameterSet(ctx.Request, dimensionPrefix.ToString());
+                List<string> dimensionParts = ReadParameterSet(p, dimensionPrefix.ToString());
+                if (dimensionParts.Count == 0) break;
 
                 if (dimensionParts.Count == 1 && dimensionParts[0].EndsWith(">"))
                 {
@@ -518,28 +515,24 @@ namespace Arriba.Server
 
         private async Task<IResponse> Distinct(IRequestContext ctx, Route route)
         {
-            IQuery<DistinctResult> query = await BuildDistinctFromContext(ctx);
-            return Query(ctx, route, query);
+            NameValueCollection p = await ParametersFromQueryStringAndBody(ctx);
+            IQuery<DistinctResult> query = BuildDistinctFromContext(ctx, p);
+            return Query(ctx, route, query, p);
         }
 
-        private async static Task<DistinctQuery> BuildDistinctFromContext(IRequestContext ctx)
+        private DistinctQuery BuildDistinctFromContext(IRequestContext ctx, NameValueCollection p)
         {
-            if (ctx.Request.Method == RequestVerb.Post && ctx.Request.HasBody)
-            {
-                return await ctx.Request.ReadBodyAsync<DistinctQuery>();
-            }
-
             DistinctQueryTop query = new DistinctQueryTop();
-            query.Column = ctx.Request.ResourceParameters["col"];
+            query.Column = p["col"];
             if (String.IsNullOrEmpty(query.Column)) throw new ArgumentException("Distinct Column [col] must be passed.");
 
-            string queryString = ctx.Request.ResourceParameters["q"];
+            string queryString = p["q"];
             using (ctx.Monitor(MonitorEventLevel.Verbose, "Arriba.ParseQuery", String.IsNullOrEmpty(queryString) ? "<none>" : queryString))
             {
                 query.Where = String.IsNullOrEmpty(queryString) ? new AllExpression() : SelectQuery.ParseWhere(queryString);
             }
 
-            string take = ctx.Request.ResourceParameters["t"];
+            string take = p["t"];
             if (!String.IsNullOrEmpty(take)) query.Count = UInt16.Parse(take);
 
             return query;

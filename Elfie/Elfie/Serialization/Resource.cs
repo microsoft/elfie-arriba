@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 
-namespace Xsv
+namespace Elfie.Serialization
 {
     public static class Resource
     {
@@ -17,7 +17,7 @@ namespace Xsv
         /// <returns>Lines from file in stream</returns>
         public static string[] ReadAllStreamLines(string streamName, Assembly asm = null)
         {
-            if (asm == null) asm = Assembly.GetExecutingAssembly();
+            if (asm == null) asm = Assembly.GetCallingAssembly();
 
             List<string> lines = new List<string>();
             using (StreamReader reader = new StreamReader(asm.GetManifestResourceStream(streamName)))
@@ -39,7 +39,7 @@ namespace Xsv
         /// <param name="asm">Assembly to read from, defaults to Xsv</param>
         public static void SaveStreamTo(string streamName, string filePath, Assembly asm = null)
         {
-            if (asm == null) asm = Assembly.GetExecutingAssembly();
+            if (asm == null) asm = Assembly.GetCallingAssembly();
 
             using (FileStream output = new FileStream(filePath, FileMode.Create))
             {
@@ -58,12 +58,12 @@ namespace Xsv
         /// <param name="asm">Assembly to read from, defaults to Xsv</param>
         public static void SaveStreamFolderTo(string streamFolderName, string folderPath, Assembly asm = null)
         {
-            if (asm == null) asm = Assembly.GetExecutingAssembly();
+            if (asm == null) asm = Assembly.GetCallingAssembly();
 
             Directory.CreateDirectory(folderPath);
-            foreach(string streamName in asm.GetManifestResourceNames())
+            foreach (string streamName in asm.GetManifestResourceNames())
             {
-                if(streamName.StartsWith(streamFolderName))
+                if (streamName.StartsWith(streamFolderName))
                 {
                     string fileName = streamName.Substring(streamFolderName.Length + 1);
                     SaveStreamTo(streamName, Path.Combine(folderPath, fileName), asm);
