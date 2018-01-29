@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -50,6 +51,22 @@ namespace XForm.IO
             if (IndicesType == null) return null;
             GetReader();
             return _enumReader.Values;
+        }
+
+        public Func<object> ComponentGetter(string componentName)
+        {
+            if(componentName.Equals("String8Raw"))
+            {
+                if (ColumnDetails.Type != typeof(String8)) return null;
+
+                GetReader();
+                String8ColumnReader reader = _columnReader as String8ColumnReader;
+                if (reader == null) return null;
+
+                return () => reader.ReadRaw(_table.CurrentSelector);
+            }
+
+            return null;
         }
 
         public Type IndicesType

@@ -7,6 +7,7 @@ using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 
 using XForm.Data;
 using XForm.Query;
+using XForm.IO;
 
 namespace XForm.Types.Comparers
 {
@@ -531,6 +532,93 @@ namespace XForm.Types.Comparers
             // Remove nulls from matches
             BoolComparer.AndNotNull(left, vector);
             BoolComparer.AndNotNull(right, vector);
+        }
+
+        /// <summary>
+        ///  WhereContains overload to compare String8 rows as a single block, if available.
+        ///  This is only available when comparing to a constant and before any other row filtering operations.
+        /// </summary>
+        /// <param name="left">Raw String8 byte[] and int[] for current rows</param>
+        /// <param name="rightValue">Constant Value to compare to</param>
+        /// <param name="vector">BitVector to record matches to</param>
+        public void WhereContains(String8Raw left, String8 rightValue, BitVector vector)
+        {
+            if (rightValue.Length == 0) return;
+
+            String8 all = new String8((byte[])left.Bytes.Array, 0, left.Bytes.Selector.EndIndexExclusive);
+            Allocator.AllocateToSize(ref _indicesBuffer, 1024);
+
+            int startRowIndex = left.Positions.Selector.StartIndexInclusive;
+            int nextRowIndex = startRowIndex;
+            int endRowIndex = left.Positions.Selector.EndIndexExclusive;
+
+            int nextByteIndex = left.Bytes.Selector.StartIndexInclusive;
+            
+            int rightLength = rightValue.Length;
+            int[] positions = (int[])left.Positions.Array;
+
+            bool includesFirstString = (left.Selector.StartIndexInclusive == 0);
+            int firstStringStart = (includesFirstString ? 0 : positions[left.Positions.Index(0)]);
+            int positionOffset = left.Positions.Index((includesFirstString ? 0 : 1));
+            int textOffset = firstStringStart - left.Bytes.Index(0);
+
+            while (true)
+            {
+                // Find a batch of matches
+                int countFound = s_IndexOfAllNative(all.Array, nextByteIndex, all.Length - nextByteIndex, rightValue.Array, rightValue.Index, rightValue.Length, true, _indicesBuffer);
+
+                // Map the indices found to rows
+                int countMatched = 0;
+
+                // If matching the very first row, look for the full match within it
+                if (countFound > 0 && nextRowIndex == startRowIndex)
+                {
+                    if (_indicesBuffer[0] < (positions[nextRowIndex] - textOffset))
+                    {
+                        if (_indicesBuffer[0] + rightLength <= (positions[nextRowIndex] - textOffset))
+                        {
+                            vector.Set(0);
+                            countMatched++;
+                        }
+                    }
+
+                    nextRowIndex++;
+                }
+
+                for (; countMatched < countFound; ++countMatched)
+                {
+                    int indexToFind = _indicesBuffer[countMatched] + rightLength + textOffset;
+
+                    for (; nextRowIndex < endRowIndex; ++nextRowIndex)
+                    {
+                        // If the next match is before this row...
+                        if (indexToFind <= positions[nextRowIndex])
+                        {
+                            // If it's fully within the previous row, add it
+                            if (indexToFind - rightLength >= positions[nextRowIndex - 1])
+                            {
+                                vector.Set(nextRowIndex - startRowIndex - 1);
+                            }
+
+                            // Look for the next match (in this row again)
+                            break;
+                        }
+                    }
+
+                    // If we're out of rows, stop
+                    if (nextRowIndex == endRowIndex) break;
+                }
+
+                // If there were matches left, they must be in the last row
+                if (countMatched != countFound)
+                {
+                    vector.Set(nextRowIndex - startRowIndex - 1);
+                }
+
+                // Find the next index to search for matches from
+                if (countFound < _indicesBuffer.Length) break;
+                nextByteIndex = _indicesBuffer[countFound - 1] + 1;
+            }
         }
 
         public bool WhereContains(String8 left, String8 right)

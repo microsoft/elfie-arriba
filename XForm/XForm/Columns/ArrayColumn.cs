@@ -55,5 +55,10 @@ namespace XForm.Columns
         {
             return null;
         }
+
+        public Func<object> ComponentGetter(string componentName)
+        {
+            return null;
+        }
     }
 }

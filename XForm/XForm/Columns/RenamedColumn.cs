@@ -55,6 +55,11 @@ namespace XForm.Columns
             return _column.IndicesSeekGetter();
         }
 
+        public Func<object> ComponentGetter(string componentName)
+        {
+            return _column.ComponentGetter(componentName);
+        }
+
         public override string ToString()
         {
             return $"{_column} AS {XqlScanner.Escape(ColumnDetails.Name, TokenType.ColumnName)}";

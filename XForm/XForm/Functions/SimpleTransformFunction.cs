@@ -110,6 +110,11 @@ namespace XForm.Functions
             return _column.IndicesSeekGetter();
         }
 
+        public Func<object> ComponentGetter(string componentName)
+        {
+            return null;
+        }
+
         private XArray Convert(XArray xarray)
         {
             // If a single value was returned, only convert it

@@ -119,6 +119,11 @@ namespace XForm.Columns
             return _column.IndicesSeekGetter();
         }
 
+        public Func<object> ComponentGetter(string componentName)
+        {
+            return _column.ComponentGetter(componentName);
+        }
+
         public override string ToString()
         {
             if (_defaultValue != null && _changeToDefaultKinds != ValueKinds.InvalidOrNull)
