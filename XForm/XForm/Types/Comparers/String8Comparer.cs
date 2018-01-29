@@ -891,7 +891,10 @@ namespace XForm.Types.Comparers
             // If there were matches left, they must be in the last row
             if (countMatched != countFound)
             {
-                vector.Set(nextRowIndex - 1 - startRowIndex);
+                if (_indicesBuffer[countMatched] == leftArray[endRowIndex - 1].Index && rightLength == leftArray[endRowIndex - 1].Length)
+                {
+                    vector.Set(endRowIndex - 1 - startRowIndex);
+                }
             }
         }
 
@@ -926,7 +929,10 @@ namespace XForm.Types.Comparers
             // If there were matches left, they must be in the last row
             if (countMatched != countFound)
             {
-                vector.Set(nextRowIndex - 1 - startRowIndex);
+                if (_indicesBuffer[countMatched] == leftArray[endRowIndex - 1].Index)
+                {
+                    vector.Set(endRowIndex - 1 - startRowIndex);
+                }
             }
         }
     }
