@@ -565,7 +565,15 @@ namespace XForm.Types.Comparers
             while (true)
             {
                 // Find a batch of matches
-                int countFound = s_IndexOfAllNative(all.Array, nextByteIndex, all.Length - nextByteIndex, rightValue.Array, rightValue.Index, rightValue.Length, true, _indicesBuffer);
+                int countFound;
+                if (s_IndexOfAllNative != null)
+                {
+                    countFound = s_IndexOfAllNative(all.Array, nextByteIndex, all.Length - nextByteIndex, rightValue.Array, rightValue.Index, rightValue.Length, true, _indicesBuffer);
+                }
+                else
+                {
+                    countFound = all.IndexOfAll(rightValue, nextByteIndex, true, _indicesBuffer);
+                }
 
                 // Map the indices found to rows
                 int countMatched = 0;
