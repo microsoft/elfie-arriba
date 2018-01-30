@@ -249,8 +249,10 @@ namespace XForm
                 case "json":
                     return new JsonTabularWriter(toStream);
                 case "csv":
+                    response.AddHeader("Content-Disposition", "attachment; filename=\"Result.csv\"");
                     return new CsvWriter(toStream);
                 case "tsv":
+                    response.AddHeader("Content-Disposition", "attachment; filename=\"Result.tsv\"");
                     return new TsvWriter(toStream);
                 default:
                     throw new ArgumentException("fmt");

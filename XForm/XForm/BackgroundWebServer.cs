@@ -19,6 +19,7 @@ namespace XForm
         HttpStatusCode StatusCode { get; set; }
         string ContentType { get; set; }
         Stream OutputStream { get; }
+        void AddHeader(string name, string value);
     }
 
     public class HttpListenerResponseWrapper : IHttpResponse
@@ -40,6 +41,11 @@ namespace XForm
         {
             get { return Response.ContentType; }
             set { Response.ContentType = value; }
+        }
+
+        public void AddHeader(string name, string value)
+        {
+            Response.AddHeader(name, value);
         }
 
         public Stream OutputStream => Response.OutputStream;
