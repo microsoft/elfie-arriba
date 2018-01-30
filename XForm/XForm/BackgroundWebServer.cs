@@ -12,6 +12,40 @@ using System.Threading;
 namespace XForm
 {
     /// <summary>
+    ///  IHttpResponse is a generic interface for interacting with System.Net.HttpListenerResponse and System.Net.Http.HttpResponseMessage uniformly.
+    /// </summary>
+    public interface IHttpResponse
+    {
+        HttpStatusCode StatusCode { get; set; }
+        string ContentType { get; set; }
+        Stream OutputStream { get; }
+    }
+
+    public class HttpListenerResponseWrapper : IHttpResponse
+    {
+        private HttpListenerResponse Response;
+
+        public HttpListenerResponseWrapper(HttpListenerResponse response)
+        {
+            this.Response = response;
+        }
+
+        public HttpStatusCode StatusCode
+        {
+            get { return (HttpStatusCode)Response.StatusCode; }
+            set { Response.StatusCode = (int)value; }
+        }
+
+        public string ContentType
+        {
+            get { return Response.ContentType; }
+            set { Response.ContentType = value; }
+        }
+
+        public Stream OutputStream => Response.OutputStream;
+    }
+
+    /// <summary>
     ///  BackgroundWebServer handles Http Requests for the XForm engine on a background thread.
     /// </summary>
     /// <remarks>
@@ -28,7 +62,7 @@ namespace XForm
         private Thread ListenerThread { get; set; }
 
         private string DefaultDocument { get; set; }
-        private Dictionary<string, Action<HttpListenerContext, HttpListenerResponse>> MethodsToServe { get; set; }
+        private Dictionary<string, Action<HttpListenerContext, IHttpResponse>> MethodsToServe { get; set; }
         private Dictionary<string, string> FilesToServe { get; set; }
         private string FolderToServe { get; set; }
 
@@ -37,7 +71,7 @@ namespace XForm
             this.IsRunning = false;
 
             this.DefaultDocument = defaultDocument;
-            this.MethodsToServe = new Dictionary<string, Action<HttpListenerContext, HttpListenerResponse>>(StringComparer.OrdinalIgnoreCase);
+            this.MethodsToServe = new Dictionary<string, Action<HttpListenerContext, IHttpResponse>>(StringComparer.OrdinalIgnoreCase);
             this.FilesToServe = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
             if (!String.IsNullOrEmpty(serveUnderRelativePath))
@@ -50,7 +84,7 @@ namespace XForm
             }
         }
 
-        public void AddResponder(string url, Action<HttpListenerContext, HttpListenerResponse> itemWrite)
+        public void AddResponder(string url, Action<HttpListenerContext, IHttpResponse> itemWrite)
         {
             this.MethodsToServe[url] = itemWrite;
         }
@@ -212,14 +246,14 @@ namespace XForm
 
         private bool ReturnMethodItem(string requestUri, HttpListenerContext context, HttpListenerResponse response)
         {
-            Action<HttpListenerContext, HttpListenerResponse> writeMethod;
+            Action<HttpListenerContext, IHttpResponse> writeMethod;
             if (this.MethodsToServe.TryGetValue(requestUri, out writeMethod))
             {
                 response.AddHeader("Cache-Control", "no-cache, no-store");
                 response.ContentType = ContentType(requestUri);
                 response.StatusCode = 200;
 
-                writeMethod(context, response);
+                writeMethod(context, new HttpListenerResponseWrapper(response));
                 response.Close();
                 return true;
             }

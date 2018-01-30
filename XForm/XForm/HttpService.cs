@@ -42,7 +42,7 @@ namespace XForm
             }
         }
 
-        private void Suggest(HttpListenerContext context, HttpListenerResponse response)
+        private void Suggest(HttpListenerContext context, IHttpResponse response)
         {
             using (ITabularWriter writer = WriterForFormat("json", response))
             {
@@ -72,7 +72,7 @@ namespace XForm
             }
         }
 
-        private void Run(HttpListenerContext context, HttpListenerResponse response)
+        private void Run(HttpListenerContext context, IHttpResponse response)
         {
             try
             {
@@ -93,7 +93,7 @@ namespace XForm
             }
         }
 
-        private void Download(HttpListenerContext context, HttpListenerResponse response)
+        private void Download(HttpListenerContext context, IHttpResponse response)
         {
             try
             {
@@ -114,7 +114,7 @@ namespace XForm
             }
         }
 
-        private void CountWithinTimeout(HttpListenerContext context, HttpListenerResponse response)
+        private void CountWithinTimeout(HttpListenerContext context, IHttpResponse response)
         {
             try
             {
@@ -133,7 +133,7 @@ namespace XForm
             }
         }
 
-        private void CountWithinTimeout(string query, TimeSpan timeout, DateTime asOfDate, HttpListenerResponse response)
+        private void CountWithinTimeout(string query, TimeSpan timeout, DateTime asOfDate, IHttpResponse response)
         {
             IXTable pipeline = null;
 
@@ -173,7 +173,7 @@ namespace XForm
             }
         }
 
-        private void Run(string query, string format, int rowCountLimit, int colCountLimit, DateTime asOfDate, HttpListenerResponse response)
+        private void Run(string query, string format, int rowCountLimit, int colCountLimit, DateTime asOfDate, IHttpResponse response)
         {
             IXTable pipeline = null;
 
@@ -214,7 +214,7 @@ namespace XForm
             }
         }
 
-        private void Save(HttpListenerContext context, HttpListenerResponse response)
+        private void Save(HttpListenerContext context, IHttpResponse response)
         {
             try
             {
@@ -223,7 +223,7 @@ namespace XForm
                     Require(context, "name"));
 
                 // Success
-                response.StatusCode = 200;
+                response.StatusCode = HttpStatusCode.OK;
             }
             catch (Exception ex)
             {
@@ -239,7 +239,7 @@ namespace XForm
             _xDatabaseContext.Runner.Save(query, tableName);
         }
 
-        private ITabularWriter WriterForFormat(string format, HttpListenerResponse response)
+        private ITabularWriter WriterForFormat(string format, IHttpResponse response)
         {
             Stream toStream = response.OutputStream;
             toStream = new BufferedStream(toStream, 64 * 1024);
@@ -249,10 +249,8 @@ namespace XForm
                 case "json":
                     return new JsonTabularWriter(toStream);
                 case "csv":
-                    response.AddHeader("Content-Disposition", "attachment; filename=\"Result.csv\"");
                     return new CsvWriter(toStream);
                 case "tsv":
-                    response.AddHeader("Content-Disposition", "attachment; filename=\"Result.tsv\"");
                     return new TsvWriter(toStream);
                 default:
                     throw new ArgumentException("fmt");
