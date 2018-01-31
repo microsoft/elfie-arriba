@@ -3,7 +3,7 @@ using System.Configuration;
 using System.IO;
 using System.Web;
 using XForm;
-using XForm.IIS.Http;
+using XForm.Http;
 using XForm.IO.StreamProvider;
 
 public class RequestHandler : IHttpHandler
