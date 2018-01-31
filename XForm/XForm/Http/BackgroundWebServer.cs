@@ -8,48 +8,11 @@ using System.IO;
 using System.Net;
 using System.Reflection;
 using System.Threading;
+using XForm.Http;
 
 namespace XForm
 {
-    /// <summary>
-    ///  IHttpResponse is a generic interface for interacting with System.Net.HttpListenerResponse and System.Net.Http.HttpResponseMessage uniformly.
-    /// </summary>
-    public interface IHttpResponse
-    {
-        HttpStatusCode StatusCode { get; set; }
-        string ContentType { get; set; }
-        Stream OutputStream { get; }
-        void AddHeader(string name, string value);
-    }
 
-    public class HttpListenerResponseWrapper : IHttpResponse
-    {
-        private HttpListenerResponse Response;
-
-        public HttpListenerResponseWrapper(HttpListenerResponse response)
-        {
-            this.Response = response;
-        }
-
-        public HttpStatusCode StatusCode
-        {
-            get { return (HttpStatusCode)Response.StatusCode; }
-            set { Response.StatusCode = (int)value; }
-        }
-
-        public string ContentType
-        {
-            get { return Response.ContentType; }
-            set { Response.ContentType = value; }
-        }
-
-        public void AddHeader(string name, string value)
-        {
-            Response.AddHeader(name, value);
-        }
-
-        public Stream OutputStream => Response.OutputStream;
-    }
 
     /// <summary>
     ///  BackgroundWebServer handles Http Requests for the XForm engine on a background thread.
@@ -68,7 +31,7 @@ namespace XForm
         private Thread ListenerThread { get; set; }
 
         private string DefaultDocument { get; set; }
-        private Dictionary<string, Action<HttpListenerContext, IHttpResponse>> MethodsToServe { get; set; }
+        private Dictionary<string, Action<IHttpRequest, IHttpResponse>> MethodsToServe { get; set; }
         private Dictionary<string, string> FilesToServe { get; set; }
         private string FolderToServe { get; set; }
 
@@ -77,20 +40,18 @@ namespace XForm
             this.IsRunning = false;
 
             this.DefaultDocument = defaultDocument;
-            this.MethodsToServe = new Dictionary<string, Action<HttpListenerContext, IHttpResponse>>(StringComparer.OrdinalIgnoreCase);
+            this.MethodsToServe = new Dictionary<string, Action<IHttpRequest, IHttpResponse>>(StringComparer.OrdinalIgnoreCase);
             this.FilesToServe = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
             if (!String.IsNullOrEmpty(serveUnderRelativePath))
             {
-                Assembly entryAssembly = Assembly.GetEntryAssembly();
-                if (entryAssembly == null) entryAssembly = Assembly.GetCallingAssembly();
-
-                this.FolderToServe = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(entryAssembly.Location), serveUnderRelativePath));
-                if (!Directory.Exists(this.FolderToServe)) this.FolderToServe = null;
+                Assembly assembly = Assembly.GetExecutingAssembly();
+                this.FolderToServe = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(assembly.Location), serveUnderRelativePath));
+                //if (!Directory.Exists(this.FolderToServe)) this.FolderToServe = null;
             }
         }
 
-        public void AddResponder(string url, Action<HttpListenerContext, IHttpResponse> itemWrite)
+        public void AddResponder(string url, Action<IHttpRequest, IHttpResponse> itemWrite)
         {
             this.MethodsToServe[url] = itemWrite;
         }
@@ -209,9 +170,32 @@ namespace XForm
         #endregion
 
         #region Request Handling
-        private void HandleRequest(HttpListenerContext context)
+        public void HandleRequest(HttpListenerContext context)
         {
-            HttpListenerResponse response = context.Response;
+            HandleRequest(new HttpListenerContextAdapter(context), new HttpListenerResponseAdapter(context.Response));
+        }
+
+        public void HandleRequest(IHttpRequest request, IHttpResponse response)
+        {
+            ////using (StreamWriter writer = new StreamWriter(response.OutputStream))
+            ////{
+            ////    writer.Write(request.Url);
+            ////}
+
+            //using (StreamReader reader = new StreamReader(@"C:\Code\XForm\XForm\XForm.IIS\bin\Web\index.html"))
+            //{
+            //    reader.BaseStream.CopyTo(response.OutputStream);
+            //}
+            //response.StatusCode = 200;
+
+            ////response.OutputStream.Dispose();
+
+
+            ////ReturnServedFolderFile(this.DefaultDocument, response);
+            ////StreamWriter writer = new StreamWriter(response.OutputStream);
+            ////writer.Write(this.FolderToServe ?? "<noFolder>");
+            ////writer.Dispose();
+            //return;
 
             try
             {
@@ -222,12 +206,12 @@ namespace XForm
                 response.AddHeader("Access-Control-Allow-Origin", "*");
 
                 // Get the URI requested
-                string localPath = context.Request.Url.LocalPath;
+                string localPath = request.Url.LocalPath;
                 if (!String.IsNullOrEmpty(localPath)) localPath = localPath.TrimStart('/');
 
                 // Respond with the default document, a JSON item, file, or a folder item, or not found
                 if (ReturnDefaultDocument(localPath, response)) return;
-                if (ReturnMethodItem(localPath, context, response)) return;
+                if (ReturnMethodItem(localPath, request, response)) return;
                 if (ReturnFileItem(localPath, response)) return;
                 if (ReturnServedFolderFile(localPath, response)) return;
                 ReturnNotFound(response);
@@ -240,7 +224,7 @@ namespace XForm
             }
         }
 
-        private bool ReturnDefaultDocument(string requestUri, HttpListenerResponse response)
+        private bool ReturnDefaultDocument(string requestUri, IHttpResponse response)
         {
             if (String.IsNullOrEmpty(requestUri))
             {
@@ -250,24 +234,23 @@ namespace XForm
             return false;
         }
 
-        private bool ReturnMethodItem(string requestUri, HttpListenerContext context, HttpListenerResponse response)
+        private bool ReturnMethodItem(string requestUri, IHttpRequest request, IHttpResponse response)
         {
-            Action<HttpListenerContext, IHttpResponse> writeMethod;
+            Action<IHttpRequest, IHttpResponse> writeMethod;
             if (this.MethodsToServe.TryGetValue(requestUri, out writeMethod))
             {
                 response.AddHeader("Cache-Control", "no-cache, no-store");
                 response.ContentType = ContentType(requestUri);
                 response.StatusCode = 200;
 
-                writeMethod(context, new HttpListenerResponseWrapper(response));
-                response.Close();
+                writeMethod(request, response);
                 return true;
             }
 
             return false;
         }
 
-        private bool ReturnFileItem(string requestUri, HttpListenerResponse response)
+        private bool ReturnFileItem(string requestUri, IHttpResponse response)
         {
             string filePath;
             if (this.FilesToServe.TryGetValue(requestUri, out filePath))
@@ -279,7 +262,7 @@ namespace XForm
             return false;
         }
 
-        private bool ReturnServedFolderFile(string requestUri, HttpListenerResponse response)
+        private bool ReturnServedFolderFile(string requestUri, IHttpResponse response)
         {
             if (String.IsNullOrEmpty(this.FolderToServe)) return false;
             if (String.IsNullOrEmpty(requestUri)) return false;
@@ -294,29 +277,24 @@ namespace XForm
             return false;
         }
 
-        private void RespondWithFile(string filePath, HttpListenerResponse response)
+        private void RespondWithFile(string filePath, IHttpResponse response)
         {
-            using (StreamWriter writer = new StreamWriter(response.OutputStream))
+            using (StreamReader reader = new StreamReader(filePath))
             {
-                using (StreamReader reader = new StreamReader(filePath))
-                {
-                    response.AddHeader("Cache-Control", "max-age=60");
-                    response.ContentType = ContentType(filePath);
-                    reader.BaseStream.CopyTo(writer.BaseStream);
-                }
+                response.AddHeader("Cache-Control", "max-age=60");
+                response.ContentType = ContentType(filePath);
+                reader.BaseStream.CopyTo(response.OutputStream);
+                response.StatusCode = 200;
             }
-
-            response.StatusCode = 200;
-            response.Close();
         }
 
-        private void ReturnNotFound(HttpListenerResponse response)
+        private void ReturnNotFound(IHttpResponse response)
         {
             response.StatusCode = 404;
             response.Close();
         }
 
-        private void ReturnError(HttpListenerResponse response)
+        private void ReturnError(IHttpResponse response)
         {
             response.StatusCode = 500;
             response.Close();

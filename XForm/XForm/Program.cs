@@ -73,6 +73,7 @@ namespace XForm
 
                         return 0;
                     case "http":
+                    case "web":
                         new HttpService(context).Run();
                         return 0;
                     case "perf":

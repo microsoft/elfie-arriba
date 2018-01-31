@@ -92,7 +92,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Aggregators\CountAggregator.cs" />
-    <Compile Include="BackgroundWebServer.cs" />
+    <Compile Include="Http\BackgroundWebServer.cs" />
     <Compile Include="Columns\ArrayColumn.cs" />
     <Compile Include="Columns\CastedColumn.cs" />
     <Compile Include="Columns\PagingColumn.cs" />
@@ -106,6 +106,8 @@
     <Compile Include="Columns\RemappedColumn.cs" />
     <Compile Include="Functions\Date\DatePart.cs" />
     <Compile Include="Functions\String\BeforeFirst.cs" />
+    <Compile Include="Http\IHttpRequest.cs" />
+    <Compile Include="Http\IHttpResponse.cs" />
     <Compile Include="IO\ColumnCache.cs" />
     <Compile Include="IO\ConvertingReaderWriter.cs" />
     <Compile Include="IO\EnumReaderWriter.cs" />
@@ -223,6 +225,6 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>$(ProjectDir)\..\Deploy.WebSite.cmd $(TargetDir)</PostBuildEvent>
+    <PostBuildEvent>$(SolutionDir)\Deploy.WebSite.cmd $(TargetDir)</PostBuildEvent>
   </PropertyGroup>
 </Project>
