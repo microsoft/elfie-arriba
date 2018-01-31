@@ -47,7 +47,7 @@ namespace XForm
             {
                 Assembly assembly = Assembly.GetExecutingAssembly();
                 this.FolderToServe = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(assembly.Location), serveUnderRelativePath));
-                //if (!Directory.Exists(this.FolderToServe)) this.FolderToServe = null;
+                if (!Directory.Exists(this.FolderToServe)) this.FolderToServe = null;
             }
         }
 
@@ -79,6 +79,7 @@ namespace XForm
         private void StartForBinding(params string[] urls)
         {
             this.Listener = new HttpListener();
+            this.Listener.AuthenticationSchemes = AuthenticationSchemes.Negotiate;
 
             foreach (string url in urls)
             {

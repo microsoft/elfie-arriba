@@ -35,6 +35,7 @@ namespace XForm
             _server.AddResponder("download", Download);
             _server.AddResponder("count", CountWithinTimeout);
             _server.AddResponder("save", Save);
+            _server.AddResponder("test", Test);
         }
 
         public void Run()
@@ -45,6 +46,17 @@ namespace XForm
             }
 
             _server = null;
+        }
+
+        private void Test(IHttpRequest request, IHttpResponse response)
+        {
+            using (StreamWriter writer = new StreamWriter(response.OutputStream))
+            {
+                writer.WriteLine(request.Url);
+                writer.WriteLine(request.User.Identity.Name);
+            }
+
+            response.Close();
         }
 
         public void HandleRequest(IHttpRequest request, IHttpResponse response)
