@@ -29,6 +29,7 @@ export default class extends EventedComponent {
     }
 
     set suggestions(dataContent) {
+        this.props.completedChanged(dataContent.complete);
         this.setState({
             suggestions: dataContent.suggestions,
             sel: this.props.sel || 0,
@@ -46,7 +47,6 @@ export default class extends EventedComponent {
 
         var cached = this.cache[this.props.query];
         if (this.props.cache && cached) {
-            this.props.completedChanged(cached.complete);
             this.suggestions = cached;
             return;
         }
@@ -55,7 +55,6 @@ export default class extends EventedComponent {
         this.lastRequest = jsonQuery(
             configuration.url + `/suggest?${t}q=` + encodeURIComponent(this.props.query),
             data => {
-                this.props.completedChanged(data.content.complete);
                 this.suggestions = data.content;
                 if (this.props.cache) this.cache[this.props.query] = data.content; // Assume query hasn't changed since the call, since new requests abort old ones.
             }
