@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Configuration;
 using System.IO;
 using System.Web;
 using XForm;
@@ -9,14 +10,18 @@ public class RequestHandler : IHttpHandler
 {
     private static HttpService HttpService;
 
-    private void Initialize()
+    private void Initialize(HttpContext context)
     {
-        XDatabaseContext context = new XDatabaseContext();
-        context.RequestedAsOfDateTime = DateTime.MaxValue;
-        context.StreamProvider = new StreamProviderCache(new LocalFileStreamProvider(@"C:\Download\XFormProduction"));
-        context.Runner = new WorkflowRunner(context);
+        string productionFolderPath = ConfigurationManager.AppSettings["XFormProductionFolder"];
+        if (String.IsNullOrEmpty(productionFolderPath)) throw new InvalidOperationException("XForm.IIS requires web.config to contain appSetting 'XFormProductionFolder'.");
+        if (!Path.IsPathRooted(productionFolderPath)) productionFolderPath = context.Server.MapPath(productionFolderPath);
 
-        HttpService = new HttpService(context);
+        XDatabaseContext db = new XDatabaseContext();
+        db.RequestedAsOfDateTime = DateTime.MaxValue;
+        db.StreamProvider = new StreamProviderCache(new LocalFileStreamProvider(productionFolderPath));
+        db.Runner = new WorkflowRunner(db);
+
+        HttpService = new HttpService(db);
     }
 
     public bool IsReusable => true;
@@ -25,7 +30,7 @@ public class RequestHandler : IHttpHandler
     {
         try
         {
-            if (HttpService == null) Initialize();
+            if (HttpService == null) Initialize(context);
             HttpService.HandleRequest(new HttpContextAdapter(context), new HttpResponseAdapter(context.Response));
         }
         catch (Exception ex)
