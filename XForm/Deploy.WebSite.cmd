@@ -6,6 +6,11 @@ IF "%Target%"=="" (
   GOTO :EOF
 )
 
+IF NOT EXIST "%~dp0XForm.Web\node_modules\monaco-editor\min\vs" (
+  ECHO WebSite not yet built. Run Build.cmd for instructions.
+  GOTO :End
+)
+
 ECHO - Copying XForm.Web required files to '%Target%'
 ROBOCOPY /PURGE /NJH /NJS "%~dp0XForm.Web" "%Target%\Web" /XF *.jsx *.scss *.json webpack.config.js
 IF NOT %ERRORLEVEL% LEQ 7 GOTO :Error
