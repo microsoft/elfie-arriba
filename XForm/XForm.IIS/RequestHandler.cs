@@ -16,11 +16,16 @@ public class RequestHandler : IHttpHandler
         if (String.IsNullOrEmpty(productionFolderPath)) throw new InvalidOperationException("XForm.IIS requires web.config to contain appSetting 'XFormProductionFolder'.");
         if (!Path.IsPathRooted(productionFolderPath)) productionFolderPath = context.Server.MapPath(productionFolderPath);
 
+        // Enable XForm Native Acceleration
+        NativeAccelerator.Enable();
+
+        // Build the Database Context
         XDatabaseContext db = new XDatabaseContext();
         db.RequestedAsOfDateTime = DateTime.MaxValue;
         db.StreamProvider = new StreamProviderCache(new LocalFileStreamProvider(productionFolderPath));
         db.Runner = new WorkflowRunner(db);
 
+        // Build and save an HttpService instance to run queries
         HttpService = new HttpService(db);
     }
 
