@@ -96,7 +96,7 @@ namespace XForm
                 {
                     // Try binding for all names on port 5073
                     StartForBinding("http://+:5073/");
-                    Console.WriteLine("Http Server running; browse to http://localhost:5073. [Local and Remote]\r\nPress enter to stop server.");
+                    Console.WriteLine("Web Server running; browse to http://localhost:5073. [Local and Remote]\r\nPress enter to stop server.");
                 }
                 catch (HttpListenerException ex) when (ex.ErrorCode == 5)
                 {
@@ -108,7 +108,7 @@ namespace XForm
                 {
                     // Try binding to just localhost:5073
                     StartForBinding("http://localhost:5073/");
-                    Console.WriteLine("Http Server running; browse to http://localhost:5073. [Local Only]");
+                    Console.WriteLine("Web Server running; browse to http://localhost:5073. [Local Only]");
                     Console.WriteLine(" To enable remote: https://github.com/Microsoft/elfie-arriba/wiki/XForm-Http-Remote-Access");
                     Console.WriteLine("Press enter to stop server.");
                 }
@@ -177,26 +177,6 @@ namespace XForm
 
         public void HandleRequest(IHttpRequest request, IHttpResponse response)
         {
-            ////using (StreamWriter writer = new StreamWriter(response.OutputStream))
-            ////{
-            ////    writer.Write(request.Url);
-            ////}
-
-            //using (StreamReader reader = new StreamReader(@"C:\Code\XForm\XForm\XForm.IIS\bin\Web\index.html"))
-            //{
-            //    reader.BaseStream.CopyTo(response.OutputStream);
-            //}
-            //response.StatusCode = 200;
-
-            ////response.OutputStream.Dispose();
-
-
-            ////ReturnServedFolderFile(this.DefaultDocument, response);
-            ////StreamWriter writer = new StreamWriter(response.OutputStream);
-            ////writer.Write(this.FolderToServe ?? "<noFolder>");
-            ////writer.Dispose();
-            //return;
-
             try
             {
                 // Add header to ask IE not to use compatibility mode
@@ -244,6 +224,7 @@ namespace XForm
                 response.StatusCode = 200;
 
                 writeMethod(request, response);
+                response.Close();
                 return true;
             }
 
@@ -271,6 +252,7 @@ namespace XForm
             if (localServablePath.StartsWith(this.FolderToServe) && File.Exists(localServablePath))
             {
                 RespondWithFile(localServablePath, response);
+                response.Close();
                 return true;
             }
 
@@ -286,6 +268,8 @@ namespace XForm
                 reader.BaseStream.CopyTo(response.OutputStream);
                 response.StatusCode = 200;
             }
+
+            response.Close();
         }
 
         private void ReturnNotFound(IHttpResponse response)
