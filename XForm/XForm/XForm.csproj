@@ -92,6 +92,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Aggregators\CountAggregator.cs" />
+    <Compile Include="Core\ParallelRunner.cs" />
     <Compile Include="Http\BackgroundWebServer.cs" />
     <Compile Include="Columns\ArrayColumn.cs" />
     <Compile Include="Columns\CastedColumn.cs" />
