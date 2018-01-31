@@ -26,7 +26,8 @@ namespace XForm.Data
     /// </summary>
     public struct XArray
     {
-        private static bool[] s_NullSingle;
+        private static bool[] s_SingleTrue = new bool[1] { true };
+        private static bool[] s_SingleFalse = new bool[1] { false };
 
         /// <summary>
         ///  Optional array when XArray may contain null values indicating which
@@ -53,12 +54,6 @@ namespace XForm.Data
         ///  This may not be the full size of the array, but only this count should be accessed
         /// </summary>
         public int Count => Selector.Count;
-
-        static XArray()
-        {
-            s_NullSingle = new bool[1];
-            s_NullSingle[0] = true;
-        }
 
         /// <summary>
         ///  Return the real Array index for a "logical row index" from zero to Count - 1.
@@ -106,7 +101,27 @@ namespace XForm.Data
         /// <returns>XArray with a null Array and a single value indicating null for everything</returns>
         public static XArray Null(Array singleNullValueArray, int count)
         {
-            return new XArray() { Array = singleNullValueArray, IsNull = s_NullSingle, Selector = ArraySelector.Single(count) };
+            return new XArray() { Array = singleNullValueArray, IsNull = s_SingleTrue, Selector = ArraySelector.Single(count) };
+        }
+
+        /// <summary>
+        ///  Build an XArray with only the value 'true' for the logical row count.
+        /// </summary>
+        /// <param name="count">Number of rows in result XArray</param>
+        /// <returns>XArray with a single value true for everything</returns>
+        public static XArray AllTrue(int count)
+        {
+            return new XArray() { Array = s_SingleTrue, IsNull = null, Selector = ArraySelector.Single(count) };
+        }
+
+        /// <summary>
+        ///  Build an XArray with only the value 'false' for the logical row count.
+        /// </summary>
+        /// <param name="count">Number of rows in result XArray</param>
+        /// <returns>XArray with a single value false for everything</returns>
+        public static XArray AllFalse(int count)
+        {
+            return new XArray() { Array = s_SingleFalse, IsNull = null, Selector = ArraySelector.Single(count) };
         }
 
         /// <summary>
@@ -163,7 +178,7 @@ namespace XForm.Data
         /// <returns>XArray with values replaced and Selector the same</returns>
         public XArray ReplaceValues(XArray other)
         {
-            return new XArray(this) { Array = other.Array, IsNull = other.IsNull };
+            return ReplaceValues(other, other.IsNull);
         }
 
         /// <summary>
@@ -173,7 +188,25 @@ namespace XForm.Data
         /// <returns>XArray with values replaced and Selector the same</returns>
         public XArray ReplaceValues(XArray other, bool[] isNull)
         {
-            return new XArray(this) { Array = other.Array, IsNull = isNull };
+            if (other.Selector.IsSingleValue)
+            {
+                return new XArray(this) { Array = other.Array, IsNull = isNull, Selector = ArraySelector.Single(this.Count) };
+            }
+            else
+            {
+                return new XArray(this) { Array = other.Array, IsNull = isNull };
+            }
+        }
+
+        /// <summary>
+        ///  Replace the values in an XArray and return it with the same selector
+        /// </summary>
+        /// <param name="other">Replacement Array to use</param>
+        /// <param name="isNull">Replacement isNull array to use</param>
+        /// <returns>XArray with values replaced and Selector the same</returns>
+        public XArray ReplaceValues(Array other, bool[] isNull = null)
+        {
+            return new XArray(this) { Array = other, IsNull = isNull };
         }
 
         /// <summary>
