@@ -5,7 +5,12 @@ ECHO - Building XForm.Web...
 PUSHD %~dp0XForm.Web
 IF NOT EXIST node_modules\.bin\WebPack.cmd (
   ECHO Error. XForm.Web can't build because webpack wasn't found.
-  ECHO Have you installed NPM and run 'npm install' from the XForm.Web folder?
+  ECHO.
+  ECHO First Time Setup:
+  ECHO  - Install VS and NPM [https://github.com/Microsoft/elfie-arriba/wiki/XForm-QuickStart]
+  ECHO  - In XForm.Web, run 'npm install'
+  ECHO  - In XForm, run '..\.nuget\NuGet.exe restore XForm.sln'
+  ECHO  - In XForm, run 'Build.cmd'
   GOTO Error
 )
 CALL node_modules\.bin\WebPack.cmd

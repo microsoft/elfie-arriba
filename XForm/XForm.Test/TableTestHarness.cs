@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Text;
 
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
@@ -11,7 +12,6 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using XForm.Data;
 using XForm.Extensions;
-using System.Linq;
 
 namespace XForm.Test
 {

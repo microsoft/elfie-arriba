@@ -1,5 +1,10 @@
-﻿using Microsoft.CodeAnalysis.Elfie.Model.Strings;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
+
+using Microsoft.CodeAnalysis.Elfie.Model.Strings;
+
 using XForm.Data;
 using XForm.Query;
 
@@ -58,6 +63,11 @@ namespace XForm.Columns
         }
 
         public Func<ArraySelector, XArray> IndicesSeekGetter()
+        {
+            return null;
+        }
+
+        public Func<object> ComponentGetter(string componentName)
         {
             return null;
         }

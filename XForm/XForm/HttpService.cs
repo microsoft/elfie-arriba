@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Net;
 
@@ -12,12 +13,13 @@ using XForm.Data;
 using XForm.Extensions;
 using XForm.IO;
 using XForm.Query;
-using System.Diagnostics;
+using XForm.Http;
 
 namespace XForm
 {
-    public class HttpService
+    public class HttpService : IDisposable
     {
+        private BackgroundWebServer _server;
         private XDatabaseContext _xDatabaseContext;
         private QuerySuggester _suggester;
         private static String8 s_delimiter = String8.Convert(";", new byte[1]);
@@ -26,34 +28,51 @@ namespace XForm
         {
             _xDatabaseContext = xDatabaseContext;
             _suggester = new QuerySuggester(_xDatabaseContext);
+
+            _server = new BackgroundWebServer("index.html", "Web");
+            _server.AddResponder("suggest", Suggest);
+            _server.AddResponder("run", Run);
+            _server.AddResponder("download", Download);
+            _server.AddResponder("count", CountWithinTimeout);
+            _server.AddResponder("save", Save);
+            _server.AddResponder("test", Test);
         }
 
         public void Run()
         {
-            using (BackgroundWebServer server = new BackgroundWebServer("index.html", "Web"))
+            using (_server)
             {
-                server.AddResponder("suggest", Suggest);
-                server.AddResponder("run", Run);
-                server.AddResponder("download", Download);
-                server.AddResponder("count", CountWithinTimeout);
-                server.AddResponder("save", Save);
-
-                server.Start();
-                Console.WriteLine("Http Server running; browse http://localhost:5073. Press enter to stop server.");
-                Console.ReadLine();
-                server.Stop();
+                _server.Run();
             }
+
+            _server = null;
         }
 
-        private void Suggest(HttpListenerContext context, HttpListenerResponse response)
+        private void Test(IHttpRequest request, IHttpResponse response)
+        {
+            using (StreamWriter writer = new StreamWriter(response.OutputStream))
+            {
+                writer.WriteLine(request.Url);
+                writer.WriteLine(request.User.Identity.Name);
+            }
+
+            response.Close();
+        }
+
+        public void HandleRequest(IHttpRequest request, IHttpResponse response)
+        {
+            _server.HandleRequest(request, response);
+        }
+
+        private void Suggest(IHttpRequest request, IHttpResponse response)
         {
             using (ITabularWriter writer = WriterForFormat("json", response))
             {
                 try
                 {
-                    string query = Require(context, "q");
+                    string query = Require(request, "q");
 
-                    DateTime asOfDate = ParseOrDefault(context.Request.QueryString["asof"], _xDatabaseContext.RequestedAsOfDateTime);
+                    DateTime asOfDate = ParseOrDefault(request.QueryString["asof"], _xDatabaseContext.RequestedAsOfDateTime);
                     SuggestResult result = _suggester.Suggest(query, asOfDate);
 
                     // If the query is valid and there are no extra values valid next, just return valid
@@ -75,16 +94,16 @@ namespace XForm
             }
         }
 
-        private void Run(HttpListenerContext context, HttpListenerResponse response)
+        private void Run(IHttpRequest request, IHttpResponse response)
         {
             try
             {
                 Run(
-                    Require(context, "q"),
-                    context.Request.QueryString["fmt"] ?? "json",
-                    ParseOrDefault(context.Request.QueryString["rowLimit"], 100),
-                    ParseOrDefault(context.Request.QueryString["colLimit"], -1),
-                    ParseOrDefault(context.Request.QueryString["asof"], _xDatabaseContext.RequestedAsOfDateTime),
+                    Require(request, "q"),
+                    request.QueryString["fmt"] ?? "json",
+                    ParseOrDefault(request.QueryString["rowLimit"], 100),
+                    ParseOrDefault(request.QueryString["colLimit"], -1),
+                    ParseOrDefault(request.QueryString["asof"], _xDatabaseContext.RequestedAsOfDateTime),
                     response);
             }
             catch (Exception ex)
@@ -96,16 +115,16 @@ namespace XForm
             }
         }
 
-        private void Download(HttpListenerContext context, HttpListenerResponse response)
+        private void Download(IHttpRequest request, IHttpResponse response)
         {
             try
             {
                 Run(
-                    Require(context, "q"),
-                    Require(context, "fmt"),
-                    ParseOrDefault(context.Request.QueryString["rowLimit"], -1),
-                    ParseOrDefault(context.Request.QueryString["colLimit"], -1),
-                    ParseOrDefault(context.Request.QueryString["asof"], _xDatabaseContext.RequestedAsOfDateTime),
+                    Require(request, "q"),
+                    Require(request, "fmt"),
+                    ParseOrDefault(request.QueryString["rowLimit"], -1),
+                    ParseOrDefault(request.QueryString["colLimit"], -1),
+                    ParseOrDefault(request.QueryString["asof"], _xDatabaseContext.RequestedAsOfDateTime),
                     response);
             }
             catch (Exception ex)
@@ -117,14 +136,14 @@ namespace XForm
             }
         }
 
-        private void CountWithinTimeout(HttpListenerContext context, HttpListenerResponse response)
+        private void CountWithinTimeout(IHttpRequest request, IHttpResponse response)
         {
             try
             {
                 CountWithinTimeout(
-                    Require(context, "q"),
-                    TimeSpan.FromMilliseconds(ParseOrDefault(context.Request.QueryString["ms"], 5000)),
-                    ParseOrDefault(context.Request.QueryString["asof"], _xDatabaseContext.RequestedAsOfDateTime),
+                    Require(request, "q"),
+                    TimeSpan.FromMilliseconds(ParseOrDefault(request.QueryString["ms"], 5000)),
+                    ParseOrDefault(request.QueryString["asof"], _xDatabaseContext.RequestedAsOfDateTime),
                     response);
             }
             catch (Exception ex)
@@ -136,7 +155,7 @@ namespace XForm
             }
         }
 
-        private void CountWithinTimeout(string query, TimeSpan timeout, DateTime asOfDate, HttpListenerResponse response)
+        private void CountWithinTimeout(string query, TimeSpan timeout, DateTime asOfDate, IHttpResponse response)
         {
             IXTable pipeline = null;
 
@@ -176,7 +195,7 @@ namespace XForm
             }
         }
 
-        private void Run(string query, string format, int rowCountLimit, int colCountLimit, DateTime asOfDate, HttpListenerResponse response)
+        private void Run(string query, string format, int rowCountLimit, int colCountLimit, DateTime asOfDate, IHttpResponse response)
         {
             IXTable pipeline = null;
 
@@ -217,7 +236,7 @@ namespace XForm
             }
         }
 
-        private void Save(HttpListenerContext context, HttpListenerResponse response)
+        private void Save(IHttpRequest context, IHttpResponse response)
         {
             try
             {
@@ -242,7 +261,7 @@ namespace XForm
             _xDatabaseContext.Runner.Save(query, tableName);
         }
 
-        private ITabularWriter WriterForFormat(string format, HttpListenerResponse response)
+        private ITabularWriter WriterForFormat(string format, IHttpResponse response)
         {
             Stream toStream = response.OutputStream;
             toStream = new BufferedStream(toStream, 64 * 1024);
@@ -312,9 +331,9 @@ namespace XForm
             writer.NextRow();
         }
 
-        private static string Require(HttpListenerContext context, string parameterName)
+        private static string Require(IHttpRequest context, string parameterName)
         {
-            string value = context.Request.QueryString[parameterName];
+            string value = context.QueryString[parameterName];
             if (value == null) throw new ArgumentException($"Request must include parameter \"{parameterName}\".");
             return value;
         }
@@ -337,6 +356,15 @@ namespace XForm
             if (!DateTime.TryParse(value, out result)) return defaultValue;
 
             return result;
+        }
+
+        public void Dispose()
+        {
+            if(_server != null)
+            {
+                _server.Dispose();
+                _server = null;
+            }
         }
     }
 }

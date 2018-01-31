@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System;
 using System.Collections.Generic;
 
 namespace XForm.Data
@@ -11,6 +12,7 @@ namespace XForm.Data
 
         public XTableWrapper(IXTable source)
         {
+            if (source == null) throw new ArgumentNullException("source");
             _source = source;
         }
 

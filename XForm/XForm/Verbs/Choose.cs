@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+
 using XForm.Columns;
 using XForm.Data;
 using XForm.Extensions;
@@ -48,6 +49,7 @@ namespace XForm.Verbs
 
         public Choose(IXTable source, ChooseDirection direction, IXColumn rankColumn, IList<IXColumn> keyColumns)
         {
+            if (source == null) throw new ArgumentNullException("source");
             _source = source;
 
             // Build a typed dictionary to handle the rank and key column types

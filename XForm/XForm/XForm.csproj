@@ -83,8 +83,8 @@
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Web" />
     <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Net.Http" />
@@ -92,7 +92,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Aggregators\CountAggregator.cs" />
-    <Compile Include="BackgroundWebServer.cs" />
+    <Compile Include="Http\BackgroundWebServer.cs" />
     <Compile Include="Columns\ArrayColumn.cs" />
     <Compile Include="Columns\CastedColumn.cs" />
     <Compile Include="Columns\PagingColumn.cs" />
@@ -104,6 +104,10 @@
     <Compile Include="Core\Dictionary5.cs" />
     <Compile Include="Core\Hashing.cs" />
     <Compile Include="Columns\RemappedColumn.cs" />
+    <Compile Include="Functions\Date\DatePart.cs" />
+    <Compile Include="Functions\String\BeforeFirst.cs" />
+    <Compile Include="Http\IHttpRequest.cs" />
+    <Compile Include="Http\IHttpResponse.cs" />
     <Compile Include="IO\ColumnCache.cs" />
     <Compile Include="IO\ConvertingReaderWriter.cs" />
     <Compile Include="IO\EnumReaderWriter.cs" />

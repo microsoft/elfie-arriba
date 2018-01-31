@@ -69,22 +69,30 @@ namespace XForm.Extensions
             // Return raw Sources as tables
             AddFullFolderContainers(streamProvider, "Source", tables);
 
+            // Return built Tables as tables
+            AddFullFolderContainers(streamProvider, "Table", tables);
+
             return tables;
         }
 
         private static void AddFullFolderContainers(this IStreamProvider streamProvider, string underPath, HashSet<string> results)
+        {
+            AddFullFolderContainers(streamProvider, underPath + "\\", underPath, results);
+        }
+
+        private static void AddFullFolderContainers(this IStreamProvider streamProvider, string rootToRemove, string underPath, HashSet<string> results)
         {
             foreach (StreamAttributes item in streamProvider.Enumerate(underPath, EnumerateTypes.Folder, false))
             {
                 if (item.Path.EndsWith("\\Full"))
                 {
                     // If this has a 'Full' folder in it, add it and stop recursing
-                    results.Add(underPath.RelativePath("Source\\"));
+                    results.Add(underPath.RelativePath(rootToRemove));
                     return;
                 }
 
                 // Otherwise look under this folder
-                AddFullFolderContainers(streamProvider, item.Path, results);
+                AddFullFolderContainers(streamProvider, rootToRemove, item.Path, results);
             }
         }
 

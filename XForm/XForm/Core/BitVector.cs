@@ -130,7 +130,7 @@ namespace XForm
             if (endIndexExclusive == -1) endIndexExclusive = this.Capacity;
             Allocator.AllocateToSize(ref array, (endIndexExclusive - startIndexInclusive));
 
-            for(int i = startIndexInclusive; i < endIndexExclusive; ++i)
+            for (int i = startIndexInclusive; i < endIndexExclusive; ++i)
             {
                 array[i - startIndexInclusive] = this[i];
             }

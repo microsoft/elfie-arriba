@@ -133,7 +133,7 @@ namespace XForm.IO
                 _writer = null;
 
                 // On Dispose, tell the StreamProvider to publish the table
-                _streamProvider.Publish(_outputFilePath);
+                if(_streamProvider != null) _streamProvider.Publish(_outputFilePath);  
             }
         }
     }

@@ -9,6 +9,7 @@ namespace XForm
 		{
 		public:
 			static Int32 SplitTsv(array<Byte>^ content, Int32 index, Int32 length, array<UInt64>^ cellVector, array<UInt64>^ rowVector);
+			static Int32 IndexOfAll(array<Byte>^ content, Int32 index, Int32 length, array<Byte>^ value, Int32 valueIndex, Int32 valueLength, Boolean ignoreCase, array<Int32>^ matchArray);
 		};
 	}
 }

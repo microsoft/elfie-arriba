@@ -8,12 +8,12 @@ using System.Linq;
 
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 
+using XForm.Columns;
 using XForm.Data;
 using XForm.Extensions;
 using XForm.Functions;
 using XForm.Query.Expression;
 using XForm.Types;
-using XForm.Columns;
 
 namespace XForm.Query
 {
@@ -136,21 +136,22 @@ namespace XForm.Query
             return provider.Type;
         }
 
-        public string NextColumnName(IXTable currentSource, Type requiredType = null)
+        public string NextColumnName(IXTable source, Type requiredType = null)
         {
+            if (source == null) throw new ArgumentNullException("source");
             IXColumn column = null;
 
             ParseNextOrThrow(
-                () => currentSource.Columns.TryFind(_scanner.Current.Value, out column)
+                () => source.Columns.TryFind(_scanner.Current.Value, out column)
                 && (requiredType == null || column.ColumnDetails.Type == requiredType),
                 "[Column]",
                 TokenType.ColumnName,
-                EscapedColumnList(currentSource, requiredType));
+                EscapedColumnList(source, requiredType));
 
             return column.ColumnDetails.Name;
         }
 
-        public string NextOutputColumnName(IXTable currentSource)
+        public string NextOutputColumnName(IXTable source)
         {
             string value = _scanner.Current.Value;
             ParseNextOrThrow(() => true, "[Column]", TokenType.ColumnName);
@@ -183,6 +184,8 @@ namespace XForm.Query
 
         public IXColumn NextColumn(IXTable source, XDatabaseContext context, Type requiredType = null)
         {
+            if (source == null) throw new ArgumentNullException("source");
+
             IXColumn result = null;
 
             if (_scanner.Current.Type == TokenType.Value)
@@ -481,6 +484,12 @@ namespace XForm.Query
                     context.ErrorMessage = $"Invalid {context.InvalidValueCategory} \"{context.InvalidValue ?? "<null>"}\"";
                 }
 
+                throw new UsageException(context, ex);
+            }
+            else if (ex is ArgumentNullException && ((ArgumentNullException)ex).ParamName.Equals("source", StringComparison.OrdinalIgnoreCase))
+            {
+                ErrorContext context = BuildErrorContext();
+                context.ErrorMessage = "read must be called before any other query verbs.";
                 throw new UsageException(context, ex);
             }
             else if (ex is ArgumentException)

@@ -29,6 +29,10 @@ import ReactDOM from "react-dom"
         return this;
     }
 
+    Array.prototype.last = function() {
+        return this[this.length - 1]
+    }
+
     Date.daysAgo = function(n) {
         const d = new Date()
         d.setDate(d.getDate() - (n || 0))
@@ -45,6 +49,34 @@ import ReactDOM from "react-dom"
         const dd = this.toLocaleString('en-US', { day: '2-digit' })
         return `${this.getFullYear()}-${mm}-${dd}`
     }
+
+    window.extendEditor = function(editor) {
+        editor.valueUntilPosition = function() {
+            const position = this.getPosition()
+            return this.getModel().getValueInRange({
+                startLineNumber: 1,
+                startColumn: 1,
+                endLineNumber: position.lineNumber,
+                endColumn: position.column,
+            })
+        }
+        editor.decorate = function(newDecorations) {
+            const old = this._oldDecorations || []
+            if (old.length || newDecorations.length) {
+                this._oldDecorations = this.deltaDecorations(old, newDecorations)
+            }
+        }
+        editor.indexToPosition = function(i) {
+            const lines = this.getValue().slice(0, i).split('\n')
+            const col = lines.last().length + 1
+            return new monaco.Position(lines.length, col)
+        }
+
+        // Assumes monaco is loaded
+        monaco.Position.prototype.toRange = function(length) {
+            return new monaco.Range(this.lineNumber, this.column, this.lineNumber, this.column + length)
+        }
+    }
 })()
 
 class Index extends React.Component {
@@ -53,7 +85,10 @@ class Index extends React.Component {
         this.count = this.baseCount = 50
         this.cols = this.baseCols = 20
         this.debouncedQueryChanged = debounce(this.queryChanged, 500)
-        this.state = { query: this.query, userCols: [], pausePulse: true }
+        this.state = { query: this.query, userCols: [], saveAs: '', pausePulse: true }
+
+        const loc = document.location;
+        this.serviceUrl = (loc.port === "8080" ? `${loc.protocol}//${loc.hostname}:5073` : '')
     }
     componentDidMount() {
         window.require.config({ paths: { 'vs': 'node_modules/monaco-editor/min/vs' }});
@@ -74,42 +109,39 @@ class Index extends React.Component {
                 inherit: false,
                 rules: [
                     // https://github.com/Microsoft/vscode/blob/bef497ff82391f4f29ea52f532d896a6903f6ff6/src/vs/editor/standalone/common/themes.ts
-                    { token: 'verb', foreground: '569cd6' }, // Atom dark: 44C0C6
-                    { token: 'column', foreground: '4ec9b0' }, // Atom dark: D1BC92
-                    { token: 'string', foreground: 'd69d85' }, // Atom dark: FC8458
+                    { token: 'verb',   foreground: '5c99d6' }, // hsa(210, 60%, 60%), Atom dark: 44C0C6
+                    { token: 'column', foreground: '40bfbf' }, // hsl(180, 50%, 50%), Atom dark: D1BC92
+                    { token: 'string', foreground: 'bf5540' }, // hsl( 10, 50%, 50%), Atom dark: FC8458
                 ]
             })
             monaco.languages.registerCompletionItemProvider('xform', {
-                triggerCharacters: [' ', '\n', '('],
-                provideCompletionItems: (model, position) => {
-                    const textUntilPosition = model.getValueInRange({
-                        startLineNumber: 1,
-                        startColumn: 1,
-                        endLineNumber: position.lineNumber,
-                        endColumn: position.column,
-                    })
-                    const lastChar = textUntilPosition[textUntilPosition.length - 1]
-                    return xhr(`suggest`, { q: textUntilPosition }).then(o => {
+                provideCompletionItems: (model, position) =>
+                    (this.suggestions && Promise.resolve(this.suggestions) || this.suggest).then(o => {
+                        this.suggestions = undefined
+
                         if (!o.Values) return []
 
+                        const textUntilPosition = this.editor.valueUntilPosition()
+                        const trunate = o.ItemCategory === '[Column]' && /\[\w*$/.test(textUntilPosition)
+                            || o.ItemCategory === 'CompareOperator' && /!$/.test(textUntilPosition)
+                            || o.ItemCategory === 'CompareOperator' && /\|$/.test(textUntilPosition)
+
                         const kind = monaco.languages.CompletionItemKind;
-                        const suggestions = !o.Values.length ? [] : o.Values.split(";").map(s => ({
+                        return !o.Values.length ? [] : o.Values.split(";").map(s => ({
                             kind: {
                                 verb: kind.Keyword,
                                 compareOperator: kind.Keyword,
                                 columnName: kind.Field,
                             }[o.ItemCategory] || kind.Text,
                             label: s,
-                            insertText: lastChar === '[' && o.ItemCategory === '[Column]' ? s.slice(1) : s,
+                            insertText: trunate ? s.slice(1) : s,
                         }))
-                        return suggestions
                     })
-                }
             })
 
     		this.editor = monaco.editor.create(document.getElementById('queryEditor'), {
     			value: [
-    				'read WebRequestHuge',
+    				'read WebRequest',
                     'where [HttpStatus] != "200"',
     			].join('\n'),
     			language: 'xform',
@@ -121,28 +153,48 @@ class Index extends React.Component {
                 occurrencesHighlight: false,
                 hideCursorInOverviewRuler: true,
     		});
+            extendEditor(this.editor)
 
-            this.editor.onDidChangeModelContent(() => this.queryTextChanged())
+            this.editor.onDidChangeModelContent(this.queryTextChanged.bind(this))
+            this.editor.onDidChangeCursorPosition(e => {
+                if (this.textJustChanged) this.queryAndCursorChanged()
+                this.textJustChanged = false
+            })
+
             this.validQuery = this.query
             this.queryChanged()
     	});
     }
-    get query() {
-        return this.editor && this.editor.getModel().getValue()
+    get suggest() {
+        return xhr(this.serviceUrl, `suggest`, { asof: this.state.asOf, q: this.editor.valueUntilPosition() })
     }
-    queryTextChanged() {
-        xhr(`suggest`, { asof: this.state.asOf, q: this.query }).then(info => {
-            const trimmedQuery = this.query.trim()
-            if (info.Valid && this.validQuery !== trimmedQuery) {
+    get query() {
+        return this.editor && this.editor.getValue()
+    }
+    queryTextChanged(force) {
+        this.textJustChanged = true
+        const trimmedQuery = this.query.trim() // Pre async capture
+        xhr(this.serviceUrl, `suggest`, { asof: this.state.asOf, q: this.query }).then(info => {
+            if (info.Valid && (force || this.validQuery !== trimmedQuery)) {
                 this.validQuery = trimmedQuery
                 this.debouncedQueryChanged()
             }
 
-            const status = info.ErrorMessage || info.Usage
-            if (status !== this.state.status) this.setState({ status })
+            const errorMessage = info.ErrorMessage
+            if (errorMessage !== this.state.errorMessage) this.setState({ errorMessage })
+
+            const usage = info.Usage
+            if (usage !== this.state.usage) this.setState({ usage })
 
             const queryHint = !info.InvalidToken && info.ItemCategory || ''
             if (queryHint != this.state.queryHint) this.setState({ queryHint })
+
+            this.editor.decorate(info.ErrorMessage // Need to verify info.InvalidTokenIndex < this.query.length?
+                ? [{
+                    range: this.editor.indexToPosition(info.InvalidTokenIndex).toRange(info.InvalidToken.length),
+                    options: { inlineClassName: 'validationError' },
+                }]
+                : [])
         })
         setTimeout(() => {
             const ia = document.querySelector('.inputarea').style
@@ -151,11 +203,23 @@ class Index extends React.Component {
             qh.left = ia.left
         })
     }
+    queryAndCursorChanged() {
+        const q = this.editor.valueUntilPosition()
+        this.suggest.then(suggestions => {
+            if (suggestions.Values && (suggestions.InvalidTokenIndex < q.length || /[\s\(]$/.test(q))) {
+                this.suggestions = suggestions
+                this.editor.trigger('source', 'editor.action.triggerSuggest', {});
+            }
+        })
+    }
     queryChanged() {
         this.count = this.baseCount
         this.cols = this.baseCols
-        xhr(`run`, { asof: this.state.asOf, q: `${this.validQuery}\nschema` }).then(o => {
-            const schemaBody = o.rows.map(r => ({ name: r[0], type: `${r[1]}` }))
+
+        if(!!this.validQuery) this.setState({ loading: true, pausePulse: true })
+
+        xhr(this.serviceUrl, `run`, { asof: this.state.asOf, q: `${this.validQuery}\nschema` }).then(o => {
+            const schemaBody = (o.rows || []).map(r => ({ name: r[0], type: `${r[1]}` }))
             const colNames = new Set(schemaBody.map(r => r.name))
             this.setState({
                 schemaBody,
@@ -169,15 +233,22 @@ class Index extends React.Component {
         this.cols += addCols
         const q = this.validQuery
 
-        if (!q) return // Running with an empty query will return a "" instead of an empty object table.
-
         const userCols = this.state.userCols.length && `\nselect ${this.state.userCols.map(c => `[${c}]`).join(', ')}` || ''
         this.setState({ loading: true, pausePulse: firstRun })
-        xhr(`run`, { rowLimit: this.count, colLimit: this.cols, asof: this.state.asOf, q: `${q}${userCols}` }).then(o => {
+        xhr(this.serviceUrl, `run`, { rowLimit: this.count, colLimit: this.cols, asof: this.state.asOf, q: `${q}${userCols}` }).then(o => {
+            if (o.Valid === false) {
+                this.setState({
+                    results: [],
+                    resultCount: undefined,
+                    loading: false,
+                    pausePulse: false,
+                })
+                return
+            }
             if (o.Message || o.ErrorMessage) throw 'Error should have been caught before run.'
             if (firstRun) {
                 this.setState({ results: o })
-                xhr(`count`, { asof: this.state.asOf, q: this.validQuery }).then(o => {
+                xhr(this.serviceUrl, `count`, { asof: this.state.asOf, q: this.validQuery }).then(o => {
                     this.setState({
                         resultCount: typeof o.Count === "number" && `${o.Count.toLocaleString()} Results (${o.RuntimeMs} ms)`,
                         loading: false,
@@ -202,24 +273,28 @@ class Index extends React.Component {
         return <div className={`root`}>
             <div className="query">
                 <div className="queryHeader">
-                    <input ref="name" type="text" placeholder="Add Title to Save" />
-                    <span onClick={e => {
+                    <input type="text" placeholder="Save As"
+                        value={this.state.saveAs} onChange={e => this.setState({ saveAs: e.target.value })}/>
+                    <span className="save" style={{ opacity: +!!this.state.saveAs }} onClick={e => {
                         const q = this.query
-                        const name = this.refs.name.value
+                        const name = this.state.saveAs
                         if (!name || !q) return
-                        xhr(`save`, { name, q }).then(o => {
+                        xhr(this.serviceUrl, `save`, { name, q }).then(o => {
                             this.setState({ saving: "Saved" })
                             setTimeout(() => this.setState({ saving: "Save" }), 3000)
                         })
                     }}>{ this.state.saving || "Save" }</span>
-                    <select onChange={e => this.setState({ asOf: e.target.value || undefined }, () => this.queryTextChanged())}>
+                    <select onChange={e => this.setState({ asOf: e.target.value || undefined }, () => this.queryTextChanged(true))}>
                         <option value="">As of Now</option>
                         <option value={Date.daysAgo(1).toXFormat()}>As of Yesterday</option>
                         <option value={Date.daysAgo(7).toXFormat()}>As of Last Week</option>
                         <option value={Date.firstOfMonth().toXFormat()}>As of {(new Date()).toLocaleString('en-us', { month: "long" })} 1st</option>
                     </select>
                 </div>
-                <div className="queryUsage">{ this.state.status || `\u200B` }</div>
+                <div className="queryUsage">{
+                    this.state.errorMessage && <span className="errorMessage">{this.state.errorMessage}</span>
+                    || this.state.usage || `\u200B`
+                }</div>
                 <div id="queryEditor">
                     <div className="queryHint">{this.state.queryHint}</div>
                 </div>
@@ -259,13 +334,12 @@ class Index extends React.Component {
                 <div className="" className={`resultsHeader ${this.state.pausePulse ? '' : 'pulse'}`}>
                     <span>{this.state.resultCount}</span>
                     <span className="flexFill"></span>
-                    {encodedQuery && <a className="button" target="_blank" href={`http://localhost:5073/download?fmt=csv&q=${encodedQuery}`}>CSV</a>}
-                    {encodedQuery && <a className="button" target="_blank" href={`http://localhost:5073/download?fmt=tsv&q=${encodedQuery}`}>TSV</a>}
+                    {encodedQuery && <a className="button" target="_blank" href={`${this.serviceUrl}/download?fmt=csv&q=${encodedQuery}`}>CSV</a>}
+                    {encodedQuery && <a className="button" target="_blank" href={`${this.serviceUrl}/download?fmt=tsv&q=${encodedQuery}`}>TSV</a>}
                     <span className={`loading ${ this.state.loading && 'loading-active' }`}></span>
                 </div>
                 <div className="tableWrapper" onScroll={e => {
                         const element = e.target
-                        log(element.scrollWidth, element.clientWidth, element.scrollLeft)
                         const pixelsFromLimitX = (element.scrollWidth - element.clientWidth - element.scrollLeft)
                         const pixelsFromLimitY = (element.scrollHeight - element.clientHeight - element.scrollTop)
                         if (pixelsFromLimitX < 20 && this.colLimit < this.state.schemaBody.length ) this.limitChanged(0, 10)

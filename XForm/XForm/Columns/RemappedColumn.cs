@@ -1,4 +1,8 @@
-﻿using System;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
+
 using XForm.Data;
 using XForm.Transforms;
 
@@ -59,6 +63,11 @@ namespace XForm.Columns
         {
             // Seeking isn't supported on remapped columns
             return null;
+        }
+
+        public Func<object> ComponentGetter(string componentName)
+        {
+            return _column.ComponentGetter(componentName);
         }
 
         public override string ToString()

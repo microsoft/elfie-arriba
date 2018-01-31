@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+
 using XForm.Columns;
 using XForm.Data;
 using XForm.Extensions;
@@ -30,6 +31,8 @@ namespace XForm.Aggregators
 
         public CountAggregator(IXTable source)
         {
+            if (source == null) throw new ArgumentNullException("source");
+
             _source = source;
             _count = -1;
             _countColumn = new SingleValueColumn[] { new SingleValueColumn(this, typeof(int)) };

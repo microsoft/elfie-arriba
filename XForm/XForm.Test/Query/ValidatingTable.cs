@@ -3,11 +3,11 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using XForm.Data;
-using System.Linq;
 
 namespace XForm.Test.Query
 {
@@ -27,7 +27,7 @@ namespace XForm.Test.Query
 
         public Func<XArray> CurrentGetter()
         {
-            if(_table.NextCalled) throw new AssertFailedException("Column Getters must all be requested before the first Next() call (so callees know what to retrieve).");
+            if (_table.NextCalled) throw new AssertFailedException("Column Getters must all be requested before the first Next() call (so callees know what to retrieve).");
             Func<XArray> getter = _column.CurrentGetter();
             return () =>
             {
@@ -56,7 +56,7 @@ namespace XForm.Test.Query
 
         public Func<XArray> IndicesCurrentGetter()
         {
-            if(_table.NextCalled) throw new AssertFailedException("Column Getters must all be requested before the first Next() call (so callees know what to retrieve).");
+            if (_table.NextCalled) throw new AssertFailedException("Column Getters must all be requested before the first Next() call (so callees know what to retrieve).");
             Func<XArray> getter = _column.IndicesCurrentGetter();
             return () =>
             {
@@ -68,7 +68,7 @@ namespace XForm.Test.Query
 
         public Func<ArraySelector, XArray> IndicesSeekGetter()
         {
-            if(_table.NextCalled) throw new AssertFailedException("Column Getters must all be requested before the first Next() call (so callees know what to retrieve).");
+            if (_table.NextCalled) throw new AssertFailedException("Column Getters must all be requested before the first Next() call (so callees know what to retrieve).");
             Func<ArraySelector, XArray> getter = _column.IndicesSeekGetter();
             return (selector) =>
             {
@@ -76,6 +76,11 @@ namespace XForm.Test.Query
                 Assert.AreEqual(selector.Count, result.Count, "Seek getters must return count matching requested ArraySelector count.");
                 return result;
             };
+        }
+
+        public Func<object> ComponentGetter(string componentName)
+        {
+            return null;
         }
     }
 

@@ -28,6 +28,7 @@ namespace XForm
             foreach (string arg in args)
             {
                 if (arg.Equals("+cache", StringComparison.OrdinalIgnoreCase)) ColumnCache.IsEnabled = true;
+                if (arg.Equals("-parallel", StringComparison.OrdinalIgnoreCase)) context.ForceSingleThreaded = true;
             }
 
             return Run(args, context);
@@ -60,6 +61,7 @@ namespace XForm
                             ParseCrawlTypeOrDefault(args, 3, CrawlType.Full),
                             ParseDateTimeOrDefault(args, 4, DateTime.MinValue));
 
+                        Console.WriteLine($"Done. \"{args[1]}\" added as Source \"{args[2]}\".");
                         return 0;
                     case "build":
                         if (args.Length < 2) throw new UsageException($"'build' [Table] [OutputFormat?] [AsOfDateTimeUtc?]", context.Runner.SourceNames);
@@ -71,6 +73,7 @@ namespace XForm
 
                         return 0;
                     case "http":
+                    case "web":
                         new HttpService(context).Run();
                         return 0;
                     case "perf":

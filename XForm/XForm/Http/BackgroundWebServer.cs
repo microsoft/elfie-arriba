@@ -8,9 +8,22 @@ using System.IO;
 using System.Net;
 using System.Reflection;
 using System.Threading;
+using XForm.Http;
 
 namespace XForm
 {
+
+
+    /// <summary>
+    ///  BackgroundWebServer handles Http Requests for the XForm engine on a background thread.
+    /// </summary>
+    /// <remarks>
+    ///   Access Rules:
+    ///     - HttpListener cannot register for any host name [http://+:5073] unless a URL ACL has been set first.
+    ///     - HttpListener *can* register for localhost only unelevated [http://localhost:5073].
+    ///     - Register for a URL ACL by running elevated: 'netsh http add urlacl url="http://+:5073" user=[DOMAIN\User]'
+    ///     - Delete the URL ACL with: 'netsh http delete urlacl url="http://+:5073"'
+    /// </remarks>
     public class BackgroundWebServer : IDisposable
     {
         private bool IsRunning { get; set; }
@@ -18,7 +31,7 @@ namespace XForm
         private Thread ListenerThread { get; set; }
 
         private string DefaultDocument { get; set; }
-        private Dictionary<string, Action<HttpListenerContext, HttpListenerResponse>> MethodsToServe { get; set; }
+        private Dictionary<string, Action<IHttpRequest, IHttpResponse>> MethodsToServe { get; set; }
         private Dictionary<string, string> FilesToServe { get; set; }
         private string FolderToServe { get; set; }
 
@@ -27,20 +40,18 @@ namespace XForm
             this.IsRunning = false;
 
             this.DefaultDocument = defaultDocument;
-            this.MethodsToServe = new Dictionary<string, Action<HttpListenerContext, HttpListenerResponse>>(StringComparer.OrdinalIgnoreCase);
+            this.MethodsToServe = new Dictionary<string, Action<IHttpRequest, IHttpResponse>>(StringComparer.OrdinalIgnoreCase);
             this.FilesToServe = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
             if (!String.IsNullOrEmpty(serveUnderRelativePath))
             {
-                Assembly entryAssembly = Assembly.GetEntryAssembly();
-                if (entryAssembly == null) entryAssembly = Assembly.GetCallingAssembly();
-
-                this.FolderToServe = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(entryAssembly.Location), serveUnderRelativePath));
+                Assembly assembly = Assembly.GetExecutingAssembly();
+                this.FolderToServe = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(assembly.Location), serveUnderRelativePath));
                 if (!Directory.Exists(this.FolderToServe)) this.FolderToServe = null;
             }
         }
 
-        public void AddResponder(string url, Action<HttpListenerContext, HttpListenerResponse> itemWrite)
+        public void AddResponder(string url, Action<IHttpRequest, IHttpResponse> itemWrite)
         {
             this.MethodsToServe[url] = itemWrite;
         }
@@ -51,24 +62,57 @@ namespace XForm
         }
 
         #region Start/Stop
-        public void Start()
+        public void Run()
         {
             this.IsRunning = true;
 
-            this.Listener = new HttpListener();
-            this.Listener.Prefixes.Add("http://+:80/");
-            this.Listener.Prefixes.Add("http://+:5073/");
-
+            // Start the background thread (it'll write a running message)
             this.ListenerThread = new Thread(StartWithinThread);
             this.ListenerThread.IsBackground = true;
             this.ListenerThread.Start();
+
+            // Wait for a newline on this thread and then stop
+            Console.ReadLine();
+            this.Stop();
+        }
+
+        private void StartForBinding(params string[] urls)
+        {
+            this.Listener = new HttpListener();
+            this.Listener.AuthenticationSchemes = AuthenticationSchemes.Negotiate;
+
+            foreach (string url in urls)
+            {
+                this.Listener.Prefixes.Add(url);
+            }
+
+            this.Listener.Start();
         }
 
         private void StartWithinThread()
         {
             try
             {
-                this.Listener.Start();
+                try
+                {
+                    // Try binding for all names on port 5073
+                    StartForBinding("http://+:5073/");
+                    Console.WriteLine("Web Server running; browse to http://localhost:5073. [Local and Remote]\r\nPress enter to stop server.");
+                }
+                catch (HttpListenerException ex) when (ex.ErrorCode == 5)
+                {
+                    // If we couldn't get the binding, there's no URL ACL set yet
+                    this.Listener = null;
+                }
+
+                if (this.Listener == null)
+                {
+                    // Try binding to just localhost:5073
+                    StartForBinding("http://localhost:5073/");
+                    Console.WriteLine("Web Server running; browse to http://localhost:5073. [Local Only]");
+                    Console.WriteLine(" To enable remote: https://github.com/Microsoft/elfie-arriba/wiki/XForm-Http-Remote-Access");
+                    Console.WriteLine("Press enter to stop server.");
+                }
             }
             catch (Exception ex)
             {
@@ -127,10 +171,13 @@ namespace XForm
         #endregion
 
         #region Request Handling
-        private void HandleRequest(HttpListenerContext context)
+        public void HandleRequest(HttpListenerContext context)
         {
-            HttpListenerResponse response = context.Response;
+            HandleRequest(new HttpListenerContextAdapter(context), new HttpListenerResponseAdapter(context.Response));
+        }
 
+        public void HandleRequest(IHttpRequest request, IHttpResponse response)
+        {
             try
             {
                 // Add header to ask IE not to use compatibility mode
@@ -140,12 +187,12 @@ namespace XForm
                 response.AddHeader("Access-Control-Allow-Origin", "*");
 
                 // Get the URI requested
-                string localPath = context.Request.Url.LocalPath;
+                string localPath = request.Url.LocalPath;
                 if (!String.IsNullOrEmpty(localPath)) localPath = localPath.TrimStart('/');
 
                 // Respond with the default document, a JSON item, file, or a folder item, or not found
                 if (ReturnDefaultDocument(localPath, response)) return;
-                if (ReturnMethodItem(localPath, context, response)) return;
+                if (ReturnMethodItem(localPath, request, response)) return;
                 if (ReturnFileItem(localPath, response)) return;
                 if (ReturnServedFolderFile(localPath, response)) return;
                 ReturnNotFound(response);
@@ -158,7 +205,7 @@ namespace XForm
             }
         }
 
-        private bool ReturnDefaultDocument(string requestUri, HttpListenerResponse response)
+        private bool ReturnDefaultDocument(string requestUri, IHttpResponse response)
         {
             if (String.IsNullOrEmpty(requestUri))
             {
@@ -168,16 +215,16 @@ namespace XForm
             return false;
         }
 
-        private bool ReturnMethodItem(string requestUri, HttpListenerContext context, HttpListenerResponse response)
+        private bool ReturnMethodItem(string requestUri, IHttpRequest request, IHttpResponse response)
         {
-            Action<HttpListenerContext, HttpListenerResponse> writeMethod;
+            Action<IHttpRequest, IHttpResponse> writeMethod;
             if (this.MethodsToServe.TryGetValue(requestUri, out writeMethod))
             {
                 response.AddHeader("Cache-Control", "no-cache, no-store");
                 response.ContentType = ContentType(requestUri);
                 response.StatusCode = 200;
 
-                writeMethod(context, response);
+                writeMethod(request, response);
                 response.Close();
                 return true;
             }
@@ -185,7 +232,7 @@ namespace XForm
             return false;
         }
 
-        private bool ReturnFileItem(string requestUri, HttpListenerResponse response)
+        private bool ReturnFileItem(string requestUri, IHttpResponse response)
         {
             string filePath;
             if (this.FilesToServe.TryGetValue(requestUri, out filePath))
@@ -197,7 +244,7 @@ namespace XForm
             return false;
         }
 
-        private bool ReturnServedFolderFile(string requestUri, HttpListenerResponse response)
+        private bool ReturnServedFolderFile(string requestUri, IHttpResponse response)
         {
             if (String.IsNullOrEmpty(this.FolderToServe)) return false;
             if (String.IsNullOrEmpty(requestUri)) return false;
@@ -206,35 +253,33 @@ namespace XForm
             if (localServablePath.StartsWith(this.FolderToServe) && File.Exists(localServablePath))
             {
                 RespondWithFile(localServablePath, response);
+                response.Close();
                 return true;
             }
 
             return false;
         }
 
-        private void RespondWithFile(string filePath, HttpListenerResponse response)
+        private void RespondWithFile(string filePath, IHttpResponse response)
         {
-            using (StreamWriter writer = new StreamWriter(response.OutputStream))
+            using (StreamReader reader = new StreamReader(filePath))
             {
-                using (StreamReader reader = new StreamReader(filePath))
-                {
-                    response.AddHeader("Cache-Control", "max-age=60");
-                    response.ContentType = ContentType(filePath);
-                    reader.BaseStream.CopyTo(writer.BaseStream);
-                }
+                response.AddHeader("Cache-Control", "max-age=60");
+                response.ContentType = ContentType(filePath);
+                reader.BaseStream.CopyTo(response.OutputStream);
+                response.StatusCode = 200;
             }
 
-            response.StatusCode = 200;
             response.Close();
         }
 
-        private void ReturnNotFound(HttpListenerResponse response)
+        private void ReturnNotFound(IHttpResponse response)
         {
             response.StatusCode = 404;
             response.Close();
         }
 
-        private void ReturnError(HttpListenerResponse response)
+        private void ReturnError(IHttpResponse response)
         {
             response.StatusCode = 500;
             response.Close();
