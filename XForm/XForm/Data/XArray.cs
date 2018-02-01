@@ -226,7 +226,7 @@ namespace XForm.Data
         public static bool[] RemapNulls(XArray array, ref bool[] remapArray)
         {
             // If there were no source nulls, there are none for the output
-            if (array.HasNulls) return null;
+            if (!array.HasNulls) return null;
 
             // If the source isn't indexed or shifted, the Nulls array may be reused
             if (array.Selector.Indices == null && array.Selector.StartIndexInclusive == 0) return array.Nulls;

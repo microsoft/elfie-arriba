@@ -25,7 +25,7 @@ namespace XForm.Types.Comparers
             for (int i = 0; i < xarray.Count; ++i)
             {
                 int index = xarray.Index(i);
-                if (xarray.HasNulls || xarray.Nulls[index] == false)
+                if (!xarray.HasNulls || xarray.Nulls[index] == false)
                 {
                     hashes[i] = (hashes[i] << 5) - hashes[i] + unchecked((int)Hashing.Hash(array[xarray.Index(i)].GetHashCode(), 0));
                 }
