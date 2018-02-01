@@ -91,9 +91,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Aggregators\CountAggregator.cs" />
+    <Compile Include="Aggregators\Count.cs" />
+    <Compile Include="Aggregators\IAggregator.cs" />
+    <Compile Include="Aggregators\Sum.cs" />
+    <Compile Include="Verbs\Count.cs" />
     <Compile Include="Columns\DeferredArrayColumn.cs" />
     <Compile Include="Core\DictionaryColumn.cs" />
+    <Compile Include="Core\Factory.cs" />
     <Compile Include="Core\GroupByDictionary.cs" />
     <Compile Include="Core\ParallelRunner.cs" />
     <Compile Include="Http\BackgroundWebServer.cs" />
@@ -148,7 +152,6 @@
     <Compile Include="Functions\Date\DateAdd.cs" />
     <Compile Include="Columns\RenamedColumn.cs" />
     <Compile Include="Columns\ConstantColumn.cs" />
-    <Compile Include="Functions\FunctionFactory.cs" />
     <Compile Include="Data\IXColumn.cs" />
     <Compile Include="Functions\IFunctionBuilder.cs" />
     <Compile Include="Functions\SimpleTransformFunction.cs" />
@@ -228,6 +231,7 @@
       <Name>Elfie</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>$(SolutionDir)\Deploy.WebSite.cmd $(TargetDir)</PostBuildEvent>

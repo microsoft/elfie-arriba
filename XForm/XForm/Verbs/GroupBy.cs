@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using XForm.Aggregators;
 using XForm.Columns;
 using XForm.Data;
 using XForm.Extensions;
@@ -16,65 +17,25 @@ namespace XForm.Verbs
         public IXTable Build(IXTable source, XDatabaseContext context)
         {
             List<IXColumn> groupByColumns = new List<IXColumn>();
+            List<IAggregator> aggregators = new List<IAggregator>();
+
             do
             {
                 groupByColumns.Add(context.Parser.NextColumn(source, context));
-            } while (context.Parser.HasAnotherPart);
+            } while (context.Parser.HasAnotherPart && !context.Parser.NextTokenText.Equals("GET", StringComparison.OrdinalIgnoreCase));
 
-            return new GroupBy(source, groupByColumns, new CountAggregator());
-        }
-    }
 
-    public interface IAggregator
-    {
-        ColumnDetails ColumnDetails { get; }
-        XArray Values { get; }
-
-        void Add(XArray rowIndices, int newDistinctCount);
-    }
-
-    public class CountAggregator : IAggregator
-    {
-        private int[] _countPerBucket;
-        private int _distinctCount;
-
-        public ColumnDetails ColumnDetails { get; private set; }
-        public XArray Values => XArray.All(_countPerBucket, _distinctCount);
-
-        public CountAggregator()
-        {
-            ColumnDetails = new ColumnDetails("Count", typeof(int));
-        }
-
-        public void Add(XArray rowIndices, int newDistinctCount)
-        {
-            _distinctCount = newDistinctCount;
-            Allocator.ExpandToSize(ref _countPerBucket, newDistinctCount);
-
-            if (rowIndices.Array is int[])
+            if (context.Parser.HasAnotherPart)
             {
-                int[] array = (int[])rowIndices.Array;
-                for (int i = rowIndices.Selector.StartIndexInclusive; i < rowIndices.Selector.EndIndexExclusive; ++i)
+                context.Parser.NextSingleKeyword("GET");
+
+                do
                 {
-                    _countPerBucket[array[i]]++;
-                }
+                    aggregators.Add(context.Parser.NextAggregator(source, context));
+                } while (context.Parser.HasAnotherPart);
             }
-            else if (rowIndices.Array is byte[])
-            {
-                byte[] array = (byte[])rowIndices.Array;
-                for (int i = rowIndices.Selector.StartIndexInclusive; i < rowIndices.Selector.EndIndexExclusive; ++i)
-                {
-                    _countPerBucket[array[i]]++;
-                }
-            }
-            else
-            {
-                ushort[] array = (ushort[])rowIndices.Array;
-                for (int i = rowIndices.Selector.StartIndexInclusive; i < rowIndices.Selector.EndIndexExclusive; ++i)
-                {
-                    _countPerBucket[array[i]]++;
-                }
-            }
+
+            return new GroupBy(source, groupByColumns, aggregators);
         }
     }
 
@@ -82,7 +43,7 @@ namespace XForm.Verbs
     {
         private IXTable _source;
         private IXColumn[] _keyColumns;
-        private IAggregator _aggregator;
+        private IAggregator[] _aggregators;
 
         private DeferredArrayColumn[] _columns;
 
@@ -92,24 +53,27 @@ namespace XForm.Verbs
 
         private ArraySelector _currentEnumerateSelector;
 
-        public GroupBy(IXTable source, IList<IXColumn> keyColumns, IAggregator aggregator)
+        public GroupBy(IXTable source, IList<IXColumn> keyColumns, IList<IAggregator> aggregators)
         {
             if (source == null) throw new ArgumentNullException("source");
             _source = source;
             _keyColumns = keyColumns.ToArray();
-            _aggregator = aggregator;
+            _aggregators = aggregators.ToArray();
 
             // Build a typed dictionary to handle the rank and key column types
             _dictionary = new GroupByDictionary(keyColumns.Select((col) => col.ColumnDetails).ToArray());
 
             // Build a DeferredArrayColumn for each key and for the aggregator
-            _columns = new DeferredArrayColumn[keyColumns.Count + 1];
-            for(int i = 0; i < keyColumns.Count; ++i)
+            _columns = new DeferredArrayColumn[keyColumns.Count + aggregators.Count];
+            for (int i = 0; i < keyColumns.Count; ++i)
             {
                 _columns[i] = new DeferredArrayColumn(keyColumns[i].ColumnDetails);
             }
 
-            _columns[_columns.Length - 1] = new DeferredArrayColumn(_aggregator.ColumnDetails);
+            for(int i = 0; i < aggregators.Count; ++i)
+            {
+                _columns[keyColumns.Count + i] = new DeferredArrayColumn(_aggregators[i].ColumnDetails);
+            }
         }
 
         public IReadOnlyList<IXColumn> Columns => _columns;
@@ -139,7 +103,7 @@ namespace XForm.Verbs
         private void BuildDictionary()
         {
             // Short-circuit path if there's one key column and it's an EnumColumn
-            if(_keyColumns.Length == 1 && _keyColumns[0].IsEnumColumn())
+            if (_keyColumns.Length == 1 && _keyColumns[0].IsEnumColumn())
             {
                 BuildSingleEnumColumnDictionary();
                 return;
@@ -162,21 +126,26 @@ namespace XForm.Verbs
                 XArray indicesForRows = _dictionary.FindOrAdd(keyArrays);
 
                 // Identify the bucket for each row and aggregate them
-                _aggregator.Add(indicesForRows, _dictionary.Count);
+                for (int i = 0; i < _aggregators.Length; ++i)
+                {
+                    _aggregators[i].Add(indicesForRows, _dictionary.Count);
+                }
             }
 
             // Store the distinct count now that we know it
             _distinctCount = _dictionary.Count;
 
-            // Once the loop is done, get the distinct values and aggregation result
+            // Once the loop is done, get the distinct values and aggregation results
             XArray[] keys = _dictionary.DistinctKeys();
-            if (keys.Length != _columns.Length - 1) throw new InvalidOperationException("GroupByDictionary didn't have the right number of key columns.");
-            for (int i = 0; i < _columns.Length - 1; ++i)
+            for (int i = 0; i < _keyColumns.Length; ++i)
             {
                 _columns[i].SetValues(keys[i]);
             }
 
-            _columns[_columns.Length - 1].SetValues(_aggregator.Values);
+            for (int i = 0; i < _aggregators.Length; ++i)
+            {
+                _columns[_keyColumns.Length + i].SetValues(_aggregators[i].Values);
+            }
         }
 
         private void BuildSingleEnumColumnDictionary()
@@ -187,17 +156,24 @@ namespace XForm.Verbs
             int count;
             while ((count = _source.Next(XTableExtensions.DefaultBatchSize)) != 0)
             {
-                // Identify the bucket for each row and aggregate them
+                // Aggregate each row directly on the row index (already a small zero-based value)
                 XArray indices = indicesGetter();
-                _aggregator.Add(indices, values.Count);
+
+                for (int i = 0; i < _aggregators.Length; ++i)
+                {
+                    _aggregators[i].Add(indices, values.Count);
+                }
             }
 
             // Store the distinct count now that we know it
             _distinctCount = values.Count;
 
-            // Once the loop is done, get the distinct values and aggregation result
+            // Once the loop is done, get the distinct values and aggregation results
             _columns[0].SetValues(values);
-            _columns[1].SetValues(_aggregator.Values);
+            for (int i = 0; i < _aggregators.Length; ++i)
+            {
+                _columns[i + 1].SetValues(_aggregators[i].Values);
+            }
         }
 
         public void Reset()

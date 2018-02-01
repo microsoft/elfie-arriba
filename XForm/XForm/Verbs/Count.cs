@@ -7,29 +7,28 @@ using System.Collections.Generic;
 using XForm.Columns;
 using XForm.Data;
 using XForm.Extensions;
-using XForm.Functions;
 using XForm.Query;
 
-namespace XForm.Aggregators
+namespace XForm.Verbs
 {
-    internal class CountCommandBuilder : IVerbBuilder
+    internal class CountVerbBuilder : IVerbBuilder
     {
         public string Verb => "count";
         public string Usage => "count";
 
         public IXTable Build(IXTable source, XDatabaseContext context)
         {
-            return new CountAggregator(source);
+            return new Count(source);
         }
     }
 
-    public class CountAggregator : IXTable
+    public class Count : IXTable
     {
         private SingleValueColumn[] _countColumn;
         private IXTable _source;
         private int _count;
 
-        public CountAggregator(IXTable source)
+        public Count(IXTable source)
         {
             if (source == null) throw new ArgumentNullException("source");
 
