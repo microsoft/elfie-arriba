@@ -21,6 +21,17 @@ namespace XForm.Test.Query
         public static DateTime TestAsOfDateTime = new DateTime(2017, 12, 10, 0, 0, 0, DateTimeKind.Utc);
 
         [TestMethod]
+        public void Function_IsNull()
+        {
+            int[] values = new int[] { 1, 2, 0, 3, 4 };
+            bool[] nulls = new bool[] { false, false, true, false, false };
+
+            XArray input = XArray.All(values, values.Length, nulls);
+            XArray expected = XArray.All(nulls, nulls.Length);
+            RunQueryAndVerify(input, "Name", expected, "Name", "set [Name] IsNull([Name])");
+        }
+
+        [TestMethod]
         public void Function_DateAdd()
         {
             DateTime[] values = new DateTime[]
@@ -146,22 +157,29 @@ namespace XForm.Test.Query
 
         public static void RunQueryAndVerify(Array values, string inputColumnName, Array expected, string outputColumnName, string queryText)
         {
-            Assert.IsTrue(expected.Length > 3, "Must have at least four values for a proper test.");
-
             XArray inputxarray = XArray.All(values, values.Length);
             XArray expectedxarray = XArray.All(expected, expected.Length);
+            RunQueryAndVerify(inputxarray, inputColumnName, expectedxarray, outputColumnName, queryText);
+        }
+
+        public static void RunQueryAndVerify(XArray inputXArray, string inputColumnName, XArray expectedXArray, string outputColumnName, string queryText)
+        {
+            Assert.IsTrue(expectedXArray.Count > 3, "Must have at least four values for a proper test.");
 
             // Run with full array arrays
-            RunAndCompare(inputxarray, inputColumnName, expectedxarray, outputColumnName, queryText);
+            RunAndCompare(inputXArray, inputColumnName, expectedXArray, outputColumnName, queryText);
 
             // Add indices and gaps and verify against original set
-            RunAndCompare(TableTestHarness.Pad(inputxarray), inputColumnName, expectedxarray, outputColumnName, queryText);
+            RunAndCompare(TableTestHarness.Pad(inputXArray), inputColumnName, expectedXArray, outputColumnName, queryText);
 
-            // Add alternating nulls and verify alternating null/expected
-            RunAndCompare(TableTestHarness.Nulls(inputxarray), inputColumnName, TableTestHarness.Nulls(expectedxarray), outputColumnName, queryText);
+            if (!inputXArray.HasNulls)
+            {
+                // Add alternating nulls and verify alternating null/expected
+                RunAndCompare(TableTestHarness.Nulls(inputXArray), inputColumnName, TableTestHarness.Nulls(expectedXArray), outputColumnName, queryText);
+            }
 
             // Test a single value by itself
-            RunAndCompare(TableTestHarness.First(inputxarray), inputColumnName, TableTestHarness.First(expectedxarray), outputColumnName, queryText);
+            RunAndCompare(TableTestHarness.First(inputXArray), inputColumnName, TableTestHarness.First(expectedXArray), outputColumnName, queryText);
         }
 
         public static void RunAndCompare(XArray input, string inputColumnName, XArray expected, string outputColumnName, string queryText)

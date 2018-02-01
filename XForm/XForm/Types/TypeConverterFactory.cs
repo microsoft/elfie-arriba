@@ -112,7 +112,7 @@ namespace XForm.Types
             XArray resultxarray = converter(XArray.Single(array, 1));
 
             // Verify the result was not null unless the input was "" or 'null'
-            if (resultxarray.IsNull != null && resultxarray.IsNull[resultxarray.Index(0)] == true)
+            if (resultxarray.HasNulls && resultxarray.Nulls[resultxarray.Index(0)] == true)
             {
                 result = null;
 
@@ -181,14 +181,11 @@ namespace XForm.Types
             }
             else if (errorOnKinds == ValueKinds.Invalid)
             {
-                if (couldNotConvert != null)
+                if (couldNotConvert != null && source.HasNulls)
                 {
-                    if (source.IsNull != null)
+                    for (int i = 0; i < source.Count; ++i)
                     {
-                        for (int i = 0; i < source.Count; ++i)
-                        {
-                            if (couldNotConvert[i] == true && source.IsNull[source.Index(i)] == false) throw new InvalidOperationException($"{errorContextMessage} failed for at least one value.");
-                        }
+                        if (couldNotConvert[i] == true && source.Nulls[source.Index(i)] == false) throw new InvalidOperationException($"{errorContextMessage} failed for at least one value.");
                     }
                 }
             }
@@ -201,7 +198,7 @@ namespace XForm.Types
         private static bool[] MergeNulls(XArray xarray, bool[] couldNotConvert, ref bool[] buffer)
         {
             // No nulls? Just return the values which didn't convert
-            if (xarray.IsNull == null) return couldNotConvert;
+            if (!xarray.HasNulls) return couldNotConvert;
 
             if (couldNotConvert == null) return XArray.RemapNulls(xarray, ref buffer);
 
@@ -210,7 +207,7 @@ namespace XForm.Types
             {
                 for (int i = 0; i < xarray.Count; ++i)
                 {
-                    couldNotConvert[i] |= xarray.IsNull[xarray.Index(i)];
+                    couldNotConvert[i] |= xarray.Nulls[xarray.Index(i)];
                 }
             }
             else
@@ -218,7 +215,7 @@ namespace XForm.Types
                 int start = xarray.Selector.StartIndexInclusive;
                 for (int i = 0; i < xarray.Count; ++i)
                 {
-                    couldNotConvert[i] |= xarray.IsNull[i + start];
+                    couldNotConvert[i] |= xarray.Nulls[i + start];
                 }
             }
 

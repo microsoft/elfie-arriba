@@ -70,7 +70,7 @@ namespace XForm
             _currentIsNewValue = true;
 
             int realIndex = _currentArray.Index((int)index);
-            if (_currentArray.IsNull != null && _currentArray.IsNull[realIndex])
+            if (_currentArray.HasNulls && _currentArray.Nulls[realIndex])
             {
                 _current = default(TColumnType);
             }

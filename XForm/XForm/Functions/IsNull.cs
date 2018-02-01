@@ -91,12 +91,12 @@ namespace XForm.Functions
 
         private XArray Convert(XArray array)
         {
-            if (array.IsNull == null)
+            if (!array.HasNulls)
             {
                 return XArray.AllFalse(array.Count);
             }
 
-            return array.ReplaceValues(array.IsNull);
+            return array.ReplaceValues(array.Nulls);
         }
     }
 }

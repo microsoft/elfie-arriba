@@ -42,7 +42,7 @@ namespace XForm.Types
             _rowCountSoFar += xarray.Count;
 
             // If there are no nulls in this set and none previously, no null markers need to be written
-            if (xarray.IsNull == null && _nullWriter == null) return;
+            if (!xarray.HasNulls && _nullWriter == null) return;
 
             if (_nullWriter == null)
             {
@@ -50,7 +50,7 @@ namespace XForm.Types
                 bool areAnyNulls = false;
                 for (int i = 0; i < xarray.Count && !areAnyNulls; ++i)
                 {
-                    areAnyNulls |= xarray.IsNull[xarray.Index(i)];
+                    areAnyNulls |= xarray.Nulls[xarray.Index(i)];
                 }
 
                 // If there are not actually any null rows in this set, don't write null output yet
@@ -70,7 +70,7 @@ namespace XForm.Types
                 }
             }
 
-            if (xarray.IsNull == null)
+            if (!xarray.HasNulls)
             {
                 // If this xarray doesn't have any nulls, write false for every value in this page
                 Allocator.AllocateToSize(ref _falseArray, xarray.Count);
@@ -79,7 +79,7 @@ namespace XForm.Types
             else
             {
                 // Write the actual true/false values for this page
-                _nullWriter.Append(XArray.All(xarray.IsNull).Reselect(xarray.Selector));
+                _nullWriter.Append(XArray.All(xarray.Nulls).Reselect(xarray.Selector));
             }
         }
 
