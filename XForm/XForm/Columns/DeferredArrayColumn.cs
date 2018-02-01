@@ -8,9 +8,9 @@ using XForm.Data;
 namespace XForm.Columns
 {
     /// <summary>
-    ///  ArrayColumn is an IXColumn wrapping an available array.
+    ///  DeferredArrayColumn wraps an array not available until Next() is first called.
     /// </summary>
-    public class ArrayColumn : IXColumn
+    public class DeferredArrayColumn : IXColumn
     {
         private ArraySelector _currentSelector;
         private XArray _allValues;
@@ -18,14 +18,19 @@ namespace XForm.Columns
 
         private int[] _remapArray;
 
-        public ArrayColumn(XArray allValues, ColumnDetails columnDetails)
+        public DeferredArrayColumn(ColumnDetails columnDetails)
         {
-            _allValues = allValues;
             ColumnDetails = columnDetails;
+        }
+
+        public void SetValues(XArray values)
+        {
+            _allValues = values;
         }
 
         public void SetSelector(ArraySelector currentSelector)
         {
+            if (currentSelector.Count != 0 && _allValues.Array == null) throw new InvalidOperationException("SetValues must be called before SetSelector on DeferredArrayColumn.");
             _currentSelector = currentSelector;
         }
 

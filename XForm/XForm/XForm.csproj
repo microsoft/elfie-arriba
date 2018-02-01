@@ -92,6 +92,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Aggregators\CountAggregator.cs" />
+    <Compile Include="Columns\DeferredArrayColumn.cs" />
+    <Compile Include="Core\DictionaryColumn.cs" />
+    <Compile Include="Core\GroupByDictionary.cs" />
     <Compile Include="Core\ParallelRunner.cs" />
     <Compile Include="Http\BackgroundWebServer.cs" />
     <Compile Include="Columns\ArrayColumn.cs" />
@@ -124,6 +127,7 @@
     <Compile Include="Types\TimeSpanTypeProvider.cs" />
     <Compile Include="Verbs\Cast.cs" />
     <Compile Include="Verbs\Choose.cs" />
+    <Compile Include="Verbs\GroupBy.cs" />
     <Compile Include="Verbs\Rename.cs" />
     <Compile Include="Verbs\Set.cs" />
     <Compile Include="Verbs\Read.cs" />
