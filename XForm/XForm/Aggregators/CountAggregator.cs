@@ -9,11 +9,11 @@ namespace XForm.Aggregators
 
         public IAggregator Build(IXTable source, XDatabaseContext context)
         {
-            return new Count();
+            return new CountAggregator();
         }
     }
 
-    public class Count : IAggregator
+    public class CountAggregator : IAggregator
     {
         private int[] _countPerBucket;
         private int _distinctCount;
@@ -21,7 +21,7 @@ namespace XForm.Aggregators
         public ColumnDetails ColumnDetails { get; private set; }
         public XArray Values => XArray.All(_countPerBucket, _distinctCount);
 
-        public Count()
+        public CountAggregator()
         {
             ColumnDetails = new ColumnDetails("Count", typeof(int));
         }

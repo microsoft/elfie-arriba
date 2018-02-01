@@ -10,11 +10,11 @@ namespace XForm.Aggregators
 
         public IAggregator Build(IXTable source, XDatabaseContext context)
         {
-            return new Sum(context.Parser.NextColumn(source, context, typeof(int)));
+            return new SumAggregator(context.Parser.NextColumn(source, context, typeof(int)));
         }
     }
 
-    public class Sum : IAggregator
+    public class SumAggregator : IAggregator
     {
         private IXColumn _sumColumn;
         private Func<XArray> _sumCurrentGetter;
@@ -26,7 +26,7 @@ namespace XForm.Aggregators
         public ColumnDetails ColumnDetails { get; private set; }
         public XArray Values => XArray.All(_sumPerBucket, _distinctCount, _isNullPerBucket);
 
-        public Sum(IXColumn sumOverColumn)
+        public SumAggregator(IXColumn sumOverColumn)
         {
             _sumColumn = sumOverColumn;
             _sumCurrentGetter = sumOverColumn.CurrentGetter();

@@ -91,9 +91,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Aggregators\Count.cs" />
+    <Compile Include="Aggregators\CountAggregator.cs" />
     <Compile Include="Aggregators\IAggregator.cs" />
-    <Compile Include="Aggregators\Sum.cs" />
+    <Compile Include="Aggregators\SumAggregator.cs" />
     <Compile Include="Verbs\Count.cs" />
     <Compile Include="Columns\DeferredArrayColumn.cs" />
     <Compile Include="Core\DictionaryColumn.cs" />

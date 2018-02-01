@@ -22,7 +22,10 @@ namespace XForm.Verbs
             // Parse GroupBy columns
             do
             {
-                groupByColumns.Add(context.Parser.NextColumn(source, context));
+                IXColumn column = context.Parser.NextColumn(source, context);
+                if (column.IsConstantColumn()) throw new ArgumentException("GroupBy can't aggregate across a constant.");
+
+                groupByColumns.Add(column);
             } while (context.Parser.HasAnotherPart && !context.Parser.NextTokenText.Equals("GET", StringComparison.OrdinalIgnoreCase));
 
 
@@ -155,6 +158,11 @@ namespace XForm.Verbs
             XArray values = _keyColumns[0].ValuesGetter()();
             Func<XArray> indicesGetter = _keyColumns[0].IndicesCurrentGetter();
 
+            // Find or construct a count aggregator [to figure out which indices were in the results]
+            CountAggregator counter = (CountAggregator)_aggregators.FirstOrDefault((agg) => agg is CountAggregator);
+            bool countAggregatorFound = (counter != null);
+            if (!countAggregatorFound) counter = new CountAggregator();
+
             int count;
             while ((count = _source.Next(XTableExtensions.DefaultBatchSize)) != 0)
             {
@@ -165,17 +173,42 @@ namespace XForm.Verbs
                 {
                     _aggregators[i].Add(indices, values.Count);
                 }
+
+                if (!countAggregatorFound) counter.Add(indices, values.Count);
             }
+
+            // Figure out which rows had matches
+            ArraySelector foundValuesSelector = BuildSelectorForFoundIndices(counter.Values);
 
             // Store the distinct count now that we know it
-            _distinctCount = values.Count;
+            _distinctCount = foundValuesSelector.Count;
 
             // Once the loop is done, get the distinct values and aggregation results
-            _columns[0].SetValues(values);
+            _columns[0].SetValues(values.Reselect(foundValuesSelector));
             for (int i = 0; i < _aggregators.Length; ++i)
             {
-                _columns[i + 1].SetValues(_aggregators[i].Values);
+                _columns[i + 1].SetValues(_aggregators[i].Values.Reselect(foundValuesSelector));
             }
+        }
+
+        private ArraySelector BuildSelectorForFoundIndices(XArray counts)
+        {
+            // Count each bucket which had more than zero rows and keep the in-order indices of them
+            int[] countArray = (int[])counts.Array;
+
+            int distinctCountFound = 0;
+            int[] foundIndexSelector = new int[counts.Count];
+            for (int i = 0; i < counts.Count; ++i)
+            {
+                if (countArray[counts.Index(i)] > 0)
+                {
+                    foundIndexSelector[distinctCountFound] = i;
+                    distinctCountFound++;
+                }
+            }
+
+            // Build a selector to filter the keys and aggregates to the non-zero row set (or keep all of them, if all were non-zero)
+            return (distinctCountFound == counts.Count ? ArraySelector.All(distinctCountFound) : ArraySelector.Map(foundIndexSelector, distinctCountFound));
         }
 
         public void Reset()
