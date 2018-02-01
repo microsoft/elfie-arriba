@@ -33,15 +33,33 @@ namespace XForm.Aggregators
 
             if (rowIndices.Array is int[])
             {
-                int[] array = (int[])rowIndices.Array;
-                for (int i = rowIndices.Selector.StartIndexInclusive; i < rowIndices.Selector.EndIndexExclusive; ++i)
-                {
-                    _countPerBucket[array[i]]++;
-                }
+                AddInt(rowIndices, newDistinctCount);
             }
             else if (rowIndices.Array is byte[])
             {
-                byte[] array = (byte[])rowIndices.Array;
+                AddByte(rowIndices, newDistinctCount);
+            }
+            else
+            {
+                AddUShort(rowIndices, newDistinctCount);
+            }
+        }
+
+        private void AddInt(XArray rowIndices, int newDistinctCount)
+        {
+            int[] array = (int[])rowIndices.Array;
+            if (rowIndices.Selector.Indices != null)
+            {
+                // Indexed XArray - look up indexed values
+                int[] indices = rowIndices.Selector.Indices;
+                for (int i = rowIndices.Selector.StartIndexInclusive; i < rowIndices.Selector.EndIndexExclusive; ++i)
+                {
+                    _countPerBucket[array[indices[i]]]++;
+                }
+            }
+            else if(rowIndices.Selector.IsSingleValue == false)
+            {
+                // Non-Indexed XArray - loop from Start to End
                 for (int i = rowIndices.Selector.StartIndexInclusive; i < rowIndices.Selector.EndIndexExclusive; ++i)
                 {
                     _countPerBucket[array[i]]++;
@@ -49,11 +67,62 @@ namespace XForm.Aggregators
             }
             else
             {
-                ushort[] array = (ushort[])rowIndices.Array;
+                // All rows are one value - add to that count
+                _countPerBucket[array[rowIndices.Index(0)]] += rowIndices.Count;
+            }
+        }
+
+        private void AddByte(XArray rowIndices, int newDistinctCount)
+        {
+            byte[] array = (byte[])rowIndices.Array;
+            if (rowIndices.Selector.Indices != null)
+            {
+                // Indexed XArray - look up indexed values
+                int[] indices = rowIndices.Selector.Indices;
+                for (int i = rowIndices.Selector.StartIndexInclusive; i < rowIndices.Selector.EndIndexExclusive; ++i)
+                {
+                    _countPerBucket[array[indices[i]]]++;
+                }
+            }
+            else if (rowIndices.Selector.IsSingleValue == false)
+            {
+                // Non-Indexed XArray - loop from Start to End
                 for (int i = rowIndices.Selector.StartIndexInclusive; i < rowIndices.Selector.EndIndexExclusive; ++i)
                 {
                     _countPerBucket[array[i]]++;
                 }
+            }
+            else
+            {
+                // All rows are one value - add to that count
+                _countPerBucket[array[rowIndices.Index(0)]] += rowIndices.Count;
+            }
+        }
+
+        private void AddUShort(XArray rowIndices, int newDistinctCount)
+        {
+            ushort[] array = (ushort[])rowIndices.Array;
+            if (rowIndices.Selector.Indices != null)
+            {
+                // Indexed XArray - look up indexed values
+                int[] indices = rowIndices.Selector.Indices;
+                for (int i = rowIndices.Selector.StartIndexInclusive; i < rowIndices.Selector.EndIndexExclusive; ++i)
+                {
+                    _countPerBucket[array[indices[i]]]++;
+                }
+            }
+            else if (rowIndices.Selector.IsSingleValue == false)
+            {
+                // Non-Indexed XArray - loop from Start to End
+                for (int i = rowIndices.Selector.StartIndexInclusive; i < rowIndices.Selector.EndIndexExclusive; ++i)
+                {
+                    _countPerBucket[array[i]]++;
+                }
+            }
+            else
+            {
+                // All rows are one value - add to that count
+                _countPerBucket[array[rowIndices.Index(0)]] += rowIndices.Count;
             }
         }
     }

@@ -19,12 +19,14 @@ namespace XForm.Verbs
             List<IXColumn> groupByColumns = new List<IXColumn>();
             List<IAggregator> aggregators = new List<IAggregator>();
 
+            // Parse GroupBy columns
             do
             {
                 groupByColumns.Add(context.Parser.NextColumn(source, context));
             } while (context.Parser.HasAnotherPart && !context.Parser.NextTokenText.Equals("GET", StringComparison.OrdinalIgnoreCase));
 
 
+            // If 'GET', parse Aggregators
             if (context.Parser.HasAnotherPart)
             {
                 context.Parser.NextSingleKeyword("GET");
