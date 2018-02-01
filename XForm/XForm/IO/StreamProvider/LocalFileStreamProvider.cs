@@ -62,7 +62,7 @@ namespace XForm.IO.StreamProvider
 
         public void Delete(string logicalPath)
         {
-            DirectoryIO.DeleteAllContents(PathCombineSandbox(logicalPath));
+            DirectoryIO.DeleteAll(PathCombineSandbox(logicalPath));
         }
 
         public Stream OpenAppend(string logicalPath)

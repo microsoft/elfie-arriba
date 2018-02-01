@@ -3,9 +3,10 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
-
+using XForm.IO;
 using XForm.IO.StreamProvider;
 
 namespace XForm.Extensions
@@ -50,6 +51,61 @@ namespace XForm.Extensions
             else
             {
                 streamProvider.Copy(File.OpenRead(sourceFileOrFolderPath), System.IO.Path.Combine(desiredFolderPath, System.IO.Path.GetFileName(sourceFileOrFolderPath)));
+            }
+        }
+
+        public static void Clean(this IStreamProvider streamProvider, bool reallyDelete, DateTime cutoff = default(DateTime))
+        {
+            // By default, keep data from the last week (so Now, Yesterday, and Last Week 'as of' data is all available)
+            if (cutoff == default(DateTime)) cutoff = DateTime.UtcNow.AddDays(-8);
+
+            // Remove Sources and Tables older than the cutoff
+            ItemVersions currentVersions;
+            int countLeft;
+
+            foreach (string tableName in streamProvider.Tables())
+            {
+                // Find all Source versions
+                currentVersions = streamProvider.ItemVersions(LocationType.Source, tableName);
+                countLeft = currentVersions.Versions.Count;
+
+                // Delete ones older than the cutoff, keeping the last three
+                foreach (var version in currentVersions.Versions)
+                {
+                    if (version.AsOfDate < cutoff)
+                    {
+                        if (countLeft <= 3) break;
+                        countLeft--;
+
+                        Trace.WriteLine($"DELETE {version.Path}");
+                        if (reallyDelete)
+                        {
+                            // Delete the source
+                            streamProvider.Delete(version.Path);
+                            version.LocationType = LocationType.Table;
+
+                            // Delete the matching table, if found
+                            streamProvider.Delete(version.Path);
+                        }
+                    }
+                }
+
+                // Find all Table versions
+                currentVersions = streamProvider.ItemVersions(LocationType.Table, tableName);
+                countLeft = currentVersions.Versions.Count;
+
+                // Delete ones older than the cutoff, keeping the last three
+                foreach (var version in currentVersions.Versions)
+                {
+                    if (version.AsOfDate < cutoff)
+                    {
+                        if (countLeft <= 3) break;
+                        countLeft--;
+
+                        Trace.WriteLine($"DELETE {version.Path}");
+                        if (reallyDelete) streamProvider.Delete(version.Path);
+                    }
+                }
             }
         }
 

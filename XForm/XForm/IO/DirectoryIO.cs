@@ -26,6 +26,18 @@ namespace XForm.IO
             }
         }
 
+        public static void DeleteAll(string directoryOrFilePath)
+        {
+            if (Directory.Exists(directoryOrFilePath))
+            {
+                Directory.Delete(directoryOrFilePath, true);
+            }
+            else if (File.Exists(directoryOrFilePath))
+            {
+                File.Delete(directoryOrFilePath);
+            }
+        }
+
         public static void Copy(string directoryPath, string destination)
         {
             if (!Directory.Exists(directoryPath)) throw new IOException($"{directoryPath} did not exist to copy from.");
