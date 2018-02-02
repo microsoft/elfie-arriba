@@ -112,7 +112,7 @@ namespace XForm.Types
             XArray resultxarray = converter(XArray.Single(array, 1));
 
             // Verify the result was not null unless the input was "" or 'null'
-            if (resultxarray.HasNulls && resultxarray.Nulls[resultxarray.Index(0)] == true)
+            if (resultxarray.HasNulls && resultxarray.Nulls[resultxarray.Index(0)])
             {
                 result = null;
 
@@ -185,7 +185,7 @@ namespace XForm.Types
                 {
                     for (int i = 0; i < source.Count; ++i)
                     {
-                        if (couldNotConvert[i] == true && source.Nulls[source.Index(i)] == false) throw new InvalidOperationException($"{errorContextMessage} failed for at least one value.");
+                        if (couldNotConvert[i] == true && !source.Nulls[source.Index(i)]) throw new InvalidOperationException($"{errorContextMessage} failed for at least one value.");
                     }
                 }
             }

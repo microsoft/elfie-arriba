@@ -168,7 +168,7 @@ namespace XForm.Test
                 if (expected.HasNulls)
                 {
                     isNull = expected.Nulls[expectedIndex];
-                    if (!AssertAreEqual(isNull, (actual.Nulls[actualIndex]), $"{columnName}[{i:n0}].IsNull", ref errorMessage)) return i;
+                    if (!AssertAreEqual(isNull, (actual.HasNulls && actual.Nulls[actualIndex]), $"{columnName}[{i:n0}].IsNull", ref errorMessage)) return i;
                 }
 
                 if (!isNull)

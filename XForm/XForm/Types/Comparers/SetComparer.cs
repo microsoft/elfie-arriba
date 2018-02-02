@@ -95,13 +95,13 @@ namespace XForm.Types.Comparers
             byte[] leftArray = (byte[])left.Array;
 
             // Check how the arrays are configured and run the fastest loop possible for the configuration.
-            if (!left.HasNulls)
+            if (left.HasNulls)
             {
                 // Slowest Path: Null checks and look up indices on both sides
                 for (int i = 0; i < left.Count; ++i)
                 {
                     int leftIndex = left.Index(i);
-                    if (!left.HasNulls && left.Nulls[leftIndex]) continue;
+                    if (left.Nulls[leftIndex]) continue;
                     if (_array[leftArray[leftIndex]]) vector.Set(i);
                 }
             }
