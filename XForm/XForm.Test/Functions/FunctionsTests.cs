@@ -184,8 +184,10 @@ namespace XForm.Test.Query
 
         public static void RunAndCompare(XArray input, string inputColumnName, XArray expected, string outputColumnName, string queryText)
         {
-            XDatabaseContext context = new XDatabaseContext();
-            context.RequestedAsOfDateTime = TestAsOfDateTime;
+            XDatabaseContext context = new XDatabaseContext
+            {
+                RequestedAsOfDateTime = TestAsOfDateTime
+            };
 
             IXTable query = TableTestHarness.DatabaseContext.FromArrays(input.Count)
                 .WithColumn(new ColumnDetails(inputColumnName, input.Array.GetType().GetElementType()), input)

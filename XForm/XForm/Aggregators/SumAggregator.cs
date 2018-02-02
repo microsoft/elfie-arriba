@@ -60,7 +60,7 @@ namespace XForm.Aggregators
             int[] sumArray = (int[])sumValues.Array;
             int[] indicesArray = (int[])rowIndices.Array;
 
-            if (sumValues.IsNull != null)
+            if (sumValues.HasNulls)
             {
                 // Nulls: Find nulls and mark those buckets null
                 Allocator.AllocateToSize(ref _isNullPerBucket, newDistinctCount);
@@ -68,7 +68,7 @@ namespace XForm.Aggregators
                 {
                     int bucketIndex = rowIndices.Index(i);
                     int sumIndex = sumValues.Index(i);
-                    if (sumValues.IsNull[sumIndex]) _isNullPerBucket[indicesArray[bucketIndex]] = true;
+                    if (sumValues.Nulls[sumIndex]) _isNullPerBucket[indicesArray[bucketIndex]] = true;
 
                     _sumPerBucket[indicesArray[bucketIndex]] += sumArray[sumIndex];
                 }
@@ -113,7 +113,7 @@ namespace XForm.Aggregators
             int[] sumArray = (int[])sumValues.Array;
             byte[] indicesArray = (byte[])rowIndices.Array;
 
-            if (sumValues.IsNull != null)
+            if (sumValues.HasNulls)
             {
                 // Nulls: Find nulls and mark those buckets null
                 Allocator.AllocateToSize(ref _isNullPerBucket, newDistinctCount);
@@ -121,7 +121,7 @@ namespace XForm.Aggregators
                 {
                     int bucketIndex = rowIndices.Index(i);
                     int sumIndex = sumValues.Index(i);
-                    if (sumValues.IsNull[sumIndex]) _isNullPerBucket[indicesArray[bucketIndex]] = true;
+                    if (sumValues.Nulls[sumIndex]) _isNullPerBucket[indicesArray[bucketIndex]] = true;
 
                     _sumPerBucket[indicesArray[bucketIndex]] += sumArray[sumIndex];
                 }
@@ -166,7 +166,7 @@ namespace XForm.Aggregators
             int[] sumArray = (int[])sumValues.Array;
             ushort[] indicesArray = (ushort[])rowIndices.Array;
 
-            if (sumValues.IsNull != null)
+            if (sumValues.HasNulls)
             {
                 // Nulls: Find nulls and mark those buckets null
                 Allocator.AllocateToSize(ref _isNullPerBucket, newDistinctCount);
@@ -174,7 +174,7 @@ namespace XForm.Aggregators
                 {
                     int bucketIndex = rowIndices.Index(i);
                     int sumIndex = sumValues.Index(i);
-                    if (sumValues.IsNull[sumIndex]) _isNullPerBucket[indicesArray[bucketIndex]] = true;
+                    if (sumValues.Nulls[sumIndex]) _isNullPerBucket[indicesArray[bucketIndex]] = true;
 
                     _sumPerBucket[indicesArray[bucketIndex]] += sumArray[sumIndex];
                 }
