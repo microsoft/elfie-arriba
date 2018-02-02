@@ -8,42 +8,11 @@ using System.IO;
 using System.Net;
 using System.Reflection;
 using System.Threading;
+using XForm.Http;
 
 namespace XForm
 {
-    /// <summary>
-    ///  IHttpResponse is a generic interface for interacting with System.Net.HttpListenerResponse and System.Net.Http.HttpResponseMessage uniformly.
-    /// </summary>
-    public interface IHttpResponse
-    {
-        HttpStatusCode StatusCode { get; set; }
-        string ContentType { get; set; }
-        Stream OutputStream { get; }
-    }
 
-    public class HttpListenerResponseWrapper : IHttpResponse
-    {
-        private HttpListenerResponse Response;
-
-        public HttpListenerResponseWrapper(HttpListenerResponse response)
-        {
-            this.Response = response;
-        }
-
-        public HttpStatusCode StatusCode
-        {
-            get { return (HttpStatusCode)Response.StatusCode; }
-            set { Response.StatusCode = (int)value; }
-        }
-
-        public string ContentType
-        {
-            get { return Response.ContentType; }
-            set { Response.ContentType = value; }
-        }
-
-        public Stream OutputStream => Response.OutputStream;
-    }
 
     /// <summary>
     ///  BackgroundWebServer handles Http Requests for the XForm engine on a background thread.
@@ -62,7 +31,7 @@ namespace XForm
         private Thread ListenerThread { get; set; }
 
         private string DefaultDocument { get; set; }
-        private Dictionary<string, Action<HttpListenerContext, IHttpResponse>> MethodsToServe { get; set; }
+        private Dictionary<string, Action<IHttpRequest, IHttpResponse>> MethodsToServe { get; set; }
         private Dictionary<string, string> FilesToServe { get; set; }
         private string FolderToServe { get; set; }
 
@@ -71,20 +40,18 @@ namespace XForm
             this.IsRunning = false;
 
             this.DefaultDocument = defaultDocument;
-            this.MethodsToServe = new Dictionary<string, Action<HttpListenerContext, IHttpResponse>>(StringComparer.OrdinalIgnoreCase);
+            this.MethodsToServe = new Dictionary<string, Action<IHttpRequest, IHttpResponse>>(StringComparer.OrdinalIgnoreCase);
             this.FilesToServe = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
             if (!String.IsNullOrEmpty(serveUnderRelativePath))
             {
-                Assembly entryAssembly = Assembly.GetEntryAssembly();
-                if (entryAssembly == null) entryAssembly = Assembly.GetCallingAssembly();
-
-                this.FolderToServe = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(entryAssembly.Location), serveUnderRelativePath));
+                Assembly assembly = Assembly.GetExecutingAssembly();
+                this.FolderToServe = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(assembly.Location), serveUnderRelativePath));
                 if (!Directory.Exists(this.FolderToServe)) this.FolderToServe = null;
             }
         }
 
-        public void AddResponder(string url, Action<HttpListenerContext, IHttpResponse> itemWrite)
+        public void AddResponder(string url, Action<IHttpRequest, IHttpResponse> itemWrite)
         {
             this.MethodsToServe[url] = itemWrite;
         }
@@ -112,6 +79,7 @@ namespace XForm
         private void StartForBinding(params string[] urls)
         {
             this.Listener = new HttpListener();
+            this.Listener.AuthenticationSchemes = AuthenticationSchemes.Negotiate;
 
             foreach (string url in urls)
             {
@@ -129,7 +97,7 @@ namespace XForm
                 {
                     // Try binding for all names on port 5073
                     StartForBinding("http://+:5073/");
-                    Console.WriteLine("Http Server running; browse to http://localhost:5073. [Local and Remote]\r\nPress enter to stop server.");
+                    Console.WriteLine("Web Server running; browse to http://localhost:5073. [Local and Remote]\r\nPress enter to stop server.");
                 }
                 catch (HttpListenerException ex) when (ex.ErrorCode == 5)
                 {
@@ -141,7 +109,7 @@ namespace XForm
                 {
                     // Try binding to just localhost:5073
                     StartForBinding("http://localhost:5073/");
-                    Console.WriteLine("Http Server running; browse to http://localhost:5073. [Local Only]");
+                    Console.WriteLine("Web Server running; browse to http://localhost:5073. [Local Only]");
                     Console.WriteLine(" To enable remote: https://github.com/Microsoft/elfie-arriba/wiki/XForm-Http-Remote-Access");
                     Console.WriteLine("Press enter to stop server.");
                 }
@@ -203,10 +171,13 @@ namespace XForm
         #endregion
 
         #region Request Handling
-        private void HandleRequest(HttpListenerContext context)
+        public void HandleRequest(HttpListenerContext context)
         {
-            HttpListenerResponse response = context.Response;
+            HandleRequest(new HttpListenerContextAdapter(context), new HttpListenerResponseAdapter(context.Response));
+        }
 
+        public void HandleRequest(IHttpRequest request, IHttpResponse response)
+        {
             try
             {
                 // Add header to ask IE not to use compatibility mode
@@ -216,12 +187,12 @@ namespace XForm
                 response.AddHeader("Access-Control-Allow-Origin", "*");
 
                 // Get the URI requested
-                string localPath = context.Request.Url.LocalPath;
+                string localPath = request.Url.LocalPath;
                 if (!String.IsNullOrEmpty(localPath)) localPath = localPath.TrimStart('/');
 
                 // Respond with the default document, a JSON item, file, or a folder item, or not found
                 if (ReturnDefaultDocument(localPath, response)) return;
-                if (ReturnMethodItem(localPath, context, response)) return;
+                if (ReturnMethodItem(localPath, request, response)) return;
                 if (ReturnFileItem(localPath, response)) return;
                 if (ReturnServedFolderFile(localPath, response)) return;
                 ReturnNotFound(response);
@@ -234,7 +205,7 @@ namespace XForm
             }
         }
 
-        private bool ReturnDefaultDocument(string requestUri, HttpListenerResponse response)
+        private bool ReturnDefaultDocument(string requestUri, IHttpResponse response)
         {
             if (String.IsNullOrEmpty(requestUri))
             {
@@ -244,16 +215,16 @@ namespace XForm
             return false;
         }
 
-        private bool ReturnMethodItem(string requestUri, HttpListenerContext context, HttpListenerResponse response)
+        private bool ReturnMethodItem(string requestUri, IHttpRequest request, IHttpResponse response)
         {
-            Action<HttpListenerContext, IHttpResponse> writeMethod;
+            Action<IHttpRequest, IHttpResponse> writeMethod;
             if (this.MethodsToServe.TryGetValue(requestUri, out writeMethod))
             {
                 response.AddHeader("Cache-Control", "no-cache, no-store");
                 response.ContentType = ContentType(requestUri);
                 response.StatusCode = 200;
 
-                writeMethod(context, new HttpListenerResponseWrapper(response));
+                writeMethod(request, response);
                 response.Close();
                 return true;
             }
@@ -261,7 +232,7 @@ namespace XForm
             return false;
         }
 
-        private bool ReturnFileItem(string requestUri, HttpListenerResponse response)
+        private bool ReturnFileItem(string requestUri, IHttpResponse response)
         {
             string filePath;
             if (this.FilesToServe.TryGetValue(requestUri, out filePath))
@@ -273,7 +244,7 @@ namespace XForm
             return false;
         }
 
-        private bool ReturnServedFolderFile(string requestUri, HttpListenerResponse response)
+        private bool ReturnServedFolderFile(string requestUri, IHttpResponse response)
         {
             if (String.IsNullOrEmpty(this.FolderToServe)) return false;
             if (String.IsNullOrEmpty(requestUri)) return false;
@@ -282,35 +253,33 @@ namespace XForm
             if (localServablePath.StartsWith(this.FolderToServe) && File.Exists(localServablePath))
             {
                 RespondWithFile(localServablePath, response);
+                response.Close();
                 return true;
             }
 
             return false;
         }
 
-        private void RespondWithFile(string filePath, HttpListenerResponse response)
+        private void RespondWithFile(string filePath, IHttpResponse response)
         {
-            using (StreamWriter writer = new StreamWriter(response.OutputStream))
+            using (StreamReader reader = new StreamReader(filePath))
             {
-                using (StreamReader reader = new StreamReader(filePath))
-                {
-                    response.AddHeader("Cache-Control", "max-age=60");
-                    response.ContentType = ContentType(filePath);
-                    reader.BaseStream.CopyTo(writer.BaseStream);
-                }
+                response.AddHeader("Cache-Control", "max-age=60");
+                response.ContentType = ContentType(filePath);
+                reader.BaseStream.CopyTo(response.OutputStream);
+                response.StatusCode = 200;
             }
 
-            response.StatusCode = 200;
             response.Close();
         }
 
-        private void ReturnNotFound(HttpListenerResponse response)
+        private void ReturnNotFound(IHttpResponse response)
         {
             response.StatusCode = 404;
             response.Close();
         }
 
-        private void ReturnError(HttpListenerResponse response)
+        private void ReturnError(IHttpResponse response)
         {
             response.StatusCode = 500;
             response.Close();

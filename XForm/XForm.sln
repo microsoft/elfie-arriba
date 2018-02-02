@@ -17,6 +17,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XForm.Generator", "XForm.Ge
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XForm.Scanning", "XForm.Scanning\XForm.Scanning.csproj", "{D6C8B34C-3B8D-486C-8834-CF20685B3DC1}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XForm.IIS", "XForm.IIS\XForm.IIS.csproj", "{5E33233F-AFA3-4B54-AB2A-3EC5CE254191}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{123FFBC6-445C-445A-A2AB-D7E4AA5FBD62}"
+	ProjectSection(SolutionItems) = preProject
+		XForm.runsettings = XForm.runsettings
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -111,6 +118,14 @@ Global
 		{D6C8B34C-3B8D-486C-8834-CF20685B3DC1}.Release|x64.Build.0 = Release|x64
 		{D6C8B34C-3B8D-486C-8834-CF20685B3DC1}.Release|x86.ActiveCfg = Release|Any CPU
 		{D6C8B34C-3B8D-486C-8834-CF20685B3DC1}.Release|x86.Build.0 = Release|Any CPU
+		{5E33233F-AFA3-4B54-AB2A-3EC5CE254191}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{5E33233F-AFA3-4B54-AB2A-3EC5CE254191}.Debug|x64.ActiveCfg = Debug|x64
+		{5E33233F-AFA3-4B54-AB2A-3EC5CE254191}.Debug|x64.Build.0 = Debug|x64
+		{5E33233F-AFA3-4B54-AB2A-3EC5CE254191}.Debug|x86.ActiveCfg = Debug|x64
+		{5E33233F-AFA3-4B54-AB2A-3EC5CE254191}.Release|Any CPU.ActiveCfg = Release|x64
+		{5E33233F-AFA3-4B54-AB2A-3EC5CE254191}.Release|x64.ActiveCfg = Release|x64
+		{5E33233F-AFA3-4B54-AB2A-3EC5CE254191}.Release|x64.Build.0 = Release|x64
+		{5E33233F-AFA3-4B54-AB2A-3EC5CE254191}.Release|x86.ActiveCfg = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

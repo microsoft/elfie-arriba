@@ -1,92 +1,128 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
-
-using System;
-using System.Collections.Generic;
-
-using XForm.Columns;
-using XForm.Data;
-using XForm.Extensions;
-using XForm.Functions;
-using XForm.Query;
+﻿using XForm.Data;
 
 namespace XForm.Aggregators
 {
-    internal class CountCommandBuilder : IVerbBuilder
+    internal class CountBuilder : IAggregatorBuilder
     {
-        public string Verb => "count";
-        public string Usage => "count";
+        public string Name => "Count";
+        public string Usage => "Count()";
 
-        public IXTable Build(IXTable source, XDatabaseContext context)
+        public IAggregator Build(IXTable source, XDatabaseContext context)
         {
-            return new CountAggregator(source);
+            return new CountAggregator();
         }
     }
 
-    public class CountAggregator : IXTable
+    public class CountAggregator : IAggregator
     {
-        private SingleValueColumn[] _countColumn;
-        private IXTable _source;
-        private int _count;
+        private int[] _countPerBucket;
+        private int _distinctCount;
 
-        public CountAggregator(IXTable source)
+        public ColumnDetails ColumnDetails { get; private set; }
+        public XArray Values => XArray.All(_countPerBucket, _distinctCount);
+
+        public CountAggregator()
         {
-            if (source == null) throw new ArgumentNullException("source");
-
-            _source = source;
-            _count = -1;
-            _countColumn = new SingleValueColumn[] { new SingleValueColumn(this, typeof(int)) };
+            ColumnDetails = new ColumnDetails("Count", typeof(int));
         }
 
-        public IReadOnlyList<IXColumn> Columns => _countColumn;
-        public int CurrentRowCount { get; private set; }
-
-        public void Reset()
+        public void Add(XArray rowIndices, int newDistinctCount)
         {
-            _count = -1;
-            _source.Reset();
-        }
+            _distinctCount = newDistinctCount;
+            Allocator.ExpandToSize(ref _countPerBucket, newDistinctCount);
 
-        public int Next(int desiredCount)
-        {
-            // Return no more rows if this isn't the first call
-            if (_count != -1)
+            if (rowIndices.Array is int[])
             {
-                CurrentRowCount = 0;
-                return CurrentRowCount;
+                AddInt(rowIndices, newDistinctCount);
             }
-
-            // If this is a List, just get the count
-            if (_source is ISeekableXTable)
+            else if (rowIndices.Array is byte[])
             {
-                _count = ((ISeekableXTable)_source).Count;
+                AddByte(rowIndices, newDistinctCount);
             }
             else
             {
-                // Accumulate count over all rows from source
-                _count = 0;
-                while (true)
-                {
-                    int batchCount = _source.Next(Math.Max(desiredCount, XTableExtensions.DefaultBatchSize));
-                    if (batchCount == 0) break;
-                    _count += batchCount;
-                }
+                AddUShort(rowIndices, newDistinctCount);
             }
-
-            // Set the count on the constant
-            _countColumn[0].Set(_count);
-
-            // Return that there's one row (the count)
-            CurrentRowCount = 1;
-            return CurrentRowCount;
         }
 
-        public void Dispose()
+        private void AddInt(XArray rowIndices, int newDistinctCount)
         {
-            if (_source != null)
+            int[] array = (int[])rowIndices.Array;
+            if (rowIndices.Selector.Indices != null)
             {
-                _source.Dispose();
-                _source = null;
+                // Indexed XArray - look up indexed values
+                int[] indices = rowIndices.Selector.Indices;
+                for (int i = rowIndices.Selector.StartIndexInclusive; i < rowIndices.Selector.EndIndexExclusive; ++i)
+                {
+                    _countPerBucket[array[indices[i]]]++;
+                }
+            }
+            else if(rowIndices.Selector.IsSingleValue == false)
+            {
+                // Non-Indexed XArray - loop from Start to End
+                for (int i = rowIndices.Selector.StartIndexInclusive; i < rowIndices.Selector.EndIndexExclusive; ++i)
+                {
+                    _countPerBucket[array[i]]++;
+                }
+            }
+            else
+            {
+                // All rows are one value - add to that count
+                _countPerBucket[array[rowIndices.Index(0)]] += rowIndices.Count;
+            }
+        }
+
+        private void AddByte(XArray rowIndices, int newDistinctCount)
+        {
+            byte[] array = (byte[])rowIndices.Array;
+            if (rowIndices.Selector.Indices != null)
+            {
+                // Indexed XArray - look up indexed values
+                int[] indices = rowIndices.Selector.Indices;
+                for (int i = rowIndices.Selector.StartIndexInclusive; i < rowIndices.Selector.EndIndexExclusive; ++i)
+                {
+                    _countPerBucket[array[indices[i]]]++;
+                }
+            }
+            else if (rowIndices.Selector.IsSingleValue == false)
+            {
+                // Non-Indexed XArray - loop from Start to End
+                for (int i = rowIndices.Selector.StartIndexInclusive; i < rowIndices.Selector.EndIndexExclusive; ++i)
+                {
+                    _countPerBucket[array[i]]++;
+                }
+            }
+            else
+            {
+                // All rows are one value - add to that count
+                _countPerBucket[array[rowIndices.Index(0)]] += rowIndices.Count;
+            }
+        }
+
+        private void AddUShort(XArray rowIndices, int newDistinctCount)
+        {
+            ushort[] array = (ushort[])rowIndices.Array;
+            if (rowIndices.Selector.Indices != null)
+            {
+                // Indexed XArray - look up indexed values
+                int[] indices = rowIndices.Selector.Indices;
+                for (int i = rowIndices.Selector.StartIndexInclusive; i < rowIndices.Selector.EndIndexExclusive; ++i)
+                {
+                    _countPerBucket[array[indices[i]]]++;
+                }
+            }
+            else if (rowIndices.Selector.IsSingleValue == false)
+            {
+                // Non-Indexed XArray - loop from Start to End
+                for (int i = rowIndices.Selector.StartIndexInclusive; i < rowIndices.Selector.EndIndexExclusive; ++i)
+                {
+                    _countPerBucket[array[i]]++;
+                }
+            }
+            else
+            {
+                // All rows are one value - add to that count
+                _countPerBucket[array[rowIndices.Index(0)]] += rowIndices.Count;
             }
         }
     }

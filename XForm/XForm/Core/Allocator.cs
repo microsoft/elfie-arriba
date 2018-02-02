@@ -54,6 +54,29 @@ namespace XForm
         }
 
         /// <summary>
+        ///  Ensure a given array is at least a given required size. If not, expand it and copy
+        ///  existing values.
+        /// </summary>
+        /// <typeparam name="T">Type of array elements</typeparam>
+        /// <param name="array">Array reference to ensure is the minimum size</param>
+        /// <param name="minimumSize">Minimum size Array will be after the call. It may be larger.</param>
+        public static void ExpandToSize<T>(ref T[] array, int minimumSize)
+        {
+            if (array == null)
+            {
+                array = new T[minimumSize];
+                return;
+            }
+
+            if (array.Length >= minimumSize) return;
+
+            int newSize = Math.Max(minimumSize, array.Length * 2);
+            T[] newArray = new T[minimumSize];
+            Array.Copy(array, newArray, array.Length);
+            array = newArray;
+        }
+
+        /// <summary>
         ///  Create a generic class for a dynamic type parameter using the empty constructor.
         ///  
         ///  Ex:

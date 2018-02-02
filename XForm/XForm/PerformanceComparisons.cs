@@ -78,8 +78,8 @@ namespace XForm
             //    join [Name] Asset.Extended.Release [Name] Asset. ";
 
             query = @"
-                read WebRequestBig    
-                where [EventTime] : ""59""";
+                read WebRequestMed 
+                groupBy [EventTime]";
 
             //query = @"
             //    read WebRequestHuge.Typed     

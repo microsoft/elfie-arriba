@@ -72,7 +72,7 @@ namespace XForm.Types
 
         public bool[] FromSbyte(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             sbyte[] sourceArray = (sbyte[])xarray.Array;
             if (xarray.Selector.Indices != null)
@@ -101,8 +101,8 @@ namespace XForm.Types
 
         public bool[] FromShort(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             short[] sourceArray = (short[])xarray.Array;
@@ -146,8 +146,8 @@ namespace XForm.Types
 
         public bool[] FromInt(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             int[] sourceArray = (int[])xarray.Array;
@@ -191,8 +191,8 @@ namespace XForm.Types
 
         public bool[] FromLong(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             long[] sourceArray = (long[])xarray.Array;
@@ -236,8 +236,8 @@ namespace XForm.Types
 
         public bool[] FromByte(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             byte[] sourceArray = (byte[])xarray.Array;
@@ -281,8 +281,8 @@ namespace XForm.Types
 
         public bool[] FromUshort(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             ushort[] sourceArray = (ushort[])xarray.Array;
@@ -326,8 +326,8 @@ namespace XForm.Types
 
         public bool[] FromUint(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             uint[] sourceArray = (uint[])xarray.Array;
@@ -371,8 +371,8 @@ namespace XForm.Types
 
         public bool[] FromUlong(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             ulong[] sourceArray = (ulong[])xarray.Array;
@@ -416,8 +416,8 @@ namespace XForm.Types
 
         public bool[] FromFloat(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             float[] sourceArray = (float[])xarray.Array;
@@ -461,8 +461,8 @@ namespace XForm.Types
 
         public bool[] FromDouble(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             double[] sourceArray = (double[])xarray.Array;
@@ -521,7 +521,7 @@ namespace XForm.Types
 
         public bool[] FromSbyte(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             sbyte[] sourceArray = (sbyte[])xarray.Array;
             if (xarray.Selector.Indices != null)
@@ -550,7 +550,7 @@ namespace XForm.Types
 
         public bool[] FromShort(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             short[] sourceArray = (short[])xarray.Array;
             if (xarray.Selector.Indices != null)
@@ -579,8 +579,8 @@ namespace XForm.Types
 
         public bool[] FromInt(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             int[] sourceArray = (int[])xarray.Array;
@@ -624,8 +624,8 @@ namespace XForm.Types
 
         public bool[] FromLong(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             long[] sourceArray = (long[])xarray.Array;
@@ -669,7 +669,7 @@ namespace XForm.Types
 
         public bool[] FromByte(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             byte[] sourceArray = (byte[])xarray.Array;
             if (xarray.Selector.Indices != null)
@@ -698,8 +698,8 @@ namespace XForm.Types
 
         public bool[] FromUshort(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             ushort[] sourceArray = (ushort[])xarray.Array;
@@ -743,8 +743,8 @@ namespace XForm.Types
 
         public bool[] FromUint(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             uint[] sourceArray = (uint[])xarray.Array;
@@ -788,8 +788,8 @@ namespace XForm.Types
 
         public bool[] FromUlong(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             ulong[] sourceArray = (ulong[])xarray.Array;
@@ -833,8 +833,8 @@ namespace XForm.Types
 
         public bool[] FromFloat(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             float[] sourceArray = (float[])xarray.Array;
@@ -878,8 +878,8 @@ namespace XForm.Types
 
         public bool[] FromDouble(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             double[] sourceArray = (double[])xarray.Array;
@@ -938,7 +938,7 @@ namespace XForm.Types
 
         public bool[] FromSbyte(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             sbyte[] sourceArray = (sbyte[])xarray.Array;
             if (xarray.Selector.Indices != null)
@@ -967,7 +967,7 @@ namespace XForm.Types
 
         public bool[] FromShort(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             short[] sourceArray = (short[])xarray.Array;
             if (xarray.Selector.Indices != null)
@@ -996,7 +996,7 @@ namespace XForm.Types
 
         public bool[] FromInt(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             int[] sourceArray = (int[])xarray.Array;
             if (xarray.Selector.Indices != null)
@@ -1025,8 +1025,8 @@ namespace XForm.Types
 
         public bool[] FromLong(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             long[] sourceArray = (long[])xarray.Array;
@@ -1070,7 +1070,7 @@ namespace XForm.Types
 
         public bool[] FromByte(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             byte[] sourceArray = (byte[])xarray.Array;
             if (xarray.Selector.Indices != null)
@@ -1099,7 +1099,7 @@ namespace XForm.Types
 
         public bool[] FromUshort(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             ushort[] sourceArray = (ushort[])xarray.Array;
             if (xarray.Selector.Indices != null)
@@ -1128,8 +1128,8 @@ namespace XForm.Types
 
         public bool[] FromUint(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             uint[] sourceArray = (uint[])xarray.Array;
@@ -1173,8 +1173,8 @@ namespace XForm.Types
 
         public bool[] FromUlong(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             ulong[] sourceArray = (ulong[])xarray.Array;
@@ -1218,8 +1218,8 @@ namespace XForm.Types
 
         public bool[] FromFloat(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             float[] sourceArray = (float[])xarray.Array;
@@ -1263,8 +1263,8 @@ namespace XForm.Types
 
         public bool[] FromDouble(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             double[] sourceArray = (double[])xarray.Array;
@@ -1323,7 +1323,7 @@ namespace XForm.Types
 
         public bool[] FromSbyte(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             sbyte[] sourceArray = (sbyte[])xarray.Array;
             if (xarray.Selector.Indices != null)
@@ -1352,7 +1352,7 @@ namespace XForm.Types
 
         public bool[] FromShort(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             short[] sourceArray = (short[])xarray.Array;
             if (xarray.Selector.Indices != null)
@@ -1381,7 +1381,7 @@ namespace XForm.Types
 
         public bool[] FromInt(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             int[] sourceArray = (int[])xarray.Array;
             if (xarray.Selector.Indices != null)
@@ -1410,7 +1410,7 @@ namespace XForm.Types
 
         public bool[] FromLong(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             long[] sourceArray = (long[])xarray.Array;
             if (xarray.Selector.Indices != null)
@@ -1439,7 +1439,7 @@ namespace XForm.Types
 
         public bool[] FromByte(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             byte[] sourceArray = (byte[])xarray.Array;
             if (xarray.Selector.Indices != null)
@@ -1468,7 +1468,7 @@ namespace XForm.Types
 
         public bool[] FromUshort(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             ushort[] sourceArray = (ushort[])xarray.Array;
             if (xarray.Selector.Indices != null)
@@ -1497,7 +1497,7 @@ namespace XForm.Types
 
         public bool[] FromUint(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             uint[] sourceArray = (uint[])xarray.Array;
             if (xarray.Selector.Indices != null)
@@ -1526,8 +1526,8 @@ namespace XForm.Types
 
         public bool[] FromUlong(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             ulong[] sourceArray = (ulong[])xarray.Array;
@@ -1571,8 +1571,8 @@ namespace XForm.Types
 
         public bool[] FromFloat(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             float[] sourceArray = (float[])xarray.Array;
@@ -1616,8 +1616,8 @@ namespace XForm.Types
 
         public bool[] FromDouble(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             double[] sourceArray = (double[])xarray.Array;
@@ -1676,8 +1676,8 @@ namespace XForm.Types
 
         public bool[] FromSbyte(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             sbyte[] sourceArray = (sbyte[])xarray.Array;
@@ -1721,8 +1721,8 @@ namespace XForm.Types
 
         public bool[] FromShort(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             short[] sourceArray = (short[])xarray.Array;
@@ -1766,8 +1766,8 @@ namespace XForm.Types
 
         public bool[] FromInt(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             int[] sourceArray = (int[])xarray.Array;
@@ -1811,8 +1811,8 @@ namespace XForm.Types
 
         public bool[] FromLong(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             long[] sourceArray = (long[])xarray.Array;
@@ -1856,7 +1856,7 @@ namespace XForm.Types
 
         public bool[] FromByte(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             byte[] sourceArray = (byte[])xarray.Array;
             if (xarray.Selector.Indices != null)
@@ -1885,8 +1885,8 @@ namespace XForm.Types
 
         public bool[] FromUshort(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             ushort[] sourceArray = (ushort[])xarray.Array;
@@ -1930,8 +1930,8 @@ namespace XForm.Types
 
         public bool[] FromUint(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             uint[] sourceArray = (uint[])xarray.Array;
@@ -1975,8 +1975,8 @@ namespace XForm.Types
 
         public bool[] FromUlong(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             ulong[] sourceArray = (ulong[])xarray.Array;
@@ -2020,8 +2020,8 @@ namespace XForm.Types
 
         public bool[] FromFloat(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             float[] sourceArray = (float[])xarray.Array;
@@ -2065,8 +2065,8 @@ namespace XForm.Types
 
         public bool[] FromDouble(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             double[] sourceArray = (double[])xarray.Array;
@@ -2125,8 +2125,8 @@ namespace XForm.Types
 
         public bool[] FromSbyte(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             sbyte[] sourceArray = (sbyte[])xarray.Array;
@@ -2170,8 +2170,8 @@ namespace XForm.Types
 
         public bool[] FromShort(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             short[] sourceArray = (short[])xarray.Array;
@@ -2215,8 +2215,8 @@ namespace XForm.Types
 
         public bool[] FromInt(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             int[] sourceArray = (int[])xarray.Array;
@@ -2260,8 +2260,8 @@ namespace XForm.Types
 
         public bool[] FromLong(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             long[] sourceArray = (long[])xarray.Array;
@@ -2305,7 +2305,7 @@ namespace XForm.Types
 
         public bool[] FromByte(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             byte[] sourceArray = (byte[])xarray.Array;
             if (xarray.Selector.Indices != null)
@@ -2334,7 +2334,7 @@ namespace XForm.Types
 
         public bool[] FromUshort(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             ushort[] sourceArray = (ushort[])xarray.Array;
             if (xarray.Selector.Indices != null)
@@ -2363,8 +2363,8 @@ namespace XForm.Types
 
         public bool[] FromUint(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             uint[] sourceArray = (uint[])xarray.Array;
@@ -2408,8 +2408,8 @@ namespace XForm.Types
 
         public bool[] FromUlong(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             ulong[] sourceArray = (ulong[])xarray.Array;
@@ -2453,8 +2453,8 @@ namespace XForm.Types
 
         public bool[] FromFloat(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             float[] sourceArray = (float[])xarray.Array;
@@ -2498,8 +2498,8 @@ namespace XForm.Types
 
         public bool[] FromDouble(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             double[] sourceArray = (double[])xarray.Array;
@@ -2558,8 +2558,8 @@ namespace XForm.Types
 
         public bool[] FromSbyte(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             sbyte[] sourceArray = (sbyte[])xarray.Array;
@@ -2603,8 +2603,8 @@ namespace XForm.Types
 
         public bool[] FromShort(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             short[] sourceArray = (short[])xarray.Array;
@@ -2648,8 +2648,8 @@ namespace XForm.Types
 
         public bool[] FromInt(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             int[] sourceArray = (int[])xarray.Array;
@@ -2693,8 +2693,8 @@ namespace XForm.Types
 
         public bool[] FromLong(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             long[] sourceArray = (long[])xarray.Array;
@@ -2738,7 +2738,7 @@ namespace XForm.Types
 
         public bool[] FromByte(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             byte[] sourceArray = (byte[])xarray.Array;
             if (xarray.Selector.Indices != null)
@@ -2767,7 +2767,7 @@ namespace XForm.Types
 
         public bool[] FromUshort(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             ushort[] sourceArray = (ushort[])xarray.Array;
             if (xarray.Selector.Indices != null)
@@ -2796,7 +2796,7 @@ namespace XForm.Types
 
         public bool[] FromUint(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             uint[] sourceArray = (uint[])xarray.Array;
             if (xarray.Selector.Indices != null)
@@ -2825,8 +2825,8 @@ namespace XForm.Types
 
         public bool[] FromUlong(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             ulong[] sourceArray = (ulong[])xarray.Array;
@@ -2870,8 +2870,8 @@ namespace XForm.Types
 
         public bool[] FromFloat(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             float[] sourceArray = (float[])xarray.Array;
@@ -2915,8 +2915,8 @@ namespace XForm.Types
 
         public bool[] FromDouble(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             double[] sourceArray = (double[])xarray.Array;
@@ -2975,8 +2975,8 @@ namespace XForm.Types
 
         public bool[] FromSbyte(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             sbyte[] sourceArray = (sbyte[])xarray.Array;
@@ -3020,8 +3020,8 @@ namespace XForm.Types
 
         public bool[] FromShort(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             short[] sourceArray = (short[])xarray.Array;
@@ -3065,8 +3065,8 @@ namespace XForm.Types
 
         public bool[] FromInt(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             int[] sourceArray = (int[])xarray.Array;
@@ -3110,8 +3110,8 @@ namespace XForm.Types
 
         public bool[] FromLong(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             long[] sourceArray = (long[])xarray.Array;
@@ -3155,7 +3155,7 @@ namespace XForm.Types
 
         public bool[] FromByte(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             byte[] sourceArray = (byte[])xarray.Array;
             if (xarray.Selector.Indices != null)
@@ -3184,7 +3184,7 @@ namespace XForm.Types
 
         public bool[] FromUshort(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             ushort[] sourceArray = (ushort[])xarray.Array;
             if (xarray.Selector.Indices != null)
@@ -3213,7 +3213,7 @@ namespace XForm.Types
 
         public bool[] FromUint(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             uint[] sourceArray = (uint[])xarray.Array;
             if (xarray.Selector.Indices != null)
@@ -3242,7 +3242,7 @@ namespace XForm.Types
 
         public bool[] FromUlong(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             ulong[] sourceArray = (ulong[])xarray.Array;
             if (xarray.Selector.Indices != null)
@@ -3271,8 +3271,8 @@ namespace XForm.Types
 
         public bool[] FromFloat(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             float[] sourceArray = (float[])xarray.Array;
@@ -3316,8 +3316,8 @@ namespace XForm.Types
 
         public bool[] FromDouble(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             double[] sourceArray = (double[])xarray.Array;
@@ -3376,7 +3376,7 @@ namespace XForm.Types
 
         public bool[] FromSbyte(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             sbyte[] sourceArray = (sbyte[])xarray.Array;
             if (xarray.Selector.Indices != null)
@@ -3405,7 +3405,7 @@ namespace XForm.Types
 
         public bool[] FromShort(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             short[] sourceArray = (short[])xarray.Array;
             if (xarray.Selector.Indices != null)
@@ -3434,7 +3434,7 @@ namespace XForm.Types
 
         public bool[] FromInt(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             int[] sourceArray = (int[])xarray.Array;
             if (xarray.Selector.Indices != null)
@@ -3463,7 +3463,7 @@ namespace XForm.Types
 
         public bool[] FromLong(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             long[] sourceArray = (long[])xarray.Array;
             if (xarray.Selector.Indices != null)
@@ -3492,7 +3492,7 @@ namespace XForm.Types
 
         public bool[] FromByte(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             byte[] sourceArray = (byte[])xarray.Array;
             if (xarray.Selector.Indices != null)
@@ -3521,7 +3521,7 @@ namespace XForm.Types
 
         public bool[] FromUshort(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             ushort[] sourceArray = (ushort[])xarray.Array;
             if (xarray.Selector.Indices != null)
@@ -3550,7 +3550,7 @@ namespace XForm.Types
 
         public bool[] FromUint(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             uint[] sourceArray = (uint[])xarray.Array;
             if (xarray.Selector.Indices != null)
@@ -3579,7 +3579,7 @@ namespace XForm.Types
 
         public bool[] FromUlong(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             ulong[] sourceArray = (ulong[])xarray.Array;
             if (xarray.Selector.Indices != null)
@@ -3608,7 +3608,7 @@ namespace XForm.Types
 
         public bool[] FromFloat(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             float[] sourceArray = (float[])xarray.Array;
             if (xarray.Selector.Indices != null)
@@ -3637,8 +3637,8 @@ namespace XForm.Types
 
         public bool[] FromDouble(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             double[] sourceArray = (double[])xarray.Array;
@@ -3696,7 +3696,7 @@ namespace XForm.Types
 
         public bool[] FromSbyte(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             sbyte[] sourceArray = (sbyte[])xarray.Array;
             if (xarray.Selector.Indices != null)
@@ -3725,7 +3725,7 @@ namespace XForm.Types
 
         public bool[] FromShort(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             short[] sourceArray = (short[])xarray.Array;
             if (xarray.Selector.Indices != null)
@@ -3754,7 +3754,7 @@ namespace XForm.Types
 
         public bool[] FromInt(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             int[] sourceArray = (int[])xarray.Array;
             if (xarray.Selector.Indices != null)
@@ -3783,7 +3783,7 @@ namespace XForm.Types
 
         public bool[] FromLong(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             long[] sourceArray = (long[])xarray.Array;
             if (xarray.Selector.Indices != null)
@@ -3812,7 +3812,7 @@ namespace XForm.Types
 
         public bool[] FromByte(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             byte[] sourceArray = (byte[])xarray.Array;
             if (xarray.Selector.Indices != null)
@@ -3841,7 +3841,7 @@ namespace XForm.Types
 
         public bool[] FromUshort(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             ushort[] sourceArray = (ushort[])xarray.Array;
             if (xarray.Selector.Indices != null)
@@ -3870,7 +3870,7 @@ namespace XForm.Types
 
         public bool[] FromUint(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             uint[] sourceArray = (uint[])xarray.Array;
             if (xarray.Selector.Indices != null)
@@ -3899,7 +3899,7 @@ namespace XForm.Types
 
         public bool[] FromUlong(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             ulong[] sourceArray = (ulong[])xarray.Array;
             if (xarray.Selector.Indices != null)
@@ -3928,7 +3928,7 @@ namespace XForm.Types
 
         public bool[] FromFloat(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             float[] sourceArray = (float[])xarray.Array;
             if (xarray.Selector.Indices != null)
@@ -3957,7 +3957,7 @@ namespace XForm.Types
 
         public bool[] FromDouble(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             double[] sourceArray = (double[])xarray.Array;
             if (xarray.Selector.Indices != null)

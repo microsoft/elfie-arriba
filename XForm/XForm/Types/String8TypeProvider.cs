@@ -443,18 +443,31 @@ namespace XForm.Types
 
         public bool[] Convert(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvertArray, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvertArray, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool anyCouldNotConvert = false;
             String8[] sourceArray = (String8[])xarray.Array;
-            for (int i = 0; i < xarray.Count; ++i)
-            {
-                _couldNotConvertArray[i] = !_tryConvert(sourceArray[xarray.Index(i)], out _array[i]);
 
-                if (_couldNotConvertArray[i])
+            if (!xarray.Selector.IsSingleValue)
+            {
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    _array[i] = _defaultValue;
+                    _couldNotConvertArray[i] = !_tryConvert(sourceArray[xarray.Index(i)], out _array[i]);
+
+                    if (_couldNotConvertArray[i])
+                    {
+                        _array[i] = _defaultValue;
+                        anyCouldNotConvert = true;
+                    }
+                }
+            }
+            else
+            {
+                _couldNotConvertArray[0] = !_tryConvert(sourceArray[xarray.Index(0)], out _array[0]);
+                if(_couldNotConvertArray[0])
+                {
+                    _array[0] = _defaultValue;
                     anyCouldNotConvert = true;
                 }
             }

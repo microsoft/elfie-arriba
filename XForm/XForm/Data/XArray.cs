@@ -90,14 +90,15 @@ namespace XForm.Data
         /// <param name="array">Array containing values</param>
         /// <param name="count">Count of valid Array values</param>
         /// <param name="nulls">bool[] true for rows which have a null value</param>
+        /// <param name="isSingle">True for IsSingleValue arrays, False otherwise</param>
         /// <returns>XArray wrapping the array from [0, Count)</returns>
-        public static XArray All(Array array, int count = -1, bool[] nulls = null)
+        public static XArray All(Array array, int count = -1, bool[] nulls = null, bool isSingle = false)
         {
             if (count == -1) count = array.Length;
-            if (count > array.Length) throw new ArgumentOutOfRangeException("length");
-            if (nulls != null && count > nulls.Length) throw new ArgumentOutOfRangeException("length");
+            if (isSingle == false && count > array.Length) throw new ArgumentOutOfRangeException("length");
+            if (isSingle == false && nulls != null && count > nulls.Length) throw new ArgumentOutOfRangeException("length");
 
-            return new XArray() { Array = array, Nulls = nulls, Selector = ArraySelector.All(count) };
+            return new XArray() { Array = array, Nulls = nulls, Selector = (isSingle ? ArraySelector.Single(count) : ArraySelector.All(count)) };
         }
 
         /// <summary>
