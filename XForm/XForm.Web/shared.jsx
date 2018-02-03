@@ -17,7 +17,8 @@ window.xhr = (urlRoot, path, params) => {
 
                     // Custom logic for XForm
                     function sugar() {
-                        if (o.colIndex.Count === 0 || o.colIndex.Valid === 0) {
+                        // For 'Suggest' oo 'Count' outputs, convert the one result row to a normal object
+                        if (path === "suggest" || path === "count") {
                             const dict = {};
                             Object.keys(o.colIndex).forEach(k => dict[k] = o.rows[0][o.colIndex[k]])
                             return dict

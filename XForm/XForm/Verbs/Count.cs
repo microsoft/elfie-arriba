@@ -34,7 +34,7 @@ namespace XForm.Verbs
 
             _source = source;
             _count = -1;
-            _countColumn = new SingleValueColumn[] { new SingleValueColumn(this, typeof(int)) };
+            _countColumn = new SingleValueColumn[] { new SingleValueColumn(this, "Count", typeof(int)) };
         }
 
         public IReadOnlyList<IXColumn> Columns => _countColumn;
