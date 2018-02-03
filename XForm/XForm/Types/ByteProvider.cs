@@ -35,8 +35,7 @@ namespace XForm.Types
 
         public IColumnWriter BinaryWriter(IStreamProvider streamProvider, string columnPath)
         {
-            Directory.CreateDirectory(columnPath);
-            return new ByteWriter(streamProvider.OpenWrite(Path.Combine(columnPath, "V.u8.bin")));
+            return new ByteWriter(streamProvider.OpenWrite(ValuesFilePath(columnPath)));
         }
 
         public IXArrayComparer TryGetComparer()
