@@ -1,6 +1,4 @@
-﻿using Xsv.Sanitize;
-
-namespace Xsv.Test.Generators
+﻿namespace XForm.Generator.Mappers
 {
     public class UriStemMapper
     {

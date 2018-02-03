@@ -268,6 +268,28 @@ class Index extends React.Component {
             rows = results.rows
         }
 
+        var tableRows = [];
+        if(rows) {
+            var formatters = [];
+            for(var colIndex = 0; colIndex < cols.length; ++colIndex) {
+                if(cols[colIndex] === "Count" || cols[colIndex].endsWith(".Sum")) {
+                    formatters[colIndex] = i => ((+i).toLocaleString());
+                } else {
+                    formatters[colIndex] = i => i;
+                }
+            }
+
+            for(var rowIndex = 0; rowIndex < rows.length; ++rowIndex) {
+                var row = rows[rowIndex];
+                var rowCells = [];
+                for(var colIndex = 0; colIndex < cols.length; ++colIndex) {
+                    rowCells.push(<td key={rowIndex + "x" + colIndex}>{formatters[colIndex](row[colIndex])}</td>);
+                }
+
+                tableRows.push(<tr key={rowIndex}>{rowCells}</tr>);
+            }
+        }
+
         const encodedQuery = encodeURIComponent(this.validQuery)
 
         return <div className={`root`}>
@@ -352,7 +374,7 @@ class Index extends React.Component {
                             </tr>
                         </thead>
                         <tbody>
-                            {rows && rows.map((r, i) => <tr key={i}>{r.map((c, ii) => <td key={i + "x" + ii}>{c}</td>)}</tr>)}
+                            {tableRows}
                         </tbody>
                     </table>
                 </div>

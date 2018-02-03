@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Xsv.Test.Extensions
+namespace XForm.Generator.Extensions
 {
     public static class RandomExtensions
     {
