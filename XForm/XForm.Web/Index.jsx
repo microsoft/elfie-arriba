@@ -273,7 +273,7 @@ class Index extends React.Component {
             var formatters = [];
             for(var colIndex = 0; colIndex < cols.length; ++colIndex) {
                 if(cols[colIndex] === "Count" || cols[colIndex].endsWith(".Sum")) {
-                    formatters[colIndex] = i => ((+i).toLocaleString());
+                    formatters[colIndex] = i => (i === "" ? "-" : (+i).toLocaleString());
                 } else {
                     formatters[colIndex] = i => i;
                 }

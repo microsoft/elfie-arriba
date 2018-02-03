@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
-
+using XForm.Columns;
 using XForm.Data;
 
 namespace XForm.Aggregators
@@ -14,7 +14,8 @@ namespace XForm.Aggregators
 
         public IAggregator Build(IXTable source, XDatabaseContext context)
         {
-            return new SumAggregator(context.Parser.NextColumn(source, context, typeof(int)));
+            IXColumn column = CastedColumn.Build(source, context.Parser.NextColumn(source, context), typeof(long));
+            return new SumAggregator(column);
         }
     }
 
@@ -61,7 +62,7 @@ namespace XForm.Aggregators
 
         private void AddInt(XArray rowIndices, XArray sumValues, int newDistinctCount)
         {
-            int[] sumArray = (int[])sumValues.Array;
+            long[] sumArray = (long[])sumValues.Array;
             int[] indicesArray = (int[])rowIndices.Array;
 
             if (sumValues.IsNull != null)
@@ -99,7 +100,7 @@ namespace XForm.Aggregators
             else if (rowIndices.Selector.IsSingleValue == false)
             {
                 // Single Sum Value: Add constant to each bucket
-                int sumValue = sumArray[sumValues.Index(0)];
+                long sumValue = sumArray[sumValues.Index(0)];
                 for (int i = rowIndices.Selector.StartIndexInclusive; i < rowIndices.Selector.EndIndexExclusive; ++i)
                 {
                     _sumPerBucket[indicesArray[i]] += sumValue;
@@ -114,7 +115,7 @@ namespace XForm.Aggregators
 
         private void AddByte(XArray rowIndices, XArray sumValues, int newDistinctCount)
         {
-            int[] sumArray = (int[])sumValues.Array;
+            long[] sumArray = (long[])sumValues.Array;
             byte[] indicesArray = (byte[])rowIndices.Array;
 
             if (sumValues.IsNull != null)
@@ -152,7 +153,7 @@ namespace XForm.Aggregators
             else if (rowIndices.Selector.IsSingleValue == false)
             {
                 // Single Sum Value: Add constant to each bucket
-                int sumValue = sumArray[sumValues.Index(0)];
+                long sumValue = sumArray[sumValues.Index(0)];
                 for (int i = rowIndices.Selector.StartIndexInclusive; i < rowIndices.Selector.EndIndexExclusive; ++i)
                 {
                     _sumPerBucket[indicesArray[i]] += sumValue;
@@ -167,7 +168,7 @@ namespace XForm.Aggregators
 
         private void AddUShort(XArray rowIndices, XArray sumValues, int newDistinctCount)
         {
-            int[] sumArray = (int[])sumValues.Array;
+            long[] sumArray = (long[])sumValues.Array;
             ushort[] indicesArray = (ushort[])rowIndices.Array;
 
             if (sumValues.IsNull != null)
@@ -205,7 +206,7 @@ namespace XForm.Aggregators
             else if (rowIndices.Selector.IsSingleValue == false)
             {
                 // Single Sum Value: Add constant to each bucket
-                int sumValue = sumArray[sumValues.Index(0)];
+                long sumValue = sumArray[sumValues.Index(0)];
                 for (int i = rowIndices.Selector.StartIndexInclusive; i < rowIndices.Selector.EndIndexExclusive; ++i)
                 {
                     _sumPerBucket[indicesArray[i]] += sumValue;

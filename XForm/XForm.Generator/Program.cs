@@ -38,13 +38,14 @@ namespace XForm.Generator
         private static void Generate_WebRequestSample(int randomSeed, int userCount, int eventCount, int numberOfDays)
         {
             Random r = new Random(randomSeed);
-            DateTime asOfDate = DateTime.Today.ToUniversalTime();
+            DateTime asOfDate = DateTime.UtcNow.Date;
             String8Block block = new String8Block();
             WebRequestGenerator generator;
 
             string path;
 
             // Generate a set of users and write them out
+            asOfDate = asOfDate.AddDays(-8);
             path = $"Users.{asOfDate:yyyyMMdd}.r{randomSeed}.{userCount}.csv";
             Console.WriteLine($"Writing {path}...");
             UserGenerator userGenerator = new UserGenerator(r, asOfDate);
@@ -58,28 +59,29 @@ namespace XForm.Generator
             }
 
             File.SetLastWriteTimeUtc(path, asOfDate);
+            asOfDate = asOfDate.AddDays(8);
 
             // Generate batches of WebRequest sample data
             for (int day = 0; day < numberOfDays; ++day)
             {
                 generator = new WebRequestGenerator(users, r, asOfDate, (eventCount < 1001 ? 10 : 100));
-                generator.Issue = new DataCenterOutage() { DataCenter = "Europe West", StartTime = asOfDate.AddSeconds(5), EndTime = asOfDate.AddSeconds(15) };
+                if(day == 0) generator.Issue = new DataCenterOutage() { DataCenter = "Europe West", StartTime = asOfDate.AddSeconds(5), EndTime = asOfDate.AddSeconds(15) };
                 BuildWebRequests(generator, eventCount, WebRequestWriteMode.All);
-                asOfDate = asOfDate.AddDays(1);
+                asOfDate = asOfDate.AddDays(-1);
             }
 
-            // Generate one big joinable batch
-            eventCount = 10 * 1000 * 1000;
-            generator = new WebRequestGenerator(users, r, asOfDate, 1000);
-            generator.Issue = new PortRangeBlocked() { StartTime = asOfDate.AddMinutes(1), EndTime = asOfDate.AddMinutes(180), StartPort = 11450, EndPort = 11480 };
-            BuildWebRequests(generator, eventCount, WebRequestWriteMode.UserEmailOnly);
-            asOfDate = asOfDate.AddDays(1);
+            //// Generate one big joinable batch
+            //eventCount = 10 * 1000 * 1000;
+            //generator = new WebRequestGenerator(users, r, asOfDate, 1000);
+            //generator.Issue = new PortRangeBlocked() { StartTime = asOfDate.AddMinutes(1), EndTime = asOfDate.AddMinutes(180), StartPort = 11450, EndPort = 11480 };
+            //BuildWebRequests(generator, eventCount, WebRequestWriteMode.UserEmailOnly);
+            //asOfDate = asOfDate.AddDays(-1);
 
-            // Generate one huge minimal batch
-            eventCount = 100 * 1000 * 1000;
-            generator = new WebRequestGenerator(users, r, asOfDate, 1000);
-            generator.Issue = new UncachedSlowness() { Random = r, StartTime = asOfDate.AddMinutes(4), EndTime = asOfDate.AddMinutes(36) };
-            BuildWebRequests(generator, eventCount, WebRequestWriteMode.Minimal);
+            //// Generate one huge minimal batch
+            //eventCount = 100 * 1000 * 1000;
+            //generator = new WebRequestGenerator(users, r, asOfDate, 1000);
+            //generator.Issue = new UncachedSlowness() { Random = r, StartTime = asOfDate.AddMinutes(4), EndTime = asOfDate.AddMinutes(36) };
+            //BuildWebRequests(generator, eventCount, WebRequestWriteMode.Minimal);
 
             Console.WriteLine("Done.");
         }

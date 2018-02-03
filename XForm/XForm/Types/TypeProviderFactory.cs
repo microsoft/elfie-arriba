@@ -90,12 +90,9 @@ namespace XForm.Types
             // Wrap with a NullableWriter to handle null persistence
             writer = new NullableWriter(streamProvider, columnPath, writer);
 
-            // Wrap with an EnumWriter to write as an EnumColumn while possible (*for types worth compressing*)
-            // NOTE: Use EnumColumn for bool because nullable bool is much better as one byte than two.
-            if (columnType != typeof(byte) && columnType != typeof(sbyte) && columnType != typeof(ushort) && columnType != typeof(short))
-            {
-                writer = new EnumWriter(streamProvider, columnPath, columnType, writer);
-            }
+            // Wrap with an EnumWriter to write as an EnumColumn while possible.
+            // Try for *all types* [even bool, byte, ushort] because Enum columns can roll nulls into the column itself and accelerate groupBy
+            writer = new EnumWriter(streamProvider, columnPath, columnType, writer);
 
             return writer;
         }
