@@ -16,7 +16,7 @@ namespace XForm.Verbs
     internal class GroupByBuilder : IVerbBuilder
     {
         public string Verb => "groupBy";
-        public string Usage => "groupBy {Column}, ... GET {Aggregator}, ...";
+        public string Usage => "groupBy {Column}, ... with {Aggregator}, ...";
 
         public IXTable Build(IXTable source, XDatabaseContext context)
         {
@@ -30,13 +30,13 @@ namespace XForm.Verbs
                 if (column.IsConstantColumn()) throw new ArgumentException("GroupBy can't aggregate across a constant.");
 
                 groupByColumns.Add(column);
-            } while (context.Parser.HasAnotherPart && !context.Parser.NextTokenText.Equals("GET", StringComparison.OrdinalIgnoreCase));
+            } while (context.Parser.HasAnotherPart && !context.Parser.NextTokenText.Equals("with", StringComparison.OrdinalIgnoreCase));
 
 
             // If 'GET', parse Aggregators
             if (context.Parser.HasAnotherPart)
             {
-                context.Parser.NextSingleKeyword("GET");
+                context.Parser.NextSingleKeyword("with");
 
                 do
                 {
@@ -162,10 +162,10 @@ namespace XForm.Verbs
             XArray values = _keyColumns[0].ValuesGetter()();
             Func<XArray> indicesGetter = _keyColumns[0].IndicesCurrentGetter();
 
-            // Find or construct a count aggregator [to figure out which indices were in the results]
-            CountAggregator counter = (CountAggregator)_aggregators.FirstOrDefault((agg) => agg is CountAggregator);
-            bool countAggregatorFound = (counter != null);
-            if (!countAggregatorFound) counter = new CountAggregator();
+            // Find or construct an aggregator which can track which enum values ended up with any rows in the result
+            IFoundIndicesTracker tracker = (IFoundIndicesTracker)_aggregators.FirstOrDefault((agg) => agg is IFoundIndicesTracker);
+            bool trackerFound = (tracker != null);
+            if (!trackerFound) tracker = new CountAggregator();
 
             int count;
             while ((count = _source.Next(XTableExtensions.DefaultBatchSize)) != 0)
@@ -178,11 +178,11 @@ namespace XForm.Verbs
                     _aggregators[i].Add(indices, values.Count);
                 }
 
-                if (!countAggregatorFound) counter.Add(indices, values.Count);
+                if (!trackerFound) tracker.Add(indices, values.Count);
             }
 
             // Figure out which rows had matches
-            ArraySelector foundValuesSelector = BuildSelectorForFoundIndices(counter.Values);
+            ArraySelector foundValuesSelector = tracker.FoundIndices;
 
             // Store the distinct count now that we know it
             _distinctCount = foundValuesSelector.Count;
@@ -193,26 +193,6 @@ namespace XForm.Verbs
             {
                 _columns[i + 1].SetValues(_aggregators[i].Values.Reselect(foundValuesSelector));
             }
-        }
-
-        private ArraySelector BuildSelectorForFoundIndices(XArray counts)
-        {
-            // Count each bucket which had more than zero rows and keep the in-order indices of them
-            int[] countArray = (int[])counts.Array;
-
-            int distinctCountFound = 0;
-            int[] foundIndexSelector = new int[counts.Count];
-            for (int i = 0; i < counts.Count; ++i)
-            {
-                if (countArray[counts.Index(i)] > 0)
-                {
-                    foundIndexSelector[distinctCountFound] = i;
-                    distinctCountFound++;
-                }
-            }
-
-            // Build a selector to filter the keys and aggregates to the non-zero row set (or keep all of them, if all were non-zero)
-            return (distinctCountFound == counts.Count ? ArraySelector.All(distinctCountFound) : ArraySelector.Map(foundIndexSelector, distinctCountFound));
         }
 
         public void Reset()

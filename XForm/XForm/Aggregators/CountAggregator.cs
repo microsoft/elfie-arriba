@@ -16,17 +16,38 @@ namespace XForm.Aggregators
         }
     }
 
-    public class CountAggregator : IAggregator
+    public class CountAggregator : IAggregator, IFoundIndicesTracker
     {
         private int[] _countPerBucket;
         private int _distinctCount;
+        
+        public CountAggregator()
+        {
+            ColumnDetails = new ColumnDetails("Count", typeof(int));
+        }
 
         public ColumnDetails ColumnDetails { get; private set; }
         public XArray Values => XArray.All(_countPerBucket, _distinctCount);
 
-        public CountAggregator()
+        public ArraySelector FoundIndices
         {
-            ColumnDetails = new ColumnDetails("Count", typeof(int));
+            get
+            {
+                // Count each bucket which had more than zero rows and keep the in-order indices of them
+                int distinctCountFound = 0;
+                int[] foundIndexSelector = new int[_countPerBucket.Length];
+                for (int i = 0; i < _countPerBucket.Length; ++i)
+                {
+                    if (_countPerBucket[i] > 0)
+                    {
+                        foundIndexSelector[distinctCountFound] = i;
+                        distinctCountFound++;
+                    }
+                }
+
+                // Build a selector to filter the keys and aggregates to the non-zero row set (or keep all of them, if all were non-zero)
+                return (distinctCountFound == _distinctCount ? ArraySelector.All(distinctCountFound) : ArraySelector.Map(foundIndexSelector, distinctCountFound));
+            }
         }
 
         public void Add(XArray rowIndices, int newDistinctCount)

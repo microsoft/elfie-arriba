@@ -38,4 +38,14 @@ namespace XForm.Aggregators
     {
         IAggregator Build(IXTable source, XDatabaseContext context);
     }
+
+    /// <summary>
+    ///  IFoundIndicesTrackers are IAggregators which can identify which buckets had any rows
+    ///  added to them. When aggregating on Enum columns, these can be used to figure out which
+    ///  enum values actually had rows in the results.
+    /// </summary>
+    public interface IFoundIndicesTracker : IAggregator
+    {
+        ArraySelector FoundIndices { get; }
+    }
 }
