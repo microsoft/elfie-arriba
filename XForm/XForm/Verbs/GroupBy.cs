@@ -1,6 +1,10 @@
-﻿using System;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
+
 using XForm.Aggregators;
 using XForm.Columns;
 using XForm.Data;
@@ -75,7 +79,7 @@ namespace XForm.Verbs
                 _columns[i] = new DeferredArrayColumn(keyColumns[i].ColumnDetails);
             }
 
-            for(int i = 0; i < aggregators.Count; ++i)
+            for (int i = 0; i < aggregators.Count; ++i)
             {
                 _columns[keyColumns.Count + i] = new DeferredArrayColumn(_aggregators[i].ColumnDetails);
             }

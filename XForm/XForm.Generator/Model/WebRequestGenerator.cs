@@ -1,5 +1,9 @@
-﻿using System;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Collections.Generic;
+
 using XForm.Generator.Extensions;
 using XForm.Generator.Mappers;
 
@@ -37,7 +41,7 @@ namespace XForm.Generator.Model
             if (item.EventTime > EndTime) return;
             if (item.EventTime < StartTime) return;
 
-            if(item.WasCachedResponse == false)
+            if (item.WasCachedResponse == false)
             {
                 if ((Random.Next() & 7) < 4) item.TimeTakenMs = item.TimeTakenMs * 4;
             }
@@ -56,7 +60,7 @@ namespace XForm.Generator.Model
             if (item.EventTime > EndTime) return;
             if (item.EventTime < StartTime) return;
 
-            if(item.ServerPort >= StartPort && item.ServerPort <= EndPort)
+            if (item.ServerPort >= StartPort && item.ServerPort <= EndPort)
             {
                 item.HttpStatus = 404;
                 item.ResponseBytes = 0;

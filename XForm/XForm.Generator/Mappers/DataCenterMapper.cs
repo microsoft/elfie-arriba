@@ -1,10 +1,13 @@
-﻿using System;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 
 namespace XForm.Generator.Mappers
 {
-    class DataCenterMapper
+    internal class DataCenterMapper
     {
-        private static string[] NorthAmericaDataCenters = new string[] { "West US 2", "Central US", "East US 2" };
+        private static string[] s_northAmericaDataCenters = new string[] { "West US 2", "Central US", "East US 2" };
 
         public string Generate(string clientRegion, uint hash)
         {
@@ -12,7 +15,7 @@ namespace XForm.Generator.Mappers
             {
                 case "US":
                 case "CA":
-                    return NorthAmericaDataCenters[Hashing.Extract(ref hash, NorthAmericaDataCenters.Length)];
+                    return s_northAmericaDataCenters[Hashing.Extract(ref hash, s_northAmericaDataCenters.Length)];
                 case "CN":
                     return "China East";
                 case "JP":

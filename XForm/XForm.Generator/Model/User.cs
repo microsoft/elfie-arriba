@@ -1,7 +1,12 @@
-﻿using Microsoft.CodeAnalysis.Elfie.Model.Strings;
-using Microsoft.CodeAnalysis.Elfie.Serialization;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Collections.Generic;
+
+using Microsoft.CodeAnalysis.Elfie.Model.Strings;
+using Microsoft.CodeAnalysis.Elfie.Serialization;
+
 using XForm.Generator.Mappers;
 
 namespace XForm.Generator.Model
@@ -65,7 +70,7 @@ namespace XForm.Generator.Model
 
             this.GuidMapper = new GuidMapper();
             this.EmailAddressMapper = new EmailAddressMapper();
-            
+
             // ClientRegion: ISO 3166: US 28 % | CN 22 % | JP 17 % | GB 9 % | CA 8 % | IN 7 % | DE 5 % | AU 4 %
             this.ClientRegionMapper = new FrequencyMapper<string>(
                 new string[] { "US", "CN", "JP", "GB", "CA", "IN", "DE", "AU" },

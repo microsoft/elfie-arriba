@@ -1,11 +1,13 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using Microsoft.CodeAnalysis.Elfie.Model.Strings;
-using Microsoft.CodeAnalysis.Elfie.Serialization;
 using System;
 using System.Collections.Generic;
 using System.IO;
+
+using Microsoft.CodeAnalysis.Elfie.Model.Strings;
+using Microsoft.CodeAnalysis.Elfie.Serialization;
+
 using XForm.Generator.Model;
 
 namespace XForm.Generator
@@ -14,7 +16,7 @@ namespace XForm.Generator
     {
         private static void Main(string[] args)
         {
-            if(args.Length > 0 && args[0].Equals("sample", StringComparison.OrdinalIgnoreCase))
+            if (args.Length > 0 && args[0].Equals("sample", StringComparison.OrdinalIgnoreCase))
             {
                 Generate_WebRequestSample(5, 250000, 1000 * 1000, 3);
                 return;
@@ -49,7 +51,7 @@ namespace XForm.Generator
             List<User> users = userGenerator.Next(userCount);
             using (ITabularWriter writer = TabularFactory.BuildWriter(path))
             {
-                foreach(User user in users)
+                foreach (User user in users)
                 {
                     user.WriteTo(writer, block);
                 }

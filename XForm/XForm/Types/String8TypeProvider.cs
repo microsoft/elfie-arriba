@@ -465,7 +465,7 @@ namespace XForm.Types
             else
             {
                 _couldNotConvertArray[0] = !_tryConvert(sourceArray[xarray.Index(0)], out _array[0]);
-                if(_couldNotConvertArray[0])
+                if (_couldNotConvertArray[0])
                 {
                     _array[0] = _defaultValue;
                     anyCouldNotConvert = true;

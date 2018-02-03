@@ -1,4 +1,7 @@
-﻿using System.Collections.Generic;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System.Collections.Generic;
 
 namespace XForm.Generator.Mappers
 {
@@ -23,7 +26,7 @@ namespace XForm.Generator.Mappers
         {
             this.Options = new FrequencyEntry<T>[options.Count];
 
-            for(int i = 0; i < options.Count; ++i)
+            for (int i = 0; i < options.Count; ++i)
             {
                 this.Options[i] = new FrequencyEntry<T>(options[i], 1);
             }
@@ -47,7 +50,7 @@ namespace XForm.Generator.Mappers
         {
             int roll = Hashing.Extract(ref hash, this.Total);
 
-            for(int i = 0; i < this.Options.Length - 1; ++i)
+            for (int i = 0; i < this.Options.Length - 1; ++i)
             {
                 FrequencyEntry<T> option = this.Options[i];
                 roll -= option.RelativeFrequency;

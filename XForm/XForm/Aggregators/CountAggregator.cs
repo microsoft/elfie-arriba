@@ -1,4 +1,7 @@
-﻿using XForm.Data;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using XForm.Data;
 
 namespace XForm.Aggregators
 {
@@ -57,7 +60,7 @@ namespace XForm.Aggregators
                     _countPerBucket[array[indices[i]]]++;
                 }
             }
-            else if(rowIndices.Selector.IsSingleValue == false)
+            else if (rowIndices.Selector.IsSingleValue == false)
             {
                 // Non-Indexed XArray - loop from Start to End
                 for (int i = rowIndices.Selector.StartIndexInclusive; i < rowIndices.Selector.EndIndexExclusive; ++i)

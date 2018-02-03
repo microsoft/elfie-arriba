@@ -8,6 +8,7 @@ using System.Linq;
 
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 
+using XForm.Aggregators;
 using XForm.Columns;
 using XForm.Data;
 using XForm.Extensions;
@@ -15,7 +16,6 @@ using XForm.Functions;
 using XForm.Query.Expression;
 using XForm.Types;
 using XForm.Verbs;
-using XForm.Aggregators;
 
 namespace XForm.Query
 {
@@ -291,7 +291,7 @@ namespace XForm.Query
 
                 return result;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Rethrow(ex);
                 return null;

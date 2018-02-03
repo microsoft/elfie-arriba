@@ -8,12 +8,11 @@ using System.IO;
 using System.Net;
 using System.Reflection;
 using System.Threading;
+
 using XForm.Http;
 
 namespace XForm
 {
-
-
     /// <summary>
     ///  BackgroundWebServer handles Http Requests for the XForm engine on a background thread.
     /// </summary>

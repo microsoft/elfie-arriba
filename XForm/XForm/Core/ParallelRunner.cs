@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Threading.Tasks;
 
 namespace XForm.Core
@@ -6,10 +9,10 @@ namespace XForm.Core
     public class ParallelRunner
     {
         public static int ParallelCount = Environment.ProcessorCount;
-        
+
         public static void Run(int startIndexInclusive, int endIndexExclusive, Action<int, int> method)
         {
-            if(ParallelCount == 1)
+            if (ParallelCount == 1)
             {
                 method(startIndexInclusive, endIndexExclusive);
             }
