@@ -72,26 +72,13 @@ namespace XForm.Types
         public XArray Read(ArraySelector selector)
         {
             if (selector.Indices != null) throw new NotImplementedException();
-            return Read(selector.StartIndexInclusive, selector.Count);
-        }
 
-        public XArray Read(long start, long count)
-        {
-            if (count > int.MaxValue) throw new ArgumentOutOfRangeException("count");
-            int intCount = (int)count;
+            Allocator.AllocateToSize(ref _array, selector.Count);
 
-            Allocator.AllocateToSize(ref _array, intCount);
+            _stream.Seek(selector.StartIndexInclusive, SeekOrigin.Begin);
+            _stream.Read(_array, 0, selector.Count);
 
-            _stream.Seek(start, SeekOrigin.Begin);
-            _stream.Read(_array, 0, intCount);
-
-            return XArray.All(_array, intCount);
-        }
-
-        public void Read(long start, long count, byte[] buffer, int toBufferIndex)
-        {
-            _stream.Seek(start, SeekOrigin.Begin);
-            _stream.Read(buffer, toBufferIndex, (int)count);
+            return XArray.All(_array, selector.Count);
         }
 
         public void Dispose()
