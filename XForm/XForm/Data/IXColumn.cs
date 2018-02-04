@@ -59,5 +59,13 @@ namespace XForm.Data
         /// <returns>Func&lt;ArraySelector, XArray&gt; to get row value indices, or null if values aren't constrained.</returns>
         Func<ArraySelector, XArray> IndicesSeekGetter();
 
+        /// <summary>
+        ///  ComponentGetter is IXColumn's extensibility mechanism to return underlying components or
+        ///  off-to-the-side data structures. This is used to get the underlying String8 byte[] and int[],
+        ///  for example.
+        /// </summary>
+        /// <param name="componentName">Name of component requested</param>
+        /// <returns>Null if not supported or unavailable, or getter for component</returns>
+        Func<object> ComponentGetter(string componentName);
     }
 }

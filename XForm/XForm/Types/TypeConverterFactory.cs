@@ -140,7 +140,7 @@ namespace XForm.Types
                 {
                     couldNotConvert = negatedTryConvert(values, out result);
                     ErrorWhenSpecified(errorOn, values, couldNotConvert, errorContextMessage);
-                    return XArray.All(result, values.Count, MergeNulls(values, couldNotConvert, ref buffer));
+                    return XArray.All(result, values.Count, MergeNulls(values, couldNotConvert, ref buffer), values.Selector.IsSingleValue);
                 };
             }
             else if (changeToDefault == ValueKinds.Invalid)
@@ -150,7 +150,7 @@ namespace XForm.Types
                 {
                     couldNotConvert = negatedTryConvert(values, out result);
                     ErrorWhenSpecified(errorOn, values, couldNotConvert, errorContextMessage);
-                    return XArray.All(result, values.Count, XArray.RemapNulls(values, ref couldNotConvert));
+                    return XArray.All(result, values.Count, XArray.RemapNulls(values, ref couldNotConvert), values.Selector.IsSingleValue);
                 };
             }
             else if (changeToDefault == ValueKinds.InvalidOrNull)
@@ -160,7 +160,7 @@ namespace XForm.Types
                 {
                     couldNotConvert = negatedTryConvert(values, out result);
                     ErrorWhenSpecified(errorOn, values, couldNotConvert, errorContextMessage);
-                    return XArray.All(result, values.Count, null);
+                    return XArray.All(result, values.Count, null, values.Selector.IsSingleValue);
                 };
             }
             else

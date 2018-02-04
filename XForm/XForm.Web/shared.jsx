@@ -1,14 +1,13 @@
 window.log = function() { console.log.apply(console, arguments) }
 
-window.xhr = (path, params) => {
+window.xhr = (urlRoot, path, params) => {
     return new Promise((resolve, reject) => {
-        const host = "localhost:5073"
         const encodedParams = Object.keys(params)
             .filter(k => params[k] !== undefined)
             .map(k => `${k}=${encodeURIComponent(params[k])}`).join('&')
         const xhr = new XMLHttpRequest();
         xhr.withCredentials = false;
-        xhr.open("GET", `http://${host}/${path}?${encodedParams}`, true); // For testing: http://httpbin.org/post
+        xhr.open("GET", `${urlRoot}/${path}?${encodedParams}`, true); // For testing: http://httpbin.org/post
         xhr.onload = () => {
             const responseText = xhr.responseText;
 
@@ -18,7 +17,8 @@ window.xhr = (path, params) => {
 
                     // Custom logic for XForm
                     function sugar() {
-                        if (o.colIndex.Count === 0 || o.colIndex.Valid === 0) {
+                        // For 'Suggest' oo 'Count' outputs, convert the one result row to a normal object
+                        if (path === "suggest" || path === "count") {
                             const dict = {};
                             Object.keys(o.colIndex).forEach(k => dict[k] = o.rows[0][o.colIndex[k]])
                             return dict

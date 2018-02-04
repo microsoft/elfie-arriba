@@ -8,12 +8,14 @@ using System.Linq;
 
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 
+using XForm.Aggregators;
+using XForm.Columns;
 using XForm.Data;
 using XForm.Extensions;
 using XForm.Functions;
 using XForm.Query.Expression;
 using XForm.Types;
-using XForm.Columns;
+using XForm.Verbs;
 
 namespace XForm.Query
 {
@@ -136,21 +138,22 @@ namespace XForm.Query
             return provider.Type;
         }
 
-        public string NextColumnName(IXTable currentSource, Type requiredType = null)
+        public string NextColumnName(IXTable source, Type requiredType = null)
         {
+            if (source == null) throw new ArgumentNullException("source");
             IXColumn column = null;
 
             ParseNextOrThrow(
-                () => currentSource.Columns.TryFind(_scanner.Current.Value, out column)
+                () => source.Columns.TryFind(_scanner.Current.Value, out column)
                 && (requiredType == null || column.ColumnDetails.Type == requiredType),
                 "[Column]",
                 TokenType.ColumnName,
-                EscapedColumnList(currentSource, requiredType));
+                EscapedColumnList(source, requiredType));
 
             return column.ColumnDetails.Name;
         }
 
-        public string NextOutputColumnName(IXTable currentSource)
+        public string NextOutputColumnName(IXTable source)
         {
             string value = _scanner.Current.Value;
             ParseNextOrThrow(() => true, "[Column]", TokenType.ColumnName);
@@ -183,6 +186,8 @@ namespace XForm.Query
 
         public IXColumn NextColumn(IXTable source, XDatabaseContext context, Type requiredType = null)
         {
+            if (source == null) throw new ArgumentNullException("source");
+
             IXColumn result = null;
 
             if (_scanner.Current.Type == TokenType.Value)
@@ -227,11 +232,11 @@ namespace XForm.Query
 
             // Get the builder for the function
             IFunctionBuilder builder = null;
-            ParseNextOrThrow(() => FunctionFactory.TryGetBuilder(_scanner.Current.Value, out builder)
+            ParseNextOrThrow(() => Factories.FunctionFactory.TryGetBuilder(_scanner.Current.Value, out builder)
                 && (requiredType == null || builder.ReturnType == null || requiredType == builder.ReturnType),
                 "Function",
                 TokenType.FunctionName,
-                FunctionFactory.SupportedFunctions(requiredType));
+                Factories.FunctionFactory.SupportedFunctions(requiredType));
 
             _currentlyBuilding.Push(builder);
 
@@ -250,8 +255,39 @@ namespace XForm.Query
                 // Error if the final function doesn't have the required return type
                 if (requiredType != null && result.ColumnDetails.Type != requiredType)
                 {
-                    Throw("Function", FunctionFactory.SupportedFunctions(requiredType));
+                    Throw("Function", Factories.FunctionFactory.SupportedFunctions(requiredType));
                 }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Rethrow(ex);
+                return null;
+            }
+        }
+
+        public IAggregator NextAggregator(IXTable source, XDatabaseContext context)
+        {
+            IAggregatorBuilder builder = null;
+            ParseNextOrThrow(
+                () => Factories.AggregatorFactory.TryGetBuilder(_scanner.Current.Value, out builder),
+                "Aggregator",
+                TokenType.FunctionName,
+                Factories.AggregatorFactory.SupportedNames);
+
+            _currentlyBuilding.Push(builder);
+
+            // Parse the open paren
+            ParseNextOrThrow(() => true, "(", TokenType.OpenParen);
+
+            try
+            {
+                IAggregator result = builder.Build(source, context);
+
+                // Ensure we've parsed all arguments, and consume the close paren
+                ParseNextOrThrow(() => true, ")", TokenType.CloseParen);
+                _currentlyBuilding.Pop();
 
                 return result;
             }
@@ -299,6 +335,11 @@ namespace XForm.Query
             object value = (object)_scanner.Current.Value;
             ParseNextOrThrow(() => true, "Constant", TokenType.Value);
             return value;
+        }
+
+        public void NextSingleKeyword(string requiredValue)
+        {
+            ParseNextOrThrow(() => requiredValue.Equals(_scanner.Current.Value, StringComparison.OrdinalIgnoreCase), "Keyword", TokenType.Value, new string[] { requiredValue });
         }
 
         public T NextEnum<T>() where T : struct
@@ -431,7 +472,7 @@ namespace XForm.Query
 
         public static IEnumerable<string> EscapedFunctionList(Type requiredType = null)
         {
-            return FunctionFactory.SupportedFunctions(requiredType).Select((name) => name + "(");
+            return Factories.FunctionFactory.SupportedFunctions(requiredType).Select((name) => $"{name}(");
         }
 
         private ErrorContext BuildErrorContext()
@@ -483,6 +524,12 @@ namespace XForm.Query
 
                 throw new UsageException(context, ex);
             }
+            else if (ex is ArgumentNullException && ((ArgumentNullException)ex).ParamName.Equals("source", StringComparison.OrdinalIgnoreCase))
+            {
+                ErrorContext context = BuildErrorContext();
+                context.ErrorMessage = "read must be called before any other query verbs.";
+                throw new UsageException(context, ex);
+            }
             else if (ex is ArgumentException)
             {
                 ErrorContext context = BuildErrorContext();
@@ -499,5 +546,6 @@ namespace XForm.Query
         public bool HasAnotherPart => _scanner.Current.Type != TokenType.Newline && _scanner.Current.Type != TokenType.End;
         public bool HasAnotherArgument => HasAnotherPart && _scanner.Current.Type != TokenType.CloseParen;
         public int CurrentLineNumber => _scanner.Current.LineNumber;
+        public string NextTokenText => (HasAnotherPart ? _scanner.Current.Value : "");
     }
 }

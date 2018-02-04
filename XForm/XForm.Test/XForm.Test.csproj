@@ -97,6 +97,8 @@
     <Compile Include="Core\BitVectorTests.cs" />
     <Compile Include="Core\Dictionary5Tests.cs" />
     <Compile Include="Core\HashingTests.cs" />
+    <Compile Include="IO\VariableIntegerReaderWriterTests.cs" />
+    <Compile Include="IO\EnumReaderWriterTests.cs" />
     <Compile Include="TableTestHarness.cs" />
     <Compile Include="Extensions\StringExtensionsTests.cs" />
     <Compile Include="IO\StreamProviderTests.cs" />

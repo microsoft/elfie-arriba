@@ -83,16 +83,26 @@
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Web" />
     <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Aggregators\PercentageAggregator.cs" />
     <Compile Include="Aggregators\CountAggregator.cs" />
-    <Compile Include="BackgroundWebServer.cs" />
+    <Compile Include="Aggregators\IAggregator.cs" />
+    <Compile Include="Aggregators\SumAggregator.cs" />
+    <Compile Include="IO\VariableIntegerReaderWriter.cs" />
+    <Compile Include="Verbs\Count.cs" />
+    <Compile Include="Columns\DeferredArrayColumn.cs" />
+    <Compile Include="Core\DictionaryColumn.cs" />
+    <Compile Include="Core\Factory.cs" />
+    <Compile Include="Core\GroupByDictionary.cs" />
+    <Compile Include="Core\ParallelRunner.cs" />
+    <Compile Include="Http\BackgroundWebServer.cs" />
     <Compile Include="Columns\ArrayColumn.cs" />
     <Compile Include="Columns\CastedColumn.cs" />
     <Compile Include="Columns\PagingColumn.cs" />
@@ -104,6 +114,10 @@
     <Compile Include="Core\Dictionary5.cs" />
     <Compile Include="Core\Hashing.cs" />
     <Compile Include="Columns\RemappedColumn.cs" />
+    <Compile Include="Functions\Date\DatePart.cs" />
+    <Compile Include="Functions\String\BeforeFirst.cs" />
+    <Compile Include="Http\IHttpRequest.cs" />
+    <Compile Include="Http\IHttpResponse.cs" />
     <Compile Include="IO\ColumnCache.cs" />
     <Compile Include="IO\ConvertingReaderWriter.cs" />
     <Compile Include="IO\EnumReaderWriter.cs" />
@@ -119,6 +133,7 @@
     <Compile Include="Types\TimeSpanTypeProvider.cs" />
     <Compile Include="Verbs\Cast.cs" />
     <Compile Include="Verbs\Choose.cs" />
+    <Compile Include="Verbs\GroupBy.cs" />
     <Compile Include="Verbs\Rename.cs" />
     <Compile Include="Verbs\Set.cs" />
     <Compile Include="Verbs\Read.cs" />
@@ -139,7 +154,6 @@
     <Compile Include="Functions\Date\DateAdd.cs" />
     <Compile Include="Columns\RenamedColumn.cs" />
     <Compile Include="Columns\ConstantColumn.cs" />
-    <Compile Include="Functions\FunctionFactory.cs" />
     <Compile Include="Data\IXColumn.cs" />
     <Compile Include="Functions\IFunctionBuilder.cs" />
     <Compile Include="Functions\SimpleTransformFunction.cs" />
@@ -219,6 +233,7 @@
       <Name>Elfie</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>$(SolutionDir)\Deploy.WebSite.cmd $(TargetDir)</PostBuildEvent>

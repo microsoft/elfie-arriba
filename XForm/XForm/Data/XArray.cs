@@ -89,14 +89,15 @@ namespace XForm.Data
         /// <param name="array">Array containing values</param>
         /// <param name="count">Count of valid Array values</param>
         /// <param name="isNullArray">bool[] true for rows which have a null value</param>
+        /// <param name="isSingle">True for IsSingleValue arrays, False otherwise</param>
         /// <returns>XArray wrapping the array from [0, Count)</returns>
-        public static XArray All(Array array, int count = -1, bool[] isNullArray = null)
+        public static XArray All(Array array, int count = -1, bool[] isNullArray = null, bool isSingle = false)
         {
             if (count == -1) count = array.Length;
-            if (count > array.Length) throw new ArgumentOutOfRangeException("length");
-            if (isNullArray != null && count > isNullArray.Length) throw new ArgumentOutOfRangeException("length");
+            if (isSingle == false && count > array.Length) throw new ArgumentOutOfRangeException("length");
+            if (isSingle == false && isNullArray != null && count > isNullArray.Length) throw new ArgumentOutOfRangeException("length");
 
-            return new XArray() { Array = array, IsNull = isNullArray, Selector = ArraySelector.All(count) };
+            return new XArray() { Array = array, IsNull = isNullArray, Selector = (isSingle ? ArraySelector.Single(count) : ArraySelector.All(count)) };
         }
 
         /// <summary>
@@ -177,6 +178,16 @@ namespace XForm.Data
         }
 
         /// <summary>
+        ///  Return a copy of this XArray with no logical nulls (just the underlying values).
+        /// </summary>
+        /// <returns>XArray with no null array</returns>
+        internal XArray WithoutNulls()
+        {
+            if (this.IsNull == null) return this;
+            return new XArray(this) { IsNull = null };
+        }
+
+        /// <summary>
         ///  Remap the IsNull array from the source XArray, if any, to a non-indexed array.
         ///  Used when the values in the XAray were converted into an in-order array but IsNull
         ///  from the source needs to be preserved.
@@ -202,6 +213,46 @@ namespace XForm.Data
             }
 
             return (areAnyNulls ? remapArray : null);
+        }
+
+        /// <summary>
+        ///  Convert an XArray which uses indices into a contiguous, zero-based array.
+        ///  This allows using (fast) Reselect once converted.
+        /// </summary>
+        /// <param name="array">Buffer to use to write contiguous values</param>
+        /// <param name="isNull">Buffer to use for new null array</param>
+        /// <returns>XArray of values written contiguously</returns>
+        public XArray ToContiguous<T>(ref T[] array, ref bool[] isNull)
+        {
+            // If this XArray isn't shifted or indirected, we can use it as-is
+            if (this.Selector.Indices == null && this.Selector.StartIndexInclusive == 0) return this;
+
+            T[] thisArray = (T[])this.Array;
+            Allocator.AllocateToSize(ref array, this.Count);
+
+            if (this.IsNull == null)
+            {
+                for (int i = 0; i < this.Count; ++i)
+                {
+                    int index = this.Index(i);
+                    array[i] = thisArray[index];
+                }
+
+                return XArray.All(array, this.Count);
+            }
+            else
+            {
+                Allocator.AllocateToSize(ref isNull, this.Count);
+
+                for (int i = 0; i < this.Count; ++i)
+                {
+                    int index = this.Index(i);
+                    array[i] = thisArray[index];
+                    isNull[i] = this.IsNull[index];
+                }
+
+                return XArray.All(array, this.Count, isNull);
+            }
         }
     }
 }

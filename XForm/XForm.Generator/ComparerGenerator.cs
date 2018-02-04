@@ -135,6 +135,9 @@ namespace XForm.Types.Comparers
 
             foreach (string type in SupportedTypes.AdditionalTypes)
             {
+                // Don't generate String8Comparer for now - ContainsBlock logic.
+                if (type.Equals("String8")) continue;
+
                 Generate(type, outputPath);
             }
 

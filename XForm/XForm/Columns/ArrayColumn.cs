@@ -1,10 +1,14 @@
-﻿using System;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
+
 using XForm.Data;
 
 namespace XForm.Columns
 {
     /// <summary>
-    ///  ArrayColumn is an IXColumn wraping an available array.
+    ///  ArrayColumn is an IXColumn wrapping an available array.
     /// </summary>
     public class ArrayColumn : IXColumn
     {
@@ -48,6 +52,11 @@ namespace XForm.Columns
         }
 
         public Func<ArraySelector, XArray> IndicesSeekGetter()
+        {
+            return null;
+        }
+
+        public Func<object> ComponentGetter(string componentName)
         {
             return null;
         }

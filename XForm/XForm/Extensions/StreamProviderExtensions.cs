@@ -3,9 +3,11 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 
+using XForm.IO;
 using XForm.IO.StreamProvider;
 
 namespace XForm.Extensions
@@ -53,6 +55,61 @@ namespace XForm.Extensions
             }
         }
 
+        public static void Clean(this IStreamProvider streamProvider, bool reallyDelete, DateTime cutoff = default(DateTime))
+        {
+            // By default, keep data from the last week (so Now, Yesterday, and Last Week 'as of' data is all available)
+            if (cutoff == default(DateTime)) cutoff = DateTime.UtcNow.AddDays(-8);
+
+            // Remove Sources and Tables older than the cutoff
+            ItemVersions currentVersions;
+            int countLeft;
+
+            foreach (string tableName in streamProvider.Tables())
+            {
+                // Find all Source versions
+                currentVersions = streamProvider.ItemVersions(LocationType.Source, tableName);
+                countLeft = currentVersions.Versions.Count;
+
+                // Delete ones older than the cutoff, keeping the last three
+                foreach (var version in currentVersions.Versions)
+                {
+                    if (version.AsOfDate < cutoff)
+                    {
+                        if (countLeft <= 3) break;
+                        countLeft--;
+
+                        Trace.WriteLine($"DELETE {version.Path}");
+                        if (reallyDelete)
+                        {
+                            // Delete the source
+                            streamProvider.Delete(version.Path);
+                            version.LocationType = LocationType.Table;
+
+                            // Delete the matching table, if found
+                            streamProvider.Delete(version.Path);
+                        }
+                    }
+                }
+
+                // Find all Table versions
+                currentVersions = streamProvider.ItemVersions(LocationType.Table, tableName);
+                countLeft = currentVersions.Versions.Count;
+
+                // Delete ones older than the cutoff, keeping the last three
+                foreach (var version in currentVersions.Versions)
+                {
+                    if (version.AsOfDate < cutoff)
+                    {
+                        if (countLeft <= 3) break;
+                        countLeft--;
+
+                        Trace.WriteLine($"DELETE {version.Path}");
+                        if (reallyDelete) streamProvider.Delete(version.Path);
+                    }
+                }
+            }
+        }
+
         public static IEnumerable<string> Tables(this IStreamProvider streamProvider)
         {
             HashSet<string> tables = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -69,22 +126,30 @@ namespace XForm.Extensions
             // Return raw Sources as tables
             AddFullFolderContainers(streamProvider, "Source", tables);
 
+            // Return built Tables as tables
+            AddFullFolderContainers(streamProvider, "Table", tables);
+
             return tables;
         }
 
         private static void AddFullFolderContainers(this IStreamProvider streamProvider, string underPath, HashSet<string> results)
+        {
+            AddFullFolderContainers(streamProvider, underPath + "\\", underPath, results);
+        }
+
+        private static void AddFullFolderContainers(this IStreamProvider streamProvider, string rootToRemove, string underPath, HashSet<string> results)
         {
             foreach (StreamAttributes item in streamProvider.Enumerate(underPath, EnumerateTypes.Folder, false))
             {
                 if (item.Path.EndsWith("\\Full"))
                 {
                     // If this has a 'Full' folder in it, add it and stop recursing
-                    results.Add(underPath.RelativePath("Source\\"));
+                    results.Add(underPath.RelativePath(rootToRemove));
                     return;
                 }
 
                 // Otherwise look under this folder
-                AddFullFolderContainers(streamProvider, item.Path, results);
+                AddFullFolderContainers(streamProvider, rootToRemove, item.Path, results);
             }
         }
 

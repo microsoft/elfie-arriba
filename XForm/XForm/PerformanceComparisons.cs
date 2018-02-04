@@ -78,9 +78,8 @@ namespace XForm
             //    join [Name] Asset.Extended.Release [Name] Asset. ";
 
             query = @"
-                read WebRequestHuge.Typed     
-                where [ClientBrowser] : ""Edge""
-                count";
+                read WebRequestMed 
+                groupBy [EventTime]";
 
             //query = @"
             //    read WebRequestHuge.Typed     

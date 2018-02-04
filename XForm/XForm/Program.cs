@@ -28,6 +28,7 @@ namespace XForm
             foreach (string arg in args)
             {
                 if (arg.Equals("+cache", StringComparison.OrdinalIgnoreCase)) ColumnCache.IsEnabled = true;
+                if (arg.Equals("-parallel", StringComparison.OrdinalIgnoreCase)) context.ForceSingleThreaded = true;
             }
 
             return Run(args, context);
@@ -60,6 +61,16 @@ namespace XForm
                             ParseCrawlTypeOrDefault(args, 3, CrawlType.Full),
                             ParseDateTimeOrDefault(args, 4, DateTime.MinValue));
 
+                        Console.WriteLine($"Done. \"{args[1]}\" added as Source \"{args[2]}\".");
+                        return 0;
+                    case "clean":
+                        Console.WriteLine("Cleaning Production folder...");
+
+                        context.StreamProvider.Clean(
+                            ParseBooleanOrDefault(args, 1, true),
+                            ParseDateTimeOrDefault(args, 2, default(DateTime)));
+
+                        Console.WriteLine("Done. Clean pass complete.");
                         return 0;
                     case "build":
                         if (args.Length < 2) throw new UsageException($"'build' [Table] [OutputFormat?] [AsOfDateTimeUtc?]", context.Runner.SourceNames);
@@ -71,6 +82,7 @@ namespace XForm
 
                         return 0;
                     case "http":
+                    case "web":
                         new HttpService(context).Run();
                         return 0;
                     case "perf":
@@ -113,6 +125,19 @@ namespace XForm
             if (!DateTime.TryParse(args[index], CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out result))
             {
                 throw new UsageException($"'{args[index]} was not a valid DateTime.");
+            }
+
+            return result;
+        }
+
+        private static bool ParseBooleanOrDefault(string[] args, int index, bool defaultValue)
+        {
+            if (args.Length <= index) return defaultValue;
+
+            bool result;
+            if (!bool.TryParse(args[index], out result))
+            {
+                throw new UsageException($"'{args[index]} was not a valid Boolean.");
             }
 
             return result;

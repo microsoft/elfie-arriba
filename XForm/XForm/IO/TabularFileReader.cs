@@ -56,6 +56,11 @@ namespace XForm.IO
         {
             return null;
         }
+
+        public Func<object> ComponentGetter(string componentName)
+        {
+            return null;
+        }
     }
 
     public class TabularFileReader : IXTable
@@ -86,7 +91,7 @@ namespace XForm.IO
 
             _columns = new TabularColumn[_reader.Columns.Count];
             _cells = new String8[_reader.Columns.Count][];
-            for(int i = 0; i < _reader.Columns.Count; ++i)
+            for (int i = 0; i < _reader.Columns.Count; ++i)
             {
                 _columns[i] = new TabularColumn(this, _reader.Columns[i]);
             }
@@ -118,7 +123,7 @@ namespace XForm.IO
                 if (CurrentRowCount == desiredCount) break;
             }
 
-            for(int i = 0; i < _columns.Length; ++i)
+            for (int i = 0; i < _columns.Length; ++i)
             {
                 _columns[i].SetValues(_cells[i]);
             }

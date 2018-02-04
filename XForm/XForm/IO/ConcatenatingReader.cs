@@ -18,7 +18,7 @@ namespace XForm.IO
         private List<IXColumn> _sources;
         private Func<XArray> _currentGetter;
 
-        Array _nullArray = null;
+        private Array _nullArray = null;
 
         public ColumnDetails ColumnDetails { get; private set; }
 
@@ -74,6 +74,11 @@ namespace XForm.IO
         {
             return null;
         }
+
+        public Func<object> ComponentGetter(string componentName)
+        {
+            return null;
+        }
     }
 
     /// <summary>
@@ -117,13 +122,13 @@ namespace XForm.IO
                     }
                 }
             }
-            
+
             // Create a column for each, adding each source to it (or null for sources which didn't have it)
-            foreach(string columnName in columnCollection.Keys)
+            foreach (string columnName in columnCollection.Keys)
             {
                 ConcatenatingColumn column = new ConcatenatingColumn(this, columnCollection[columnName]);
 
-                foreach(IXTable source in _sources)
+                foreach (IXTable source in _sources)
                 {
                     IXColumn sourceColumn;
                     source.Columns.TryFind(columnName, out sourceColumn);

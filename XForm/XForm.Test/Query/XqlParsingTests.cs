@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 using Elfie.Test;
 
@@ -18,6 +19,18 @@ namespace XForm.Test.Query
     [TestClass]
     public class XqlParsingTests
     {
+        [TestMethod]
+        public void XqlParsing_Invalid()
+        {
+            // Verify all verbs passed alone as the first query text cause a UsageException
+            foreach (string verb in XqlParser.SupportedVerbs)
+            {
+                if (verb.Equals("read", StringComparison.OrdinalIgnoreCase) || verb.Equals("readRange", StringComparison.OrdinalIgnoreCase)) continue;
+                Trace.WriteLine(verb);
+                Verify.Exception<UsageException>(() => SampleDatabase.XDatabaseContext.Query(verb));
+            }
+        }
+
         [TestMethod]
         public void XqlParser_QueryParsing()
         {

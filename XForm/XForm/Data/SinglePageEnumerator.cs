@@ -4,12 +4,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+
 using XForm.Columns;
 
 namespace XForm.Data
 {
-    
-
     /// <summary>
     ///  SinglePageEnumerator is an IXArrayList which will only return the current single page
     ///  from the source to pipeline stages referencing it. Call 'SourceNext' to advance which page

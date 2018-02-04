@@ -1,5 +1,10 @@
-﻿using Microsoft.CodeAnalysis.Elfie.Model.Strings;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
+
+using Microsoft.CodeAnalysis.Elfie.Model.Strings;
+
 using XForm.Data;
 using XForm.Query;
 
@@ -16,12 +21,12 @@ namespace XForm.Columns
         private Array _array;
         private IXTable _source;
 
-        public SingleValueColumn(IXTable source, Type type)
+        public SingleValueColumn(IXTable source, string columnName, Type type)
         {
             _source = source;
 
             Allocator.AllocateToSize(ref _array, 1, type);
-            ColumnDetails = new ColumnDetails(string.Empty, type);
+            ColumnDetails = new ColumnDetails(columnName, type);
         }
 
         public void Set(object value)
@@ -58,6 +63,11 @@ namespace XForm.Columns
         }
 
         public Func<ArraySelector, XArray> IndicesSeekGetter()
+        {
+            return null;
+        }
+
+        public Func<object> ComponentGetter(string componentName)
         {
             return null;
         }

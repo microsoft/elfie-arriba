@@ -21,9 +21,9 @@ namespace XForm
     public class WorkflowRunner : IWorkflowRunner
     {
         private XDatabaseContext XDatabaseContext { get; set; }
-        private HashSet<string> Sources { get; set; }
-        private DateTime SourcesCacheExpires { get; set; }
 
+        private HashSet<string> _sources;
+        private DateTime _sourcesCacheExpires;
         private Cache<ItemVersions> _versionCache;
         private Cache<LatestTableForCutoff> _currentTableVersions;
 
@@ -34,20 +34,22 @@ namespace XForm
             _currentTableVersions = new Cache<LatestTableForCutoff>();
         }
 
-        public IEnumerable<string> SourceNames
+        public IEnumerable<string> SourceNames => Sources;
+        public HashSet<string> Sources
         {
             get
             {
                 DateTime now = DateTime.UtcNow;
-                if (Sources == null || now > SourcesCacheExpires)
+                if (_sources == null || now > _sourcesCacheExpires)
                 {
-                    Sources = new HashSet<string>(XDatabaseContext.StreamProvider.Tables(), StringComparer.OrdinalIgnoreCase);
-                    Sources.UnionWith(XDatabaseContext.StreamProvider.Queries());
+                    _sources = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                    _sources.UnionWith(XDatabaseContext.StreamProvider.Tables());
+                    _sources.UnionWith(XDatabaseContext.StreamProvider.Queries());
 
-                    SourcesCacheExpires = now.AddMinutes(10);
+                    _sourcesCacheExpires = now.Add(Cache<ItemVersions>.DefaultCacheDuration);
                 }
 
-                return Sources;
+                return _sources;
             }
         }
 
@@ -58,8 +60,8 @@ namespace XForm
 
         public IXTable Build(string tableName, XDatabaseContext outerContext, bool deferred)
         {
-            // Disallow tables ending with '.' (the file system maps them to folders with the same name)
-            if (tableName.EndsWith(".")) throw new UsageException(tableName, "Table", outerContext.StreamProvider.Tables());
+            // Validate the source name is recognized
+            if (!Sources.Contains(tableName)) throw new UsageException(tableName, "Table", outerContext.StreamProvider.Tables());
 
             // If we previously found the latest for this table, just return it again
             LatestTableForCutoff previousLatest;
@@ -130,7 +132,7 @@ namespace XForm
             string tablePath = innerContext.StreamProvider.Path(LocationType.Table, tableName, CrawlType.Full, innerContext.NewestDependency);
 
             // If sources rebuilt, the query changed, or the latest output isn't up-to-date, rebuild it
-            if (innerContext.RebuiltSomething || xql != latestTableQuery || IsOutOfDate(latestTable.AsOfDate, innerContext.NewestDependency))
+            if (innerContext.RebuiltSomething || (latestTableQuery != null && xql != latestTableQuery) || IsOutOfDate(latestTable.AsOfDate, innerContext.NewestDependency))
             {
                 // If we're not running now, just return how to build it
                 if (deferred) return builder;
@@ -156,15 +158,17 @@ namespace XForm
             // Find the latest source of this type
             ItemVersions sourceVersions = context.StreamProvider.ItemVersions(LocationType.Source, tableName);
             ItemVersion latestFullSource = sourceVersions.LatestBeforeCutoff(CrawlType.Full, context.RequestedAsOfDateTime);
-            if (latestFullSource == null) throw new UsageException(tableName, "[Table]", context.StreamProvider.SourceNames());
 
             // Find the latest already converted table
             ItemVersions tableVersions = context.StreamProvider.ItemVersions(LocationType.Table, tableName);
             ItemVersion latestBuiltTable = tableVersions.LatestBeforeCutoff(CrawlType.Full, context.RequestedAsOfDateTime);
 
+            // If no source or table was found, throw
+            if (latestFullSource == null && latestBuiltTable == null) throw new UsageException(tableName, "[Table]", context.StreamProvider.SourceNames());
+
             // Read the Table or the Full Crawl Source, whichever is newer
             DateTime incrementalNeededAfterCutoff;
-            if (latestBuiltTable != null && !IsOutOfDate(latestBuiltTable.AsOfDate, latestFullSource.AsOfDate))
+            if (latestBuiltTable != null && (latestFullSource == null || !IsOutOfDate(latestBuiltTable.AsOfDate, latestFullSource.AsOfDate)))
             {
                 // If the table is current, reuse it
                 sources.Add(new BinaryTableReader(context.StreamProvider, latestBuiltTable.Path));

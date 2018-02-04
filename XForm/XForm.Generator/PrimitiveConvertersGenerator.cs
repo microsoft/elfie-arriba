@@ -46,7 +46,7 @@ namespace XForm.Types
 
         public bool[] FromFromType(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             fromType[] sourceArray = (fromType[])xarray.Array;
             if (xarray.Selector.Indices != null)
@@ -77,8 +77,8 @@ namespace XForm.Types
 
         public bool[] FromFromType(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvert, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvert, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool couldNotConvertAny = false;
             fromType[] sourceArray = (fromType[])xarray.Array;

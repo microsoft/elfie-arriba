@@ -1,4 +1,8 @@
-﻿using System;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
+
 using XForm.Data;
 
 namespace XForm.Columns
@@ -51,6 +55,12 @@ namespace XForm.Columns
             if (sourceSeeker == null) return null;
 
             return () => sourceSeeker(_currentSelector);
+        }
+
+        public Func<object> ComponentGetter(string componentName)
+        {
+            // Components in underlying column won't be seeked
+            return null;
         }
 
         public Func<ArraySelector, XArray> IndicesSeekGetter()

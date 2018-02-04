@@ -1202,6 +1202,50 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         }
 
         /// <summary>
+        ///  Find multiple matches of 'value' within this text, starting at start index.
+        ///  Stop at the end of the string or when the results array is full.
+        ///  
+        ///  If countFound is less than results.Length, use results[countFound - 1] + 1 as the next startIndex.
+        /// </summary>
+        /// <param name="value">Value to find</param>
+        /// <param name="startIndex">Index to start searching from</param>
+        /// <param name="ignoreCase">True to compare case-insensitively, False otherwise</param>
+        /// <param name="results">Array to write results (index of each match) to</param>
+        /// <returns>Number of matches found.</returns>
+        public int IndexOfAll(String8 value, int startIndex, bool ignoreCase, int[] results)
+        {
+            int countFound = 0;
+
+            // Find a batch of matches
+            if (ignoreCase)
+            {
+                while (true)
+                {
+                    int foundIndex = this.IndexOfOrdinalIgnoreCase(value, startIndex);
+                    if (foundIndex == -1) break;
+
+                    results[countFound++] = foundIndex;
+                    startIndex = foundIndex + 1;
+                    if (countFound == results.Length) break;
+                }
+            }
+            else
+            {
+                while (true)
+                {
+                    int foundIndex = this.IndexOf(value, startIndex);
+                    if (foundIndex == -1) break;
+
+                    results[countFound++] = foundIndex;
+                    startIndex = foundIndex + 1;
+                    if (countFound == results.Length) break;
+                }
+            }
+
+            return countFound;
+        }
+
+        /// <summary>
         ///  Return the first index at which the passed string appears in this string.
         /// </summary>
         /// <param name="value">Value to find</param>

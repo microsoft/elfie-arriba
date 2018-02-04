@@ -127,6 +127,13 @@ namespace XForm.Types
         }
     }
 
+    public struct String8Raw
+    {
+        public ArraySelector Selector;
+        public XArray Bytes;
+        public XArray Positions;
+    }
+
     internal class String8ColumnReader : IColumnReader
     {
         private string _columnPath;
@@ -135,9 +142,9 @@ namespace XForm.Types
         private IColumnReader _bytesReader;
         private IColumnReader _positionsReader;
 
+        private String8Raw _currentRaw;
         private XArray _currentArray;
         private ArraySelector _currentSelector;
-
         private String8[] _resultArray;
 
         public String8ColumnReader(IStreamProvider streamProvider, string columnPath, CachingOption option)
@@ -162,23 +169,15 @@ namespace XForm.Types
             Allocator.AllocateToSize(ref _resultArray, selector.Count);
             bool includesFirstString = (selector.StartIndexInclusive == 0);
 
-            // Read the string positions
-            XArray positionxarray = _positionsReader.Read(ArraySelector.All(Count).Slice((includesFirstString ? 0 : selector.StartIndexInclusive - 1), selector.EndIndexExclusive));
-            if (positionxarray.Selector.Indices != null) throw new NotImplementedException("String8TypeProvider requires positions to be read contiguously.");
-            int[] positionArray = (int[])positionxarray.Array;
-
-            // Get the full byte range of all of the strings
-            int firstStringStart = (includesFirstString ? 0 : positionArray[positionxarray.Index(0)]);
-            int lastStringEnd = positionArray[positionxarray.Index(positionxarray.Count - 1)];
-
-            // Read the raw string bytes
-            XArray textxarray = _bytesReader.Read(ArraySelector.All(int.MaxValue).Slice(firstStringStart, lastStringEnd));
-            if (textxarray.Selector.Indices != null) throw new NotImplementedException("String8TypeProvider requires positions to be read contiguously.");
-            byte[] textArray = (byte[])textxarray.Array;
+            // Read the string positions and bytes
+            ReadRaw(selector);
 
             // Update the String8 array to point to them
-            int positionOffset = positionxarray.Index((includesFirstString ? 0 : 1));
-            int textOffset = firstStringStart - textxarray.Index(0);
+            byte[] textArray = (byte[])_currentRaw.Bytes.Array;
+            int[] positionArray = (int[])_currentRaw.Positions.Array;
+            int firstStringStart = (includesFirstString ? 0 : positionArray[_currentRaw.Positions.Index(0)]);
+            int positionOffset = _currentRaw.Positions.Index((includesFirstString ? 0 : 1));
+            int textOffset = firstStringStart - _currentRaw.Bytes.Index(0);
 
             int previousStringEnd = firstStringStart - textOffset;
             for (int i = 0; i < selector.Count; ++i)
@@ -194,17 +193,40 @@ namespace XForm.Types
             return _currentArray;
         }
 
+        public String8Raw ReadRaw(ArraySelector selector)
+        {
+            if (selector.Equals(_currentRaw.Selector)) return _currentRaw;
+            bool includesFirstString = (selector.StartIndexInclusive == 0);
+
+            _currentRaw.Selector = selector;
+
+            // Read the string positions
+            _currentRaw.Positions = _positionsReader.Read(ArraySelector.All(Count).Slice((includesFirstString ? 0 : selector.StartIndexInclusive - 1), selector.EndIndexExclusive));
+            if (_currentRaw.Positions.Selector.Indices != null) throw new NotImplementedException("String8TypeProvider requires positions to be read contiguously.");
+            int[] positionArray = (int[])_currentRaw.Positions.Array;
+
+            // Get the full byte range of all of the strings
+            int firstStringStart = (includesFirstString ? 0 : positionArray[_currentRaw.Positions.Index(0)]);
+            int lastStringEnd = positionArray[_currentRaw.Positions.Index(_currentRaw.Positions.Count - 1)];
+
+            // Read the raw string bytes
+            _currentRaw.Bytes = _bytesReader.Read(ArraySelector.All(int.MaxValue).Slice(firstStringStart, lastStringEnd));
+            if (_currentRaw.Bytes.Selector.Indices != null) throw new NotImplementedException("String8TypeProvider requires positions to be read contiguously.");
+
+            return _currentRaw;
+        }
+
         private XArray ReadIndices(ArraySelector selector)
         {
             Allocator.AllocateToSize(ref _resultArray, selector.Count);
 
             // Read all string positions
-            XArray positionxarray = _positionsReader.Read(ArraySelector.All(_positionsReader.Count));
-            int[] positionArray = (int[])positionxarray.Array;
+            XArray positions = _positionsReader.Read(ArraySelector.All(_positionsReader.Count));
+            int[] positionArray = (int[])positions.Array;
 
             // Read all raw string bytes
-            XArray textxarray = _bytesReader.Read(ArraySelector.All(_bytesReader.Count));
-            byte[] textArray = (byte[])textxarray.Array;
+            XArray bytes = _bytesReader.Read(ArraySelector.All(_bytesReader.Count));
+            byte[] textArray = (byte[])bytes.Array;
 
             // Update the String8 array to point to them
             for (int i = 0; i < selector.Count; ++i)
@@ -421,18 +443,31 @@ namespace XForm.Types
 
         public bool[] Convert(XArray xarray, out Array result)
         {
-            Allocator.AllocateToSize(ref _array, xarray.Count);
-            Allocator.AllocateToSize(ref _couldNotConvertArray, xarray.Count);
+            Allocator.AllocateToSize(ref _array, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
+            Allocator.AllocateToSize(ref _couldNotConvertArray, (xarray.Selector.IsSingleValue ? 1 : xarray.Count));
 
             bool anyCouldNotConvert = false;
             String8[] sourceArray = (String8[])xarray.Array;
-            for (int i = 0; i < xarray.Count; ++i)
-            {
-                _couldNotConvertArray[i] = !_tryConvert(sourceArray[xarray.Index(i)], out _array[i]);
 
-                if (_couldNotConvertArray[i])
+            if (!xarray.Selector.IsSingleValue)
+            {
+                for (int i = 0; i < xarray.Count; ++i)
                 {
-                    _array[i] = _defaultValue;
+                    _couldNotConvertArray[i] = !_tryConvert(sourceArray[xarray.Index(i)], out _array[i]);
+
+                    if (_couldNotConvertArray[i])
+                    {
+                        _array[i] = _defaultValue;
+                        anyCouldNotConvert = true;
+                    }
+                }
+            }
+            else
+            {
+                _couldNotConvertArray[0] = !_tryConvert(sourceArray[xarray.Index(0)], out _array[0]);
+                if (_couldNotConvertArray[0])
+                {
+                    _array[0] = _defaultValue;
                     anyCouldNotConvert = true;
                 }
             }

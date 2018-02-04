@@ -166,6 +166,52 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
         }
 
         [TestMethod]
+        public void String8_IndexOfAll()
+        {
+            // Three matches for 's' case sensitive
+            Assert.AreEqual("2, 17, 29", IndexOfAll("System.Collections.Generic.List", "s", false));
+
+            // Four matches case insensitive
+            Assert.AreEqual("0, 2, 17, 29", IndexOfAll("System.Collections.Generic.List", "s", true));
+
+            // Match right at end and after end
+            Assert.AreEqual("27", IndexOfAll("System.Collections.Generic.List", "list", true));
+            Assert.AreEqual("", IndexOfAll("System.Collections.Generic.List", "Lists", true));
+
+            // Full Match
+            Assert.AreEqual("0", IndexOfAll("System", "system", true));
+
+            // Overlapping matches
+            Assert.AreEqual("0, 1, 2, 3", IndexOfAll("AAAAAA", "aaa", true));
+        }
+
+        private static string IndexOfAll(string text, string value, bool ignoreCase)
+        {
+            String8 text8 = text.TestConvert();
+            String8 value8 = value.TestConvert();
+
+            StringBuilder result = new StringBuilder();
+
+            int nextIndex = 0;
+            int[] matches = new int[2];
+            while (true)
+            {
+                int matchCount = text8.IndexOfAll(value8, nextIndex, ignoreCase, matches);
+
+                for (int i = 0; i < matchCount; ++i)
+                {
+                    if (result.Length > 0) result.Append(", ");
+                    result.Append(matches[i]);
+                }
+
+                if (matchCount < matches.Length) break;
+                nextIndex = matches[matchCount - 1] + 1;
+            }
+
+            return result.ToString();
+        }
+
+        [TestMethod]
         public void String8_ContainsVariants()
         {
             Assert.AreEqual(0, "".TestConvert().IndexOfOrdinalIgnoreCase("".TestConvert()), "Empty always contains empty");

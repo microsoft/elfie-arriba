@@ -9,8 +9,6 @@ using XForm.Data;
 
 namespace XForm.IO
 {
-
-
     public class ArrayTable : ISeekableXTable
     {
         private List<ArrayColumn> _columns;
@@ -63,7 +61,7 @@ namespace XForm.IO
             _currentEnumerateSelector = _currentEnumerateSelector.NextPage(_rowCount, desiredCount);
             _currentSelector = _currentEnumerateSelector;
 
-            for(int i = 0; i < _columns.Count; ++i)
+            for (int i = 0; i < _columns.Count; ++i)
             {
                 _columns[i].SetSelector(_currentEnumerateSelector);
             }

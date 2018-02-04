@@ -33,10 +33,10 @@ namespace XForm.Functions
 
         private SimpleTransformFunction(string name, IXColumn column, Func<T, U> function, Action beforeBatch = null)
         {
-            this._name = name;
-            this._column = column;
-            this._function = function;
-            this._beforeBatch = beforeBatch;
+            _name = name;
+            _column = column;
+            _function = function;
+            _beforeBatch = beforeBatch;
             this.ColumnDetails = column.ColumnDetails.ChangeType(typeof(U));
         }
 
@@ -108,6 +108,11 @@ namespace XForm.Functions
         public Func<ArraySelector, XArray> IndicesSeekGetter()
         {
             return _column.IndicesSeekGetter();
+        }
+
+        public Func<object> ComponentGetter(string componentName)
+        {
+            return null;
         }
 
         private XArray Convert(XArray xarray)

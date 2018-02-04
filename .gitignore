@@ -233,3 +233,7 @@ DiskCache/
 Arriba/Databases/*
 !Arriba/Databases/Louvau/
 !Arriba/Databases/Walkthrough/
+
+# Exclude Arriba.HttpShim
+Arriba.HttpShim/
+Arriba.HttpShim.sln
