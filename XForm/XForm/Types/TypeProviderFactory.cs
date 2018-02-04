@@ -63,7 +63,7 @@ namespace XForm.Types
             {
                 return NullableReader.Wrap(streamProvider, columnType, columnPath, option);
             }
-            else // typeof(NullableReader) || typeof(String8ColumnReader)
+            else // typeof(NullableReader) || typeof(String8ColumnReader) || typeof(VariableIntegerReader)
             {
                 return Get(columnType).BinaryReader(streamProvider, columnPath, option);
             }

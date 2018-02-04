@@ -178,6 +178,16 @@ namespace XForm.Data
         }
 
         /// <summary>
+        ///  Return a copy of this XArray with no logical nulls (just the underlying values).
+        /// </summary>
+        /// <returns>XArray with no null array</returns>
+        internal XArray WithoutNulls()
+        {
+            if (this.IsNull == null) return this;
+            return new XArray(this) { IsNull = null };
+        }
+
+        /// <summary>
         ///  Remap the IsNull array from the source XArray, if any, to a non-indexed array.
         ///  Used when the values in the XAray were converted into an in-order array but IsNull
         ///  from the source needs to be preserved.
