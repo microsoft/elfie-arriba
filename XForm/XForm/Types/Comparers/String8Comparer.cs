@@ -548,19 +548,18 @@ namespace XForm.Types.Comparers
             String8 all = new String8((byte[])left.Bytes.Array, 0, left.Bytes.Selector.EndIndexExclusive);
             Allocator.AllocateToSize(ref _indicesBuffer, 1024);
 
-            int startRowIndex = left.Lengths.Selector.StartIndexInclusive;
+            int startRowIndex = left.Positions.Selector.StartIndexInclusive;
             int nextRowIndex = startRowIndex;
-            int endRowIndex = left.Lengths.Selector.EndIndexExclusive;
+            int endRowIndex = left.Positions.Selector.EndIndexExclusive;
 
             int nextByteIndex = left.Bytes.Selector.StartIndexInclusive;
 
-            // TODO: Have to fix to use lengths instead of positions
             int rightLength = rightValue.Length;
-            int[] positions = (int[])left.Lengths.Array;
+            int[] positions = (int[])left.Positions.Array;
 
             bool includesFirstString = (left.Selector.StartIndexInclusive == 0);
-            int firstStringStart = (includesFirstString ? 0 : positions[left.Lengths.Index(0)]);
-            int positionOffset = left.Lengths.Index((includesFirstString ? 0 : 1));
+            int firstStringStart = (includesFirstString ? 0 : positions[left.Positions.Index(0)]);
+            int positionOffset = left.Positions.Index((includesFirstString ? 0 : 1));
             int textOffset = firstStringStart - left.Bytes.Index(0);
 
             while (true)

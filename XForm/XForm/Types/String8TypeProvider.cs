@@ -131,7 +131,7 @@ namespace XForm.Types
     {
         public ArraySelector Selector;
         public XArray Bytes;
-        public XArray Lengths;
+        public XArray Positions;
     }
 
     internal class String8ColumnReader : IColumnReader
@@ -139,9 +139,7 @@ namespace XForm.Types
         private string _columnPath;
 
         private IStreamProvider _streamProvider;
-        private ByteReader _bytesReader;
-        private IColumnReader _lengthsReader;
-
+        private IColumnReader _bytesReader;
         private IColumnReader _positionsReader;
 
         private String8Raw _currentRaw;
@@ -149,58 +147,16 @@ namespace XForm.Types
         private ArraySelector _currentSelector;
         private String8[] _resultArray;
 
-        private byte[] _indicesByteBuffer;
-
         public String8ColumnReader(IStreamProvider streamProvider, string columnPath, CachingOption option)
         {
             _columnPath = columnPath;
 
             _streamProvider = streamProvider;
-            _bytesReader = new ByteReader(streamProvider.OpenRead(Path.Combine(columnPath, "V.s.bin"))); // (ByteReader)TypeProviderFactory.TryGetColumnReader(streamProvider, typeof(byte), Path.Combine(columnPath, "V.s.bin"), option, typeof(String8ColumnReader));
-            _lengthsReader = new VariableIntegerReader(streamProvider, Path.Combine(columnPath, "Vl"), option);
-            _positionsReader = TypeProviderFactory.TryGetColumnReader(streamProvider, typeof(long), Path.Combine(columnPath, $"Vp{String8ColumnWriter.WritePositionPerRowCount}.i64.bin"), option, typeof(String8ColumnReader));
+            _bytesReader = TypeProviderFactory.TryGetColumnReader(streamProvider, typeof(byte), Path.Combine(columnPath, "V.s.bin"), option, typeof(String8ColumnReader));
+            _positionsReader = TypeProviderFactory.TryGetColumnReader(streamProvider, typeof(int), Path.Combine(columnPath, "Vp.i32.bin"), option, typeof(String8ColumnReader));
         }
 
-        public int Count => _lengthsReader.Count;
-
-        private long FirstByteOfRowValue(int rowIndex)
-        {
-            // The first row starts at the beginning of the file
-            if (rowIndex == 0) return 0;
-
-            // The row after the last row is at the end of the file
-            if (rowIndex == _lengthsReader.Count) return _bytesReader.Count;
-
-            // We write only every 64th (currently) position.
-            // If we want the 70th string index, we read the first position (start of row 64) and then add the lengths of rows from there to the target row to find it
-            long position = 0;
-
-            // Figure out which position we need to read and how many lengths we'll have to add to it
-            int rowsAfterPosition = (rowIndex % String8ColumnWriter.WritePositionPerRowCount);
-            int rowWithPosition = rowIndex - rowsAfterPosition;
-            int positionIndex = (rowWithPosition / String8ColumnWriter.WritePositionPerRowCount) - 1;
-
-            // Read the closest 'every nth row' position (start of row 64)
-            if (positionIndex >= 0)
-            {
-                XArray positions = _positionsReader.Read(ArraySelector.All(int.MaxValue).Slice(positionIndex, positionIndex + 1));
-                position = ((long[])positions.Array)[positions.Index(0)];
-            }
-
-            // Read the lengths from there to the desired row and add them (length[64] - length[69]
-            if (rowsAfterPosition > 0)
-            {
-                XArray lengths = _lengthsReader.Read(ArraySelector.All(int.MaxValue).Slice(rowWithPosition, rowWithPosition + rowsAfterPosition - 1));
-                int[] lengthsArray = (int[])lengths.Array;
-                for(int i = 0; i < lengths.Count; ++i)
-                {
-                    position += lengthsArray[lengths.Index(i)];
-                }
-            }
-
-            // We should have the start of row 70.
-            return position;
-        }
+        public int Count => _positionsReader.Count;
 
         public XArray Read(ArraySelector selector)
         {
@@ -218,16 +174,17 @@ namespace XForm.Types
 
             // Update the String8 array to point to them
             byte[] textArray = (byte[])_currentRaw.Bytes.Array;
-            int[] lengthsArray = (int[])_currentRaw.Lengths.Array;
-            int firstStringStart = _currentRaw.Bytes.Index(0);
-            int lengthOffset = _currentRaw.Lengths.Index(0);
+            int[] positionArray = (int[])_currentRaw.Positions.Array;
+            int firstStringStart = (includesFirstString ? 0 : positionArray[_currentRaw.Positions.Index(0)]);
+            int positionOffset = _currentRaw.Positions.Index((includesFirstString ? 0 : 1));
+            int textOffset = firstStringStart - _currentRaw.Bytes.Index(0);
 
-            int previousStringEnd = firstStringStart;
+            int previousStringEnd = firstStringStart - textOffset;
             for (int i = 0; i < selector.Count; ++i)
             {
-                int length = lengthsArray[lengthOffset + i];
-                _resultArray[i] = new String8(textArray, previousStringEnd, length);
-                previousStringEnd += length;
+                int valueEnd = positionArray[i + positionOffset] - textOffset;
+                _resultArray[i] = new String8(textArray, previousStringEnd, valueEnd - previousStringEnd);
+                previousStringEnd = valueEnd;
             }
 
             // Cache the xarray and return it
@@ -239,19 +196,22 @@ namespace XForm.Types
         public String8Raw ReadRaw(ArraySelector selector)
         {
             if (selector.Equals(_currentRaw.Selector)) return _currentRaw;
+            bool includesFirstString = (selector.StartIndexInclusive == 0);
+
             _currentRaw.Selector = selector;
 
-            long firstRowStart = FirstByteOfRowValue(selector.StartIndexInclusive);
-            long lastRowEnd = FirstByteOfRowValue(selector.EndIndexExclusive);
+            // Read the string positions
+            _currentRaw.Positions = _positionsReader.Read(ArraySelector.All(Count).Slice((includesFirstString ? 0 : selector.StartIndexInclusive - 1), selector.EndIndexExclusive));
+            if (_currentRaw.Positions.Selector.Indices != null) throw new NotImplementedException("String8TypeProvider requires positions to be read contiguously.");
+            int[] positionArray = (int[])_currentRaw.Positions.Array;
 
-            // Read the bytes
-            _currentRaw.Bytes = _bytesReader.Read(firstRowStart, lastRowEnd - firstRowStart);
+            // Get the full byte range of all of the strings
+            int firstStringStart = (includesFirstString ? 0 : positionArray[_currentRaw.Positions.Index(0)]);
+            int lastStringEnd = positionArray[_currentRaw.Positions.Index(_currentRaw.Positions.Count - 1)];
+
+            // Read the raw string bytes
+            _currentRaw.Bytes = _bytesReader.Read(ArraySelector.All(int.MaxValue).Slice(firstStringStart, lastStringEnd));
             if (_currentRaw.Bytes.Selector.Indices != null) throw new NotImplementedException("String8TypeProvider requires positions to be read contiguously.");
-
-            // Read the string lengths
-            _currentRaw.Lengths = _lengthsReader.Read(ArraySelector.All(int.MaxValue).Slice(selector.StartIndexInclusive, selector.EndIndexExclusive));
-            if (_currentRaw.Lengths.Selector.Indices != null) throw new NotImplementedException("String8TypeProvider requires lengths to be read contiguously.");
-            int[] lengthsArray = (int[])_currentRaw.Lengths.Array;
 
             return _currentRaw;
         }
@@ -260,30 +220,21 @@ namespace XForm.Types
         {
             Allocator.AllocateToSize(ref _resultArray, selector.Count);
 
-            // Read *all* lengths
-            XArray lengths = _lengthsReader.Read(ArraySelector.All(this.Count));
-            int[] lengthsArray = (int[])lengths.Array;
+            // Read all string positions
+            XArray positions = _positionsReader.Read(ArraySelector.All(_positionsReader.Count));
+            int[] positionArray = (int[])positions.Array;
 
-            // Determine total string length
-            int totalLength = 0;
-            for (int i = 0; i < selector.Count; ++i)
-            {
-                totalLength += lengthsArray[selector.Index(i)];
-            }
+            // Read all raw string bytes
+            XArray bytes = _bytesReader.Read(ArraySelector.All(_bytesReader.Count));
+            byte[] textArray = (byte[])bytes.Array;
 
-            Allocator.AllocateToSize(ref _indicesByteBuffer, totalLength);
-
-            int lengthUsed = 0;
+            // Update the String8 array to point to them
             for (int i = 0; i < selector.Count; ++i)
             {
                 int rowIndex = selector.Index(i);
-                long firstRowStart = FirstByteOfRowValue(rowIndex);
-                int length = lengthsArray[lengths.Index(rowIndex)];
-
-                _bytesReader.Read(firstRowStart, length, _indicesByteBuffer, lengthUsed);
-                _resultArray[i] = new String8(_indicesByteBuffer, lengthUsed, length);
-
-                lengthUsed += length;
+                int valueStart = (rowIndex == 0 ? 0 : positionArray[rowIndex - 1]);
+                int valueEnd = positionArray[rowIndex];
+                _resultArray[i] = new String8(textArray, valueStart, valueEnd - valueStart);
             }
 
             // Cache the xarray and return it
@@ -300,12 +251,6 @@ namespace XForm.Types
                 _bytesReader = null;
             }
 
-            if(_lengthsReader != null)
-            {
-                _lengthsReader.Dispose();
-                _lengthsReader = null;
-            }
-
             if (_positionsReader != null)
             {
                 _positionsReader.Dispose();
@@ -316,52 +261,36 @@ namespace XForm.Types
 
     internal class String8ColumnWriter : IColumnWriter
     {
-        internal const int WritePositionPerRowCount = 64;
-
         private IStreamProvider _streamProvider;
         private Stream _bytesWriter;
-        private IColumnWriter _lengthsWriter;
-        private IColumnWriter _positionsWriter;
+        private PrimitiveArrayWriter<int> _positionsWriter;
 
-        private long _position;
-        private int _rowCountWritten;
-
-        private int[] _lengthsBuffer;
-        private long[] _positionsBuffer;
+        private int[] _positionsBuffer;
+        private int _position;
 
         public String8ColumnWriter(IStreamProvider streamProvider, string columnPath)
         {
             _streamProvider = streamProvider;
             _bytesWriter = _streamProvider.OpenWrite(Path.Combine(columnPath, "V.s.bin"));
-            _lengthsWriter = new VariableIntegerWriter(streamProvider, Path.Combine(columnPath, "Vl"));
-            _positionsWriter = new PrimitiveArrayWriter<long>(streamProvider.OpenWrite(Path.Combine(columnPath, $"Vp{WritePositionPerRowCount}.i64.bin")));
+            _positionsWriter = new PrimitiveArrayWriter<int>(streamProvider.OpenWrite(Path.Combine(columnPath, "Vp.i32.bin")));
         }
 
         public Type WritingAsType => typeof(String8);
 
         public void Append(XArray xarray)
         {
-            Allocator.AllocateToSize(ref _lengthsBuffer, xarray.Count);
-            Allocator.AllocateToSize(ref _positionsBuffer, (xarray.Count / WritePositionPerRowCount) + 1);
-
-            int positionCount = 0;
+            Allocator.AllocateToSize(ref _positionsBuffer, xarray.Count);
 
             String8[] array = (String8[])xarray.Array;
             for (int i = 0; i < xarray.Count; ++i)
             {
                 String8 value = array[xarray.Index(i)];
                 value.WriteTo(_bytesWriter);
-                _lengthsBuffer[i] = value.Length;
-
-                // Track the absolute position and write the end of every nth value
                 _position += value.Length;
-                if ((_rowCountWritten + i) % WritePositionPerRowCount == WritePositionPerRowCount - 1) _positionsBuffer[positionCount++] = _position;
+                _positionsBuffer[i] = _position;
             }
 
-            _lengthsWriter.Append(XArray.All(_lengthsBuffer, xarray.Count));
-            if(positionCount > 0) _positionsWriter.Append(XArray.All(_positionsBuffer, positionCount));
-
-            _rowCountWritten += xarray.Count;
+            _positionsWriter.Append(XArray.All(_positionsBuffer, xarray.Count));
         }
 
         public void Dispose()
@@ -370,12 +299,6 @@ namespace XForm.Types
             {
                 _bytesWriter.Dispose();
                 _bytesWriter = null;
-            }
-
-            if(_lengthsWriter != null)
-            {
-                _lengthsWriter.Dispose();
-                _lengthsWriter = null;
             }
 
             if (_positionsWriter != null)
