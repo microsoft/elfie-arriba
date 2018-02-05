@@ -6,10 +6,9 @@ namespace XForm.Functions
     internal class IsNullBuilder : IFunctionBuilder
     {
         public string Name => "IsNull";
-
+        public string Usage => "IsNull({Col|Func|Const})";
         public Type ReturnType => typeof(bool);
 
-        public string Usage => "IsNull({Col|Func|Const})";
 
         public IXColumn Build(IXTable source, XDatabaseContext context)
         {
