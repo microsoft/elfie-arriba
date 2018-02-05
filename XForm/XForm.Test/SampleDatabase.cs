@@ -139,6 +139,20 @@ namespace XForm.Test
         }
 
         [TestMethod]
+        public void Database_BadSourceNames()
+        {
+            XForm($"build WebRequest");
+
+            // Tables with trailing dots and slashes caused problems because file path logic in the StreamProvider would consider them the same as the name without the last character.
+            // Verify asking for tables with these names doesn't trash the base name.
+            XForm($"build WebRequest.", -2);
+            XForm($"build WebRequest\\", -2);
+            XForm($"build WebRequest/", -2);
+
+            XForm($"build WebRequest");
+        }
+
+        [TestMethod]
         public void Database_Sources()
         {
             SampleDatabase.EnsureBuilt();

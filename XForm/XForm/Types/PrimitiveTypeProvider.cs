@@ -74,19 +74,25 @@ namespace XForm.Types
 
         public static string BinaryFileTypePart()
         {
-            if (typeof(T) == typeof(bool)) return "b8";
+            return BinaryFileTypePart(typeof(T));
+        }
 
-            if (typeof(T) == typeof(sbyte)) return "i8";
-            if (typeof(T) == typeof(short)) return "i16";
-            if (typeof(T) == typeof(ushort)) return "u16";
-            if (typeof(T) == typeof(int)) return "i32";
-            if (typeof(T) == typeof(uint)) return "u32";
-            if (typeof(T) == typeof(long)) return "i64";
-            if (typeof(T) == typeof(ulong)) return "u64";
-            if (typeof(T) == typeof(float)) return "f32";
-            if (typeof(T) == typeof(double)) return "f64";
+        public static string BinaryFileTypePart(Type type)
+        {
+            if (type == typeof(bool)) return "b8";
 
-            throw new ArgumentException($"PrimitiveTypeProvider doesn't know how to read type {typeof(T).Name}.");
+            if (type == typeof(byte)) return "u8";
+            if (type == typeof(sbyte)) return "i8";
+            if (type == typeof(short)) return "i16";
+            if (type == typeof(ushort)) return "u16";
+            if (type == typeof(int)) return "i32";
+            if (type == typeof(uint)) return "u32";
+            if (type == typeof(long)) return "i64";
+            if (type == typeof(ulong)) return "u64";
+            if (type == typeof(float)) return "f32";
+            if (type == typeof(double)) return "f64";
+
+            throw new ArgumentException($"PrimitiveTypeProvider doesn't know how to read type {type.Name}.");
         }
     }
 

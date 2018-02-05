@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -29,14 +32,14 @@ namespace XForm
 
     public class Factory<T> where T : INamedBuilder
     {
-        private Dictionary<string, T> s_buildersByName;
+        private Dictionary<string, T> _buildersByName;
 
         public IEnumerable<T> Builders
         {
             get
             {
                 EnsureLoaded();
-                return s_buildersByName.Values;
+                return _buildersByName.Values;
             }
         }
 
@@ -45,7 +48,7 @@ namespace XForm
             get
             {
                 EnsureLoaded();
-                return s_buildersByName.Keys;
+                return _buildersByName.Keys;
             }
         }
 
@@ -54,20 +57,20 @@ namespace XForm
             EnsureLoaded();
 
             builder = default(T);
-            return s_buildersByName.TryGetValue(name, out builder);
+            return _buildersByName.TryGetValue(name, out builder);
         }
 
         private void EnsureLoaded()
         {
-            if (s_buildersByName != null) return;
+            if (_buildersByName != null) return;
 
             // Initialize lookup Dictionaries
-            s_buildersByName = new Dictionary<string, T>(StringComparer.OrdinalIgnoreCase);
+            _buildersByName = new Dictionary<string, T>(StringComparer.OrdinalIgnoreCase);
 
             // Add configured type providers
             foreach (T provider in InterfaceLoader.BuildAll<T>())
             {
-                s_buildersByName[provider.Name] = provider;
+                _buildersByName[provider.Name] = provider;
             }
         }
     }

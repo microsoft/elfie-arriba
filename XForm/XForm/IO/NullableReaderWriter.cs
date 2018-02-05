@@ -35,8 +35,8 @@ namespace XForm.Types
 
         public void Append(XArray xarray)
         {
-            // Write the values
-            _valueWriter.Append(xarray);
+            // Write the values (without the null markers; we're writing those here)
+            _valueWriter.Append(xarray.WithoutNulls());
 
             // Track the row count written so we know how many null=false values to write when we first see a null
             _rowCountSoFar += xarray.Count;

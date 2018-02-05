@@ -1,10 +1,11 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using System;
 using System.Collections.Generic;
 using System.IO;
+
+using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 
 using XForm.Data;
 using XForm.IO.StreamProvider;
@@ -55,7 +56,7 @@ namespace XForm.IO
 
         public Func<object> ComponentGetter(string componentName)
         {
-            if(componentName.Equals("String8Raw"))
+            if (componentName.Equals("String8Raw"))
             {
                 if (ColumnDetails.Type != typeof(String8)) return null;
 

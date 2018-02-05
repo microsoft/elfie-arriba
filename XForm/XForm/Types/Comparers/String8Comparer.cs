@@ -6,8 +6,8 @@ using System;
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 
 using XForm.Data;
-using XForm.Query;
 using XForm.IO;
+using XForm.Query;
 
 namespace XForm.Types.Comparers
 {
@@ -553,7 +553,7 @@ namespace XForm.Types.Comparers
             int endRowIndex = left.Positions.Selector.EndIndexExclusive;
 
             int nextByteIndex = left.Bytes.Selector.StartIndexInclusive;
-            
+
             int rightLength = rightValue.Length;
             int[] positions = (int[])left.Positions.Array;
 

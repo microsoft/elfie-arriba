@@ -1,7 +1,9 @@
-﻿using System.Collections.Generic;
-using Xsv.Sanitize;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-namespace Xsv.Test.Generators
+using System.Collections.Generic;
+
+namespace XForm.Generator.Mappers
 {
     public class FrequencyEntry<T>
     {
@@ -24,7 +26,7 @@ namespace Xsv.Test.Generators
         {
             this.Options = new FrequencyEntry<T>[options.Count];
 
-            for(int i = 0; i < options.Count; ++i)
+            for (int i = 0; i < options.Count; ++i)
             {
                 this.Options[i] = new FrequencyEntry<T>(options[i], 1);
             }
@@ -48,7 +50,7 @@ namespace Xsv.Test.Generators
         {
             int roll = Hashing.Extract(ref hash, this.Total);
 
-            for(int i = 0; i < this.Options.Length - 1; ++i)
+            for (int i = 0; i < this.Options.Length - 1; ++i)
             {
                 FrequencyEntry<T> option = this.Options[i];
                 roll -= option.RelativeFrequency;

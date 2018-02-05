@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 
 using XForm.Data;
 
@@ -179,7 +182,7 @@ namespace XForm
             // If the value being swapped in is one we're inserting, record the index found or assigned
             if (_currentRowAdding >= 0)
             {
-                if(swapType == SwapType.Match)
+                if (swapType == SwapType.Match)
                 {
                     _currentAddedArrayIndices[_currentRowAdding] = _assignedIndices[index];
                 }
@@ -187,7 +190,7 @@ namespace XForm
                 {
                     _currentAddedArrayIndices[_currentRowAdding] = _uniqueValueCount++;
                 }
-                
+
                 _currentRowAdding = -1;
             }
 
