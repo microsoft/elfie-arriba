@@ -116,6 +116,7 @@
     <Compile Include="Core\Hashing.cs" />
     <Compile Include="Columns\RemappedColumn.cs" />
     <Compile Include="Functions\Date\DatePart.cs" />
+    <Compile Include="Functions\IsNull.cs" />
     <Compile Include="Functions\String\BeforeFirst.cs" />
     <Compile Include="Http\IHttpRequest.cs" />
     <Compile Include="Http\IHttpResponse.cs" />

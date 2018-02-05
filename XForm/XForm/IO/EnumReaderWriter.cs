@@ -146,7 +146,7 @@ namespace XForm.IO
             for (int i = 0; i < xarray.Count; ++i)
             {
                 int index = xarray.Index(i);
-                bool isNull = (xarray.IsNull != null && xarray.IsNull[index]);
+                bool isNull = (xarray.HasNulls && xarray.NullRows[index]);
                 T value = array[index];
 
                 int indexFound = Add(value, isNull);
@@ -159,11 +159,11 @@ namespace XForm.IO
 
         public XArray Values()
         {
-            bool[] isNull = null;
+            bool[] nulls = null;
             if (_nullItemIndex != -1)
             {
-                isNull = new bool[this.Metadata.Length];
-                isNull[_nullItemIndex] = true;
+                nulls = new bool[this.Metadata.Length];
+                nulls[_nullItemIndex] = true;
             }
 
             int[] indicesInOrder = new int[this.Count];
@@ -176,7 +176,7 @@ namespace XForm.IO
             }
 
             // Build an indexed XArray pointing to the keys in insertion order
-            XArray keysInOrder = XArray.All(_keys, this.Count, isNull).Reselect(ArraySelector.Map(indicesInOrder, this.Count));
+            XArray keysInOrder = XArray.All(_keys, this.Count, nulls).Reselect(ArraySelector.Map(indicesInOrder, this.Count));
 
             // Convert it to a contiguous, 0-based XArray
             T[] contiguousCopy = null;

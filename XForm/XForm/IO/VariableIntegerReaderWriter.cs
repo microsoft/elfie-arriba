@@ -56,7 +56,7 @@ namespace XForm.IO
                 XArray asUshort = ushortConverter(values);
 
                 // If none overflow, just upconvert to ushort
-                if (asUshort.IsNull == null)
+                if (!asUshort.HasNulls)
                 {
                     Upconvert(typeof(ushort));
                     _writer.Append(asUshort);
@@ -121,7 +121,7 @@ namespace XForm.IO
                 // Convert the array to the type we're writing
                 XArray convertedArray = _converter(xarray);
 
-                if (convertedArray.IsNull == null)
+                if (!convertedArray.HasNulls)
                 {
                     // If values were all in range, just write them
                     _writer.Append(convertedArray);
