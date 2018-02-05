@@ -167,8 +167,8 @@ namespace XForm.Test
 
                 if (expected.HasNulls)
                 {
-                    isNull = expected.Nulls[expectedIndex];
-                    if (!AssertAreEqual(isNull, (actual.HasNulls && actual.Nulls[actualIndex]), $"{columnName}[{i:n0}].IsNull", ref errorMessage)) return i;
+                    isNull = expected.NullRows[expectedIndex];
+                    if (!AssertAreEqual(isNull, (actual.HasNulls && actual.NullRows[actualIndex]), $"{columnName}[{i:n0}].IsNull", ref errorMessage)) return i;
                 }
 
                 if (!isNull)
@@ -260,7 +260,7 @@ namespace XForm.Test
 
                     // NOTE: Untyped Array access via object in XForm is very expensive. Don't do this in non-test code.
                     object value = null;
-                    if (!column.HasNulls || !column.Nulls[realRowIndex])
+                    if (!column.HasNulls || !column.NullRows[realRowIndex])
                     {
                         value = column.Array.GetValue(realRowIndex);
                     }
@@ -315,7 +315,7 @@ namespace XForm.Test
 
                 if (values.HasNulls)
                 {
-                    nulls.SetValue(values.Nulls.GetValue(values.Index(i)), indices[i]);
+                    nulls.SetValue(values.NullRows.GetValue(values.Index(i)), indices[i]);
                 }
             }
 

@@ -146,7 +146,7 @@ namespace XForm.IO
             for (int i = 0; i < xarray.Count; ++i)
             {
                 int index = xarray.Index(i);
-                bool isNull = (xarray.HasNulls && xarray.Nulls[index]);
+                bool isNull = (xarray.HasNulls && xarray.NullRows[index]);
                 T value = array[index];
 
                 int indexFound = Add(value, isNull);

@@ -199,7 +199,7 @@ namespace XForm.Verbs
                 for (int i = 0; i < keys.Count; ++i)
                 {
                     int index = keys.Index(i);
-                    if (keys.HasNulls && keys.Nulls[index]) continue;
+                    if (keys.HasNulls && keys.NullRows[index]) continue;
                     T key = keyArray[index];
                     if (_valueCopier != null) key = _valueCopier.Copy(key);
                     _dictionary[key] = firstRowIndex + i;
@@ -229,7 +229,7 @@ namespace XForm.Verbs
             {
                 int index = keys.Index(i);
                 int foundAtIndex;
-                if ((keys.HasNulls && keys.Nulls[index]) || !_dictionary.TryGetValue(keyArray[index], out foundAtIndex))
+                if ((keys.HasNulls && keys.NullRows[index]) || !_dictionary.TryGetValue(keyArray[index], out foundAtIndex))
                 {
                     _returnedVector.Clear(i);
                 }

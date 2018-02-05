@@ -95,7 +95,7 @@ namespace XForm.Functions
                 return XArray.AllFalse(array.Count);
             }
 
-            return array.ReplaceValues(array.Nulls);
+            return array.ReplaceValues(array.NullRows);
         }
     }
 }

@@ -348,7 +348,7 @@ namespace XForm.Types
             for (int i = 0; i < xarray.Count; ++i)
             {
                 int index = xarray.Index(i);
-                if (xarray.HasNulls && xarray.Nulls[index])
+                if (xarray.HasNulls && xarray.NullRows[index])
                 {
                     // Always turn nulls into the default value rather than converting default of other type
                     _string8Array[i] = _defaultValue;
@@ -406,7 +406,7 @@ namespace XForm.Types
                 int index = xarray.Index(i);
                 string value = sourceArray[index];
 
-                if (value == null || (xarray.HasNulls && xarray.Nulls[index]))
+                if (value == null || (xarray.HasNulls && xarray.NullRows[index]))
                 {
                     // Always turn nulls into the default value rather than converting string default
                     _string8Array[i] = _defaultValue;

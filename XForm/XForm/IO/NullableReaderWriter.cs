@@ -50,7 +50,7 @@ namespace XForm.Types
                 bool areAnyNulls = false;
                 for (int i = 0; i < xarray.Count && !areAnyNulls; ++i)
                 {
-                    areAnyNulls |= xarray.Nulls[xarray.Index(i)];
+                    areAnyNulls |= xarray.NullRows[xarray.Index(i)];
                 }
 
                 // If there are not actually any null rows in this set, don't write null output yet
@@ -79,7 +79,7 @@ namespace XForm.Types
             else
             {
                 // Write the actual true/false values for this page
-                _nullWriter.Append(XArray.All(xarray.Nulls).Reselect(xarray.Selector));
+                _nullWriter.Append(XArray.All(xarray.NullRows).Reselect(xarray.Selector));
             }
         }
 

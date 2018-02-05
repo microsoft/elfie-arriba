@@ -64,7 +64,7 @@ namespace XForm
             _currentIsNewValue = true;
 
             int realIndex = _currentArray.Index((int)index);
-            if (_currentArray.HasNulls && _currentArray.Nulls[realIndex])
+            if (_currentArray.HasNulls && _currentArray.NullRows[realIndex])
             {
                 _current = default(TColumnType);
             }

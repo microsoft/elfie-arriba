@@ -73,7 +73,7 @@ namespace XForm.Aggregators
                 {
                     int bucketIndex = rowIndices.Index(i);
                     int sumIndex = sumValues.Index(i);
-                    if (sumValues.Nulls[sumIndex]) _isNullPerBucket[indicesArray[bucketIndex]] = true;
+                    if (sumValues.NullRows[sumIndex]) _isNullPerBucket[indicesArray[bucketIndex]] = true;
 
                     _sumPerBucket[indicesArray[bucketIndex]] += sumArray[sumIndex];
                 }
@@ -126,7 +126,7 @@ namespace XForm.Aggregators
                 {
                     int bucketIndex = rowIndices.Index(i);
                     int sumIndex = sumValues.Index(i);
-                    if (sumValues.Nulls[sumIndex]) _isNullPerBucket[indicesArray[bucketIndex]] = true;
+                    if (sumValues.NullRows[sumIndex]) _isNullPerBucket[indicesArray[bucketIndex]] = true;
 
                     _sumPerBucket[indicesArray[bucketIndex]] += sumArray[sumIndex];
                 }
@@ -179,7 +179,7 @@ namespace XForm.Aggregators
                 {
                     int bucketIndex = rowIndices.Index(i);
                     int sumIndex = sumValues.Index(i);
-                    if (sumValues.Nulls[sumIndex]) _isNullPerBucket[indicesArray[bucketIndex]] = true;
+                    if (sumValues.NullRows[sumIndex]) _isNullPerBucket[indicesArray[bucketIndex]] = true;
 
                     _sumPerBucket[indicesArray[bucketIndex]] += sumArray[sumIndex];
                 }

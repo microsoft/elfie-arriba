@@ -101,7 +101,7 @@ namespace XForm.Types.Comparers
                 for (int i = 0; i < left.Count; ++i)
                 {
                     int leftIndex = left.Index(i);
-                    if (left.Nulls[leftIndex]) continue;
+                    if (left.NullRows[leftIndex]) continue;
                     if (_array[leftArray[leftIndex]]) vector.Set(i);
                 }
             }

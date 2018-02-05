@@ -34,13 +34,13 @@ namespace XForm.Data
         ///  are null. If the array itself is null, none of the values are null.
         ///  Avoids using Nullable which keeps the values back-to-back for bulk serialization.
         /// </summary>
-        public bool[] Nulls { get; private set; }
+        public bool[] NullRows { get; private set; }
 
         /// <summary>
         ///  HasNulls is a more intuitive way to check for whether the XArray can have any null
         ///  values in it. (If the Nulls array itself is null, there definitely aren't any null rows).
         /// </summary>
-        public bool HasNulls => (Nulls != null);
+        public bool HasNulls => (NullRows != null);
 
         /// <summary>
         ///  Strongly typed array of raw values for one column for a set of rows.
@@ -80,7 +80,7 @@ namespace XForm.Data
         private XArray(XArray copyFrom)
         {
             this.Array = copyFrom.Array;
-            this.Nulls = copyFrom.Nulls;
+            this.NullRows = copyFrom.NullRows;
             this.Selector = copyFrom.Selector;
         }
 
@@ -98,7 +98,7 @@ namespace XForm.Data
             if (isSingle == false && count > array.Length) throw new ArgumentOutOfRangeException("length");
             if (isSingle == false && nulls != null && count > nulls.Length) throw new ArgumentOutOfRangeException("length");
 
-            return new XArray() { Array = array, Nulls = nulls, Selector = (isSingle ? ArraySelector.Single(count) : ArraySelector.All(count)) };
+            return new XArray() { Array = array, NullRows = nulls, Selector = (isSingle ? ArraySelector.Single(count) : ArraySelector.All(count)) };
         }
 
         /// <summary>
@@ -108,7 +108,7 @@ namespace XForm.Data
         /// <returns>XArray with a null Array and a single value indicating null for everything</returns>
         public static XArray Null(Array singleNullValueArray, int count)
         {
-            return new XArray() { Array = singleNullValueArray, Nulls = s_SingleTrue, Selector = ArraySelector.Single(count) };
+            return new XArray() { Array = singleNullValueArray, NullRows = s_SingleTrue, Selector = ArraySelector.Single(count) };
         }
 
         /// <summary>
@@ -118,7 +118,7 @@ namespace XForm.Data
         /// <returns>XArray with a single value true for everything</returns>
         public static XArray AllTrue(int count)
         {
-            return new XArray() { Array = s_SingleTrue, Nulls = null, Selector = ArraySelector.Single(count) };
+            return new XArray() { Array = s_SingleTrue, NullRows = null, Selector = ArraySelector.Single(count) };
         }
 
         /// <summary>
@@ -128,7 +128,7 @@ namespace XForm.Data
         /// <returns>XArray with a single value false for everything</returns>
         public static XArray AllFalse(int count)
         {
-            return new XArray() { Array = s_SingleFalse, Nulls = null, Selector = ArraySelector.Single(count) };
+            return new XArray() { Array = s_SingleFalse, NullRows = null, Selector = ArraySelector.Single(count) };
         }
 
         /// <summary>
@@ -185,7 +185,7 @@ namespace XForm.Data
         /// <returns>XArray with values replaced and Selector the same</returns>
         public XArray ReplaceValues(XArray other)
         {
-            return ReplaceValues(other, other.Nulls);
+            return ReplaceValues(other, other.NullRows);
         }
 
         /// <summary>
@@ -197,11 +197,11 @@ namespace XForm.Data
         {
             if (other.Selector.IsSingleValue)
             {
-                return new XArray(this) { Array = other.Array, Nulls = nulls, Selector = ArraySelector.Single(this.Count) };
+                return new XArray(this) { Array = other.Array, NullRows = nulls, Selector = ArraySelector.Single(this.Count) };
             }
             else
             {
-                return new XArray(this) { Array = other.Array, Nulls = nulls };
+                return new XArray(this) { Array = other.Array, NullRows = nulls };
             }
         }
 
@@ -213,7 +213,7 @@ namespace XForm.Data
         /// <returns>XArray with values replaced and Selector the same</returns>
         public XArray ReplaceValues(Array other, bool[] nulls = null)
         {
-            return new XArray(this) { Array = other, Nulls = nulls };
+            return new XArray(this) { Array = other, NullRows = nulls };
         }
 
         /// <summary>
@@ -223,7 +223,7 @@ namespace XForm.Data
         internal XArray WithoutNulls()
         {
             if (!this.HasNulls) return this;
-            return new XArray(this) { Nulls = null };
+            return new XArray(this) { NullRows = null };
         }
 
         /// <summary>
@@ -240,7 +240,7 @@ namespace XForm.Data
             if (!array.HasNulls) return null;
 
             // If the source isn't indexed or shifted, the Nulls array may be reused
-            if (array.Selector.Indices == null && array.Selector.StartIndexInclusive == 0) return array.Nulls;
+            if (array.Selector.Indices == null && array.Selector.StartIndexInclusive == 0) return array.NullRows;
 
             // Otherwise, we must remap nulls
             Allocator.AllocateToSize(ref remapArray, array.Count);
@@ -248,7 +248,7 @@ namespace XForm.Data
             bool areAnyNulls = false;
             for (int i = 0; i < array.Count; ++i)
             {
-                areAnyNulls |= (remapArray[i] = array.Nulls[array.Index(i)]);
+                areAnyNulls |= (remapArray[i] = array.NullRows[array.Index(i)]);
             }
 
             return (areAnyNulls ? remapArray : null);
@@ -287,7 +287,7 @@ namespace XForm.Data
                 {
                     int index = this.Index(i);
                     array[i] = thisArray[index];
-                    nulls[i] = this.Nulls[index];
+                    nulls[i] = this.NullRows[index];
                 }
 
                 return XArray.All(array, this.Count, nulls);
