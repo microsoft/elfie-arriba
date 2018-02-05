@@ -20,7 +20,7 @@ namespace XForm.Data
     ///     for(int i = 0; i &lt; xarray.Count; ++i)                                             // Always loop from zero to xarray.Count - 1.
     ///     {
     ///         int realIndex = xarray.Index(i);                                                 // Index() is an inlined method which returns the real index of a row
-    ///         bool valueIsNull = (xarray.IsNull != null &amp;&amp; xarray.IsNull[realIndex]);   // IsNull, if provided, indicates whether the row is null
+    ///         bool valueIsNull = (xarray.HasNulls &amp;&amp; xarray.Nulls[realIndex]);   // IsNull, if provided, indicates whether the row is null
     ///         T rowValue = realArray[realIndex];
     ///     }
     /// </summary>
