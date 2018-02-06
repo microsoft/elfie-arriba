@@ -29,7 +29,7 @@ namespace XForm.Extensions
             if (!column.IsConstantColumn()) return false;
 
             XArray value = column.ValuesGetter()();
-            return (value.IsNull != null && value.IsNull[value.Index(0)]);
+            return (value.HasNulls && value.NullRows[value.Index(0)]);
         }
 
         public static IXColumn Find(this IReadOnlyList<IXColumn> columns, string columnName)

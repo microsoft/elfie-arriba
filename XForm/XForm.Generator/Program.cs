@@ -44,7 +44,7 @@ namespace XForm.Generator
 
             string path;
 
-            // Generate a set of users and write them out
+            // Generate a set of users and write them out [for a week ago]
             asOfDate = asOfDate.AddDays(-8);
             path = $"Users.{asOfDate:yyyyMMdd}.r{randomSeed}.{userCount}.csv";
             Console.WriteLine($"Writing {path}...");
@@ -59,9 +59,14 @@ namespace XForm.Generator
             }
 
             File.SetLastWriteTimeUtc(path, asOfDate);
+
+            // Generate WebRequest Data [for a week ago]
+            generator = new WebRequestGenerator(users, r, asOfDate, (eventCount < 1001 ? 10 : 100));
+            BuildWebRequests(generator, eventCount, WebRequestWriteMode.All);
+
             asOfDate = asOfDate.AddDays(8);
 
-            // Generate batches of WebRequest sample data
+            // Generate batches of WebRequest sample data [current]
             for (int day = 0; day < numberOfDays; ++day)
             {
                 generator = new WebRequestGenerator(users, r, asOfDate, (eventCount < 1001 ? 10 : 100));

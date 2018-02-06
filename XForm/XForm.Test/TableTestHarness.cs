@@ -104,7 +104,13 @@ namespace XForm.Test
                         XArray expectedArray = expectedArrays[i].Slice(expectedNextIndex, expectedNextIndex + countToCompare);
                         XArray actualArray = actualArrays[i].Slice(actualNextIndex, actualNextIndex + countToCompare);
 
-                        firstMismatchedRow = FirstMismatchedRow(expectedArray, actualArray, countToCompare, expected.Columns[i].ColumnDetails.Name, out errorMessage);
+                        firstMismatchedRow = FirstMismatchedRow(
+                            expectedArray, 
+                            actualArray, 
+                            countToCompare, 
+                            expected.Columns[i].ColumnDetails.Name, 
+                            out errorMessage);
+
                         if (!String.IsNullOrEmpty(errorMessage)) break;
                     }
                 }
@@ -159,10 +165,10 @@ namespace XForm.Test
                 int actualIndex = actual.Index(i);
                 bool isNull = false;
 
-                if (expected.IsNull != null)
+                if (expected.HasNulls)
                 {
-                    isNull = expected.IsNull[expectedIndex];
-                    if (!AssertAreEqual(isNull, (actual.IsNull != null && actual.IsNull[actualIndex]), $"{columnName}[{i:n0}].IsNull", ref errorMessage)) return i;
+                    isNull = expected.NullRows[expectedIndex];
+                    if (!AssertAreEqual(isNull, (actual.HasNulls && actual.NullRows[actualIndex]), $"{columnName}[{i:n0}].IsNull", ref errorMessage)) return i;
                 }
 
                 if (!isNull)
@@ -174,7 +180,7 @@ namespace XForm.Test
             }
 
             // NOTE: We should not filter the null array if we aren't looping over every item, so this rule isn't always valid.
-            //if (!areAnyNull) AssertAreEqual(true, actual.IsNull == null, "Result Null Array (when no null values)", ref errorMessage);
+            //if (!areAnyNull) AssertAreEqual(true, actual.HasNulls, "Result Null Array (when no null values)", ref errorMessage);
 
             return 0;
         }
@@ -254,7 +260,7 @@ namespace XForm.Test
 
                     // NOTE: Untyped Array access via object in XForm is very expensive. Don't do this in non-test code.
                     object value = null;
-                    if (column.IsNull == null || column.IsNull[realRowIndex] == false)
+                    if (!column.HasNulls || !column.NullRows[realRowIndex])
                     {
                         value = column.Array.GetValue(realRowIndex);
                     }
@@ -291,7 +297,14 @@ namespace XForm.Test
         public static XArray Pad(XArray values)
         {
             Array modifiedArray = null;
+            bool[] nulls = null;
             Allocator.AllocateToSize(ref modifiedArray, values.Array.Length + 4, values.Array.GetType().GetElementType());
+
+            if (values.HasNulls)
+            {
+                nulls = new bool[values.Array.Length + 4];
+            }
+
             int[] indices = new int[modifiedArray.Length];
 
             // Copy values shifted over two (so, two default values at the beginning and two at the end)
@@ -299,11 +312,16 @@ namespace XForm.Test
             {
                 indices[i] = i + 2;
                 modifiedArray.SetValue(values.Array.GetValue(values.Index(i)), indices[i]);
+
+                if (values.HasNulls)
+                {
+                    nulls.SetValue(values.NullRows.GetValue(values.Index(i)), indices[i]);
+                }
             }
 
             // Return an XArray with the padded array with the indices and shorter real length
             int[] remapArray = null;
-            return XArray.All(modifiedArray, values.Count).Select(ArraySelector.Map(indices, values.Count), ref remapArray);
+            return XArray.All(modifiedArray, values.Count, nulls).Select(ArraySelector.Map(indices, values.Count), ref remapArray);
         }
 
         // Return an XArray with nulls inserted for every other value
@@ -311,17 +329,17 @@ namespace XForm.Test
         {
             Array modifiedArray = null;
             Allocator.AllocateToSize(ref modifiedArray, values.Array.Length * 2, values.Array.GetType().GetElementType());
-            bool[] isNull = new bool[modifiedArray.Length];
+            bool[] nulls = new bool[modifiedArray.Length];
 
             // Every other value is null
             for (int i = 0; i < modifiedArray.Length; ++i)
             {
-                isNull[i] = (i % 2 == 0);
+                nulls[i] = (i % 2 == 0);
                 modifiedArray.SetValue(values.Array.GetValue(values.Index(i / 2)), i);
             }
 
             // Return an XArray with the doubled length and alternating nulls
-            return XArray.All(modifiedArray, modifiedArray.Length, isNull);
+            return XArray.All(modifiedArray, modifiedArray.Length, nulls);
         }
 
         // Return an XArray with a slice of the rows only
