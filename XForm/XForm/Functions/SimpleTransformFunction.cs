@@ -133,7 +133,7 @@ namespace XForm.Functions
             for (int i = 0; i < xarray.Count; ++i)
             {
                 int index = xarray.Index(i);
-                bool rowIsNull = (xarray.IsNull != null && xarray.IsNull[index]);
+                bool rowIsNull = (xarray.HasNulls && xarray.NullRows[index]);
                 _buffer[i] = (rowIsNull ? default(U) : _function(array[index]));
             }
 

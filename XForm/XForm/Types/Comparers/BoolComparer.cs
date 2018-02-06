@@ -24,7 +24,7 @@ namespace XForm.Types.Comparers
             for (int i = 0; i < xarray.Count; ++i)
             {
                 int index = xarray.Index(i);
-                if (xarray.IsNull == null || xarray.IsNull[index] == false)
+                if (!xarray.HasNulls || xarray.NullRows[index] == false)
                 {
                     hashes[i] = (hashes[i] << 5) - hashes[i] + GetHashCode(array[xarray.Index(i)]);
                 }
@@ -39,7 +39,7 @@ namespace XForm.Types.Comparers
 
         public static void AndNotNull(XArray left, BitVector vector)
         {
-            bool[] leftArray = (bool[])left.IsNull;
+            bool[] leftArray = (bool[])left.NullRows;
             if (leftArray == null) return;
 
             // Check how the arrays are configured and run the fastest loop possible for the configuration.
@@ -80,7 +80,7 @@ namespace XForm.Types.Comparers
 
         public static void WhereNull(XArray left, bool isValue, BitVector vector)
         {
-            bool[] leftArray = (bool[])left.IsNull;
+            bool[] leftArray = (bool[])left.NullRows;
             if (leftArray == null)
             {
                 if (isValue == false) vector.All(left.Count);
