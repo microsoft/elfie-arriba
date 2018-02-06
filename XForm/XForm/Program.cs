@@ -63,6 +63,15 @@ namespace XForm
 
                         Console.WriteLine($"Done. \"{args[1]}\" added as Source \"{args[2]}\".");
                         return 0;
+                    case "clean":
+                        Console.WriteLine("Cleaning Production folder...");
+
+                        context.StreamProvider.Clean(
+                            ParseBooleanOrDefault(args, 1, true),
+                            ParseDateTimeOrDefault(args, 2, default(DateTime)));
+
+                        Console.WriteLine("Done. Clean pass complete.");
+                        return 0;
                     case "build":
                         if (args.Length < 2) throw new UsageException($"'build' [Table] [OutputFormat?] [AsOfDateTimeUtc?]", context.Runner.SourceNames);
                         context.RequestedAsOfDateTime = ParseDateTimeOrDefault(args, 3, context.RequestedAsOfDateTime);
@@ -116,6 +125,19 @@ namespace XForm
             if (!DateTime.TryParse(args[index], CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out result))
             {
                 throw new UsageException($"'{args[index]} was not a valid DateTime.");
+            }
+
+            return result;
+        }
+
+        private static bool ParseBooleanOrDefault(string[] args, int index, bool defaultValue)
+        {
+            if (args.Length <= index) return defaultValue;
+
+            bool result;
+            if (!bool.TryParse(args[index], out result))
+            {
+                throw new UsageException($"'{args[index]} was not a valid Boolean.");
             }
 
             return result;

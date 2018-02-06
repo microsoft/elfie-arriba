@@ -1,4 +1,7 @@
-﻿using System.IO;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System.IO;
 using System.Net;
 using System.Web;
 
@@ -22,35 +25,35 @@ namespace XForm.Http
     /// </summary>
     public class HttpListenerResponseAdapter : IHttpResponse
     {
-        private HttpListenerResponse Response;
+        private HttpListenerResponse _response;
 
         public HttpListenerResponseAdapter(HttpListenerResponse response)
         {
-            this.Response = response;
+            _response = response;
         }
 
         public int StatusCode
         {
-            get { return (int)Response.StatusCode; }
-            set { Response.StatusCode = (int)value; }
+            get { return (int)_response.StatusCode; }
+            set { _response.StatusCode = (int)value; }
         }
 
         public string ContentType
         {
-            get { return Response.ContentType; }
-            set { Response.ContentType = value; }
+            get { return _response.ContentType; }
+            set { _response.ContentType = value; }
         }
 
         public void AddHeader(string name, string value)
         {
-            Response.AddHeader(name, value);
+            _response.AddHeader(name, value);
         }
 
-        public Stream OutputStream => Response.OutputStream;
+        public Stream OutputStream => _response.OutputStream;
 
         public void Close()
         {
-            Response.Close();
+            _response.Close();
         }
     }
 
@@ -59,30 +62,30 @@ namespace XForm.Http
     /// </summary>
     public class HttpResponseAdapter : IHttpResponse
     {
-        private HttpResponse Response;
+        private HttpResponse _response;
 
         public HttpResponseAdapter(HttpResponse response)
         {
-            this.Response = response;
+            _response = response;
         }
 
         public int StatusCode
         {
-            get { return Response.StatusCode; }
-            set { Response.StatusCode = value; }
+            get { return _response.StatusCode; }
+            set { _response.StatusCode = value; }
         }
 
         public string ContentType
         {
-            get { return Response.ContentType; }
-            set { Response.ContentType = value; }
+            get { return _response.ContentType; }
+            set { _response.ContentType = value; }
         }
 
-        public Stream OutputStream => Response.OutputStream;
+        public Stream OutputStream => _response.OutputStream;
 
         public void AddHeader(string name, string value)
         {
-            Response.AddHeader(name, value);
+            _response.AddHeader(name, value);
         }
 
         public void Close()

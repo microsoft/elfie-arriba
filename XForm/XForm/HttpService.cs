@@ -11,9 +11,9 @@ using Microsoft.CodeAnalysis.Elfie.Serialization;
 
 using XForm.Data;
 using XForm.Extensions;
+using XForm.Http;
 using XForm.IO;
 using XForm.Query;
-using XForm.Http;
 
 namespace XForm
 {
@@ -360,7 +360,7 @@ namespace XForm
 
         public void Dispose()
         {
-            if(_server != null)
+            if (_server != null)
             {
                 _server.Dispose();
                 _server = null;

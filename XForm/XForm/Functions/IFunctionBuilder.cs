@@ -12,13 +12,8 @@ namespace XForm.Functions
     ///  XForm contains named functions
     ///  Create an IPipelineStageBuilder and specify the verbs it supports to extend the language.
     /// </summary>
-    public interface IFunctionBuilder : IUsage
+    public interface IFunctionBuilder : IUsage, INamedBuilder
     {
-        /// <summary>
-        ///  Function Name which this builder constructs.
-        /// </summary>
-        string Name { get; }
-
         /// <summary>
         ///  Return Type of function, if constant. Return null if type matches a parameter.
         /// </summary>

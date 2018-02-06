@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Collections.Specialized;
 using System.IO;
 using System.Net;
@@ -26,21 +29,21 @@ namespace XForm.Http
     /// </summary>
     public class HttpListenerContextAdapter : IHttpRequest
     {
-        private HttpListenerContext Context;
+        private HttpListenerContext _context;
 
         public HttpListenerContextAdapter(HttpListenerContext context)
         {
-            this.Context = context;
+            _context = context;
         }
 
-        public IPrincipal User => Context.User;
+        public IPrincipal User => _context.User;
 
-        public Uri Url => Context.Request.Url;
+        public Uri Url => _context.Request.Url;
 
-        public NameValueCollection QueryString => Context.Request.QueryString;
+        public NameValueCollection QueryString => _context.Request.QueryString;
 
-        public bool HasRequestBody => Context.Request.HasEntityBody;
-        public Stream RequestBody => Context.Request.InputStream;
+        public bool HasRequestBody => _context.Request.HasEntityBody;
+        public Stream RequestBody => _context.Request.InputStream;
     }
 
     /// <summary>
@@ -48,21 +51,21 @@ namespace XForm.Http
     /// </summary>
     public class HttpContextAdapter : IHttpRequest
     {
-        private HttpContext Context;
+        private HttpContext _context;
 
         public HttpContextAdapter(HttpContext context)
         {
-            this.Context = context;
+            _context = context;
         }
 
-        public IPrincipal User => Context.User;
+        public IPrincipal User => _context.User;
 
-        public Uri Url => Context.Request.Url;
+        public Uri Url => _context.Request.Url;
 
-        public NameValueCollection QueryString => Context.Request.QueryString;
+        public NameValueCollection QueryString => _context.Request.QueryString;
 
-        public bool HasRequestBody => Context.Request.ContentLength > 0;
+        public bool HasRequestBody => _context.Request.ContentLength > 0;
 
-        public Stream RequestBody => Context.Request.InputStream;
+        public Stream RequestBody => _context.Request.InputStream;
     }
 }

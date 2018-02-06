@@ -62,7 +62,7 @@ namespace XForm.IO.StreamProvider
 
         public void Delete(string logicalPath)
         {
-            DirectoryIO.DeleteAllContents(PathCombineSandbox(logicalPath));
+            DirectoryIO.DeleteAll(PathCombineSandbox(logicalPath));
         }
 
         public Stream OpenAppend(string logicalPath)
@@ -129,7 +129,15 @@ namespace XForm.IO.StreamProvider
             foreach (StreamAttributes version in Enumerate(sourceFullPath, EnumerateTypes.Folder, false))
             {
                 DateTime versionAsOf;
+
+                // If it's not a DateTime folder, it's not a table version
                 if (!DateTime.TryParseExact(System.IO.Path.GetFileName(version.Path), StreamProviderExtensions.DateTimeFolderFormat, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out versionAsOf))
+                {
+                    continue;
+                }
+
+                // If we're looking at tables, verify there's a Schema.csv
+                if (versions.LocationType == LocationType.Table && !Attributes(Path.Combine(version.Path, "Schema.csv")).Exists)
                 {
                     continue;
                 }

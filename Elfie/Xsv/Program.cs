@@ -513,7 +513,7 @@ namespace Xsv
                                     int readerColumnIndex = writerColumnIndexInReader[i];
                                     if(readerColumnIndex >= 0 && readerColumnIndex < reader.CurrentRowColumns)
                                     {
-                                        writer.Write(reader.Current(i).ToString8());
+                                        writer.Write(reader.Current(readerColumnIndex).ToString8());
                                     }
                                     else
                                     {

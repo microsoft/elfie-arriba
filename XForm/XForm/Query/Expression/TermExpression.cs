@@ -8,9 +8,9 @@ using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using XForm.Columns;
 using XForm.Data;
 using XForm.Extensions;
+using XForm.IO;
 using XForm.Types;
 using XForm.Types.Comparers;
-using XForm.IO;
 
 namespace XForm.Query.Expression
 {
@@ -24,7 +24,7 @@ namespace XForm.Query.Expression
         private Func<XArray> _rightGetter;
         private ComparerExtensions.Comparer _comparer;
         private Action<BitVector> _evaluate;
-        
+
         public TermExpression(IXTable source, IXColumn left, CompareOperator op, IXColumn right)
         {
             _evaluate = EvaluateNormal;

@@ -194,11 +194,11 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
 
             int nextIndex = 0;
             int[] matches = new int[2];
-            while(true)
+            while (true)
             {
                 int matchCount = text8.IndexOfAll(value8, nextIndex, ignoreCase, matches);
 
-                for(int i = 0; i < matchCount; ++i)
+                for (int i = 0; i < matchCount; ++i)
                 {
                     if (result.Length > 0) result.Append(", ");
                     result.Append(matches[i]);

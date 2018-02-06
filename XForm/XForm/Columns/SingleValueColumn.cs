@@ -21,12 +21,12 @@ namespace XForm.Columns
         private Array _array;
         private IXTable _source;
 
-        public SingleValueColumn(IXTable source, Type type)
+        public SingleValueColumn(IXTable source, string columnName, Type type)
         {
             _source = source;
 
             Allocator.AllocateToSize(ref _array, 1, type);
-            ColumnDetails = new ColumnDetails(string.Empty, type);
+            ColumnDetails = new ColumnDetails(columnName, type);
         }
 
         public void Set(object value)

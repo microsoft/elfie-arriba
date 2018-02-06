@@ -1,14 +1,18 @@
-﻿using System;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 using System.Configuration;
 using System.IO;
 using System.Web;
+
 using XForm;
 using XForm.Http;
 using XForm.IO.StreamProvider;
 
 public class RequestHandler : IHttpHandler
 {
-    private static HttpService HttpService;
+    private static HttpService s_httpService;
 
     private void Initialize(HttpContext context)
     {
@@ -26,7 +30,7 @@ public class RequestHandler : IHttpHandler
         db.Runner = new WorkflowRunner(db);
 
         // Build and save an HttpService instance to run queries
-        HttpService = new HttpService(db);
+        s_httpService = new HttpService(db);
     }
 
     public bool IsReusable => true;
@@ -35,8 +39,8 @@ public class RequestHandler : IHttpHandler
     {
         try
         {
-            if (HttpService == null) Initialize(context);
-            HttpService.HandleRequest(new HttpContextAdapter(context), new HttpResponseAdapter(context.Response));
+            if (s_httpService == null) Initialize(context);
+            s_httpService.HandleRequest(new HttpContextAdapter(context), new HttpResponseAdapter(context.Response));
         }
         catch (Exception ex)
         {

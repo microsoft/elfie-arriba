@@ -21,9 +21,9 @@ namespace XForm
     public class WorkflowRunner : IWorkflowRunner
     {
         private XDatabaseContext XDatabaseContext { get; set; }
-        private HashSet<string> Sources { get; set; }
-        private DateTime SourcesCacheExpires { get; set; }
 
+        private HashSet<string> _sources;
+        private DateTime _sourcesCacheExpires;
         private Cache<ItemVersions> _versionCache;
         private Cache<LatestTableForCutoff> _currentTableVersions;
 
@@ -34,20 +34,22 @@ namespace XForm
             _currentTableVersions = new Cache<LatestTableForCutoff>();
         }
 
-        public IEnumerable<string> SourceNames
+        public IEnumerable<string> SourceNames => Sources;
+        public HashSet<string> Sources
         {
             get
             {
                 DateTime now = DateTime.UtcNow;
-                if (Sources == null || now > SourcesCacheExpires)
+                if (_sources == null || now > _sourcesCacheExpires)
                 {
-                    Sources = new HashSet<string>(XDatabaseContext.StreamProvider.Tables(), StringComparer.OrdinalIgnoreCase);
-                    Sources.UnionWith(XDatabaseContext.StreamProvider.Queries());
+                    _sources = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                    _sources.UnionWith(XDatabaseContext.StreamProvider.Tables());
+                    _sources.UnionWith(XDatabaseContext.StreamProvider.Queries());
 
-                    SourcesCacheExpires = now.AddMinutes(10);
+                    _sourcesCacheExpires = now.Add(Cache<ItemVersions>.DefaultCacheDuration);
                 }
 
-                return Sources;
+                return _sources;
             }
         }
 
@@ -58,8 +60,8 @@ namespace XForm
 
         public IXTable Build(string tableName, XDatabaseContext outerContext, bool deferred)
         {
-            // Disallow tables ending with '.' (the file system maps them to folders with the same name)
-            if (tableName.EndsWith(".")) throw new UsageException(tableName, "Table", outerContext.StreamProvider.Tables());
+            // Validate the source name is recognized
+            if (!Sources.Contains(tableName)) throw new UsageException(tableName, "Table", outerContext.StreamProvider.Tables());
 
             // If we previously found the latest for this table, just return it again
             LatestTableForCutoff previousLatest;

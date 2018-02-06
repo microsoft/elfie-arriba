@@ -8,7 +8,7 @@ using XForm.Data;
 namespace XForm.Columns
 {
     /// <summary>
-    ///  ArrayColumn is an IXColumn wraping an available array.
+    ///  ArrayColumn is an IXColumn wrapping an available array.
     /// </summary>
     public class ArrayColumn : IXColumn
     {
