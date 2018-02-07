@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using XForm.Data;
+using XForm.Query;
 
 namespace XForm.Functions
 {
@@ -15,107 +16,158 @@ namespace XForm.Functions
         public IXColumn Build(IXTable source, XDatabaseContext context)
         {
             return new CoalesceTransformFunction(source, context);
-            // Start with first column
-            // If non nulls, return first column
-            // Else, take all non-nulls from first, and replace nulls with non-nulls from second.
-            throw new NotImplementedException();
         }
     }
 
     public class CoalesceTransformFunction : IXColumn
     {
-        private Type _indiciesType;
         private List<IXColumn> _columns = new List<IXColumn>();
+        private ICoalescer _coalescer;
 
         public CoalesceTransformFunction(IXTable source, XDatabaseContext context)
         {
-            do
+            while (context.Parser.HasAnotherArgument)
             {
                 IXColumn column = context.Parser.NextColumn(source, context);
                 _columns.Add(column);
                 if (System.String.IsNullOrEmpty(column.ColumnDetails.Name)) throw new ArgumentException($"Column {_columns.Count} passed to 'Column' wasn't assigned a name. Use 'AS [Name]' to assign names to every column selected.");
-            } while (context.Parser.HasAnotherPart);
-        }
-
-        public ColumnDetails ColumnDetails => throw new NotImplementedException();
-
-        public Type IndicesType
-        {
-            get
-            {
-                if (_indiciesType != null)
-                    return _indiciesType;
-
-                foreach (IXColumn column in _columns)
-                {
-                    // if more than one type exists, the output will be string.
-                    if (_indiciesType != null && _indiciesType != column.ColumnDetails.Type)
-                        return typeof(string);
-
-                    _indiciesType = column.ColumnDetails.Type;
-                }
-
-                return _indiciesType;
             }
+
+            if (!AllTypesMatch(_columns))
+                throw new UsageException("Coalesce requires all column types to match");
+
+            _coalescer = (ICoalescer)Allocator.ConstructGenericOf(typeof(Coalescer<>), _columns[0].ColumnDetails.Type);
+
+            ColumnDetails = new ColumnDetails($"{_columns[0].ColumnDetails.Name}.Coalesce", _columns[0].ColumnDetails.Type);
+            IndicesType = _columns[0].IndicesType;
         }
+
+        public ColumnDetails ColumnDetails { get; private set; }
+
+        public Type IndicesType { get; private set; }
 
         public Func<object> ComponentGetter(string componentName)
         {
-            throw new NotImplementedException();
+            return null;
         }
 
         public Func<XArray> CurrentGetter()
         {
-            return () => Convert();
+            Func<ArraySelector, XArray>[] getters = new Func<ArraySelector, XArray>[_columns.Count];
+
+            for (int index = 0; index < _columns.Count; index++)
+            {
+                int i = index;
+                getters[i] = (selector) => _columns[i].CurrentGetter()();
+            }
+
+            return () => _coalescer.Convert(getters, null);
         }
 
         public Func<XArray> IndicesCurrentGetter()
         {
-            throw new NotImplementedException();
+            return null;
         }
 
         public Func<ArraySelector, XArray> IndicesSeekGetter()
         {
-            throw new NotImplementedException();
+            return null;
         }
 
         public Func<ArraySelector, XArray> SeekGetter()
         {
-            throw new NotImplementedException();
+            Func<ArraySelector, XArray>[] getters = new Func<ArraySelector, XArray>[_columns.Count];
+
+            for (int index = 0; index < _columns.Count; index++)
+            {
+                getters[index] = (selector) => _columns[index].SeekGetter()(selector);
+            }
+
+            return (selector) => _coalescer.Convert(getters, selector);
         }
 
         public Func<XArray> ValuesGetter()
         {
-            throw new NotImplementedException();
+            return null;
         }
 
-        public XArray Convert()
+        private bool AllTypesMatch(List<IXColumn> columns)
         {
-            XArray xArray = _columns[0].CurrentGetter()();
-            if (!xArray.HasNulls)
-                return xArray;
-
-            xArray = XArray.All(xArray.Array, xArray.Count, xArray.NullRows);
-            for (int column = 1; column < _columns.Count; column++)
+            Type previousColumnType = null;
+            foreach (IXColumn column in columns)
             {
-                XArray currentArray = _columns[column].CurrentGetter()();
-                for (int row = 0; row < xArray.Count; row++)
-                {
-                    if (!xArray.NullRows[row])
-                        continue;
+                if (previousColumnType != null && previousColumnType != column.ColumnDetails.Type)
+                    return false;
 
-                    if (currentArray.NullRows[row])
-                        continue;
-
-                    xArray.NullRows[row] = false;
-                    xArray.Array.SetValue(currentArray.Array.GetValue(row), row);
-                }
-
-                if (!currentArray.HasNulls)
-                    return xArray;
+                previousColumnType = column.ColumnDetails.Type;
             }
 
-            return xArray;
+            return true;
+        }
+    }
+
+    internal interface ICoalescer
+    {
+        XArray Convert(Func<ArraySelector, XArray>[] getters, ArraySelector selector);
+    }
+
+    internal class Coalescer<T> : ICoalescer
+    {
+        T[] _buffer;
+        bool[] _nullRowsBuffer;
+
+        public XArray Convert(Func<ArraySelector, XArray>[] getters, ArraySelector selector)
+        {
+            // Get the first column. Return it as-is if there are no nulls already
+            XArray currentArray = getters[0](selector);
+            T[] currentTyped = (T[])currentArray.Array;
+
+            // If there are no nulls or only one column, return as-is
+            if (!currentArray.HasNulls || getters.Length == 1) return currentArray;
+
+            // Allocate result arrays for the coalesced results
+            int rowCount = currentArray.Selector.Count;
+            Allocator.AllocateToSize(ref _buffer, rowCount);
+            Allocator.AllocateToSize(ref _nullRowsBuffer, rowCount);
+
+            // Copy non-null values from the first column and count remaining nulls
+            int nullCount = rowCount;
+            for (int row = 0; row < rowCount; ++row)
+            {
+                int index = currentArray.Index(row);
+                _nullRowsBuffer[row] = true;
+
+                if (!currentArray.NullRows[index])
+                {
+                    _buffer[row] = currentTyped[index];
+                    _nullRowsBuffer[row] = false;
+                    nullCount--;
+                }
+            }
+
+            // Replace nulls with non-nulls from each column
+            for (int column = 1; column < getters.Length; column++)
+            {
+                currentArray = getters[column](selector);
+                currentTyped = (T[])currentArray.Array;
+
+                for (int row = 0; row < currentArray.Count; row++)
+                {
+                    int index = currentArray.Index(row);
+                    if (_nullRowsBuffer[row] && (!currentArray.HasNulls || !currentArray.NullRows[index]))
+                    {
+                        _buffer[row] = currentTyped[index];
+                        _nullRowsBuffer[row] = false;
+                        nullCount--;
+                    }
+                }
+
+                // If there are no nulls left, we can return
+                if (nullCount <= 0) return XArray.All(_buffer, rowCount);
+            }
+
+            // If we got through all columns, return the values with any remaining nulls marked
+            return XArray.All(_buffer, rowCount, _nullRowsBuffer);
         }
     }
 }

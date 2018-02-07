@@ -22,6 +22,7 @@ namespace XForm.Columns
         {
             _allValues = allValues;
             ColumnDetails = columnDetails;
+            SetSelector(allValues.Selector);
         }
 
         public void SetSelector(ArraySelector currentSelector)
