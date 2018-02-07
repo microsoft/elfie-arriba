@@ -46,11 +46,6 @@ namespace XForm.Functions
 
         public Type IndicesType { get; private set; }
 
-        public Func<object> ComponentGetter(string componentName)
-        {
-            return null;
-        }
-
         public Func<XArray> CurrentGetter()
         {
             Func<ArraySelector, XArray>[] getters = new Func<ArraySelector, XArray>[_columns.Count];
@@ -62,16 +57,6 @@ namespace XForm.Functions
             }
 
             return () => _coalescer.Convert(getters, null);
-        }
-
-        public Func<XArray> IndicesCurrentGetter()
-        {
-            return null;
-        }
-
-        public Func<ArraySelector, XArray> IndicesSeekGetter()
-        {
-            return null;
         }
 
         public Func<ArraySelector, XArray> SeekGetter()
@@ -86,7 +71,22 @@ namespace XForm.Functions
             return (selector) => _coalescer.Convert(getters, selector);
         }
 
+        public Func<XArray> IndicesCurrentGetter()
+        {
+            return null;
+        }
+
+        public Func<ArraySelector, XArray> IndicesSeekGetter()
+        {
+            return null;
+        }
+
         public Func<XArray> ValuesGetter()
+        {
+            return null;
+        }
+
+        public Func<object> ComponentGetter(string componentName)
         {
             return null;
         }
@@ -118,7 +118,6 @@ namespace XForm.Functions
 
         public XArray Convert(Func<ArraySelector, XArray>[] getters, ArraySelector selector)
         {
-            // Get the first column. Return it as-is if there are no nulls already
             XArray currentArray = getters[0](selector);
             T[] currentTyped = (T[])currentArray.Array;
 
@@ -134,8 +133,8 @@ namespace XForm.Functions
             int nullCount = rowCount;
             for (int row = 0; row < rowCount; ++row)
             {
-                int index = currentArray.Index(row);
                 _nullRowsBuffer[row] = true;
+                int index = currentArray.Index(row);
 
                 if (!currentArray.NullRows[index])
                 {
