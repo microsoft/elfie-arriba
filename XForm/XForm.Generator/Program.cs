@@ -18,7 +18,7 @@ namespace XForm.Generator
         {
             if (args.Length > 0 && args[0].Equals("sample", StringComparison.OrdinalIgnoreCase))
             {
-                Generate_WebRequestSample(5, 250000, 1000 * 1000, 3);
+                Generate_WebRequestSample(@"C:\Download", 5, 250000, 1000 * 1000, 3);
                 return;
             }
 
@@ -35,7 +35,7 @@ namespace XForm.Generator
             Console.WriteLine("Done.");
         }
 
-        private static void Generate_WebRequestSample(int randomSeed, int userCount, int eventCount, int numberOfDays)
+        private static void Generate_WebRequestSample(string basePath, int randomSeed, int userCount, int eventCount, int numberOfDays)
         {
             Random r = new Random(randomSeed);
             DateTime asOfDate = DateTime.UtcNow.Date;
@@ -46,7 +46,7 @@ namespace XForm.Generator
 
             // Generate a set of users and write them out
             asOfDate = asOfDate.AddDays(-8);
-            path = $"Users.{asOfDate:yyyyMMdd}.r{randomSeed}.{userCount}.csv";
+            path = Path.Combine(basePath, $"Users.{asOfDate:yyyyMMdd}.r{randomSeed}.{userCount}.csv");
             Console.WriteLine($"Writing {path}...");
             UserGenerator userGenerator = new UserGenerator(r, asOfDate);
             List<User> users = userGenerator.Next(userCount);
@@ -65,33 +65,33 @@ namespace XForm.Generator
             for (int day = 0; day < numberOfDays; ++day)
             {
                 generator = new WebRequestGenerator(users, r, asOfDate, (eventCount < 1001 ? 10 : 100));
-                if(day == 0) generator.Issue = new DataCenterOutage() { DataCenter = "Europe West", StartTime = asOfDate.AddSeconds(5), EndTime = asOfDate.AddSeconds(15) };
-                BuildWebRequests(generator, eventCount, WebRequestWriteMode.All);
+                if(day == 0) generator.Issue = new PremiumUserOutage(asOfDate.AddMinutes(18), asOfDate.AddMinutes(104), r);
+                BuildWebRequests(basePath, generator, eventCount, WebRequestWriteMode.UserIdentityOnly);
                 asOfDate = asOfDate.AddDays(-1);
             }
 
-            //// Generate one big joinable batch
-            //eventCount = 10 * 1000 * 1000;
-            //generator = new WebRequestGenerator(users, r, asOfDate, 1000);
-            //generator.Issue = new PortRangeBlocked() { StartTime = asOfDate.AddMinutes(1), EndTime = asOfDate.AddMinutes(180), StartPort = 11450, EndPort = 11480 };
-            //BuildWebRequests(generator, eventCount, WebRequestWriteMode.UserEmailOnly);
-            //asOfDate = asOfDate.AddDays(-1);
+            // Generate one big joinable batch
+            eventCount = 10 * 1000 * 1000;
+            generator = new WebRequestGenerator(users, r, asOfDate, 1000);
+            generator.Issue = new PortRangeBlocked(asOfDate.AddMinutes(1), asOfDate.AddMinutes(180), 11450, 11480);
+            BuildWebRequests(basePath, generator, eventCount, WebRequestWriteMode.UserIdentityOnly);
+            asOfDate = asOfDate.AddDays(-1);
 
-            //// Generate one huge minimal batch
-            //eventCount = 100 * 1000 * 1000;
-            //generator = new WebRequestGenerator(users, r, asOfDate, 1000);
-            //generator.Issue = new UncachedSlowness() { Random = r, StartTime = asOfDate.AddMinutes(4), EndTime = asOfDate.AddMinutes(36) };
-            //BuildWebRequests(generator, eventCount, WebRequestWriteMode.Minimal);
+            // Generate one huge minimal batch
+            eventCount = 100 * 1000 * 1000;
+            generator = new WebRequestGenerator(users, r, asOfDate, 1000);
+            generator.Issue = new UncachedSlowness(asOfDate.AddMinutes(4), asOfDate.AddMinutes(36), r);
+            BuildWebRequests(basePath, generator, eventCount, WebRequestWriteMode.Minimal);
 
             Console.WriteLine("Done.");
         }
 
-        private static void BuildWebRequests(WebRequestGenerator generator, int eventCount, WebRequestWriteMode mode)
+        private static void BuildWebRequests(string basePath, WebRequestGenerator generator, int eventCount, WebRequestWriteMode mode)
         {
             DateTime asOfDate = generator.Current;
             String8Block block = new String8Block();
 
-            string path = $"WebRequestSample.{asOfDate:yyyyMMdd}.r5.{eventCount}.csv";
+            string path = Path.Combine(basePath, $"WebRequestSample.{asOfDate:yyyyMMdd}.r5.{eventCount}.csv");
             Console.WriteLine($"Writing {path}...");
 
             using (ITabularWriter writer = TabularFactory.BuildWriter(path))

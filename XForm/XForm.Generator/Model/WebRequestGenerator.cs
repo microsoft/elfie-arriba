@@ -9,72 +9,13 @@ using XForm.Generator.Mappers;
 
 namespace XForm.Generator.Model
 {
-    public interface ISimulatedIssue<T>
-    {
-        void Transform(T item);
-    }
-
-    public class DataCenterOutage : ISimulatedIssue<WebRequest>
-    {
-        public DateTime StartTime { get; set; }
-        public DateTime EndTime { get; set; }
-        public string DataCenter { get; set; }
-
-        public void Transform(WebRequest item)
-        {
-            if (item.EventTime > EndTime) return;
-            if (item.EventTime < StartTime) return;
-            if (item.DataCenter != DataCenter) return;
-
-            item.HttpStatus = 500;
-        }
-    }
-
-    public class UncachedSlowness : ISimulatedIssue<WebRequest>
-    {
-        public DateTime StartTime { get; set; }
-        public DateTime EndTime { get; set; }
-        public Random Random { get; set; }
-
-        public void Transform(WebRequest item)
-        {
-            if (item.EventTime > EndTime) return;
-            if (item.EventTime < StartTime) return;
-
-            if (item.WasCachedResponse == false)
-            {
-                if ((Random.Next() & 7) < 4) item.TimeTakenMs = item.TimeTakenMs * 4;
-            }
-        }
-    }
-
-    public class PortRangeBlocked : ISimulatedIssue<WebRequest>
-    {
-        public DateTime StartTime { get; set; }
-        public DateTime EndTime { get; set; }
-        public ushort StartPort { get; set; }
-        public ushort EndPort { get; set; }
-
-        public void Transform(WebRequest item)
-        {
-            if (item.EventTime > EndTime) return;
-            if (item.EventTime < StartTime) return;
-
-            if (item.ServerPort >= StartPort && item.ServerPort <= EndPort)
-            {
-                item.HttpStatus = 404;
-                item.ResponseBytes = 0;
-            }
-        }
-    }
-
     public class WebRequestGenerator
     {
         public Random Random { get; set; }
         public int CountPerSecond { get; set; }
         public DateTime Current { get; set; }
 
-        public ISimulatedIssue<WebRequest> Issue { get; set; }
+        public IDisaster<WebRequest> Issue { get; set; }
 
         private long TicksBetweenEvents { get; set; }
 

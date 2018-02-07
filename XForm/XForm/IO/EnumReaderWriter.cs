@@ -55,7 +55,11 @@ namespace XForm.IO
 
         protected override bool EqualsCurrent(uint index)
         {
-            if (_currentIsNull) return _nullItemIndex == index;
+            if (_currentIsNull)
+            {
+                return _nullItemIndex == index;
+            }
+
             return _comparer.Equals(_keys[index], _currentKey);
         }
 
@@ -123,10 +127,7 @@ namespace XForm.IO
         {
             if (swapType == SwapType.Match) return;
             if (swapType == SwapType.Insert && _copier != null) _currentKey = _copier.Copy(_currentKey);
-            if (swapType == SwapType.Insert && _currentIsNull)
-            {
-                _nullItemIndex = (int)index;
-            }
+            if (swapType == SwapType.Insert && _currentIsNull) _nullItemIndex = (int)index;
 
             T swapKey = _keys[index];
             int swapValue = _values[index];
@@ -136,6 +137,7 @@ namespace XForm.IO
 
             _currentKey = swapKey;
             _currentValue = swapValue;
+            _currentIsNull = (_nullItemIndex == index);
         }
 
         public bool Add(XArray xarray, ref byte[] indicesFound)

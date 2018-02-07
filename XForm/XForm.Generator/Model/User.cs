@@ -13,6 +13,7 @@ namespace XForm.Generator.Model
 {
     public class User
     {
+        public int ID { get; set; }
         public string EmailAddress { get; set; }
         public Guid Guid { get; set; }
         public bool IsPremiumUser { get; set; }
@@ -27,6 +28,7 @@ namespace XForm.Generator.Model
             if (writer.RowCountWritten == 0)
             {
                 writer.SetColumns(new string[] {
+                    "UserID",
                     "UserGuid",
                     "EmailAddress",
                     "Region",
@@ -39,6 +41,7 @@ namespace XForm.Generator.Model
 
             block.Clear();
 
+            writer.Write(this.ID);
             writer.Write(block.GetCopy(this.Guid.ToString()));
             writer.Write(block.GetCopy(this.EmailAddress));
             writer.Write(block.GetCopy(this.Region));
@@ -92,6 +95,8 @@ namespace XForm.Generator.Model
         {
             User user = new User();
             uint userIdentity = (uint)this.Random.Next();
+
+            user.ID = unchecked((int)userIdentity);
 
             // UserName is an alias (for now)
             user.EmailAddress = this.EmailAddressMapper.Generate(userIdentity);

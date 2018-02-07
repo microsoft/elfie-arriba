@@ -12,7 +12,7 @@ namespace XForm.Generator.Model
     public enum WebRequestWriteMode
     {
         All,
-        UserEmailOnly,
+        UserIdentityOnly,
         Minimal
     }
 
@@ -69,11 +69,12 @@ namespace XForm.Generator.Model
                 {
                     columnNames.Add("ClientIP");
                     columnNames.Add("UriStem");
-                    columnNames.Add("UserEmailAddress");
+                    columnNames.Add("UserID");
 
-                    if (mode != WebRequestWriteMode.UserEmailOnly)
+                    if (mode != WebRequestWriteMode.UserIdentityOnly)
                     {
                         columnNames.AddRange(new string[] {
+                            "UserEmailAddress",
                             "UserGuid",
                             "IsPremiumUser",
                             "JoinDate"
@@ -109,10 +110,11 @@ namespace XForm.Generator.Model
                 writer.Write(this.ClientIP);
                 writer.Write(block.GetCopy(this.UriStem));
 
-                if (this.IsAnonymous) { writer.Write(String8.Empty); } else { writer.Write(block.GetCopy(this.User.EmailAddress)); }
+                if (this.IsAnonymous) { writer.Write(String8.Empty); } else { writer.Write(this.User.ID); }
 
-                if (mode != WebRequestWriteMode.UserEmailOnly)
+                if (mode != WebRequestWriteMode.UserIdentityOnly)
                 {
+                    if (this.IsAnonymous) { writer.Write(String8.Empty); } else { writer.Write(block.GetCopy(this.User.EmailAddress)); }
                     if (this.IsAnonymous) { writer.Write(String8.Empty); } else { writer.Write(block.GetCopy(this.User.Guid.ToString())); }
                     if (this.IsAnonymous) { writer.Write(String8.Empty); } else { writer.Write(this.User.IsPremiumUser); }
                     if (this.IsAnonymous) { writer.Write(String8.Empty); } else { writer.Write(this.User.JoinDate); }
