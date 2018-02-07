@@ -33,9 +33,6 @@
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Microsoft.CodeAnalysis.Elfie">
-      <HintPath>..\bin\x64\Release\Microsoft.CodeAnalysis.Elfie.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -64,6 +61,7 @@
     <Compile Include="Mappers\UriStemMapper.cs" />
     <Compile Include="Model\User.cs" />
     <Compile Include="Model\WebRequest.cs" />
+    <Compile Include="Model\WebRequestDisasters.cs" />
     <Compile Include="Model\WebRequestGenerator.cs" />
     <Compile Include="PrimitiveConvertersGenerator.cs" />
     <Compile Include="Program.cs" />
@@ -78,6 +76,12 @@
     <EmbeddedResource Include="Data\FirstNames.txt" />
     <EmbeddedResource Include="Data\LastNames.txt" />
     <EmbeddedResource Include="Data\TopWords.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Elfie\Elfie\Elfie.csproj">
+      <Project>{d45f339f-847a-4f3a-88a0-afb883e9920e}</Project>
+      <Name>Elfie</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
