@@ -26,6 +26,40 @@ window.xhr = (path, params, body) => {
     });
 };
 
+window.CachableReusedRequest = class CachableReusedRequest {
+    constructor(path) {
+        this._path = path;
+        this.reset();
+    }
+    reset() {
+        this._cache = {};
+    }
+    update(paramObj, then) {
+        if (this._xhr) this._xhr.abort();
+
+        if (!paramObj) return then(); // return undef
+
+        const paramStr = buildUrlParameters(paramObj);
+        then = then || this._then;
+        const cache = this.caching && this._cache[paramStr];
+        if (cache) {
+            then(cache);
+        } else {
+            const xhr = this._xhr = new XMLHttpRequest();
+            xhr.withCredentials = true;
+            xhr.open("GET", `${configuration.url}/${this._path + paramStr}`);
+            xhr.onload = () => {
+                if (xhr.status >= 200 && xhr.status < 400) {
+                    const json = JSON.parse(xhr.responseText).content;
+                    if (this.caching) this._cache[paramStr] = json;
+                    then(json);
+                }
+            }
+            xhr.send();
+        }
+    }
+}
+
 Object.keysNoFunctions = function(o) {
     const keys = Object.keys(o)
     return keys.filter(k => typeof o[k] !== "function")

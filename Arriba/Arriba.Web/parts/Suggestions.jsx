@@ -4,7 +4,8 @@ import EventedComponent from "./EventedComponent";
 export default class extends EventedComponent {
     constructor(props) {
         super(props);
-        this.cache = {};
+        this.request = new CachableReusedRequest("suggest");
+        this.request.caching = props.cache;
         this.state = { suggestions: [] };
         this.suggestions = { suggestions: [], complete: "", completionCharacters: [] };
         this.events = {
@@ -38,33 +39,19 @@ export default class extends EventedComponent {
         });
     }
     fetch() {
-        if (this.lastRequest) this.lastRequest.abort();
-
-        if (this.props.query === undefined) {
-            this.clear();
-            return;
-        }
-
-        var cached = this.cache[this.props.query];
-        if (this.props.cache && cached) {
-            this.suggestions = cached;
-            return;
-        }
-
-        const t = this.props.userSelectedTable ? `t=${encodeURIComponent(this.props.userSelectedTable)}&` : ""
-        this.lastRequest = jsonQuery(
-            configuration.url + `/suggest?${t}q=` + encodeURIComponent(this.props.query),
-            data => {
-                this.suggestions = data.content;
-                if (this.props.cache) this.cache[this.props.query] = data.content; // Assume query hasn't changed since the call, since new requests abort old ones.
-            }
-        );
+        // query=undef valid for peek, which implies clear.
+        const params = this.props.query === undefined
+            ? undefined
+            : { t: this.props.userSelectedTable, q: this.props.query || "" };
+        this.request.update(params, json => {
+            this.suggestions = json || { suggestions: [], complete: "", completionCharacters: [] };
+        });
     }
     clear() {
         this.setState({ suggestions: [] });
     }
     clearCache() {
-        this.cache = {};
+        this.request.reset();
     }
 
     onClick(item) {
