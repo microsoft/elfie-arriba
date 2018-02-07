@@ -62,7 +62,7 @@ namespace XForm.Generator
 
             // Generate WebRequest Data [for a week ago]
             generator = new WebRequestGenerator(users, r, asOfDate, (eventCount < 1001 ? 10 : 100));
-            BuildWebRequests(generator, eventCount, WebRequestWriteMode.All);
+            BuildWebRequests(basePath, generator, eventCount, WebRequestWriteMode.All);
 
             asOfDate = asOfDate.AddDays(8);
 
