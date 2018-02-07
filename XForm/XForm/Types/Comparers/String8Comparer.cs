@@ -56,7 +56,7 @@ namespace XForm.Types.Comparers
                 // Slow Path: Look up indices on both sides. ~55ms for 16M
                 for (int i = 0; i < left.Count; ++i)
                 {
-                    if (leftArray[left.Index(i)].CompareTo(rightArray[right.Index(i)]) == 0) vector.Set(i);
+                    if (leftArray[left.Index(i)].Equals(rightArray[right.Index(i)])) vector.Set(i);
                 }
             }
             else if (!right.Selector.IsSingleValue)
@@ -72,7 +72,7 @@ namespace XForm.Types.Comparers
                     int leftIndexToRightIndex = right.Selector.StartIndexInclusive - left.Selector.StartIndexInclusive;
                     for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
                     {
-                        if (leftArray[i].CompareTo(rightArray[i + leftIndexToRightIndex]) == 0) vector.Set(i - zeroOffset);
+                        if (leftArray[i].Equals(rightArray[i + leftIndexToRightIndex])) vector.Set(i - zeroOffset);
                     }
                 }
             }
@@ -98,7 +98,7 @@ namespace XForm.Types.Comparers
                     {
                         for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
                         {
-                            if (leftArray[i].CompareTo(rightValue) == 0) vector.Set(i - zeroOffset);
+                            if (leftArray[i].Equals(rightValue)) vector.Set(i - zeroOffset);
                         }
                     }
                 }
@@ -119,7 +119,7 @@ namespace XForm.Types.Comparers
 
         public bool WhereEqual(String8 left, String8 right)
         {
-            return left.CompareTo(right) == 0;
+            return left.Equals(right);
         }
 
         public void WhereNotEqual(XArray left, XArray right, BitVector vector)

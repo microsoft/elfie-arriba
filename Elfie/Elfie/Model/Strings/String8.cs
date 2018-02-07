@@ -1433,19 +1433,19 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         #region Object Overrides
         public static bool operator ==(String8 left, String8 right)
         {
-            return left.CompareTo(right) == 0;
+            return left.Equals(right);
         }
 
         public static bool operator !=(String8 left, String8 right)
         {
-            return left.CompareTo(right) != 0;
+            return !left.Equals(right);
         }
 
         public override bool Equals(object o)
         {
             if (o is String8)
             {
-                return this.CompareTo((String8)o) == 0;
+                return this.Equals((String8)o);
             }
             else if (o is string)
             {
@@ -1455,6 +1455,21 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             {
                 return false;
             }
+        }
+
+        public bool Equals(String8 other)
+        {
+            if (this.Length != other.Length) return false;
+            if (this.Array == other.Array && this.Index == other.Index) return true;
+
+            int offset = other.Index - this.Index;
+            int end = this.Index + this.Length;
+            for(int i = this.Index; i < end; ++i)
+            {
+                if (this.Array[i] != other.Array[i + offset]) return false;
+            }
+
+            return true;
         }
 
         public override int GetHashCode()
