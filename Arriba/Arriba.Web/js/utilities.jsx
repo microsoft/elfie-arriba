@@ -68,6 +68,11 @@ Object.keysNoFunctions = function(o) {
 // Example: Object.diff({a: 1, b: 2, c: 3}, {b: 3, c: 3, d: 4}) >> Set(a, b, d)
 // Note: Ignores function values are they don't compare predictably.
 Object.diff = function(a, b) {
+    function eq(a, b) {
+        // Special case equality for [] to reduce churn in shouldComponentUpdate.
+        if (Array.isArray(a) && !a.length && Array.isArray(b) && !b.length) return true;
+        return a === b
+    }
     const makeSet = iterable => {
         // IE Set.ctor doesn't take args. Must manually add.
         const s = new Set(iterable);
@@ -76,7 +81,7 @@ Object.diff = function(a, b) {
     }
 
     const allKeys = makeSet([...Object.keysNoFunctions(a), ...Object.keysNoFunctions(b)]);
-    return makeSet([...allKeys.values()].filter(i => a[i] !== b[i]));
+    return makeSet([...allKeys.values()].filter(i => !eq(a[i], b[i])));
 };
 
 String.prototype.includes = String.prototype.includes || function() {
