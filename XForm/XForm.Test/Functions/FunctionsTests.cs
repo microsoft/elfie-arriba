@@ -3,15 +3,11 @@
 
 using System;
 using System.Linq;
-
 using Elfie.Test;
-
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-
 using XForm.Data;
 using XForm.Extensions;
-using XForm.IO;
 using XForm.Query;
 
 namespace XForm.Test.Query
