@@ -56,7 +56,7 @@ namespace XForm.Types.Comparers
                 // Slow Path: Look up indices on both sides. ~55ms for 16M
                 for (int i = 0; i < left.Count; ++i)
                 {
-                    if (leftArray[left.Index(i)].Equals(rightArray[right.Index(i)])) vector.Set(i);
+                    if (WhereEqual(leftArray[left.Index(i)], rightArray[right.Index(i)])) vector.Set(i);
                 }
             }
             else if (!right.Selector.IsSingleValue)
@@ -72,7 +72,7 @@ namespace XForm.Types.Comparers
                     int leftIndexToRightIndex = right.Selector.StartIndexInclusive - left.Selector.StartIndexInclusive;
                     for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
                     {
-                        if (leftArray[i].Equals(rightArray[i + leftIndexToRightIndex])) vector.Set(i - zeroOffset);
+                        if (WhereEqual(leftArray[i], rightArray[i + leftIndexToRightIndex])) vector.Set(i - zeroOffset);
                     }
                 }
             }
@@ -98,7 +98,7 @@ namespace XForm.Types.Comparers
                     {
                         for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
                         {
-                            if (leftArray[i].Equals(rightValue)) vector.Set(i - zeroOffset);
+                            if (WhereEqual(leftArray[i], rightValue)) vector.Set(i - zeroOffset);
                         }
                     }
                 }
@@ -106,7 +106,7 @@ namespace XForm.Types.Comparers
             else
             {
                 // Single Static comparison. ~0.7ms for 16M [called every 10,240 rows]
-                if (leftArray[left.Selector.StartIndexInclusive].CompareTo(rightArray[right.Selector.StartIndexInclusive]) == 0)
+                if (WhereEqual(leftArray[left.Selector.StartIndexInclusive], rightArray[right.Selector.StartIndexInclusive]))
                 {
                     vector.All(left.Count);
                 }
@@ -117,9 +117,41 @@ namespace XForm.Types.Comparers
             BoolComparer.AndNotNull(right, vector);
         }
 
-        public bool WhereEqual(String8 left, String8 right)
+        public unsafe bool WhereEqual(String8 left, String8 right)
         {
-            return left.Equals(right);
+            //return left.Equals(right);
+
+            if (left.Length != right.Length) return false;
+            if (left.Length == 0) return true;
+            if (left.Array == right.Array && left.Index == right.Index) return true;
+
+            if (left.Array.Length < left.Index + left.Length) throw new IndexOutOfRangeException("left.Index + Length");
+            if (right.Array.Length < right.Index + right.Length) throw new IndexOutOfRangeException("right.Index + Length");
+
+            fixed (byte* leftArray = &left.Array[left.Index])
+            {
+                fixed (byte* rightArray = &right.Array[right.Index])
+                {
+                    int index = 0;
+                    int length = left.Length;
+                    int blockLength = length - 8;
+
+                    while (index < blockLength)
+                    {
+                        ulong* leftLong = (ulong*)&leftArray[index];
+                        ulong* rightLong = (ulong*)&rightArray[index];
+                        if (*leftLong != *rightLong) return false;
+                        index += 8;
+                    }
+
+                    for (; index < length; ++index)
+                    {
+                        if (leftArray[index] != rightArray[index]) return false;
+                    }
+                }
+            }
+
+            return true;
         }
 
         public void WhereNotEqual(XArray left, XArray right, BitVector vector)
@@ -133,7 +165,7 @@ namespace XForm.Types.Comparers
                 // Slow Path: Look up indices on both sides. ~55ms for 16M
                 for (int i = 0; i < left.Count; ++i)
                 {
-                    if (leftArray[left.Index(i)].CompareTo(rightArray[right.Index(i)]) != 0) vector.Set(i);
+                    if (!WhereEqual(leftArray[left.Index(i)], rightArray[right.Index(i)])) vector.Set(i);
                 }
             }
             else if (!right.Selector.IsSingleValue)
@@ -149,7 +181,7 @@ namespace XForm.Types.Comparers
                     int leftIndexToRightIndex = right.Selector.StartIndexInclusive - left.Selector.StartIndexInclusive;
                     for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
                     {
-                        if (leftArray[i].CompareTo(rightArray[i + leftIndexToRightIndex]) != 0) vector.Set(i - zeroOffset);
+                        if (!WhereEqual(leftArray[i], rightArray[i + leftIndexToRightIndex])) vector.Set(i - zeroOffset);
                     }
                 }
             }
@@ -167,14 +199,14 @@ namespace XForm.Types.Comparers
                 {
                     for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
                     {
-                        if (leftArray[i].CompareTo(rightValue) != 0) vector.Set(i - zeroOffset);
+                        if (!WhereEqual(leftArray[i], rightValue)) vector.Set(i - zeroOffset);
                     }
                 }
             }
             else
             {
                 // Single Static comparison. ~0.7ms for 16M [called every 10,240 rows]
-                if (leftArray[left.Selector.StartIndexInclusive].CompareTo(rightArray[right.Selector.StartIndexInclusive]) != 0)
+                if (!WhereEqual(leftArray[left.Selector.StartIndexInclusive], rightArray[right.Selector.StartIndexInclusive]))
                 {
                     vector.All(left.Count);
                 }
@@ -187,7 +219,7 @@ namespace XForm.Types.Comparers
 
         public bool WhereNotEqual(String8 left, String8 right)
         {
-            return left.CompareTo(right) != 0;
+            return !WhereEqual(left, right);
         }
 
         public void WhereLessThan(XArray left, XArray right, BitVector vector)
