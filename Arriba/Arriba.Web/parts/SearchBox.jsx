@@ -27,10 +27,6 @@ export default class extends EventedComponent {
     focus() {
         this.refs.input.focus();
     }
-    onInput(query) {
-        // IE focus/blur spurriously triggers onInput(), this works around that.
-        if (this.props.query !== query) this.props.queryChanged(query);
-    }
     toggleFavorite() {
         if (!this.props.parsedQuery) return;
         localStorage.updateJson("favorites", favs => (favs || []).toggle(this.props.parsedQuery));
@@ -45,7 +41,11 @@ export default class extends EventedComponent {
                 tabIndex="1"
                 value={this.props.query}
                 onClick={e => this.refs.suggestions.fetch()}
-                onInput={e => this.onInput(e.target.value)}
+                onInput={e => {
+                    // IE focus/blur spurriously triggers onInput(), this works around that.
+                    const query = e.target.value;
+                    if (this.props.query !== query) this.props.queryChanged(query);
+                }}
                 onKeyDown={e => this.refs.suggestions.onKeyDown(e)} />
             <div className="rail">
                 {this.state.completed}
