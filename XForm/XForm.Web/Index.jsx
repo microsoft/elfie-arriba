@@ -88,7 +88,7 @@ class Index extends React.Component {
         this.state = { query: this.query, userCols: [], saveAs: '', pausePulse: true }
 
         const loc = document.location;
-        this.serviceUrl = (loc.port === "8080" ? `${loc.protocol}//${loc.hostname}:5073` : '')
+        xhr.urlRoot = loc.port === '8080' ? `${loc.protocol}//${loc.hostname}:5073` : ''
     }
     componentDidMount() {
         window.require.config({ paths: { 'vs': 'node_modules/monaco-editor/min/vs' }});
@@ -166,7 +166,7 @@ class Index extends React.Component {
     	});
     }
     get suggest() {
-        return xhr(this.serviceUrl, `suggest`, { asof: this.state.asOf, q: this.editor.valueUntilPosition() })
+        return xhr(`suggest`, { asof: this.state.asOf, q: this.editor.valueUntilPosition() })
     }
     get query() {
         return this.editor && this.editor.getValue()
@@ -174,7 +174,7 @@ class Index extends React.Component {
     queryTextChanged(force) {
         this.textJustChanged = true
         const trimmedQuery = this.query.trim() // Pre async capture
-        xhr(this.serviceUrl, `suggest`, { asof: this.state.asOf, q: this.query }).then(info => {
+        xhr(`suggest`, { asof: this.state.asOf, q: this.query }).then(info => {
             if (info.Valid && (force || this.validQuery !== trimmedQuery)) {
                 this.validQuery = trimmedQuery
                 this.debouncedQueryChanged()
@@ -218,7 +218,7 @@ class Index extends React.Component {
 
         if(!!this.validQuery) this.setState({ loading: true, pausePulse: true })
 
-        xhr(this.serviceUrl, `run`, { asof: this.state.asOf, q: `${this.validQuery}\nschema` }).then(o => {
+        xhr(`run`, { asof: this.state.asOf, q: `${this.validQuery}\nschema` }).then(o => {
             const schemaBody = (o.rows || []).map(r => ({ name: r[0], type: `${r[1]}` }))
             const colNames = new Set(schemaBody.map(r => r.name))
             this.setState({
@@ -235,7 +235,7 @@ class Index extends React.Component {
 
         const userCols = this.state.userCols.length && `\nselect ${this.state.userCols.map(c => `[${c}]`).join(', ')}` || ''
         this.setState({ loading: true, pausePulse: firstRun })
-        xhr(this.serviceUrl, `run`, { rowLimit: this.count, colLimit: this.cols, asof: this.state.asOf, q: `${q}${userCols}` }).then(o => {
+        xhr(`run`, { rowLimit: this.count, colLimit: this.cols, asof: this.state.asOf, q: `${q}${userCols}` }).then(o => {
             if (o.Valid === false) {
                 this.setState({
                     results: [],
@@ -248,7 +248,7 @@ class Index extends React.Component {
             if (o.Message || o.ErrorMessage) throw 'Error should have been caught before run.'
             if (firstRun) {
                 this.setState({ results: o })
-                xhr(this.serviceUrl, `count`, { asof: this.state.asOf, q: this.validQuery }).then(o => {
+                xhr(`count`, { asof: this.state.asOf, q: this.validQuery }).then(o => {
                     this.setState({
                         resultCount: typeof o.Count === "number" && `${o.Count.toLocaleString()} Results (${o.RuntimeMs} ms)`,
                         loading: false,
@@ -301,7 +301,7 @@ class Index extends React.Component {
                         const q = this.query
                         const name = this.state.saveAs
                         if (!name || !q) return
-                        xhr(this.serviceUrl, `save`, { name, q }).then(o => {
+                        xhr(`save`, { name, q }).then(o => {
                             this.setState({ saving: "Saved" })
                             setTimeout(() => this.setState({ saving: "Save" }), 3000)
                         })

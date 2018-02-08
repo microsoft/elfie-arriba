@@ -1,13 +1,13 @@
 window.log = function() { console.log.apply(console, arguments) }
 
-window.xhr = (urlRoot, path, params) => {
+window.xhr = (path, params) => {
     return new Promise((resolve, reject) => {
         const encodedParams = Object.keys(params)
             .filter(k => params[k] !== undefined)
             .map(k => `${k}=${encodeURIComponent(params[k])}`).join('&')
         const xhr = new XMLHttpRequest();
         xhr.withCredentials = false;
-        xhr.open("GET", `${urlRoot}/${path}?${encodedParams}`, true); // For testing: http://httpbin.org/post
+        xhr.open("GET", `${xhr.urlRoot}/${path}?${encodedParams}`, true); // For testing: http://httpbin.org/post
         xhr.onload = () => {
             const responseText = xhr.responseText;
 
