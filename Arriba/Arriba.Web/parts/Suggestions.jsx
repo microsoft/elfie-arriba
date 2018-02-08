@@ -11,16 +11,20 @@ export default class extends EventedComponent {
         this.events = {
             "mousewheel": e => { // Prefer "mousewheel" over "scroll" as the latter gets (noisily) triggered by results loading.
                 if (!this.refs.suggestions || this.refs.suggestions.contains(e.target)) return;
-                this.clear();
+                this.props.hide();
             },
         };
     }
     componentDidUpdate(prevProps, prevState) {
-        // Skip fetch in situations where the input is not focused. Namely, when a the query is set from the Recents/Favs.
-        if (prevProps.query !== this.props.query
-            && this.props.query !== "*"
-            && (!this.props.hasFocus || this.props.hasFocus())) // If hasFocus is not available, assume true.
-            this.fetch();
+        if (prevProps.query !== this.props.query) {
+            // query=undef valid for peek, which implies clear.
+            const params = this.props.query === undefined
+                ? undefined
+                : { t: this.props.userSelectedTable, q: this.props.query || "" };
+            this.request.update(params, json => {
+                this.suggestions = json || { suggestions: [], complete: "", completionCharacters: [] };
+            });
+        }
 
         var suggestions = this.state.suggestions;
         var sel = this.state.sel;
@@ -37,18 +41,6 @@ export default class extends EventedComponent {
             completed: dataContent.complete,
             completionCharacters: dataContent.completionCharacters.map(c => ({ "\t": "Tab" })[c] || c),
         });
-    }
-    fetch() {
-        // query=undef valid for peek, which implies clear.
-        const params = this.props.query === undefined
-            ? undefined
-            : { t: this.props.userSelectedTable, q: this.props.query || "" };
-        this.request.update(params, json => {
-            this.suggestions = json || { suggestions: [], complete: "", completionCharacters: [] };
-        });
-    }
-    clear() {
-        this.setState({ suggestions: [] });
     }
     clearCache() {
         this.request.reset();
@@ -80,7 +72,7 @@ export default class extends EventedComponent {
             e.preventDefault(); // Suppress focus tabbing.
         }
         if (e.key === "Escape") {
-            this.clear();
+            this.props.hide();
             e.stopPropagation(); // Prevent SelectedItem clear.
         }
     }
