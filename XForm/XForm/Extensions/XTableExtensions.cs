@@ -123,13 +123,15 @@ namespace XForm.Extensions
                     int count = pipeline.Next(batchSize, cancellationToken);
                     result.RowCount += count;
 
-                    if (count == 0)
+                    if(cancellationToken.IsCancellationRequested)
+                    {
+                        break;
+                    }
+                    else if (count == 0)
                     {
                         result.IsComplete = true;
                         break;
                     }
-
-                    if (w.Elapsed > timeout) break;
                 }
 
                 result.Elapsed = w.Elapsed;
