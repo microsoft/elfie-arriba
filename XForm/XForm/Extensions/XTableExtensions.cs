@@ -112,7 +112,7 @@ namespace XForm.Extensions
             using (CancellationTokenSource source = new CancellationTokenSource())
             {
                 CancellationToken cancellationToken = source.Token;
-                source.CancelAfter(timeout);
+                if(timeout != TimeSpan.Zero && timeout != TimeSpan.MaxValue) source.CancelAfter(timeout);
 
                 RunResult result = new RunResult();
                 result.Timeout = timeout;

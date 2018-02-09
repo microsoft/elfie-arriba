@@ -91,7 +91,7 @@ namespace XForm.Verbs
 
         public int Next(int desiredCount, CancellationToken cancellationToken)
         {
-            // If this is the first call, walk all rows once to find best rows
+            // If this is the first call, walk all rows once to group them
             if (!_isDictionaryBuilt)
             {
                 _isDictionaryBuilt = true;
