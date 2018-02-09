@@ -89,6 +89,9 @@ class Index extends React.Component {
 
         const loc = document.location;
         xhr.urlRoot = loc.port === '8080' ? `${loc.protocol}//${loc.hostname}:5073` : ''
+
+        this.reqPeek = new CachableReusedRequest('run');
+        this.reqPeek.caching = true;
     }
     componentDidMount() {
         window.require.config({ paths: { 'vs': 'node_modules/monaco-editor/min/vs' }});
@@ -164,6 +167,16 @@ class Index extends React.Component {
             this.validQuery = this.query
             this.queryChanged()
     	});
+    }
+    componentDidUpdate(prevProps, prevState) {
+        if (prevState.peek !== this.state.peek) {
+            const params = this.state.peek
+                ? { q: `${this.query}\ngroupBy [${this.state.peek.name}] with Count(), Percentage()\nwhere [Count] > 1` }
+                : undefined
+            this.reqPeek.update(params, json => {
+                this.setState({ peekData: json && json.rows.sort((a, b) => b[1] - a[1]) && json.rows.slice(0, 7) })
+            })
+        }
     }
     get suggest() {
         return xhr(`suggest`, { asof: this.state.asOf, q: this.editor.valueUntilPosition() })
@@ -260,6 +273,36 @@ class Index extends React.Component {
             }
         })
     }
+    _makeSvg(list) {
+        if (!list.length) return false;
+
+        // Generates a SVG histogram to be displayed behind the completion list.
+        // The path goes counter-clockwise starting from the top-right.
+        var d = '';
+
+        // The inst() currently concats SVG commands to the list 'd'.
+        // However when debugging, it is useful to redirect the ...params to the console.
+        const inst = (...params) => d += params.join(" ") + " ";
+
+        // Scrape ___% from the item.hint. If not found, default to 0.
+        const values = list.map(item => new Number(item[2].replace('%', '')) + 0 || 0);
+
+        const w = 80; // Matches CSS declared width.
+        inst("M", w, 0);
+        inst("L", w - values[0] * 0.75, 0);
+        const max = Math.max(...values) || 1; // Prevent divide by zero.
+        var y = 0; // Running total fo the height.
+        values.forEach(val => {
+            const x = w - (val/max) * w;
+            inst("S", x, y, ",", x, y + 17); // Half of the CSS height.
+            y += 34; // Matches the CSS declared height of each row.
+        });
+        const x = w - values[values.length - 1] * 0.75;
+        inst("S", x, y, x, y + 18);
+        inst("L", w, y);
+        inst("Z");
+        return <svg><path id="p" d={d} /></svg>
+    }
     render() {
         var cols, rows
         const results = this.state.results
@@ -268,13 +311,25 @@ class Index extends React.Component {
             rows = results.rows
         }
 
+        const Peek = () => {
+            if (!this.state.peek || !this.state.peek.tr || !this.state.peekData) return null
+            const rect = this.state.peek.tr.getBoundingClientRect()
+            return <div className="peek" style={{ left: `${rect.x + rect.width - 5}px`, top: `${rect.y}px` }}>
+                {this._makeSvg(this.state.peekData)}
+                {this.state.peekData.map((row, i) => <div key={i} className="peek-value">
+                    <span>{row[0] === '' ? '—' : row[0] }</span>
+                    <span>{row[2]}</span>
+                </div>)}
+            </div>
+        }
+
         const formatters = rows && cols.map(col => col === "Count" || col.endsWith(".Sum")
                 ? cell => cell === "" ? "—" : (+cell).toLocaleString()
                 : cell => cell)
 
         const encodedQuery = encodeURIComponent(this.validQuery)
 
-        return <div className={`root`}>
+        return [<div key="root" className={`root`}>
             <div className="query">
                 <div className="queryHeader">
                     <input type="text" placeholder="Save As"
@@ -324,7 +379,10 @@ class Index extends React.Component {
                 {this.state.schemaBody && <div className="tableWrapper">
                     <table>
                         <tbody>
-                            {this.state.schemaBody && this.state.schemaBody.map((r, i) => <tr key={i}>
+                            {this.state.schemaBody && this.state.schemaBody.map((r, i) => <tr key={i}
+                                ref={tr => r.tr = tr}
+                                onMouseEnter={e => this.setState({ peek: r })}
+                                onMouseLeave={e => this.setState({ peek: undefined })}>
                                 <td><label><input type="checkbox" checked={this.state.userCols.includes(r.name)} onChange={e => {
                                     this.setState({ userCols: [...this.state.userCols].toggle(r.name) }, () => this.limitChanged())
                                 }}/>{r.name}</label></td>
@@ -361,7 +419,8 @@ class Index extends React.Component {
                     </table>
                 </div>
             </div>
-        </div>
+        </div>,
+        <Peek key="peek" />]
     }
 }
 

@@ -108,6 +108,44 @@ body {
     }
 }
 
+.peek {
+    position: absolute;
+    z-index: 3; // Might be 3 because of interaction with Monaco.
+    border: 1px solid $line80;
+    border-radius: 2px;
+    background: $bg;
+    box-shadow: 0px 0 15px 0 rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+
+    svg {
+        position: absolute;
+        right: 0;
+        width: 80px;
+        height: 100%;
+        z-index: -1;
+        fill: adjust-color($blue, $green: -20);
+        opacity: 0.15; // lighten() doesn't work for all color inputs.
+    }
+
+    .peek-value {
+        padding: 10px 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        :first-child {
+            font-size: 9pt;
+            font-weight: bold;
+        }
+        :last-child {
+            color: adjust-color($blue, $saturation: -50%);
+            margin-left: 50px;
+        }
+
+        &:hover { background: adjust-color(change-color($blue, $alpha: 0.1), $green: -40); }
+    }
+}
+
 .query {
     display: flex;
     flex-direction: column;
@@ -234,7 +272,7 @@ body {
                 padding-right: 20px;
             }
         }
-        tr:hover { background: change-color($blue, $alpha: 0.1); }
+        tr:hover { background: adjust-color(change-color($blue, $alpha: 0.1), $green: -40); }
         :nth-child(5n) td {
             padding-bottom: 20px;
         }

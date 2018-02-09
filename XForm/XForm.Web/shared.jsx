@@ -7,7 +7,7 @@ window.xhr = (path, params) => {
             .map(k => `${k}=${encodeURIComponent(params[k])}`).join('&')
         const xhr = new XMLHttpRequest();
         xhr.withCredentials = false;
-        xhr.open("GET", `${xhr.urlRoot}/${path}?${encodedParams}`, true); // For testing: http://httpbin.org/post
+        xhr.open("GET", `${window.xhr.urlRoot}/${path}?${encodedParams}`, true); // For testing: http://httpbin.org/post
         xhr.onload = () => {
             const responseText = xhr.responseText;
 
@@ -43,3 +43,38 @@ window.xhr = (path, params) => {
         xhr.send();
     });
 };
+
+window.CachableReusedRequest = class CachableReusedRequest {
+    constructor(path) {
+        this._path = path;
+        this.reset();
+    }
+    reset() {
+        this._cache = {};
+    }
+    update(paramObj, then) {
+        if (this._xhr) this._xhr.abort();
+
+        if (!paramObj) return then(); // return undef
+
+        const paramStr = Object.keys(paramObj)
+            .filter(k => paramObj[k] !== undefined)
+            .map(k => `${k}=${encodeURIComponent(paramObj[k])}`).join('&')
+        const cache = this.caching && this._cache[paramStr];
+        if (cache) {
+            then(cache);
+        } else {
+            const xhr = this._xhr = new XMLHttpRequest();
+            xhr.withCredentials = false;
+            xhr.open("GET", `${window.xhr.urlRoot}/${this._path}?${paramStr}`);
+            xhr.onload = () => {
+                if (xhr.status >= 200 && xhr.status < 400) {
+                    const json = JSON.parse(xhr.responseText);
+                    if (this.caching) this._cache[paramStr] = json;
+                    then(json);
+                }
+            }
+            xhr.send();
+        }
+    }
+}
