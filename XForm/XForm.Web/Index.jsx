@@ -269,7 +269,7 @@ class Index extends React.Component {
         }
 
         const formatters = rows && cols.map(col => col === "Count" || col.endsWith(".Sum")
-                ? cell => cell === "" ? "-" : (+cell).toLocaleString()
+                ? cell => cell === "" ? "—" : (+cell).toLocaleString()
                 : cell => cell)
 
         const encodedQuery = encodeURIComponent(this.validQuery)
