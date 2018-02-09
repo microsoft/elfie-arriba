@@ -20,9 +20,9 @@ namespace XForm.Test.Query
         [TestMethod]
         public void Function_Coalesce()
         {
-            int[] ageValues = { 50, 23, 42, 0, 0, 0 };
-            int[] salaryValues = { 5, 0, 12, 0, 13, 0 };
-            int[] siblingValues = { 0, 0, 0, 1, 0, 2 };
+            int[] ageValues = { 50, 23, 42, 0, -99, 0 };
+            int[] salaryValues = { 5, 0, 12, -3, 13, 0 };
+            int[] siblingValues = { -8, 0, 0, 1, 0, 2 };
 
             bool[] ageNullRows = { false, false, false, true, true, true };
             bool[] salaryNullRows = { false, true, false, true, false, true };

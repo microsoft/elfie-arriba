@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using XForm.Data;
 using XForm.Query;
 
@@ -30,16 +31,13 @@ namespace XForm.Functions
             {
                 IXColumn column = context.Parser.NextColumn(source, context);
                 _columns.Add(column);
-                if (System.String.IsNullOrEmpty(column.ColumnDetails.Name)) throw new ArgumentException($"Column {_columns.Count} passed to 'Column' wasn't assigned a name. Use 'AS [Name]' to assign names to every column selected.");
             }
 
-            if (!AllTypesMatch(_columns))
-                throw new UsageException("Coalesce requires all column types to match");
-
-            _coalescer = (ICoalescer)Allocator.ConstructGenericOf(typeof(Coalescer<>), _columns[0].ColumnDetails.Type);
-
-            ColumnDetails = new ColumnDetails($"{_columns[0].ColumnDetails.Name}.Coalesce", _columns[0].ColumnDetails.Type);
-            IndicesType = _columns[0].IndicesType;
+            ValidateAllTypesMatch(_columns);
+            IXColumn firstColumn = _columns[0];
+            IndicesType = firstColumn.IndicesType;
+            ColumnDetails = new ColumnDetails(nameof(Coalesce), firstColumn.ColumnDetails.Type);
+            _coalescer = (ICoalescer)Allocator.ConstructGenericOf(typeof(Coalescer<>), firstColumn.ColumnDetails.Type);
         }
 
         public ColumnDetails ColumnDetails { get; private set; }
@@ -48,25 +46,22 @@ namespace XForm.Functions
 
         public Func<XArray> CurrentGetter()
         {
-            Func<ArraySelector, XArray>[] getters = new Func<ArraySelector, XArray>[_columns.Count];
+            Func<XArray>[] getters = _columns.Select((column) => column.CurrentGetter()).ToArray();
+            List<Func<ArraySelector, XArray>> selectedGetters = new List<Func<ArraySelector, XArray>>();
 
-            for (int index = 0; index < _columns.Count; index++)
+            foreach (Func<XArray> func in getters)
             {
-                int i = index;
-                getters[i] = (selector) => _columns[i].CurrentGetter()();
+                selectedGetters.Add((selector) => func());
             }
 
-            return () => _coalescer.Convert(getters, null);
+            return () => _coalescer.Convert(selectedGetters.ToArray(), null);
         }
 
         public Func<ArraySelector, XArray> SeekGetter()
         {
-            Func<ArraySelector, XArray>[] getters = new Func<ArraySelector, XArray>[_columns.Count];
-
-            for (int index = 0; index < _columns.Count; index++)
-            {
-                getters[index] = (selector) => _columns[index].SeekGetter()(selector);
-            }
+            Func<ArraySelector, XArray>[] getters = _columns
+                .Select((column) => column.SeekGetter())
+                .ToArray();
 
             return (selector) => _coalescer.Convert(getters, selector);
         }
@@ -91,18 +86,16 @@ namespace XForm.Functions
             return null;
         }
 
-        private bool AllTypesMatch(List<IXColumn> columns)
+        private void ValidateAllTypesMatch(List<IXColumn> columns)
         {
             Type previousColumnType = null;
             foreach (IXColumn column in columns)
             {
                 if (previousColumnType != null && previousColumnType != column.ColumnDetails.Type)
-                    return false;
+                    throw new UsageException($"[{column.ColumnDetails.Name}] type of '{column.ColumnDetails.Type.ToString()}' does not match the previous columns type of '{previousColumnType.ToString()}'");
 
                 previousColumnType = column.ColumnDetails.Type;
             }
-
-            return true;
         }
     }
 
