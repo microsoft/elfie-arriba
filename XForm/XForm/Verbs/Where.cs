@@ -131,6 +131,10 @@ namespace XForm.Verbs
                 countToRequest = CountToRequest(desiredCount);
             }
 
+            // Tell the mapper there are no more matches
+            _vector.None();
+            _mapper.SetMatches(_vector, 0);
+
             return 0;
 
             // Where.Next implementation which doesn't request excess results and page through them.

@@ -28,6 +28,7 @@ namespace XForm.Verbs
 
     public class Peek : IXTable
     {
+        private const int MaximumCountToReturn = 20;
         private const float MinimumPercentageToReport = 0.005f;
 
         private IXTable _source;
@@ -109,6 +110,12 @@ namespace XForm.Verbs
             // Sort the values by count descending
             Array.Sort<int, int>(finalCounts, finalIndices, 0, groupCount, new ReverseComparer());
 
+            // Limit to the top N if needed
+            if (groupCount > MaximumCountToReturn) groupCount = MaximumCountToReturn;
+
+            // Set the distinct count (now that it's known)
+            _distinctCount = groupCount;
+
             // Set the output values
             int[] groupsRemap = null;
             XArray finalCountsX = XArray.All(finalCounts, groupCount);
@@ -116,9 +123,6 @@ namespace XForm.Verbs
             _columns[0].SetValues(groups.Select(ArraySelector.Map(finalIndices, groupCount), ref groupsRemap));
             _columns[1].SetValues(finalCountsX);
             _columns[2].SetValues(PercentageAggregator.ToPercentageStrings(finalCountsX, totalRowCount));
-
-            // Set the distinct count (now that it's known)
-            _distinctCount = groupCount;
         }
 
         private class ReverseComparer : IComparer<int>
