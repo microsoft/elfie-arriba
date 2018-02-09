@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace XForm.Data
 {
@@ -19,9 +20,9 @@ namespace XForm.Data
         public virtual int CurrentRowCount => _source.CurrentRowCount;
         public virtual IReadOnlyList<IXColumn> Columns => _source.Columns;
 
-        public virtual int Next(int desiredCount)
+        public virtual int Next(int desiredCount, CancellationToken cancellationToken)
         {
-            return _source.Next(desiredCount);
+            return _source.Next(desiredCount, cancellationToken);
         }
 
         public virtual void Reset()

@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 
@@ -161,7 +162,7 @@ namespace XForm.IO
         public int Count => _metadata.RowCount;
         public int CurrentRowCount { get; private set; }
 
-        public int Next(int desiredCount)
+        public int Next(int desiredCount, CancellationToken cancellationToken)
         {
             _currentEnumerateSelector = _currentEnumerateSelector.NextPage(Count, desiredCount);
             _currentSelector = _currentEnumerateSelector;

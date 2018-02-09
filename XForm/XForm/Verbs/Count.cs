@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading;
 
 using XForm.Columns;
 using XForm.Data;
@@ -46,7 +47,7 @@ namespace XForm.Verbs
             _source.Reset();
         }
 
-        public int Next(int desiredCount)
+        public int Next(int desiredCount, CancellationToken cancellationToken)
         {
             // Return no more rows if this isn't the first call
             if (_count != -1)
@@ -66,7 +67,7 @@ namespace XForm.Verbs
                 _count = 0;
                 while (true)
                 {
-                    int batchCount = _source.Next(Math.Max(desiredCount, XTableExtensions.DefaultBatchSize));
+                    int batchCount = _source.Next(Math.Max(desiredCount, XTableExtensions.DefaultBatchSize), cancellationToken);
                     if (batchCount == 0) break;
                     _count += batchCount;
                 }

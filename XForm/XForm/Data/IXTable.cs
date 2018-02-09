@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace XForm.Data
 {
@@ -29,8 +30,9 @@ namespace XForm.Data
         ///  Request the next batch of rows from the source of up to desiredCount rows.
         /// </summary>
         /// <param name="desiredCount">Desired Row count; fewer or more rows may be returned.</param>
+        /// <param name="cancellationToken">Token to allow early cancellation of query</param>
         /// <returns>Row count returned, zero if no more rows available</returns>
-        int Next(int desiredCount);
+        int Next(int desiredCount, CancellationToken cancellationToken);
 
         /// <summary>
         ///  Return the row count in the current array..

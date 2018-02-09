@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Threading;
 
 using XForm.Data;
 using XForm.Extensions;
@@ -44,10 +45,10 @@ namespace XForm.Test
             _assertPipeline = context.Parser.NextQuery(_singlePageSource);
         }
 
-        public override int Next(int desiredCount)
+        public override int Next(int desiredCount, CancellationToken cancellationToken)
         {
             // Get the next rows from the real source
-            int count = _singlePageSource.SourceNext(desiredCount);
+            int count = _singlePageSource.SourceNext(desiredCount, cancellationToken);
 
             if (count > 0)
             {
@@ -93,10 +94,10 @@ namespace XForm.Test
             _debuggingContext = new QueryDebuggingContext(context);
         }
 
-        public override int Next(int desiredCount)
+        public override int Next(int desiredCount, CancellationToken cancellationToken)
         {
             // Get the next rows from the real source
-            int count = _source.Next(desiredCount);
+            int count = _source.Next(desiredCount, cancellationToken);
             _actualCount += count;
 
             // When done, ensure the row count matches

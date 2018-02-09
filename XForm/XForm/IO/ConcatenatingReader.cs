@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 using XForm.Data;
 using XForm.Extensions;
@@ -142,14 +143,14 @@ namespace XForm.IO
         public IReadOnlyList<IXColumn> Columns => _columns;
         public int CurrentRowCount { get; private set; }
 
-        public int Next(int desiredCount)
+        public int Next(int desiredCount, CancellationToken cancellationToken)
         {
             if (_currentSourceIndex == -1) NextSource();
 
             while (_currentSourceIndex < _sources.Length)
             {
                 // Try to get rows from the next source
-                CurrentRowCount = _sources[_currentSourceIndex].Next(desiredCount);
+                CurrentRowCount = _sources[_currentSourceIndex].Next(desiredCount, cancellationToken);
 
                 // If it had rows left, return them
                 if (CurrentRowCount > 0) return CurrentRowCount;

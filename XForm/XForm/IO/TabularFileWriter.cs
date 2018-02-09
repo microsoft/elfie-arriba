@@ -11,6 +11,7 @@ using Microsoft.CodeAnalysis.Elfie.Serialization;
 using XForm.Data;
 using XForm.IO.StreamProvider;
 using XForm.Types;
+using System.Threading;
 
 namespace XForm.IO
 {
@@ -77,7 +78,7 @@ namespace XForm.IO
             }
         }
 
-        public int Next(int desiredCount)
+        public int Next(int desiredCount, CancellationToken cancellationToken)
         {
             // Build the writer only when we start getting rows
             if (_writer == null)
@@ -96,7 +97,7 @@ namespace XForm.IO
             }
 
             // Or smaller batch?
-            int rowCount = _source.Next(desiredCount);
+            int rowCount = _source.Next(desiredCount, cancellationToken);
             if (rowCount == 0) return 0;
 
             XArray[] arrays = new XArray[_stringColumnGetters.Length];
