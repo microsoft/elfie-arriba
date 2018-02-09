@@ -31,26 +31,24 @@ namespace XForm.Aggregators
         public ColumnDetails ColumnDetails { get; private set; }
         public ArraySelector FoundIndices => _counter.FoundIndices;
 
-        public XArray Values
+        public XArray Values => ToPercentageStrings(_counter.Values, _totalRows);
+
+        public static XArray ToPercentageStrings(XArray counts, int total)
         {
-            get
+            int[] countArray = (int[])counts.Array;
+
+            String8Block block = new String8Block();
+            String8[] percentages = new String8[counts.Count];
+            for (int i = 0; i < counts.Count; ++i)
             {
-                XArray counts = _counter.Values;
-                int[] countArray = (int[])counts.Array;
-
-                String8Block block = new String8Block();
-                String8[] percentages = new String8[counts.Count];
-                for(int i = 0; i < counts.Count; ++i)
-                {
-                    // Convert to a percentage, string, and then String8
-                    percentages[i] = block.GetCopy(ToFixedPercentage(countArray[counts.Index(i)], _totalRows));
-                }
-
-                return XArray.All(percentages, counts.Count);
+                // Convert to a percentage, string, and then String8
+                percentages[i] = block.GetCopy(ToThreeDigitPercentage(countArray[counts.Index(i)], total));
             }
+
+            return XArray.All(percentages, counts.Count);
         }
 
-        private static string ToFixedPercentage(int count, int total)
+        public static string ToThreeDigitPercentage(int count, int total)
         {
             if (total == 0) return "-";
             if (count == total) return "100%";
