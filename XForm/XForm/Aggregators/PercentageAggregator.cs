@@ -1,7 +1,10 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System;
+
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
+
 using XForm.Data;
 
 namespace XForm.Aggregators
@@ -31,9 +34,9 @@ namespace XForm.Aggregators
         public ColumnDetails ColumnDetails { get; private set; }
         public ArraySelector FoundIndices => _counter.FoundIndices;
 
-        public XArray Values => ToPercentageStrings(_counter.Values, _totalRows);
+        public XArray Values => ToPercentageStrings(_counter.Values, _totalRows, ThreeSigFigs);
 
-        public static XArray ToPercentageStrings(XArray counts, int total)
+        public static XArray ToPercentageStrings(XArray counts, int total, Func<int, int, string> formatter)
         {
             int[] countArray = (int[])counts.Array;
 
@@ -42,13 +45,13 @@ namespace XForm.Aggregators
             for (int i = 0; i < counts.Count; ++i)
             {
                 // Convert to a percentage, string, and then String8
-                percentages[i] = block.GetCopy(ToThreeDigitPercentage(countArray[counts.Index(i)], total));
+                percentages[i] = block.GetCopy(formatter(countArray[counts.Index(i)], total));
             }
 
             return XArray.All(percentages, counts.Count);
         }
 
-        public static string ToThreeDigitPercentage(int count, int total)
+        public static string ThreeSigFigs(int count, int total)
         {
             if (total == 0) return "-";
             if (count == total) return "100%";
@@ -67,6 +70,36 @@ namespace XForm.Aggregators
             {
                 return percentage.ToString("p1");  // 12.3%
             }
+        }
+
+        public static string TwoSigFigs(int count, int total)
+        {
+            if (total == 0) return "-";
+            if (count == total) return "100%";
+
+            float percentage = (float)count / (float)total;
+
+            if (percentage < 0.01)
+            {
+                return percentage.ToString("p1");  // 0.1%
+            }
+            else if (percentage < 0.10)
+            {
+                return percentage.ToString("p1");  // 1.2%
+            }
+            else
+            {
+                return percentage.ToString("p0");  // 12%
+            }
+        }
+
+        public static string WholePercentage(int count, int total)
+        {
+            if (total == 0) return "-";
+            if (count == total) return "100%";
+
+            float percentage = (float)count / (float)total;
+            return percentage.ToString("p0"); 
         }
 
         public void Add(XArray rowIndices, int newDistinctCount)

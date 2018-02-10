@@ -26,12 +26,19 @@ namespace XForm.Verbs
         }
     }
 
+    /// <summary>
+    ///  Peek returns the top 20 distinct values in the column and the approximate
+    ///  percentage of rows for each value. It returns only values in more than 0.5%
+    ///  of rows, only the top 20, and only accurate to +/- 1% with 95% confidence.
+    ///  
+    ///  9,604 samples required to see a 50% value within +/- 1% with 95% confidence.
+    /// </summary>
     public class Peek : IXTable
     {
         private const int MaximumCountToReturn = 20;                    // Only return the top this many groups
         private const float MinimumPercentageToReport = 0.005f;         // Only return groups with at least this percentage of rows
-        private const int RequiredSampleSize = 16666;                   // Use sampled rows when the same has at least this many samples
-        private const int SampleCount = 3;                              // Build this many scaled samples
+        private const int RequiredSampleSize = 9604;                   // Use sampled rows when the same has at least this many samples
+        private const int SampleCount = 5;                              // Build this many scaled samples
 
         private IXTable _source;
         private IXColumn _column;
@@ -81,7 +88,7 @@ namespace XForm.Verbs
             return CurrentRowCount;
         }
 
-        private void PostSortAndFilter(XArray groups, XArray counts, int totalRowCount)
+        private void PostSortAndFilter(XArray groups, XArray counts, int totalRowCount, bool wasAllRows)
         {
             int[] finalIndices = new int[groups.Count];
             int[] finalCounts = new int[groups.Count];
@@ -117,7 +124,15 @@ namespace XForm.Verbs
 
             _columns[0].SetValues(groups.Select(ArraySelector.Map(finalIndices, groupCount), ref groupsRemap));
             _columns[1].SetValues(finalCountsX);
-            _columns[2].SetValues(PercentageAggregator.ToPercentageStrings(finalCountsX, totalRowCount));
+
+            if (wasAllRows)
+            {
+                _columns[2].SetValues(PercentageAggregator.ToPercentageStrings(finalCountsX, totalRowCount, PercentageAggregator.TwoSigFigs));
+            }
+            else
+            {
+                _columns[2].SetValues(PercentageAggregator.ToPercentageStrings(finalCountsX, totalRowCount, PercentageAggregator.WholePercentage));
+            }
         }
 
         private class ReverseComparer : IComparer<int>
@@ -190,6 +205,9 @@ namespace XForm.Verbs
                         // If this sample now has enough values, stop collecting bigger row sets
                         if (currentSample == i - 1 && counts[i].TotalRowCount > RequiredSampleSize)
                         {
+                            // If every row was unique, stop early and don't set outputs (zero rows)
+                            if (ShouldStopEarly(dictionaries[currentSample], counts[currentSample])) return;
+
                             dictionaries[currentSample] = null;
                             counts[currentSample] = null;
                             currentSample++;
@@ -206,7 +224,26 @@ namespace XForm.Verbs
             }
 
             // Once the loop is done, get the distinct values and aggregation results
-            PostSortAndFilter(dictionaries[currentSample].DistinctKeys()[0], counts[currentSample].Values, counts[currentSample].TotalRowCount);
+            PostSortAndFilter(dictionaries[currentSample].DistinctKeys()[0], counts[currentSample].Values, counts[currentSample].TotalRowCount, currentSample == 0);
+        }
+
+        private bool ShouldStopEarly(GroupByDictionary dictionary, CountAggregator counter)
+        {
+            // If every value was unique so far, stop
+            if (dictionary.Count == counter.TotalRowCount) return true;
+
+            // If any value had enough rows to report, keep going
+            XArray counts = counter.Values;
+            int[] countsArray = (int[])counts.Array;
+            int threshold = (int)(counter.TotalRowCount * MinimumPercentageToReport);
+            for (int i = 0; i < counts.Count; ++i)
+            {
+                int count = countsArray[counts.Index(i)];
+                if (count >= threshold) return false;
+            }
+
+            // Otherwise, stop (not all unique, but no values in > 0.5% of rows)
+            return true;
         }
 
         private void BuildSingleEnumColumnDictionary(CancellationToken cancellationToken)
@@ -226,7 +263,7 @@ namespace XForm.Verbs
             }
 
             // Once the loop is done, get the distinct values and aggregation results
-            PostSortAndFilter(values, counts.Values, counts.TotalRowCount);
+            PostSortAndFilter(values, counts.Values, counts.TotalRowCount, true);
         }
 
         public void Reset()

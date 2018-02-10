@@ -140,56 +140,73 @@ namespace XForm.Test.Query
         }
 
         [TestMethod]
-        public void Verb_PeekAndGroupBy()
+        public void Verb_Peek()
         {
             String8Block block = new String8Block();
-            int[] values = new int[1000];
+            int[] values = BuildPeekSample();
 
-            int i = 0;
-            for(; i < 500; ++i)
-            {
-                // 500 are "0"
-                values[i] = 0;
-            }
+            IXTable expected = TableTestHarness.DatabaseContext.FromArrays(3)
+                .WithColumn("Value", new int[] { 0, 1, 2 })
+                .WithColumn("Count", new int[] { 500, 250, 150 })
+                .WithColumn("Percentage", TableTestHarness.ToString8(new string[] { "50%", "25%", "15%" }));
 
-            for(; i < 750; ++i)
-            {
-                // 250 are "1"
-                values[i] = 1;
-            }
+            IXTable actual = TableTestHarness.DatabaseContext.FromArrays(values.Length)
+                .WithColumn("Value", values)
+                .Query("peek [Value]", TableTestHarness.DatabaseContext);
 
-            for(; i < 900; ++i)
-            {
-                // 150 are "2"
-                values[i] = 2;
-            }
+            TableTestHarness.AssertAreEqual(expected, actual, 2);
+        }
 
-            for(; i < values.Length; ++i)
-            {
-                // 100 are four each of the same (under 0.5% threshold)
-                values[i] = i / 4;
-            }
+        [TestMethod]
+        public void Verb_GroupBy()
+        {
+            String8Block block = new String8Block();
+            int[] values = BuildPeekSample();
 
             IXTable expected = TableTestHarness.DatabaseContext.FromArrays(3)
                 .WithColumn("Value", new int[] { 0, 1, 2 })
                 .WithColumn("Count", new int[] { 500, 250, 150 })
                 .WithColumn("Percentage", TableTestHarness.ToString8(new string[] { "50.0%", "25.0%", "15.0%" }));
 
-            // Test Peek
-            IXTable peekActual = TableTestHarness.DatabaseContext.FromArrays(values.Length)
-                .WithColumn("Value", values)
-                .Query("peek [Value]", TableTestHarness.DatabaseContext);
-
-            TableTestHarness.AssertAreEqual(expected, peekActual, 2);
-
-            // Test GroupBy
-            IXTable groupByActual = TableTestHarness.DatabaseContext.FromArrays(values.Length)
+            IXTable actual = TableTestHarness.DatabaseContext.FromArrays(values.Length)
                 .WithColumn("Value", values)
                 .Query(@"
                     groupBy [Value] with Count(), Percentage()
                     where [Count] > 5", TableTestHarness.DatabaseContext);
 
-            TableTestHarness.AssertAreEqual(expected, groupByActual, 2);
+            TableTestHarness.AssertAreEqual(expected, actual, 2);
+        }
+
+        private static int[] BuildPeekSample()
+        {
+            int[] values = new int[1000];
+
+            int i = 0;
+            for (; i < 500; ++i)
+            {
+                // 500 are "0"
+                values[i] = 0;
+            }
+
+            for (; i < 750; ++i)
+            {
+                // 250 are "1"
+                values[i] = 1;
+            }
+
+            for (; i < 900; ++i)
+            {
+                // 150 are "2"
+                values[i] = 2;
+            }
+
+            for (; i < values.Length; ++i)
+            {
+                // 100 are four each of the same (under 0.5% threshold)
+                values[i] = i / 4;
+            }
+
+            return values;
         }
     }
 }
