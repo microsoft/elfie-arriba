@@ -71,6 +71,7 @@ namespace XForm.Test.Query
             XTable_All("groupBy [ServerPort] with Count()", 2);
             XTable_All("join [ServerName] WebServer [ServerName] Server.", 1000);
             XTable_All("limit 10", 10);
+            XTable_All("peek [ClientBrowser]", 9);
             XTable_All("remove [EventTime]", 1000);
             XTable_All("rename [ServerPort] [PortNumber], [HttpStatus] [HttpResult]", 1000);
             XTable_All("schema", 22, new string[] { "Name", "Type" });
