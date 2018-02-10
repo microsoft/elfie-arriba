@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading;
 
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.CodeAnalysis.Elfie.Serialization;
@@ -97,8 +98,11 @@ namespace XForm.IO
             }
         }
 
-        public int Next(int desiredCount)
+        public int Next(int desiredCount, CancellationToken cancellationToken)
         {
+            // Stop reading on cancellation
+            if (cancellationToken.IsCancellationRequested) return 0;
+
             if (_cells[0] == null || _cells[0].Length < desiredCount)
             {
                 for (int i = 0; i < _cells.Length; ++i)

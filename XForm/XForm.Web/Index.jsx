@@ -18,6 +18,26 @@ import ReactDOM from "react-dom"
     	}
     }
 
+    window.singleTimeout = function() {
+        // Usage:
+        // st = singleTimeout()   // Init
+        // st(f)                  // Cancels any previous f, runs f synchonously.
+        // st(f, 100)             // Cancels any previous f, runs f after 100ms delay.
+        // st()                   // Cancels any previous f.
+
+        var timerId
+        return (f, delayMs) => {
+            clearTimeout(timerId) // No harm if id is undef.
+            timerId = undefined
+            if (!f) return
+            if (delayMs) {
+                timerId = setTimeout(f, delayMs)
+            } else {
+                f()
+            }
+        }
+    }
+
     Array.prototype.remove = function(item) {
         var i = this.indexOf(item);
         if (i >= 0) this.splice(i, 1);
@@ -88,7 +108,12 @@ class Index extends React.Component {
         this.state = { query: this.query, userCols: [], saveAs: '', pausePulse: true }
 
         const loc = document.location;
-        this.serviceUrl = (loc.port === "8080" ? `${loc.protocol}//${loc.hostname}:5073` : '')
+        xhr.urlRoot = loc.port === '8080' ? `${loc.protocol}//${loc.hostname}:5073` : ''
+
+        this.reqPeek = new CachableReusedRequest('run');
+        this.reqPeek.caching = true;
+
+        this.peekTimer = singleTimeout()
     }
     componentDidMount() {
         window.require.config({ paths: { 'vs': 'node_modules/monaco-editor/min/vs' }});
@@ -165,8 +190,18 @@ class Index extends React.Component {
             this.queryChanged()
     	});
     }
+    componentDidUpdate(prevProps, prevState) {
+        if (prevState.peek !== this.state.peek) {
+            const params = this.state.peek
+                ? { q: `${this.query}\npeek [${this.state.peek.name}]` }
+                : undefined
+            this.reqPeek.update(params, json => {
+                this.setState({ peekData: json && json.rows.sort((a, b) => b[1] - a[1]) && json.rows.slice(0, 7) })
+            })
+        }
+    }
     get suggest() {
-        return xhr(this.serviceUrl, `suggest`, { asof: this.state.asOf, q: this.editor.valueUntilPosition() })
+        return xhr(`suggest`, { asof: this.state.asOf, q: this.editor.valueUntilPosition() })
     }
     get query() {
         return this.editor && this.editor.getValue()
@@ -174,7 +209,7 @@ class Index extends React.Component {
     queryTextChanged(force) {
         this.textJustChanged = true
         const trimmedQuery = this.query.trim() // Pre async capture
-        xhr(this.serviceUrl, `suggest`, { asof: this.state.asOf, q: this.query }).then(info => {
+        xhr(`suggest`, { asof: this.state.asOf, q: this.query }).then(info => {
             if (info.Valid && (force || this.validQuery !== trimmedQuery)) {
                 this.validQuery = trimmedQuery
                 this.debouncedQueryChanged()
@@ -218,7 +253,7 @@ class Index extends React.Component {
 
         if(!!this.validQuery) this.setState({ loading: true, pausePulse: true })
 
-        xhr(this.serviceUrl, `run`, { asof: this.state.asOf, q: `${this.validQuery}\nschema` }).then(o => {
+        xhr(`run`, { asof: this.state.asOf, q: `${this.validQuery}\nschema` }).then(o => {
             const schemaBody = (o.rows || []).map(r => ({ name: r[0], type: `${r[1]}` }))
             const colNames = new Set(schemaBody.map(r => r.name))
             this.setState({
@@ -235,7 +270,7 @@ class Index extends React.Component {
 
         const userCols = this.state.userCols.length && `\nselect ${this.state.userCols.map(c => `[${c}]`).join(', ')}` || ''
         this.setState({ loading: true, pausePulse: firstRun })
-        xhr(this.serviceUrl, `run`, { rowLimit: this.count, colLimit: this.cols, asof: this.state.asOf, q: `${q}${userCols}` }).then(o => {
+        xhr(`run`, { rowLimit: this.count, colLimit: this.cols, asof: this.state.asOf, q: `${q}${userCols}` }).then(o => {
             if (o.Valid === false) {
                 this.setState({
                     results: [],
@@ -248,7 +283,7 @@ class Index extends React.Component {
             if (o.Message || o.ErrorMessage) throw 'Error should have been caught before run.'
             if (firstRun) {
                 this.setState({ results: o })
-                xhr(this.serviceUrl, `count`, { asof: this.state.asOf, q: this.validQuery }).then(o => {
+                xhr(`count`, { asof: this.state.asOf, q: this.validQuery }).then(o => {
                     this.setState({
                         resultCount: typeof o.Count === "number" && `${o.Count.toLocaleString()} Results (${o.RuntimeMs} ms)`,
                         loading: false,
@@ -260,6 +295,36 @@ class Index extends React.Component {
             }
         })
     }
+    _makeSvg(list) {
+        if (!list.length) return false;
+
+        // Generates a SVG histogram to be displayed behind the completion list.
+        // The path goes counter-clockwise starting from the top-right.
+        var d = '';
+
+        // The inst() currently concats SVG commands to the list 'd'.
+        // However when debugging, it is useful to redirect the ...params to the console.
+        const inst = (...params) => d += params.join(" ") + " ";
+
+        // Scrape ___% from the item.hint. If not found, default to 0.
+        const values = list.map(item => new Number(item[2].replace('%', '')) + 0 || 0);
+
+        const w = 80; // Matches CSS declared width.
+        inst("M", w, 0);
+        inst("L", w - values[0] * 0.75, 0);
+        const max = Math.max(...values) || 1; // Prevent divide by zero.
+        var y = 0; // Running total fo the height.
+        values.forEach(val => {
+            const x = w - (val/max) * w;
+            inst("S", x, y, ",", x, y + 17); // Half of the CSS height.
+            y += 34; // Matches the CSS declared height of each row.
+        });
+        const x = w - values[values.length - 1] * 0.75;
+        inst("S", x, y, x, y + 18);
+        inst("L", w, y);
+        inst("Z");
+        return <svg><path id="p" d={d} /></svg>
+    }
     render() {
         var cols, rows
         const results = this.state.results
@@ -268,31 +333,27 @@ class Index extends React.Component {
             rows = results.rows
         }
 
-        var tableRows = [];
-        if(rows) {
-            var formatters = [];
-            for(var colIndex = 0; colIndex < cols.length; ++colIndex) {
-                if(cols[colIndex] === "Count" || cols[colIndex].endsWith(".Sum")) {
-                    formatters[colIndex] = i => (i === "" ? "-" : (+i).toLocaleString());
-                } else {
-                    formatters[colIndex] = i => i;
-                }
-            }
-
-            for(var rowIndex = 0; rowIndex < rows.length; ++rowIndex) {
-                var row = rows[rowIndex];
-                var rowCells = [];
-                for(var colIndex = 0; colIndex < cols.length; ++colIndex) {
-                    rowCells.push(<td key={rowIndex + "x" + colIndex}>{formatters[colIndex](row[colIndex])}</td>);
-                }
-
-                tableRows.push(<tr key={rowIndex}>{rowCells}</tr>);
-            }
+        const Peek = () => {
+            if (!this.state.peek || !this.state.peek.tr || !this.state.peekData) return null
+            const rect = this.state.peek.tr.getBoundingClientRect()
+            return <div className="peek" style={{ left: `${rect.x + rect.width - 5}px`, top: `${rect.y}px` }}
+                onMouseEnter={e => this.peekTimer()}
+                onMouseLeave={e => this.peekTimer(() => this.setState({ peek: undefined }), 100)}>
+                {this._makeSvg(this.state.peekData)}
+                {this.state.peekData.map((row, i) => <div key={i} className="peek-value">
+                    <span>{row[0] === '' ? '—' : row[0] }</span>
+                    <span>{row[2]}</span>
+                </div>)}
+            </div>
         }
+
+        const formatters = rows && cols.map(col => col === "Count" || col.endsWith(".Sum")
+                ? cell => cell === "" ? "—" : (+cell).toLocaleString()
+                : cell => cell)
 
         const encodedQuery = encodeURIComponent(this.validQuery)
 
-        return <div className={`root`}>
+        return [<div key="root" className={`root`}>
             <div className="query">
                 <div className="queryHeader">
                     <input type="text" placeholder="Save As"
@@ -301,7 +362,7 @@ class Index extends React.Component {
                         const q = this.query
                         const name = this.state.saveAs
                         if (!name || !q) return
-                        xhr(this.serviceUrl, `save`, { name, q }).then(o => {
+                        xhr(`save`, { name, q }).then(o => {
                             this.setState({ saving: "Saved" })
                             setTimeout(() => this.setState({ saving: "Save" }), 3000)
                         })
@@ -342,7 +403,10 @@ class Index extends React.Component {
                 {this.state.schemaBody && <div className="tableWrapper">
                     <table>
                         <tbody>
-                            {this.state.schemaBody && this.state.schemaBody.map((r, i) => <tr key={i}>
+                            {this.state.schemaBody && this.state.schemaBody.map((r, i) => <tr key={i}
+                                ref={tr => r.tr = tr}
+                                onMouseEnter={e => this.peekTimer(() => this.setState({ peek: r }))}
+                                onMouseLeave={e => this.peekTimer(() => this.setState({ peek: undefined }), 100)}>
                                 <td><label><input type="checkbox" checked={this.state.userCols.includes(r.name)} onChange={e => {
                                     this.setState({ userCols: [...this.state.userCols].toggle(r.name) }, () => this.limitChanged())
                                 }}/>{r.name}</label></td>
@@ -364,7 +428,7 @@ class Index extends React.Component {
                         const element = e.target
                         const pixelsFromLimitX = (element.scrollWidth - element.clientWidth - element.scrollLeft)
                         const pixelsFromLimitY = (element.scrollHeight - element.clientHeight - element.scrollTop)
-                        if (pixelsFromLimitX < 20 && this.colLimit < this.state.schemaBody.length ) this.limitChanged(0, 10)
+                        if (pixelsFromLimitX < 20 && this.cols < this.state.schemaBody.length ) this.limitChanged(0, 10)
                         if (pixelsFromLimitY < 100) this.limitChanged(50)
                     }}>
                     <table>
@@ -374,12 +438,13 @@ class Index extends React.Component {
                             </tr>
                         </thead>
                         <tbody>
-                            {tableRows}
+                            {rows && rows.map((r, i) => <tr key={i}>{r.map((c, ii) => <td key={i + "x" + ii}>{ formatters[ii](c) }</td>)}</tr>)}
                         </tbody>
                     </table>
                 </div>
             </div>
-        </div>
+        </div>,
+        <Peek key="peek" />]
     }
 }
 

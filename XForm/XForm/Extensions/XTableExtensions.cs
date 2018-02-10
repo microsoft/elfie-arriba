@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading;
 
 using XForm.Data;
 using XForm.IO;
@@ -23,6 +24,29 @@ namespace XForm.Extensions
     public static class XTableExtensions
     {
         public const int DefaultBatchSize = 10240;
+
+        #region Next Overloads
+        /// <summary>
+        ///  Get the next batch of rows from the table.
+        /// </summary>
+        /// <param name="table">IXTable to enumerate</param>
+        /// <returns>Count of rows returned; zero means no more rows</returns>
+        public static int Next(this IXTable table)
+        {
+            return table.Next(DefaultBatchSize, default(CancellationToken));
+        }
+
+        /// <summary>
+        ///  Get a specific desired count of rows from the table.
+        /// </summary>
+        /// <param name="table">IXTable to enumerate</param>
+        /// <param name="desiredCount">Maximum number of rows to return</param>
+        /// <returns>Count of rows returned; zero means no more rows</returns>
+        public static int Next(this IXTable table, int desiredCount)
+        {
+            return table.Next(desiredCount, default(CancellationToken));
+        }
+        #endregion
 
         #region Query
         /// <summary>
@@ -44,13 +68,14 @@ namespace XForm.Extensions
         ///  Run a Query, dispose the source, and return the count of rows from the query.
         /// </summary>
         /// <param name="pipeline">IXTable of source or query to run</param>
-        /// <param name="xarraySize">Number of rows to process on each iteration</param>
+        /// <param name="cancellationToken">Token to allow early cancellation</param>
+        /// <param name="batchSize">Number of rows to process on each iteration</param>
         /// <returns>Count of rows in this source or query.</returns>
-        public static long RunAndDispose(this IXTable pipeline, int xarraySize = DefaultBatchSize)
+        public static long RunAndDispose(this IXTable pipeline, CancellationToken cancellationToken = default(CancellationToken), int batchSize = DefaultBatchSize)
         {
             using (pipeline)
             {
-                return RunWithoutDispose(pipeline, xarraySize);
+                return RunWithoutDispose(pipeline, cancellationToken, batchSize);
             }
         }
 
@@ -58,14 +83,15 @@ namespace XForm.Extensions
         ///  Run a Query but don't dispose the source, and return the count of rows from the query.
         /// </summary>
         /// <param name="pipeline">IXTable of source or query to run</param>
-        /// <param name="xarraySize">Number of rows to process on each iteration</param>
+        /// <param name="cancellationToken">Token to allow early cancellation</param>
+        /// <param name="batchSize">Number of rows to process on each iteration</param>
         /// <returns>Count of rows in this source or query.</returns>
-        public static long RunWithoutDispose(this IXTable pipeline, int xarraySize = DefaultBatchSize)
+        public static long RunWithoutDispose(this IXTable pipeline, CancellationToken cancellationToken = default(CancellationToken), int batchSize = DefaultBatchSize)
         {
             long rowsWritten = 0;
             while (true)
             {
-                int batchCount = pipeline.Next(xarraySize);
+                int batchCount = pipeline.Next(batchSize, cancellationToken);
                 if (batchCount == 0) break;
                 rowsWritten += batchCount;
             }
@@ -80,30 +106,38 @@ namespace XForm.Extensions
         /// </summary>
         /// <param name="pipeline">IXTable of source or query to run</param>
         /// <param name="timeout">Time limit for runtime</param>
-        /// <param name="xarraySize">Number of rows to process in each iteration</param>
+        /// <param name="batchSize">Number of rows to process in each iteration</param>
         /// <returns>RunResult with whether query completed, runtime so far, and row count so far</returns>
-        public static RunResult RunUntilTimeout(this IXTable pipeline, TimeSpan timeout, int xarraySize = DefaultBatchSize)
+        public static RunResult RunUntilTimeout(this IXTable pipeline, TimeSpan timeout, int batchSize = DefaultBatchSize)
         {
-            RunResult result = new RunResult();
-            result.Timeout = timeout;
-
-            Stopwatch w = Stopwatch.StartNew();
-            while (true)
+            using (CancellationTokenSource source = new CancellationTokenSource())
             {
-                int xarray = pipeline.Next(xarraySize);
-                result.RowCount += xarray;
+                CancellationToken cancellationToken = source.Token;
+                if (timeout != TimeSpan.Zero && timeout != TimeSpan.MaxValue) source.CancelAfter(timeout);
 
-                if (xarray == 0)
+                RunResult result = new RunResult();
+                result.Timeout = timeout;
+
+                Stopwatch w = Stopwatch.StartNew();
+                while (true)
                 {
-                    result.IsComplete = true;
-                    break;
+                    int count = pipeline.Next(batchSize, cancellationToken);
+                    result.RowCount += count;
+
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        break;
+                    }
+                    else if (count == 0)
+                    {
+                        result.IsComplete = true;
+                        break;
+                    }
                 }
 
-                if (w.Elapsed > timeout) break;
+                result.Elapsed = w.Elapsed;
+                return result;
             }
-
-            result.Elapsed = w.Elapsed;
-            return result;
         }
         #endregion
 
@@ -112,11 +146,11 @@ namespace XForm.Extensions
         ///  Get the count of rows from the source.
         /// </summary>
         /// <param name="pipeline">IXTable to count</param>
-        /// <param name="xarraySize">Number of rows to process on each iteration</param>
+        /// <param name="batchSize">Number of rows to process on each iteration</param>
         /// <returns>Count of rows in this source or query.</returns>
-        public static long Count(this IXTable pipeline, int xarraySize = DefaultBatchSize)
+        public static long Count(this IXTable pipeline, CancellationToken cancellationToken = default(CancellationToken), int batchSize = DefaultBatchSize)
         {
-            return RunAndDispose(pipeline, xarraySize);
+            return RunAndDispose(pipeline, cancellationToken, batchSize);
         }
 
         /// <summary>
@@ -125,12 +159,12 @@ namespace XForm.Extensions
         /// <typeparam name="T">Data Type of result</typeparam>
         /// <param name="pipeline">IDatxarrayEnumerator to run</param>
         /// <returns>Single value result (first column, first row)</returns>
-        public static T Single<T>(this IXTable pipeline)
+        public static T Single<T>(this IXTable pipeline, CancellationToken cancellationToken = default(CancellationToken))
         {
             Func<XArray> getter = pipeline.Columns[0].CurrentGetter();
             using (pipeline)
             {
-                pipeline.Next(1);
+                pipeline.Next(1, cancellationToken);
 
                 XArray xarray = getter();
                 T[] array = (T[])(getter().Array);
@@ -150,17 +184,17 @@ namespace XForm.Extensions
         /// <typeparam name="T">Type of values in column</typeparam>
         /// <param name="pipeline">IXTable to run</param>
         /// <param name="columnName">Column Name to retrieve values from</param>
-        /// <param name="xarraySize">Maximum row count to retrieve per page</param>
+        /// <param name="batchSize">Maximum row count to retrieve per page</param>
         /// <returns>Pages of the result column in a List</returns>
-        public static IEnumerable<List<T>> ToList<T>(this IXTable pipeline, string columnName, int xarraySize = DefaultBatchSize)
+        public static IEnumerable<List<T>> ToList<T>(this IXTable pipeline, string columnName, CancellationToken cancellationToken = default(CancellationToken), int batchSize = DefaultBatchSize)
         {
-            List<T> result = new List<T>(xarraySize);
+            List<T> result = new List<T>(batchSize);
 
             using (pipeline)
             {
                 Func<XArray> getter = pipeline.Columns.Find(columnName).CurrentGetter();
 
-                while (pipeline.Next(xarraySize) != 0)
+                while (pipeline.Next(batchSize, cancellationToken) != 0)
                 {
                     XArray xarray = getter();
                     T[] array = (T[])xarray.Array;

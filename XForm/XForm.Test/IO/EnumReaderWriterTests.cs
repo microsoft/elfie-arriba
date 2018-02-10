@@ -46,8 +46,6 @@ namespace XForm.Test.IO
             {
                 TableTestHarness.AssertAreEqual(expected, actual, 1024);
             }
-
-            context.StreamProvider.Delete($"Table\\{tableName}");
         }
     }
 }

@@ -20,7 +20,7 @@ namespace XForm.Aggregators
     {
         private int[] _countPerBucket;
         private int _distinctCount;
-        
+
         public CountAggregator()
         {
             ColumnDetails = new ColumnDetails("Count", typeof(int));
@@ -28,6 +28,7 @@ namespace XForm.Aggregators
 
         public ColumnDetails ColumnDetails { get; private set; }
         public XArray Values => XArray.All(_countPerBucket, _distinctCount);
+        public int TotalRowCount { get; private set; }
 
         public ArraySelector FoundIndices
         {
@@ -52,6 +53,8 @@ namespace XForm.Aggregators
 
         public void Add(XArray rowIndices, int newDistinctCount)
         {
+            TotalRowCount += rowIndices.Count;
+
             _distinctCount = newDistinctCount;
             Allocator.ExpandToSize(ref _countPerBucket, newDistinctCount);
 

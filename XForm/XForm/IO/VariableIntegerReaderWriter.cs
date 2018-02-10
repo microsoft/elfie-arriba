@@ -1,4 +1,8 @@
-﻿using System;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
+
 using XForm.Data;
 using XForm.IO.StreamProvider;
 using XForm.Types;
@@ -143,7 +147,7 @@ namespace XForm.IO
 
         public void Dispose()
         {
-            if(_writer != null)
+            if (_writer != null)
             {
                 _writer.Dispose();
                 _writer = null;
@@ -165,7 +169,7 @@ namespace XForm.IO
             // Look for each potential size in descending order and build the right reader and converter
             Type type = typeof(int);
             string path = VariableIntegerWriter.PathForType(columnPathPrefix, typeof(int));
-            if(streamProvider.Attributes(path).Exists)
+            if (streamProvider.Attributes(path).Exists)
             {
                 _reader = TypeProviderFactory.TryGetColumnReader(streamProvider, typeof(int), path, option, typeof(VariableIntegerReader));
                 _converter = null;
@@ -197,7 +201,7 @@ namespace XForm.IO
 
         public void Dispose()
         {
-            if(_reader != null)
+            if (_reader != null)
             {
                 _reader.Dispose();
                 _reader = null;
