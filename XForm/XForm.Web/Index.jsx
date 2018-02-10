@@ -18,6 +18,26 @@ import ReactDOM from "react-dom"
     	}
     }
 
+    window.singleTimeout = function() {
+        // Usage:
+        // st = singleTimeout()   // Init
+        // st(f)                  // Cancels any previous f, runs f synchonously.
+        // st(f, 100)             // Cancels any previous f, runs f after 100ms delay.
+        // st()                   // Cancels any previous f.
+
+        var timerId
+        return (f, delayMs) => {
+            clearTimeout(timerId) // No harm if id is undef.
+            timerId = undefined
+            if (!f) return
+            if (delayMs) {
+                timerId = setTimeout(f, delayMs)
+            } else {
+                f()
+            }
+        }
+    }
+
     Array.prototype.remove = function(item) {
         var i = this.indexOf(item);
         if (i >= 0) this.splice(i, 1);
@@ -92,6 +112,8 @@ class Index extends React.Component {
 
         this.reqPeek = new CachableReusedRequest('run');
         this.reqPeek.caching = true;
+
+        this.peekTimer = singleTimeout()
     }
     componentDidMount() {
         window.require.config({ paths: { 'vs': 'node_modules/monaco-editor/min/vs' }});
@@ -314,7 +336,9 @@ class Index extends React.Component {
         const Peek = () => {
             if (!this.state.peek || !this.state.peek.tr || !this.state.peekData) return null
             const rect = this.state.peek.tr.getBoundingClientRect()
-            return <div className="peek" style={{ left: `${rect.x + rect.width - 5}px`, top: `${rect.y}px` }}>
+            return <div className="peek" style={{ left: `${rect.x + rect.width - 5}px`, top: `${rect.y}px` }}
+                onMouseEnter={e => this.peekTimer()}
+                onMouseLeave={e => this.peekTimer(() => this.setState({ peek: undefined }), 100)}>
                 {this._makeSvg(this.state.peekData)}
                 {this.state.peekData.map((row, i) => <div key={i} className="peek-value">
                     <span>{row[0] === '' ? '—' : row[0] }</span>
@@ -381,8 +405,8 @@ class Index extends React.Component {
                         <tbody>
                             {this.state.schemaBody && this.state.schemaBody.map((r, i) => <tr key={i}
                                 ref={tr => r.tr = tr}
-                                onMouseEnter={e => this.setState({ peek: r })}
-                                onMouseLeave={e => this.setState({ peek: undefined })}>
+                                onMouseEnter={e => this.peekTimer(() => this.setState({ peek: r }))}
+                                onMouseLeave={e => this.peekTimer(() => this.setState({ peek: undefined }), 100)}>
                                 <td><label><input type="checkbox" checked={this.state.userCols.includes(r.name)} onChange={e => {
                                     this.setState({ userCols: [...this.state.userCols].toggle(r.name) }, () => this.limitChanged())
                                 }}/>{r.name}</label></td>
