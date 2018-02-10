@@ -4,11 +4,11 @@
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 
 using XForm.Aggregators;
 using XForm.Columns;
+using XForm.Core;
 using XForm.Data;
 using XForm.Extensions;
 using XForm.Query;
@@ -28,17 +28,16 @@ namespace XForm.Verbs
 
     public class Peek : IXTable
     {
-        private const int MaximumCountToReturn = 20;
-        private const float MinimumPercentageToReport = 0.005f;
+        private const int MaximumCountToReturn = 20;                    // Only return the top this many groups
+        private const float MinimumPercentageToReport = 0.005f;         // Only return groups with at least this percentage of rows
+        private const int RequiredSampleSize = 16666;                   // Use sampled rows when the same has at least this many samples
+        private const int SampleCount = 3;                              // Build this many scaled samples
 
         private IXTable _source;
         private IXColumn _column;
-        private CountAggregator _counts;
-
         private DeferredArrayColumn[] _columns;
 
         private bool _isDictionaryBuilt;
-        private GroupByDictionary _dictionary;
         private int _distinctCount;
 
         private ArraySelector _currentEnumerateSelector;
@@ -48,10 +47,6 @@ namespace XForm.Verbs
             if (source == null) throw new ArgumentNullException("source");
             _source = source;
             _column = column;
-            _counts = new CountAggregator();
-
-            // Build a typed dictionary to handle the column values
-            _dictionary = new GroupByDictionary(new ColumnDetails[] { _column.ColumnDetails });
 
             // Build a DeferredArrayColumn for each key and for the aggregator
             _columns = new DeferredArrayColumn[]
@@ -133,6 +128,18 @@ namespace XForm.Verbs
             }
         }
 
+        /// <summary>
+        ///  Build a GroupBy Dictionary for Peek.
+        /// </summary>
+        /// <remarks>
+        ///  Peek identifies each distinct common value and the approximate percentage of rows with it.
+        ///  If we have many matching rows, we can sample - the sample will have any common values in it.
+        ///  However, we don't know how many matches we have in advance.
+        ///  Therefore, we build a Dictionary of all rows, 1/8 of rows, 1/64 of rows, and 1/512 of rows.
+        ///  As soon as a given sample has enough samples to be statistically valid, we stop collecting the larger subsets.
+        ///  This strategy allows us to run the overall query only once, end up with a large enough sample, and avoid building giant Dictionaries.
+        /// </remarks>
+        /// <param name="cancellationToken">CancellationToken to request early stop</param>
         private void BuildDictionary(CancellationToken cancellationToken)
         {
             // Short-circuit path if there's one key column and it's an EnumColumn
@@ -142,29 +149,71 @@ namespace XForm.Verbs
                 return;
             }
 
-            // Retrieve the getters for all columns
+            // Build a Random instance to sample rows
+            Random r = new Random();
+
+            // Build a Dictionary and CountAggregator for each sample
+            GroupByDictionary[] dictionaries = new GroupByDictionary[SampleCount]; 
+            CountAggregator[] counts = new CountAggregator[SampleCount];
+            int[][] remapArrays = new int[SampleCount][];
+            for (int i = 0; i < SampleCount; ++i)
+            {
+                dictionaries[i] = new GroupByDictionary(new ColumnDetails[] { _column.ColumnDetails });
+                counts[i] = new CountAggregator();
+            }
+
+            // Retrieve the column getter
             Func<XArray> columnGetter = _column.CurrentGetter();
+
+            // Track which sample we'll currently report
+            int currentSample = 0;
 
             XArray[] arrays = new XArray[1];
             int count;
             while ((count = _source.Next(XTableExtensions.DefaultBatchSize, cancellationToken)) != 0)
             {
-                // Get the key column arrays
+                // Get the column values
                 arrays[0] = columnGetter();
 
-                // Add these to the Join Dictionary
-                XArray indicesForRows = _dictionary.FindOrAdd(arrays);
+                // Build the GroupBy count for all rows and successive 1/8 samples
+                for (int i = 0; i < SampleCount; ++i)
+                {
+                    // Add these to the Join Dictionary
+                    if (i >= currentSample)
+                    {
+                        // Choose buckets for each row
+                        XArray indicesForRows = dictionaries[i].FindOrAdd(arrays);
 
-                // Identify the bucket for each row and aggregate them
-                _counts.Add(indicesForRows, _dictionary.Count);
+                        // Identify the bucket for each row and aggregate them
+                        counts[i].Add(indicesForRows, dictionaries[i].Count);
+
+                        // If this sample now has enough values, stop collecting bigger row sets
+                        if (currentSample == i - 1 && counts[i].TotalRowCount > RequiredSampleSize)
+                        {
+                            dictionaries[currentSample] = null;
+                            counts[currentSample] = null;
+                            currentSample++;
+                        }
+                    }
+
+                    // Each successive dictionary has ~1/8 of the rows of the previous one
+                    if (i < SampleCount - 1)
+                    {
+                        ArraySelector sample = Sampler.Eighth(arrays[0].Selector, r, ref remapArrays[i]);
+                        arrays[0] = arrays[0].Reselect(sample);
+                    }
+                }
             }
 
             // Once the loop is done, get the distinct values and aggregation results
-            PostSortAndFilter(_dictionary.DistinctKeys()[0], _counts.Values, _counts.TotalRowCount);
+            PostSortAndFilter(dictionaries[currentSample].DistinctKeys()[0], counts[currentSample].Values, counts[currentSample].TotalRowCount);
         }
 
         private void BuildSingleEnumColumnDictionary(CancellationToken cancellationToken)
         {
+            // Build a CountAggregator for the enum GroupBy
+            CountAggregator counts = new CountAggregator();
+
             XArray values = _column.ValuesGetter()();
             Func<XArray> indicesGetter = _column.IndicesCurrentGetter();
 
@@ -173,11 +222,11 @@ namespace XForm.Verbs
             {
                 // Aggregate each row directly on the row index (already a small zero-based value)
                 XArray indices = indicesGetter();
-                _counts.Add(indices, values.Count);
+                counts.Add(indices, values.Count);
             }
 
             // Once the loop is done, get the distinct values and aggregation results
-            PostSortAndFilter(values, _counts.Values, _counts.TotalRowCount);
+            PostSortAndFilter(values, counts.Values, counts.TotalRowCount);
         }
 
         public void Reset()
