@@ -95,6 +95,7 @@
     <Compile Include="Aggregators\CountAggregator.cs" />
     <Compile Include="Aggregators\IAggregator.cs" />
     <Compile Include="Aggregators\SumAggregator.cs" />
+    <Compile Include="Core\Sampler.cs" />
     <Compile Include="IO\VariableIntegerReaderWriter.cs" />
     <Compile Include="Verbs\Count.cs" />
     <Compile Include="Columns\DeferredArrayColumn.cs" />

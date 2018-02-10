@@ -5,16 +5,16 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 
 using Microsoft.CodeAnalysis.Elfie.Serialization;
 
+using XForm.Core;
 using XForm.Data;
 using XForm.Extensions;
 using XForm.IO;
 using XForm.Query;
 using XForm.Types;
-using XForm.Verbs;
+
 
 namespace XForm
 {
@@ -311,6 +311,26 @@ namespace XForm
                 });
             }
         }
+
+        public void Sample()
+        {
+            Random r = new Random(8);
+            ArraySelector all = ArraySelector.All(10240);
+
+            int[] eighthArray = null;
+            int[] sixtyfourthArray = null;
+
+            using (Benchmarker b = new Benchmarker($"Sampler.Eighth", DefaultMeasureMilliseconds))
+            {
+                b.Measure("Sampler.Eighth", all.Count, () =>
+                {
+                    ArraySelector eighth = Sampler.Eighth(all, r, ref eighthArray);
+                    ArraySelector sixtyfourth = Sampler.Eighth(eighth, r, ref sixtyfourthArray);
+                    return sixtyfourth.Count;
+                });
+            }
+        }
+
 
         public void TsvSplit()
         {
