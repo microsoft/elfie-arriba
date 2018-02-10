@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using System;
 
 namespace XForm.Generator.Model
 {
@@ -17,7 +20,7 @@ namespace XForm.Generator.Model
         {
             this.StartTime = startTime;
             this.EndTime = endTime;
-            this.DataCenter = dataCenter    ;
+            this.DataCenter = dataCenter;
         }
 
         public void Transform(WebRequest item)
@@ -107,5 +110,4 @@ namespace XForm.Generator.Model
             }
         }
     }
-
 }

@@ -1464,7 +1464,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
 
             int offset = other.Index - this.Index;
             int end = this.Index + this.Length;
-            for(int i = this.Index; i < end; ++i)
+            for (int i = this.Index; i < end; ++i)
             {
                 if (this.Array[i] != other.Array[i + offset]) return false;
             }

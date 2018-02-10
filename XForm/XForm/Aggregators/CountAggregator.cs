@@ -20,7 +20,7 @@ namespace XForm.Aggregators
     {
         private int[] _countPerBucket;
         private int _distinctCount;
-        
+
         public CountAggregator()
         {
             ColumnDetails = new ColumnDetails("Count", typeof(int));

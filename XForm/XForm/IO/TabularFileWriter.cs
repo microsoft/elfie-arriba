@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.CodeAnalysis.Elfie.Serialization;
@@ -11,7 +12,6 @@ using Microsoft.CodeAnalysis.Elfie.Serialization;
 using XForm.Data;
 using XForm.IO.StreamProvider;
 using XForm.Types;
-using System.Threading;
 
 namespace XForm.IO
 {

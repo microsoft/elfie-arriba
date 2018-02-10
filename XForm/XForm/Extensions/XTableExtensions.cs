@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
+
 using XForm.Data;
 using XForm.IO;
 using XForm.IO.StreamProvider;
@@ -112,7 +113,7 @@ namespace XForm.Extensions
             using (CancellationTokenSource source = new CancellationTokenSource())
             {
                 CancellationToken cancellationToken = source.Token;
-                if(timeout != TimeSpan.Zero && timeout != TimeSpan.MaxValue) source.CancelAfter(timeout);
+                if (timeout != TimeSpan.Zero && timeout != TimeSpan.MaxValue) source.CancelAfter(timeout);
 
                 RunResult result = new RunResult();
                 result.Timeout = timeout;
@@ -123,7 +124,7 @@ namespace XForm.Extensions
                     int count = pipeline.Next(batchSize, cancellationToken);
                     result.RowCount += count;
 
-                    if(cancellationToken.IsCancellationRequested)
+                    if (cancellationToken.IsCancellationRequested)
                     {
                         break;
                     }

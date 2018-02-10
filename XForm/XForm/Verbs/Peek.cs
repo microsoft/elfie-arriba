@@ -1,10 +1,11 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+
+using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 
 using XForm.Aggregators;
 using XForm.Columns;
@@ -101,7 +102,7 @@ namespace XForm.Verbs
             for (int i = 0; i < groups.Count; ++i)
             {
                 int count = countsArray[counts.Index(i)];
-                if(count >= threshold)
+                if (count >= threshold)
                 {
                     finalIndices[groupCount] = i;
                     finalCounts[groupCount] = count;
@@ -168,7 +169,7 @@ namespace XForm.Verbs
             Random r = new Random();
 
             // Build a Dictionary and CountAggregator for each sample
-            GroupByDictionary[] dictionaries = new GroupByDictionary[SampleCount]; 
+            GroupByDictionary[] dictionaries = new GroupByDictionary[SampleCount];
             CountAggregator[] counts = new CountAggregator[SampleCount];
             int[][] remapArrays = new int[SampleCount][];
             for (int i = 0; i < SampleCount; ++i)

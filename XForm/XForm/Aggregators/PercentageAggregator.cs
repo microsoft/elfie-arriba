@@ -99,7 +99,7 @@ namespace XForm.Aggregators
             if (count == total) return "100%";
 
             float percentage = (float)count / (float)total;
-            return percentage.ToString("p0"); 
+            return percentage.ToString("p0");
         }
 
         public void Add(XArray rowIndices, int newDistinctCount)

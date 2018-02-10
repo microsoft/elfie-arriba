@@ -70,7 +70,7 @@ namespace XForm.Generator
             for (int day = 0; day < numberOfDays; ++day)
             {
                 generator = new WebRequestGenerator(users, r, asOfDate, (eventCount < 1001 ? 10 : 100));
-                if(day == 0) generator.Issue = new PremiumUserOutage(asOfDate.AddMinutes(18), asOfDate.AddMinutes(104), r);
+                if (day == 0) generator.Issue = new PremiumUserOutage(asOfDate.AddMinutes(18), asOfDate.AddMinutes(104), r);
                 BuildWebRequests(basePath, generator, eventCount, WebRequestWriteMode.UserIdentityOnly);
                 asOfDate = asOfDate.AddDays(-1);
             }

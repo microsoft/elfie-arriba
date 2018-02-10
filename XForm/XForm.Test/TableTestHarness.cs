@@ -32,8 +32,6 @@ namespace XForm.Test
             }
         }
 
-        public static object Strnig8Block { get; private set; }
-
         public static void AssertAreEqual(IXTable expected, IXTable actual, int pageSize)
         {
             // Reset both tables (so they can be used for repeated scenarios)
@@ -107,10 +105,10 @@ namespace XForm.Test
                         XArray actualArray = actualArrays[i].Slice(actualNextIndex, actualNextIndex + countToCompare);
 
                         firstMismatchedRow = FirstMismatchedRow(
-                            expectedArray, 
-                            actualArray, 
-                            countToCompare, 
-                            expected.Columns[i].ColumnDetails.Name, 
+                            expectedArray,
+                            actualArray,
+                            countToCompare,
+                            expected.Columns[i].ColumnDetails.Name,
                             out errorMessage);
 
                         if (!String.IsNullOrEmpty(errorMessage)) break;
@@ -290,7 +288,7 @@ namespace XForm.Test
             String8Block block = new String8Block();
 
             String8[] result = new String8[values.Length];
-            for(int i = 0; i < values.Length; ++i)
+            for (int i = 0; i < values.Length; ++i)
             {
                 result[i] = block.GetCopy(values[i]);
             }
