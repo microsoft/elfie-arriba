@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 using XForm.Aggregators;
 using XForm.Columns;
@@ -88,13 +89,13 @@ namespace XForm.Verbs
         public IReadOnlyList<IXColumn> Columns => _columns;
         public int CurrentRowCount { get; private set; }
 
-        public int Next(int desiredCount)
+        public int Next(int desiredCount, CancellationToken cancellationToken)
         {
-            // If this is the first call, walk all rows once to find best rows
+            // If this is the first call, walk all rows once to group them
             if (!_isDictionaryBuilt)
             {
                 _isDictionaryBuilt = true;
-                BuildDictionary();
+                BuildDictionary(cancellationToken);
                 Reset();
             }
 
@@ -109,12 +110,12 @@ namespace XForm.Verbs
             return CurrentRowCount;
         }
 
-        private void BuildDictionary()
+        private void BuildDictionary(CancellationToken cancellationToken)
         {
             // Short-circuit path if there's one key column and it's an EnumColumn
             if (_keyColumns.Length == 1 && _keyColumns[0].IsEnumColumn())
             {
-                BuildSingleEnumColumnDictionary();
+                BuildSingleEnumColumnDictionary(cancellationToken);
                 return;
             }
 
@@ -123,7 +124,7 @@ namespace XForm.Verbs
 
             XArray[] keyArrays = new XArray[keyColumnGetters.Length];
             int count;
-            while ((count = _source.Next(XTableExtensions.DefaultBatchSize)) != 0)
+            while ((count = _source.Next(XTableExtensions.DefaultBatchSize, cancellationToken)) != 0)
             {
                 // Get the key column arrays
                 for (int i = 0; i < keyArrays.Length; ++i)
@@ -157,7 +158,7 @@ namespace XForm.Verbs
             }
         }
 
-        private void BuildSingleEnumColumnDictionary()
+        private void BuildSingleEnumColumnDictionary(CancellationToken cancellationToken)
         {
             XArray values = _keyColumns[0].ValuesGetter()();
             Func<XArray> indicesGetter = _keyColumns[0].IndicesCurrentGetter();
@@ -168,7 +169,7 @@ namespace XForm.Verbs
             if (!trackerFound) tracker = new CountAggregator();
 
             int count;
-            while ((count = _source.Next(XTableExtensions.DefaultBatchSize)) != 0)
+            while ((count = _source.Next(XTableExtensions.DefaultBatchSize, cancellationToken)) != 0)
             {
                 // Aggregate each row directly on the row index (already a small zero-based value)
                 XArray indices = indicesGetter();

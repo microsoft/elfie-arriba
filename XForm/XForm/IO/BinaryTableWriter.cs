@@ -2,14 +2,13 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
-using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 
 using XForm.Data;
-using XForm.Extensions;
 using XForm.Query;
 using XForm.Types;
 
@@ -92,11 +91,11 @@ namespace XForm.IO
             }
         }
 
-        public override int Next(int desiredCount)
+        public override int Next(int desiredCount, CancellationToken cancellationToken)
         {
             if (_writers == null) BuildWriters();
 
-            int count = _source.Next(desiredCount);
+            int count = _source.Next(desiredCount, cancellationToken);
             if (count == 0)
             {
                 // Ensure Writers flush

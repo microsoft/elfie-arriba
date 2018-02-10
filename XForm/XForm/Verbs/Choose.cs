@@ -4,11 +4,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 using XForm.Columns;
 using XForm.Data;
 using XForm.Extensions;
-using XForm.Functions;
 using XForm.Query;
 using XForm.Transforms;
 
@@ -67,18 +67,18 @@ namespace XForm.Verbs
         public IReadOnlyList<IXColumn> Columns => _columns;
         public int CurrentRowCount { get; private set; }
 
-        public int Next(int desiredCount)
+        public int Next(int desiredCount, CancellationToken cancellationToken)
         {
             // If this is the first call, walk all rows once to find best rows
             if (!_isDictionaryBuilt)
             {
                 _isDictionaryBuilt = true;
-                BuildChooseDictionary();
+                BuildChooseDictionary(cancellationToken);
                 _source.Reset();
             }
 
             int outerCount;
-            while ((outerCount = _source.Next(desiredCount)) > 0)
+            while ((outerCount = _source.Next(desiredCount, cancellationToken)) > 0)
             {
                 // Ask for the indices of rows which were chosen in this page
                 XArray chosenRows = _dictionary.GetChosenRows(_totalRowsRead, _totalRowsRead + outerCount, _totalRowsRead);
@@ -99,14 +99,14 @@ namespace XForm.Verbs
             return 0;
         }
 
-        private void BuildChooseDictionary()
+        private void BuildChooseDictionary(CancellationToken cancellationToken)
         {
             XArray[] keyarrays = new XArray[_keyColumnGetters.Length];
             int[] rowIndices = new int[XTableExtensions.DefaultBatchSize];
 
             int totalSoFar = 0;
             int count;
-            while ((count = _source.Next(XTableExtensions.DefaultBatchSize)) != 0)
+            while ((count = _source.Next(XTableExtensions.DefaultBatchSize, cancellationToken)) != 0)
             {
                 // Get the rank and key column arrays
                 XArray rankArray = _rankColumnGetter();

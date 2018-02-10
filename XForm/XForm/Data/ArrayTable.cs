@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading;
 
 using XForm.Columns;
 using XForm.Data;
@@ -56,7 +57,7 @@ namespace XForm.IO
             }
         }
 
-        public int Next(int desiredCount)
+        public int Next(int desiredCount, CancellationToken cancellationToken)
         {
             _currentEnumerateSelector = _currentEnumerateSelector.NextPage(_rowCount, desiredCount);
             _currentSelector = _currentEnumerateSelector;

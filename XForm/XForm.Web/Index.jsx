@@ -193,7 +193,7 @@ class Index extends React.Component {
     componentDidUpdate(prevProps, prevState) {
         if (prevState.peek !== this.state.peek) {
             const params = this.state.peek
-                ? { q: `${this.query}\ngroupBy [${this.state.peek.name}] with Count(), Percentage()\nwhere [Count] > 1` }
+                ? { q: `${this.query}\npeek [${this.state.peek.name}]` }
                 : undefined
             this.reqPeek.update(params, json => {
                 this.setState({ peekData: json && json.rows.sort((a, b) => b[1] - a[1]) && json.rows.slice(0, 7) })
