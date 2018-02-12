@@ -33,15 +33,16 @@ namespace XForm.Test.Query
             XArray siblings = XArray.All(siblingValues, siblingValues.Length, siblingNullRows);
 
             int[] expectedValues = { 50, 23, 42, 1, 13, 2 };
-            XArray expected = XArray.All(expectedValues, expectedValues.Length);
+            IXTable expected = TableTestHarness.DatabaseContext.FromArrays(ageValues.Length)
+                .WithColumn("Coalesce", expectedValues);
+
             IXTable resultTable = TableTestHarness.DatabaseContext.FromArrays(ageValues.Length)
                 .WithColumn(new ColumnDetails("Age", typeof(int)), ages)
                 .WithColumn(new ColumnDetails("Salary", typeof(int)), salaries)
                 .WithColumn(new ColumnDetails("Siblings", typeof(int)), siblings)
                 .Query("select Coalesce([Age], [Salary], [Siblings])", TableTestHarness.DatabaseContext);
 
-            XArray actual = resultTable.Columns[0].CurrentGetter()();
-            TableTestHarness.AssertAreEqual(expected, actual, expected.Count);
+            TableTestHarness.AssertAreEqual(expected, resultTable, 2);
         }
 
         [TestMethod]
