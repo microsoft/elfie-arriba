@@ -96,6 +96,7 @@
     <Compile Include="Aggregators\IAggregator.cs" />
     <Compile Include="Aggregators\SumAggregator.cs" />
     <Compile Include="Core\Sampler.cs" />
+    <Compile Include="Functions\Coalesce.cs" />
     <Compile Include="IO\VariableIntegerReaderWriter.cs" />
     <Compile Include="Verbs\Count.cs" />
     <Compile Include="Columns\DeferredArrayColumn.cs" />
@@ -236,7 +237,6 @@
       <Name>Elfie</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>$(SolutionDir)\Deploy.WebSite.cmd $(TargetDir)</PostBuildEvent>

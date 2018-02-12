@@ -3,12 +3,9 @@
 
 using System;
 using System.Linq;
-
 using Elfie.Test;
-
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-
 using XForm.Data;
 using XForm.Extensions;
 using XForm.Query;
@@ -19,6 +16,64 @@ namespace XForm.Test.Query
     public class FunctionsTests
     {
         public static DateTime TestAsOfDateTime = new DateTime(2017, 12, 10, 0, 0, 0, DateTimeKind.Utc);
+
+        [TestMethod]
+        public void Function_Coalesce()
+        {
+            int[] ageValues = { 50, 23, 42, 0, -99, 0 };
+            int[] salaryValues = { 5, 0, 12, -3, 13, 0 };
+            int[] siblingValues = { -8, 0, 0, 1, 0, 2 };
+
+            bool[] ageNullRows = { false, false, false, true, true, true };
+            bool[] salaryNullRows = { false, true, false, true, false, true };
+            bool[] siblingNullRows = { true, true, true, false, true, false };
+
+            XArray ages = XArray.All(ageValues, ageValues.Length, ageNullRows);
+            XArray salaries = XArray.All(salaryValues, salaryValues.Length, salaryNullRows);
+            XArray siblings = XArray.All(siblingValues, siblingValues.Length, siblingNullRows);
+
+            int[] expectedValues = { 50, 23, 42, 1, 13, 2 };
+            IXTable expected = TableTestHarness.DatabaseContext.FromArrays(ageValues.Length)
+                .WithColumn("Coalesce", expectedValues);
+
+            IXTable resultTable = TableTestHarness.DatabaseContext.FromArrays(ageValues.Length)
+                .WithColumn(new ColumnDetails("Age", typeof(int)), ages)
+                .WithColumn(new ColumnDetails("Salary", typeof(int)), salaries)
+                .WithColumn(new ColumnDetails("Siblings", typeof(int)), siblings)
+                .Query("select Coalesce([Age], [Salary], [Siblings])", TableTestHarness.DatabaseContext);
+
+            TableTestHarness.AssertAreEqual(expected, resultTable, 2);
+        }
+
+        [TestMethod]
+        public void Function_Coalesce_DifferingColumnTypesShouldFail()
+        {
+            string[] nameValues = { "Bob", "Sue", "Joseph", "Marty", "Samantha", "" };
+            int[] ageValues = { 50, 23, 42, 0, 0, 0 };
+            bool[] ageNullRows = { false, false, false, true, true, true };
+            bool[] birthdayNulls = { false, true, true, false, false, false };
+            DateTime[] birthdayValues =
+            {
+                new DateTime(2017, 12, 01, 0, 0, 0, DateTimeKind.Utc),
+                new DateTime(2017, 12, 02, 0, 0, 0, DateTimeKind.Utc),
+                new DateTime(2017, 12, 03, 0, 0, 0, DateTimeKind.Utc),
+                new DateTime(2017, 12, 04, 0, 0, 0, DateTimeKind.Utc),
+                new DateTime(2017, 12, 05, 0, 0, 0, DateTimeKind.Utc),
+                new DateTime(2017, 12, 05, 0, 0, 0, DateTimeKind.Utc),
+            };
+
+            XArray names = XArray.All(nameValues, nameValues.Length);
+            XArray ages = XArray.All(ageValues, ageValues.Length, ageNullRows);
+            XArray birthdays = XArray.All(birthdayValues, birthdayValues.Length, birthdayNulls);
+
+            Action query = () => TableTestHarness.DatabaseContext.FromArrays(nameValues.Length)
+                .WithColumn(new ColumnDetails("Name", typeof(string)), names)
+                .WithColumn(new ColumnDetails("Age", typeof(int)), ages)
+                .WithColumn(new ColumnDetails("Birthday", typeof(DateTime)), birthdays)
+                .Query("select Coalesce([Age], [Name], [Birthday])", TableTestHarness.DatabaseContext);
+
+            Assert.ThrowsException<UsageException>(query);
+        }
 
         [TestMethod]
         public void Function_IsNull()
