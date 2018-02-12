@@ -348,7 +348,11 @@ class Index extends React.Component {
                 onMouseEnter={e => this.peekTimer()}
                 onMouseLeave={e => this.peekTimer(() => this.setState({ peek: undefined }), 100)}>
                 {this._makeSvg(this.state.peekData)}
-                {this.state.peekData.map((row, i) => <div key={i} className="peek-value">
+                {this.state.peekData.map((row, i) => <div key={i} className="peek-value"
+                    onClick={e => {
+                        this.editor.appendLine(`where [${this.state.peek.name}] = "${row[0]}"`)
+                        this.peekTimer(() => this.setState({ peek: undefined }))
+                    }}>
                     <span>{row[0] === '' ? '—' : row[0] }</span>
                     <span>{row[2]}</span>
                 </div>)}
