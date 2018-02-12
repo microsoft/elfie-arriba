@@ -29,6 +29,8 @@ namespace XForm.Data
         private static bool[] s_SingleTrue = new bool[1] { true };
         private static bool[] s_SingleFalse = new bool[1] { false };
 
+        public static XArray Empty = new XArray() { Array = null, Selector = ArraySelector.All(0) };
+
         /// <summary>
         ///  Optional array when XArray may contain null values indicating which
         ///  are null. If the array itself is null, none of the values are null.

@@ -1,9 +1,9 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 using XForm.Columns;
 using XForm.Data;
@@ -49,7 +49,7 @@ namespace XForm.Verbs
             _columns[1].SetSelector(_enumerateSelector);
         }
 
-        public override int Next(int desiredCount)
+        public override int Next(int desiredCount, CancellationToken cancellationToken)
         {
             _enumerateSelector = _enumerateSelector.NextPage(_source.Columns.Count, desiredCount);
 

@@ -105,10 +105,10 @@ namespace XForm.Test
                         XArray actualArray = actualArrays[i].Slice(actualNextIndex, actualNextIndex + countToCompare);
 
                         firstMismatchedRow = FirstMismatchedRow(
-                            expectedArray, 
-                            actualArray, 
-                            countToCompare, 
-                            expected.Columns[i].ColumnDetails.Name, 
+                            expectedArray,
+                            actualArray,
+                            countToCompare,
+                            expected.Columns[i].ColumnDetails.Name,
                             out errorMessage);
 
                         if (!String.IsNullOrEmpty(errorMessage)) break;
@@ -281,6 +281,19 @@ namespace XForm.Test
             output.Append(asString);
             output.Append(' ');
             if (asString.Length < length) output.Append(' ', length - asString.Length);
+        }
+
+        public static String8[] ToString8(String[] values)
+        {
+            String8Block block = new String8Block();
+
+            String8[] result = new String8[values.Length];
+            for (int i = 0; i < values.Length; ++i)
+            {
+                result[i] = block.GetCopy(values[i]);
+            }
+
+            return result;
         }
 
         // Return an IsSingleElement array with just the first value of the xarray, but the same count

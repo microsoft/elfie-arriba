@@ -21,6 +21,7 @@ namespace XForm.Columns
         public DeferredArrayColumn(ColumnDetails columnDetails)
         {
             ColumnDetails = columnDetails;
+            _allValues = XArray.Empty;
         }
 
         public void SetValues(XArray values)

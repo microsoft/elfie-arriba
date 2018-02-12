@@ -1,9 +1,9 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 using XForm.Columns;
 
@@ -36,12 +36,12 @@ namespace XForm.Data
 
         public IReadOnlyList<IXColumn> Columns => _columns;
 
-        public int SourceNext(int desiredCount)
+        public int SourceNext(int desiredCount, CancellationToken cancellationToken)
         {
             Reset();
 
             // Get a page from the real source
-            _currentPageCount = _source.Next(desiredCount);
+            _currentPageCount = _source.Next(desiredCount, cancellationToken);
 
             return _currentPageCount;
         }
@@ -52,7 +52,7 @@ namespace XForm.Data
             _currentEnumerateSelector = ArraySelector.All(_currentPageCount).Slice(0, 0);
         }
 
-        public int Next(int desiredCount)
+        public int Next(int desiredCount, CancellationToken cancellationToken)
         {
             // Iterate over the cached single page
             _currentEnumerateSelector = _currentEnumerateSelector.NextPage(_currentPageCount, desiredCount);

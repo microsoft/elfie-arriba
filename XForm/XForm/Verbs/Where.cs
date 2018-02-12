@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading;
 
 using XForm.Columns;
 using XForm.Data;
@@ -88,7 +89,7 @@ namespace XForm.Verbs
             return result;
         }
 
-        public override int Next(int desiredCount)
+        public override int Next(int desiredCount, CancellationToken cancellationToken)
         {
             _currentMatchesReturned += _nextCountToReturn;
 
@@ -105,7 +106,7 @@ namespace XForm.Verbs
             _currentMatchesReturned = 0;
 
             int outerCount;
-            while ((outerCount = _source.Next(countToRequest)) > 0)
+            while ((outerCount = _source.Next(countToRequest, cancellationToken)) > 0)
             {
                 // Track the total retrieved from the source
                 _totalRowsRetrieved += outerCount;
@@ -129,6 +130,10 @@ namespace XForm.Verbs
                 // Reconsider how many rows to request if no matches
                 countToRequest = CountToRequest(desiredCount);
             }
+
+            // Tell the mapper there are no more matches
+            _vector.None();
+            _mapper.SetMatches(_vector, 0);
 
             return 0;
 

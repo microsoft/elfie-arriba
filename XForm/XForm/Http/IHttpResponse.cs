@@ -3,6 +3,7 @@
 
 using System.IO;
 using System.Net;
+using System.Threading;
 using System.Web;
 
 namespace XForm.Http
@@ -16,6 +17,7 @@ namespace XForm.Http
         string ContentType { get; set; }
         void AddHeader(string name, string value);
 
+        CancellationToken ClientDisconnectedToken { get; }
         Stream OutputStream { get; }
         void Close();
     }
@@ -51,6 +53,9 @@ namespace XForm.Http
 
         public Stream OutputStream => _response.OutputStream;
 
+        // HttpListener doesn't expose whether the client disconnected
+        public CancellationToken ClientDisconnectedToken => default(CancellationToken);
+
         public void Close()
         {
             _response.Close();
@@ -81,12 +86,14 @@ namespace XForm.Http
             set { _response.ContentType = value; }
         }
 
-        public Stream OutputStream => _response.OutputStream;
-
         public void AddHeader(string name, string value)
         {
             _response.AddHeader(name, value);
         }
+
+        public CancellationToken ClientDisconnectedToken => _response.ClientDisconnectedToken;
+
+        public Stream OutputStream => _response.OutputStream;
 
         public void Close()
         {

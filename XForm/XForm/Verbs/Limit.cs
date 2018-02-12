@@ -3,6 +3,7 @@
 
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 using XForm.Data;
 using XForm.Query;
@@ -44,12 +45,12 @@ namespace XForm.Verbs
             _rowCountSoFar = 0;
         }
 
-        public override int Next(int desiredCount)
+        public override int Next(int desiredCount, CancellationToken cancellationToken)
         {
             if (_rowCountSoFar >= _rowCountLimit) return 0;
             if (_rowCountSoFar + desiredCount > _rowCountLimit) desiredCount = _rowCountLimit - _rowCountSoFar;
 
-            int sourceCount = _source.Next(desiredCount);
+            int sourceCount = _source.Next(desiredCount, cancellationToken);
             _rowCountSoFar += sourceCount;
 
             return sourceCount;

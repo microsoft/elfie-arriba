@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading;
 
 using XForm.Columns;
 using XForm.Data;
@@ -95,17 +96,17 @@ namespace XForm.Verbs
 
         public int CurrentRowCount { get; private set; }
 
-        public int Next(int desiredCount)
+        public int Next(int desiredCount, CancellationToken cancellationToken)
         {
             // If this is the first call, fully cache the JoinToSource and build a lookup Dictionary
-            if (_joinDictionary == null) BuildJoinDictionary();
+            if (_joinDictionary == null) BuildJoinDictionary(cancellationToken);
 
             BitVector matchedRows = null;
 
             while (true)
             {
                 // Get the next rows from the source
-                int count = _source.Next(desiredCount);
+                int count = _source.Next(desiredCount, cancellationToken);
                 if (count == 0)
                 {
                     CurrentRowCount = 0;
@@ -134,7 +135,7 @@ namespace XForm.Verbs
             return _currentRightSideSelector.Count;
         }
 
-        private void BuildJoinDictionary()
+        private void BuildJoinDictionary(CancellationToken cancellationToken)
         {
             // Validate the RHS is a seekable table (only on build, so that Suggest doesn't fail)
             ISeekableXTable joinToSource = _joinToSource as ISeekableXTable;

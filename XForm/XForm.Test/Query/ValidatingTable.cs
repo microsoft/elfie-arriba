@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -112,11 +113,13 @@ namespace XForm.Test.Query
             }
         }
 
-        public int Next(int desiredCount)
+        public int Next(int desiredCount, CancellationToken cancellationToken)
         {
+            if (cancellationToken == default(CancellationToken)) Assert.Fail("CancellationToken must be passed through the table pipeline.");
+
             NextCalled = true;
 
-            CurrentRowCount = _inner.Next(desiredCount);
+            CurrentRowCount = _inner.Next(desiredCount, cancellationToken);
             Assert.AreEqual(CurrentRowCount, _inner.CurrentRowCount, $"Enumerator must return the same row count from Next {CurrentRowCount:n0} that it saves in CurrentRowbatchCount {_inner.CurrentRowCount:n0}.");
             return CurrentRowCount;
         }
