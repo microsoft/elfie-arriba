@@ -91,6 +91,14 @@ import ReactDOM from "react-dom"
             const col = lines.last().length + 1
             return new monaco.Position(lines.length, col)
         }
+        editor.appendLine = function(line) {
+            this.executeEdits('my-source', [{
+                    identifier: { major: 1, minor: 1 },
+                    range: monaco.Range.fromPositions(this.getModel().getFullModelRange().getEndPosition()),
+                    text: `${this.getValue().endsWith('\n') ? '' : '\n'}${line}`,
+                    forceMoveMarkers: true,
+                }])
+        }
 
         // Assumes monaco is loaded
         monaco.Position.prototype.toRange = function(length) {
@@ -388,15 +396,7 @@ class Index extends React.Component {
                     {!!this.state.userCols.length && <span className="button" onClick={e => this.setState({ userCols: [] }, () => this.limitChanged())}>Reset</span>}
                     <span className="flexFill"></span>
                     {!!this.state.userCols.length && <span className="button" onClick={e => {
-                        const newLine = this.query.endsWith('\n') ? '' : '\n'
-                        const userCols = this.state.userCols.length && `${newLine}select ${this.state.userCols.map(c => `[${c}]`).join(', ')}` || ''
-                        const r = this.editor.getModel().getFullModelRange()
-                        this.editor.executeEdits('my-source', [{
-                                identifier: { major: 1, minor: 1 },
-                                range: new monaco.Range(r.endLineNumber, r.endColumn, r.endLineNumber, r.endColumn),
-                                text: userCols,
-                                forceMoveMarkers: true,
-                            }])
+                        this.editor.appendLine(`select ${this.state.userCols.map(c => `[${c}]`).join(', ')}`)
                         this.setState({ userCols: [] }, () => this.limitChanged())
                     }}>Apply</span>}
                 </div>
