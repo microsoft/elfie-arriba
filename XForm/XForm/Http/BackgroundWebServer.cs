@@ -75,10 +75,10 @@ namespace XForm
             this.Stop();
         }
 
-        private void StartForBinding(params string[] urls)
+        private void StartForBinding(bool withAuthentication, params string[] urls)
         {
             this.Listener = new HttpListener();
-            this.Listener.AuthenticationSchemes = AuthenticationSchemes.Negotiate;
+            if(withAuthentication) this.Listener.AuthenticationSchemes = AuthenticationSchemes.Negotiate;
 
             foreach (string url in urls)
             {
@@ -94,8 +94,8 @@ namespace XForm
             {
                 try
                 {
-                    // Try binding for all names on port 5073
-                    StartForBinding("http://+:5073/");
+                    // Try binding for all names on port 5073, with authentication
+                    StartForBinding(true, "http://+:5073/");
                     Console.WriteLine("Web Server running; browse to http://localhost:5073. [Local and Remote]\r\nPress enter to stop server.");
                 }
                 catch (HttpListenerException ex) when (ex.ErrorCode == 5)
@@ -106,8 +106,8 @@ namespace XForm
 
                 if (this.Listener == null)
                 {
-                    // Try binding to just localhost:5073
-                    StartForBinding("http://localhost:5073/");
+                    // Try binding to just localhost:5073, with no authentication
+                    StartForBinding(false, "http://localhost:5073/");
                     Console.WriteLine("Web Server running; browse to http://localhost:5073. [Local Only]");
                     Console.WriteLine(" To enable remote: https://github.com/Microsoft/elfie-arriba/wiki/XForm-Http-Remote-Access");
                     Console.WriteLine("Press enter to stop server.");
