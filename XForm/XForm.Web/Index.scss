@@ -51,10 +51,6 @@ body {
         background: hsla(0, 0, 0, 0.1);
         &:hover { background: hsla(0, 0, 0, 0.2); }
     }
-
-    ::-webkit-clear-button { display: none; }
-    ::-webkit-inner-spin-button { display: none; }
-    ::-webkit-calendar-picker-indicator { background: transparent; }
 }
 
 @mixin buttonBase {
@@ -156,15 +152,13 @@ body {
 
     .queryHeader {
         @include header;
-        padding: 0; // Override 'header'
+        padding-left: 0; // Override 'header'
 
         input {
+            flex: 1 1 auto;
             font: inherit;
             border: 0;
-            padding: 16px;
-
-            &[type=text] { flex: 1 1 auto; }
-            &[type=date] { width: 120px; }
+            padding: 17px;
         }
 
         span {

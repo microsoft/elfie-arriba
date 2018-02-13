@@ -388,13 +388,12 @@ class Index extends React.Component {
                             setTimeout(() => this.setState({ saving: "Save" }), 3000)
                         })
                     }}>{ this.state.saving || "Save" }</span>
-                    <input type="date" defaultValue={(new Date()).toISOString().split('T')[0]} onChange={e => this.setState({ asOf: e.target.valueAsDate.toXFormat() }, () => this.queryTextChanged(true))} />
-                    {/* <select onChange={e => this.setState({ asOf: e.target.value || undefined }, () => this.queryTextChanged(true))}>
+                    <select onChange={e => this.setState({ asOf: e.target.value || undefined }, () => this.queryTextChanged(true))}>
                         <option value="">As of Now</option>
                         <option value={Date.daysAgo(1).toXFormat()}>As of Yesterday</option>
                         <option value={Date.daysAgo(7).toXFormat()}>As of Last Week</option>
                         <option value={Date.firstOfMonth().toXFormat()}>As of {(new Date()).toLocaleString('en-us', { month: "long" })} 1st</option>
-                    </select> */}
+                    </select>
                 </div>
                 <div className="queryUsage">{
                     this.state.errorMessage && <span className="errorMessage">{this.state.errorMessage}</span>
