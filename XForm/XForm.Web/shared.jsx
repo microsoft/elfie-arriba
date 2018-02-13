@@ -78,3 +78,9 @@ window.CachableReusedRequest = class CachableReusedRequest {
         }
     }
 }
+
+window.o2c = function(o) {
+    // Object --> css class names (string)
+    // { a: true, b: false, c: 1 } --> 'a c'
+    return Object.keys(o).filter(k => o[k]).join(' ')
+}

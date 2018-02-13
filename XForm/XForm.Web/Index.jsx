@@ -53,21 +53,54 @@ import ReactDOM from "react-dom"
         return this[this.length - 1]
     }
 
-    Date.daysAgo = function(n) {
-        const d = new Date()
-        d.setDate(d.getDate() - (n || 0))
-        return d
+    Date.min = function(...dates) {
+        return new Date(Math.min(...dates))
     }
 
-    Date.firstOfMonth = function() {
-        const now = new Date()
-        return new Date(now.getFullYear(), now.getMonth())
+    Date.range = function(from, to) {
+        const range = [new Date(from)]
+        while (from < to) {
+            from.setDate(from.getDate() + 1)
+            range.push(new Date(from))
+        }
+        return range
+    }
+
+    Date.isDateEquals = function(a, b) {
+        return a && b
+            && a.getYear()  === b.getYear()
+            && a.getMonth() === b.getMonth()
+            && a.getDate()  === b.getDate()
+    }
+
+    Date.prototype.firstOfMonth = function() {
+        const copy = new Date(this)
+        copy.setDate(1)
+        return copy
+    }
+
+    Date.prototype.daysAgo = function(n) {
+        const copy = new Date(this)
+        copy.setDate(copy.getDate() - (n || 0))
+        return copy
+    }
+
+    Date.prototype.sunday = function() {
+        const copy = new Date(this)
+        copy.setDate(copy.getDate() - copy.getDay())
+        return copy
     }
 
     Date.prototype.toXFormat = function() {
         const mm = this.toLocaleString('en-US', { month: '2-digit' })
         const dd = this.toLocaleString('en-US', { day: '2-digit' })
         return `${this.getFullYear()}-${mm}-${dd}`
+    }
+
+    Date.prototype.toMMMd = function() {
+        const mm = this.toLocaleString('en-US', { month: 'short' })
+        const dd = this.toLocaleString('en-US', { day: 'numeric' })
+        return `${mm} ${dd}`
     }
 
     window.extendEditor = function(editor) {
@@ -124,6 +157,7 @@ class Index extends React.Component {
         this.reqPeek = new CachableReusedRequest('run');
         this.reqPeek.caching = true;
 
+        this.dateTimer = singleTimeout()
         this.peekTimer = singleTimeout()
     }
     componentDidMount() {
@@ -368,6 +402,31 @@ class Index extends React.Component {
             </div>
         }
 
+        const DatePicker = () => {
+            if (!this.state.showDatePicker) return null
+            const today = new Date()
+            const startDate = Date.min(today.firstOfMonth(), today.daysAgo(7)).sunday()
+            return <div className="datePicker"
+                onMouseEnter={e => this.dateTimer()}
+                onMouseLeave={e => this.dateTimer(() => this.setState({ showDatePicker: undefined }), 100)}>
+                <div>{new Date().toLocaleString('en-US', { month: 'long' })}</div>
+                <div>
+                    {'SMTWTFS'.split('').map((d, i)=> <span key={`header${i}`} className="header">{d}</span>)}
+                    {Date.range(startDate, today).map(d => <span key={d}
+                        className={o2c({
+                            current: Date.isDateEquals(this.state.asOfDate || new Date(), d),
+                            outside: today.getMonth() !== d.getMonth(),
+                        })}
+                        onClick={() => {
+                            this.setState({ asOf: d.toXFormat(), asOfDate: d }, () => this.queryTextChanged(true))
+                            this.dateTimer(() => this.setState({ showDatePicker: undefined }))
+                        }}>
+                        <span>{d.getDate()}</span>
+                    </span>)}
+                </div>
+            </div>
+        }
+
         const formatters = rows && cols.map(col => col === "Count" || col.endsWith(".Sum")
                 ? cell => cell === "" ? "—" : (+cell).toLocaleString()
                 : cell => cell)
@@ -388,12 +447,11 @@ class Index extends React.Component {
                             setTimeout(() => this.setState({ saving: "Save" }), 3000)
                         })
                     }}>{ this.state.saving || "Save" }</span>
-                    <select onChange={e => this.setState({ asOf: e.target.value || undefined }, () => this.queryTextChanged(true))}>
-                        <option value="">As of Now</option>
-                        <option value={Date.daysAgo(1).toXFormat()}>As of Yesterday</option>
-                        <option value={Date.daysAgo(7).toXFormat()}>As of Last Week</option>
-                        <option value={Date.firstOfMonth().toXFormat()}>As of {(new Date()).toLocaleString('en-us', { month: "long" })} 1st</option>
-                    </select>
+                    <span title={(this.state.asOfDate || new Date()).toDateString()}
+                        className={'button' + (this.state.showDatePicker ? ' hot' : '')}
+                        onMouseEnter={e => this.dateTimer(() => this.setState({ showDatePicker: true }))}
+                        onMouseLeave={e => this.dateTimer(() => this.setState({ showDatePicker: undefined }), 100)}>
+                        As of {(this.state.asOfDate || new Date()).toMMMd()}</span>
                 </div>
                 <div className="queryUsage">{
                     this.state.errorMessage && <span className="errorMessage">{this.state.errorMessage}</span>
@@ -402,6 +460,7 @@ class Index extends React.Component {
                 <div id="queryEditor">
                     <div className="queryHint">{this.state.queryHint}</div>
                 </div>
+                <DatePicker key="datePicker" />
             </div>
             <div id="schema">
                 <div className="schemaHeader">

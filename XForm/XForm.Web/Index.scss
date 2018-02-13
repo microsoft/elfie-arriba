@@ -53,6 +53,12 @@ body {
     }
 }
 
+@mixin center-center {
+    display: flex;
+    justify-content: center; // Left/Right
+    align-items: center; // Top/Bottom
+}
+
 @mixin buttonBase {
     padding: 8px 10px;
     padding-right: 12px; // Optical
@@ -62,7 +68,7 @@ body {
 @mixin buttonActive {
     cursor: pointer;
     user-select: none;
-    &:hover { background-color: hsla(0, 0, 0, 0.15); }
+    &:hover, &.hot { background-color: hsla(0, 0, 0, 0.15); }
     &:active { background-color: hsla(0, 0, 100%, 0.15); }
 }
 
@@ -149,6 +155,7 @@ body {
 .query {
     display: flex;
     flex-direction: column;
+    position: relative; // For datePicker
 
     .queryHeader {
         @include header;
@@ -361,3 +368,72 @@ body {
     }
 }
 
+.datePicker {
+    box-sizing: content-box;
+    position: absolute;
+    top: 50px;
+    right: -120px;
+    border: 1px solid $line80;
+    border-top: none;
+    border-radius: 0 0 2px 2px;
+    background: $bg;
+    box-shadow: 0 5px 10px 0 rgba(0, 0, 0, 0.2);
+    display: flex;
+    $dateWH: 50px;
+
+    div:first-child { // Month
+        font-size: 9pt;
+        font-weight: bold;
+        height: $dateWH;
+        margin-top: 10px + $dateWH / 2; // Align with Days padding + header
+        padding: 0px 30px 0 20px;
+        display: flex;
+        align-items: center;
+    }
+
+    div:last-child { // Days
+        box-sizing: content-box;
+        padding: 10px 0;
+        border-left: 1px solid $line;
+        display: flex;
+        flex-flow: row wrap;
+        width: 7 * $dateWH;
+
+        & > span {
+            width: $dateWH;
+            height: $dateWH;
+            @include center-center;
+            cursor: pointer;
+            padding: 5px;
+
+            &.header {
+                height: $dateWH / 2;
+                cursor: default;
+                font-size: 7pt;
+                font-weight: bold;
+                color: adjust-color($blue, $saturation: -40%, $lightness: 30%);
+            }
+
+            & > span {
+                width: 100%;
+                height: 100%;
+                @include center-center;
+                border-radius: 50%;
+                padding-right: 2px; // Optical.
+                transition: 100ms background;
+            }
+
+            &:hover:not(.header) > span {
+                background: adjust-color(change-color($blue, $alpha: 0.1), $green: -40);
+            }
+
+            &.current > span {
+                background-color: $line;
+            }
+
+            &.outside {
+                color: $line;
+            }
+        }
+    }
+}
