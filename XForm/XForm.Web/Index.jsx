@@ -91,13 +91,16 @@ import ReactDOM from "react-dom"
             const col = lines.last().length + 1
             return new monaco.Position(lines.length, col)
         }
-        editor.appendLine = function(line) {
+        editor.append = function(value) {
             this.executeEdits('my-source', [{
                     identifier: { major: 1, minor: 1 },
                     range: monaco.Range.fromPositions(this.getModel().getFullModelRange().getEndPosition()),
-                    text: `${this.getValue().endsWith('\n') ? '' : '\n'}${line}`,
+                    text: `${value}`,
                     forceMoveMarkers: true,
                 }])
+        }
+        editor.appendLine = function(line) {
+            this.append(`${this.getValue().endsWith('\n') ? '' : '\n'}${line}`)
         }
 
         // Assumes monaco is loaded
@@ -350,7 +353,13 @@ class Index extends React.Component {
                 {this._makeSvg(this.state.peekData)}
                 {this.state.peekData.map((row, i) => <div key={i} className="peek-value"
                     onClick={e => {
-                        this.editor.appendLine(`where [${this.state.peek.name}] = "${row[0]}"`)
+                        const expr = `[${this.state.peek.name}] = "${row[0]}"`
+                        const last = this.query.split('\n').last()
+                        if (last.startsWith('where')) {
+                            this.editor.append(` AND ${expr}`)
+                        } else {
+                            this.editor.appendLine(`where ${expr}`)
+                        }
                         this.peekTimer(() => this.setState({ peek: undefined }))
                     }}>
                     <span>{row[0] === '' ? '—' : row[0] }</span>
