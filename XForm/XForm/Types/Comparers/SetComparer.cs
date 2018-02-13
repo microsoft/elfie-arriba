@@ -42,7 +42,7 @@ namespace XForm.Types.Comparers
             if (valuesGetter == null) throw new ArgumentException("ConvertToEnumIndexComparer is only valid for columns implementing Values.");
 
             // Get all distinct values from the left side and find matches
-            XArray left = leftColumn.ValuesGetter()();
+            XArray left = valuesGetter();
             XArray right = rightColumn.ValuesGetter()();
             BitVector set = new BitVector(left.Count);
             currentComparer(left, right, set);

@@ -325,12 +325,25 @@ namespace XForm.Test
         {
             // Verify WorkflowRunner handles case insensitive table names
             XForm("build WebRequest");
-            XForm("build webrequest");
+            //XForm("build webrequest");
 
             // Verify table and column name accesses work case insensitive
             Assert.AreEqual((long)1000, SampleDatabase.XDatabaseContext.Query(@"
                 read webrequest
                 select [id]").RunAndDispose());
+
+            // Verify Equals is case sensitive but contains isn't
+            Assert.AreEqual((long)916, SampleDatabase.XDatabaseContext.Query(@"
+                read webrequest
+                where [HttpMethod] = ""GET""").RunAndDispose());
+
+            Assert.AreEqual((long)0, SampleDatabase.XDatabaseContext.Query(@"
+                read webrequest
+                where [HttpMethod] = ""get""").RunAndDispose());
+
+            Assert.AreEqual((long)916, SampleDatabase.XDatabaseContext.Query(@"
+                read webrequest
+                where [HttpMethod] : ""get""").RunAndDispose());
         }
 
         [TestMethod]
