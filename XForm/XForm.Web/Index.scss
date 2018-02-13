@@ -76,7 +76,7 @@ body {
 
     background-color: $blue;
     color: hsl(0, 0, 95%);
-    border-bottom: 1px solid adjust-color($blue, $lightness: -10%);
+    border-bottom: 1px solid adjust-color($blue, $lightness: -5%);
 
     & > :not(input):not(.loading) {
         @include buttonBase;
@@ -346,16 +346,16 @@ body {
         }
 
         td {
-            border-bottom: 1px solid $line;
+            border-bottom: transparent;
             padding: 10px 20px 10px 0;
             white-space: nowrap;
         }
 
-        :nth-child(2n) td {
+        tr:nth-child(2n) td {
             border-bottom: 1px solid hsl(0, 0, 95%);
         }
 
-        :nth-child(10n) td {
+        tr:nth-child(10n) td {
             border-bottom: 1px solid hsl(0, 0, 80%);
         }
     }
