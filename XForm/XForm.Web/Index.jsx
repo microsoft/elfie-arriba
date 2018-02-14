@@ -97,7 +97,11 @@ import ReactDOM from "react-dom"
         return `${this.getFullYear()}-${mm}-${dd}`
     }
 
-    Date.prototype.toMMMd = function() {
+    Date.prototype.toFriendly = function() {
+        const today = new Date()
+        if (Date.isDateEquals(this, today)) return "Today"
+        if (Date.isDateEquals(this, today.daysAgo(1))) return "Yesterday"
+        if (Date.isDateEquals(this, today.daysAgo(7))) return "Last Week"
         const mm = this.toLocaleString('en-US', { month: 'short' })
         const dd = this.toLocaleString('en-US', { day: 'numeric' })
         return `${mm} ${dd}`
@@ -451,7 +455,7 @@ class Index extends React.Component {
                         className={'button' + (this.state.showDatePicker ? ' hot' : '')}
                         onMouseEnter={e => this.dateTimer(() => this.setState({ showDatePicker: true }))}
                         onMouseLeave={e => this.dateTimer(() => this.setState({ showDatePicker: undefined }), 100)}>
-                        As of {(this.state.asOfDate || new Date()).toMMMd()}</span>
+                        As of {(this.state.asOfDate || new Date()).toFriendly()}</span>
                 </div>
                 <div className="queryUsage">{
                     this.state.errorMessage && <span className="errorMessage">{this.state.errorMessage}</span>
