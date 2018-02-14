@@ -172,6 +172,9 @@ namespace XForm
                 // Build a Pipeline for the Query
                 pipeline = context.Query(query);
 
+                // If there was no query, return an empty result
+                if (pipeline == null) return;
+
                 // Try to get the count up to the timeout
                 if (Debugger.IsAttached) timeout = TimeSpan.MaxValue;
                 RunResult result = pipeline.RunUntilTimeout(timeout);
@@ -211,6 +214,9 @@ namespace XForm
 
                 // Build a Pipeline for the Query
                 pipeline = context.Query(query);
+
+                // If there was no query, return an empty result
+                if (pipeline == null) return;
 
                 // Restrict the row and column count if requested
                 if (rowCountLimit >= 0 || colCountLimit > 0)
