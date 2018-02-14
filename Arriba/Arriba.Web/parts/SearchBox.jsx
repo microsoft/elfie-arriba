@@ -13,23 +13,38 @@ export default class extends EventedComponent {
             },
             "click": e => { // Ideally use input.blur, but that fires before suggestions.item.onClick.
                 if (e.target === this.refs.input) return;
-                this.setState({ showSuggest: undefined });
+                this.reqQuery.clear();
             },
         };
+        this.reqQuery = new CachableReusedRequest("suggest",
+            () => ({ t: this.props.userSelectedTable, q: this.props.query }),
+            json => {
+                this.setState({ completed: json && json.complete })
+                this.refs.suggestions.suggestions = json
+            });
+        this.reqPeek = new CachableReusedRequest("suggest",
+            () => this.state.selected && this.state.selected.category === "ColumnName"
+                    ? { t: this.props.userSelectedTable, q: `${this.state.completed}${this.state.selected.completeAs} = ` }
+                    : undefined,
+            json => this.refs.peek.suggestions = json)
+        this.reqPeek.caching = true
     }
     componentDidMount() {
         super.componentDidMount();
         this.focus();
     }
-    componentWillReceiveProps(nextProps) {
-        if (this.props.query != nextProps.query) this.refs.peek.clearCache();
-    }
     componentDidUpdate(prevProps, prevState) {
         // Skip onInteract in situations where the input is not focused. Namely, when a the query is set from the Recents/Favs.
         const diffProps = Object.diff(prevProps, this.props);
+        const diffState = Object.diff(prevState, this.state);
+
         const hasFocus = this.refs.input === document.activeElement;
         if (diffProps.hasAny("query") && hasFocus && this.props.query !== "*") {
-            this.setState({ showSuggest: true });
+            this.reqPeek.resetCache();
+            this.reqQuery.update();
+        }
+        if (diffState.hasAny("selected")) {
+            this.reqPeek.update();
         }
     }
     focus() {
@@ -48,7 +63,7 @@ export default class extends EventedComponent {
                 placeholder="Search for..."
                 tabIndex="1"
                 value={this.props.query}
-                onClick={e => this.setState({ showSuggest: true })}
+                onClick={e => this.reqQuery.update()}
                 onInput={e => {
                     // IE focus/blur spurriously triggers onInput(), this works around that.
                     const query = e.target.value;
@@ -61,23 +76,17 @@ export default class extends EventedComponent {
                     <div className="railContents">
                         <Suggestions
                             ref="suggestions"
-                            query={this.state.showSuggest ? this.props.query : undefined}
-                            hide={() => this.setState({ showSuggest: undefined })}
+                            hide={() => this.reqQuery.clear()}
                             queryChanged={q => this.props.queryChanged(q)}
-                            userSelectedTable={this.props.userSelectedTable}
-                            completedChanged={c => this.setState({ completed: c })}
                             selectedChanged={s => this.setState({ selected: s && s.category === "ColumnName" && s || undefined }) }
                             refocus={() => this.refs.input.focus()} />
 
                         <Suggestions
                             ref="peek"
                             marginTop={this.state.selected && this.state.selected.offsetTop || 0}
-                            cache={true}
-                            query={this.state.selected && this.state.completed + this.state.selected.completeAs + ' = ' || undefined}
                             hide={() => this.setState({ selected: undefined })}
                             queryChanged={q => this.props.queryChanged(q)}
                             sel={-1}
-                            completedChanged={c => {}}
                             refocus={() => this.refs.input.focus()} />
                     </div>
                 </span>

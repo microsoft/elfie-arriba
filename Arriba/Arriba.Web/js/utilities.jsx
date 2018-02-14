@@ -27,16 +27,21 @@ window.xhr = (path, params, body) => {
 };
 
 window.CachableReusedRequest = class CachableReusedRequest {
-    constructor(path) {
+    constructor(path, getParams, then) {
         this._path = path;
-        this.reset();
+        this._getParams = getParams;
+        this._then = then;
+        this.resetCache();
     }
-    reset() {
+    resetCache() {
         this._cache = {};
     }
-    update(paramObj, then) {
+    update() { this._update(this._getParams()); }
+    clear()  { this._update(); }
+    _update(paramObj) {
         if (this._xhr) this._xhr.abort();
 
+        const then = this._then;
         if (!paramObj) return then(); // return undef
 
         const paramStr = buildUrlParameters(paramObj);

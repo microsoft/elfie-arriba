@@ -4,8 +4,6 @@ import EventedComponent from "./EventedComponent";
 export default class extends EventedComponent {
     constructor(props) {
         super(props);
-        this.request = new CachableReusedRequest("suggest");
-        this.request.caching = props.cache;
         this.state = { suggestions: [] };
         this.suggestions = undefined;
         this.events = {
@@ -16,14 +14,6 @@ export default class extends EventedComponent {
         };
     }
     componentDidUpdate(prevProps, prevState) {
-        if (prevProps.query !== this.props.query) {
-            // query=undef valid for peek, which implies clear.
-            const params = this.props.query === undefined
-                ? undefined
-                : { t: this.props.userSelectedTable, q: this.props.query || "" };
-            this.request.update(params, json => this.suggestions = json);
-        }
-
         var suggestions = this.state.suggestions;
         var sel = this.state.sel;
         if (this.props.selectedChanged && (prevState.suggestions !== suggestions || prevState.sel !== sel)) {
@@ -33,16 +23,12 @@ export default class extends EventedComponent {
 
     set suggestions(dataContent) {
         dataContent = dataContent || { suggestions: [], complete: "", completionCharacters: [] };
-        this.props.completedChanged(dataContent.complete);
         this.setState({
             suggestions: dataContent.suggestions,
             sel: this.props.sel || 0,
             completed: dataContent.complete,
             completionCharacters: dataContent.completionCharacters.map(c => ({ "\t": "Tab" })[c] || c),
         });
-    }
-    clearCache() {
-        this.request.reset();
     }
 
     onClick(item) {
