@@ -40,7 +40,6 @@ window.CachableReusedRequest = class CachableReusedRequest {
         if (!paramObj) return then(); // return undef
 
         const paramStr = buildUrlParameters(paramObj);
-        then = then || this._then;
         const cache = this.caching && this._cache[paramStr];
         if (cache) {
             then(cache);
