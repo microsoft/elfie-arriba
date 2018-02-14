@@ -77,14 +77,19 @@ namespace XForm
             //    read Identity.StandingAdmins.AssetAdminSummary.V0
             //    join [Name] Asset.Extended.Release [Name] Asset. ";
 
-            query = @"
-                read WebRequestHuge
-                peek [DataCenter]";
+            //query = @"
+            //    read WebRequestHuge
+            //    peek [DataCenter]";
 
             //query = @"
             //    read WebRequestHuge.Typed     
             //    where [EventTime] = null
             //    count";
+
+            query = @"
+                read WebRequest
+                where [HttpMethod] = ""GET""
+            ";
 
             string singleLineQuery = XqlScanner.QueryToSingleLineStyle(query);
 
