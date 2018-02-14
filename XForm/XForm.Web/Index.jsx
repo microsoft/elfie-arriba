@@ -431,7 +431,7 @@ class Index extends React.Component {
                 ? cell => cell === "" ? "—" : (+cell).toLocaleString()
                 : cell => cell)
 
-        const encodedQuery = encodeURIComponent(this.validQuery)
+        const encodedParams = encodeParams({ asof: this.state.asOf, q: this.validQuery })
 
         return [<div key="root" className={`root`}>
             <div className="query">
@@ -492,8 +492,8 @@ class Index extends React.Component {
                 <div className="" className={`resultsHeader ${this.state.pausePulse ? '' : 'pulse'}`}>
                     <span>{this.state.resultCount}</span>
                     <span className="flexFill"></span>
-                    {encodedQuery && <a className="button" target="_blank" href={`${xhr.urlRoot}/download?fmt=csv&q=${encodedQuery}`}>CSV</a>}
-                    {encodedQuery && <a className="button" target="_blank" href={`${xhr.urlRoot}/download?fmt=tsv&q=${encodedQuery}`}>TSV</a>}
+                    {encodedParams && <a className="button" target="_blank" href={`${xhr.urlRoot}/download?fmt=csv&${encodedParams}`}>CSV</a>}
+                    {encodedParams && <a className="button" target="_blank" href={`${xhr.urlRoot}/download?fmt=tsv&${encodedParams}`}>TSV</a>}
                     <span className={`loading ${ this.state.loading && 'loading-active' }`}></span>
                 </div>
                 <div className="tableWrapper" onScroll={e => {
