@@ -7,7 +7,7 @@ export default class extends EventedComponent {
         this.request = new CachableReusedRequest("suggest");
         this.request.caching = props.cache;
         this.state = { suggestions: [] };
-        this.suggestions = { suggestions: [], complete: "", completionCharacters: [] };
+        this.suggestions = undefined;
         this.events = {
             "mousewheel": e => { // Prefer "mousewheel" over "scroll" as the latter gets (noisily) triggered by results loading.
                 if (!this.refs.suggestions || this.refs.suggestions.contains(e.target)) return;
@@ -21,9 +21,7 @@ export default class extends EventedComponent {
             const params = this.props.query === undefined
                 ? undefined
                 : { t: this.props.userSelectedTable, q: this.props.query || "" };
-            this.request.update(params, json => {
-                this.suggestions = json || { suggestions: [], complete: "", completionCharacters: [] };
-            });
+            this.request.update(params, json => this.suggestions = json);
         }
 
         var suggestions = this.state.suggestions;
@@ -34,6 +32,7 @@ export default class extends EventedComponent {
     }
 
     set suggestions(dataContent) {
+        dataContent = dataContent || { suggestions: [], complete: "", completionCharacters: [] };
         this.props.completedChanged(dataContent.complete);
         this.setState({
             suggestions: dataContent.suggestions,
