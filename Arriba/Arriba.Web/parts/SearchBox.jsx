@@ -11,7 +11,7 @@ function ciStartNotEq(prefix, term) {
 export default class extends EventedComponent {
     constructor(props) {
         super(props);
-        this.state = { space: ""};
+        this.state = { space: this.props.userSelectedTable ? " " : "" };
         this.events = {
             "storage": e => {
                 if (!["favorites"].includes(e.key)) return;
