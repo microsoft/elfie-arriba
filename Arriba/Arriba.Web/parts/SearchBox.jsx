@@ -120,7 +120,7 @@ export default class extends EventedComponent {
                     <div className="railContents">
                         <Suggestions
                             ref="tables"
-                            hide={() => null}
+                            hide={() => this.refs.tables.suggestions = undefined}
                             complete={this._completeTable.bind(this)} />
                         <Suggestions
                             ref="suggestions"
