@@ -46,6 +46,7 @@ export default class extends EventedComponent {
 
         const hasFocus = this.refs.input === document.activeElement;
         if (diffProps.hasAny("userSelectedTable") && hasFocus) {
+            if (!this.props.userSelectedTable) this.setState({ space: "" });
             this._updateTables();
         }
         if (diffState.hasAny("space")) {
