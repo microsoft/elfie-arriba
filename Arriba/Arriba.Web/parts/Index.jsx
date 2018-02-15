@@ -76,13 +76,6 @@ class Index extends EventedComponent {
         }
     }
 
-    onKeyDown(e) {
-        // Backspace: Clear state *if query empty*
-        if (e.keyCode === 8 && !this.state.query && this.state.userSelectedTable) {
-            this.setState({ userSelectedTable: undefined });
-        }
-    }
-
     refreshAllBasics(then) {
         // On Page load, find the list of known table names
         jsonQuery(configuration.url + "/allBasics",
@@ -126,7 +119,7 @@ class Index extends EventedComponent {
     render() {
         if (this.state.blockingErrorStatus != null) return <ErrorPage status={this.state.blockingErrorStatus} />;
         const Page = { grid: Grid, help: Help }[this.state.mode] || Search;
-        return <div className="viewport" onKeyDown={this.onKeyDown.bind(this)}>
+        return <div className="viewport">
             {this.state.error && <div className="errorBar">{this.state.error}</div>}
             <div className="header">
                 <a className="title font-light" onClick={() => {
@@ -152,6 +145,7 @@ class Index extends EventedComponent {
                         parsedQuery={this.state.counts && this.state.counts.parsedQuery}
                         queryChanged={query => this.setState({ query: query })}
                         userSelectedTable={this.state.userSelectedTable}
+                        userSelectedTableChanged={name => this.setState({ userSelectedTable: name })}
                         loading={this.state.loading} />
 
                 </Tabs>

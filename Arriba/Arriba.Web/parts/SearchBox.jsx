@@ -5,7 +5,7 @@ import Suggestions from "./Suggestions";
 export default class extends EventedComponent {
     constructor(props) {
         super(props);
-        this.state = { table: "", space: ""};
+        this.state = { space: ""};
         this.events = {
             "storage": e => {
                 if (!["favorites"].includes(e.key)) return;
@@ -26,8 +26,8 @@ export default class extends EventedComponent {
             () => this.state.selected && this.state.selected.category === "ColumnName"
                     ? { t: this.props.userSelectedTable, q: `${this.state.completed}${this.state.selected.completeAs} = ` }
                     : undefined,
-            json => this.refs.peek.suggestions = json)
-        this.reqPeek.caching = true
+            json => this.refs.peek.suggestions = json);
+        this.reqPeek.caching = true;
     }
     componentDidMount() {
         super.componentDidMount();
@@ -66,7 +66,7 @@ export default class extends EventedComponent {
     }
     render() {
         var star = (localStorage.getJson("favorites") || []).includes(this.props.parsedQuery) ? "icon-solid-star" : "icon-outlined-star"
-        const tableSpaceQuery = `${this.state.table}${this.state.space}${this.props.query}`
+        const tableSpaceQuery = `${this.props.userSelectedTable || ""}${this.state.space}${this.props.query}`
         return <div className="searchBox">
             <div className={ "loading " + (this.props.loading ? "loading-active" : "") }></div>
             <input ref="input" type="text"
@@ -82,7 +82,8 @@ export default class extends EventedComponent {
                     space = space || ""
                     query = query || ""
 
-                    this.setState({ table, space });
+                    if (this.props.userSelectedTable !== table) this.props.userSelectedTableChanged(table);
+                    this.setState({ space });
                     if (this.props.query !== query) this.props.queryChanged(query);
                 }}
                 onKeyDown={e => this.refs.suggestions.onKeyDown(e)} />
