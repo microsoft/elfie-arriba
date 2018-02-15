@@ -66,13 +66,14 @@ export default class extends EventedComponent {
     }
     render() {
         var star = (localStorage.getJson("favorites") || []).includes(this.props.parsedQuery) ? "icon-solid-star" : "icon-outlined-star"
+        const tableSpaceQuery = `${this.state.table}${this.state.space}${this.props.query}`
         return <div className="searchBox">
             <div className={ "loading " + (this.props.loading ? "loading-active" : "") }></div>
             <input ref="input" type="text"
                 spellCheck="false"
                 placeholder="Search for..."
                 tabIndex="1"
-                value={`${this.state.table}${this.state.space}${this.props.query}`}
+                value={tableSpaceQuery}
                 onClick={e => this.reqQuery.update()}
                 onInput={e => {
                     // IE focus/blur spurriously triggers onInput(), this works around that.
@@ -86,7 +87,7 @@ export default class extends EventedComponent {
                 }}
                 onKeyDown={e => this.refs.suggestions.onKeyDown(e)} />
             <div className="rail">
-                {this.state.table}{this.state.space}{this.state.completed}
+                {tableSpaceQuery}
                 <span style={{ position: "relative" }} >
                     <div className="railContents">
                         <Suggestions
