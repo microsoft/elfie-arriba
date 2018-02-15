@@ -5,7 +5,7 @@ import Suggestions from "./Suggestions";
 export default class extends EventedComponent {
     constructor(props) {
         super(props);
-        this.state = {};
+        this.state = { table: "", space: ""};
         this.events = {
             "storage": e => {
                 if (!["favorites"].includes(e.key)) return;
@@ -17,7 +17,7 @@ export default class extends EventedComponent {
             },
         };
         this.reqQuery = new CachableReusedRequest("suggest",
-            () => ({ t: this.props.userSelectedTable, q: this.props.query }),
+            () => this.state.space !== "" && ({ t: this.props.userSelectedTable, q: this.props.query }) || undefined,
             json => {
                 this.setState({ completed: json && json.complete })
                 this.refs.suggestions.suggestions = json
@@ -39,6 +39,9 @@ export default class extends EventedComponent {
         const diffState = Object.diff(prevState, this.state);
 
         const hasFocus = this.refs.input === document.activeElement;
+        if (diffState.hasAny("space")) {
+            this.reqQuery[this.state.space ? "update" : "clear"]();
+        }
         if (diffProps.hasAny("query") && hasFocus && this.props.query !== "*") {
             this.reqPeek.resetCache();
             this.reqQuery.update();
@@ -62,16 +65,21 @@ export default class extends EventedComponent {
                 spellCheck="false"
                 placeholder="Search for..."
                 tabIndex="1"
-                value={this.props.query}
+                value={`${this.state.table}${this.state.space}${this.props.query}`}
                 onClick={e => this.reqQuery.update()}
                 onInput={e => {
                     // IE focus/blur spurriously triggers onInput(), this works around that.
-                    const query = e.target.value;
+                    var [_, table, space, query] = /([^\s]*)?(\s+)?(.*)?/.exec(e.target.value);
+                    table = table || "" // Redundant
+                    space = space || ""
+                    query = query || ""
+
+                    this.setState({ table, space });
                     if (this.props.query !== query) this.props.queryChanged(query);
                 }}
                 onKeyDown={e => this.refs.suggestions.onKeyDown(e)} />
             <div className="rail">
-                {this.state.completed}
+                {this.state.table}{this.state.space}{this.state.completed}
                 <span style={{ position: "relative" }} >
                     <div className="railContents">
                         <Suggestions
