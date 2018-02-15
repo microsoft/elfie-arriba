@@ -141,6 +141,7 @@ class Index extends EventedComponent {
                     counts={this.state.counts}>
 
                     <SearchBox ref="searchBox"
+                        allBasics={this.state.allBasics}
                         query={this.state.query}
                         parsedQuery={this.state.counts && this.state.counts.parsedQuery}
                         queryChanged={query => this.setState({ query: query })}

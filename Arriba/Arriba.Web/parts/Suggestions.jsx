@@ -70,7 +70,7 @@ export default class extends EventedComponent {
         const inst = (...params) => d += params.join(" ") + " ";
 
         // Scrape ___% from the item.hint. If not found, default to 0.
-        const values = this.state.suggestions.map(item => new Number(item.hint.replace('%', '')) + 0 || 0);
+        const values = this.state.suggestions.map(item => item.hint && new Number(item.hint.replace('%', '')) + 0 || 0);
 
         const w = 80; // Matches CSS declared width.
         inst("M", w, 0);

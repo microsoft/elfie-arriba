@@ -2,6 +2,12 @@ import "./SearchBox.scss";
 import EventedComponent from "./EventedComponent";
 import Suggestions from "./Suggestions";
 
+function ciStartNotEq(prefix, term) {
+    prefix = prefix.toLowerCase()
+    term = term.toLowerCase()
+    return prefix !== term && term.startsWith(prefix)
+}
+
 export default class extends EventedComponent {
     constructor(props) {
         super(props);
@@ -39,6 +45,9 @@ export default class extends EventedComponent {
         const diffState = Object.diff(prevState, this.state);
 
         const hasFocus = this.refs.input === document.activeElement;
+        if (diffProps.hasAny("userSelectedTable") && hasFocus) {
+            this._updateTables();
+        }
         if (diffState.hasAny("space")) {
             this.reqQuery[this.state.space ? "update" : "clear"]();
         }
@@ -48,6 +57,16 @@ export default class extends EventedComponent {
         }
         if (diffState.hasAny("selected")) {
             this.reqPeek.update();
+        }
+    }
+    _updateTables() {
+        const table = this.props.userSelectedTable || ""
+        this.refs.tables.suggestions = { // Todo: Bypass the shim transform.
+            suggestions: Object.keys(this.props.allBasics)
+                .filter(k => ciStartNotEq(table, k))
+                .map(k => ({ display: k, completeAs: k })),
+            complete: "",
+            completionCharacters: ["\t"],
         }
     }
     focus() {
@@ -64,6 +83,11 @@ export default class extends EventedComponent {
         var newQuery = completed + item.completeAs + separator + suffix;
         this.props.queryChanged(newQuery);
     }
+    _completeTable(completed, item, key) {
+        this.focus(); // Must come before?
+        this.props.userSelectedTableChanged(item.completeAs);
+        this.setState({ space: " " });
+    }
     render() {
         var star = (localStorage.getJson("favorites") || []).includes(this.props.parsedQuery) ? "icon-solid-star" : "icon-outlined-star"
         const tableSpaceQuery = `${this.props.userSelectedTable || ""}${this.state.space}${this.props.query}`
@@ -74,7 +98,10 @@ export default class extends EventedComponent {
                 placeholder="Search for..."
                 tabIndex="1"
                 value={tableSpaceQuery}
-                onClick={e => this.reqQuery.update()}
+                onClick={e => {
+                    if (this.state.space || this.props.query) this.reqQuery.update();
+                    else this._updateTables();
+                }}
                 onInput={e => {
                     // IE focus/blur spurriously triggers onInput(), this works around that.
                     var [_, table, space, query] = /([^\s]*)?(\s+)?(.*)?/.exec(e.target.value);
@@ -86,11 +113,15 @@ export default class extends EventedComponent {
                     this.setState({ space });
                     if (this.props.query !== query) this.props.queryChanged(query);
                 }}
-                onKeyDown={e => this.refs.suggestions.onKeyDown(e)} />
+                onKeyDown={e => { this.refs.tables.onKeyDown(e); this.refs.suggestions.onKeyDown(e)} } />
             <div className="rail">
                 {tableSpaceQuery}
                 <span style={{ position: "relative" }} >
                     <div className="railContents">
+                        <Suggestions
+                            ref="tables"
+                            hide={() => null}
+                            complete={this._completeTable.bind(this)} />
                         <Suggestions
                             ref="suggestions"
                             selectedChanged={s => this.setState({ selected: s && s.category === "ColumnName" && s || undefined }) }
