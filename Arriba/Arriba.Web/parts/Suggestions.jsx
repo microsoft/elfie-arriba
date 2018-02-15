@@ -32,9 +32,7 @@ export default class extends EventedComponent {
     }
 
     onClick(item) {
-        var separator = (item.category === "Value" ? "" : " ");
-        this.props.queryChanged(this.state.completed + item.completeAs + separator);
-        this.props.refocus();
+        this.complete(item);
     }
     onKeyDown(e) {
         if (!this.state.suggestions.length) return;
@@ -48,18 +46,16 @@ export default class extends EventedComponent {
             e.stopPropagation();
         }
         if (e.key === "Enter" || this.state.completionCharacters.includes(e.key)) {
-            var item = this.state.suggestions[this.state.sel];
-
-            var separator = (item.category === "Value" && e.key !== " " ? "" : " ");
-            var suffix = (e.key === "Enter" || e.key === "Tab" || e.key === " ") ? "" : e.key;
-            var newQuery = this.state.completed + item.completeAs + separator + suffix;
-            this.props.queryChanged(newQuery);
+            this.complete(this.state.suggestions[this.state.sel], e.key);
             e.preventDefault(); // Suppress focus tabbing.
         }
         if (e.key === "Escape") {
             this.props.hide();
             e.stopPropagation(); // Prevent SelectedItem clear.
         }
+    }
+    complete(item, key = "Enter") { // "Tab" would work too.
+        this.props.complete(this.state.completed, item, key);
     }
 
     get svg() {

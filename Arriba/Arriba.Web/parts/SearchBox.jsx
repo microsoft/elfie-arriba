@@ -57,6 +57,13 @@ export default class extends EventedComponent {
         if (!this.props.parsedQuery) return;
         localStorage.updateJson("favorites", favs => (favs || []).toggle(this.props.parsedQuery));
     }
+    _complete(completed, item, key) {
+        this.focus(); // Must come before?
+        var separator = (item.category === "Value" && key !== " " ? "" : " ");
+        var suffix = (key === "Enter" || key === "Tab" || key === " ") ? "" : key;
+        var newQuery = completed + item.completeAs + separator + suffix;
+        this.props.queryChanged(newQuery);
+    }
     render() {
         var star = (localStorage.getJson("favorites") || []).includes(this.props.parsedQuery) ? "icon-solid-star" : "icon-outlined-star"
         return <div className="searchBox">
@@ -84,18 +91,14 @@ export default class extends EventedComponent {
                     <div className="railContents">
                         <Suggestions
                             ref="suggestions"
-                            hide={() => this.reqQuery.clear()}
-                            queryChanged={q => this.props.queryChanged(q)}
                             selectedChanged={s => this.setState({ selected: s && s.category === "ColumnName" && s || undefined }) }
-                            refocus={() => this.refs.input.focus()} />
-
+                            hide={() => this.reqQuery.clear()}
+                            complete={this._complete.bind(this)} />
                         <Suggestions
-                            ref="peek"
+                            ref="peek" sel={-1}
                             marginTop={this.state.selected && this.state.selected.offsetTop || 0}
                             hide={() => this.setState({ selected: undefined })}
-                            queryChanged={q => this.props.queryChanged(q)}
-                            sel={-1}
-                            refocus={() => this.refs.input.focus()} />
+                            complete={this._complete.bind(this)} />
                     </div>
                 </span>
             </div>
