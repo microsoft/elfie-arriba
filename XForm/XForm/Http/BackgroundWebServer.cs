@@ -29,13 +29,15 @@ namespace XForm
         private HttpListener Listener { get; set; }
         private Thread ListenerThread { get; set; }
 
+        private ushort PortNumber { get; set; }
         private string DefaultDocument { get; set; }
         private Dictionary<string, Action<IHttpRequest, IHttpResponse>> MethodsToServe { get; set; }
         private Dictionary<string, string> FilesToServe { get; set; }
         private string FolderToServe { get; set; }
 
-        public BackgroundWebServer(string defaultDocument, string serveUnderRelativePath)
+        public BackgroundWebServer(ushort portNumber, string defaultDocument, string serveUnderRelativePath)
         {
+            this.PortNumber = portNumber;
             this.IsRunning = false;
 
             this.DefaultDocument = defaultDocument;
@@ -78,7 +80,7 @@ namespace XForm
         private void StartForBinding(bool withAuthentication, params string[] urls)
         {
             this.Listener = new HttpListener();
-            if(withAuthentication) this.Listener.AuthenticationSchemes = AuthenticationSchemes.Negotiate;
+            if (withAuthentication) this.Listener.AuthenticationSchemes = AuthenticationSchemes.Negotiate;
 
             foreach (string url in urls)
             {
@@ -94,9 +96,9 @@ namespace XForm
             {
                 try
                 {
-                    // Try binding for all names on port 5073, with authentication
-                    StartForBinding(true, "http://+:5073/");
-                    Console.WriteLine("Web Server running; browse to http://localhost:5073. [Local and Remote]\r\nPress enter to stop server.");
+                    // Try binding for all names on port
+                    StartForBinding(true, $"http://+:{PortNumber}/");
+                    Console.WriteLine($"Web Server running; browse to http://localhost:{PortNumber}. [Local and Remote]\r\nPress enter to stop server.");
                 }
                 catch (HttpListenerException ex) when (ex.ErrorCode == 5)
                 {
@@ -106,9 +108,9 @@ namespace XForm
 
                 if (this.Listener == null)
                 {
-                    // Try binding to just localhost:5073, with no authentication
-                    StartForBinding(false, "http://localhost:5073/");
-                    Console.WriteLine("Web Server running; browse to http://localhost:5073. [Local Only]");
+                    // Try binding to just localhost
+                    StartForBinding(false, $"http://localhost:{PortNumber}/");
+                    Console.WriteLine($"Web Server running; browse to http://localhost:{PortNumber}. [Local Only]");
                     Console.WriteLine(" To enable remote: https://github.com/Microsoft/elfie-arriba/wiki/XForm-Http-Remote-Access");
                     Console.WriteLine("Press enter to stop server.");
                 }
@@ -217,15 +219,24 @@ namespace XForm
         private bool ReturnMethodItem(string requestUri, IHttpRequest request, IHttpResponse response)
         {
             Action<IHttpRequest, IHttpResponse> writeMethod;
-            if (this.MethodsToServe.TryGetValue(requestUri, out writeMethod))
-            {
-                response.AddHeader("Cache-Control", "no-cache, no-store");
-                response.ContentType = ContentType(requestUri);
-                response.StatusCode = 200;
 
-                writeMethod(request, response);
-                response.Close();
-                return true;
+            while (true)
+            {
+                // Look for a handler for the passed URI
+                if (this.MethodsToServe.TryGetValue(requestUri, out writeMethod))
+                {
+                    response.AddHeader("Cache-Control", "no-cache, no-store");
+                    response.StatusCode = 200;
+
+                    writeMethod(request, response);
+                    response.Close();
+                    return true;
+                }
+
+                // If not found, look for handlers for prefixes of the URI (which will route)
+                int lastSlash = requestUri.LastIndexOf('/');
+                if (lastSlash == -1) break;
+                requestUri = requestUri.Substring(0, lastSlash);
             }
 
             return false;

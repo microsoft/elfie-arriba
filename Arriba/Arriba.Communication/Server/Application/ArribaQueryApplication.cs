@@ -381,38 +381,6 @@ namespace Arriba.Server
             return ArribaResponse.Ok(result);
         }
 
-        private class AllCountResult
-        {
-            public string Query { get; set; }
-            public string ParsedQuery { get; set; }
-
-            public List<CountResult> ResultsPerTable { get; set; }
-
-            public AllCountResult(string query)
-            {
-                this.Query = query;
-                this.ParsedQuery = QueryParser.Parse(query).ToString();
-
-                this.ResultsPerTable = new List<CountResult>();
-            }
-        }
-
-        private class CountResult
-        {
-            public string TableName { get; set; }
-            public ulong Count { get; set; }
-            public bool AllowedToRead { get; set; }
-            public bool Succeeded { get; set; }
-
-            public CountResult(string tableName, ulong count, bool allowedToRead, bool succeeded)
-            {
-                this.TableName = tableName;
-                this.Count = count;
-                this.AllowedToRead = allowedToRead;
-                this.Succeeded = succeeded;
-            }
-        }
-
         private async Task<IResponse> Suggest(IRequestContext ctx, Route route)
         {
             NameValueCollection p = await ParametersFromQueryStringAndBody(ctx);
