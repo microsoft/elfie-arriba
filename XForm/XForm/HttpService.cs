@@ -29,7 +29,7 @@ namespace XForm
             _xDatabaseContext = xDatabaseContext;
             _suggester = new QuerySuggester(_xDatabaseContext);
 
-            _server = new BackgroundWebServer("index.html", "Web");
+            _server = new BackgroundWebServer(5073, "index.html", "Web");
             _server.AddResponder("suggest", Suggest);
             _server.AddResponder("run", Run);
             _server.AddResponder("download", Download);

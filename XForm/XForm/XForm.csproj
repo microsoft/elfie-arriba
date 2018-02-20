@@ -239,6 +239,6 @@
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>$(SolutionDir)\Deploy.WebSite.cmd $(TargetDir)</PostBuildEvent>
+    <PostBuildEvent>$(ProjectDir)\..\Deploy.WebSite.cmd $(TargetDir)</PostBuildEvent>
   </PropertyGroup>
 </Project>
