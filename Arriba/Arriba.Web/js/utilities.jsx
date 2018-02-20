@@ -8,7 +8,7 @@ window.xhr = (path, params, body) => {
     return new Promise((resolve, reject) => {
         const pathParams = path + buildUrlParameters(params);
         var xhr = new XMLHttpRequest();
-        xhr.withCredentials = true;
+        if(!configuration || !configuration.noCredentials) xhr.withCredentials = true;
         xhr.open(body ? "POST" : "GET", configuration.url + "/" + pathParams, true); // For testing: http://httpbin.org/post
         xhr.onload = () => {
             if (xhr.status >= 200 && xhr.status < 300 || xhr.status === 404) { // 404 workaround for delete table.
