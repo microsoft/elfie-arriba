@@ -88,6 +88,7 @@
     <Compile Include="Model\Column\ColumnDetails.cs" />
     <Compile Include="Model\Column\FastAddSortedColumn.cs" />
     <Compile Include="Model\Column\IpRangeColumn.cs" />
+    <Compile Include="Model\Query\AllCountResult.cs" />
     <Compile Include="Model\Query\DistributionQuery.cs" />
     <Compile Include="Model\Query\PercentilesQuery.cs" />
     <Compile Include="Model\Query\TermInColumnsQuery.cs" />
