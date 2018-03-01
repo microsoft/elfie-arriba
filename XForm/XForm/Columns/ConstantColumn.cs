@@ -30,7 +30,7 @@ namespace XForm.Columns
             Allocator.AllocateToSize(ref _array, 1, type);
             _array.SetValue(value, 0);
 
-            IsNull = (value == null || value.Equals("null"));
+            IsNull = (value == null || (value.Equals("null") && wasUnwrappedLiteral));
             _xArray = (IsNull ? XArray.Null(_array, 1) : XArray.Single(_array, 1));
 
             WasUnwrappedLiteral = wasUnwrappedLiteral;
