@@ -280,25 +280,25 @@ namespace Arriba.Test.Model.Query
 
             // Values are suggested in order by frequency
             result = qi.GetIntelliSenseItems("[Student Count] = ", Tables);
-            Assert.AreEqual("100000 70 %, 10000 20 %, 1000 10 %", ItemsAndCounts(result));
+            Assert.AreEqual("100000 70%, 10000 20%, 1000 10%", ItemsAndCounts(result));
 
             // Values are filtered according to the query
             result = qi.GetIntelliSenseItems("[ID] < 15 AND [Student Count] = ", Tables);
-            Assert.AreEqual("1000 67 %, 10000 33 %", ItemsAndCounts(result));
+            Assert.AreEqual("1000 67%, 10000 33%", ItemsAndCounts(result));
 
             // Distributions are returned for range operators
             // Only non-empty buckets are returned.
             result = qi.GetIntelliSenseItems("[Student Count] < ", Tables);
-            Assert.AreEqual("17500 30 %", ItemsAndCounts(result));
+            Assert.AreEqual("17500 30%", ItemsAndCounts(result));
 
             result = qi.GetIntelliSenseItems("[Student Count] <= ", Tables);
-            Assert.AreEqual("1000 10 %, 17500 30 %, 100000 all", ItemsAndCounts(result));
+            Assert.AreEqual("1000 10%, 17500 30%, 100000 all", ItemsAndCounts(result));
 
             result = qi.GetIntelliSenseItems("[Student Count] > ", Tables);
-            Assert.AreEqual("83500 70 %, 1000 90 %", ItemsAndCounts(result));
+            Assert.AreEqual("83500 70%, 1000 90%", ItemsAndCounts(result));
 
             result = qi.GetIntelliSenseItems("[Student Count] >= ", Tables);
-            Assert.AreEqual("100000 70 %, 1000 all", ItemsAndCounts(result));
+            Assert.AreEqual("100000 70%, 1000 all", ItemsAndCounts(result));
 
             // Only show one value when there's only one value available
             result = qi.GetIntelliSenseItems("[ID] > 50 AND [Student Count] >= ", Tables);
@@ -310,7 +310,7 @@ namespace Arriba.Test.Model.Query
 
             // Works for TimeSpan
             result = qi.GetIntelliSenseItems("[SchoolYearLength] >= ", Tables);
-            Assert.AreEqual("211.00:00:00 12 %, 208.00:00:00 21 %, 204.00:00:00 33 %, 200.00:00:00 45 %, 196.00:00:00 57 %, 192.00:00:00 72 %, 188.00:00:00 88 %", ItemsAndCounts(result));
+            Assert.AreEqual("211.00:00:00 12%, 208.00:00:00 21%, 204.00:00:00 33%, 200.00:00:00 45%, 196.00:00:00 57%, 192.00:00:00 72%, 188.00:00:00 88%", ItemsAndCounts(result));
 
             // Works for DateTime
             result = qi.GetIntelliSenseItems("[WhenFounded] >= ", Tables);
@@ -322,15 +322,15 @@ namespace Arriba.Test.Model.Query
 
             // Term column suggestions are offered
             result = qi.GetIntelliSenseItems("Uni", Tables);
-            Assert.AreEqual("[Name] : Uni 40 %, [Mascot] : Uni 25 %", ItemsAndCounts(result));
+            Assert.AreEqual("[Name] : Uni 40%, [Mascot] : Uni 25%", ItemsAndCounts(result));
 
             // Term column suggestions are based on the remaining query rows
             result = qi.GetIntelliSenseItems("[Mascot] : Uni AND Uni", Tables);
-            Assert.AreEqual("[Mascot] : Uni all, [Name] : Uni 40 %", ItemsAndCounts(result));
+            Assert.AreEqual("[Mascot] : Uni all, [Name] : Uni 40%", ItemsAndCounts(result));
 
             // Term suggestions only show for columns which have any matches
             result = qi.GetIntelliSenseItems("Ele", Tables);
-            Assert.AreEqual("[Mascot] : Ele 25 %", ItemsAndCounts(result));
+            Assert.AreEqual("[Mascot] : Ele 25%", ItemsAndCounts(result));
 
             // Term suggestions only show if the term has matches
             result = qi.GetIntelliSenseItems("Elelion", Tables);
