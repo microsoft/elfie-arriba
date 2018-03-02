@@ -6,7 +6,7 @@ using System.Linq;
 
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-
+using XForm.Aggregators;
 using XForm.Data;
 using XForm.Extensions;
 using XForm.Verbs;
@@ -139,6 +139,11 @@ namespace XForm.Test.Query
             TableTestHarness.AssertAreEqual(expected, actual, 2);
         }
 
+        private string ToPercent(double value)
+        {
+            return value.ToString("P0");
+        }
+
         [TestMethod]
         public void Verb_Peek()
         {
@@ -148,7 +153,12 @@ namespace XForm.Test.Query
             IXTable expected = TableTestHarness.DatabaseContext.FromArrays(3)
                 .WithColumn("Value", new int[] { 0, 1, 2 })
                 .WithColumn("Count", new int[] { 500, 250, 150 })
-                .WithColumn("Percentage", TableTestHarness.ToString8(new string[] { "50%", "25%", "15%" }));
+                .WithColumn("Percentage", TableTestHarness.ToString8(new string[]
+                {
+                    PercentageAggregator.TwoSigFigs(500, 1000),
+                    PercentageAggregator.TwoSigFigs(250, 1000),
+                    PercentageAggregator.TwoSigFigs(150, 1000)
+                }));
 
             IXTable actual = TableTestHarness.DatabaseContext.FromArrays(values.Length)
                 .WithColumn("Value", values)
@@ -166,7 +176,12 @@ namespace XForm.Test.Query
             IXTable expected = TableTestHarness.DatabaseContext.FromArrays(3)
                 .WithColumn("Value", new int[] { 0, 1, 2 })
                 .WithColumn("Count", new int[] { 500, 250, 150 })
-                .WithColumn("Percentage", TableTestHarness.ToString8(new string[] { "50.0%", "25.0%", "15.0%" }));
+                .WithColumn("Percentage", TableTestHarness.ToString8(new string[] 
+                {
+                    PercentageAggregator.ThreeSigFigs(500, 1000),
+                    PercentageAggregator.ThreeSigFigs(250, 1000),
+                    PercentageAggregator.ThreeSigFigs(150, 1000)
+                }));
 
             IXTable actual = TableTestHarness.DatabaseContext.FromArrays(values.Length)
                 .WithColumn("Value", values)
