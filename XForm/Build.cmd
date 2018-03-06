@@ -25,6 +25,9 @@ SET MSBuildError=%ERRORLEVEL%
 POPD
 IF NOT "%MSBuildError%"=="0" GOTO Error
 
+ECHO - Copying Extensions...
+XCOPY /Y "%~dp0\bin\x64\Release" "%~dp0\XForm.IIS\bin"
+
 GOTO :EOF
 :Error
   ECHO Error. Build Stopping.
