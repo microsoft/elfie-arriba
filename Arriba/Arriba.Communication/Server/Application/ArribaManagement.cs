@@ -32,6 +32,8 @@ namespace Arriba.Server.Application
 
             this.Get("/allBasics", this.GetAllBasics);
 
+            this.Get("/unloadAll", this.ValidateCreateAccess, this.UnloadAll);
+
             // GET /table/foo - Get table information 
             this.Get("/table/:tableName", this.ValidateReadAccess, this.GetTableInformation);
 
@@ -44,7 +46,8 @@ namespace Arriba.Server.Application
             // GET /table/foo/save -- TODO: This is not ideal, think of a better pattern 
             this.Get("/table/:tableName/save", this.ValidateWriteAccess, this.Save);
 
-            // GET /table/foo/reload
+            // Unload/Reload
+            this.Get("/table/:tableName/unload", this.ValidateWriteAccess, this.UnloadTable);
             this.Get("/table/:tableName/reload", this.ValidateWriteAccess, this.Reload);
 
             // DELETE /table/foo 
@@ -144,6 +147,19 @@ namespace Arriba.Server.Application
             }
 
             return ti;
+        }
+
+        private IResponse UnloadTable(IRequestContext ctx, Route route)
+        {
+            var tableName = GetAndValidateTableName(route);
+            this.Database.UnloadTable(tableName);
+            return ArribaResponse.Ok($"Table unloaded");
+        }
+
+        private IResponse UnloadAll(IRequestContext ctx, Route route)
+        {
+            this.Database.UnloadAll();
+            return ArribaResponse.Ok("All Tables unloaded");
         }
 
         private IResponse Drop(IRequestContext ctx, Route route)

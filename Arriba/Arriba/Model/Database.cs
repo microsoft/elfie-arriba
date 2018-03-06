@@ -17,7 +17,7 @@ namespace Arriba.Model
     {
         public const string SystemTablePrefix = "arriba";
 
-        private readonly object _tableLock = new object();
+        protected readonly object _tableLock = new object();
         private readonly Dictionary<string, Lazy<Table>> _tables = new Dictionary<string, Lazy<Table>>();
 
         public Database()
@@ -106,7 +106,7 @@ namespace Arriba.Model
 
         private bool IsTableLoaded(string tableName)
         {
-            return _tables.ContainsKey(tableName) && _tables[tableName].Value != null;
+            return _tables.ContainsKey(tableName) && _tables[tableName].IsValueCreated;
         }
 
         public bool TableExists(string tableName)
@@ -161,6 +161,22 @@ namespace Arriba.Model
                     t.Load(tableName);
                     return t;
                 });
+            }
+        }
+        
+        public virtual void UnloadTable(string tableName)
+        {
+            lock(_tableLock)
+            {
+                _tables.Remove(tableName);
+            }
+        }
+
+        public virtual void UnloadAll()
+        {
+            lock (_tableLock)
+            {
+                _tables.Clear();
             }
         }
 
