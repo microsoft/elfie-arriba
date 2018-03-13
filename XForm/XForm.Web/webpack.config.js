@@ -18,11 +18,13 @@ module.exports = {
                 use: {
                     loader: "babel-loader",
                     options: {
-                        presets: ["babel-preset-es2015", "babel-preset-react"],
-                    	plugins: [
-                    		["babel-plugin-transform-es2015-arrow-functions", { "spec": true }],
-                    		"babel-plugin-transform-object-rest-spread",
-                    	],
+                        presets: [
+                            ["@babel/preset-env", { targets: { chrome: 64 } }],
+                            "@babel/preset-react",
+                        ],
+                        plugins: [
+                            "@babel/plugin-proposal-optional-chaining",
+                        ],
                     }
                 },
             },
@@ -41,5 +43,9 @@ module.exports = {
                 { from: /./, to: 'index.html' },
             ]
         }
-    }
+    },
+    performance: {
+        maxAssetSize: 300000,
+        maxEntrypointSize: 300000,
+    },
 }

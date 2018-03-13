@@ -253,7 +253,7 @@ class Index extends React.Component {
         return xhr(`suggest`, { asof: this.state.asOf, q: this.editor.valueUntilPosition() })
     }
     get query() {
-        return this.editor && this.editor.getValue()
+        return this.editor?.getValue()
     }
     queryTextChanged(force) {
         this.textJustChanged = true
@@ -510,11 +510,11 @@ class Index extends React.Component {
                     <table>
                         <thead>
                             <tr>
-                                {cols && cols.map(c => <td key={c}>{c}</td>)}
+                                {cols?.map(c => <td key={c}>{c}</td>)}
                             </tr>
                         </thead>
                         <tbody>
-                            {rows && rows.map((r, i) => <tr key={i}>{r.map((c, ii) => <td key={i + "x" + ii}>{ formatters[ii](c) }</td>)}</tr>)}
+                            {rows?.map((r, i) => <tr key={i}>{r.map((c, ii) => <td key={i + "x" + ii}>{c}</td>)}</tr>)}
                         </tbody>
                     </table>
                 </div>
