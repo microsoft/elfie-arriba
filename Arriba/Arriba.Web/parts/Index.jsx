@@ -114,7 +114,7 @@ class Index extends EventedComponent {
         this.setState({ loading: true });
 
         // Get the count of matches from each accessible table
-        xhr("allCount", { q: this.state.query })
+        xhr("allCount", { q: this.state.query, t: this.state.currentTable })
             .then(data => {
                 this.setState({ counts: data, loading: false }, then);
 

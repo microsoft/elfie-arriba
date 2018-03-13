@@ -29,7 +29,7 @@ namespace XForm
             _xDatabaseContext = xDatabaseContext;
             _suggester = new QuerySuggester(_xDatabaseContext);
 
-            _server = new BackgroundWebServer("index.html", "Web");
+            _server = new BackgroundWebServer(5073, "index.html", "Web");
             _server.AddResponder("suggest", Suggest);
             _server.AddResponder("run", Run);
             _server.AddResponder("download", Download);
@@ -172,6 +172,9 @@ namespace XForm
                 // Build a Pipeline for the Query
                 pipeline = context.Query(query);
 
+                // If there was no query, return an empty result
+                if (pipeline == null) return;
+
                 // Try to get the count up to the timeout
                 if (Debugger.IsAttached) timeout = TimeSpan.MaxValue;
                 RunResult result = pipeline.RunUntilTimeout(timeout);
@@ -211,6 +214,9 @@ namespace XForm
 
                 // Build a Pipeline for the Query
                 pipeline = context.Query(query);
+
+                // If there was no query, return an empty result
+                if (pipeline == null) return;
 
                 // Restrict the row and column count if requested
                 if (rowCountLimit >= 0 || colCountLimit > 0)
@@ -266,18 +272,17 @@ namespace XForm
             Stream toStream = response.OutputStream;
             toStream = new BufferedStream(toStream, 64 * 1024);
 
-            switch (format.ToLowerInvariant())
+            format = format.ToLowerInvariant();
+            string sampleOutputFileName = $"Result.{format}";
+            if(format != "json")
             {
-                case "json":
-                    return new JsonTabularWriter(toStream);
-                case "csv":
-                    response.AddHeader("Content-Disposition", "attachment; filename=\"Result.csv\"");
-                    return new CsvWriter(toStream);
-                case "tsv":
-                    response.AddHeader("Content-Disposition", "attachment; filename=\"Result.tsv\"");
-                    return new TsvWriter(toStream);
-                default:
-                    throw new ArgumentException("fmt");
+                // Add a 'download this' header to all formats except JSON
+                response.AddHeader("Content-Disposition", $"attachment; filename=\"{sampleOutputFileName}\"");
+                return TabularFactory.BuildWriter(toStream, sampleOutputFileName);
+            }
+            else
+            {
+                return new JsonTabularWriter(toStream);
             }
         }
 

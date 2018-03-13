@@ -369,7 +369,7 @@ namespace Arriba.Model.Query
             return result;
         }
 
-        private static IReadOnlyCollection<Table> FilterToValidTablesForQuery(IReadOnlyCollection<Table> tables, string query)
+        public static IReadOnlyCollection<Table> FilterToValidTablesForQuery(IReadOnlyCollection<Table> tables, string query)
         {
             // Parse the query to execute (exclude incomplete terms)
             IExpression queryToExecute = QueryParser.Parse(query);

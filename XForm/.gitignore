@@ -8,6 +8,5 @@
 XForm.Web/node_modules
 XForm.Web/bundle*
 
-# Don't include Push.cmd
-XForm/Push.cmd
-XForm/PullWeb.cmd
+# Don't include local prototypes
+XForm.CST

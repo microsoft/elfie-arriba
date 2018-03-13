@@ -173,7 +173,7 @@ function jsonQuery(url, onSuccess, onError, parameters) {
     var paramUri = buildUrlParameters(parameters);
 
     var request = new XMLHttpRequest();
-    request.withCredentials = true;
+    if(!configuration || !configuration.noCredentials) request.withCredentials = true;
     request.url = url + paramUri; // For error reporting.
     request.open('GET', request.url, true);
 

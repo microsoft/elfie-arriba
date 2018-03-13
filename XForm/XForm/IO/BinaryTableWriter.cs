@@ -141,7 +141,7 @@ namespace XForm.IO
             {
                 foreach (IColumnWriter writer in _writers)
                 {
-                    writer.Dispose();
+                    if(writer != null) writer.Dispose();
                 }
 
                 _writers = null;

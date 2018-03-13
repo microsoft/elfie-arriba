@@ -41,6 +41,7 @@ namespace Arriba
             s_columnCreators["boolean"] = s_columnCreators["bool"];
 
             s_columnCreators["byte"] = (details, columnComponents, initialCapacity) => { AdjustColumnComponents(ref columnComponents); return Build<byte>(details, columnComponents, initialCapacity); };
+            s_columnCreators["sbyte"] = (details, columnComponents, initialCapacity) => { AdjustColumnComponents(ref columnComponents); return Build<sbyte>(details, columnComponents, initialCapacity); };
 
             s_columnCreators["short"] = (details, columnComponents, initialCapacity) => { AdjustColumnComponents(ref columnComponents); return Build<short>(details, columnComponents, initialCapacity); };
             s_columnCreators["int16"] = s_columnCreators["short"];

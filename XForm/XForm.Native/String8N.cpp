@@ -203,6 +203,9 @@ namespace XForm
 
 		Int32 String8N::IndexOfAll(array<Byte>^ content, Int32 index, Int32 length, array<Byte>^ value, Int32 valueIndex, Int32 valueLength, Boolean ignoreCase, array<Int32>^ matchArray)
 		{
+			if (content == nullptr || content->Length == 0) return 0;
+			if (value == nullptr || value->Length == 0) return 0;
+
 			pin_ptr<Byte> pContent = &content[0];
 			pin_ptr<Byte> pValue = &value[valueIndex];
 			pin_ptr<Int32> pMatchArray = &matchArray[0];
