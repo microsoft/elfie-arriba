@@ -272,18 +272,17 @@ namespace XForm
             Stream toStream = response.OutputStream;
             toStream = new BufferedStream(toStream, 64 * 1024);
 
-            switch (format.ToLowerInvariant())
+            format = format.ToLowerInvariant();
+            string sampleOutputFileName = $"Result.{format}";
+            if(format != "json")
             {
-                case "json":
-                    return new JsonTabularWriter(toStream);
-                case "csv":
-                    response.AddHeader("Content-Disposition", "attachment; filename=\"Result.csv\"");
-                    return new CsvWriter(toStream);
-                case "tsv":
-                    response.AddHeader("Content-Disposition", "attachment; filename=\"Result.tsv\"");
-                    return new TsvWriter(toStream);
-                default:
-                    throw new ArgumentException("fmt");
+                // Add a 'download this' header to all formats except JSON
+                response.AddHeader("Content-Disposition", $"attachment; filename=\"{sampleOutputFileName}\"");
+                return TabularFactory.BuildWriter(toStream, sampleOutputFileName);
+            }
+            else
+            {
+                return new JsonTabularWriter(toStream);
             }
         }
 

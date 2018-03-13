@@ -119,7 +119,7 @@ namespace XForm.Query
             {
                 stage = builder.Build(source, _workflow);
             }
-            catch (Exception ex)
+            catch (ArgumentException ex)
             {
                 Rethrow(ex);
             }
@@ -177,7 +177,7 @@ namespace XForm.Query
             {
                 return _workflow.Runner.Build(tableName, _workflow);
             }
-            catch (Exception ex)
+            catch (ArgumentException ex)
             {
                 Rethrow(ex);
                 return null;
@@ -260,7 +260,7 @@ namespace XForm.Query
 
                 return result;
             }
-            catch (Exception ex)
+            catch (ArgumentException ex)
             {
                 Rethrow(ex);
                 return null;
@@ -291,7 +291,7 @@ namespace XForm.Query
 
                 return result;
             }
-            catch (Exception ex)
+            catch (ArgumentException ex)
             {
                 Rethrow(ex);
                 return null;

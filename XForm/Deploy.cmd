@@ -11,6 +11,7 @@ ROBOCOPY /NJH /NJS "%~dp0bin\x64\Release" "%Target%\Database" /XD Source Table C
 IF NOT %ERRORLEVEL% LEQ 7 GOTO :Error
 
 ECHO - Copying XForm WebSite to '%Target%\XForm.IIS'...
+ROBOCOPY /E  /NJH /NJS "%~dp0bin\x64\Release" "%~dp0XForm.IIS\bin"
 ROBOCOPY /MIR /NJH /NJS "%~dp0XForm.IIS\bin" "%Target%\XForm.IIS\bin"
 IF NOT %ERRORLEVEL% LEQ 7 GOTO :Error
 
