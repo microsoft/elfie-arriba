@@ -66,5 +66,14 @@
     <Compile Include="Extensions\String.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Cinco.Native\Cinco.Native.vcxproj">
+      <Project>{5B4DBE01-BD65-407C-A493-D3121B288D67}</Project>
+      <Name>Cinco.Native</Name>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <OutputItemType>Content</OutputItemType>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
