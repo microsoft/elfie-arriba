@@ -29,8 +29,14 @@ namespace XForm.Query
             this.InvalidValueCategory = invalidValueCategory;
             this.ValidValues = validValues;
 
-            // Always sort expected values
-            if (this.ValidValues != null) this.ValidValues = this.ValidValues.OrderBy((s) => s);
+            if (this.ValidValues != null)
+            {
+                // Filter valid values based on prefix typed
+                if(!String.IsNullOrEmpty(this.InvalidValue)) this.ValidValues = this.ValidValues.Where((value) => value.StartsWith(invalidValue, StringComparison.OrdinalIgnoreCase));
+
+                // Always sort expected values
+                this.ValidValues = this.ValidValues.OrderBy((s) => s);
+            }
         }
 
         public ErrorContext Merge(ErrorContext inner)
