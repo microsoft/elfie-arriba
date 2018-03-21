@@ -170,12 +170,19 @@ namespace XForm.Query
         public IXTable NextTableSource()
         {
             string tableName = _scanner.Current.Value;
-            ParseNextOrThrow(() => _scanner.Current.Type == TokenType.Value, "Table", TokenType.Value, _workflow.Runner.SourceNames);
 
-            // If there's a WorkflowProvider, ask it to get the table. This will recurse.
+            // Throw for tokens of the wrong type, but don't consume the table name token yet
+            if (_scanner.Current.Type != TokenType.Value) Throw("Table", _workflow.Runner.SourceNames);
+
+            // As the WorkflowProvider to get the table. This will recurse.
             try
             {
-                return _workflow.Runner.Build(tableName, _workflow);
+                IXTable table = _workflow.Runner.Build(tableName, _workflow);
+
+                // Consume the table *after* the runner built it
+                _scanner.Next();
+
+                return table;
             }
             catch (ArgumentException ex)
             {
@@ -517,6 +524,10 @@ namespace XForm.Query
             if (ex is UsageException)
             {
                 ErrorContext context = BuildErrorContext().Merge(((UsageException)ex).Context);
+
+                // Consume the bad token
+                _scanner.Next();
+
                 if (!this.WasLastTokenInQuery && String.IsNullOrEmpty(context.ErrorMessage))
                 {
                     context.ErrorMessage = $"Invalid {context.InvalidValueCategory} \"{context.InvalidValue ?? "<null>"}\"";
