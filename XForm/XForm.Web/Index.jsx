@@ -424,7 +424,9 @@ class Index extends React.Component {
                         onClick={() => {
                             this.setState({ asOf: d.toXFormat(), asOfDate: d }, () => this.queryTextChanged(true))
                             this.dateTimer(() => this.setState({ showDatePicker: undefined }))
-                        }}>
+                        }}
+                        onMouseEnter={e => this.setState({ hoverDate: d })}
+                        onMouseLeave={e => this.setState({ hoverDate: undefined })}>
                         <span>{d.getDate()}</span>
                     </span>)}
                 </div>
@@ -455,7 +457,7 @@ class Index extends React.Component {
                         className={'button' + (this.state.showDatePicker ? ' hot' : '')}
                         onMouseEnter={e => this.dateTimer(() => this.setState({ showDatePicker: true }))}
                         onMouseLeave={e => this.dateTimer(() => this.setState({ showDatePicker: undefined }), 100)}>
-                        As of {(this.state.asOfDate || new Date()).toFriendly()}</span>
+                        As of {(this.state.hoverDate || this.state.asOfDate || new Date()).toFriendly()}</span>
                 </div>
                 <div className="queryUsage">{
                     this.state.errorMessage && <span className="errorMessage">{this.state.errorMessage}</span>
