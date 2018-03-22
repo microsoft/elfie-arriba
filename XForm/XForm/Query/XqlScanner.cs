@@ -22,19 +22,21 @@ namespace XForm.Query
 
     public class Token
     {
-        public TokenType Type { get; set; }
-        public string Value { get; set; }
-        public string WhitespacePrefix { get; set; }
-        public bool IsWrapped { get; set; }
+        public TokenType Type { get; set; }             // Type of current token
+        public string Value { get; set; }               // The interpreted value (column name without braces, value unquoted and with escaped quotes interpreted, ...)
+        public string RawValue { get; set; }            // The exact value from the query being parsed
+        public string WhitespacePrefix { get; set; }    // The whitespace before this token, if any
+        public bool IsWrapped { get; set; }             // Whether this token was wrapped (in quotes or braces), and so had an explicit end marker
 
-        public int LineNumber { get; set; }
-        public int CharInLine { get; set; }
-        public int Index { get; set; }
+        public int LineNumber { get; set; }             // The line in the query where this token starts (after whitespace)
+        public int CharInLine { get; set; }             // The character in the query line where this token starts (after whitespace)
+        public int Index { get; set; }                  // The .NET string index where this token starts (after whitespace)
 
         public Token(int currentLineNumber)
         {
             this.Type = TokenType.End;
             this.Value = "";
+            this.RawValue = "";
             this.WhitespacePrefix = "";
             this.IsWrapped = false;
             this.LineNumber = currentLineNumber;
@@ -156,6 +158,9 @@ namespace XForm.Query
                 ParseUnwrappedValue();
                 this.Current.Type = (Peek() == '(' ? TokenType.FunctionName : TokenType.Value);
             }
+
+            // Get the unescaped, un-interpreted value of the current token
+            this.Current.RawValue = this.Text.Substring(this.Current.Index, CurrentIndex - this.Current.Index);
 
             return true;
         }

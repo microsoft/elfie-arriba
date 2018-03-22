@@ -484,22 +484,32 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
 
         private ulong ParseWithCutoff(ulong cutoff, ref bool valid)
         {
+            ulong value = 0;
+
+            if (Length == 20 && cutoff == ulong.MaxValue)
+            {
+                // Max Length: Parse all but last digit
+                value = 10 * this.Substring(0, this.Length - 1).ParseWithCutoff(ulong.MaxValue / 10, ref valid);
+
+                // Limit Last digit so sum is <= ulong.MaxValue
+                value += this.Substring(this.Length - 1).ParseWithCutoff(ulong.MaxValue - value, ref valid);
+
+                if (!valid) value = 0;
+                return value;
+            }
+
             // Validate non-empty and not too long to convert
-            valid &= Length > 0;
-            valid &= Length < 20;
+            valid &= Length > 0 && Length < 20;
 
             // Stop early if too long or short
             if (!valid) return 0;
-
-            ulong value = 0;
 
             // Convert the digits
             // NOTE: Don't need to check digits valid, because even 19 255 digits won't overflow
             int end = Index + Length;
             for (int i = Index; i < end; ++i)
             {
-                value *= 10;
-                value += ParseDigit(Array[i], ref valid);
+                value = (10 * value) + ParseDigit(Array[i], ref valid);
             }
 
             // Validate under cutoff
@@ -657,24 +667,57 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         public bool TryToULong(out ulong result)
         {
             bool valid = true;
+            result = ParseWithCutoff(ulong.MaxValue, ref valid);
+            return valid;
+        }
 
-            if (Length < 20)
+        /// <summary>
+        ///  Convert a String8 with a floating point value to the double representation, if valid.
+        ///  *Only handles decimal format for now (no base+exponent form).*
+        /// </summary>
+        /// <param name="result">Numeric value found, if valid number, otherwise zero.</param>
+        /// <returns>True if valid, false otherwise</returns>
+        public bool TryToDouble(out double result)
+        {
+            bool valid = true;
+            result = 0.0;
+            if (this.Length == 0) return false;
+
+            bool negative = StartsWith(UTF8.Dash);
+            int decimalPointIndex = IndexOf(UTF8.Period);
+            if (decimalPointIndex == -1) decimalPointIndex = this.Length;
+
+            // Parse the part after the decimal point, scale, and add to the result
+            if (decimalPointIndex != this.Length)
             {
-                // Not max length: Parse normally
-                result = ParseWithCutoff(ulong.MaxValue, ref valid);
+                String8 fractionalPart = this.Substring(decimalPointIndex + 1);
+                result = (double)fractionalPart.ParseWithCutoff(ulong.MaxValue, ref valid) / Math.Pow(10, fractionalPart.Length);
             }
-            else
+
+            // Parse the whole number part (without the minus sign, if any) and add to the result
+            int firstDigitIndex = (negative ? 1 : 0);
+            if (decimalPointIndex - firstDigitIndex > 0)
             {
-                // Max Length: Parse all but last digit
-                result = 10 * this.Substring(0, this.Length - 1).ParseWithCutoff(ulong.MaxValue / 10, ref valid);
-
-                // Limit Last digit so sum is <= ulong.MaxValue
-                result += this.Substring(this.Length - 1).ParseWithCutoff(ulong.MaxValue - result, ref valid);
-
-                // Ensure overflows are reset to zero
-                if (!valid) result = 0;
+                String8 wholePart = this.Substring(firstDigitIndex, decimalPointIndex - firstDigitIndex);
+                result += wholePart.ParseWithCutoff(ulong.MaxValue, ref valid);
             }
 
+            // Negate the result if a minus sign was found
+            if (negative) result = -result;
+
+            return valid;
+        }
+
+        /// <summary>
+        ///  Convert a String8 with a floating point value to the double representation, if valid.
+        /// </summary>
+        /// <param name="result">Numeric value found, if valid number, otherwise zero.</param>
+        /// <returns>True if valid, false otherwise</returns>
+        public bool TryToFloat(out float result)
+        {
+            double inner;
+            bool valid = TryToDouble(out inner);
+            result = (float)inner;
             return valid;
         }
 
@@ -693,7 +736,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         ///  Buffer must be at least 11 bytes long to handle all values.
         /// </summary>
         /// <param name="value">Integer value to convert</param>
-        /// <param name="buffer">byte[] for conversion (at least length 11 for all values)</param>
+        /// <param name="buffer">byte[] for conversion (at least length 21 for all values)</param>
         /// <returns>String8 representation of integer value</returns>
         public static String8 FromInteger(int value, byte[] buffer)
         {
@@ -705,7 +748,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         ///  Buffer must be at least 11 bytes long to handle all values.
         /// </summary>
         /// <param name="value">Integer value to convert</param>
-        /// <param name="buffer">byte[] for conversion (at least length 11 for all values)</param>
+        /// <param name="buffer">byte[] for conversion (at least length 21 for all values)</param>
         /// <param name="index">Index within byte[] at which to being writing</param>
         /// <param name="minimumDigits">Minimum integer length (leading zeros written if needed)</param>
         /// <returns>String8 representation of integer value</returns>
@@ -723,7 +766,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         /// <param name="index">Index within byte[] at which to being writing</param>
         /// <param name="minimumDigits">Minimum integer length (leading zeros written if needed)</param>
         /// <returns>String8 representation of integer value</returns>
-        public static String8 FromNumber(long value, byte[] buffer, int index, int minimumDigits = 1)
+        public static String8 FromNumber(long value, byte[] buffer, int index = 0, int minimumDigits = 1)
         {
             if (value >= 0)
             {
@@ -736,7 +779,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         }
 
         /// <summary>
-        ///  Convert a number into the equivalent String8 representation, using the provided buffer.
+        ///  Convert a floating point number into the equivalent String8 representation, using the provided buffer.
         ///  Buffer must be at least 11 bytes long to handle all values.
         /// </summary>
         /// <param name="value">ulong value to convert</param>
@@ -745,7 +788,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         /// <param name="index">Index within byte[] at which to being writing</param>
         /// <param name="minimumDigits">Minimum integer length (leading zeros written if needed)</param>
         /// <returns>String8 representation of integer value</returns>
-        public static String8 FromNumber(ulong value, bool isNegative, byte[] buffer, int index, int minimumDigits = 1)
+        public static String8 FromNumber(ulong value, bool isNegative, byte[] buffer, int index = 0, int minimumDigits = 1)
         {
             ulong valueLeft = value;
 
@@ -764,7 +807,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             // Validate buffer is long enough
             int requiredLength = digits;
             if (isNegative) requiredLength++;
-            if (buffer.Length + index < requiredLength) throw new ArgumentException("String8.FromNumber requires an 21 byte buffer for number conversion.");
+            if (buffer.Length - index < requiredLength) throw new ArgumentException("String8.FromNumber requires an 21 byte buffer for number conversion.");
 
             // Write minus sign if negative
             int digitStartIndex = index;
@@ -783,6 +826,72 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             }
 
             return new String8(buffer, index, requiredLength);
+        }
+
+        /// <summary>
+        ///  Convert a number into the equivalent String8 representation, using the provided buffer.
+        /// </summary>
+        /// <param name="value">double value to convert</param>
+        /// <param name="isNegative">True if the original value was negative</param>
+        /// <param name="buffer">byte[] for conversion (at least length 21 for all values)</param>
+        /// <param name="index">Index within byte[] at which to being writing</param>
+        /// <param name="minimumDigits">Minimum integer length (leading zeros written if needed)</param>
+        /// <returns>String8 representation of integer value</returns>
+        public static String8 FromNumber(double value, byte[] buffer, int index = 0, int minimumDigits = 1)
+        {
+            if (value >= 0)
+            {
+                return FromNumber(value, false, buffer, index, minimumDigits);
+            }
+            else
+            {
+                return FromNumber(-value, true, buffer, index, minimumDigits);
+            }
+        }
+
+        /// <summary>
+        ///  Convert a number into the equivalent String8 representation, using the provided buffer.
+        /// </summary>
+        /// <param name="value">ulong value to convert</param>
+        /// <param name="isNegative">True if the original value was negative</param>
+        /// <param name="buffer">byte[] for conversion (at least length 21 for all values)</param>
+        /// <param name="index">Index within byte[] at which to being writing</param>
+        /// <param name="minimumDigits">Minimum integer length (leading zeros written if needed)</param>
+        /// <returns>String8 representation of integer value</returns>
+        private static String8 FromNumber(double value, bool isNegative, byte[] buffer, int index = 0, int minimumDigits = 1)
+        {
+            // Split the whole and fractional parts of the number
+            ulong wholePart = (ulong)value;
+            double fractionalPart = (value - (double)wholePart);
+
+            // Write out the whole part of the number
+            String8 result = FromNumber(wholePart, isNegative, buffer, index, minimumDigits);
+
+            // Write out the fractional part, if any, up to a maximum overall digits of precision (16).
+            int digitsOfPrecisionLeft = 16 - result.Length;
+            if (digitsOfPrecisionLeft > 0)
+            {
+                ulong scaledWholePart = (ulong)(fractionalPart * Math.Pow(10, digitsOfPrecisionLeft));
+                
+                // Trim trailing zeros
+                while(scaledWholePart > 0 && (scaledWholePart % 10 == 0))
+                {
+                    scaledWholePart /= 10;
+                    digitsOfPrecisionLeft--;
+                }
+
+                // If there's a value left, write the digits
+                if (scaledWholePart > 0)
+                {
+                    if (index + result.Length + 1 + digitsOfPrecisionLeft >= buffer.Length) throw new ArgumentException("String8.FromNumber requires up to a 21 byte buffer per number conversion.");
+                    buffer[index + result.Length] = UTF8.Period;
+                    String8 fractionalPart8 = FromNumber(scaledWholePart, false, buffer, index + result.Length + 1, digitsOfPrecisionLeft);
+
+                    result = new String8(result.Array, result.Index, result.Length + 1 + fractionalPart8.Length);
+                }
+            }
+
+            return result;
         }
 
         /// <summary>

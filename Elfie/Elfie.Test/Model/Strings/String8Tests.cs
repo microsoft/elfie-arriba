@@ -456,6 +456,32 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
         }
 
         [TestMethod]
+        public void String8_FloatConversions()
+        {
+            // TODO: XForm doesn't parse base and exponent notation yet; add tests when it does.
+
+            TryFloatConversions(null);
+            TryFloatConversions(string.Empty);
+            TryFloatConversions("0");
+            TryFloatConversions("-1.5");
+            TryFloatConversions("12345.67890");
+            TryFloatConversions("0.123456789");
+            TryFloatConversions(".123456789");
+            TryFloatConversions(int.MaxValue.ToString());
+            TryFloatConversions(long.MinValue.ToString());
+            TryFloatConversions(ulong.MaxValue.ToString());
+        }
+
+        private static void TryFloatConversions(string value)
+        {
+            String8 value8 = value.TestConvert();
+
+            double expectedDouble, actualDouble;
+            Assert.AreEqual(double.TryParse(value, out expectedDouble), value8.TryToDouble(out actualDouble));
+            Assert.AreEqual(expectedDouble, actualDouble);
+        }
+
+        [TestMethod]
         public void String8_FromInteger()
         {
             byte[] buffer = new byte[20];
@@ -471,6 +497,22 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
             Assert.AreEqual("123456789", String8.FromInteger(123456789, buffer).ToString());
             Assert.AreEqual(int.MaxValue.ToString(), String8.FromInteger(int.MaxValue, buffer).ToString());
             Assert.AreEqual(int.MinValue.ToString(), String8.FromInteger(int.MinValue, buffer).ToString());
+        }
+
+        [TestMethod]
+        public void String8_FromNumber_Double()
+        {
+            // TODO: XForm doesn't write to base and exponent notation yet; add tests when it does.
+
+            byte[] buffer = new byte[21];
+            Assert.AreEqual("0", String8.FromNumber(0.0, buffer).ToString());
+            Assert.AreEqual("1000", String8.FromNumber(1000.0, buffer).ToString());
+            Assert.AreEqual("1.5", String8.FromNumber(1.5, buffer).ToString());
+            Assert.AreEqual("-1.5", String8.FromNumber(-1.5, buffer).ToString());
+            Assert.AreEqual("0.666666666666666", String8.FromNumber((double)2 / (double)3, buffer).ToString());
+            Assert.AreEqual("0.75", String8.FromNumber((double)3 / (double)4, buffer).ToString());
+            Assert.AreEqual("0.0075", String8.FromNumber(0.0075, buffer).ToString());
+            Assert.AreEqual(int.MaxValue.ToString(), String8.FromNumber((double)int.MaxValue, buffer).ToString());
         }
 
         [TestMethod]

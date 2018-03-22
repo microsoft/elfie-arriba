@@ -58,6 +58,9 @@ namespace XForm.Types
                 if (sourceType == typeof(uint)) return new ToString8Converter<uint>(defaultValue, 10, (value, buffer, index) => String8.FromNumber(value, buffer, index)).Convert;
                 if (sourceType == typeof(long)) return new ToString8Converter<long>(defaultValue, 21, (value, buffer, index) => String8.FromNumber(value, buffer, index)).Convert;
                 if (sourceType == typeof(ulong)) return new ToString8Converter<ulong>(defaultValue, 20, (value, buffer, index) => String8.FromNumber(value, false, buffer, index)).Convert;
+
+                if (sourceType == typeof(float)) return new ToString8Converter<float>(defaultValue, 21, (value, buffer, index) => String8.FromNumber(value, buffer, index)).Convert;
+                if (sourceType == typeof(double)) return new ToString8Converter<double>(defaultValue, 21, (value, buffer, index) => String8.FromNumber(value, buffer, index)).Convert;
             }
             else if (sourceType == typeof(String8))
             {
@@ -100,6 +103,14 @@ namespace XForm.Types
                 else if (targetType == typeof(sbyte))
                 {
                     return new FromString8Converter<sbyte>(defaultValue, (String8 value, out sbyte result) => value.TryToSByte(out result)).Convert;
+                }
+                else if (targetType == typeof(double))
+                {
+                    return new FromString8Converter<double>(defaultValue, (String8 value, out double result) => value.TryToDouble(out result)).Convert;
+                }
+                else if (targetType == typeof(float))
+                {
+                    return new FromString8Converter<float>(defaultValue, (String8 value, out float result) => value.TryToFloat(out result)).Convert;
                 }
             }
 

@@ -31,6 +31,11 @@ namespace XForm.Query
             result.Query = partialXqlQuery;
             result.IsValid = false;
 
+            // Determine whether the user is starting to type the next token (the last one is a newline, space, or function start)
+            char lastQueryChar = ' ';
+            if (!String.IsNullOrEmpty(partialXqlQuery)) lastQueryChar = partialXqlQuery[partialXqlQuery.Length - 1];
+            bool userIsStartingNextToken = (Char.IsWhiteSpace(lastQueryChar) || lastQueryChar == '(');
+
             try
             {
                 XDatabaseContext context = _xDatabaseContext;
@@ -45,15 +50,21 @@ namespace XForm.Query
                 IXTable pipeline = context.Query(partialXqlQuery);
                 result.IsValid = true;
 
-                // Parse the query with an extra argument on the last line to see what would be suggested
-                partialXqlQuery = partialXqlQuery + " ?";
-
-                // Try building the query pipeline, using a *DeferredRunner* so dependencies aren't built right now
-                pipeline = context.Query(partialXqlQuery);
+                // If the query is valid but the user is starting the next token, figure out what the token type is
+                if (userIsStartingNextToken)
+                {
+                    pipeline = context.Query(partialXqlQuery + "?");
+                }
             }
             catch (UsageException ex)
             {
                 result.Context = ex.Context;
+
+                // Don't show suggestions after the last token unless an explicit space, newline, or a '(' is at the end of the current query
+                if (result.Context.InvalidTokenIndex >= partialXqlQuery.Length && !userIsStartingNextToken)
+                {
+                    result.Context.ValidValues = null;
+                }
             }
 
             return result;
