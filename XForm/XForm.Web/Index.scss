@@ -75,6 +75,7 @@ body {
 @mixin header {
     height: 50px;
     display: flex;
+    flex-shrink: 0;
     align-items: center;
     padding: 0 10px;
     font-size: 9pt;
@@ -217,6 +218,7 @@ body {
     }
 
     .queryUsage {
+        flex-shrink: 0;
         font-family: monospace;
         color: hsl(0, 0, 50%);
         padding: 10px 5px 10px 30px;
