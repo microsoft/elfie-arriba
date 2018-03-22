@@ -4,6 +4,7 @@ $line: hsl(0, 0, 92%);
 $line80: hsl(0, 0, 80%);
 $linedark: hsl(0, 0, 70%);
 $blue: hsl(205, 90%, 45%);
+$bluelight: adjust-color(change-color($blue, $alpha: 0.1), $green: -40);
 
 html, #app {
     height: 100%;
@@ -153,7 +154,7 @@ body {
             margin-left: 50px;
         }
 
-        &:hover { background: adjust-color(change-color($blue, $alpha: 0.1), $green: -40); }
+        &:hover { background: $bluelight; }
     }
 }
 
@@ -256,7 +257,7 @@ body {
         border-collapse: collapse;
         tr {
             @include clickable;
-            &:hover { background: adjust-color(change-color($blue, $alpha: 0.1), $green: -40); }
+            &:hover { background: $bluelight; }
         }
         td {
             white-space: nowrap;
@@ -367,7 +368,7 @@ body {
         tr {
             @include clickable;
             &:hover, &.selected {
-                background: adjust-color(change-color($blue, $alpha: 0.1), $green: -40);
+                background: $bluelight;
             }
         }
     }
@@ -429,7 +430,7 @@ body {
             }
 
             &:hover:not(.header) > span {
-                background: adjust-color(change-color($blue, $alpha: 0.1), $green: -40);
+                background: $bluelight;
             }
 
             &.current > span {
