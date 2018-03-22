@@ -488,7 +488,7 @@ namespace XForm.Query
             context.TableName = _workflow.CurrentTable;
             context.QueryLineNumber = _scanner.Current.LineNumber;
             context.Usage = (_currentlyBuilding.Count > 0 ? _currentlyBuilding.Peek().Usage : null);
-            context.InvalidValue = _scanner.Current.Value;
+            context.InvalidValue = _scanner.Current.RawValue;
             context.InvalidTokenIndex = _scanner.Current.Index;
             context.ErrorMessage = "";
 
@@ -497,7 +497,7 @@ namespace XForm.Query
 
         private void Throw(string valueCategory, IEnumerable<string> validValues = null)
         {
-            ErrorContext context = BuildErrorContext().Merge(new ErrorContext(_scanner.Current.Value, valueCategory, validValues));
+            ErrorContext context = BuildErrorContext().Merge(new ErrorContext(_scanner.Current.RawValue, valueCategory, validValues));
 
             // Consume the bad token
             _scanner.Next();

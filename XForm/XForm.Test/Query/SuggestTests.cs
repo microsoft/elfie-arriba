@@ -159,7 +159,7 @@ namespace XForm.Test.Query
             Assert.AreEqual(null, result.Context.TableName);
             Assert.AreEqual(3, result.Context.QueryLineNumber);
             Assert.AreEqual("where {Expression}", result.Context.Usage);
-            Assert.AreEqual("BadColumnName", result.Context.InvalidValue);
+            Assert.AreEqual("[BadColumnName]", result.Context.InvalidValue);
             Assert.AreEqual("[Column]", result.Context.InvalidValueCategory);
             Assert.AreEqual("", string.Join("|", result.Context.ValidValues));
         }
