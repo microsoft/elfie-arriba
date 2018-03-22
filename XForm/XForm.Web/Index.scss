@@ -65,9 +65,13 @@ body {
     border-radius: 3px;
 }
 
-@mixin buttonActive {
+@mixin clickable {
     cursor: pointer;
     user-select: none;
+}
+
+@mixin buttonActive {
+    @include clickable;
     &:hover, &.hot { background-color: hsla(0, 0, 0, 0.15); }
     &:active { background-color: hsla(0, 0, 100%, 0.15); }
 }
@@ -250,6 +254,10 @@ body {
     table {
         margin-top: 20px;
         border-collapse: collapse;
+        tr {
+            @include clickable;
+            &:hover { background: adjust-color(change-color($blue, $alpha: 0.1), $green: -40); }
+        }
         td {
             white-space: nowrap;
             padding: 0;
@@ -257,8 +265,7 @@ body {
             label {
                 padding: 5px 15px 5px 20px;
                 display: flex;
-                cursor: pointer;
-                user-select: none;
+
             }
 
             input {
@@ -271,7 +278,6 @@ body {
                 padding-right: 20px;
             }
         }
-        tr:hover { background: adjust-color(change-color($blue, $alpha: 0.1), $green: -40); }
         :nth-child(5n) td {
             padding-bottom: 20px;
         }
@@ -359,9 +365,7 @@ body {
         }
 
         tr {
-            cursor: pointer;
-            user-select: none;
-
+            @include clickable;
             &:hover, &.selected {
                 background: adjust-color(change-color($blue, $alpha: 0.1), $green: -40);
             }
