@@ -214,16 +214,6 @@ body {
                 text-decoration-color: hsl(5, 80%, 65%);
             }
         }
-
-        position: relative;
-        .queryHint {
-            position: absolute;
-            z-index: -1;
-            font: 14px Consolas; // Manually match Monaco
-            color: hsl(0, 0, 90%);
-            white-space: pre;
-            display: none;
-        }
     }
 
     .queryUsage {

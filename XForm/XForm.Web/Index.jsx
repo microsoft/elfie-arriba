@@ -270,21 +270,12 @@ class Index extends React.Component {
             const usage = info.Usage
             if (usage !== this.state.usage) this.setState({ usage })
 
-            const queryHint = !info.InvalidToken && info.ItemCategory || ''
-            if (queryHint != this.state.queryHint) this.setState({ queryHint })
-
             this.editor.decorate(info.ErrorMessage // Need to verify info.InvalidTokenIndex < this.query.length?
                 ? [{
                     range: this.editor.indexToPosition(info.InvalidTokenIndex).toRange(info.InvalidToken.length),
                     options: { inlineClassName: 'validationError' },
                 }]
                 : [])
-        })
-        setTimeout(() => {
-            const ia = document.querySelector('.inputarea').style
-            const qh = document.querySelector('.queryHint').style
-            qh.top = parseInt(ia.top) + 1 + 'px'
-            qh.left = ia.left
         })
     }
     queryAndCursorChanged() {
@@ -464,7 +455,6 @@ class Index extends React.Component {
                     || this.state.usage || `\u200B`
                 }</div>
                 <div id="queryEditor">
-                    <div className="queryHint">{this.state.queryHint}</div>
                 </div>
                 <DatePicker key="datePicker" />
             </div>
