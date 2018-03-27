@@ -5,6 +5,17 @@
 #include <intrin.h>
 #include <nmmintrin.h>
 
+// StringN methods use AVX and SSE 4.2 [SSE String Instructions], available on Intel and AMD CPUs from 2011 onward.
+// The instructions are "PCMPESTRI", "PCMPESTRM", "PCMPISTRI", and "PCMPISTRM".
+// They use 128-bit [16 byte] vector registers, and can be configured for UTF8 or UTF16.
+// They run in 3-5 clock cycles on a Haswell or Skylake CPU and 2-4 cycles on a Ryzen CPU. [2017 current CPUs]
+//
+// Instructions ending with 'I' return the index of the first matching character; ones with 'M' return a mask of each match.
+// Instructions with 'CMP*E*' take the string length; ones with 'CMP*I*' look for a null terminator.
+//
+// The instructions take a mode and can do a full match (String.Equals), a search (String.IndexOf), or check for characters
+// in ranges (Char.IsUpper, Char.IsDigit, etc).
+
 const int Utf16IndexOfMode = _SIDD_UWORD_OPS | _SIDD_CMP_EQUAL_ORDERED;
 const int Utf16FirstDifferentCharacterMode = _SIDD_UWORD_OPS | _SIDD_CMP_EQUAL_EACH | _SIDD_NEGATIVE_POLARITY;
 
