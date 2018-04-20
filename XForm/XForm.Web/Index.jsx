@@ -215,8 +215,7 @@ class Index extends React.Component {
 
     		this.editor = monaco.editor.create(document.getElementById('queryEditor'), {
     			value: [
-    				'read WebRequest',
-                    'where [HttpStatus] != "200"',
+    				'read WebRequest', 'where [ClientBrowser]: "Edge"'
     			].join('\n'),
     			language: 'xform',
                 scrollBeyondLastLine: false,
@@ -431,9 +430,19 @@ class Index extends React.Component {
             </div>
         }
 
-        const formatters = rows && cols.map(col => col === "Count" || col.endsWith(".Sum")
-                ? cell => cell === "" ? "—" : (+cell).toLocaleString()
-                : cell => cell)
+        const formatters = [];
+        if(rows && cols) {
+            for(var i = 0; i < cols.length; ++i) {
+                var col = cols[i];
+                if(col === "Count" || col.endsWith(".Sum")) {
+                    formatters.push(cell => cell === "" ? "—" : (+cell).toLocaleString());
+                } else if(col === "Location.DeepLink") {
+                    formatters.push(cell => (cell && <a target="_blank" href={cell}>View</a>));
+                } else {
+                    formatters.push(cell => cell);
+                }                
+            }
+        }
 
         const encodedParams = encodeParams({ asof: this.state.asOf, q: this.validQuery })
 
@@ -496,6 +505,7 @@ class Index extends React.Component {
                 <div className="" className={`resultsHeader ${this.state.pausePulse ? '' : 'pulse'}`}>
                     <span>{this.state.resultCount}</span>
                     <span className="flexFill"></span>
+                    {encodedParams && <a className="button" target="_blank" href={`${xhr.urlRoot}/download?fmt=sarif&${encodedParams}`}>SARIF</a>}                    
                     {encodedParams && <a className="button" target="_blank" href={`${xhr.urlRoot}/download?fmt=csv&${encodedParams}`}>CSV</a>}
                     {encodedParams && <a className="button" target="_blank" href={`${xhr.urlRoot}/download?fmt=tsv&${encodedParams}`}>TSV</a>}
                     <span className={`loading ${ this.state.loading && 'loading-active' }`}></span>

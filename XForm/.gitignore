@@ -7,6 +7,3 @@
 # Don't include XForm.Web references or outputs
 XForm.Web/node_modules
 XForm.Web/bundle*
-
-# Don't include local prototypes
-XForm.CST
