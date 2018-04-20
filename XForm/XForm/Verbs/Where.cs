@@ -89,6 +89,14 @@ namespace XForm.Verbs
             return result;
         }
 
+        public override void Reset()
+        {
+            base.Reset();
+            _currentMatchesTotal = 0;
+            _currentMatchesReturned = 0;
+            _nextCountToReturn = 0;
+        }
+
         public override int Next(int desiredCount, CancellationToken cancellationToken)
         {
             _currentMatchesReturned += _nextCountToReturn;

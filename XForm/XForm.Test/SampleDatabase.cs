@@ -408,5 +408,14 @@ namespace XForm.Test
             if (sourceName.StartsWith("Error.")) return -1;
             return 0;
         }
+
+        [TestMethod]
+        public void Database_WhereThenChoose()
+        {
+            // Exercise paging over rows in a complex case.
+            //  'choose' will cause two passes of where; where must resume after reset correctly.
+            //  'limit' asks for partial rows, forcing paging to occur.
+            Assert.AreEqual(5, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [ClientBrowser]: \"Edge\"\r\nchoose Max [ResponseBytes] [ClientOs]\r\nlimit 5").RunAndDispose());
+        }
     }
 }

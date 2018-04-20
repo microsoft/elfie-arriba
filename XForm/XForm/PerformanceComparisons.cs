@@ -50,7 +50,7 @@ namespace XForm
 
             //WhereUShortUnderConstant();
             //WhereUShortEqualsUshort();
-            //ByteEqualsConstant();
+            //ByteLessThanConstant();
             //DoubleWhere();
             //Join();
             //Dictionary();
@@ -88,7 +88,9 @@ namespace XForm
 
             query = @"
                 read WebRequest
-                where [HttpMethod] = ""GET""
+                where [ClientBrowser]: ""Edge""
+                choose Max [ResponseBytes] [ClientOS]
+                limit 10
             ";
 
             string singleLineQuery = XqlScanner.QueryToSingleLineStyle(query);
@@ -186,7 +188,7 @@ namespace XForm
             }
         }
 
-        public void ByteEqualsConstant()
+        public void ByteLessThanConstant()
         {
             byte[] bytes = new byte[1000 * 1000];
             Random r = new Random(8);
