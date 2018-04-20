@@ -61,7 +61,7 @@ namespace XForm
         public IXTable Build(string tableName, XDatabaseContext outerContext, bool deferred)
         {
             // Validate the source name is recognized
-            if (!Sources.Contains(tableName)) throw new UsageException(tableName, "Table", outerContext.StreamProvider.Tables());
+            if (!Sources.Contains(tableName)) throw new UsageException(tableName, "Table", Sources);
 
             // If we previously found the latest for this table, just return it again
             LatestTableForCutoff previousLatest;
