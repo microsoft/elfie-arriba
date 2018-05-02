@@ -234,6 +234,14 @@ a:visited:hover {
         flex: 1;
         padding: 4px 0px;
         border-bottom: solid 1px silver;
+
+        .box-header span {
+            margin-right: 5px;
+        }
+
+        .box-body {
+            margin-top: 8px;
+        }
     }
 }
 

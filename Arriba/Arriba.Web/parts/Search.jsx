@@ -184,7 +184,7 @@ export default class extends EventedComponent {
         };
 
         var detailsQuery = table.idColumn + '="' + this.state.userSelectedId + '"';
-        if (this.props.query) detailsQuery += " AND (" + this.props.query + ")"; // Query is included for term highlighting.
+        if (this.props.query && this.props.query !== '*') detailsQuery += " AND (" + this.props.query + ")"; // Query is included for term highlighting.
 
         // Select all columns for the selected item, with highlighting
         this.jsonQueryWithError(
