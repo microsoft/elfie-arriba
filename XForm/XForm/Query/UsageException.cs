@@ -32,7 +32,7 @@ namespace XForm.Query
             if (this.ValidValues != null)
             {
                 // Filter valid values based on prefix typed
-                if(!String.IsNullOrEmpty(this.InvalidValue)) this.ValidValues = this.ValidValues.Where((value) => value.StartsWith(invalidValue, StringComparison.OrdinalIgnoreCase));
+                if (!String.IsNullOrEmpty(this.InvalidValue)) this.ValidValues = this.ValidValues.Where((value) => value.StartsWith(invalidValue, StringComparison.OrdinalIgnoreCase));
 
                 // Always sort expected values
                 this.ValidValues = this.ValidValues.OrderBy((s) => s);

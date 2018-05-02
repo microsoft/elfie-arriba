@@ -20,7 +20,6 @@ namespace Arriba.Model
     /// </summary>
     public class SecureDatabase : Database
     {
-        private readonly object _tableLock = new object();
         private Dictionary<string, SecurityPermissions> _securityByTable;
 
         public SecureDatabase() : base()
@@ -235,14 +234,34 @@ namespace Arriba.Model
 
         public override void ReloadTable(string tableName)
         {
-            // Reload the table
-            base.ReloadTable(tableName);
-
-            // Reload the security
             lock (_tableLock)
             {
+                // Reload the table
+                base.ReloadTable(tableName);
+
+                // Reload the security
                 _securityByTable.Remove(tableName);
                 Security(tableName);
+            }
+        }
+
+        public override void UnloadTable(string tableName)
+        {
+            // Unload the table and security data
+            lock (_tableLock)
+            {
+                base.UnloadTable(tableName);
+                _securityByTable.Remove(tableName);
+            }
+        }
+
+        public override void UnloadAll()
+        {
+            // Unload all tables and security data
+            lock (_tableLock)
+            {
+                base.UnloadAll();
+                _securityByTable.Clear();
             }
         }
     }

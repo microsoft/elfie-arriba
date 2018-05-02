@@ -13,6 +13,7 @@ using Microsoft.CodeAnalysis.Elfie.Serialization;
 
 using Xsv.Where;
 using System.IO;
+using System.Linq;
 
 namespace Xsv
 {
@@ -233,10 +234,10 @@ namespace Xsv
                 using (ITabularWriter writer = TabularFactory.BuildWriter(outputFilePath))
                 {
                     writer.SetColumns(columns);
-                    
-                    while(reader.NextRow())
+
+                    while (reader.NextRow())
                     {
-                        for(int i = 0; i < columnIndices.Length; ++i)
+                        for (int i = 0; i < columnIndices.Length; ++i)
                         {
                             writer.Write(reader.Current(columnIndices[i]).ToString8());
                         }
@@ -267,7 +268,7 @@ namespace Xsv
             string writerColumns = null;
             try
             {
-                foreach(string inputFilePath in inputFilePaths)
+                foreach (string inputFilePath in inputFilePaths)
                 {
                     using (ITabularReader reader = TabularFactory.BuildReader(inputFilePath))
                     {
@@ -298,7 +299,7 @@ namespace Xsv
             }
             finally
             {
-                if(writer != null)
+                if (writer != null)
                 {
                     writer.Dispose();
                     writer = null;
@@ -460,13 +461,13 @@ namespace Xsv
             // Walk the input files to figure out the latest copy of each ID
             Trace.WriteLine($"Identifying latest {idColumnIdentifier} in all files in {inputFolderPath}...");
             int rowCountRead = 0;
-            foreach(string inputFilePath in Directory.GetFiles(inputFolderPath))
+            foreach (string inputFilePath in Directory.GetFiles(inputFolderPath))
             {
                 using (ITabularReader reader = TabularFactory.BuildReader(inputFilePath))
                 {
                     int idColumnIndex = reader.ColumnIndex(idColumnIdentifier);
 
-                    while(reader.NextRow())
+                    while (reader.NextRow())
                     {
                         rowCountRead++;
                         String8 id = reader.Current(idColumnIndex).ToString8();
@@ -506,12 +507,12 @@ namespace Xsv
 
                             // Copy this row to the output file, *if* it's the latest for this ID
                             Tuple<string, int> latestForID = latestFileAndRowByID[id];
-                            if(latestForID.Item1 == inputFilePath && latestForID.Item2 == reader.RowCountRead)
+                            if (latestForID.Item1 == inputFilePath && latestForID.Item2 == reader.RowCountRead)
                             {
                                 for (int i = 0; i < writerColumns.Count; ++i)
                                 {
                                     int readerColumnIndex = writerColumnIndexInReader[i];
-                                    if(readerColumnIndex >= 0 && readerColumnIndex < reader.CurrentRowColumns)
+                                    if (readerColumnIndex >= 0 && readerColumnIndex < reader.CurrentRowColumns)
                                     {
                                         writer.Write(reader.Current(readerColumnIndex).ToString8());
                                     }
@@ -593,11 +594,11 @@ namespace Xsv
             }
         }
 
-        private static void HtmlInnerText(string inputFilePath, string outputFilePath, string columnIdentifier)
+        private static void HtmlInnerText(string inputFilePath, string outputFilePath, string columnsDelimited)
         {
             using (ITabularReader reader = TabularFactory.BuildReader(inputFilePath))
             {
-                int columnIndexToEscape = reader.ColumnIndex(columnIdentifier);
+                List<int> columnIndicesToEscape = columnsDelimited.Split(',').Select((col) => reader.ColumnIndex(col.Trim())).ToList();
 
                 using (ITabularWriter writer = TabularFactory.BuildWriter(outputFilePath))
                 {
@@ -607,7 +608,7 @@ namespace Xsv
                     {
                         for (int i = 0; i < reader.CurrentRowColumns; ++i)
                         {
-                            if (i == columnIndexToEscape)
+                            if (columnIndicesToEscape.Contains(i))
                             {
                                 WriteHtmlEscaped(reader.Current(i).ToString8(), writer);
                             }
@@ -630,7 +631,7 @@ namespace Xsv
             writer.WriteValueStart();
 
             int writeFrom = 0;
-            while(true)
+            while (true)
             {
                 // Look for an Html Tag
                 int startOfTag = value.IndexOf((byte)'<', writeFrom);
