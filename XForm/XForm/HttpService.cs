@@ -108,6 +108,8 @@ namespace XForm
             }
             catch (Exception ex)
             {
+                Trace.WriteLine($"ERROR: {request.Url}\r\n{ex.ToString()}");
+
                 using (ITabularWriter writer = WriterForFormat("json", response))
                 {
                     WriteException(ex, writer);
@@ -129,6 +131,8 @@ namespace XForm
             }
             catch (Exception ex)
             {
+                Trace.WriteLine($"ERROR: {request.Url}\r\n{ex.ToString()}");
+
                 using (ITabularWriter writer = WriterForFormat("json", response))
                 {
                     WriteException(ex, writer);
@@ -148,6 +152,8 @@ namespace XForm
             }
             catch (Exception ex)
             {
+                Trace.WriteLine($"ERROR: {request.Url}\r\n{ex.ToString()}");
+
                 using (ITabularWriter writer = WriterForFormat("json", response))
                 {
                     WriteException(ex, writer);
@@ -225,12 +231,10 @@ namespace XForm
                 }
 
                 // Build a writer for the desired format
-                using (ITabularWriter writer = WriterForFormat(format, response))
-                {
-                    // Run the query and return the output
-                    pipeline = new TabularFileWriter(pipeline, writer);
-                    pipeline.RunAndDispose();
-                }
+                pipeline = new TabularFileWriter(pipeline, WriterForFormat(format, response));
+                
+                // Run the query and return the output
+                pipeline.RunWithoutDispose();
             }
             finally
             {
@@ -242,19 +246,21 @@ namespace XForm
             }
         }
 
-        private void Save(IHttpRequest context, IHttpResponse response)
+        private void Save(IHttpRequest request, IHttpResponse response)
         {
             try
             {
                 Save(
-                    Require(context, "q"),
-                    Require(context, "name"));
+                    Require(request, "q"),
+                    Require(request, "name"));
 
                 // Success
                 response.StatusCode = 200;
             }
             catch (Exception ex)
             {
+                Trace.WriteLine($"ERROR: {request.Url}\r\n{ex.ToString()}");
+
                 using (ITabularWriter writer = WriterForFormat("json", response))
                 {
                     WriteException(ex, writer);

@@ -130,11 +130,17 @@ namespace XForm.IO
 
             if (_writer != null)
             {
-                _writer.Dispose();
-                _writer = null;
+                try
+                {
+                    _writer.Dispose();
 
-                // On Dispose, tell the StreamProvider to publish the table
-                if (_streamProvider != null) _streamProvider.Publish(_outputFilePath);
+                    // On Dispose, tell the StreamProvider to publish the table
+                    if (_streamProvider != null) _streamProvider.Publish(_outputFilePath);
+                }
+                finally
+                {
+                    _writer = null;
+                }
             }
         }
     }
