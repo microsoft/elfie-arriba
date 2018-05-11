@@ -73,6 +73,12 @@ namespace XForm
                 UpdateSources();
             }
 
+            // If only a Date was passed for AsOfDate, look for the last version as of that day
+            if(outerContext.RequestedAsOfDateTime.TimeOfDay == TimeSpan.Zero)
+            {
+                outerContext.RequestedAsOfDateTime = outerContext.RequestedAsOfDateTime.AddDays(1).AddSeconds(-1);
+            }
+
             // If we previously found the latest for this table, just return it again
             LatestTableForCutoff previousLatest;
             if (_currentTableVersions.TryGet(tableName, out previousLatest)
