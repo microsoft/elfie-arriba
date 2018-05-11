@@ -67,7 +67,8 @@ namespace XForm.Columns
 
         public Func<object> ComponentGetter(string componentName)
         {
-            return _column.ComponentGetter(componentName);
+            // Components in underlying column won't be remapped
+            return null;
         }
 
         public override string ToString()

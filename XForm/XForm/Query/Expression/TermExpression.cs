@@ -107,7 +107,7 @@ namespace XForm.Query.Expression
             // Allow String8 to constant Contains queries to compare on the raw byte[] and int[]
             if (op == CompareOperator.Contains && _right.IsConstantColumn() && _left.ColumnDetails.Type == typeof(String8) && !_left.IsEnumColumn())
             {
-                Func<object> rawGetter = _left.ComponentGetter("String8Raw");
+                Func<object> rawGetter = _left.ComponentGetter(ColumnComponent.String8Raw);
 
                 if (rawGetter != null)
                 {
