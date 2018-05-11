@@ -88,7 +88,7 @@ namespace XForm.Query
             // For nested pipelines, we should still be on the line for the stage which has a nested pipeline. Move forward.
             if (_scanner.Current.Type == TokenType.Newline) _scanner.Next();
 
-            while (_scanner.Current.Type != TokenType.End)
+            do
             {
                 // If this line is 'end', this is the end of the inner pipeline. Leave it at the end of this line; the outer NextPipeline will skip to the next line.
                 if (_scanner.Current.Value.Equals("end", StringComparison.OrdinalIgnoreCase))
@@ -99,7 +99,7 @@ namespace XForm.Query
 
                 pipeline = NextVerb(pipeline);
                 _scanner.Next();
-            }
+            } while (_scanner.Current.Type != TokenType.End) ;
 
             return pipeline;
         }
@@ -326,7 +326,7 @@ namespace XForm.Query
         public TimeSpan NextTimeSpan()
         {
             object value = null;
-            ParseNextOrThrow(() => TypeConverterFactory.TryConvertSingle(_scanner.Current.Value, typeof(TimeSpan), out value), "TimeSpan ['60s', '7d']", TokenType.Value);
+            ParseNextOrThrow(() => (TypeConverterFactory.TryConvertSingle(_scanner.Current.Value, typeof(TimeSpan), out value) && value != null), "TimeSpan ['60s', '7d']", TokenType.Value);
             return (TimeSpan)value;
         }
 

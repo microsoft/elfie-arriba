@@ -365,6 +365,12 @@ namespace XForm
             DateTime result;
             if (!DateTime.TryParse(value, out result)) return defaultValue;
 
+            // If only date passed, return the very end of the day
+            if(result.TimeOfDay == TimeSpan.Zero && value.Length <= 10)
+            {
+                result = result.AddDays(1).AddSeconds(-1);
+            }
+
             return result;
         }
 
