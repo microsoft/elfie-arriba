@@ -24,8 +24,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		XForm.runsettings = XForm.runsettings
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XForm.CST", "XForm.CST\XForm.CST.csproj", "{77DA7FA1-6A93-4E78-B33A-1F8624D9F0A1}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XForm.Prices", "XForm.Prices\XForm.Prices.csproj", "{90B7AE34-5EC8-4A29-8A11-9EE2B19D34F3}"
 EndProject
 Global
@@ -124,14 +122,6 @@ Global
 		{5E33233F-AFA3-4B54-AB2A-3EC5CE254191}.Release|x64.ActiveCfg = Release|x64
 		{5E33233F-AFA3-4B54-AB2A-3EC5CE254191}.Release|x64.Build.0 = Release|x64
 		{5E33233F-AFA3-4B54-AB2A-3EC5CE254191}.Release|x86.ActiveCfg = Release|x64
-		{77DA7FA1-6A93-4E78-B33A-1F8624D9F0A1}.Debug|Any CPU.ActiveCfg = Debug|x64
-		{77DA7FA1-6A93-4E78-B33A-1F8624D9F0A1}.Debug|x64.ActiveCfg = Debug|x64
-		{77DA7FA1-6A93-4E78-B33A-1F8624D9F0A1}.Debug|x64.Build.0 = Debug|x64
-		{77DA7FA1-6A93-4E78-B33A-1F8624D9F0A1}.Debug|x86.ActiveCfg = Debug|x64
-		{77DA7FA1-6A93-4E78-B33A-1F8624D9F0A1}.Release|Any CPU.ActiveCfg = Release|x64
-		{77DA7FA1-6A93-4E78-B33A-1F8624D9F0A1}.Release|x64.ActiveCfg = Release|x64
-		{77DA7FA1-6A93-4E78-B33A-1F8624D9F0A1}.Release|x64.Build.0 = Release|x64
-		{77DA7FA1-6A93-4E78-B33A-1F8624D9F0A1}.Release|x86.ActiveCfg = Release|x64
 		{90B7AE34-5EC8-4A29-8A11-9EE2B19D34F3}.Debug|Any CPU.ActiveCfg = Debug|x86
 		{90B7AE34-5EC8-4A29-8A11-9EE2B19D34F3}.Debug|x64.ActiveCfg = Debug|x64
 		{90B7AE34-5EC8-4A29-8A11-9EE2B19D34F3}.Debug|x64.Build.0 = Debug|x64
