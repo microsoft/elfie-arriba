@@ -110,6 +110,19 @@ namespace XForm.Extensions
             }
         }
 
+        public static bool ContainsTable(this IStreamProvider streamProvider, string tableName)
+        {
+            // Don't allow trailing characters on table name which File I/O removes
+            if (tableName.EndsWith(".") || tableName.EndsWith("\\") || tableName.EndsWith("/")) return false;
+
+            if (streamProvider.Attributes(Path(streamProvider, LocationType.Source, tableName, CrawlType.Full)).Exists) return true;
+            if (streamProvider.Attributes(Path(streamProvider, LocationType.Table, tableName, CrawlType.Full)).Exists) return true;
+            if (streamProvider.Attributes(Path(streamProvider, LocationType.Config, tableName, ".xql")).Exists) return true;
+            if (streamProvider.Attributes(Path(streamProvider, LocationType.Query, tableName, ".xql")).Exists) return true;
+
+            return false;
+        }
+
         public static IEnumerable<string> Tables(this IStreamProvider streamProvider)
         {
             HashSet<string> tables = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
