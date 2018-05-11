@@ -92,6 +92,9 @@ import ReactDOM from "react-dom"
     }
 
     Date.prototype.toXFormat = function() {
+        // If today is selected, don't pass a dates
+        if(Date.isDateEquals(this, new Date())) return "";
+
         const mm = this.toLocaleString('en-US', { month: '2-digit' })
         const dd = this.toLocaleString('en-US', { day: '2-digit' })
         return `${this.getFullYear()}-${mm}-${dd}`
@@ -155,8 +158,16 @@ class Index extends React.Component {
         this.debouncedQueryChanged = debounce(this.queryChanged, 500)
         this.state = { query: this.query, userCols: [], saveAs: '', pausePulse: true }
 
+        const params = new URLSearchParams(location.search.slice(1));
+        const q = params.get("q");
+        
         const loc = document.location;
         xhr.urlRoot = loc.port === '8080' ? `${loc.protocol}//${loc.hostname}:5073` : ''
+
+        this.initialQuery = q ? q : [
+            'read WebRequest',
+            'where [HttpStatus] != "200"',
+        ].join('\n');
 
         this.reqPeek = new CachableReusedRequest('run');
         this.reqPeek.caching = true;
@@ -214,10 +225,7 @@ class Index extends React.Component {
             })
 
     		this.editor = monaco.editor.create(document.getElementById('queryEditor'), {
-    			value: [
-    				'read WebRequest',
-                    'where [HttpStatus] != "200"',
-    			].join('\n'),
+    			value: this.initialQuery,
     			language: 'xform',
                 scrollBeyondLastLine: false,
                 minimap: { enabled: false },
