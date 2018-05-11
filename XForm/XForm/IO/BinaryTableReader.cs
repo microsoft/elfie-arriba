@@ -8,6 +8,7 @@ using System.Threading;
 
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 
+using XForm.Columns;
 using XForm.Data;
 using XForm.IO.StreamProvider;
 using XForm.Query;
@@ -57,7 +58,7 @@ namespace XForm.IO
 
         public Func<object> ComponentGetter(string componentName)
         {
-            if (componentName.Equals("String8Raw"))
+            if (componentName.Equals(ColumnComponent.String8Raw))
             {
                 if (ColumnDetails.Type != typeof(String8)) return null;
 

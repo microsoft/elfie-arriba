@@ -27,13 +27,15 @@ namespace XForm.Aggregators
         }
 
         public ColumnDetails ColumnDetails { get; private set; }
-        public XArray Values => XArray.All(_countPerBucket, _distinctCount);
+        public XArray Values => (_countPerBucket == null ? XArray.Empty : XArray.All(_countPerBucket, _distinctCount));
         public int TotalRowCount { get; private set; }
 
         public ArraySelector FoundIndices
         {
             get
             {
+                if (_countPerBucket == null) return ArraySelector.All(0);
+
                 // Count each bucket which had more than zero rows and keep the in-order indices of them
                 int distinctCountFound = 0;
                 int[] foundIndexSelector = new int[_countPerBucket.Length];

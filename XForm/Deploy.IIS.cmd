@@ -1,5 +1,4 @@
 @ECHO OFF
-SET AppCmdPath=%windir%\system32\inetsrv\appcmd.exe
 SET Target=%1
 IF "%Target%"=="" (
   ECHO Error. No destination path specified.
@@ -11,17 +10,12 @@ IF "%Target%"=="" (
 SET WebConfigPath=%~dp0XForm.IIS\Web.config
 IF NOT "%2"=="" SET WebConfigPath=%2
 
-ECHO - Deploying Website...
-"%AppCmdPath%" stop apppool "XForm.IIS"
-
-ROBOCOPY /MIR /NJH /NJS "%~dp0XForm.IIS\bin" "%Target%\bin"
-IF NOT %ERRORLEVEL% LEQ 7 GOTO :Error
-
-ECHO - Copying Web.config from [%WebConfigPath%]...
+ECHO - Deploying Web.config [to stop site]
 COPY /Y "%WebConfigPath%" "%Target%\Web.config"
 
-"%AppCmdPath%" start apppool "XForm.IIS"
-
+ECHO - Deploying Website...
+ROBOCOPY /MIR /NJH /NJS "%~dp0XForm.IIS\bin" "%Target%\bin"
+IF NOT %ERRORLEVEL% LEQ 7 GOTO :Error
 
 GOTO :End
 :Error

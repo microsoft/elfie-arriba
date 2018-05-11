@@ -402,6 +402,13 @@ namespace XForm.Test
             Assert.AreEqual((long)50, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [EventTime] : \"0z\"\r\nwhere Cast([ID], Int32) > 499").RunAndDispose());
         }
 
+        [TestMethod]
+        public void Database_WhereContainsChaining()
+        {
+            // Useful, but want to find a test which causes IndexOutOfRangeException if bulk contains is used on the second clause.
+            Assert.AreEqual((long)50, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [EventTime] : \"00:\"\r\nwhere [EventTime] : \"00\"\r\nlimit 50").RunAndDispose());
+        }
+
         private static int ExpectedResult(string sourceName)
         {
             if (sourceName.StartsWith("UsageError.")) return -2;

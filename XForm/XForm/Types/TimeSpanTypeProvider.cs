@@ -147,7 +147,8 @@ namespace XForm.Types
                 if (Char.IsLetter(value[numberPrefixLength])) break;
             }
 
-            double numberPartValue = double.Parse(value.Substring(0, numberPrefixLength));
+            double numberPartValue;
+            if (!double.TryParse(value.Substring(0, numberPrefixLength), out numberPartValue)) return false;
             string suffix = value.Substring(numberPrefixLength);
 
             switch (suffix.ToLowerInvariant())

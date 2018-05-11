@@ -4,53 +4,49 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{DA405DCD-14B4-44E4-B84D-0A189A19D4AD}</ProjectGuid>
-    <OutputType>Exe</OutputType>
-    <RootNamespace>XForm.Generator</RootNamespace>
-    <AssemblyName>XForm.Generator</AssemblyName>
+    <ProjectGuid>{90B7AE34-5EC8-4A29-8A11-9EE2B19D34F3}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>XForm.Prices</RootNamespace>
+    <AssemblyName>XForm.Prices</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\x64\Debug\</OutputPath>
+    <OutputPath>..\bin\x64\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <DebugType>full</DebugType>
     <PlatformTarget>x64</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
-    <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
-    <OutputPath>bin\x64\Release\</OutputPath>
+    <OutputPath>..\bin\x64\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
     <PlatformTarget>x64</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
-    <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
     <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\x86\Debug\</OutputPath>
+    <OutputPath>..\bin\x86\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <DebugType>full</DebugType>
     <PlatformTarget>x86</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
-    <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
-    <OutputPath>bin\x86\Release\</OutputPath>
+    <OutputPath>..\bin\x86\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
     <PlatformTarget>x86</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
-    <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -63,45 +59,25 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ComparerGenerator.cs" />
-    <Compile Include="Extensions\RandomExtensions.cs" />
-    <Compile Include="Mappers\AliasMapper.cs" />
-    <Compile Include="Mappers\ComputerNameMapper.cs" />
-    <Compile Include="Mappers\DataCenterMapper.cs" />
-    <Compile Include="Mappers\EmailAddressMapper.cs" />
-    <Compile Include="Mappers\FrequencyMapper.cs" />
-    <Compile Include="Mappers\GuidMapper.cs" />
-    <Compile Include="Mappers\Hashing.cs" />
-    <Compile Include="Mappers\IntMapper.cs" />
-    <Compile Include="Mappers\IpMapper.cs" />
-    <Compile Include="Mappers\ISanitizeMapper.cs" />
-    <Compile Include="Mappers\PersonNameMapper.cs" />
-    <Compile Include="Mappers\PhraseMapper.cs" />
-    <Compile Include="Mappers\ServerNameMapper.cs" />
-    <Compile Include="Mappers\UriStemMapper.cs" />
-    <Compile Include="Model\User.cs" />
-    <Compile Include="Model\WebRequest.cs" />
-    <Compile Include="Model\WebRequestDisasters.cs" />
-    <Compile Include="Model\WebRequestGenerator.cs" />
-    <Compile Include="PrimitiveConvertersGenerator.cs" />
-    <Compile Include="Program.cs" />
+    <Compile Include="Functions\Math\Divide.cs" />
+    <Compile Include="Functions\LastRowValue.cs" />
+    <Compile Include="Functions\Math\Multiply.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SupportedTypes.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="App.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Data\ComputerNames.txt" />
-    <EmbeddedResource Include="Data\FirstNames.txt" />
-    <EmbeddedResource Include="Data\LastNames.txt" />
-    <EmbeddedResource Include="Data\TopWords.txt" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Elfie\Elfie\Elfie.csproj">
       <Project>{d45f339f-847a-4f3a-88a0-afb883e9920e}</Project>
       <Name>Elfie</Name>
     </ProjectReference>
+    <ProjectReference Include="..\XForm\XForm.csproj">
+      <Project>{29eedfbf-d79c-4113-94f5-f3eba9ba7c47}</Project>
+      <Name>XForm</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="XForm.exe.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

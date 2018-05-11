@@ -89,7 +89,7 @@ namespace XForm
                 }
                 catch (Exception ex)
                 {
-                    WriteException(ex, writer, false);
+                    ReportError(request, response, ex);
                 }
             }
         }
@@ -108,10 +108,7 @@ namespace XForm
             }
             catch (Exception ex)
             {
-                using (ITabularWriter writer = WriterForFormat("json", response))
-                {
-                    WriteException(ex, writer);
-                }
+                ReportError(request, response, ex);
             }
         }
 
@@ -129,10 +126,7 @@ namespace XForm
             }
             catch (Exception ex)
             {
-                using (ITabularWriter writer = WriterForFormat("json", response))
-                {
-                    WriteException(ex, writer);
-                }
+                ReportError(request, response, ex);
             }
         }
 
@@ -148,6 +142,8 @@ namespace XForm
             }
             catch (Exception ex)
             {
+                Trace.WriteLine($"ERROR: {request.Url}\r\n{ex.ToString()}");
+
                 using (ITabularWriter writer = WriterForFormat("json", response))
                 {
                     WriteException(ex, writer);
@@ -225,12 +221,10 @@ namespace XForm
                 }
 
                 // Build a writer for the desired format
-                using (ITabularWriter writer = WriterForFormat(format, response))
-                {
-                    // Run the query and return the output
-                    pipeline = new TabularFileWriter(pipeline, writer);
-                    pipeline.RunAndDispose();
-                }
+                pipeline = new TabularFileWriter(pipeline, WriterForFormat(format, response));
+                
+                // Run the query and return the output
+                pipeline.RunWithoutDispose();
             }
             finally
             {
@@ -242,29 +236,40 @@ namespace XForm
             }
         }
 
-        private void Save(IHttpRequest context, IHttpResponse response)
+        private void Save(IHttpRequest request, IHttpResponse response)
         {
             try
             {
                 Save(
-                    Require(context, "q"),
-                    Require(context, "name"));
+                    Require(request, "q"),
+                    Require(request, "name"));
 
                 // Success
                 response.StatusCode = 200;
             }
             catch (Exception ex)
             {
-                using (ITabularWriter writer = WriterForFormat("json", response))
-                {
-                    WriteException(ex, writer);
-                }
+                ReportError(request, response, ex);
             }
         }
 
         private void Save(string query, string tableName)
         {
             _xDatabaseContext.Runner.Save(query, tableName);
+        }
+
+        private const int HttpListener_RequestAborted = 1229;
+        private void ReportError(IHttpRequest request, IHttpResponse response, Exception ex)
+        {
+            HttpListenerException hle = ex as HttpListenerException;
+            if (hle != null && (uint)hle.ErrorCode == HttpListener_RequestAborted) return;
+
+            Trace.WriteLine($"ERROR: {request.Url}\r\n{ex.ToString()}");
+
+            using (ITabularWriter writer = WriterForFormat("json", response))
+            {
+                WriteException(ex, writer);
+            }
         }
 
         private ITabularWriter WriterForFormat(string format, IHttpResponse response)

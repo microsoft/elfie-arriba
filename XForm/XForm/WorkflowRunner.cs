@@ -32,6 +32,7 @@ namespace XForm
             this.XDatabaseContext = context;
             _versionCache = new Cache<ItemVersions>();
             _currentTableVersions = new Cache<LatestTableForCutoff>();
+            _sources = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         }
 
         public IEnumerable<string> SourceNames => Sources;
@@ -39,17 +40,19 @@ namespace XForm
         {
             get
             {
-                DateTime now = DateTime.UtcNow;
-                if (_sources == null || now > _sourcesCacheExpires)
-                {
-                    _sources = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                    _sources.UnionWith(XDatabaseContext.StreamProvider.Tables());
-                    _sources.UnionWith(XDatabaseContext.StreamProvider.Queries());
-
-                    _sourcesCacheExpires = now.Add(Cache<ItemVersions>.DefaultCacheDuration);
-                }
-
+                if (DateTime.UtcNow > _sourcesCacheExpires) UpdateSources();
                 return _sources;
+            }
+        }
+
+        private void UpdateSources()
+        {
+            lock (_sources)
+            {
+                _sources.Clear();
+                _sources.UnionWith(XDatabaseContext.StreamProvider.Tables());
+                _sources.UnionWith(XDatabaseContext.StreamProvider.Queries());
+                _sourcesCacheExpires = DateTime.UtcNow.Add(Cache<ItemVersions>.DefaultCacheDuration);
             }
         }
 
@@ -61,7 +64,20 @@ namespace XForm
         public IXTable Build(string tableName, XDatabaseContext outerContext, bool deferred)
         {
             // Validate the source name is recognized
-            if (!Sources.Contains(tableName)) throw new UsageException(tableName, "Table", Sources);
+            if (!Sources.Contains(tableName))
+            {
+                // If it wasn't in cache, check individually for it live
+                if (!XDatabaseContext.StreamProvider.ContainsTable(tableName)) throw new UsageException(tableName, "Table", Sources);
+
+                // If found, update the cache
+                UpdateSources();
+            }
+
+            // If only a Date was passed for AsOfDate, look for the last version as of that day
+            if(outerContext.RequestedAsOfDateTime.TimeOfDay == TimeSpan.Zero)
+            {
+                outerContext.RequestedAsOfDateTime = outerContext.RequestedAsOfDateTime.AddDays(1).AddSeconds(-1);
+            }
 
             // If we previously found the latest for this table, just return it again
             LatestTableForCutoff previousLatest;

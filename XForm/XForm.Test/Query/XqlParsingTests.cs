@@ -22,6 +22,9 @@ namespace XForm.Test.Query
         [TestMethod]
         public void XqlParsing_Invalid()
         {
+            // Verify an empty query causes a UsageException
+            Verify.Exception<UsageException>(() => SampleDatabase.XDatabaseContext.Query(""));
+
             // Verify all verbs passed alone as the first query text cause a UsageException
             foreach (string verb in XqlParser.SupportedVerbs)
             {
