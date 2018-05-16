@@ -212,5 +212,10 @@ namespace XForm.Extensions
                 }
             }
         }
+
+        public static void Copy(this IStreamProvider streamProvider, string sourceFilePath, string targetPath)
+        {
+            Copy(streamProvider, File.OpenRead(sourceFilePath), targetPath);
+        }
     }
 }

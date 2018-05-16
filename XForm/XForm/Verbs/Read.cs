@@ -3,7 +3,7 @@
 
 using System;
 using System.Collections.Generic;
-
+using System.Linq;
 using XForm.Data;
 using XForm.IO;
 using XForm.IO.StreamProvider;
@@ -35,21 +35,42 @@ namespace XForm.Verbs
             List<IXTable> sources = new List<IXTable>();
 
             // Identify the interval and table name requested
-            TimeSpan interval = context.Parser.NextTimeSpan();
-            DateTime rangeStart = context.RequestedAsOfDateTime.Subtract(interval);
+            TimeSpan interval = context.Parser.NextTimeSpan();            
             string tableName = (string)context.Parser.NextLiteralValue();
 
-            // Add rows *just before* each full source in range (the previous full crawl and all incremental ones)
-            foreach (ItemVersion fullSource in context.StreamProvider.ItemVersions(LocationType.Source, tableName).VersionsInRange(CrawlType.Full, rangeStart, context.RequestedAsOfDateTime))
+            // Determine the range of versions to include (from the as of date or now if not provided)
+            DateTime rangeEnd = (context.RequestedAsOfDateTime == DateTime.MaxValue ? DateTime.UtcNow : context.RequestedAsOfDateTime);
+            DateTime rangeStart = rangeEnd.Subtract(interval);
+
+            // Find versions available
+            ItemVersions versions = context.StreamProvider.ItemVersions(LocationType.Source, tableName);
+            if (versions.Versions.Count == 0) versions = context.StreamProvider.ItemVersions(LocationType.Table, tableName);
+            if (versions.Versions.Count == 0) throw new ArgumentException($"'{tableName}' was not found as a Source or Table.");
+
+            // Find the first version to include (if any) - the last full version before the start was 'current' at the start moment
+            ItemVersion previous = versions.LatestBeforeCutoff(CrawlType.Full, rangeStart);
+
+            XDatabaseContext historicalContext;
+            foreach (ItemVersion version in versions.VersionsInRange(CrawlType.Full, rangeStart, rangeEnd))
             {
-                // Ask for the state just before this source
-                XDatabaseContext historicalContext = new XDatabaseContext(context);
-                historicalContext.RequestedAsOfDateTime = fullSource.AsOfDate.AddSeconds(-1);
-                sources.Add(context.Runner.Build(tableName, historicalContext));
+                // Add the version before this one, if any (including any incremental pieces)
+                if (previous != null)
+                {
+                    historicalContext = new XDatabaseContext(context);
+                    historicalContext.RequestedAsOfDateTime = version.AsOfDate.AddSeconds(-1);
+                    sources.Add(context.Runner.Build(tableName, historicalContext));
+                }
+
+                previous = version;
             }
 
-            // Add the last full source and incremental ones up to the RequestedAsOfDateTime
-            sources.Add(context.Runner.Build(tableName, context));
+            // Add 'last' up to the requested moment
+            historicalContext = new XDatabaseContext(context);
+            historicalContext.RequestedAsOfDateTime = rangeEnd;
+            sources.Add(context.Runner.Build(tableName, historicalContext));
+
+            // Communicate the latest component as of date back to the builder
+            historicalContext.Pop(context);
 
             // Return the source(s) found
             if (sources.Count == 1) return sources[0];
