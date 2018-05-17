@@ -200,8 +200,14 @@ namespace XForm.Test
             // Asking for 3d should get all three crawls
             Assert.AreEqual(3000, historicalContext.Query("readRange 3d WebRequest").RunAndDispose());
 
-            // Asking for 4d should error (no version for the range start)
-            Verify.Exception<UsageException>(() => historicalContext.Query("readRange 4d WebRequest").RunAndDispose());
+            // Asking for 4d should get all three crawls (allowed to ask for beyond first version)
+            Assert.AreEqual(3000, historicalContext.Query("readRange 4d WebRequest").RunAndDispose());
+
+            // Asking for unknown table should error
+            Verify.Exception<UsageException>(() => historicalContext.Query("readRange 4d WebRequester").RunAndDispose());
+
+            // Asking for negative TimeSpan should error
+            Verify.Exception<UsageException>(() => historicalContext.Query("readRange -4d WebRequest").RunAndDispose());
         }
 
         [TestMethod]

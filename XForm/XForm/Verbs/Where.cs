@@ -140,6 +140,7 @@ namespace XForm.Verbs
             }
 
             // Tell the mapper there are no more matches
+            Allocator.AllocateToSize(ref _vector, desiredCount);
             _vector.None();
             _mapper.SetMatches(_vector, 0);
 

@@ -68,7 +68,7 @@ namespace XForm.Types.Comparers
             }
             else if (set.Count == left.Count - 1)
             {
-                set.Not(set.Count);
+                set.Not(left.Count);
 
                 // Convert the constant to the one non-matching index and make the comparison for index doesn't equal that
                 rightColumn = new ConstantColumn(source, (byte)set.GetSingle(), typeof(byte));

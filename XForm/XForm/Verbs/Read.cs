@@ -35,7 +35,8 @@ namespace XForm.Verbs
             List<IXTable> sources = new List<IXTable>();
 
             // Identify the interval and table name requested
-            TimeSpan interval = context.Parser.NextTimeSpan();            
+            TimeSpan interval = context.Parser.NextTimeSpan();
+            if (interval < TimeSpan.Zero) throw new ArgumentException($"'interval' must be positive. (For last 7 days, use '7d')");
             string tableName = (string)context.Parser.NextLiteralValue();
 
             // Determine the range of versions to include (from the as of date or now if not provided)
