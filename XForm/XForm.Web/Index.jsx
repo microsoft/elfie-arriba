@@ -168,7 +168,7 @@ class Index extends React.Component {
             'read WebRequest',
             'where [HttpStatus] != "200"',
         ].join('\n');
-
+        
         this.reqPeek = new CachableReusedRequest('run');
         this.reqPeek.caching = true;
 
@@ -504,6 +504,7 @@ class Index extends React.Component {
                 <div className="" className={`resultsHeader ${this.state.pausePulse ? '' : 'pulse'}`}>
                     <span>{this.state.resultCount}</span>
                     <span className="flexFill"></span>
+                    {encodedParams && <a className="button segoe-icon-link" alt="Link" href={`${xhr.urlRoot}/?${encodedParams}`}></a>}              
                     {encodedParams && <a className="button" target="_blank" href={`${xhr.urlRoot}/download?fmt=csv&${encodedParams}`}>CSV</a>}
                     {encodedParams && <a className="button" target="_blank" href={`${xhr.urlRoot}/download?fmt=tsv&${encodedParams}`}>TSV</a>}
                     <span className={`loading ${ this.state.loading && 'loading-active' }`}></span>
