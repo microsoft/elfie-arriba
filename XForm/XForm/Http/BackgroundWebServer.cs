@@ -80,7 +80,10 @@ namespace XForm
         private void StartForBinding(bool withAuthentication, params string[] urls)
         {
             this.Listener = new HttpListener();
-            if (withAuthentication) this.Listener.AuthenticationSchemes = AuthenticationSchemes.Negotiate;
+            if (withAuthentication)
+            {
+                this.Listener.AuthenticationSchemeSelectorDelegate = (request) => (request.HttpMethod == "OPTIONS" ? AuthenticationSchemes.Anonymous : AuthenticationSchemes.Negotiate);
+            }
 
             foreach (string url in urls)
             {
@@ -109,7 +112,7 @@ namespace XForm
                 if (this.Listener == null)
                 {
                     // Try binding to just localhost
-                    StartForBinding(false, $"http://localhost:{PortNumber}/");
+                    StartForBinding(true, $"http://localhost:{PortNumber}/");
                     Console.WriteLine($"Web Server running; browse to http://localhost:{PortNumber}. [Local Only]");
                     Console.WriteLine(" To enable remote: https://github.com/Microsoft/elfie-arriba/wiki/XForm-Http-Remote-Access");
                     Console.WriteLine("Press enter to stop server.");
@@ -181,11 +184,19 @@ namespace XForm
         {
             try
             {
+                // If the request is not authenticated, add the CORS header and authentication header and return a 401
+                if (request.User == null)
+                {
+                    string origin = request.Headers["Origin"] ?? "*";
+                    response.AddHeader("Access-Control-Allow-Origin", origin);
+                    response.AddHeader("Access-Control-Allow-Credentials", "true");
+                    response.AddHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
+                    response.StatusCode = 200;
+                    return;
+                }
+
                 // Add header to ask IE not to use compatibility mode
                 response.AddHeader("X-UA-Compatible", "IE=edge");
-
-                // Add CORS header to allow requests from other domains
-                response.AddHeader("Access-Control-Allow-Origin", "*");
 
                 // Get the URI requested
                 string localPath = request.Url.LocalPath;
