@@ -113,6 +113,7 @@
     <Compile Include="Query\SampleQuery.cs" />
     <Compile Include="Query\SuggestTests.cs" />
     <Compile Include="SampleDatabase.cs" />
+    <Compile Include="Verbs\WhereTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

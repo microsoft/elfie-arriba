@@ -17,6 +17,8 @@ namespace XForm.Query.Expression
         public void Evaluate(BitVector vector)
         {
             _inner.Evaluate(vector);
+
+            // Issue: This isn't correct; we need the vector count, not capacity. Currently fixed in Where.Next() with ClearAbove().
             vector.Not(vector.Capacity);
         }
 
