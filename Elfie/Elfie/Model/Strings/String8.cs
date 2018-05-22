@@ -443,6 +443,26 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
                 }
             }
         }
+
+        /// <summary>
+        ///  Make this String8 lowercase with invariant rules (ASCII characters only). 
+        ///  This version changes the existing value in place; make a copy if you
+        ///  need to preserve the original casing.
+        /// </summary>
+        public void ToLowerInvariant()
+        {
+            if (this.Length <= 0) return;
+
+            int end = this.Index + this.Length;
+            for (int i = this.Index; i < end; ++i)
+            {
+                byte c = this.Array[i];
+                if ((byte)(c - UTF8.A) < UTF8.AlphabetLength)
+                {
+                    this.Array[i] = (byte)(c + UTF8.ToUpperSubtract);
+                }
+            }
+        }
         #endregion
 
         #region Type Conversions
@@ -1001,9 +1021,9 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             uint hour, minute, second;
 
             // Parse the time numbers
-            if (!this.Substring(11, 2).TryToUInt(out hour)) return false;
-            if (!this.Substring(14, 2).TryToUInt(out minute)) return false;
-            if (!this.Substring(17, 2).TryToUInt(out second)) return false;
+            if (!this.Substring(hourIndex, 2).TryToUInt(out hour)) return false;
+            if (!this.Substring(minuteIndex, 2).TryToUInt(out minute)) return false;
+            if (!this.Substring(secondIndex, 2).TryToUInt(out second)) return false;
 
             // Validate the time number ranges
             if (hour > 23) return false;
@@ -1078,6 +1098,192 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
 
             // Convert with time part
             return TryToDateTimeExact(out result, 6, 0, 3, 11, 14, 17);
+        }
+
+        /// <summary>
+        ///  Convert a TimeSpan into DDD.HH:MM:SS.mmm format.
+        /// </summary>
+        /// <param name="value">UTC TimEspan to convert</param>
+        /// <param name="index">Index at which to convert</param>
+        /// <param name="buffer">byte[] at least 20 bytes long to convert into</param>
+        /// <returns>Converted TimeSpan</returns>
+        public static String8 FromTimeSpan(TimeSpan value, byte[] buffer, int index = 0)
+        {
+            if (buffer.Length + index < 21) throw new ArgumentException("String8.FromTimeSpan requires a 21 byte buffer for conversion.");
+
+            int next = index;
+            String8 part;
+
+            // Days.
+            if (value.Days != 0)
+            {
+                part = FromInteger(value.Days, buffer, next);
+                next += part.Length;
+
+                buffer[next++] = UTF8.Period;
+            }
+
+            // Hours:Minutes:Seconds
+            FromInteger(value.Hours, buffer, next, 2);
+            next += 2;
+
+            buffer[next++] = UTF8.Colon;
+            FromInteger(value.Minutes, buffer, next, 2);
+            next += 2;
+
+            buffer[next++] = UTF8.Colon;
+            FromInteger(value.Seconds, buffer, next, 2);
+            next += 2;
+
+            // .Milliseconds
+            if (value.Milliseconds != 0)
+            {
+                buffer[next++] = UTF8.Period;
+                part = FromInteger(value.Milliseconds, buffer, next);
+                next += part.Length;
+            }
+
+            return new String8(buffer, index, next - index);
+        }
+        
+        /// <summary>
+        ///  Convert a String8 to a TimeSpan.
+        /// </summary>
+        /// <remarks>
+        ///   Ex: 7.12:30:59.999
+        /// </remarks>
+        /// <param name="result">TimeSpan converted, or TimeSpan.Zero if invalid</param>
+        /// <returns>True if valid TimeSpan, False otherwise</returns>
+        public bool TryToTimeSpan(out TimeSpan result)
+        {
+            const string TimeSpanMinValue = "-10675199.02:48:05.4775808";
+
+            result = TimeSpan.Zero;
+            if (this.IsEmpty()) return false;
+
+            // If the TimeSpan is negative, parse the rest and negate
+            bool isNegative = this.StartsWith(UTF8.Dash);
+            if(isNegative)
+            {
+                // Handle TimeSpan.MinValue separately since it will overflow as a positive value
+                if(this.Length == TimeSpanMinValue.Length && this.Equals(TimeSpanMinValue))
+                {
+                    result = TimeSpan.MinValue;
+                    return true;
+                }
+
+                bool succeeded = this.Substring(1).TryToTimeSpan(out result);
+                result = -result;
+                return succeeded;
+            }
+
+            uint days = 0, hours = 0, minutes = 0, seconds = 0, ticks = 0;
+
+            // Find the first colon (hour:minute)
+            int hourIndex = this.IndexOf(UTF8.Colon) - 2;
+
+            // If this is a days-only TimeSpan, try to parse it
+            if (hourIndex < 0)
+            {
+                if (!this.TryToUInt(out days)) return false;
+            }
+            else
+            {
+                // Use length to infer components which must be present
+                bool hasDays = (hourIndex > 0);
+                bool hasSeconds = (Length - hourIndex > 5);                 // HH:MMx
+                bool hasPartialSeconds = (Length - hourIndex > 8);          // HH:MM:SSx
+
+                // Validate separators
+                if (hasDays && this[hourIndex - 1] != UTF8.Period) return false;
+                if (hasSeconds && this[hourIndex + 5] != UTF8.Colon) return false;
+                if (hasPartialSeconds && this[hourIndex + 8] != UTF8.Period) return false;
+
+                // Parse Days, Hours, Minutes, Seconds
+                if (hasDays && !this.Substring(0, hourIndex - 1).TryToUInt(out days)) return false;
+                if (!this.Substring(hourIndex, 2).TryToUInt(out hours)) return false;
+                if (!this.Substring(hourIndex + 3, 2).TryToUInt(out minutes)) return false;
+                if (hasSeconds && !this.Substring(hourIndex + 6, 2).TryToUInt(out seconds)) return false;
+
+                // Parse Partial Seconds and normalize to ticks (0.1s -> 100k ticks, ticks are millionths of a second)
+                if (hasPartialSeconds)
+                {
+                    String8 partialSeconds = this.Substring(hourIndex + 9);
+                    if (partialSeconds.Length > 7) return false;
+                    if (!partialSeconds.TryToUInt(out ticks)) return false;
+                    if (partialSeconds.Length < 7) ticks *= (uint)Math.Pow(10, 7 - partialSeconds.Length);
+                }
+            }
+
+            // Validate number ranges
+            if (days > 10675199) return false;
+            if (hours > 23) return false;
+            if (minutes > 59) return false;
+            if (seconds > 59) return false;
+
+            // Construct the TimeSpan
+            result = new TimeSpan((int)days, (int)hours, (int)minutes, (int)seconds).Add(new TimeSpan(ticks));
+            return true;
+        }
+
+        /// <summary>
+        ///  Parse a "friendly" TimeSpan value, like 7d, 24h, 5m, 30s.
+        /// </summary>
+        /// <param name="result">TimeSpan equivalent of value</param>
+        /// <returns>True if valid TimeSpan, False otherwise</returns>
+        public bool TryToTimeSpanFriendly(out TimeSpan result)
+        {
+            result = TimeSpan.Zero;
+            if (this.IsEmpty()) return false;
+
+            // Try to Parse as a "normal" format TimeSpan
+            if (TryToTimeSpan(out result)) return true;
+
+            // Find the portion of the value which is the number part
+            bool allDigits = true;
+            int numberPrefixLength = (this.StartsWith(UTF8.Dash) ? 1 : 0);
+            for (; numberPrefixLength < this.Length; ++numberPrefixLength)
+            {
+                ParseDigit(this[numberPrefixLength], ref allDigits);
+                if (!allDigits) break;
+            }
+
+            // Verify there is a suffix
+            if (numberPrefixLength == Length) return false;
+
+            // Parse the number part
+            int numberPartValue;
+            if (!this.Substring(0, numberPrefixLength).TryToInteger(out numberPartValue)) return false;
+            String8 suffix = this.Substring(numberPrefixLength);
+            suffix.ToLowerInvariant();
+
+            if(suffix.Equals("ms"))
+            {
+                result = TimeSpan.FromMilliseconds(numberPartValue);
+                return true;
+            }
+            else if (suffix.Equals("s"))
+            {
+                result = TimeSpan.FromSeconds(numberPartValue);
+                return true;
+            }
+            else if (suffix.Equals("m"))
+            {
+                result = TimeSpan.FromMinutes(numberPartValue);
+                return true;
+            }
+            else if (suffix.Equals("h"))
+            {
+                result = TimeSpan.FromHours(numberPartValue);
+                return true;
+            }
+            else if (suffix.Equals("d"))
+            {
+                result = TimeSpan.FromDays(numberPartValue);
+                return true;
+            }
+
+            return false;
         }
         #endregion
 
@@ -1579,6 +1785,11 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             }
 
             return true;
+        }
+
+        public bool Equals(string other)
+        {
+            return this.CompareTo(other) == 0;
         }
 
         public override int GetHashCode()

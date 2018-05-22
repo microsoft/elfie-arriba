@@ -91,6 +91,11 @@ namespace XForm.Test.Query
             // String = Quoted Only Constant rule
             Verify.Exception<ArgumentException>(() => ParseExpression("[ServerName] = 80", source, context));
             Assert.AreEqual("[ServerName] = \"80\"", ParseExpression("[ServerName] = \"80\"", source, context).ToString());
+
+            // Cast found invalid value
+            Verify.Exception<ArgumentException>(() => ParseExpression("Cast(80, Int32) = 5.5", source, context));
+            Verify.Exception<ArgumentException>(() => ParseExpression("Cast(\"2018-05-22T12:30:30Z\", DateTime) >= \"2018-05|22T12:30:30Z\"", source, context));
+            Verify.Exception<ArgumentException>(() => ParseExpression("Cast(\"14d\", TimeSpan) > \"55mega\"", source, context));
         }
 
         private static IExpression ParseExpression(string query, IXTable source, XDatabaseContext context)
