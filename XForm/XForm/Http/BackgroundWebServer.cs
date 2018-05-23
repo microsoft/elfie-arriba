@@ -184,13 +184,14 @@ namespace XForm
         {
             try
             {
-                // If the request is not authenticated, add the CORS header and authentication header and return a 401
+                string origin = request.Headers["Origin"] ?? "*";
+                response.AddHeader("Access-Control-Allow-Origin", origin);
+                response.AddHeader("Access-Control-Allow-Credentials", "true");
+                response.AddHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
+
+                // If the request is not authenticated, just return the CORS header
                 if (request.User == null)
                 {
-                    string origin = request.Headers["Origin"] ?? "*";
-                    response.AddHeader("Access-Control-Allow-Origin", origin);
-                    response.AddHeader("Access-Control-Allow-Credentials", "true");
-                    response.AddHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
                     response.StatusCode = 200;
                     return;
                 }
