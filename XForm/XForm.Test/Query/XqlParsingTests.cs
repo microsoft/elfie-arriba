@@ -135,7 +135,7 @@ namespace XForm.Test.Query
         private static int RunAndCount(string query, IXTable source, XDatabaseContext context)
         {
             source.Reset();
-            return (int)context.Query(query, source).Count();
+            return (int)context.Query(query, source).RunWithoutDispose().RowCount;
         }
 
         [TestMethod]
