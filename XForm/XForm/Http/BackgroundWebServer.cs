@@ -26,6 +26,7 @@ namespace XForm
     public class BackgroundWebServer : IDisposable
     {
         private bool IsRunning { get; set; }
+        private bool UsingAuthentication { get; set; }
         private HttpListener Listener { get; set; }
         private Thread ListenerThread { get; set; }
 
@@ -79,6 +80,7 @@ namespace XForm
 
         private void StartForBinding(bool withAuthentication, params string[] urls)
         {
+            this.UsingAuthentication = withAuthentication;
             this.Listener = new HttpListener();
             if (withAuthentication)
             {
@@ -112,7 +114,7 @@ namespace XForm
                 if (this.Listener == null)
                 {
                     // Try binding to just localhost
-                    StartForBinding(true, $"http://localhost:{PortNumber}/");
+                    StartForBinding(false, $"http://localhost:{PortNumber}/");
                     Console.WriteLine($"Web Server running; browse to http://localhost:{PortNumber}. [Local Only]");
                     Console.WriteLine(" To enable remote: https://github.com/Microsoft/elfie-arriba/wiki/XForm-Http-Remote-Access");
                     Console.WriteLine("Press enter to stop server.");
@@ -190,7 +192,7 @@ namespace XForm
                 response.AddHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
 
                 // If the request is not authenticated, just return the CORS header
-                if (request.User == null)
+                if (this.UsingAuthentication && request.User == null)
                 {
                     response.StatusCode = 200;
                     return;
