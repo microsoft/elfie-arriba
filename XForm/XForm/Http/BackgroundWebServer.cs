@@ -132,10 +132,9 @@ namespace XForm
                 {
                     HandleRequest(this.Listener.GetContext());
                 }
-                catch (HttpListenerException ex)
+                catch (HttpListenerException)
                 {
-                    // Happens when connection to client lost before response sent
-                    Trace.TraceWarning(String.Format("BackgroundWebServer: Lost Connection During Request. Retrying. Error: {0}", ex.ToString()));
+                    // Happens when connection to client lost before response sent (request cancelled). Do nothing.
                 }
                 catch (ThreadAbortException)
                 {
