@@ -19,6 +19,7 @@ namespace XForm.Http
         IPrincipal User { get; }
         Uri Url { get; }
         NameValueCollection QueryString { get; }
+        NameValueCollection Headers { get; }
 
         bool HasRequestBody { get; }
         Stream RequestBody { get; }
@@ -41,6 +42,7 @@ namespace XForm.Http
         public Uri Url => _context.Request.Url;
 
         public NameValueCollection QueryString => _context.Request.QueryString;
+        public NameValueCollection Headers => _context.Request.Headers;
 
         public bool HasRequestBody => _context.Request.HasEntityBody;
         public Stream RequestBody => _context.Request.InputStream;
@@ -63,6 +65,7 @@ namespace XForm.Http
         public Uri Url => _context.Request.Url;
 
         public NameValueCollection QueryString => _context.Request.QueryString;
+        public NameValueCollection Headers => _context.Request.Headers;
 
         public bool HasRequestBody => _context.Request.ContentLength > 0;
 

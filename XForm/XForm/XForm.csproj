@@ -98,6 +98,9 @@
     <Compile Include="Columns\ColumnComponent.cs" />
     <Compile Include="Core\Sampler.cs" />
     <Compile Include="Functions\Coalesce.cs" />
+    <Compile Include="Functions\Date\DateSubtract.cs" />
+    <Compile Include="Functions\SimpleTransformFunction.cs" />
+    <Compile Include="Functions\String\ToLower.cs" />
     <Compile Include="IO\VariableIntegerReaderWriter.cs" />
     <Compile Include="Verbs\Count.cs" />
     <Compile Include="Columns\DeferredArrayColumn.cs" />
@@ -161,7 +164,7 @@
     <Compile Include="Columns\ConstantColumn.cs" />
     <Compile Include="Data\IXColumn.cs" />
     <Compile Include="Functions\IFunctionBuilder.cs" />
-    <Compile Include="Functions\SimpleTransformFunction.cs" />
+    <Compile Include="Functions\SimpleTwoArgumentFunction.cs" />
     <Compile Include="Functions\String\Trim.cs" />
     <Compile Include="Functions\String\ToUpper.cs" />
     <Compile Include="HttpService.cs" />

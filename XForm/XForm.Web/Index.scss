@@ -5,6 +5,16 @@ $line80: hsl(0, 0, 80%);
 $linedark: hsl(0, 0, 70%);
 $blue: hsl(205, 90%, 45%);
 
+[class^="segoe-icon-"],
+[class*=" segoe-icon-"] {
+    // https://docs.microsoft.com/en-us/windows/uwp/design/style/segoe-ui-symbol-font
+    font-family: 'Segoe MDL2 Assets' !important;
+    font-weight: normal;
+    font-style: normal;
+}
+
+.segoe-icon-link:before { content: "\E71B"; }
+
 html, #app {
     height: 100%;
 }
@@ -312,6 +322,11 @@ body {
         span:first-child {
             opacity: 0;
             transition: opacity 1s;
+        }
+
+        [class^="segoe-icon-"],
+        [class*=" segoe-icon-"] {
+            font-size: 18px;
         }
 
         position: relative; // For .loading

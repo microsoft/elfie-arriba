@@ -197,9 +197,18 @@ namespace XForm.Types.Comparers
                 }
                 else
                 {
-                    for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
+                    String8 first = leftArray[left.Selector.StartIndexInclusive];
+                    String8 last = leftArray[left.Selector.EndIndexExclusive - 1];
+                    if (first.Array == last.Array && first.Index < last.Index)
                     {
-                        if (!WhereEqual(leftArray[i], rightValue)) vector.Set(i - zeroOffset);
+                        WhereBlock(left, rightValue, false, CompareOperator.NotEqual, vector);
+                    }
+                    else
+                    {
+                        for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
+                        {
+                            if (!WhereEqual(leftArray[i], rightValue)) vector.Set(i - zeroOffset);
+                        }
                     }
                 }
             }
@@ -709,9 +718,18 @@ namespace XForm.Types.Comparers
                 }
                 else
                 {
-                    for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
+                    String8 first = leftArray[left.Selector.StartIndexInclusive];
+                    String8 last = leftArray[left.Selector.EndIndexExclusive - 1];
+                    if (first.Array == last.Array && first.Index < last.Index)
                     {
-                        if (leftArray[i].Contains(rightValue) != -1) vector.Set(i - zeroOffset);
+                        WhereBlock(left, rightValue, false, CompareOperator.ContainsExact, vector);
+                    }
+                    else
+                    {
+                        for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
+                        {
+                            if (leftArray[i].Contains(rightValue) != -1) vector.Set(i - zeroOffset);
+                        }
                     }
                 }
             }
@@ -813,8 +831,11 @@ namespace XForm.Types.Comparers
 
         public void WhereBlock(XArray left, String8 rightValue, bool ignoreCase, CompareOperator cOp, BitVector vector)
         {
-            if (rightValue.Length == 0) return;
-            if (cOp != CompareOperator.Contains && cOp != CompareOperator.Equal && cOp != CompareOperator.StartsWith) throw new NotImplementedException(cOp.ToString());
+            if (rightValue.IsEmpty())
+            {
+                WhereBlockEmpty(left, cOp, vector);
+                return;
+            }
 
             String8[] leftArray = (String8[])left.Array;
             String8 last = leftArray[left.Selector.EndIndexExclusive - 1];
@@ -838,22 +859,46 @@ namespace XForm.Types.Comparers
                 }
 
                 // Map the indices found to rows
-                if (cOp == CompareOperator.Contains)
+                if (cOp == CompareOperator.Contains || cOp == CompareOperator.ContainsExact)
                 {
                     IndicesToContainsRows(leftArray, rightValue.Length, ref nextRowIndex, left.Selector.StartIndexInclusive, left.Selector.EndIndexExclusive, countFound, vector);
                 }
-                else if (cOp == CompareOperator.Equal)
+                else if (cOp == CompareOperator.Equal || cOp == CompareOperator.NotEqual)
                 {
                     IndicesToEqualsRows(leftArray, rightValue.Length, ref nextRowIndex, left.Selector.StartIndexInclusive, left.Selector.EndIndexExclusive, countFound, vector);
                 }
-                else // if(cOp == CompareOperator.StartsWith)
+                else if(cOp == CompareOperator.StartsWith)
                 {
                     IndicesToStartsWithRows(leftArray, rightValue.Length, ref nextRowIndex, left.Selector.StartIndexInclusive, left.Selector.EndIndexExclusive, countFound, vector);
+                }
+                else
+                {
+                    throw new NotImplementedException(cOp.ToString());
                 }
 
                 // Find the next index to search for matches from
                 if (countFound < _indicesBuffer.Length) break;
                 nextIndex = _indicesBuffer[countFound - 1] + 1;
+            }
+
+            if (cOp == CompareOperator.NotEqual) vector.Not();
+        }
+
+        public void WhereBlockEmpty(XArray left, CompareOperator cOp, BitVector vector)
+        {
+            // Contains and StartsWith are allowed but have no matches
+            if (cOp == CompareOperator.Contains || cOp == CompareOperator.ContainsExact || cOp == CompareOperator.StartsWith) return;
+
+            // Operators other than equality are otherwise disallowed
+            if (cOp != CompareOperator.Equal && cOp != CompareOperator.NotEqual) throw new NotImplementedException(cOp.ToString());
+
+            bool include = (cOp == CompareOperator.Equal);
+
+            String8[] array = (String8[])left.Array;
+            for(int i = 0; i < left.Count; ++i)
+            {
+                String8 value = array[left.Index(i)];
+                if (include == value.IsEmpty()) vector.Set(i);
             }
         }
 

@@ -200,8 +200,14 @@ namespace XForm.Test
             // Asking for 3d should get all three crawls
             Assert.AreEqual(3000, historicalContext.Query("readRange 3d WebRequest").RunAndDispose());
 
-            // Asking for 4d should error (no version for the range start)
-            Verify.Exception<UsageException>(() => historicalContext.Query("readRange 4d WebRequest").RunAndDispose());
+            // Asking for 4d should get all three crawls (allowed to ask for beyond first version)
+            Assert.AreEqual(3000, historicalContext.Query("readRange 4d WebRequest").RunAndDispose());
+
+            // Asking for unknown table should error
+            Verify.Exception<UsageException>(() => historicalContext.Query("readRange 4d WebRequester").RunAndDispose());
+
+            // Asking for negative TimeSpan should error
+            Verify.Exception<UsageException>(() => historicalContext.Query("readRange -4d WebRequest").RunAndDispose());
         }
 
         [TestMethod]
@@ -344,69 +350,6 @@ namespace XForm.Test
             Assert.AreEqual((long)916, SampleDatabase.XDatabaseContext.Query(@"
                 read webrequest
                 where [HttpMethod] : ""get""").RunAndDispose());
-        }
-
-        [TestMethod]
-        public void Database_WhereVariations()
-        {
-            // String >
-            Assert.AreEqual((long)1000, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [ID] >= \"0\"").RunAndDispose());
-            Assert.AreEqual((long)0, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [ID] >= \"a\"").RunAndDispose());
-
-            // String StartsWith
-            Assert.AreEqual((long)111, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [ID] |> \"1\"").RunAndDispose());
-            Assert.AreEqual((long)1, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [ID] |> \"999\"").RunAndDispose());
-            Assert.AreEqual((long)0, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [ID] |> \"10000\"").RunAndDispose());
-
-            // String Contains
-            Assert.AreEqual((long)19, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [ID] : \"99\"").RunAndDispose());
-            Assert.AreEqual((long)1, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [ID] : \"999\"").RunAndDispose());
-            Assert.AreEqual((long)0, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [ID] : \"9999\"").RunAndDispose());
-
-            // String Equals
-            Assert.AreEqual((long)1, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [ID] = \"9\"").RunAndDispose());
-            Assert.AreEqual((long)1, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [ID] = \"999\"").RunAndDispose());
-            Assert.AreEqual((long)0, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [ID] = \"9999\"").RunAndDispose());
-
-
-            // EnumColumn
-            Assert.AreEqual((long)1000, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [EventTime] > \"2017\"").RunAndDispose());
-            Assert.AreEqual((long)0, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [EventTime] > \"2017-13\"").RunAndDispose());
-            Assert.AreEqual((long)1000, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [EventTime] < \"2017-13\"").RunAndDispose());
-
-            Assert.AreEqual((long)1000, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [EventTime] |> \"2017-1\"").RunAndDispose());
-            Assert.AreEqual((long)0, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [EventTime] |> \"2117-1\"").RunAndDispose());
-            Assert.AreEqual((long)0, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [EventTime] |> \"017\"").RunAndDispose());
-
-            Assert.AreEqual((long)1000, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [EventTime] : \"017\"").RunAndDispose());
-            Assert.AreEqual((long)1000, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [EventTime] : \"2017\"").RunAndDispose());
-            Assert.AreEqual((long)0, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [EventTime] : \"2018\"").RunAndDispose());
-            Assert.AreEqual((long)1000, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [EventTime] : \"-12-\"").RunAndDispose());
-
-            // Matches Excel
-            Assert.AreEqual((long)103, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [EventTime] : \"0z\"").RunAndDispose());
-            Assert.AreEqual((long)19, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [EventTime] : \"00Z\"").RunAndDispose());
-            Assert.AreEqual((long)0, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [EventTime] : \"0ZA\"").RunAndDispose());
-
-            // Numeric
-            Assert.AreEqual((long)999, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere Cast([ID], Int32) > 0").RunAndDispose());
-            Assert.AreEqual((long)998, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere Cast([ID], Int32) > 1").RunAndDispose());
-            Assert.AreEqual((long)500, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere Cast([ID], Int32) > 499").RunAndDispose());
-            Assert.AreEqual((long)1, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere Cast([ID], Int32) > 998").RunAndDispose());
-            Assert.AreEqual((long)0, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere Cast([ID], Int32) > 999").RunAndDispose());
-
-            // Order shouldn't matter
-            Assert.AreEqual((long)50, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [EventTime] : \"0z\" AND Cast([ID], Int32) > 499").RunAndDispose());
-            Assert.AreEqual((long)50, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere Cast([ID], Int32) > 499 AND [EventTime] : \"0z\"").RunAndDispose());
-            Assert.AreEqual((long)50, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere Cast([ID], Int32) > 499\r\nwhere [EventTime] : \"0z\"").RunAndDispose());
-            Assert.AreEqual((long)50, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [EventTime] : \"0z\"\r\nwhere Cast([ID], Int32) > 499").RunAndDispose());
-        }
-
-        [TestMethod]
-        public void Database_WhereContainsChaining()
-        {
-            // Useful, but want to find a test which causes IndexOutOfRangeException if bulk contains is used on the second clause.
-            Assert.AreEqual((long)50, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [EventTime] : \"00:\"\r\nwhere [EventTime] : \"00\"\r\nlimit 50").RunAndDispose());
         }
 
         private static int ExpectedResult(string sourceName)

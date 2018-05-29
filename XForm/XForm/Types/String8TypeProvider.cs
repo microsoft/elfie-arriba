@@ -49,6 +49,7 @@ namespace XForm.Types
                 if (sourceType == typeof(string)) return new StringToString8Converter(defaultValue).StringToString8;
                 if (sourceType == typeof(DateTime)) return new ToString8Converter<DateTime>(defaultValue, 20, String8.FromDateTime).Convert;
                 if (sourceType == typeof(bool)) return new ToString8Converter<bool>(defaultValue, 0, (value, buffer, index) => String8.FromBoolean(value)).Convert;
+                if (sourceType == typeof(TimeSpan)) return new ToString8Converter<TimeSpan>(defaultValue, 21, String8.FromTimeSpan).Convert;
 
                 if (sourceType == typeof(sbyte)) return new ToString8Converter<sbyte>(defaultValue, 4, (value, buffer, index) => String8.FromNumber(value, buffer, index)).Convert;
                 if (sourceType == typeof(byte)) return new ToString8Converter<byte>(defaultValue, 3, (value, buffer, index) => String8.FromNumber(value, buffer, index)).Convert;
@@ -75,6 +76,11 @@ namespace XForm.Types
                 else if (targetType == typeof(DateTime))
                 {
                     return new FromString8Converter<DateTime>(defaultValue, (String8 value, out DateTime result) => value.TryToDateTime(out result)).Convert;
+                }
+                else if (targetType == typeof(TimeSpan))
+                {
+                    // Support TimeSpan conversions from .NET Format (DDD.HH:MM:SS.mmm) and 'friendly' format (24h, 7d)
+                    return new FromString8Converter<TimeSpan>(defaultValue, (String8 value, out TimeSpan result) => value.TryToTimeSpanFriendly(out result)).Convert;
                 }
                 else if (targetType == typeof(bool))
                 {

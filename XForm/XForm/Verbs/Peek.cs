@@ -98,15 +98,18 @@ namespace XForm.Verbs
 
             // Filter to counts over the minimum percentage threshold
             int[] countsArray = (int[])counts.Array;
-            int threshold = (int)(totalRowCount * MinimumPercentageToReport);
-            for (int i = 0; i < groups.Count; ++i)
+            if (countsArray != null)
             {
-                int count = countsArray[counts.Index(i)];
-                if (count >= threshold)
+                int threshold = (int)(totalRowCount * MinimumPercentageToReport);
+                for (int i = 0; i < groups.Count; ++i)
                 {
-                    finalIndices[groupCount] = i;
-                    finalCounts[groupCount] = count;
-                    groupCount++;
+                    int count = countsArray[counts.Index(i)];
+                    if (count >= threshold)
+                    {
+                        finalIndices[groupCount] = i;
+                        finalCounts[groupCount] = count;
+                        groupCount++;
+                    }
                 }
             }
 
