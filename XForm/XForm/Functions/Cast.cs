@@ -5,8 +5,6 @@ using System;
 
 using XForm.Columns;
 using XForm.Data;
-using XForm.Extensions;
-using XForm.Query;
 using XForm.Types;
 
 namespace XForm.Functions
