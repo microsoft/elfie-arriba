@@ -76,7 +76,7 @@ namespace XForm.Verbs
             // Return the source(s) found
             if (sources.Count == 1) return sources[0];
 
-            return new ConcatenatingReader(sources);
+            return new ConcatenatedTable(sources);
         }
     }
 }

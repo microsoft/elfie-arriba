@@ -3,9 +3,9 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 using XForm.Data;
+using XForm.Extensions;
 using XForm.Query;
 
 namespace XForm.Verbs
@@ -17,15 +17,19 @@ namespace XForm.Verbs
 
         public IXTable Build(IXTable source, XDatabaseContext context)
         {
-            List<IXColumn> columns = new List<IXColumn>();
-            do
+            // Select can be evaluated in parallel, so keep parallel
+            return source.WrapParallel(context.Parser, (part) =>
             {
-                IXColumn column = context.Parser.NextColumn(source, context);
-                columns.Add(column);
-                if (String.IsNullOrEmpty(column.ColumnDetails.Name)) throw new ArgumentException($"Column {columns.Count} passed to 'Column' wasn't assigned a name. Use 'AS [Name]' to assign names to every column selected.");
-            } while (context.Parser.HasAnotherPart);
+                List<IXColumn> columns = new List<IXColumn>();
+                do
+                {
+                    IXColumn column = context.Parser.NextColumn(part, context);
+                    columns.Add(column);
+                    if (String.IsNullOrEmpty(column.ColumnDetails.Name)) throw new ArgumentException($"Column {columns.Count} passed to 'Column' wasn't assigned a name. Use 'AS [Name]' to assign names to every column selected.");
+                } while (context.Parser.HasAnotherPart);
 
-            return new Select(source, columns);
+                return new Select(part, columns);
+            });
         }
     }
 

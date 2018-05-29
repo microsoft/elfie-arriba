@@ -15,7 +15,6 @@ using XForm.Extensions;
 using XForm.Functions;
 using XForm.Query.Expression;
 using XForm.Types;
-using XForm.Verbs;
 
 namespace XForm.Query
 {
@@ -33,6 +32,11 @@ namespace XForm.Query
             _scanner = new XqlScanner(xqlQuery);
             _workflow = workflow;
             _currentlyBuilding = new Stack<IUsage>();
+        }
+
+        public void RewindTo(Position position)
+        {
+            _scanner.RewindTo(position);
         }
 
         private static void EnsureLoaded()
@@ -486,10 +490,10 @@ namespace XForm.Query
         {
             ErrorContext context = new ErrorContext();
             context.TableName = _workflow.CurrentTable;
-            context.QueryLineNumber = _scanner.Current.LineNumber;
+            context.QueryLineNumber = _scanner.Current.Position.LineNumber;
             context.Usage = (_currentlyBuilding.Count > 0 ? _currentlyBuilding.Peek().Usage : null);
             context.InvalidValue = _scanner.Current.RawValue;
-            context.InvalidTokenIndex = _scanner.Current.Index;
+            context.InvalidTokenIndex = _scanner.Current.Position.Index;
             context.ErrorMessage = "";
 
             return context;
@@ -556,7 +560,7 @@ namespace XForm.Query
         public bool WasLastTokenInQuery => (_scanner.Current.Type == TokenType.End && _scanner.Current.WhitespacePrefix.Length == 0) || _scanner.Current.Type == TokenType.NextTokenHint;
         public bool HasAnotherPart => _scanner.Current.Type != TokenType.Newline && _scanner.Current.Type != TokenType.End;
         public bool HasAnotherArgument => HasAnotherPart && _scanner.Current.Type != TokenType.CloseParen;
-        public int CurrentLineNumber => _scanner.Current.LineNumber;
+        public Position CurrentPosition => _scanner.Current.Position;
         public string NextTokenText => (HasAnotherPart ? _scanner.Current.Value : "");
     }
 }

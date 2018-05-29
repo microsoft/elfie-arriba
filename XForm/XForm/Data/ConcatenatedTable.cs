@@ -11,95 +11,31 @@ using XForm.Extensions;
 
 namespace XForm.IO
 {
-    public class ConcatenatingColumn : IXColumn
-    {
-        private IXTable _table;
-
-        private bool _isSubscribed;
-        private List<IXColumn> _sources;
-        private Func<XArray> _currentGetter;
-
-        private Array _nullArray = null;
-
-        public ColumnDetails ColumnDetails { get; private set; }
-
-        public ConcatenatingColumn(IXTable table, ColumnDetails columnDetails)
-        {
-            _table = table;
-            _sources = new List<IXColumn>();
-
-            ColumnDetails = columnDetails;
-            Allocator.AllocateToSize(ref _nullArray, 1, columnDetails.Type);
-        }
-
-        public void AddSource(IXColumn sourceColumn)
-        {
-            _sources.Add(sourceColumn);
-        }
-
-        public void SetCurrentSourceIndex(int index)
-        {
-            IXColumn source = _sources[index];
-            if (_isSubscribed && source != null) _currentGetter = source.CurrentGetter();
-        }
-
-        public Func<XArray> CurrentGetter()
-        {
-            _isSubscribed = true;
-
-            return () =>
-            {
-                if (_currentGetter != null) return _currentGetter();
-                return XArray.Null(_nullArray, _table.CurrentRowCount);
-            };
-        }
-
-        public Func<ArraySelector, XArray> SeekGetter()
-        {
-            return null;
-        }
-
-        public Type IndicesType => null;
-
-        public Func<XArray> ValuesGetter()
-        {
-            return null;
-        }
-
-        public Func<XArray> IndicesCurrentGetter()
-        {
-            return null;
-        }
-
-        public Func<ArraySelector, XArray> IndicesSeekGetter()
-        {
-            return null;
-        }
-
-        public Func<object> ComponentGetter(string componentName)
-        {
-            return null;
-        }
-    }
-
     /// <summary>
-    ///  ConcatenatingReader groups together multiple IXTable sources and
-    ///  returns the rows from them one by one, showing the union of all available columns.
+    ///  ConcatenatedTable groups together multiple IXTables and exposes them.
+    ///  Unaware consumers can call Next to enumerate each source in turn.
+    ///  Aware consumers can enumerate them in parallel or append to each of them
+    ///  to allow subsequent stages to choose behavior.
     /// </summary>
-    public class ConcatenatingReader : IXTable
+    public class ConcatenatedTable : IXTable
     {
         private IXTable[] _sources;
-        private List<ConcatenatingColumn> _columns;
+        private List<ConcatenatedColumn> _columns;
         private int _currentSourceIndex;
 
-        public ConcatenatingReader(IEnumerable<IXTable> sources)
+        public ConcatenatedTable(IEnumerable<IXTable> sources)
         {
             _sources = sources.ToArray();
-            _columns = new List<ConcatenatingColumn>();
+            _columns = new List<ConcatenatedColumn>();
             _currentSourceIndex = -1;
 
             IdentifyColumns();
         }
+
+        /// <summary>
+        ///  Sources for this concatenated table. Callers may use Sources directly instead of reading this table.
+        /// </summary>
+        public IEnumerable<IXTable> Sources => _sources;
 
         private void IdentifyColumns()
         {
@@ -127,7 +63,7 @@ namespace XForm.IO
             // Create a column for each, adding each source to it (or null for sources which didn't have it)
             foreach (string columnName in columnCollection.Keys)
             {
-                ConcatenatingColumn column = new ConcatenatingColumn(this, columnCollection[columnName]);
+                ConcatenatedColumn column = new ConcatenatedColumn(this, columnCollection[columnName]);
 
                 foreach (IXTable source in _sources)
                 {
@@ -198,6 +134,81 @@ namespace XForm.IO
 
                 _sources = null;
             }
+        }
+    }
+
+    /// <summary>
+    ///  ConcatenatedColumn merges together columns from multiple sources,
+    ///  exposing only 'Current' enumeration.
+    /// </summary>
+    public class ConcatenatedColumn : IXColumn
+    {
+        private IXTable _table;
+
+        private bool _isSubscribed;
+        private List<IXColumn> _sources;
+        private Func<XArray> _currentGetter;
+
+        private Array _nullArray = null;
+
+        public ColumnDetails ColumnDetails { get; private set; }
+
+        public ConcatenatedColumn(IXTable table, ColumnDetails columnDetails)
+        {
+            _table = table;
+            _sources = new List<IXColumn>();
+
+            ColumnDetails = columnDetails;
+            Allocator.AllocateToSize(ref _nullArray, 1, columnDetails.Type);
+        }
+
+        public void AddSource(IXColumn sourceColumn)
+        {
+            _sources.Add(sourceColumn);
+        }
+
+        public void SetCurrentSourceIndex(int index)
+        {
+            IXColumn source = _sources[index];
+            if (_isSubscribed && source != null) _currentGetter = source.CurrentGetter();
+        }
+
+        public Func<XArray> CurrentGetter()
+        {
+            _isSubscribed = true;
+
+            return () =>
+            {
+                if (_currentGetter != null) return _currentGetter();
+                return XArray.Null(_nullArray, _table.CurrentRowCount);
+            };
+        }
+
+        public Func<ArraySelector, XArray> SeekGetter()
+        {
+            return null;
+        }
+
+        public Type IndicesType => null;
+
+        public Func<XArray> ValuesGetter()
+        {
+            return null;
+        }
+
+        public Func<XArray> IndicesCurrentGetter()
+        {
+            return null;
+        }
+
+        public Func<ArraySelector, XArray> IndicesSeekGetter()
+        {
+            return null;
+        }
+
+        public Func<object> ComponentGetter(string componentName)
+        {
+            return null;
         }
     }
 }

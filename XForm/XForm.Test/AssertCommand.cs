@@ -57,7 +57,7 @@ namespace XForm.Test
                 _sourceRowsTotal += count;
 
                 // Make the asserts run and count matching rows
-                _assertRowsTotal += _assertPipeline.RunWithoutDispose();
+                _assertRowsTotal += _assertPipeline.Count();
             }
             else
             {
@@ -121,18 +121,18 @@ namespace XForm.Test
     {
         public string TableName { get; private set; }
         public string Query { get; private set; }
-        public int QueryLineNumber { get; private set; }
+        public Position Position { get; private set; }
 
         public QueryDebuggingContext(XDatabaseContext context)
         {
             this.TableName = context.CurrentTable;
             this.Query = context.CurrentQuery;
-            this.QueryLineNumber = context.Parser.CurrentLineNumber;
+            this.Position = context.Parser.CurrentPosition;
         }
 
         public override string ToString()
         {
-            return $"Building {TableName}, line {QueryLineNumber}.\r\nTo Debug:\r\n{Query}";
+            return $"Building {TableName}, @{Position}.\r\nTo Debug:\r\n{Query}";
         }
     }
 }

@@ -1,5 +1,9 @@
-﻿using Elfie.Test;
+﻿using System;
+
+using Elfie.Test;
+
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+
 using XForm.Extensions;
 using XForm.Query;
 
@@ -172,6 +176,14 @@ namespace XForm.Test.Verbs
 
             // Where invalid after cast (error)
             Verify.Exception<UsageException>(() => SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere Cast([IsPremiumUser], Boolean) != \"invalid\"").RunAndDispose());
+        }
+
+        [TestMethod]
+        public void Where_Parallel()
+        {
+            XDatabaseContext historicalContext = new XDatabaseContext(SampleDatabase.XDatabaseContext) { RequestedAsOfDateTime = new DateTime(2017, 12, 04, 00, 00, 00, DateTimeKind.Utc) };
+            Assert.AreEqual(3000, historicalContext.Query("readRange \"3d\" WebRequest\r\nwhere [ID] != \"\"").RunAndDispose());
+            Assert.AreEqual(732, historicalContext.Query("readRange \"3d\" WebRequest\r\nwhere Cast([IsPremiumUser], Boolean) = \"\"").RunAndDispose());
         }
     }
 }

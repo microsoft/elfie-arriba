@@ -21,7 +21,8 @@ namespace XForm.Verbs
 
         public IXTable Build(IXTable source, XDatabaseContext context)
         {
-            return new Where(source, context.Parser.NextExpression(source, context));
+            // Where can be evaluated in parallel, so keep parallel
+            return source.WrapParallel(context.Parser, (part) => new Where(part, context.Parser.NextExpression(part, context)));
         }
     }
 
