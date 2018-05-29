@@ -261,10 +261,15 @@ namespace XForm
         private const int HttpListener_RequestAborted = 1229;
         private void ReportError(IHttpRequest request, IHttpResponse response, Exception ex)
         {
+            // Don't log connections closed
             HttpListenerException hle = ex as HttpListenerException;
             if (hle != null && (uint)hle.ErrorCode == HttpListener_RequestAborted) return;
 
-            Trace.WriteLine($"ERROR: {request.Url}\r\n{ex.ToString()}");
+            // Log locally except UsageExceptions
+            if(!(ex is UsageException))
+            {
+                Trace.WriteLine($"ERROR: {request.Url}\r\n{ex.ToString()}");
+            }
 
             using (ITabularWriter writer = WriterForFormat("json", response))
             {
