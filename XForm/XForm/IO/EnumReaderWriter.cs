@@ -325,6 +325,7 @@ namespace XForm.IO
 
             // Build a reader for the values (require caching if we we have row indices)
             IColumnReader valueReader = TypeProviderFactory.TryGetColumnReader(streamProvider, columnType, columnPath, (rowIndexReader != null ? CachingOption.Always : option), typeof(EnumReader));
+            if (valueReader == null) throw new IOException($"No values found in {columnPath}.");
 
             // If there were row indices, wrap the column. Otherwise, return as-is.
             if (rowIndexReader != null) return new EnumReader(valueReader, rowIndexReader);

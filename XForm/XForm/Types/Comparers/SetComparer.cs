@@ -41,8 +41,13 @@ namespace XForm.Types.Comparers
             Func<XArray> valuesGetter = leftColumn.ValuesGetter();
             if (valuesGetter == null) throw new ArgumentException("ConvertToEnumIndexComparer is only valid for columns implementing Values.");
 
-            // Get all distinct values from the left side and find matches
+            // Get all distinct values from the left side
             XArray left = valuesGetter();
+
+            // If there are no values, return none
+            if (left.Count == 0) return None;
+
+            // Get right side and compare
             XArray right = rightColumn.ValuesGetter()();
             BitVector set = new BitVector(left.Count);
             currentComparer(left, right, set);
