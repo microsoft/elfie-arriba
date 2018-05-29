@@ -125,9 +125,6 @@ namespace XForm.Verbs
                 // Match the query expression and count all matches
                 _expression.Evaluate(_vector);
 
-                // Issue: Cap matches to count because NotExpression doesn't know how many to negate
-                _vector.ClearAbove(outerCount);
-
                 _currentMatchesTotal = _vector.Count;
                 _totalRowsMatched += _currentMatchesTotal;
 

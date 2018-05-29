@@ -881,7 +881,7 @@ namespace XForm.Types.Comparers
                 nextIndex = _indicesBuffer[countFound - 1] + 1;
             }
 
-            if (cOp == CompareOperator.NotEqual) vector.Not(left.Count);
+            if (cOp == CompareOperator.NotEqual) vector.Not();
         }
 
         public void WhereBlockEmpty(XArray left, CompareOperator cOp, BitVector vector)

@@ -22,6 +22,7 @@ namespace XForm
     public class BitVector
     {
         private ulong[] _bitVector;
+        private int _length;
         internal static Func<ulong[], int> s_nativeCount;
         internal static PageSignature s_nativePage;
         internal delegate int PageSignature(ulong[] vector, int[] indicesFound, ref int nextIndex, int countLimit);
@@ -30,6 +31,7 @@ namespace XForm
         {
             if (length < 0) throw new ArgumentOutOfRangeException("length");
             _bitVector = new ulong[((length + 63) >> 6)];
+            _length = length;
         }
 
         public BitVector(ulong[] vector)
@@ -38,6 +40,17 @@ namespace XForm
         }
 
         internal ulong[] Array => _bitVector;
+
+        public int Capacity
+        {
+            get { return _length; }
+            set
+            {
+                _length = value;
+                int vectorLength = ((_length + 63) >> 6);
+                if (_bitVector.Length < vectorLength) _bitVector = new ulong[vectorLength];
+            }
+        }
 
         public bool this[int index]
         {
@@ -65,11 +78,6 @@ namespace XForm
         public void Clear(int index)
         {
             _bitVector[index >> 6] &= ~(0x1UL << (index & 63));
-        }
-
-        public int Capacity
-        {
-            get { return _bitVector.Length << 6; }
         }
 
         public int Count
@@ -178,8 +186,9 @@ namespace XForm
             return this;
         }
 
-        public BitVector All(int length)
+        public BitVector All(int length = -1)
         {
+            if (length != -1) length = this.Capacity;
             if (length < 0 || length > this.Capacity) throw new ArgumentOutOfRangeException("length");
 
             // Set every bit in every fully filled ulong (and the partially filled one, if any)
@@ -195,26 +204,24 @@ namespace XForm
             return this;
         }
 
-        public BitVector Not(int length)
+        public BitVector Not()
         {
-            if (length < 0 || length > this.Capacity) throw new ArgumentOutOfRangeException("length");
-
             // Negate every block to the last ulong
-            int end = (length + 63) >> 6;
+            int end = (this.Capacity + 63) >> 6;
             for (int i = 0; i < end; ++i)
             {
                 _bitVector[i] = ~_bitVector[i];
             }
 
             // Clear bits over the length
-            ClearAbove(length);
+            ClearAbove(this.Capacity);
 
             return this;
         }
 
         public BitVector Set(BitVector other)
         {
-            if (_bitVector.Length != other._bitVector.Length) throw new InvalidOperationException();
+            if (this.Capacity != other.Capacity) throw new InvalidOperationException();
 
             for (int i = 0; i < _bitVector.Length; ++i)
             {
@@ -226,7 +233,7 @@ namespace XForm
 
         public BitVector And(BitVector other)
         {
-            if (_bitVector.Length != other._bitVector.Length) throw new InvalidOperationException();
+            if (this.Capacity != other.Capacity) throw new InvalidOperationException();
 
             for (int i = 0; i < _bitVector.Length; ++i)
             {
@@ -238,7 +245,7 @@ namespace XForm
 
         public BitVector Or(BitVector other)
         {
-            if (_bitVector.Length != other._bitVector.Length) throw new InvalidOperationException();
+            if (this.Capacity != other.Capacity) throw new InvalidOperationException();
 
             for (int i = 0; i < _bitVector.Length; ++i)
             {
@@ -250,7 +257,7 @@ namespace XForm
 
         public BitVector AndNot(BitVector other)
         {
-            if (_bitVector.Length != other._bitVector.Length) throw new InvalidOperationException();
+            if (this.Capacity != other.Capacity) throw new InvalidOperationException();
 
             for (int i = 0; i < _bitVector.Length; ++i)
             {

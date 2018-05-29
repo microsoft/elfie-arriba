@@ -35,7 +35,8 @@ namespace XForm
         /// <param name="size">Minimum required size for vector</param>
         public static void AllocateToSize(ref BitVector vector, int size)
         {
-            if (vector == null || vector.Capacity < size) vector = new BitVector(size);
+            if (vector == null) vector = new BitVector(size);
+            vector.Capacity = size;
         }
 
         /// <summary>
