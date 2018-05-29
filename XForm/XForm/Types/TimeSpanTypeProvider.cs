@@ -67,7 +67,6 @@ namespace XForm.Types
 
         private TimeSpan[] _timeSpanArray;
         private long[] _longArray;
-        private bool[] _couldNotConvertArray;
 
         public TimeSpanConverter(object defaultValue)
         {

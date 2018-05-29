@@ -1,5 +1,6 @@
 import "./Index.scss"
 import "./shared.jsx"
+import "./polyfill.jsx"
 import React from "react"
 import ReactDOM from "react-dom"
 
@@ -158,8 +159,8 @@ class Index extends React.Component {
         this.debouncedQueryChanged = debounce(this.queryChanged, 500)
         this.state = { query: this.query, userCols: [], saveAs: '', pausePulse: true }
 
-        const params = new URLSearchParams(location.search.slice(1));
-        const q = params.get("q");
+        const params = window.getQueryStringParameters();
+        const q = params["q"];
         
         const loc = document.location;
         xhr.urlRoot = loc.port === '8080' ? `${loc.protocol}//${loc.hostname}:5073` : ''
@@ -168,7 +169,7 @@ class Index extends React.Component {
             'read WebRequest',
             'where [HttpStatus] != "200"',
         ].join('\n');
-        
+
         this.reqPeek = new CachableReusedRequest('run');
         this.reqPeek.caching = true;
 
@@ -504,7 +505,7 @@ class Index extends React.Component {
                 <div className="" className={`resultsHeader ${this.state.pausePulse ? '' : 'pulse'}`}>
                     <span>{this.state.resultCount}</span>
                     <span className="flexFill"></span>
-                    {encodedParams && <a className="button segoe-icon-link" alt="Link" href={`${xhr.urlRoot}/?${encodedParams}`}></a>}              
+                    {encodedParams && <a className="button segoe-icon-link" alt="Link" href={`${xhr.urlRoot}/?${encodedParams}`}></a>}
                     {encodedParams && <a className="button" target="_blank" href={`${xhr.urlRoot}/download?fmt=csv&${encodedParams}`}>CSV</a>}
                     {encodedParams && <a className="button" target="_blank" href={`${xhr.urlRoot}/download?fmt=tsv&${encodedParams}`}>TSV</a>}
                     <span className={`loading ${ this.state.loading && 'loading-active' }`}></span>
