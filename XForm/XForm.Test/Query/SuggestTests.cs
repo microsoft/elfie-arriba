@@ -169,8 +169,12 @@ namespace XForm.Test.Query
 
         private static string Values(SuggestResult result)
         {
-            if (result.Context == null || result.Context.ValidValues == null) return null;
-            return string.Join("|", result.Context.ValidValues.OrderBy((s) => s));
+            if (result.Context == null) return null;
+
+            var values = result.Context.FilteredValues;
+            if (values == null) return null;
+
+            return string.Join("|", result.Context.FilteredValues);
         }
     }
 }
