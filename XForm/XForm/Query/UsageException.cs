@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
+using XForm.Extensions;
 
 namespace XForm.Query
 {
@@ -25,6 +26,9 @@ namespace XForm.Query
 
         public ErrorContext(string invalidValue, string invalidValueCategory, IEnumerable<string> validValues)
         {
+            // If the invalid value ends with the 'next token hint', '~', remove it to filter valid values
+            invalidValue = invalidValue.RemoveTrailing('~');
+
             this.InvalidValue = invalidValue;
             this.InvalidValueCategory = invalidValueCategory;
             this.ValidValues = validValues;
@@ -32,10 +36,28 @@ namespace XForm.Query
             if (this.ValidValues != null)
             {
                 // Filter valid values based on prefix typed
-                if (!String.IsNullOrEmpty(this.InvalidValue)) this.ValidValues = this.ValidValues.Where((value) => value.StartsWith(invalidValue, StringComparison.OrdinalIgnoreCase));
+                if (!String.IsNullOrEmpty(this.InvalidValue)) this.ValidValues = this.ValidValues.Where((value) => value.IndexOf(invalidValue, StringComparison.OrdinalIgnoreCase) != -1);
+
+                int filteredCount = this.ValidValues.Count();
+                if (filteredCount == 1)
+                {
+                    // If there's only one value and it exactly matches, return no valid values
+                    if (this.ValidValues.First().Equals(invalidValue, StringComparison.OrdinalIgnoreCase))
+                    {
+                        this.ValidValues = null;
+                    }
+                }
+                else if(filteredCount == 0)
+                {
+                    // If nothing was left after filtering, return the full list
+                    this.ValidValues = validValues;
+                }
 
                 // Always sort expected values
-                this.ValidValues = this.ValidValues.OrderBy((s) => s);
+                if (this.ValidValues != null)
+                {
+                    this.ValidValues = this.ValidValues.OrderBy((s) => s);
+                }
             }
         }
 

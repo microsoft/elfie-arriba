@@ -557,7 +557,7 @@ namespace XForm.Query
             }
         }
 
-        public bool WasLastTokenInQuery => (_scanner.Current.Type == TokenType.End && _scanner.Current.WhitespacePrefix.Length == 0) || _scanner.Current.Type == TokenType.NextTokenHint;
+        public bool WasLastTokenInQuery => ((_scanner.Current.Type == TokenType.End || _scanner.Current.Type == TokenType.NextTokenHint) && _scanner.Current.WhitespacePrefix.Length == 0);
         public bool HasAnotherPart => _scanner.Current.Type != TokenType.Newline && _scanner.Current.Type != TokenType.End;
         public bool HasAnotherArgument => HasAnotherPart && _scanner.Current.Type != TokenType.CloseParen;
         public Position CurrentPosition => _scanner.Current.Position;

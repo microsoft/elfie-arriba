@@ -88,7 +88,7 @@ namespace XForm.Query
 
         static XqlScanner()
         {
-            s_charactersRequiringEscaping = new HashSet<char>(new char[] { ' ', '\t', '"', '[', ']', '(', ')', ',', '?' });
+            s_charactersRequiringEscaping = new HashSet<char>(new char[] { ' ', '\t', '"', '[', ']', '(', ')', ',', '~' });
         }
 
         public XqlScanner(string xqlQuery)
@@ -147,7 +147,7 @@ namespace XForm.Query
                 this.Position.LastNewlineIndex = this.Position.Index;
                 this.Current.Type = TokenType.Newline;
             }
-            else if (next == '?')
+            else if (next == '~')
             {
                 this.Current.Type = TokenType.NextTokenHint;
             }

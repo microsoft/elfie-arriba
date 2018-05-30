@@ -27,47 +27,50 @@ namespace XForm.Query
 
         public SuggestResult Suggest(string partialXqlQuery, DateTime asOfDate = default(DateTime))
         {
+            // Variables:
+            //  - Is query valid before last token? If not, return invalid with that error position, message, and valid values.
+            //  - Is there whitespace after the last token? If not, show information for the last token, not the next one.
+
             SuggestResult result = new SuggestResult();
             result.Query = partialXqlQuery;
             result.IsValid = false;
 
-            // Determine whether the user is starting to type the next token (the last one is a newline, space, or function start)
-            char lastQueryChar = ' ';
-            if (!String.IsNullOrEmpty(partialXqlQuery)) lastQueryChar = partialXqlQuery[partialXqlQuery.Length - 1];
-            bool userIsStartingNextToken = (Char.IsWhiteSpace(lastQueryChar) || lastQueryChar == '(');
+            XDatabaseContext context = _xDatabaseContext;
+            if (asOfDate != default(DateTime) && asOfDate != _xDatabaseContext.RequestedAsOfDateTime)
+            {
+                context = new XDatabaseContext(context) { RequestedAsOfDateTime = asOfDate };
+            }
 
+            IXTable pipeline;
+
+            // Add a 'nextTokenHint' suffix to ask for alternatives to the last token (if no trailing whitespace) or the next token (if there is)
             try
             {
-                XDatabaseContext context = _xDatabaseContext;
-
-                // Reset the as of date if requested
-                if (asOfDate != default(DateTime) && asOfDate != _xDatabaseContext.RequestedAsOfDateTime)
-                {
-                    context = new XDatabaseContext(context) { RequestedAsOfDateTime = asOfDate };
-                }
-
-                // Parse the query as-is to see if it's valid
-                IXTable pipeline = context.Query(partialXqlQuery);
-                result.IsValid = true;
-
-                // If the query is valid but the user is starting the next token, figure out what the token type is
-                if (userIsStartingNextToken)
-                {
-                    pipeline = context.Query(partialXqlQuery + "?");
-                }
+                pipeline = context.Query(partialXqlQuery + "~");
             }
             catch (UsageException ex)
             {
                 result.Context = ex.Context;
-
-                // Don't show suggestions after the last token unless an explicit space, newline, or a '(' is at the end of the current query
-                if (result.Context.InvalidTokenIndex >= partialXqlQuery.Length && !userIsStartingNextToken)
-                {
-                    result.Context.ValidValues = null;
-                }
             }
 
+            // Determine whether the query was valid as-is
+            try
+            {
+                pipeline = context.Query(partialXqlQuery);
+                result.IsValid = true;
+            }
+            catch (UsageException)
+            { }
+
             return result;
+        }
+
+        private static bool LastTokenClosed(string query)
+        {
+            if (string.IsNullOrEmpty(query)) return true;
+
+            char last = query[query.Length - 1];
+            return (Char.IsWhiteSpace(last) || last == '(' || last == ']' || last == '"');
         }
     }
 }
