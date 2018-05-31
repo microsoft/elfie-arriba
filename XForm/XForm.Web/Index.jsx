@@ -20,7 +20,7 @@ import ReactDOM from "react-dom"
 
     window.singleTimeout = function() {
         // Usage:
-        // st = singleTimeout()   // Init
+        // st = singleTimeout()   // Ctor
         // st(f)                  // Cancels any previous f, runs f synchonously.
         // st(f, 100)             // Cancels any previous f, runs f after 100ms delay.
         // st()                   // Cancels any previous f.
