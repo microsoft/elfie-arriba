@@ -9,7 +9,7 @@ window.encodeParams = function(params) {
 window.xhr = (path, paramObj) => {
     return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
-        xhr.withCredentials = false;
+        xhr.withCredentials = true;
         xhr.open("GET", `${window.xhr.urlRoot}/${path}?${encodeParams(paramObj)}`, true); // For testing: http://httpbin.org/post
         xhr.onload = () => {
             const responseText = xhr.responseText;
@@ -66,7 +66,7 @@ window.CachableReusedRequest = class CachableReusedRequest {
             then(cache);
         } else {
             const xhr = this._xhr = new XMLHttpRequest();
-            xhr.withCredentials = false;
+            xhr.withCredentials = true;
             xhr.open("GET", `${window.xhr.urlRoot}/${this._path}?${paramStr}`);
             xhr.onload = () => {
                 if (xhr.status >= 200 && xhr.status < 400) {
