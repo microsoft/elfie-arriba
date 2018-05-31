@@ -10,7 +10,7 @@ window.xhr = (path, paramObj) => {
     return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         xhr.withCredentials = true;
-        xhr.open("GET", `${window.xhr.urlRoot}/${path}?${encodeParams(paramObj)}`, true); // For testing: http://httpbin.org/post
+        xhr.open("GET", `${window.xhr.origin}/${path}?${encodeParams(paramObj)}`, true); // For testing: http://httpbin.org/post
         xhr.onload = () => {
             const responseText = xhr.responseText;
 
@@ -47,6 +47,9 @@ window.xhr = (path, paramObj) => {
     });
 };
 
+// To set, in browser console: localStorage.setItem('origin', 'yourHost')
+window.xhr.origin = localStorage.origin && `https://${localStorage.origin}` || ''
+
 window.CachableReusedRequest = class CachableReusedRequest {
     constructor(path) {
         this._path = path;
@@ -67,7 +70,7 @@ window.CachableReusedRequest = class CachableReusedRequest {
         } else {
             const xhr = this._xhr = new XMLHttpRequest();
             xhr.withCredentials = true;
-            xhr.open("GET", `${window.xhr.urlRoot}/${this._path}?${paramStr}`);
+            xhr.open("GET", `${window.xhr.origin}/${this._path}?${paramStr}`);
             xhr.onload = () => {
                 if (xhr.status >= 200 && xhr.status < 400) {
                     const json = JSON.parse(xhr.responseText);
