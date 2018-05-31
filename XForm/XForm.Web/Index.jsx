@@ -117,12 +117,6 @@ import ReactDOM from "react-dom"
                 endColumn: position.column,
             })
         }
-        editor.decorate = function(newDecorations) {
-            const old = this._oldDecorations || []
-            if (old.length || newDecorations.length) {
-                this._oldDecorations = this.deltaDecorations(old, newDecorations)
-            }
-        }
         editor.indexToPosition = function(i) {
             const lines = this.getValue().slice(0, i).split('\n')
             const col = lines.last().length + 1
