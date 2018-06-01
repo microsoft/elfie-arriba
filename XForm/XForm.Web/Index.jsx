@@ -194,9 +194,6 @@ class Index extends React.Component {
             })
         }
     }
-    get suggest() {
-        return xhr(`suggest`, { asof: this.state.asOf, q: this.editor.valueUntilPosition() })
-    }
     async suggest() {
         const vup = this.editor.valueUntilPosition()
         
