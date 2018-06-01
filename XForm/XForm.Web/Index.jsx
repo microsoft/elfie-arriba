@@ -152,7 +152,7 @@ class Index extends React.Component {
             ]
         })
 
-        this.refs.textArea.value = 'read WebRequest\nwhere [HttpStatus] != "200"'
+        this.refs.textArea.value = localStorage.q || 'read WebRequest\nwhere [HttpStatus] != "200"'
         this.editor = CodeMirror.fromTextArea(this.refs.textArea, {
             lineNumbers: true,
             mode: 'xform',
