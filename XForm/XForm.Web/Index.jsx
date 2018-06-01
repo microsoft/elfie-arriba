@@ -172,7 +172,10 @@ class Index extends React.Component {
         })
         extendEditor(this.editor)
 
-        this.editor.on('change', this.queryTextChanged.bind(this))
+        this.editor.on('change', () => {
+            this.textJustChanged = true
+            this.queryTextChanged.bind(this)
+        })
         this.editor.on('cursorActivity', async cm => {
             if (this.textJustChanged && !this.justPicked) this.queryAndCursorChanged()
             this.textJustChanged = false
@@ -223,7 +226,6 @@ class Index extends React.Component {
         return this.editor?.getValue()
     }
     async queryTextChanged(force) {
-        this.textJustChanged = true
         const trimmedQuery = this.query.trim() // Pre async capture
         
             const info = await this.suggest()
