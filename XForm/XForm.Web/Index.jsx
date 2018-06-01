@@ -106,37 +106,25 @@ import ReactDOM from "react-dom"
         const dd = this.toLocaleString('en-US', { day: 'numeric' })
         return `${mm} ${dd}`
     }
+    
+    String.prototype.ciIncludes = function(term) {
+        return !term || this.toLowerCase().includes(term.toLowerCase())
+    }
 
     window.extendEditor = function(editor) {
-        editor.valueUntilPosition = function() {
-            const position = this.getPosition()
-            return this.getModel().getValueInRange({
-                startLineNumber: 1,
-                startColumn: 1,
-                endLineNumber: position.lineNumber,
-                endColumn: position.column,
-            })
+        editor.valueUntilPosition = function(from) {
+            return this.getRange(from || { line: 0, ch: 0 }, this.getCursor())
         }
         editor.indexToPosition = function(i) {
             const lines = this.getValue().slice(0, i).split('\n')
-            const col = lines.last().length + 1
-            return new monaco.Position(lines.length, col)
+            const col = lines.last().length
+            return CodeMirror.Pos(lines.length - 1, col)
         }
         editor.append = function(value) {
-            this.executeEdits('my-source', [{
-                    identifier: { major: 1, minor: 1 },
-                    range: monaco.Range.fromPositions(this.getModel().getFullModelRange().getEndPosition()),
-                    text: `${value}`,
-                    forceMoveMarkers: true,
-                }])
+            this.replaceRange(value, { line: Infinity })
         }
         editor.appendLine = function(line) {
             this.append(`${this.getValue().endsWith('\n') ? '' : '\n'}${line}`)
-        }
-
-        // Assumes monaco is loaded
-        monaco.Position.prototype.toRange = function(length) {
-            return new monaco.Range(this.lineNumber, this.column, this.lineNumber, this.column + length)
         }
     }
 })()
@@ -156,79 +144,42 @@ class Index extends React.Component {
         this.peekTimer = singleTimeout()
     }
     componentDidMount() {
-        window.require.config({ paths: { 'vs': 'node_modules/monaco-editor/min/vs' }});
+        CodeMirror.defineSimpleMode("xform", {
+            start: [
+                { regex: /^\w+/, sol: true, token: 'xf-verb' },
+                { regex: /\[\w*\]/, token: 'variable' },
+                { regex: /"\w*"/, token: 'string' },
+            ]
+        })
 
-    	window.require(['vs/editor/editor.main'], () => {
-            monaco.languages.register({ id: 'xform' });
-            monaco.languages.setMonarchTokensProvider('xform', {
-                tokenizer: {
-                    root: [
-                        [/^\w+/, 'verb'],
-                        [/\[\w*\]/, 'column'],
-                        [/"\w*"/, 'string'],
-                    ]
-                }
-            })
-            monaco.editor.defineTheme('xform', {
-                base: 'vs',
-                inherit: false,
-                rules: [
-                    // https://github.com/Microsoft/vscode/blob/bef497ff82391f4f29ea52f532d896a6903f6ff6/src/vs/editor/standalone/common/themes.ts
-                    { token: 'verb',   foreground: '5c99d6' }, // hsa(210, 60%, 60%), Atom dark: 44C0C6
-                    { token: 'column', foreground: '40bfbf' }, // hsl(180, 50%, 50%), Atom dark: D1BC92
-                    { token: 'string', foreground: 'bf5540' }, // hsl( 10, 50%, 50%), Atom dark: FC8458
-                ]
-            })
-            monaco.languages.registerCompletionItemProvider('xform', {
-                provideCompletionItems: (model, position) =>
-                    (this.suggestions && Promise.resolve(this.suggestions) || this.suggest).then(o => {
-                        this.suggestions = undefined
+        this.refs.textArea.value = 'read WebRequest\nwhere [HttpStatus] != "200"'
+        this.editor = CodeMirror.fromTextArea(this.refs.textArea, {
+            lineNumbers: true,
+            mode: 'xform',
+            extraKeys: { 'Ctrl-Space': 'autocomplete' },
+            hintOptions: { completeSingle: false, hint: async (cm, option) =>
+                this.suggest().then(o => {
+                    const token = this.editor.valueUntilPosition(this.editor.indexToPosition(o.InvalidTokenIndex))
+                    const results = o.Values && {
+                        list: o.Values.split(";").filter(s => s.ciIncludes(token)),
+                        from: this.editor.indexToPosition(o.InvalidTokenIndex), // Convert to line/ch
+                        to:   this.editor.getCursor(),
+                    }
+                    if (results) CodeMirror.on(results, 'pick', () => this.justPicked = true) // Check if any more matches
+                    return results
+                })
+            }
+        })
+        extendEditor(this.editor)
 
-                        if (!o.Values) return []
-
-                        const textUntilPosition = this.editor.valueUntilPosition()
-                        const trunate = o.ItemCategory === '[Column]' && /\[\w*$/.test(textUntilPosition)
-                            || o.ItemCategory === 'CompareOperator' && /!$/.test(textUntilPosition)
-                            || o.ItemCategory === 'CompareOperator' && /\|$/.test(textUntilPosition)
-
-                        const kind = monaco.languages.CompletionItemKind;
-                        return !o.Values.length ? [] : o.Values.split(";").map(s => ({
-                            kind: {
-                                verb: kind.Keyword,
-                                compareOperator: kind.Keyword,
-                                columnName: kind.Field,
-                            }[o.ItemCategory] || kind.Text,
-                            label: s,
-                            insertText: trunate ? s.slice(1) : s,
-                        }))
-                    })
-            })
-
-    		this.editor = monaco.editor.create(document.getElementById('queryEditor'), {
-    			value: [
-    				'read WebRequest',
-                    'where [HttpStatus] != "200"',
-    			].join('\n'),
-    			language: 'xform',
-                scrollBeyondLastLine: false,
-                minimap: { enabled: false },
-                automaticLayout: true,
-                theme: 'xform',
-                overviewRulerBorder: false,
-                occurrencesHighlight: false,
-                hideCursorInOverviewRuler: true,
-    		});
-            extendEditor(this.editor)
-
-            this.editor.onDidChangeModelContent(this.queryTextChanged.bind(this))
-            this.editor.onDidChangeCursorPosition(e => {
-                if (this.textJustChanged) this.queryAndCursorChanged()
-                this.textJustChanged = false
-            })
-
-            this.validQuery = this.query
-            this.queryChanged()
-    	});
+        this.editor.on('change', this.queryTextChanged.bind(this))
+        this.editor.on('cursorActivity', async cm => {
+            if (this.textJustChanged && !this.justPicked) this.queryAndCursorChanged()
+            this.textJustChanged = false
+            this.justPicked = false
+        })
+        this.validQuery = this.query
+        this.queryChanged()
     }
     componentDidUpdate(prevProps, prevState) {
         if (prevState.peek !== this.state.peek) {
@@ -243,13 +194,40 @@ class Index extends React.Component {
     get suggest() {
         return xhr(`suggest`, { asof: this.state.asOf, q: this.editor.valueUntilPosition() })
     }
+    async suggest() {
+        const vup = this.editor.valueUntilPosition()
+        
+        // CodeMirror sometimes independently calls hintOptions.hint() after cursor activity.
+        // This can happen before the async suggest returns, thus using lack of .root as a sign things are in-progress.
+        // Hand-waving the cache key checking and assuming it is the same--which works in practice.
+        if (this._cached?.root !== undefined) {
+            const x = this._cached
+            const token = vup.substring(x.iti)
+            const filtered = x.values?.filter(s => s.ciIncludes(token)) || []
+            if (x.root !== vup.substring(0, x.iti) || token.length && !filtered.length) {
+                this._cached = undefined
+            }
+        }
+        
+        if (!this._cached) {
+            const x = this._cached = xhr(`suggest`, { asof: this.state.asOf, q: vup })
+            const s = await this._cached
+            x.iti = Math.min(s.InvalidTokenIndex, vup.length)
+            x.root = vup.substring(0, x.iti) // this.editor.getValue() technically more correct.
+            x.values = s.Values?.split(';')
+        }
+
+        return this._cached
+    }
     get query() {
         return this.editor?.getValue()
     }
-    queryTextChanged(force) {
+    async queryTextChanged(force) {
         this.textJustChanged = true
         const trimmedQuery = this.query.trim() // Pre async capture
-        xhr(`suggest`, { asof: this.state.asOf, q: this.query }).then(info => {
+        
+            const info = await this.suggest()
+        
             if (info.Valid && (force || this.validQuery !== trimmedQuery)) {
                 this.validQuery = trimmedQuery
                 this.debouncedQueryChanged()
@@ -260,23 +238,17 @@ class Index extends React.Component {
 
             const usage = info.Usage
             if (usage !== this.state.usage) this.setState({ usage })
-
-            this.editor.decorate(info.ErrorMessage // Need to verify info.InvalidTokenIndex < this.query.length?
-                ? [{
-                    range: this.editor.indexToPosition(info.InvalidTokenIndex).toRange(info.InvalidToken.length),
-                    options: { inlineClassName: 'validationError' },
-                }]
-                : [])
-        })
-    }
-    queryAndCursorChanged() {
-        const q = this.editor.valueUntilPosition()
-        this.suggest.then(suggestions => {
-            if (suggestions.Values && (suggestions.InvalidTokenIndex < q.length || /[\s\(]$/.test(q))) {
-                this.suggestions = suggestions
-                this.editor.trigger('source', 'editor.action.triggerSuggest', {});
+        
+            if (this.validationMarker) this.validationMarker.clear()
+            if (errorMessage) { // Not using InvalidTokenIndex as the in-progress token is considered invalid.
+                this.validationMarker = this.editor.markText(
+                    this.editor.indexToPosition(info.InvalidTokenIndex),
+                    this.editor.indexToPosition(info.InvalidTokenIndex + info.InvalidToken.length),
+                    { className: 'validationError' })
             }
-        })
+    }
+    async queryAndCursorChanged() {
+        if ((await this.suggest()).Values) this.editor.showHint()
     }
     queryChanged() {
         this.count = this.baseCount
@@ -446,6 +418,7 @@ class Index extends React.Component {
                     || this.state.usage || `\u200B`
                 }</div>
                 <div id="queryEditor">
+                    <textarea ref="textArea"></textarea>
                 </div>
                 <DatePicker key="datePicker" />
             </div>

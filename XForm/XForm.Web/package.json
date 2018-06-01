@@ -2,7 +2,7 @@
   "name": "xform.web",
   "version": "0.1.0",
   "author": "Microsoft",
-  "description": "XForm is a C# data processing engine",  
+  "description": "XForm is a C# data processing engine",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -17,8 +17,8 @@
     "@babel/preset-env": "^7.0.0-beta.40",
     "@babel/preset-react": "^7.0.0-beta.40",
     "babel-loader": "^8.0.0-beta.2",
+    "codemirror": "^5.35.0",
     "css-loader": "^0.28.7",
-    "monaco-editor": "^0.10.1",
     "node-sass": "^4.5.3",
     "react": "^16.0.0",
     "react-dom": "^16.0.0",
