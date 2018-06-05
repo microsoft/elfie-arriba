@@ -56,11 +56,11 @@ namespace XForm.IO
             _xDatabaseContext = xDatabaseContext;
             _tableRootPath = tableRootPath;
 
-            int columnCount = source.Columns.Count;
 
             _metadata = new TableMetadata();
             _metadata.Query = xDatabaseContext.CurrentQuery;
 
+            int columnCount = source.Columns.Count;
             _getters = new Func<XArray>[columnCount];
             _currentArrays = new XArray[columnCount];
 
@@ -69,6 +69,11 @@ namespace XForm.IO
             {
                 _getters[i] = source.Columns[i].CurrentGetter();
             }
+        }
+
+        public static IXTable Build(IXTable source, XDatabaseContext xDatabaseContext, string tableRootPath)
+        {
+            return new BinaryTableWriter(source, xDatabaseContext, tableRootPath);
         }
 
         private void BuildWriters()
@@ -100,8 +105,6 @@ namespace XForm.IO
 
         public override int Next(int desiredCount, CancellationToken cancellationToken)
         {
-            if (_writers == null) BuildWriters();
-
             int count = _source.Next(desiredCount, cancellationToken);
             if (count == 0)
             {
@@ -116,19 +119,28 @@ namespace XForm.IO
                 _currentArrays[i] = _getters[i]();
             }
 
+            return Write(_currentArrays);
+        }
+
+        public int Write(XArray[] arrays)
+        {
+            if (_writers == null) BuildWriters();
+
+            int count = arrays[0].Count;
+
             // Write them out (Parallel safe)
             if (_xDatabaseContext.ForceSingleThreaded)
             {
                 for (int i = 0; i < _getters.Length; ++i)
                 {
-                    _writers[i].Append(_currentArrays[i]);
+                    _writers[i].Append(arrays[i]);
                 }
             }
             else
             {
                 Parallel.For(0, _getters.Length, (i) =>
                 {
-                    _writers[i].Append(_currentArrays[i]);
+                    _writers[i].Append(arrays[i]);
                 });
             }
 

@@ -309,5 +309,10 @@ namespace XForm.Data
             XArray other = (XArray)obj;
             return other.Array == this.Array && other.NullRows == this.NullRows && other.Selector == this.Selector;
         }
+
+        public override int GetHashCode()
+        {
+            return (this.Array?.GetHashCode() ?? 0) ^ (this.NullRows?.GetHashCode() ?? 0) ^ (this.Selector?.GetHashCode() ?? 0);
+        }
     }
 }

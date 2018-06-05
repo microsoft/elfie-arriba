@@ -154,7 +154,7 @@ namespace XForm.IO
             Reset();
         }
 
-        public static IXTable Read(IStreamProvider streamProvider, string tableRootPath)
+        public static IXTable Build(IStreamProvider streamProvider, string tableRootPath)
         {
             TableMetadata metadata = TableMetadataSerializer.Read(streamProvider, tableRootPath);
 
@@ -162,7 +162,7 @@ namespace XForm.IO
             {
                 // If this table has partitions, load the parts (*allowing* recursive partitioning)
                 // This allows partitioning by a column where one column value still will hit the size limit.
-                return ConcatenatedTable.Build(metadata.Partitions.Select((partition) => BinaryTableReader.Read(streamProvider, Path.Combine(tableRootPath, partition))));
+                return ConcatenatedTable.Build(metadata.Partitions.Select((partition) => BinaryTableReader.Build(streamProvider, Path.Combine(tableRootPath, partition))));
             }
             else
             {
@@ -175,7 +175,7 @@ namespace XForm.IO
 
         public string TablePath { get; private set; }
         public string Query => _metadata.Query;
-        public int Count => _metadata.RowCount;
+        public int Count => (int)_metadata.RowCount;
         public int CurrentRowCount { get; private set; }
 
         public int Next(int desiredCount, CancellationToken cancellationToken)

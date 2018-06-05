@@ -86,7 +86,7 @@ namespace XForm
                 && previousLatest.TableVersion.AsOfDate <= outerContext.RequestedAsOfDateTime)
             {
                 outerContext.NewestDependency = previousLatest.TableVersion.AsOfDate;
-                return BinaryTableReader.Read(outerContext.StreamProvider, previousLatest.TableVersion.Path);
+                return BinaryTableReader.Build(outerContext.StreamProvider, previousLatest.TableVersion.Path);
             }
 
             // Create a context to track what we're building now
@@ -153,7 +153,7 @@ namespace XForm
                 // Otherwise, build it now; we'll return the query to read the output
                 innerContext.CurrentQuery = xql;
                 Trace.WriteLine($"COMPUTE: [{innerContext.NewestDependency.ToString(StreamProviderExtensions.DateTimeFolderFormat)}] {tableName}");
-                new BinaryTableWriter(builder, innerContext, tablePath).RunAndDispose();
+                BinaryTableWriter.Build(builder, innerContext, tablePath).RunAndDispose();
                 innerContext.RebuiltSomething = true;
             }
 
@@ -161,7 +161,7 @@ namespace XForm
             innerContext.Pop(outerContext);
 
             _currentTableVersions.Add(tableName, new LatestTableForCutoff(outerContext.RequestedAsOfDateTime, new ItemVersion(LocationType.Table, tableName, CrawlType.Full, innerContext.NewestDependency)));
-            return BinaryTableReader.Read(innerContext.StreamProvider, tablePath);
+            return BinaryTableReader.Build(innerContext.StreamProvider, tablePath);
         }
 
         public IXTable ReadSource(string tableName, XDatabaseContext context)
@@ -184,7 +184,7 @@ namespace XForm
             if (latestBuiltTable != null && (latestFullSource == null || !IsOutOfDate(latestBuiltTable.AsOfDate, latestFullSource.AsOfDate)))
             {
                 // If the table is current, reuse it
-                sources.Add(BinaryTableReader.Read(context.StreamProvider, latestBuiltTable.Path));
+                sources.Add(BinaryTableReader.Build(context.StreamProvider, latestBuiltTable.Path));
                 incrementalNeededAfterCutoff = latestBuiltTable.AsOfDate;
             }
             else
@@ -305,7 +305,7 @@ namespace XForm
                         outputPath = Path.Combine(context.StreamProvider.Path(LocationType.Report, tableName, CrawlType.Full, context.NewestDependency), $"Report.{outputFormat}");
                         if (outputFormat.Equals("xform", StringComparison.OrdinalIgnoreCase))
                         {
-                            new BinaryTableWriter(builder, context, outputPath).RunAndDispose();
+                            BinaryTableWriter.Build(builder, context, outputPath).RunAndDispose();
                         }
                         else
                         {

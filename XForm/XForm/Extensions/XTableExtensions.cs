@@ -222,7 +222,7 @@ namespace XForm.Extensions
         public static long Save(this IXTable source, string tableName, XDatabaseContext context, int xarraySize = DefaultBatchSize)
         {
             string tableRootPath = context.StreamProvider.Path(LocationType.Table, tableName, CrawlType.Full, context.RequestedAsOfDateTime);
-            return new BinaryTableWriter(source, context, tableRootPath).RunAndDispose().RowCount;
+            return BinaryTableWriter.Build(source, context, tableRootPath).RunAndDispose().RowCount;
         }
         #endregion
 

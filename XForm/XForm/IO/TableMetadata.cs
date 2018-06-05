@@ -17,7 +17,7 @@ namespace XForm.IO
 {
     public class TableMetadata
     {
-        public int RowCount { get; set; }
+        public long RowCount { get; set; }
         public string Query { get; set; }
         public List<ColumnDetails> Schema { get; set; }
         public List<string> Partitions { get; set; }
@@ -66,7 +66,7 @@ namespace XForm.IO
 
                 mw.Write(block.GetCopy("RowCount"));
                 mw.Write(String8.Empty);
-                mw.Write(metadata.RowCount);
+                mw.Write(String8.FromNumber(metadata.RowCount, new byte[20]));
                 mw.NextRow();
             }
 
