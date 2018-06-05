@@ -20,16 +20,19 @@ namespace XForm.IO
         public int RowCount { get; set; }
         public string Query { get; set; }
         public List<ColumnDetails> Schema { get; set; }
+        public List<string> Partitions { get; set; }
 
         public TableMetadata()
         {
             this.Schema = new List<ColumnDetails>();
+            this.Partitions = new List<string>();
         }
 
         public TableMetadata(int rowCount, List<ColumnDetails> schema)
         {
             this.RowCount = rowCount;
             this.Schema = schema;
+            this.Partitions = new List<string>();
         }
     }
 
@@ -37,6 +40,7 @@ namespace XForm.IO
     {
         private const string SchemaFileName = "Schema.csv";
         private const string MetadataFileName = "Metadata.csv";
+        private const string PartitionsFileName = "Partitions.csv";
         private const string ConfigQueryPath = "Config.xql";
 
         private static Cache<TableMetadata> s_Cache = new Cache<TableMetadata>();
@@ -118,6 +122,20 @@ namespace XForm.IO
             }
 
             metadata.Query = streamProvider.ReadAllText(Path.Combine(tableRootPath, ConfigQueryPath));
+
+            string partitionsPath = Path.Combine(tableRootPath, PartitionsFileName);
+            if(streamProvider.Attributes(partitionsPath).Exists)
+            {
+                using (ITabularReader pr = TabularFactory.BuildReader(streamProvider.OpenRead(partitionsPath), PartitionsFileName))
+                {
+                    int nameIndex = pr.ColumnIndex("Name");
+
+                    while (pr.NextRow())
+                    {
+                        metadata.Partitions.Add(pr.Current(nameIndex).ToString());
+                    }
+                }
+            }
 
             return metadata;
         }

@@ -19,17 +19,52 @@ namespace XForm.IO
     /// </summary>
     public class ConcatenatedTable : IXTable
     {
-        private IXTable[] _sources;
+        private List<IXTable> _sources;
         private List<ConcatenatedColumn> _columns;
         private int _currentSourceIndex;
 
-        public ConcatenatedTable(IEnumerable<IXTable> sources)
+        private ConcatenatedTable(List<IXTable> sources)
         {
-            _sources = sources.ToArray();
+            _sources = sources;
             _columns = new List<ConcatenatedColumn>();
             _currentSourceIndex = -1;
 
             IdentifyColumns();
+        }
+
+        public static IXTable Build(IEnumerable<IXTable> sources)
+        {
+            // Unwrap any nested ConcatenatedTables
+            List<IXTable> directSources = DirectSources(sources).ToList();
+
+            // If only one source remains, return it
+            if (directSources.Count == 1) return directSources[0];
+
+            // Otherwise, wrap it in a ConcatenatedTable
+            return new ConcatenatedTable(directSources);
+        }
+
+        /// <summary>
+        ///  Recursively extract each non-ConcatenatedTable source from a list of sources.
+        /// </summary>
+        /// <param name="source">IXTable to add</param>
+        private static IEnumerable<IXTable> DirectSources(IEnumerable<IXTable> sources)
+        {
+            foreach(IXTable source in sources)
+            {
+                ConcatenatedTable cSource = source as ConcatenatedTable;
+                if (cSource == null)
+                {
+                    yield return source;
+                }
+                else
+                {
+                    foreach (IXTable inner in DirectSources(cSource.Sources))
+                    {
+                        yield return inner;
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -83,7 +118,7 @@ namespace XForm.IO
         {
             if (_currentSourceIndex == -1) NextSource();
 
-            while (_currentSourceIndex < _sources.Length)
+            while (_currentSourceIndex < _sources.Count)
             {
                 // Try to get rows from the next source
                 CurrentRowCount = _sources[_currentSourceIndex].Next(desiredCount, cancellationToken);
@@ -103,7 +138,7 @@ namespace XForm.IO
         {
             _currentSourceIndex++;
 
-            if (_currentSourceIndex < _sources.Length)
+            if (_currentSourceIndex < _sources.Count)
             {
                 // Update the source for each column
                 for (int i = 0; i < _columns.Count; ++i)

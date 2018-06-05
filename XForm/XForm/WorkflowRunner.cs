@@ -86,7 +86,7 @@ namespace XForm
                 && previousLatest.TableVersion.AsOfDate <= outerContext.RequestedAsOfDateTime)
             {
                 outerContext.NewestDependency = previousLatest.TableVersion.AsOfDate;
-                return new BinaryTableReader(outerContext.StreamProvider, previousLatest.TableVersion.Path);
+                return BinaryTableReader.Read(outerContext.StreamProvider, previousLatest.TableVersion.Path);
             }
 
             // Create a context to track what we're building now
@@ -109,10 +109,7 @@ namespace XForm
             string latestTableQuery = "";
             if (latestTable != null)
             {
-                using (BinaryTableReader reader = new BinaryTableReader(outerContext.StreamProvider, latestTable.Path))
-                {
-                    latestTableQuery = reader.Query;
-                }
+                latestTableQuery = TableMetadataSerializer.Read(outerContext.StreamProvider, latestTable.Path).Query;
             }
 
             // Set the dependency date to the latest table we've already built (if any)
@@ -164,7 +161,7 @@ namespace XForm
             innerContext.Pop(outerContext);
 
             _currentTableVersions.Add(tableName, new LatestTableForCutoff(outerContext.RequestedAsOfDateTime, new ItemVersion(LocationType.Table, tableName, CrawlType.Full, innerContext.NewestDependency)));
-            return new BinaryTableReader(innerContext.StreamProvider, tablePath);
+            return BinaryTableReader.Read(innerContext.StreamProvider, tablePath);
         }
 
         public IXTable ReadSource(string tableName, XDatabaseContext context)
@@ -187,7 +184,7 @@ namespace XForm
             if (latestBuiltTable != null && (latestFullSource == null || !IsOutOfDate(latestBuiltTable.AsOfDate, latestFullSource.AsOfDate)))
             {
                 // If the table is current, reuse it
-                sources.Add(new BinaryTableReader(context.StreamProvider, latestBuiltTable.Path));
+                sources.Add(BinaryTableReader.Read(context.StreamProvider, latestBuiltTable.Path));
                 incrementalNeededAfterCutoff = latestBuiltTable.AsOfDate;
             }
             else
@@ -210,9 +207,7 @@ namespace XForm
             context.NewestDependency = latestComponent;
 
             // Return the source (if a single) or concatenated group (if multiple parts)
-            if (sources.Count == 1) return sources[0];
-
-            return new ConcatenatedTable(sources);
+            return ConcatenatedTable.Build(sources);
         }
 
         private bool IsOutOfDate(DateTime outputWhenModifiedUtc, DateTime inputsWhenModifiedUtc)

@@ -74,9 +74,7 @@ namespace XForm.Verbs
             historicalContext.Pop(context);
 
             // Return the source(s) found
-            if (sources.Count == 1) return sources[0];
-
-            return new ConcatenatedTable(sources);
+            return ConcatenatedTable.Build(sources);
         }
     }
 }

@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
@@ -138,12 +139,10 @@ namespace XForm.IO
         private ArraySelector _currentSelector;
         private ArraySelector _currentEnumerateSelector;
 
-        public BinaryTableReader(IStreamProvider streamProvider, string tableRootPath)
+        private BinaryTableReader(IStreamProvider streamProvider, string tableRootPath)
         {
             TablePath = tableRootPath;
-
-            // Read metadata
-            _metadata = TableMetadataSerializer.Read(streamProvider, TablePath);
+            _metadata = TableMetadataSerializer.Read(streamProvider, tableRootPath);
 
             // Construct columns (files aren't opened until columns are subscribed to)
             _columns = new BinaryReaderColumn[_metadata.Schema.Count];
@@ -153,6 +152,20 @@ namespace XForm.IO
             }
 
             Reset();
+        }
+
+        public static IXTable Read(IStreamProvider streamProvider, string tableRootPath)
+        {
+            TableMetadata metadata = TableMetadataSerializer.Read(streamProvider, tableRootPath);
+
+            if (metadata.Partitions.Count > 0)
+            {
+                return ConcatenatedTable.Build(metadata.Partitions.Select((partition) => new BinaryTableReader(streamProvider, Path.Combine(tableRootPath, partition))));
+            }
+            else
+            {
+                return new BinaryTableReader(streamProvider, tableRootPath);
+            }
         }
 
         public ArraySelector CurrentSelector => _currentEnumerateSelector;

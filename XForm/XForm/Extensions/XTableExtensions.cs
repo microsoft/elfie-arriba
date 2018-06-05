@@ -244,7 +244,7 @@ namespace XForm.Extensions
             if(cSource != null)
             {
                 Position currentPosition = parser.CurrentPosition;
-                return new ConcatenatedTable(cSource.Sources.Select((s) =>
+                return ConcatenatedTable.Build(cSource.Sources.Select((s) =>
                 {
                     parser.RewindTo(currentPosition);
                     return builder(s);
