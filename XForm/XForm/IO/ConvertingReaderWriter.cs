@@ -16,6 +16,9 @@ namespace XForm.IO
         private Func<XArray, XArray> _converter;
         private IColumnWriter _convertedValueWriter;
 
+        private XArray _lastSource;
+        private XArray _lastConverted;
+
         public ConvertingWriter(IColumnWriter convertedValueWriter, Func<XArray, XArray> converter)
         {
             _converter = converter;
@@ -24,9 +27,25 @@ namespace XForm.IO
 
         public Type WritingAsType => _convertedValueWriter.WritingAsType;
 
+        private XArray Convert(XArray xarray)
+        {
+            if (xarray.Equals(_lastSource)) return _lastConverted;
+
+            _lastSource = xarray;
+            _lastConverted = _converter(xarray);
+
+            return _lastConverted;
+
+        }
+
+        public bool CanAppend(XArray xarray)
+        {
+            return _convertedValueWriter.CanAppend(Convert(xarray));
+        }
+
         public void Append(XArray xarray)
         {
-            _convertedValueWriter.Append(_converter(xarray));
+            _convertedValueWriter.Append(Convert(xarray));
         }
 
         public void Dispose()

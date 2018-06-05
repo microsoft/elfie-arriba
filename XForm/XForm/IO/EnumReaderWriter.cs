@@ -214,6 +214,18 @@ namespace XForm.IO
 
         public Type WritingAsType => _valueWriter.WritingAsType;
 
+        public bool CanAppend(XArray xarray)
+        {
+            if(_dictionary == null)
+            {
+                return _valueWriter.CanAppend(xarray);
+            }
+            else
+            {
+                return _rowIndexWriter.CanAppend(xarray);
+            }
+        }
+
         public void Append(XArray xarray)
         {
             // If we already had too many values, we're just writing them out normally

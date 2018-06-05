@@ -294,6 +294,21 @@ namespace XForm.Types
 
         public Type WritingAsType => typeof(String8);
 
+        public bool CanAppend(XArray xarray)
+        {
+            if (!_positionsWriter.CanAppend(xarray)) return false;
+
+            long bytesThisTime = 0;
+            String8[] array = (String8[])xarray.Array;
+            for (int i = 0; i < xarray.Count; ++i)
+            {
+                String8 value = array[xarray.Index(i)];
+                bytesThisTime += value.Length;
+            }
+
+            return (_position + bytesThisTime) < BinaryTableWriter.ColumnFileSizeLimit;
+        }
+
         public void Append(XArray xarray)
         {
             Allocator.AllocateToSize(ref _positionsBuffer, xarray.Count);

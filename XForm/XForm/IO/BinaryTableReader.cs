@@ -160,7 +160,9 @@ namespace XForm.IO
 
             if (metadata.Partitions.Count > 0)
             {
-                return ConcatenatedTable.Build(metadata.Partitions.Select((partition) => new BinaryTableReader(streamProvider, Path.Combine(tableRootPath, partition))));
+                // If this table has partitions, load the parts (*allowing* recursive partitioning)
+                // This allows partitioning by a column where one column value still will hit the size limit.
+                return ConcatenatedTable.Build(metadata.Partitions.Select((partition) => BinaryTableReader.Read(streamProvider, Path.Combine(tableRootPath, partition))));
             }
             else
             {

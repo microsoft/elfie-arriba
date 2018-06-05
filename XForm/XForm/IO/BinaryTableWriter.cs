@@ -35,6 +35,13 @@ namespace XForm.IO
 
     public class BinaryTableWriter : XTableWrapper
     {
+        /// <summary>
+        ///  File Size limit for each individual column file.
+        ///  2GB because XForm uses integers for row indices and to seek in streams, and so XForm can allocate arrays to hold cached files whole.
+        ///  This may be lowered later to accomodate ideal sizes for cloud storage.
+        /// </summary>
+        public const long ColumnFileSizeLimit = (long)int.MaxValue;
+
         private XDatabaseContext _xDatabaseContext;
         private string _tableRootPath;
 

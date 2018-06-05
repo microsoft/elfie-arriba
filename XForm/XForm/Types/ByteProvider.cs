@@ -95,6 +95,7 @@ namespace XForm.Types
     {
         private Stream _stream;
         private byte[] _buffer;
+        private long _bytesWritten;
 
         public ByteWriter(Stream stream)
         {
@@ -102,6 +103,11 @@ namespace XForm.Types
         }
 
         public Type WritingAsType => typeof(byte);
+
+        public bool CanAppend(XArray xarray)
+        {
+            return (_bytesWritten + xarray.Count) < BinaryTableWriter.ColumnFileSizeLimit;
+        }
 
         public void Append(XArray xarray)
         {
@@ -121,6 +127,7 @@ namespace XForm.Types
             }
 
             _stream.Write((byte[])xarray.Array, xarray.Selector.StartIndexInclusive, xarray.Count);
+            _bytesWritten += xarray.Count;
         }
 
         public void Dispose()

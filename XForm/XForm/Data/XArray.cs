@@ -301,5 +301,13 @@ namespace XForm.Data
                 return XArray.All(array, this.Count, nulls);
             }
         }
+
+        public override bool Equals(object obj)
+        {
+            if (!(obj is XArray)) return false;
+
+            XArray other = (XArray)obj;
+            return other.Array == this.Array && other.NullRows == this.NullRows && other.Selector == this.Selector;
+        }
     }
 }
