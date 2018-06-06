@@ -57,7 +57,10 @@ namespace XForm.Query
             try
             {
                 pipeline = context.Query(partialXqlQuery);
+
+                // If it was valid, don't show an error message
                 result.IsValid = true;
+                result.Context.ErrorMessage = "";
             }
             catch (UsageException)
             { }
