@@ -142,12 +142,7 @@ namespace XForm
             }
             catch (Exception ex)
             {
-                Trace.WriteLine($"ERROR: {request.Url}\r\n{ex.ToString()}");
-
-                using (ITabularWriter writer = WriterForFormat("json", response))
-                {
-                    WriteException(ex, writer);
-                }
+                ReportError(request, response, ex);
             }
         }
 

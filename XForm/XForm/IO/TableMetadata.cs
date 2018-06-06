@@ -72,6 +72,20 @@ namespace XForm.IO
 
             streamProvider.WriteAllText(Path.Combine(tableRootPath, ConfigQueryPath), metadata.Query);
 
+            if (metadata.Partitions.Count > 0)
+            {
+                using (ITabularWriter pw = TabularFactory.BuildWriter(streamProvider.OpenWrite(Path.Combine(tableRootPath, PartitionsFileName)), PartitionsFileName))
+                {
+                    pw.SetColumns(new string[] { "Name" });
+
+                    foreach(string partition in metadata.Partitions)
+                    {
+                        pw.Write(block.GetCopy(partition));
+                        pw.NextRow();
+                    }
+                }
+            }
+
             s_Cache.Add($"{streamProvider}|{tableRootPath}", metadata);
         }
 

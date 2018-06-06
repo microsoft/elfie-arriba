@@ -172,7 +172,7 @@ namespace XForm.Types
         {
             // NOTE: Don't cast XArray.Array here; writers which wrap PrimitiveArrayWriter pass XArrays with the right row count
             // but unrelated values here.
-            return (_bytesWritten + (_bytesPerItem * xarray.Count)) < BinaryTableWriter.ColumnFileSizeLimit;
+            return (_bytesWritten + (_bytesPerItem * xarray.Count)) <= BinaryTableWriter.ColumnFileSizeLimit;
         }
 
         public void Append(XArray array)

@@ -106,7 +106,7 @@ namespace XForm.Types
 
         public bool CanAppend(XArray xarray)
         {
-            return (_bytesWritten + xarray.Count) < BinaryTableWriter.ColumnFileSizeLimit;
+            return (_bytesWritten + xarray.Count) <= BinaryTableWriter.ColumnFileSizeLimit;
         }
 
         public void Append(XArray xarray)

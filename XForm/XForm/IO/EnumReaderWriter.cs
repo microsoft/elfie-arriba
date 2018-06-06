@@ -218,10 +218,12 @@ namespace XForm.IO
         {
             if(_dictionary == null)
             {
+                // If we're no longer in enum mode, verify the raw values fit
                 return _valueWriter.CanAppend(xarray);
             }
             else
             {
+                // Otherwise, verify the indices fit
                 return _rowIndexWriter.CanAppend(xarray);
             }
         }

@@ -106,7 +106,7 @@ namespace XForm
             // Find the latest already built result, and associated query
             ItemVersions tableVersions = innerContext.StreamProvider.ItemVersions(LocationType.Table, tableName);
             ItemVersion latestTable = tableVersions.LatestBeforeCutoff(CrawlType.Full, outerContext.RequestedAsOfDateTime);
-            string latestTableQuery = "";
+            string latestTableQuery = null;
             if (latestTable != null)
             {
                 latestTableQuery = TableMetadataSerializer.Read(outerContext.StreamProvider, latestTable.Path).Query;
@@ -144,8 +144,8 @@ namespace XForm
             // Get the path we're either reading or building
             string tablePath = innerContext.StreamProvider.Path(LocationType.Table, tableName, CrawlType.Full, innerContext.NewestDependency);
 
-            // If sources rebuilt, the query changed, or the latest output isn't up-to-date, rebuild it
-            if (innerContext.RebuiltSomething || (latestTableQuery != null && xql != latestTableQuery) || IsOutOfDate(latestTable.AsOfDate, innerContext.NewestDependency))
+            // If we can rebuild this table and we need to (sources rebuilt, the query changed, or the latest output isn't up-to-date), rebuild it
+            if (builder != null && (latestTable == null || innerContext.RebuiltSomething || (latestTableQuery != null && xql != latestTableQuery) || IsOutOfDate(latestTable.AsOfDate, innerContext.NewestDependency)))
             {
                 // If we're not running now, just return how to build it
                 if (deferred) return builder;
@@ -171,6 +171,9 @@ namespace XForm
             // Find the latest source of this type
             ItemVersions sourceVersions = context.StreamProvider.ItemVersions(LocationType.Source, tableName);
             ItemVersion latestFullSource = sourceVersions.LatestBeforeCutoff(CrawlType.Full, context.RequestedAsOfDateTime);
+
+            // If there are no sources, there's nothing to rebuild from
+            if (sourceVersions.Versions == null || sourceVersions.Versions.Count == 0) return null;
 
             // Find the latest already converted table
             ItemVersions tableVersions = context.StreamProvider.ItemVersions(LocationType.Table, tableName);

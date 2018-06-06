@@ -7,11 +7,11 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.IO.Compression;
-
+using System.Linq;
 using Elfie.Test;
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-
+using XForm.Data;
 using XForm.Extensions;
 using XForm.IO;
 using XForm.IO.StreamProvider;
@@ -366,6 +366,50 @@ namespace XForm.Test
             //  'choose' will cause two passes of where; where must resume after reset correctly.
             //  'limit' asks for partial rows, forcing paging to occur.
             Assert.AreEqual(5, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [ClientBrowser]: \"Edge\"\r\nchoose Max [ResponseBytes] [ClientOs]\r\nlimit 5").Count());
+        }
+
+        [TestMethod]
+        public void Database_PartitionedBuildAndRead()
+        {
+            long currentFileLimit = BinaryTableWriter.ColumnFileSizeLimit;
+            try
+            {
+                string tablePath = @"Table\MultiPartition\Full\2018.06.06 00.00.00Z";
+                int length = 10 * 1024 * 1024;
+
+                // Set limit to 10MB
+                BinaryTableWriter.ColumnFileSizeLimit = length;
+
+                // Build a table with 10 million integers
+                IXTable table = SampleDatabase.XDatabaseContext.FromArrays(length)
+                    .WithColumn("ID", Enumerable.Range(0, length).ToArray())
+                    .Query($@"write ""{tablePath}""", SampleDatabase.XDatabaseContext);
+                
+                table.RunAndDispose();
+
+                // Verify there are multiple partitions created (four should exactly fit the rows)
+                Assert.IsTrue(SampleDatabase.XDatabaseContext.StreamProvider.Exists($@"{tablePath}\\0\\Schema.csv"));
+                Assert.IsTrue(SampleDatabase.XDatabaseContext.StreamProvider.Exists($@"{tablePath}\\1\\Schema.csv"));
+                Assert.IsTrue(SampleDatabase.XDatabaseContext.StreamProvider.Exists($@"{tablePath}\\2\\Schema.csv"));
+                Assert.IsTrue(SampleDatabase.XDatabaseContext.StreamProvider.Exists($@"{tablePath}\\3\\Schema.csv"));
+
+                // Verify no extra partitions
+                Assert.IsFalse(SampleDatabase.XDatabaseContext.StreamProvider.Exists($@"{tablePath}\\4\\Schema.csv"));
+
+                // Verify Partitions.csv at root (only)
+                Assert.IsTrue(SampleDatabase.XDatabaseContext.StreamProvider.Exists($@"{tablePath}\\Partitions.csv"));
+                Assert.IsFalse(SampleDatabase.XDatabaseContext.StreamProvider.Exists($@"{tablePath}\\2\\Partitions.csv"));
+
+                // Read the table; verify 10M rows reported
+                Assert.AreEqual(length, SampleDatabase.XDatabaseContext.Query("read MultiPartition").RunAndDispose().RowCount);
+
+                // Test a where clause crossing partitions
+                Assert.AreEqual(5242880, SampleDatabase.XDatabaseContext.Query("read MultiPartition\r\nwhere [ID] < 5242880").RunAndDispose().RowCount);
+            }
+            finally
+            {
+                BinaryTableWriter.ColumnFileSizeLimit = currentFileLimit;
+            }
         }
     }
 }
