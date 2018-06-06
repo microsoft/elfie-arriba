@@ -21,6 +21,8 @@ namespace XForm.Verbs
 
         public IXTable Build(IXTable source, XDatabaseContext context)
         {
+            // NOTE: Not parallel to build only one copy of the JoinTo table.
+
             string sourceColumnName = context.Parser.NextColumnName(source);
             IXTable joinToSource = context.Parser.NextTableSource();
             string joinToColumn = context.Parser.NextColumnName(joinToSource);

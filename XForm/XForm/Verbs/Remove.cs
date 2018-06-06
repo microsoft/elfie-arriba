@@ -24,7 +24,8 @@ namespace XForm.Verbs
                 columnNames.Add(context.Parser.NextColumnName(source));
             }
 
-            return new Remove(source, columnNames);
+            // Remove can be evaluated in parallel, so keep parallel
+            return source.WrapParallel(context.Parser, (part) => new Remove(part, columnNames));
         }
     }
 

@@ -171,6 +171,9 @@ namespace XForm.Types
             _streamProvider = streamProvider;
             _bytesReader = TypeProviderFactory.TryGetColumnReader(streamProvider, typeof(byte), Path.Combine(columnPath, "V.s.bin"), option, typeof(String8ColumnReader));
             _positionsReader = TypeProviderFactory.TryGetColumnReader(streamProvider, typeof(int), Path.Combine(columnPath, "Vp.i32.bin"), option, typeof(String8ColumnReader));
+
+            if (_bytesReader == null) throw new IOException($"No value bytes found in {columnPath}.");
+            if (_positionsReader == null) throw new IOException($"No value positions found in {columnPath}.");
         }
 
         public int Count => _positionsReader.Count;
@@ -293,6 +296,21 @@ namespace XForm.Types
         }
 
         public Type WritingAsType => typeof(String8);
+
+        public bool CanAppend(XArray xarray)
+        {
+            if (!_positionsWriter.CanAppend(xarray)) return false;
+
+            long bytesThisTime = 0;
+            String8[] array = (String8[])xarray.Array;
+            for (int i = 0; i < xarray.Count; ++i)
+            {
+                String8 value = array[xarray.Index(i)];
+                bytesThisTime += value.Length;
+            }
+
+            return (_position + bytesThisTime) <= BinaryTableWriter.ColumnFileSizeLimit;
+        }
 
         public void Append(XArray xarray)
         {

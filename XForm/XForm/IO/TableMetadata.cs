@@ -17,19 +17,22 @@ namespace XForm.IO
 {
     public class TableMetadata
     {
-        public int RowCount { get; set; }
+        public long RowCount { get; set; }
         public string Query { get; set; }
         public List<ColumnDetails> Schema { get; set; }
+        public List<string> Partitions { get; set; }
 
         public TableMetadata()
         {
             this.Schema = new List<ColumnDetails>();
+            this.Partitions = new List<string>();
         }
 
         public TableMetadata(int rowCount, List<ColumnDetails> schema)
         {
             this.RowCount = rowCount;
             this.Schema = schema;
+            this.Partitions = new List<string>();
         }
     }
 
@@ -37,6 +40,7 @@ namespace XForm.IO
     {
         private const string SchemaFileName = "Schema.csv";
         private const string MetadataFileName = "Metadata.csv";
+        private const string PartitionsFileName = "Partitions.csv";
         private const string ConfigQueryPath = "Config.xql";
 
         private static Cache<TableMetadata> s_Cache = new Cache<TableMetadata>();
@@ -62,11 +66,25 @@ namespace XForm.IO
 
                 mw.Write(block.GetCopy("RowCount"));
                 mw.Write(String8.Empty);
-                mw.Write(metadata.RowCount);
+                mw.Write(String8.FromNumber(metadata.RowCount, new byte[20]));
                 mw.NextRow();
             }
 
             streamProvider.WriteAllText(Path.Combine(tableRootPath, ConfigQueryPath), metadata.Query);
+
+            if (metadata.Partitions.Count > 0)
+            {
+                using (ITabularWriter pw = TabularFactory.BuildWriter(streamProvider.OpenWrite(Path.Combine(tableRootPath, PartitionsFileName)), PartitionsFileName))
+                {
+                    pw.SetColumns(new string[] { "Name" });
+
+                    foreach(string partition in metadata.Partitions)
+                    {
+                        pw.Write(block.GetCopy(partition));
+                        pw.NextRow();
+                    }
+                }
+            }
 
             s_Cache.Add($"{streamProvider}|{tableRootPath}", metadata);
         }
@@ -118,6 +136,20 @@ namespace XForm.IO
             }
 
             metadata.Query = streamProvider.ReadAllText(Path.Combine(tableRootPath, ConfigQueryPath));
+
+            string partitionsPath = Path.Combine(tableRootPath, PartitionsFileName);
+            if(streamProvider.Attributes(partitionsPath).Exists)
+            {
+                using (ITabularReader pr = TabularFactory.BuildReader(streamProvider.OpenRead(partitionsPath), PartitionsFileName))
+                {
+                    int nameIndex = pr.ColumnIndex("Name");
+
+                    while (pr.NextRow())
+                    {
+                        metadata.Partitions.Add(pr.Current(nameIndex).ToString());
+                    }
+                }
+            }
 
             return metadata;
         }

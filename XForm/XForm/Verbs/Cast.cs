@@ -19,7 +19,8 @@ namespace XForm.Verbs
 
         public IXTable Build(IXTable source, XDatabaseContext context)
         {
-            return new Cast(source, _castFunctionBuilder.Build(source, context));
+            // Cast can be evaluated in parallel, so keep parallel
+            return source.WrapParallel(context.Parser, (part) => new Cast(part, _castFunctionBuilder.Build(part, context)));
         }
     }
 

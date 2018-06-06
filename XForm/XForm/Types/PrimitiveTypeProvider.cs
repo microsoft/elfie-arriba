@@ -158,6 +158,7 @@ namespace XForm.Types
         private int _bytesPerItem;
         private Stream _stream;
         private byte[] _bytesBuffer;
+        private long _bytesWritten;
 
         public PrimitiveArrayWriter(Stream stream)
         {
@@ -167,13 +168,21 @@ namespace XForm.Types
 
         public Type WritingAsType => typeof(T);
 
+        public bool CanAppend(XArray xarray)
+        {
+            // NOTE: Don't cast XArray.Array here; writers which wrap PrimitiveArrayWriter pass XArrays with the right row count
+            // but unrelated values here.
+            return (_bytesWritten + (_bytesPerItem * xarray.Count)) <= BinaryTableWriter.ColumnFileSizeLimit;
+        }
+
         public void Append(XArray array)
         {
-            Allocator.AllocateToSize(ref _bytesBuffer, _bytesPerItem * array.Count);
+            int bytesToWrite = _bytesPerItem * array.Count;
+            Allocator.AllocateToSize(ref _bytesBuffer, bytesToWrite);
 
             if (array.Selector.Indices == null && array.Selector.IsSingleValue == false)
             {
-                Buffer.BlockCopy(array.Array, _bytesPerItem * array.Selector.StartIndexInclusive, _bytesBuffer, 0, _bytesPerItem * array.Count);
+                Buffer.BlockCopy(array.Array, _bytesPerItem * array.Selector.StartIndexInclusive, _bytesBuffer, 0, bytesToWrite);
             }
             else
             {
@@ -184,7 +193,8 @@ namespace XForm.Types
                 }
             }
 
-            _stream.Write(_bytesBuffer, 0, _bytesPerItem * array.Count);
+            _stream.Write(_bytesBuffer, 0, bytesToWrite);
+            _bytesWritten += bytesToWrite;
         }
 
         public void Dispose()

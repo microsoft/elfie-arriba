@@ -36,13 +36,13 @@ namespace XForm.Test.Query
                     pipeline = SampleDatabase.XDatabaseContext.Query(configurationLine, innerValidator);
 
                     // Run without requesting any columns. Validate.
-                    actualRowCount = pipeline.RunWithoutDispose(token);
+                    actualRowCount = pipeline.RunWithoutDispose(token).RowCount;
                     Assert.AreEqual(expectedRowCount, actualRowCount, "XTable should return correct count with no requested columns.");
 
                     // Reset; Request all columns. Validate.
                     pipeline.Reset();
                     pipeline = SampleDatabase.XDatabaseContext.Query("write \"Sample.output.csv\"", pipeline);
-                    actualRowCount = pipeline.RunWithoutDispose(token);
+                    actualRowCount = pipeline.RunWithoutDispose(token).RowCount;
                 }
                 finally
                 {

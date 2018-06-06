@@ -20,6 +20,11 @@ namespace XForm.Extensions
     {
         public const string DateTimeFolderFormat = "yyyy.MM.dd HH.mm.ssZ";
 
+        public static bool Exists(this IStreamProvider streamProvider, string logicalPath)
+        {
+            return streamProvider.Attributes(logicalPath).Exists;
+        }
+
         public static string Path(this IStreamProvider streamProvider, LocationType type, string tableName, string extension)
         {
             return System.IO.Path.Combine(type.ToString(), tableName + extension);

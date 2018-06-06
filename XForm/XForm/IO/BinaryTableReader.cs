@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
@@ -138,12 +139,10 @@ namespace XForm.IO
         private ArraySelector _currentSelector;
         private ArraySelector _currentEnumerateSelector;
 
-        public BinaryTableReader(IStreamProvider streamProvider, string tableRootPath)
+        private BinaryTableReader(IStreamProvider streamProvider, string tableRootPath)
         {
             TablePath = tableRootPath;
-
-            // Read metadata
-            _metadata = TableMetadataSerializer.Read(streamProvider, TablePath);
+            _metadata = TableMetadataSerializer.Read(streamProvider, tableRootPath);
 
             // Construct columns (files aren't opened until columns are subscribed to)
             _columns = new BinaryReaderColumn[_metadata.Schema.Count];
@@ -155,12 +154,28 @@ namespace XForm.IO
             Reset();
         }
 
+        public static IXTable Build(IStreamProvider streamProvider, string tableRootPath)
+        {
+            TableMetadata metadata = TableMetadataSerializer.Read(streamProvider, tableRootPath);
+
+            if (metadata.Partitions.Count > 0)
+            {
+                // If this table has partitions, load the parts (*allowing* recursive partitioning)
+                // This allows partitioning by a column where one column value still will hit the size limit.
+                return ConcatenatedTable.Build(metadata.Partitions.Select((partition) => BinaryTableReader.Build(streamProvider, Path.Combine(tableRootPath, partition))));
+            }
+            else
+            {
+                return new BinaryTableReader(streamProvider, tableRootPath);
+            }
+        }
+
         public ArraySelector CurrentSelector => _currentEnumerateSelector;
         public IReadOnlyList<IXColumn> Columns => _columns;
 
         public string TablePath { get; private set; }
         public string Query => _metadata.Query;
-        public int Count => _metadata.RowCount;
+        public int Count => (int)_metadata.RowCount;
         public int CurrentRowCount { get; private set; }
 
         public int Next(int desiredCount, CancellationToken cancellationToken)

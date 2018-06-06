@@ -37,23 +37,26 @@ namespace XForm.Test.Query
 
             // Verbs
             Assert.AreEqual(s_verbs, Values(suggester.Suggest("")));
-            Assert.AreEqual(string.Join("|", XqlParser.SupportedVerbs.Where((s) => s.StartsWith("re", System.StringComparison.OrdinalIgnoreCase)).OrderBy((s) => s)), Values(suggester.Suggest("re")));
+            Assert.AreEqual(string.Join("|", XqlParser.SupportedVerbs.Where((s) => s.IndexOf("re", System.StringComparison.OrdinalIgnoreCase) != -1).OrderBy((s) => s)), Values(suggester.Suggest("re")));
 
-            // Valid
-            Assert.AreEqual(null, Values(suggester.Suggest("read")));
+            // Valid, other values available
+            Assert.AreEqual("read|readrange", Values(suggester.Suggest("read")));
 
             // Tables
             Assert.AreEqual(s_sources, Values(suggester.Suggest("read ")));
 
-            // Valid
-            Assert.AreEqual(null, Values(suggester.Suggest($"read WebRequest")));
+            // Tables, filtered 
+            Assert.AreEqual("WebRequest.BigServers|WebRequest.BigServers.Direct", Values(suggester.Suggest($"read Request.Big")));
+
+            // Valid, no alternatives
+            Assert.AreEqual(null, Values(suggester.Suggest($"read WebRequest.NullableHandling")));
 
             // Verbs (newline)
             Assert.AreEqual(s_verbs, Values(suggester.Suggest($"read WebRequest\r\n")));
             Assert.AreEqual(s_verbs, Values(suggester.Suggest($"read WebRequest\r\n ")));
 
             // Valid
-            Assert.AreEqual(null, Values(suggester.Suggest($@"
+            Assert.AreEqual("!=|:|::||>|<|<=|<>|=|==|>|>=", Values(suggester.Suggest($@"
                 read WebRequest
                 where [HttpStatus]")));
 
@@ -112,7 +115,7 @@ namespace XForm.Test.Query
                 select Trim(Cast(Cast(5, Int32), String8)) AS [Fiver]").IsValid);
 
             // Valid
-            Assert.AreEqual(null, Values(suggester.Suggest($@"
+            Assert.AreEqual(s_selectListOptions, Values(suggester.Suggest($@"
                 read WebRequest
                 select [HttpStatus]")));
 
@@ -161,13 +164,17 @@ namespace XForm.Test.Query
             Assert.AreEqual("where {Expression}", result.Context.Usage);
             Assert.AreEqual("[BadColumnName]", result.Context.InvalidValue);
             Assert.AreEqual("[Column]", result.Context.InvalidValueCategory);
-            Assert.AreEqual("", string.Join("|", result.Context.ValidValues));
+            Assert.AreEqual("[ClientBrowser]|[ClientIP]|[ClientOs]|[ClientRegion]|[DataCenter]|[DaysSinceJoined]|[EventTime]|[HttpMethod]|[HttpStatus]|[ID]|[IsPremiumUser]|[Protocol]|[RequestBytes]|[ResponseBytes]|[ServerName]|[ServerPort]|[TimeTakenMs]|[UriStem]|[UserGuid]|[UserName]|[WasCachedResponse]|[WasEncrypted]", string.Join("|", result.Context.ValidValues));
         }
 
         private static string Values(SuggestResult result)
         {
-            if (result.Context == null || result.Context.ValidValues == null) return null;
-            return string.Join("|", result.Context.ValidValues.OrderBy((s) => s));
+            if (result.Context == null) return null;
+
+            var values = result.Context.FilteredValues;
+            if (values == null) return null;
+
+            return string.Join("|", result.Context.FilteredValues);
         }
     }
 }

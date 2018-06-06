@@ -12,13 +12,37 @@ namespace XForm.Types
 {
     public interface IColumnReader : IDisposable
     {
+        /// <summary>
+        ///  Row Count in read file.
+        /// </summary>
         int Count { get; }
+
+        /// <summary>
+        ///  Read the rows for the given selector into an XArray.
+        /// </summary>
+        /// <param name="selector">ArraySelector for desired rows.</param>
+        /// <returns>XArray with values for selected rows.</returns>
         XArray Read(ArraySelector selector);
     }
 
     public interface IColumnWriter : IDisposable
     {
+        /// <summary>
+        ///  Type of the values being written.
+        /// </summary>
         Type WritingAsType { get; }
+
+        /// <summary>
+        ///  Check whether the new values can be written within the file size limit for the column.
+        /// </summary>
+        /// <param name="xarray">XArray of values to write</param>
+        /// <returns>True if the new values fit in the file size limit for the column type, False otherwise.</returns>
+        bool CanAppend(XArray xarray);
+
+        /// <summary>
+        ///  Append the provided values to the file.
+        /// </summary>
+        /// <param name="xarray">XArray with current set of values</param>
         void Append(XArray xarray);
     }
 

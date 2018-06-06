@@ -86,7 +86,7 @@ namespace XForm
                 && previousLatest.TableVersion.AsOfDate <= outerContext.RequestedAsOfDateTime)
             {
                 outerContext.NewestDependency = previousLatest.TableVersion.AsOfDate;
-                return new BinaryTableReader(outerContext.StreamProvider, previousLatest.TableVersion.Path);
+                return BinaryTableReader.Build(outerContext.StreamProvider, previousLatest.TableVersion.Path);
             }
 
             // Create a context to track what we're building now
@@ -106,13 +106,10 @@ namespace XForm
             // Find the latest already built result, and associated query
             ItemVersions tableVersions = innerContext.StreamProvider.ItemVersions(LocationType.Table, tableName);
             ItemVersion latestTable = tableVersions.LatestBeforeCutoff(CrawlType.Full, outerContext.RequestedAsOfDateTime);
-            string latestTableQuery = "";
+            string latestTableQuery = null;
             if (latestTable != null)
             {
-                using (BinaryTableReader reader = new BinaryTableReader(outerContext.StreamProvider, latestTable.Path))
-                {
-                    latestTableQuery = reader.Query;
-                }
+                latestTableQuery = TableMetadataSerializer.Read(outerContext.StreamProvider, latestTable.Path).Query;
             }
 
             // Set the dependency date to the latest table we've already built (if any)
@@ -147,8 +144,8 @@ namespace XForm
             // Get the path we're either reading or building
             string tablePath = innerContext.StreamProvider.Path(LocationType.Table, tableName, CrawlType.Full, innerContext.NewestDependency);
 
-            // If sources rebuilt, the query changed, or the latest output isn't up-to-date, rebuild it
-            if (innerContext.RebuiltSomething || (latestTableQuery != null && xql != latestTableQuery) || IsOutOfDate(latestTable.AsOfDate, innerContext.NewestDependency))
+            // If we can rebuild this table and we need to (sources rebuilt, the query changed, or the latest output isn't up-to-date), rebuild it
+            if (builder != null && (latestTable == null || innerContext.RebuiltSomething || (latestTableQuery != null && xql != latestTableQuery) || IsOutOfDate(latestTable.AsOfDate, innerContext.NewestDependency)))
             {
                 // If we're not running now, just return how to build it
                 if (deferred) return builder;
@@ -156,7 +153,7 @@ namespace XForm
                 // Otherwise, build it now; we'll return the query to read the output
                 innerContext.CurrentQuery = xql;
                 Trace.WriteLine($"COMPUTE: [{innerContext.NewestDependency.ToString(StreamProviderExtensions.DateTimeFolderFormat)}] {tableName}");
-                new BinaryTableWriter(builder, innerContext, tablePath).RunAndDispose();
+                BinaryTableWriter.Build(builder, innerContext, tablePath).RunAndDispose();
                 innerContext.RebuiltSomething = true;
             }
 
@@ -164,7 +161,7 @@ namespace XForm
             innerContext.Pop(outerContext);
 
             _currentTableVersions.Add(tableName, new LatestTableForCutoff(outerContext.RequestedAsOfDateTime, new ItemVersion(LocationType.Table, tableName, CrawlType.Full, innerContext.NewestDependency)));
-            return new BinaryTableReader(innerContext.StreamProvider, tablePath);
+            return BinaryTableReader.Build(innerContext.StreamProvider, tablePath);
         }
 
         public IXTable ReadSource(string tableName, XDatabaseContext context)
@@ -174,6 +171,9 @@ namespace XForm
             // Find the latest source of this type
             ItemVersions sourceVersions = context.StreamProvider.ItemVersions(LocationType.Source, tableName);
             ItemVersion latestFullSource = sourceVersions.LatestBeforeCutoff(CrawlType.Full, context.RequestedAsOfDateTime);
+
+            // If there are no sources, there's nothing to rebuild from
+            if (sourceVersions.Versions == null || sourceVersions.Versions.Count == 0) return null;
 
             // Find the latest already converted table
             ItemVersions tableVersions = context.StreamProvider.ItemVersions(LocationType.Table, tableName);
@@ -187,7 +187,7 @@ namespace XForm
             if (latestBuiltTable != null && (latestFullSource == null || !IsOutOfDate(latestBuiltTable.AsOfDate, latestFullSource.AsOfDate)))
             {
                 // If the table is current, reuse it
-                sources.Add(new BinaryTableReader(context.StreamProvider, latestBuiltTable.Path));
+                sources.Add(BinaryTableReader.Build(context.StreamProvider, latestBuiltTable.Path));
                 incrementalNeededAfterCutoff = latestBuiltTable.AsOfDate;
             }
             else
@@ -210,9 +210,7 @@ namespace XForm
             context.NewestDependency = latestComponent;
 
             // Return the source (if a single) or concatenated group (if multiple parts)
-            if (sources.Count == 1) return sources[0];
-
-            return new ConcatenatingReader(sources);
+            return ConcatenatedTable.Build(sources);
         }
 
         private bool IsOutOfDate(DateTime outputWhenModifiedUtc, DateTime inputsWhenModifiedUtc)
@@ -310,7 +308,7 @@ namespace XForm
                         outputPath = Path.Combine(context.StreamProvider.Path(LocationType.Report, tableName, CrawlType.Full, context.NewestDependency), $"Report.{outputFormat}");
                         if (outputFormat.Equals("xform", StringComparison.OrdinalIgnoreCase))
                         {
-                            new BinaryTableWriter(builder, context, outputPath).RunAndDispose();
+                            BinaryTableWriter.Build(builder, context, outputPath).RunAndDispose();
                         }
                         else
                         {
