@@ -49,6 +49,7 @@ namespace XForm.Types
                 if (sourceType == typeof(string)) return new StringToString8Converter(defaultValue).StringToString8;
                 if (sourceType == typeof(DateTime)) return new ToString8Converter<DateTime>(defaultValue, 20, String8.FromDateTime).Convert;
                 if (sourceType == typeof(bool)) return new ToString8Converter<bool>(defaultValue, 0, (value, buffer, index) => String8.FromBoolean(value)).Convert;
+                if (sourceType == typeof(TimeSpan)) return new ToString8Converter<TimeSpan>(defaultValue, 21, String8.FromTimeSpan).Convert;
 
                 if (sourceType == typeof(sbyte)) return new ToString8Converter<sbyte>(defaultValue, 4, (value, buffer, index) => String8.FromNumber(value, buffer, index)).Convert;
                 if (sourceType == typeof(byte)) return new ToString8Converter<byte>(defaultValue, 3, (value, buffer, index) => String8.FromNumber(value, buffer, index)).Convert;
@@ -58,6 +59,9 @@ namespace XForm.Types
                 if (sourceType == typeof(uint)) return new ToString8Converter<uint>(defaultValue, 10, (value, buffer, index) => String8.FromNumber(value, buffer, index)).Convert;
                 if (sourceType == typeof(long)) return new ToString8Converter<long>(defaultValue, 21, (value, buffer, index) => String8.FromNumber(value, buffer, index)).Convert;
                 if (sourceType == typeof(ulong)) return new ToString8Converter<ulong>(defaultValue, 20, (value, buffer, index) => String8.FromNumber(value, false, buffer, index)).Convert;
+
+                if (sourceType == typeof(float)) return new ToString8Converter<float>(defaultValue, 21, (value, buffer, index) => String8.FromNumber(value, buffer, index)).Convert;
+                if (sourceType == typeof(double)) return new ToString8Converter<double>(defaultValue, 21, (value, buffer, index) => String8.FromNumber(value, buffer, index)).Convert;
             }
             else if (sourceType == typeof(String8))
             {
@@ -72,6 +76,11 @@ namespace XForm.Types
                 else if (targetType == typeof(DateTime))
                 {
                     return new FromString8Converter<DateTime>(defaultValue, (String8 value, out DateTime result) => value.TryToDateTime(out result)).Convert;
+                }
+                else if (targetType == typeof(TimeSpan))
+                {
+                    // Support TimeSpan conversions from .NET Format (DDD.HH:MM:SS.mmm) and 'friendly' format (24h, 7d)
+                    return new FromString8Converter<TimeSpan>(defaultValue, (String8 value, out TimeSpan result) => value.TryToTimeSpanFriendly(out result)).Convert;
                 }
                 else if (targetType == typeof(bool))
                 {
@@ -100,6 +109,14 @@ namespace XForm.Types
                 else if (targetType == typeof(sbyte))
                 {
                     return new FromString8Converter<sbyte>(defaultValue, (String8 value, out sbyte result) => value.TryToSByte(out result)).Convert;
+                }
+                else if (targetType == typeof(double))
+                {
+                    return new FromString8Converter<double>(defaultValue, (String8 value, out double result) => value.TryToDouble(out result)).Convert;
+                }
+                else if (targetType == typeof(float))
+                {
+                    return new FromString8Converter<float>(defaultValue, (String8 value, out float result) => value.TryToFloat(out result)).Convert;
                 }
             }
 
@@ -154,6 +171,9 @@ namespace XForm.Types
             _streamProvider = streamProvider;
             _bytesReader = TypeProviderFactory.TryGetColumnReader(streamProvider, typeof(byte), Path.Combine(columnPath, "V.s.bin"), option, typeof(String8ColumnReader));
             _positionsReader = TypeProviderFactory.TryGetColumnReader(streamProvider, typeof(int), Path.Combine(columnPath, "Vp.i32.bin"), option, typeof(String8ColumnReader));
+
+            if (_bytesReader == null) throw new IOException($"No value bytes found in {columnPath}.");
+            if (_positionsReader == null) throw new IOException($"No value positions found in {columnPath}.");
         }
 
         public int Count => _positionsReader.Count;
@@ -276,6 +296,21 @@ namespace XForm.Types
         }
 
         public Type WritingAsType => typeof(String8);
+
+        public bool CanAppend(XArray xarray)
+        {
+            if (!_positionsWriter.CanAppend(xarray)) return false;
+
+            long bytesThisTime = 0;
+            String8[] array = (String8[])xarray.Array;
+            for (int i = 0; i < xarray.Count; ++i)
+            {
+                String8 value = array[xarray.Index(i)];
+                bytesThisTime += value.Length;
+            }
+
+            return (_position + bytesThisTime) <= BinaryTableWriter.ColumnFileSizeLimit;
+        }
 
         public void Append(XArray xarray)
         {

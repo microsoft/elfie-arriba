@@ -17,9 +17,13 @@ namespace XForm.Verbs
 
         public IXTable Build(IXTable source, XDatabaseContext context)
         {
-            return new Set(source,
-                context.Parser.NextOutputColumnName(source),
-                context.Parser.NextColumn(source, context));
+            // Set can be evaluated in parallel, so keep parallel
+            return source.WrapParallel(context.Parser, (part) =>
+                new Set(
+                    part,
+                    context.Parser.NextOutputColumnName(part),
+                    context.Parser.NextColumn(part, context))
+            );
         }
     }
 

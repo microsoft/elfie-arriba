@@ -162,9 +162,12 @@ static int IndexOfAllInternal(Byte* text, Int32 textIndex, Int32 textLength, Byt
 		__m128i textBlock = _mm_loadu_si128((__m128i*)(&text[i]));
 
 		// Left ToLowerInvariant
-		uppercaseMask = _mm_cmpistrm(uppercaseRange, textBlock, Utf8RangeMaskMode);
-		corrector = _mm_and_si128(uppercaseMask, caseConvert);
-		textBlock = _mm_xor_si128(textBlock, corrector);
+		if (ignoreCase)
+		{
+			uppercaseMask = _mm_cmpistrm(uppercaseRange, textBlock, Utf8RangeMaskMode);
+			corrector = _mm_and_si128(uppercaseMask, caseConvert);
+			textBlock = _mm_xor_si128(textBlock, corrector);
+		}
 
 		int matchOffset = _mm_cmpestri(searchForBlock, valueLength, textBlock, lengthLeft, Utf8IndexOfMode);
 		if (matchOffset <= isFullyMatchedAtIndex)
@@ -200,6 +203,9 @@ namespace XForm
 
 		Int32 String8N::IndexOfAll(array<Byte>^ content, Int32 index, Int32 length, array<Byte>^ value, Int32 valueIndex, Int32 valueLength, Boolean ignoreCase, array<Int32>^ matchArray)
 		{
+			if (content == nullptr || content->Length == 0) return 0;
+			if (value == nullptr || value->Length == 0) return 0;
+
 			pin_ptr<Byte> pContent = &content[0];
 			pin_ptr<Byte> pValue = &value[valueIndex];
 			pin_ptr<Int32> pMatchArray = &matchArray[0];

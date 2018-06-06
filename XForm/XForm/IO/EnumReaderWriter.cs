@@ -214,6 +214,20 @@ namespace XForm.IO
 
         public Type WritingAsType => _valueWriter.WritingAsType;
 
+        public bool CanAppend(XArray xarray)
+        {
+            if(_dictionary == null)
+            {
+                // If we're no longer in enum mode, verify the raw values fit
+                return _valueWriter.CanAppend(xarray);
+            }
+            else
+            {
+                // Otherwise, verify the indices fit
+                return _rowIndexWriter.CanAppend(xarray);
+            }
+        }
+
         public void Append(XArray xarray)
         {
             // If we already had too many values, we're just writing them out normally
@@ -325,6 +339,7 @@ namespace XForm.IO
 
             // Build a reader for the values (require caching if we we have row indices)
             IColumnReader valueReader = TypeProviderFactory.TryGetColumnReader(streamProvider, columnType, columnPath, (rowIndexReader != null ? CachingOption.Always : option), typeof(EnumReader));
+            if (valueReader == null) throw new IOException($"No values found in {columnPath}.");
 
             // If there were row indices, wrap the column. Otherwise, return as-is.
             if (rowIndexReader != null) return new EnumReader(valueReader, rowIndexReader);

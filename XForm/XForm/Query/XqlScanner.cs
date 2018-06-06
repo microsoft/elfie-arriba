@@ -20,24 +20,49 @@ namespace XForm.Query
         NextTokenHint
     }
 
+    public class Position
+    {
+        public int Index { get; set; }
+        public int LineNumber { get; set; }
+        public int LastNewlineIndex { get; set; }
+        public int CharInLine => (Index - LastNewlineIndex);
+
+        public Position(int index, int lineNumber, int lastNewlineIndex)
+        {
+            this.Index = index;
+            this.LineNumber = lineNumber;
+            this.LastNewlineIndex = lastNewlineIndex;
+        }
+
+        public Position(Position other) : this(other.Index, other.LineNumber, other.LastNewlineIndex)
+        { }
+
+        public override string ToString()
+        {
+            return $"({LineNumber}, {CharInLine})";
+        }
+    }
+
     public class Token
     {
-        public TokenType Type { get; set; }
-        public string Value { get; set; }
-        public string WhitespacePrefix { get; set; }
-        public bool IsWrapped { get; set; }
+        public TokenType Type { get; set; }             // Type of current token
+        public string Value { get; set; }               // The interpreted value (column name without braces, value unquoted and with escaped quotes interpreted, ...)
+        public string RawValue { get; set; }            // The exact value from the query being parsed
+        public string WhitespacePrefix { get; set; }    // The whitespace before this token, if any
+        public bool IsWrapped { get; set; }             // Whether this token was wrapped (in quotes or braces), and so had an explicit end marker
 
-        public int LineNumber { get; set; }
-        public int CharInLine { get; set; }
-        public int Index { get; set; }
+        public Position Position { get; set; }
 
-        public Token(int currentLineNumber)
+        public Token(Position position)
         {
             this.Type = TokenType.End;
             this.Value = "";
+            this.RawValue = "";
             this.WhitespacePrefix = "";
             this.IsWrapped = false;
-            this.LineNumber = currentLineNumber;
+
+            // Make a snapshot of the other position
+            this.Position = new Position(position);
         }
     }
 
@@ -57,24 +82,28 @@ namespace XForm.Query
         private static HashSet<char> s_charactersRequiringEscaping;
 
         private string Text { get; set; }
-        private int CurrentIndex { get; set; }
-        private int LastNewlineIndex { get; set; }
-        private int CurrentLineNumber { get; set; }
+        private Position Position { get; set; }
 
         public Token Current { get; set; }
 
         static XqlScanner()
         {
-            s_charactersRequiringEscaping = new HashSet<char>(new char[] { ' ', '\t', '"', '[', ']', '(', ')', ',', '?' });
+            s_charactersRequiringEscaping = new HashSet<char>(new char[] { ' ', '\t', '"', '[', ']', '(', ')', ',', '~' });
         }
 
         public XqlScanner(string xqlQuery)
         {
             this.Text = xqlQuery;
-            Current = new Token(1) { Type = TokenType.Newline, Index = 0 };
-            LastNewlineIndex = -1;
-            CurrentLineNumber = 1;
+            this.Position = new Position(0, 1, -1);
+            Current = new Token(this.Position) { Type = TokenType.Newline };
             Next();
+        }
+
+        public void RewindTo(Position position)
+        {
+            // Go back to the start of the token and re-read it
+            this.Position = new Position(position);
+            InnerNext();
         }
 
         public bool Next()
@@ -104,25 +133,21 @@ namespace XForm.Query
 
         public bool InnerNext()
         {
-            this.Current = new Token(CurrentLineNumber);
+            string whitespace = ReadWhitespace();
+            this.Current = new Token(this.Position) { WhitespacePrefix = whitespace };
 
-            ReadWhitespace();
+            if (this.Position.Index >= Text.Length) return false;
 
-            this.Current.Index = this.CurrentIndex;
-            this.Current.CharInLine = this.CurrentIndex - this.LastNewlineIndex;
-
-            if (CurrentIndex >= Text.Length) return false;
-
-            char next = Text[CurrentIndex];
+            char next = Text[this.Position.Index];
             if (next == '\r' || next == '\n')
             {
-                CurrentIndex++;
-                if (next == '\r' || Peek() == '\n') CurrentIndex++;
-                this.CurrentLineNumber++;
-                this.LastNewlineIndex = CurrentIndex;
+                this.Position.Index++;
+                if (next == '\r' || Peek() == '\n') this.Position.Index++;
+                this.Position.LineNumber++;
+                this.Position.LastNewlineIndex = this.Position.Index;
                 this.Current.Type = TokenType.Newline;
             }
-            else if (next == '?')
+            else if (next == '~')
             {
                 this.Current.Type = TokenType.NextTokenHint;
             }
@@ -133,12 +158,12 @@ namespace XForm.Query
             }
             else if (next == '(')
             {
-                CurrentIndex++;
+                this.Position.Index++;
                 this.Current.Type = TokenType.OpenParen;
             }
             else if (next == ')')
             {
-                CurrentIndex++;
+                this.Position.Index++;
                 this.Current.Type = TokenType.CloseParen;
             }
             else if (next == '[')
@@ -157,33 +182,32 @@ namespace XForm.Query
                 this.Current.Type = (Peek() == '(' ? TokenType.FunctionName : TokenType.Value);
             }
 
+            // Get the unescaped, un-interpreted value of the current token
+            this.Current.RawValue = this.Text.Substring(this.Current.Position.Index, this.Position.Index - this.Current.Position.Index);
+
             return true;
         }
 
         private char Peek()
         {
-            if (CurrentIndex < Text.Length) return Text[CurrentIndex];
+            if (this.Position.Index < Text.Length) return Text[this.Position.Index];
             return '\0';
         }
 
-        private void ReadWhitespace()
+        private string ReadWhitespace()
         {
             int whitespaceLength;
-            for (whitespaceLength = 0; CurrentIndex + whitespaceLength < Text.Length; ++whitespaceLength)
+            for (whitespaceLength = 0; this.Position.Index + whitespaceLength < Text.Length; ++whitespaceLength)
             {
-                char current = Text[CurrentIndex + whitespaceLength];
+                char current = Text[this.Position.Index + whitespaceLength];
                 if (current != ' ' && current != '\t' && current != ',') break;
             }
 
-            if (whitespaceLength > 0)
-            {
-                this.Current.WhitespacePrefix = Text.Substring(CurrentIndex, whitespaceLength);
-                this.CurrentIndex += whitespaceLength;
-            }
-            else
-            {
-                this.Current.WhitespacePrefix = String.Empty;
-            }
+            if (whitespaceLength == 0) return string.Empty;
+
+            string whitespace = Text.Substring(this.Position.Index, whitespaceLength);
+            this.Position.Index += whitespaceLength;
+            return whitespace;
         }
 
         private void ParseWrappedValue(char escapeChar)
@@ -191,68 +215,68 @@ namespace XForm.Query
             StringBuilder value = new StringBuilder();
 
             // Consume the opening character
-            CurrentIndex++;
+            this.Position.Index++;
 
             // If we're here, mark the token as wrapped
             this.Current.IsWrapped = true;
 
             // Find the end for unterminated values (the next newline or the end of the query)
-            int end = Text.IndexOf('\n', CurrentIndex);
+            int end = Text.IndexOf('\n', this.Position.Index);
             if (end == -1) end = Text.Length;
             else if (Text[end - 1] == '\r') end--;
 
-            while (CurrentIndex < end)
+            while (this.Position.Index < end)
             {
-                int nextEscape = Text.IndexOf(escapeChar, CurrentIndex);
+                int nextEscape = Text.IndexOf(escapeChar, this.Position.Index);
                 if (nextEscape == -1) break;
 
                 if (Text.Length > (nextEscape + 1) && Text[nextEscape + 1] == escapeChar)
                 {
                     // Escaped Value of Escape Character - append the value so far including one copy and keep searching for the end
-                    value.Append(Text, CurrentIndex, nextEscape - CurrentIndex + 1);
-                    CurrentIndex = nextEscape + 2;
+                    value.Append(Text, this.Position.Index, nextEscape - this.Position.Index + 1);
+                    this.Position.Index = nextEscape + 2;
                 }
                 else
                 {
                     // Value Terminator. Append the value without the terminator and return it
-                    value.Append(Text, CurrentIndex, nextEscape - CurrentIndex);
-                    CurrentIndex = nextEscape + 1;
+                    value.Append(Text, this.Position.Index, nextEscape - this.Position.Index);
+                    this.Position.Index = nextEscape + 1;
                     this.Current.Value = value.ToString();
                     return;
                 }
             }
 
             // If no terminator, treat the value as going to the end of the line. This is so partially typed queries run.
-            value.Append(Text, CurrentIndex, end - CurrentIndex);
-            CurrentIndex = end;
+            value.Append(Text, this.Position.Index, end - this.Position.Index);
+            this.Position.Index = end;
             this.Current.Value = value.ToString();
         }
 
         private void ParseUnwrappedValue()
         {
-            int startIndex = CurrentIndex;
-            while (CurrentIndex < Text.Length)
+            int startIndex = this.Position.Index;
+            while (this.Position.Index < Text.Length)
             {
-                char current = Text[CurrentIndex];
+                char current = Text[this.Position.Index];
                 if (Char.IsWhiteSpace(current) || current == '(' || current == ')' || current == ',') break;
-                CurrentIndex++;
+                this.Position.Index++;
             }
 
             this.Current.IsWrapped = false;
-            this.Current.Value = Text.Substring(startIndex, CurrentIndex - startIndex);
+            this.Current.Value = Text.Substring(startIndex, this.Position.Index - startIndex);
         }
 
         private void ParseUntilNewline()
         {
-            int startIndex = CurrentIndex;
-            while (CurrentIndex < Text.Length)
+            int startIndex = this.Position.Index;
+            while (this.Position.Index < Text.Length)
             {
-                char current = Text[CurrentIndex];
+                char current = Text[this.Position.Index];
                 if (current == '\r' || current == '\n') break;
-                CurrentIndex++;
+                this.Position.Index++;
             }
 
-            this.Current.Value = Text.Substring(startIndex, CurrentIndex - startIndex);
+            this.Current.Value = Text.Substring(startIndex, this.Position.Index - startIndex);
         }
 
         public static string Escape(object value, TokenType type, bool wasUnwrapped = false)

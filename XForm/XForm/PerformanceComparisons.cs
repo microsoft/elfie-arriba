@@ -50,7 +50,7 @@ namespace XForm
 
             //WhereUShortUnderConstant();
             //WhereUShortEqualsUshort();
-            //ByteEqualsConstant();
+            //ByteLessThanConstant();
             //DoubleWhere();
             //Join();
             //Dictionary();
@@ -77,14 +77,21 @@ namespace XForm
             //    read Identity.StandingAdmins.AssetAdminSummary.V0
             //    join [Name] Asset.Extended.Release [Name] Asset. ";
 
-            query = @"
-                read WebRequestHuge
-                peek [DataCenter]";
+            //query = @"
+            //    read WebRequestHuge
+            //    peek [DataCenter]";
 
             //query = @"
             //    read WebRequestHuge.Typed     
             //    where [EventTime] = null
             //    count";
+
+            query = @"
+                read WebRequest
+                where [ClientBrowser]: ""Edge""
+                choose Max [ResponseBytes] [ClientOS]
+                limit 10
+            ";
 
             string singleLineQuery = XqlScanner.QueryToSingleLineStyle(query);
 
@@ -181,7 +188,7 @@ namespace XForm
             }
         }
 
-        public void ByteEqualsConstant()
+        public void ByteLessThanConstant()
         {
             byte[] bytes = new byte[1000 * 1000];
             Random r = new Random(8);

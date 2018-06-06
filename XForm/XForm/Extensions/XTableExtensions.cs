@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 
 using XForm.Data;
@@ -71,7 +72,7 @@ namespace XForm.Extensions
         /// <param name="cancellationToken">Token to allow early cancellation</param>
         /// <param name="batchSize">Number of rows to process on each iteration</param>
         /// <returns>Count of rows in this source or query.</returns>
-        public static long RunAndDispose(this IXTable pipeline, CancellationToken cancellationToken = default(CancellationToken), int batchSize = DefaultBatchSize)
+        public static RunResult RunAndDispose(this IXTable pipeline, CancellationToken cancellationToken = default(CancellationToken), int batchSize = DefaultBatchSize)
         {
             using (pipeline)
             {
@@ -86,16 +87,30 @@ namespace XForm.Extensions
         /// <param name="cancellationToken">Token to allow early cancellation</param>
         /// <param name="batchSize">Number of rows to process on each iteration</param>
         /// <returns>Count of rows in this source or query.</returns>
-        public static long RunWithoutDispose(this IXTable pipeline, CancellationToken cancellationToken = default(CancellationToken), int batchSize = DefaultBatchSize)
+        public static RunResult RunWithoutDispose(this IXTable pipeline, CancellationToken cancellationToken = default(CancellationToken), int batchSize = DefaultBatchSize)
         {
-            long rowsWritten = 0;
+            RunResult result = new RunResult();
+            Stopwatch w = Stopwatch.StartNew();
+
             while (true)
             {
                 int batchCount = pipeline.Next(batchSize, cancellationToken);
-                if (batchCount == 0) break;
-                rowsWritten += batchCount;
+                result.RowCount += batchCount;
+
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    break;
+                }
+                else if (batchCount == 0)
+                {
+                    result.IsComplete = true;
+                    break;
+                }
+                
             }
-            return rowsWritten;
+
+            result.Elapsed = w.Elapsed;
+            return result;
         }
 
         /// <summary>
@@ -112,30 +127,15 @@ namespace XForm.Extensions
         {
             using (CancellationTokenSource source = new CancellationTokenSource())
             {
+                // Setup the timeout
                 CancellationToken cancellationToken = source.Token;
                 if (timeout != TimeSpan.Zero && timeout != TimeSpan.MaxValue) source.CancelAfter(timeout);
 
-                RunResult result = new RunResult();
+                // Run until timeout
+                RunResult result = RunWithoutDispose(pipeline, cancellationToken, batchSize);
+
+                // Tag the timeout on the result and return it
                 result.Timeout = timeout;
-
-                Stopwatch w = Stopwatch.StartNew();
-                while (true)
-                {
-                    int count = pipeline.Next(batchSize, cancellationToken);
-                    result.RowCount += count;
-
-                    if (cancellationToken.IsCancellationRequested)
-                    {
-                        break;
-                    }
-                    else if (count == 0)
-                    {
-                        result.IsComplete = true;
-                        break;
-                    }
-                }
-
-                result.Elapsed = w.Elapsed;
                 return result;
             }
         }
@@ -150,7 +150,7 @@ namespace XForm.Extensions
         /// <returns>Count of rows in this source or query.</returns>
         public static long Count(this IXTable pipeline, CancellationToken cancellationToken = default(CancellationToken), int batchSize = DefaultBatchSize)
         {
-            return RunAndDispose(pipeline, cancellationToken, batchSize);
+            return RunAndDispose(pipeline, cancellationToken, batchSize).RowCount;
         }
 
         /// <summary>
@@ -222,8 +222,38 @@ namespace XForm.Extensions
         public static long Save(this IXTable source, string tableName, XDatabaseContext context, int xarraySize = DefaultBatchSize)
         {
             string tableRootPath = context.StreamProvider.Path(LocationType.Table, tableName, CrawlType.Full, context.RequestedAsOfDateTime);
-            return new BinaryTableWriter(source, context, tableRootPath).RunAndDispose();
+            return BinaryTableWriter.Build(source, context, tableRootPath).RunAndDispose().RowCount;
         }
+        #endregion
+
+        #region ConcatenatedTable handling
+        /// <summary>
+        ///  WrapParallel builds a parallel copy of the query stage for each source in ConcatenatingTable sources.
+        ///  It is used to allow running optimized query stages and running in parallel when multiple tables are involved.
+        /// </summary>
+        /// <remarks>
+        ///  WrapParallel can only be used by verbs where the output when run on the concatenated inputs rows from many sources
+        ///  produces the same output as running in parallel on each source and then concatenating the result rows.
+        /// </remarks>
+        /// <param name="source">IXTable to wrap</param>
+        /// <param name="builder">Wrapping function</param>
+        /// <returns>Wrapped IXTable</returns>
+        public static IXTable WrapParallel(this IXTable source, XqlParser parser, Func<IXTable, IXTable> builder)
+        {
+            ConcatenatedTable cSource = source as ConcatenatedTable;
+            if(cSource != null)
+            {
+                Position currentPosition = parser.CurrentPosition;
+                return ConcatenatedTable.Build(cSource.Sources.Select((s) =>
+                {
+                    parser.RewindTo(currentPosition);
+                    return builder(s);
+                }));
+            }
+
+            return builder(source);
+        }
+
         #endregion
     }
 }

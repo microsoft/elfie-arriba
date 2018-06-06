@@ -3,11 +3,13 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
-
+using System.Threading.Tasks;
 using XForm.Columns;
 using XForm.Data;
 using XForm.Extensions;
+using XForm.IO;
 using XForm.Query;
 
 namespace XForm.Verbs
@@ -27,7 +29,7 @@ namespace XForm.Verbs
     {
         private SingleValueColumn[] _countColumn;
         private IXTable _source;
-        private int _count;
+        private long _count;
 
         public Count(IXTable source)
         {
@@ -35,7 +37,7 @@ namespace XForm.Verbs
 
             _source = source;
             _count = -1;
-            _countColumn = new SingleValueColumn[] { new SingleValueColumn(this, "Count", typeof(int)) };
+            _countColumn = new SingleValueColumn[] { new SingleValueColumn(this, "Count", typeof(long)) };
         }
 
         public IReadOnlyList<IXColumn> Columns => _countColumn;
@@ -56,22 +58,7 @@ namespace XForm.Verbs
                 return CurrentRowCount;
             }
 
-            // If this is a List, just get the count
-            if (_source is ISeekableXTable)
-            {
-                _count = ((ISeekableXTable)_source).Count;
-            }
-            else
-            {
-                // Accumulate count over all rows from source
-                _count = 0;
-                while (true)
-                {
-                    int batchCount = _source.Next(Math.Max(desiredCount, XTableExtensions.DefaultBatchSize), cancellationToken);
-                    if (batchCount == 0) break;
-                    _count += batchCount;
-                }
-            }
+            _count = CountSource(_source, desiredCount, cancellationToken);
 
             // Set the count on the constant
             _countColumn[0].Set(_count);
@@ -79,6 +66,38 @@ namespace XForm.Verbs
             // Return that there's one row (the count)
             CurrentRowCount = 1;
             return CurrentRowCount;
+        }
+        
+        private static long CountSource(IXTable source, int desiredCount, CancellationToken cancellationToken)
+        {
+            if (source is ISeekableXTable)
+            {
+                // If this is a List, just get the count
+                return ((ISeekableXTable)source).Count;
+            }
+            else if(source is ConcatenatedTable)
+            {
+                // If this is multiple tables, count them in parallel
+                ConcatenatedTable cSource = (ConcatenatedTable)source;
+                List<IXTable> parts = cSource.Sources.ToList();
+
+                long[] counts = new long[parts.Count];
+                Parallel.For(0, parts.Count, (i) => counts[i] = CountSource(parts[i], desiredCount, cancellationToken));
+                return counts.Sum();
+            }
+            else
+            {
+                // Accumulate count over all rows from source
+                long count = 0;
+                while (true)
+                {
+                    int batchCount = source.Next(Math.Max(desiredCount, XTableExtensions.DefaultBatchSize), cancellationToken);
+                    if (batchCount == 0) break;
+                    count += batchCount;
+                }
+
+                return count;
+            }
         }
 
         public void Dispose()

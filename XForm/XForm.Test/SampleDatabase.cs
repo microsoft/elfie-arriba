@@ -7,11 +7,11 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.IO.Compression;
-
+using System.Linq;
 using Elfie.Test;
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-
+using XForm.Data;
 using XForm.Extensions;
 using XForm.IO;
 using XForm.IO.StreamProvider;
@@ -118,7 +118,7 @@ namespace XForm.Test
                 set [ClientOsUpper] Trim(ToUpper([ClientOs]))
                 set [Sample] ToUpper(Trim(""  Sample  ""))
                 assert none
-                    where [Sample] != ""SAMPLE""").RunAndDispose();
+                    where [Sample] != ""SAMPLE""").Count();
         }
 
         [TestMethod]
@@ -195,13 +195,19 @@ namespace XForm.Test
 
             // Asking for 2d from 2017-12-04 should get 2017-12-03 and 2017-12-02 crawls
             XDatabaseContext historicalContext = new XDatabaseContext(SampleDatabase.XDatabaseContext) { RequestedAsOfDateTime = new DateTime(2017, 12, 04, 00, 00, 00, DateTimeKind.Utc) };
-            Assert.AreEqual(2000, historicalContext.Query("readRange 2d WebRequest").RunAndDispose());
+            Assert.AreEqual(2000, historicalContext.Query("readRange 2d WebRequest").Count());
 
             // Asking for 3d should get all three crawls
-            Assert.AreEqual(3000, historicalContext.Query("readRange 3d WebRequest").RunAndDispose());
+            Assert.AreEqual(3000, historicalContext.Query("readRange 3d WebRequest").Count());
 
-            // Asking for 4d should error (no version for the range start)
-            Verify.Exception<UsageException>(() => historicalContext.Query("readRange 4d WebRequest").RunAndDispose());
+            // Asking for 4d should get all three crawls (allowed to ask for beyond first version)
+            Assert.AreEqual(3000, historicalContext.Query("readRange 4d WebRequest").Count());
+
+            // Asking for unknown table should error
+            Verify.Exception<UsageException>(() => historicalContext.Query("readRange 4d WebRequester").Count());
+
+            // Asking for negative TimeSpan should error
+            Verify.Exception<UsageException>(() => historicalContext.Query("readRange -4d WebRequest").Count());
         }
 
         [TestMethod]
@@ -278,19 +284,19 @@ namespace XForm.Test
             // Build WebServer as of 2017-11-25; should have 86 original rows, verify built copy cached
             reportContext.NewestDependency = DateTime.MinValue;
             reportContext.RequestedAsOfDateTime = new DateTime(2017, 11, 25, 00, 00, 00, DateTimeKind.Utc);
-            Assert.AreEqual(86, SampleDatabase.XDatabaseContext.Runner.Build("WebServer", reportContext).RunAndDispose());
+            Assert.AreEqual(86, SampleDatabase.XDatabaseContext.Runner.Build("WebServer", reportContext).Count());
             Assert.AreEqual(new DateTime(2017, 11, 25, 00, 00, 00, DateTimeKind.Utc), SampleDatabase.XDatabaseContext.StreamProvider.ItemVersions(LocationType.Table, "WebServer").LatestBeforeCutoff(CrawlType.Full, DateTime.UtcNow).AsOfDate);
 
             // Build WebServer as of 2017-11-27; should have 91 rows (one incremental added)
             reportContext.NewestDependency = DateTime.MinValue;
             reportContext.RequestedAsOfDateTime = new DateTime(2017, 11, 27, 00, 00, 00, DateTimeKind.Utc);
-            Assert.AreEqual(91, SampleDatabase.XDatabaseContext.Runner.Build("WebServer", reportContext).RunAndDispose());
+            Assert.AreEqual(91, SampleDatabase.XDatabaseContext.Runner.Build("WebServer", reportContext).Count());
             Assert.AreEqual(new DateTime(2017, 11, 27, 00, 00, 00, DateTimeKind.Utc), SampleDatabase.XDatabaseContext.StreamProvider.ItemVersions(LocationType.Table, "WebServer").LatestBeforeCutoff(CrawlType.Full, DateTime.UtcNow).AsOfDate);
 
             // Build WebServer as of 2017-11-29; should have 96 rows (two incrementals added)
             reportContext.NewestDependency = DateTime.MinValue;
             reportContext.RequestedAsOfDateTime = new DateTime(2017, 11, 29, 00, 00, 00, DateTimeKind.Utc);
-            Assert.AreEqual(96, SampleDatabase.XDatabaseContext.Runner.Build("WebServer", reportContext).RunAndDispose());
+            Assert.AreEqual(96, SampleDatabase.XDatabaseContext.Runner.Build("WebServer", reportContext).Count());
             Assert.AreEqual(new DateTime(2017, 11, 29, 00, 00, 00, DateTimeKind.Utc), SampleDatabase.XDatabaseContext.StreamProvider.ItemVersions(LocationType.Table, "WebServer").LatestBeforeCutoff(CrawlType.Full, DateTime.UtcNow).AsOfDate);
         }
 
@@ -317,7 +323,7 @@ namespace XForm.Test
             //XForm("build WebRequest");
 
             // To debug engine execution, run like this:
-            XqlParser.Parse("read webrequest", null, SampleDatabase.XDatabaseContext).RunAndDispose();
+            XqlParser.Parse("read webrequest", null, SampleDatabase.XDatabaseContext).Count();
         }
 
         [TestMethod]
@@ -325,68 +331,25 @@ namespace XForm.Test
         {
             // Verify WorkflowRunner handles case insensitive table names
             XForm("build WebRequest");
-            XForm("build webrequest");
+            //XForm("build webrequest");
 
             // Verify table and column name accesses work case insensitive
             Assert.AreEqual((long)1000, SampleDatabase.XDatabaseContext.Query(@"
                 read webrequest
-                select [id]").RunAndDispose());
-        }
+                select [id]").Count());
 
-        [TestMethod]
-        public void Database_WhereVariations()
-        {
-            // String >
-            Assert.AreEqual((long)1000, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [ID] >= \"0\"").RunAndDispose());
-            Assert.AreEqual((long)0, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [ID] >= \"a\"").RunAndDispose());
+            // Verify Equals is case sensitive but contains isn't
+            Assert.AreEqual((long)916, SampleDatabase.XDatabaseContext.Query(@"
+                read webrequest
+                where [HttpMethod] = ""GET""").Count());
 
-            // String StartsWith
-            Assert.AreEqual((long)111, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [ID] |> \"1\"").RunAndDispose());
-            Assert.AreEqual((long)1, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [ID] |> \"999\"").RunAndDispose());
-            Assert.AreEqual((long)0, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [ID] |> \"10000\"").RunAndDispose());
+            Assert.AreEqual((long)0, SampleDatabase.XDatabaseContext.Query(@"
+                read webrequest
+                where [HttpMethod] = ""get""").Count());
 
-            // String Contains
-            Assert.AreEqual((long)19, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [ID] : \"99\"").RunAndDispose());
-            Assert.AreEqual((long)1, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [ID] : \"999\"").RunAndDispose());
-            Assert.AreEqual((long)0, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [ID] : \"9999\"").RunAndDispose());
-
-            // String Equals
-            Assert.AreEqual((long)1, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [ID] = \"9\"").RunAndDispose());
-            Assert.AreEqual((long)1, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [ID] = \"999\"").RunAndDispose());
-            Assert.AreEqual((long)0, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [ID] = \"9999\"").RunAndDispose());
-
-
-            // EnumColumn
-            Assert.AreEqual((long)1000, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [EventTime] > \"2017\"").RunAndDispose());
-            Assert.AreEqual((long)0, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [EventTime] > \"2017-13\"").RunAndDispose());
-            Assert.AreEqual((long)1000, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [EventTime] < \"2017-13\"").RunAndDispose());
-
-            Assert.AreEqual((long)1000, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [EventTime] |> \"2017-1\"").RunAndDispose());
-            Assert.AreEqual((long)0, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [EventTime] |> \"2117-1\"").RunAndDispose());
-            Assert.AreEqual((long)0, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [EventTime] |> \"017\"").RunAndDispose());
-
-            Assert.AreEqual((long)1000, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [EventTime] : \"017\"").RunAndDispose());
-            Assert.AreEqual((long)1000, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [EventTime] : \"2017\"").RunAndDispose());
-            Assert.AreEqual((long)0, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [EventTime] : \"2018\"").RunAndDispose());
-            Assert.AreEqual((long)1000, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [EventTime] : \"-12-\"").RunAndDispose());
-
-            // Matches Excel
-            Assert.AreEqual((long)103, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [EventTime] : \"0z\"").RunAndDispose());
-            Assert.AreEqual((long)19, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [EventTime] : \"00Z\"").RunAndDispose());
-            Assert.AreEqual((long)0, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [EventTime] : \"0ZA\"").RunAndDispose());
-
-            // Numeric
-            Assert.AreEqual((long)999, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere Cast([ID], Int32) > 0").RunAndDispose());
-            Assert.AreEqual((long)998, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere Cast([ID], Int32) > 1").RunAndDispose());
-            Assert.AreEqual((long)500, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere Cast([ID], Int32) > 499").RunAndDispose());
-            Assert.AreEqual((long)1, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere Cast([ID], Int32) > 998").RunAndDispose());
-            Assert.AreEqual((long)0, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere Cast([ID], Int32) > 999").RunAndDispose());
-
-            // Order shouldn't matter
-            Assert.AreEqual((long)50, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [EventTime] : \"0z\" AND Cast([ID], Int32) > 499").RunAndDispose());
-            Assert.AreEqual((long)50, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere Cast([ID], Int32) > 499 AND [EventTime] : \"0z\"").RunAndDispose());
-            Assert.AreEqual((long)50, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere Cast([ID], Int32) > 499\r\nwhere [EventTime] : \"0z\"").RunAndDispose());
-            Assert.AreEqual((long)50, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [EventTime] : \"0z\"\r\nwhere Cast([ID], Int32) > 499").RunAndDispose());
+            Assert.AreEqual((long)916, SampleDatabase.XDatabaseContext.Query(@"
+                read webrequest
+                where [HttpMethod] : ""get""").Count());
         }
 
         private static int ExpectedResult(string sourceName)
@@ -394,6 +357,59 @@ namespace XForm.Test
             if (sourceName.StartsWith("UsageError.")) return -2;
             if (sourceName.StartsWith("Error.")) return -1;
             return 0;
+        }
+
+        [TestMethod]
+        public void Database_WhereThenChoose()
+        {
+            // Exercise paging over rows in a complex case.
+            //  'choose' will cause two passes of where; where must resume after reset correctly.
+            //  'limit' asks for partial rows, forcing paging to occur.
+            Assert.AreEqual(5, SampleDatabase.XDatabaseContext.Query("read WebRequest\r\nwhere [ClientBrowser]: \"Edge\"\r\nchoose Max [ResponseBytes] [ClientOs]\r\nlimit 5").Count());
+        }
+
+        [TestMethod]
+        public void Database_PartitionedBuildAndRead()
+        {
+            long currentFileLimit = BinaryTableWriter.ColumnFileSizeLimit;
+            try
+            {
+                string tablePath = @"Table\MultiPartition\Full\2018.06.06 00.00.00Z";
+                int length = 10 * 1024 * 1024;
+
+                // Set limit to 10MB
+                BinaryTableWriter.ColumnFileSizeLimit = length;
+
+                // Build a table with 10 million integers
+                IXTable table = SampleDatabase.XDatabaseContext.FromArrays(length)
+                    .WithColumn("ID", Enumerable.Range(0, length).ToArray())
+                    .Query($@"write ""{tablePath}""", SampleDatabase.XDatabaseContext);
+                
+                table.RunAndDispose();
+
+                // Verify there are multiple partitions created (four should exactly fit the rows)
+                Assert.IsTrue(SampleDatabase.XDatabaseContext.StreamProvider.Exists($@"{tablePath}\\0\\Schema.csv"));
+                Assert.IsTrue(SampleDatabase.XDatabaseContext.StreamProvider.Exists($@"{tablePath}\\1\\Schema.csv"));
+                Assert.IsTrue(SampleDatabase.XDatabaseContext.StreamProvider.Exists($@"{tablePath}\\2\\Schema.csv"));
+                Assert.IsTrue(SampleDatabase.XDatabaseContext.StreamProvider.Exists($@"{tablePath}\\3\\Schema.csv"));
+
+                // Verify no extra partitions
+                Assert.IsFalse(SampleDatabase.XDatabaseContext.StreamProvider.Exists($@"{tablePath}\\4\\Schema.csv"));
+
+                // Verify Partitions.csv at root (only)
+                Assert.IsTrue(SampleDatabase.XDatabaseContext.StreamProvider.Exists($@"{tablePath}\\Partitions.csv"));
+                Assert.IsFalse(SampleDatabase.XDatabaseContext.StreamProvider.Exists($@"{tablePath}\\2\\Partitions.csv"));
+
+                // Read the table; verify 10M rows reported
+                Assert.AreEqual(length, SampleDatabase.XDatabaseContext.Query("read MultiPartition").RunAndDispose().RowCount);
+
+                // Test a where clause crossing partitions
+                Assert.AreEqual(5242880, SampleDatabase.XDatabaseContext.Query("read MultiPartition\r\nwhere [ID] < 5242880").RunAndDispose().RowCount);
+            }
+            finally
+            {
+                BinaryTableWriter.ColumnFileSizeLimit = currentFileLimit;
+            }
         }
     }
 }

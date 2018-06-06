@@ -7,6 +7,12 @@ namespace XForm.Extensions
 {
     public static class StringExtensions
     {
+        public static string RemoveTrailing(this string text, char c)
+        {
+            if (!string.IsNullOrEmpty(text) && text[text.Length - 1] == c) return text.Substring(0, text.Length - 1);
+            return text;
+        }
+
         public static string BeforeFirst(this string text, char c)
         {
             if (string.IsNullOrEmpty(text)) return string.Empty;

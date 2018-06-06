@@ -27,36 +27,50 @@ namespace XForm.Query
 
         public SuggestResult Suggest(string partialXqlQuery, DateTime asOfDate = default(DateTime))
         {
+            // Variables:
+            //  - Is query valid before last token? If not, return invalid with that error position, message, and valid values.
+            //  - Is there whitespace after the last token? If not, show information for the last token, not the next one.
+
             SuggestResult result = new SuggestResult();
             result.Query = partialXqlQuery;
             result.IsValid = false;
 
+            XDatabaseContext context = _xDatabaseContext;
+            if (asOfDate != default(DateTime) && asOfDate != _xDatabaseContext.RequestedAsOfDateTime)
+            {
+                context = new XDatabaseContext(context) { RequestedAsOfDateTime = asOfDate };
+            }
+
+            IXTable pipeline;
+
+            // Add a 'nextTokenHint' suffix to ask for alternatives to the last token (if no trailing whitespace) or the next token (if there is)
             try
             {
-                XDatabaseContext context = _xDatabaseContext;
-
-                // Reset the as of date if requested
-                if (asOfDate != default(DateTime) && asOfDate != _xDatabaseContext.RequestedAsOfDateTime)
-                {
-                    context = new XDatabaseContext(context) { RequestedAsOfDateTime = asOfDate };
-                }
-
-                // Parse the query as-is to see if it's valid
-                IXTable pipeline = context.Query(partialXqlQuery);
-                result.IsValid = true;
-
-                // Parse the query with an extra argument on the last line to see what would be suggested
-                partialXqlQuery = partialXqlQuery + " ?";
-
-                // Try building the query pipeline, using a *DeferredRunner* so dependencies aren't built right now
-                pipeline = context.Query(partialXqlQuery);
+                pipeline = context.Query(partialXqlQuery + "~");
             }
             catch (UsageException ex)
             {
                 result.Context = ex.Context;
             }
 
+            // Determine whether the query was valid as-is
+            try
+            {
+                pipeline = context.Query(partialXqlQuery);
+                result.IsValid = true;
+            }
+            catch (UsageException)
+            { }
+
             return result;
+        }
+
+        private static bool LastTokenClosed(string query)
+        {
+            if (string.IsNullOrEmpty(query)) return true;
+
+            char last = query[query.Length - 1];
+            return (Char.IsWhiteSpace(last) || last == '(' || last == ']' || last == '"');
         }
     }
 }

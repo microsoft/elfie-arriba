@@ -21,7 +21,8 @@ namespace XForm.Verbs
 
         public IXTable Build(IXTable source, XDatabaseContext context)
         {
-            return new Where(source, context.Parser.NextExpression(source, context));
+            // Where can be evaluated in parallel, so keep parallel
+            return source.WrapParallel(context.Parser, (part) => new Where(part, context.Parser.NextExpression(part, context)));
         }
     }
 
@@ -89,6 +90,14 @@ namespace XForm.Verbs
             return result;
         }
 
+        public override void Reset()
+        {
+            base.Reset();
+            _currentMatchesTotal = 0;
+            _currentMatchesReturned = 0;
+            _nextCountToReturn = 0;
+        }
+
         public override int Next(int desiredCount, CancellationToken cancellationToken)
         {
             _currentMatchesReturned += _nextCountToReturn;
@@ -116,6 +125,7 @@ namespace XForm.Verbs
 
                 // Match the query expression and count all matches
                 _expression.Evaluate(_vector);
+
                 _currentMatchesTotal = _vector.Count;
                 _totalRowsMatched += _currentMatchesTotal;
 
@@ -132,6 +142,7 @@ namespace XForm.Verbs
             }
 
             // Tell the mapper there are no more matches
+            Allocator.AllocateToSize(ref _vector, desiredCount);
             _vector.None();
             _mapper.SetMatches(_vector, 0);
 

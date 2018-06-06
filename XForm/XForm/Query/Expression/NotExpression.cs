@@ -17,7 +17,7 @@ namespace XForm.Query.Expression
         public void Evaluate(BitVector vector)
         {
             _inner.Evaluate(vector);
-            vector.Not(vector.Capacity);
+            vector.Not();
         }
 
         public override string ToString()

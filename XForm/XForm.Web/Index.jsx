@@ -1,5 +1,6 @@
 import "./Index.scss"
 import "./shared.jsx"
+import "./polyfill.jsx"
 import React from "react"
 import ReactDOM from "react-dom"
 
@@ -53,21 +54,61 @@ import ReactDOM from "react-dom"
         return this[this.length - 1]
     }
 
-    Date.daysAgo = function(n) {
-        const d = new Date()
-        d.setDate(d.getDate() - (n || 0))
-        return d
+    Date.min = function(...dates) {
+        return new Date(Math.min(...dates))
     }
 
-    Date.firstOfMonth = function() {
-        const now = new Date()
-        return new Date(now.getFullYear(), now.getMonth())
+    Date.range = function(from, to) {
+        const range = [new Date(from)]
+        while (from < to) {
+            from.setDate(from.getDate() + 1)
+            range.push(new Date(from))
+        }
+        return range
+    }
+
+    Date.isDateEquals = function(a, b) {
+        return a && b
+            && a.getYear()  === b.getYear()
+            && a.getMonth() === b.getMonth()
+            && a.getDate()  === b.getDate()
+    }
+
+    Date.prototype.firstOfMonth = function() {
+        const copy = new Date(this)
+        copy.setDate(1)
+        return copy
+    }
+
+    Date.prototype.daysAgo = function(n) {
+        const copy = new Date(this)
+        copy.setDate(copy.getDate() - (n || 0))
+        return copy
+    }
+
+    Date.prototype.sunday = function() {
+        const copy = new Date(this)
+        copy.setDate(copy.getDate() - copy.getDay())
+        return copy
     }
 
     Date.prototype.toXFormat = function() {
+        // If today is selected, don't pass a dates
+        if(Date.isDateEquals(this, new Date())) return "";
+
         const mm = this.toLocaleString('en-US', { month: '2-digit' })
         const dd = this.toLocaleString('en-US', { day: '2-digit' })
         return `${this.getFullYear()}-${mm}-${dd}`
+    }
+
+    Date.prototype.toFriendly = function() {
+        const today = new Date()
+        if (Date.isDateEquals(this, today)) return "Today"
+        if (Date.isDateEquals(this, today.daysAgo(1))) return "Yesterday"
+        if (Date.isDateEquals(this, today.daysAgo(7))) return "Last Week"
+        const mm = this.toLocaleString('en-US', { month: 'short' })
+        const dd = this.toLocaleString('en-US', { day: 'numeric' })
+        return `${mm} ${dd}`
     }
 
     window.extendEditor = function(editor) {
@@ -91,6 +132,17 @@ import ReactDOM from "react-dom"
             const col = lines.last().length + 1
             return new monaco.Position(lines.length, col)
         }
+        editor.append = function(value) {
+            this.executeEdits('my-source', [{
+                    identifier: { major: 1, minor: 1 },
+                    range: monaco.Range.fromPositions(this.getModel().getFullModelRange().getEndPosition()),
+                    text: `${value}`,
+                    forceMoveMarkers: true,
+                }])
+        }
+        editor.appendLine = function(line) {
+            this.append(`${this.getValue().endsWith('\n') ? '' : '\n'}${line}`)
+        }
 
         // Assumes monaco is loaded
         monaco.Position.prototype.toRange = function(length) {
@@ -107,12 +159,21 @@ class Index extends React.Component {
         this.debouncedQueryChanged = debounce(this.queryChanged, 500)
         this.state = { query: this.query, userCols: [], saveAs: '', pausePulse: true }
 
+        const params = window.getQueryStringParameters();
+        const q = params["q"];
+        
         const loc = document.location;
         xhr.urlRoot = loc.port === '8080' ? `${loc.protocol}//${loc.hostname}:5073` : ''
+
+        this.initialQuery = q ? q : [
+            'read WebRequest',
+            'where [HttpStatus] != "200"',
+        ].join('\n');
 
         this.reqPeek = new CachableReusedRequest('run');
         this.reqPeek.caching = true;
 
+        this.dateTimer = singleTimeout()
         this.peekTimer = singleTimeout()
     }
     componentDidMount() {
@@ -165,10 +226,7 @@ class Index extends React.Component {
             })
 
     		this.editor = monaco.editor.create(document.getElementById('queryEditor'), {
-    			value: [
-    				'read WebRequest',
-                    'where [HttpStatus] != "200"',
-    			].join('\n'),
+    			value: this.initialQuery,
     			language: 'xform',
                 scrollBeyondLastLine: false,
                 minimap: { enabled: false },
@@ -193,7 +251,7 @@ class Index extends React.Component {
     componentDidUpdate(prevProps, prevState) {
         if (prevState.peek !== this.state.peek) {
             const params = this.state.peek
-                ? { q: `${this.query}\npeek [${this.state.peek.name}]` }
+                ? { asof: this.state.asOf, q: `${this.query}\npeek [${this.state.peek.name}]` }
                 : undefined
             this.reqPeek.update(params, json => {
                 this.setState({ peekData: json && json.rows.sort((a, b) => b[1] - a[1]) && json.rows.slice(0, 7) })
@@ -204,7 +262,7 @@ class Index extends React.Component {
         return xhr(`suggest`, { asof: this.state.asOf, q: this.editor.valueUntilPosition() })
     }
     get query() {
-        return this.editor && this.editor.getValue()
+        return this.editor?.getValue()
     }
     queryTextChanged(force) {
         this.textJustChanged = true
@@ -340,10 +398,45 @@ class Index extends React.Component {
                 onMouseEnter={e => this.peekTimer()}
                 onMouseLeave={e => this.peekTimer(() => this.setState({ peek: undefined }), 100)}>
                 {this._makeSvg(this.state.peekData)}
-                {this.state.peekData.map((row, i) => <div key={i} className="peek-value">
+                {this.state.peekData.map((row, i) => <div key={i} className="peek-value"
+                    onClick={e => {
+                        const expr = `[${this.state.peek.name}] = "${row[0]}"`
+                        const last = this.query.split('\n').last()
+                        if (last.startsWith('where')) {
+                            this.editor.append(` AND ${expr}`)
+                        } else {
+                            this.editor.appendLine(`where ${expr}`)
+                        }
+                        this.peekTimer(() => this.setState({ peek: undefined }))
+                    }}>
                     <span>{row[0] === '' ? '—' : row[0] }</span>
                     <span>{row[2]}</span>
                 </div>)}
+            </div>
+        }
+
+        const DatePicker = () => {
+            if (!this.state.showDatePicker) return null
+            const today = new Date()
+            const startDate = Date.min(today.firstOfMonth(), today.daysAgo(7)).sunday()
+            return <div className="datePicker"
+                onMouseEnter={e => this.dateTimer()}
+                onMouseLeave={e => this.dateTimer(() => this.setState({ showDatePicker: undefined }), 100)}>
+                <div>{new Date().toLocaleString('en-US', { month: 'long' })}</div>
+                <div>
+                    {'SMTWTFS'.split('').map((d, i)=> <span key={`header${i}`} className="header">{d}</span>)}
+                    {Date.range(startDate, today).map(d => <span key={d}
+                        className={o2c({
+                            current: Date.isDateEquals(this.state.asOfDate || new Date(), d),
+                            outside: today.getMonth() !== d.getMonth(),
+                        })}
+                        onClick={() => {
+                            this.setState({ asOf: d.toXFormat(), asOfDate: d }, () => this.queryTextChanged(true))
+                            this.dateTimer(() => this.setState({ showDatePicker: undefined }))
+                        }}>
+                        <span>{d.getDate()}</span>
+                    </span>)}
+                </div>
             </div>
         }
 
@@ -351,7 +444,7 @@ class Index extends React.Component {
                 ? cell => cell === "" ? "—" : (+cell).toLocaleString()
                 : cell => cell)
 
-        const encodedQuery = encodeURIComponent(this.validQuery)
+        const encodedParams = encodeParams({ asof: this.state.asOf, q: this.validQuery })
 
         return [<div key="root" className={`root`}>
             <div className="query">
@@ -367,12 +460,11 @@ class Index extends React.Component {
                             setTimeout(() => this.setState({ saving: "Save" }), 3000)
                         })
                     }}>{ this.state.saving || "Save" }</span>
-                    <select onChange={e => this.setState({ asOf: e.target.value || undefined }, () => this.queryTextChanged(true))}>
-                        <option value="">As of Now</option>
-                        <option value={Date.daysAgo(1).toXFormat()}>As of Yesterday</option>
-                        <option value={Date.daysAgo(7).toXFormat()}>As of Last Week</option>
-                        <option value={Date.firstOfMonth().toXFormat()}>As of {(new Date()).toLocaleString('en-us', { month: "long" })} 1st</option>
-                    </select>
+                    <span title={(this.state.asOfDate || new Date()).toDateString()}
+                        className={'button' + (this.state.showDatePicker ? ' hot' : '')}
+                        onMouseEnter={e => this.dateTimer(() => this.setState({ showDatePicker: true }))}
+                        onMouseLeave={e => this.dateTimer(() => this.setState({ showDatePicker: undefined }), 100)}>
+                        As of {(this.state.asOfDate || new Date()).toFriendly()}</span>
                 </div>
                 <div className="queryUsage">{
                     this.state.errorMessage && <span className="errorMessage">{this.state.errorMessage}</span>
@@ -381,6 +473,7 @@ class Index extends React.Component {
                 <div id="queryEditor">
                     <div className="queryHint">{this.state.queryHint}</div>
                 </div>
+                <DatePicker key="datePicker" />
             </div>
             <div id="schema">
                 <div className="schemaHeader">
@@ -388,15 +481,7 @@ class Index extends React.Component {
                     {!!this.state.userCols.length && <span className="button" onClick={e => this.setState({ userCols: [] }, () => this.limitChanged())}>Reset</span>}
                     <span className="flexFill"></span>
                     {!!this.state.userCols.length && <span className="button" onClick={e => {
-                        const newLine = this.query.endsWith('\n') ? '' : '\n'
-                        const userCols = this.state.userCols.length && `${newLine}select ${this.state.userCols.map(c => `[${c}]`).join(', ')}` || ''
-                        const r = this.editor.getModel().getFullModelRange()
-                        this.editor.executeEdits('my-source', [{
-                                identifier: { major: 1, minor: 1 },
-                                range: new monaco.Range(r.endLineNumber, r.endColumn, r.endLineNumber, r.endColumn),
-                                text: userCols,
-                                forceMoveMarkers: true,
-                            }])
+                        this.editor.appendLine(`select ${this.state.userCols.map(c => `[${c}]`).join(', ')}`)
                         this.setState({ userCols: [] }, () => this.limitChanged())
                     }}>Apply</span>}
                 </div>
@@ -420,8 +505,9 @@ class Index extends React.Component {
                 <div className="" className={`resultsHeader ${this.state.pausePulse ? '' : 'pulse'}`}>
                     <span>{this.state.resultCount}</span>
                     <span className="flexFill"></span>
-                    {encodedQuery && <a className="button" target="_blank" href={`${this.serviceUrl}/download?fmt=csv&q=${encodedQuery}`}>CSV</a>}
-                    {encodedQuery && <a className="button" target="_blank" href={`${this.serviceUrl}/download?fmt=tsv&q=${encodedQuery}`}>TSV</a>}
+                    {encodedParams && <a className="button segoe-icon-link" alt="Link" href={`${xhr.urlRoot}/?${encodedParams}`}></a>}
+                    {encodedParams && <a className="button" target="_blank" href={`${xhr.urlRoot}/download?fmt=csv&${encodedParams}`}>CSV</a>}
+                    {encodedParams && <a className="button" target="_blank" href={`${xhr.urlRoot}/download?fmt=tsv&${encodedParams}`}>TSV</a>}
                     <span className={`loading ${ this.state.loading && 'loading-active' }`}></span>
                 </div>
                 <div className="tableWrapper" onScroll={e => {
@@ -434,11 +520,11 @@ class Index extends React.Component {
                     <table>
                         <thead>
                             <tr>
-                                {cols && cols.map(c => <td key={c}>{c}</td>)}
+                                {cols?.map(c => <td key={c}>{c}</td>)}
                             </tr>
                         </thead>
                         <tbody>
-                            {rows && rows.map((r, i) => <tr key={i}>{r.map((c, ii) => <td key={i + "x" + ii}>{ formatters[ii](c) }</td>)}</tr>)}
+                            {rows?.map((r, i) => <tr key={i}>{r.map((c, ii) => <td key={i + "x" + ii}>{c}</td>)}</tr>)}
                         </tbody>
                     </table>
                 </div>

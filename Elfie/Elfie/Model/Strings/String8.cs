@@ -443,6 +443,26 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
                 }
             }
         }
+
+        /// <summary>
+        ///  Make this String8 lowercase with invariant rules (ASCII characters only). 
+        ///  This version changes the existing value in place; make a copy if you
+        ///  need to preserve the original casing.
+        /// </summary>
+        public void ToLowerInvariant()
+        {
+            if (this.Length <= 0) return;
+
+            int end = this.Index + this.Length;
+            for (int i = this.Index; i < end; ++i)
+            {
+                byte c = this.Array[i];
+                if ((byte)(c - UTF8.A) < UTF8.AlphabetLength)
+                {
+                    this.Array[i] = (byte)(c + UTF8.ToUpperSubtract);
+                }
+            }
+        }
         #endregion
 
         #region Type Conversions
@@ -484,22 +504,32 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
 
         private ulong ParseWithCutoff(ulong cutoff, ref bool valid)
         {
+            ulong value = 0;
+
+            if (Length == 20 && cutoff == ulong.MaxValue)
+            {
+                // Max Length: Parse all but last digit
+                value = 10 * this.Substring(0, this.Length - 1).ParseWithCutoff(ulong.MaxValue / 10, ref valid);
+
+                // Limit Last digit so sum is <= ulong.MaxValue
+                value += this.Substring(this.Length - 1).ParseWithCutoff(ulong.MaxValue - value, ref valid);
+
+                if (!valid) value = 0;
+                return value;
+            }
+
             // Validate non-empty and not too long to convert
-            valid &= Length > 0;
-            valid &= Length < 20;
+            valid &= Length > 0 && Length < 20;
 
             // Stop early if too long or short
             if (!valid) return 0;
-
-            ulong value = 0;
 
             // Convert the digits
             // NOTE: Don't need to check digits valid, because even 19 255 digits won't overflow
             int end = Index + Length;
             for (int i = Index; i < end; ++i)
             {
-                value *= 10;
-                value += ParseDigit(Array[i], ref valid);
+                value = (10 * value) + ParseDigit(Array[i], ref valid);
             }
 
             // Validate under cutoff
@@ -657,24 +687,57 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         public bool TryToULong(out ulong result)
         {
             bool valid = true;
+            result = ParseWithCutoff(ulong.MaxValue, ref valid);
+            return valid;
+        }
 
-            if (Length < 20)
+        /// <summary>
+        ///  Convert a String8 with a floating point value to the double representation, if valid.
+        ///  *Only handles decimal format for now (no base+exponent form).*
+        /// </summary>
+        /// <param name="result">Numeric value found, if valid number, otherwise zero.</param>
+        /// <returns>True if valid, false otherwise</returns>
+        public bool TryToDouble(out double result)
+        {
+            bool valid = true;
+            result = 0.0;
+            if (this.Length == 0) return false;
+
+            bool negative = StartsWith(UTF8.Dash);
+            int decimalPointIndex = IndexOf(UTF8.Period);
+            if (decimalPointIndex == -1) decimalPointIndex = this.Length;
+
+            // Parse the part after the decimal point, scale, and add to the result
+            if (decimalPointIndex != this.Length)
             {
-                // Not max length: Parse normally
-                result = ParseWithCutoff(ulong.MaxValue, ref valid);
+                String8 fractionalPart = this.Substring(decimalPointIndex + 1);
+                result = (double)fractionalPart.ParseWithCutoff(ulong.MaxValue, ref valid) / Math.Pow(10, fractionalPart.Length);
             }
-            else
+
+            // Parse the whole number part (without the minus sign, if any) and add to the result
+            int firstDigitIndex = (negative ? 1 : 0);
+            if (decimalPointIndex - firstDigitIndex > 0)
             {
-                // Max Length: Parse all but last digit
-                result = 10 * this.Substring(0, this.Length - 1).ParseWithCutoff(ulong.MaxValue / 10, ref valid);
-
-                // Limit Last digit so sum is <= ulong.MaxValue
-                result += this.Substring(this.Length - 1).ParseWithCutoff(ulong.MaxValue - result, ref valid);
-
-                // Ensure overflows are reset to zero
-                if (!valid) result = 0;
+                String8 wholePart = this.Substring(firstDigitIndex, decimalPointIndex - firstDigitIndex);
+                result += wholePart.ParseWithCutoff(ulong.MaxValue, ref valid);
             }
 
+            // Negate the result if a minus sign was found
+            if (negative) result = -result;
+
+            return valid;
+        }
+
+        /// <summary>
+        ///  Convert a String8 with a floating point value to the double representation, if valid.
+        /// </summary>
+        /// <param name="result">Numeric value found, if valid number, otherwise zero.</param>
+        /// <returns>True if valid, false otherwise</returns>
+        public bool TryToFloat(out float result)
+        {
+            double inner;
+            bool valid = TryToDouble(out inner);
+            result = (float)inner;
             return valid;
         }
 
@@ -693,7 +756,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         ///  Buffer must be at least 11 bytes long to handle all values.
         /// </summary>
         /// <param name="value">Integer value to convert</param>
-        /// <param name="buffer">byte[] for conversion (at least length 11 for all values)</param>
+        /// <param name="buffer">byte[] for conversion (at least length 21 for all values)</param>
         /// <returns>String8 representation of integer value</returns>
         public static String8 FromInteger(int value, byte[] buffer)
         {
@@ -705,7 +768,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         ///  Buffer must be at least 11 bytes long to handle all values.
         /// </summary>
         /// <param name="value">Integer value to convert</param>
-        /// <param name="buffer">byte[] for conversion (at least length 11 for all values)</param>
+        /// <param name="buffer">byte[] for conversion (at least length 21 for all values)</param>
         /// <param name="index">Index within byte[] at which to being writing</param>
         /// <param name="minimumDigits">Minimum integer length (leading zeros written if needed)</param>
         /// <returns>String8 representation of integer value</returns>
@@ -723,7 +786,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         /// <param name="index">Index within byte[] at which to being writing</param>
         /// <param name="minimumDigits">Minimum integer length (leading zeros written if needed)</param>
         /// <returns>String8 representation of integer value</returns>
-        public static String8 FromNumber(long value, byte[] buffer, int index, int minimumDigits = 1)
+        public static String8 FromNumber(long value, byte[] buffer, int index = 0, int minimumDigits = 1)
         {
             if (value >= 0)
             {
@@ -736,7 +799,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         }
 
         /// <summary>
-        ///  Convert a number into the equivalent String8 representation, using the provided buffer.
+        ///  Convert a floating point number into the equivalent String8 representation, using the provided buffer.
         ///  Buffer must be at least 11 bytes long to handle all values.
         /// </summary>
         /// <param name="value">ulong value to convert</param>
@@ -745,7 +808,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         /// <param name="index">Index within byte[] at which to being writing</param>
         /// <param name="minimumDigits">Minimum integer length (leading zeros written if needed)</param>
         /// <returns>String8 representation of integer value</returns>
-        public static String8 FromNumber(ulong value, bool isNegative, byte[] buffer, int index, int minimumDigits = 1)
+        public static String8 FromNumber(ulong value, bool isNegative, byte[] buffer, int index = 0, int minimumDigits = 1)
         {
             ulong valueLeft = value;
 
@@ -764,7 +827,7 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             // Validate buffer is long enough
             int requiredLength = digits;
             if (isNegative) requiredLength++;
-            if (buffer.Length + index < requiredLength) throw new ArgumentException("String8.FromNumber requires an 21 byte buffer for number conversion.");
+            if (buffer.Length - index < requiredLength) throw new ArgumentException("String8.FromNumber requires an 21 byte buffer for number conversion.");
 
             // Write minus sign if negative
             int digitStartIndex = index;
@@ -783,6 +846,72 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             }
 
             return new String8(buffer, index, requiredLength);
+        }
+
+        /// <summary>
+        ///  Convert a number into the equivalent String8 representation, using the provided buffer.
+        /// </summary>
+        /// <param name="value">double value to convert</param>
+        /// <param name="isNegative">True if the original value was negative</param>
+        /// <param name="buffer">byte[] for conversion (at least length 21 for all values)</param>
+        /// <param name="index">Index within byte[] at which to being writing</param>
+        /// <param name="minimumDigits">Minimum integer length (leading zeros written if needed)</param>
+        /// <returns>String8 representation of integer value</returns>
+        public static String8 FromNumber(double value, byte[] buffer, int index = 0, int minimumDigits = 1)
+        {
+            if (value >= 0)
+            {
+                return FromNumber(value, false, buffer, index, minimumDigits);
+            }
+            else
+            {
+                return FromNumber(-value, true, buffer, index, minimumDigits);
+            }
+        }
+
+        /// <summary>
+        ///  Convert a number into the equivalent String8 representation, using the provided buffer.
+        /// </summary>
+        /// <param name="value">ulong value to convert</param>
+        /// <param name="isNegative">True if the original value was negative</param>
+        /// <param name="buffer">byte[] for conversion (at least length 21 for all values)</param>
+        /// <param name="index">Index within byte[] at which to being writing</param>
+        /// <param name="minimumDigits">Minimum integer length (leading zeros written if needed)</param>
+        /// <returns>String8 representation of integer value</returns>
+        private static String8 FromNumber(double value, bool isNegative, byte[] buffer, int index = 0, int minimumDigits = 1)
+        {
+            // Split the whole and fractional parts of the number
+            ulong wholePart = (ulong)value;
+            double fractionalPart = (value - (double)wholePart);
+
+            // Write out the whole part of the number
+            String8 result = FromNumber(wholePart, isNegative, buffer, index, minimumDigits);
+
+            // Write out the fractional part, if any, up to a maximum overall digits of precision (16).
+            int digitsOfPrecisionLeft = 16 - result.Length;
+            if (digitsOfPrecisionLeft > 0)
+            {
+                ulong scaledWholePart = (ulong)(fractionalPart * Math.Pow(10, digitsOfPrecisionLeft));
+                
+                // Trim trailing zeros
+                while(scaledWholePart > 0 && (scaledWholePart % 10 == 0))
+                {
+                    scaledWholePart /= 10;
+                    digitsOfPrecisionLeft--;
+                }
+
+                // If there's a value left, write the digits
+                if (scaledWholePart > 0)
+                {
+                    if (index + result.Length + 1 + digitsOfPrecisionLeft >= buffer.Length) throw new ArgumentException("String8.FromNumber requires up to a 21 byte buffer per number conversion.");
+                    buffer[index + result.Length] = UTF8.Period;
+                    String8 fractionalPart8 = FromNumber(scaledWholePart, false, buffer, index + result.Length + 1, digitsOfPrecisionLeft);
+
+                    result = new String8(result.Array, result.Index, result.Length + 1 + fractionalPart8.Length);
+                }
+            }
+
+            return result;
         }
 
         /// <summary>
@@ -892,9 +1021,9 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             uint hour, minute, second;
 
             // Parse the time numbers
-            if (!this.Substring(11, 2).TryToUInt(out hour)) return false;
-            if (!this.Substring(14, 2).TryToUInt(out minute)) return false;
-            if (!this.Substring(17, 2).TryToUInt(out second)) return false;
+            if (!this.Substring(hourIndex, 2).TryToUInt(out hour)) return false;
+            if (!this.Substring(minuteIndex, 2).TryToUInt(out minute)) return false;
+            if (!this.Substring(secondIndex, 2).TryToUInt(out second)) return false;
 
             // Validate the time number ranges
             if (hour > 23) return false;
@@ -969,6 +1098,192 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
 
             // Convert with time part
             return TryToDateTimeExact(out result, 6, 0, 3, 11, 14, 17);
+        }
+
+        /// <summary>
+        ///  Convert a TimeSpan into DDD.HH:MM:SS.mmm format.
+        /// </summary>
+        /// <param name="value">UTC TimEspan to convert</param>
+        /// <param name="index">Index at which to convert</param>
+        /// <param name="buffer">byte[] at least 20 bytes long to convert into</param>
+        /// <returns>Converted TimeSpan</returns>
+        public static String8 FromTimeSpan(TimeSpan value, byte[] buffer, int index = 0)
+        {
+            if (buffer.Length + index < 21) throw new ArgumentException("String8.FromTimeSpan requires a 21 byte buffer for conversion.");
+
+            int next = index;
+            String8 part;
+
+            // Days.
+            if (value.Days != 0)
+            {
+                part = FromInteger(value.Days, buffer, next);
+                next += part.Length;
+
+                buffer[next++] = UTF8.Period;
+            }
+
+            // Hours:Minutes:Seconds
+            FromInteger(value.Hours, buffer, next, 2);
+            next += 2;
+
+            buffer[next++] = UTF8.Colon;
+            FromInteger(value.Minutes, buffer, next, 2);
+            next += 2;
+
+            buffer[next++] = UTF8.Colon;
+            FromInteger(value.Seconds, buffer, next, 2);
+            next += 2;
+
+            // .Milliseconds
+            if (value.Milliseconds != 0)
+            {
+                buffer[next++] = UTF8.Period;
+                part = FromInteger(value.Milliseconds, buffer, next);
+                next += part.Length;
+            }
+
+            return new String8(buffer, index, next - index);
+        }
+        
+        /// <summary>
+        ///  Convert a String8 to a TimeSpan.
+        /// </summary>
+        /// <remarks>
+        ///   Ex: 7.12:30:59.999
+        /// </remarks>
+        /// <param name="result">TimeSpan converted, or TimeSpan.Zero if invalid</param>
+        /// <returns>True if valid TimeSpan, False otherwise</returns>
+        public bool TryToTimeSpan(out TimeSpan result)
+        {
+            const string TimeSpanMinValue = "-10675199.02:48:05.4775808";
+
+            result = TimeSpan.Zero;
+            if (this.IsEmpty()) return false;
+
+            // If the TimeSpan is negative, parse the rest and negate
+            bool isNegative = this.StartsWith(UTF8.Dash);
+            if(isNegative)
+            {
+                // Handle TimeSpan.MinValue separately since it will overflow as a positive value
+                if(this.Length == TimeSpanMinValue.Length && this.Equals(TimeSpanMinValue))
+                {
+                    result = TimeSpan.MinValue;
+                    return true;
+                }
+
+                bool succeeded = this.Substring(1).TryToTimeSpan(out result);
+                result = -result;
+                return succeeded;
+            }
+
+            uint days = 0, hours = 0, minutes = 0, seconds = 0, ticks = 0;
+
+            // Find the first colon (hour:minute)
+            int hourIndex = this.IndexOf(UTF8.Colon) - 2;
+
+            // If this is a days-only TimeSpan, try to parse it
+            if (hourIndex < 0)
+            {
+                if (!this.TryToUInt(out days)) return false;
+            }
+            else
+            {
+                // Use length to infer components which must be present
+                bool hasDays = (hourIndex > 0);
+                bool hasSeconds = (Length - hourIndex > 5);                 // HH:MMx
+                bool hasPartialSeconds = (Length - hourIndex > 8);          // HH:MM:SSx
+
+                // Validate separators
+                if (hasDays && this[hourIndex - 1] != UTF8.Period) return false;
+                if (hasSeconds && this[hourIndex + 5] != UTF8.Colon) return false;
+                if (hasPartialSeconds && this[hourIndex + 8] != UTF8.Period) return false;
+
+                // Parse Days, Hours, Minutes, Seconds
+                if (hasDays && !this.Substring(0, hourIndex - 1).TryToUInt(out days)) return false;
+                if (!this.Substring(hourIndex, 2).TryToUInt(out hours)) return false;
+                if (!this.Substring(hourIndex + 3, 2).TryToUInt(out minutes)) return false;
+                if (hasSeconds && !this.Substring(hourIndex + 6, 2).TryToUInt(out seconds)) return false;
+
+                // Parse Partial Seconds and normalize to ticks (0.1s -> 100k ticks, ticks are millionths of a second)
+                if (hasPartialSeconds)
+                {
+                    String8 partialSeconds = this.Substring(hourIndex + 9);
+                    if (partialSeconds.Length > 7) return false;
+                    if (!partialSeconds.TryToUInt(out ticks)) return false;
+                    if (partialSeconds.Length < 7) ticks *= (uint)Math.Pow(10, 7 - partialSeconds.Length);
+                }
+            }
+
+            // Validate number ranges
+            if (days > 10675199) return false;
+            if (hours > 23) return false;
+            if (minutes > 59) return false;
+            if (seconds > 59) return false;
+
+            // Construct the TimeSpan
+            result = new TimeSpan((int)days, (int)hours, (int)minutes, (int)seconds).Add(new TimeSpan(ticks));
+            return true;
+        }
+
+        /// <summary>
+        ///  Parse a "friendly" TimeSpan value, like 7d, 24h, 5m, 30s.
+        /// </summary>
+        /// <param name="result">TimeSpan equivalent of value</param>
+        /// <returns>True if valid TimeSpan, False otherwise</returns>
+        public bool TryToTimeSpanFriendly(out TimeSpan result)
+        {
+            result = TimeSpan.Zero;
+            if (this.IsEmpty()) return false;
+
+            // Try to Parse as a "normal" format TimeSpan
+            if (TryToTimeSpan(out result)) return true;
+
+            // Find the portion of the value which is the number part
+            bool allDigits = true;
+            int numberPrefixLength = (this.StartsWith(UTF8.Dash) ? 1 : 0);
+            for (; numberPrefixLength < this.Length; ++numberPrefixLength)
+            {
+                ParseDigit(this[numberPrefixLength], ref allDigits);
+                if (!allDigits) break;
+            }
+
+            // Verify there is a suffix
+            if (numberPrefixLength == Length) return false;
+
+            // Parse the number part
+            int numberPartValue;
+            if (!this.Substring(0, numberPrefixLength).TryToInteger(out numberPartValue)) return false;
+            String8 suffix = this.Substring(numberPrefixLength);
+            suffix.ToLowerInvariant();
+
+            if(suffix.Equals("ms"))
+            {
+                result = TimeSpan.FromMilliseconds(numberPartValue);
+                return true;
+            }
+            else if (suffix.Equals("s"))
+            {
+                result = TimeSpan.FromSeconds(numberPartValue);
+                return true;
+            }
+            else if (suffix.Equals("m"))
+            {
+                result = TimeSpan.FromMinutes(numberPartValue);
+                return true;
+            }
+            else if (suffix.Equals("h"))
+            {
+                result = TimeSpan.FromHours(numberPartValue);
+                return true;
+            }
+            else if (suffix.Equals("d"))
+            {
+                result = TimeSpan.FromDays(numberPartValue);
+                return true;
+            }
+
+            return false;
         }
         #endregion
 
@@ -1470,6 +1785,11 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
             }
 
             return true;
+        }
+
+        public bool Equals(string other)
+        {
+            return this.CompareTo(other) == 0;
         }
 
         public override int GetHashCode()

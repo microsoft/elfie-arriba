@@ -30,7 +30,7 @@ namespace XForm.Aggregators
         private int _distinctCount;
 
         public ColumnDetails ColumnDetails { get; private set; }
-        public XArray Values => XArray.All(_sumPerBucket, _distinctCount, _isNullPerBucket);
+        public XArray Values => (_sumPerBucket == null ? XArray.Empty : XArray.All(_sumPerBucket, _distinctCount, _isNullPerBucket));
 
         public SumAggregator(IXColumn sumOverColumn)
         {

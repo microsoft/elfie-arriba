@@ -26,6 +26,7 @@ namespace XForm
     public class BackgroundWebServer : IDisposable
     {
         private bool IsRunning { get; set; }
+        private bool UsingAuthentication { get; set; }
         private HttpListener Listener { get; set; }
         private Thread ListenerThread { get; set; }
 
@@ -79,8 +80,12 @@ namespace XForm
 
         private void StartForBinding(bool withAuthentication, params string[] urls)
         {
+            this.UsingAuthentication = withAuthentication;
             this.Listener = new HttpListener();
-            if (withAuthentication) this.Listener.AuthenticationSchemes = AuthenticationSchemes.Negotiate;
+            if (withAuthentication)
+            {
+                this.Listener.AuthenticationSchemeSelectorDelegate = (request) => (request.HttpMethod == "OPTIONS" ? AuthenticationSchemes.Anonymous : AuthenticationSchemes.Negotiate);
+            }
 
             foreach (string url in urls)
             {
@@ -127,10 +132,9 @@ namespace XForm
                 {
                     HandleRequest(this.Listener.GetContext());
                 }
-                catch (HttpListenerException ex)
+                catch (HttpListenerException)
                 {
-                    // Happens when connection to client lost before response sent
-                    Trace.TraceWarning(String.Format("BackgroundWebServer: Lost Connection During Request. Retrying. Error: {0}", ex.ToString()));
+                    // Happens when connection to client lost before response sent (request cancelled). Do nothing.
                 }
                 catch (ThreadAbortException)
                 {
@@ -181,11 +185,20 @@ namespace XForm
         {
             try
             {
+                string origin = request.Headers["Origin"] ?? "*";
+                response.AddHeader("Access-Control-Allow-Origin", origin);
+                response.AddHeader("Access-Control-Allow-Credentials", "true");
+                response.AddHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
+
+                // If the request is not authenticated, just return the CORS header
+                if (this.UsingAuthentication && request.User == null)
+                {
+                    response.StatusCode = 200;
+                    return;
+                }
+
                 // Add header to ask IE not to use compatibility mode
                 response.AddHeader("X-UA-Compatible", "IE=edge");
-
-                // Add CORS header to allow requests from other domains
-                response.AddHeader("Access-Control-Allow-Origin", "*");
 
                 // Get the URI requested
                 string localPath = request.Url.LocalPath;

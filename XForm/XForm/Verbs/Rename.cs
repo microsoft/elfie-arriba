@@ -6,6 +6,7 @@ using System.Collections.Generic;
 
 using XForm.Columns;
 using XForm.Data;
+using XForm.Extensions;
 using XForm.Query;
 
 namespace XForm.Verbs
@@ -23,7 +24,8 @@ namespace XForm.Verbs
                 columnNameMappings[context.Parser.NextColumnName(source)] = context.Parser.NextOutputColumnName(source);
             }
 
-            return new Rename(source, columnNameMappings);
+            // Rename can be evaluated in parallel, so keep parallel
+            return source.WrapParallel(context.Parser, (part) => new Rename(part, columnNameMappings));
         }
     }
 

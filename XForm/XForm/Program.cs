@@ -152,7 +152,7 @@ namespace XForm
             {
                 using (IXTable source = context.Query(query))
                 {
-                    rowsWritten = source.RunWithoutDispose();
+                    rowsWritten = source.Count();
                 }
             }
 

@@ -89,7 +89,7 @@ namespace XForm
                 }
                 catch (Exception ex)
                 {
-                    WriteException(ex, writer, false);
+                    ReportError(request, response, ex);
                 }
             }
         }
@@ -108,10 +108,7 @@ namespace XForm
             }
             catch (Exception ex)
             {
-                using (ITabularWriter writer = WriterForFormat("json", response))
-                {
-                    WriteException(ex, writer);
-                }
+                ReportError(request, response, ex);
             }
         }
 
@@ -129,10 +126,7 @@ namespace XForm
             }
             catch (Exception ex)
             {
-                using (ITabularWriter writer = WriterForFormat("json", response))
-                {
-                    WriteException(ex, writer);
-                }
+                ReportError(request, response, ex);
             }
         }
 
@@ -148,10 +142,7 @@ namespace XForm
             }
             catch (Exception ex)
             {
-                using (ITabularWriter writer = WriterForFormat("json", response))
-                {
-                    WriteException(ex, writer);
-                }
+                ReportError(request, response, ex);
             }
         }
 
@@ -171,6 +162,9 @@ namespace XForm
 
                 // Build a Pipeline for the Query
                 pipeline = context.Query(query);
+
+                // If there was no query, return an empty result
+                if (pipeline == null) return;
 
                 // Try to get the count up to the timeout
                 if (Debugger.IsAttached) timeout = TimeSpan.MaxValue;
@@ -212,6 +206,9 @@ namespace XForm
                 // Build a Pipeline for the Query
                 pipeline = context.Query(query);
 
+                // If there was no query, return an empty result
+                if (pipeline == null) return;
+
                 // Restrict the row and column count if requested
                 if (rowCountLimit >= 0 || colCountLimit > 0)
                 {
@@ -219,12 +216,10 @@ namespace XForm
                 }
 
                 // Build a writer for the desired format
-                using (ITabularWriter writer = WriterForFormat(format, response))
-                {
-                    // Run the query and return the output
-                    pipeline = new TabularFileWriter(pipeline, writer);
-                    pipeline.RunAndDispose();
-                }
+                pipeline = new TabularFileWriter(pipeline, WriterForFormat(format, response));
+                
+                // Run the query and return the output
+                pipeline.RunWithoutDispose();
             }
             finally
             {
@@ -236,23 +231,20 @@ namespace XForm
             }
         }
 
-        private void Save(IHttpRequest context, IHttpResponse response)
+        private void Save(IHttpRequest request, IHttpResponse response)
         {
             try
             {
                 Save(
-                    Require(context, "q"),
-                    Require(context, "name"));
+                    Require(request, "q"),
+                    Require(request, "name"));
 
                 // Success
                 response.StatusCode = 200;
             }
             catch (Exception ex)
             {
-                using (ITabularWriter writer = WriterForFormat("json", response))
-                {
-                    WriteException(ex, writer);
-                }
+                ReportError(request, response, ex);
             }
         }
 
@@ -261,23 +253,41 @@ namespace XForm
             _xDatabaseContext.Runner.Save(query, tableName);
         }
 
+        private const int HttpListener_RequestAborted = 1229;
+        private void ReportError(IHttpRequest request, IHttpResponse response, Exception ex)
+        {
+            // Don't log connections closed
+            HttpListenerException hle = ex as HttpListenerException;
+            if (hle != null && (uint)hle.ErrorCode == HttpListener_RequestAborted) return;
+
+            // Log locally except UsageExceptions
+            if(!(ex is UsageException))
+            {
+                Trace.WriteLine($"ERROR: {request.Url}\r\n{ex.ToString()}");
+            }
+
+            using (ITabularWriter writer = WriterForFormat("json", response))
+            {
+                WriteException(ex, writer);
+            }
+        }
+
         private ITabularWriter WriterForFormat(string format, IHttpResponse response)
         {
             Stream toStream = response.OutputStream;
             toStream = new BufferedStream(toStream, 64 * 1024);
 
-            switch (format.ToLowerInvariant())
+            format = format.ToLowerInvariant();
+            string sampleOutputFileName = $"Result.{format}";
+            if(format != "json")
             {
-                case "json":
-                    return new JsonTabularWriter(toStream);
-                case "csv":
-                    response.AddHeader("Content-Disposition", "attachment; filename=\"Result.csv\"");
-                    return new CsvWriter(toStream);
-                case "tsv":
-                    response.AddHeader("Content-Disposition", "attachment; filename=\"Result.tsv\"");
-                    return new TsvWriter(toStream);
-                default:
-                    throw new ArgumentException("fmt");
+                // Add a 'download this' header to all formats except JSON
+                response.AddHeader("Content-Disposition", $"attachment; filename=\"{sampleOutputFileName}\"");
+                return TabularFactory.BuildWriter(toStream, sampleOutputFileName);
+            }
+            else
+            {
+                return new JsonTabularWriter(toStream);
             }
         }
 

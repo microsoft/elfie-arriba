@@ -117,7 +117,7 @@ namespace XForm.Types
                 result = null;
 
                 string stringValue = value.ToString();
-                if (stringValue != "" || String.Compare(stringValue, "null", true) == 0) return true;
+                if (stringValue == "" || String.Compare(stringValue, "null", true) == 0) return true;
                 return false;
             }
 

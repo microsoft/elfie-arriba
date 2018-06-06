@@ -96,6 +96,12 @@ namespace XForm.Data
         /// <returns>XArray wrapping the array from [0, Count)</returns>
         public static XArray All(Array array, int count = -1, bool[] nulls = null, bool isSingle = false)
         {
+            if(array == null)
+            {
+                if (count == 0 || count == -1) return XArray.Empty;
+                throw new ArgumentNullException("array");
+            }
+
             if (count == -1) count = array.Length;
             if (isSingle == false && count > array.Length) throw new ArgumentOutOfRangeException("length");
             if (isSingle == false && nulls != null && count > nulls.Length) throw new ArgumentOutOfRangeException("length");
@@ -294,6 +300,19 @@ namespace XForm.Data
 
                 return XArray.All(array, this.Count, nulls);
             }
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (!(obj is XArray)) return false;
+
+            XArray other = (XArray)obj;
+            return other.Array == this.Array && other.NullRows == this.NullRows && other.Selector == this.Selector;
+        }
+
+        public override int GetHashCode()
+        {
+            return (this.Array?.GetHashCode() ?? 0) ^ (this.NullRows?.GetHashCode() ?? 0) ^ (this.Selector?.GetHashCode() ?? 0);
         }
     }
 }

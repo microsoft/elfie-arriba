@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
+using XForm.Extensions;
 
 namespace XForm.Query
 {
@@ -25,12 +26,57 @@ namespace XForm.Query
 
         public ErrorContext(string invalidValue, string invalidValueCategory, IEnumerable<string> validValues)
         {
+            // If the invalid value ends with the 'next token hint', '~', remove it to filter valid values
+            invalidValue = invalidValue.RemoveTrailing('~');
+
             this.InvalidValue = invalidValue;
             this.InvalidValueCategory = invalidValueCategory;
             this.ValidValues = validValues;
 
-            // Always sort expected values
-            if (this.ValidValues != null) this.ValidValues = this.ValidValues.OrderBy((s) => s);
+            if (this.ValidValues != null)
+            {
+                // Don't filter valid values; the client side should get the whole list
+                // so that it can filter during typing without calling back, including during backspace
+
+                // Always sort expected values
+                if (this.ValidValues != null)
+                {
+                    this.ValidValues = this.ValidValues.OrderBy((s) => s);
+                }
+            }
+        }
+
+        /// <summary>
+        ///  Return the filtered list of ValidValues as client IntelliSense should display.
+        ///  The service returns the full list and the client filters it so that Suggest only
+        ///  has to be called once per token rather than once per keystroke.
+        /// </summary>
+        public IEnumerable<string> FilteredValues
+        {
+            get
+            {
+                IEnumerable<string> filteredValues = this.ValidValues;
+
+                // Filter valid values based on prefix typed
+                if (!String.IsNullOrEmpty(this.InvalidValue)) filteredValues = filteredValues.Where((value) => value.IndexOf(this.InvalidValue, StringComparison.OrdinalIgnoreCase) != -1);
+
+                int filteredCount = filteredValues.Count();
+                if (filteredCount == 1)
+                {
+                    // If there's only one value and it exactly matches, return no valid values
+                    if (filteredValues.First().Equals(this.InvalidValue, StringComparison.OrdinalIgnoreCase))
+                    {
+                        filteredValues = null;
+                    }
+                }
+                else if (filteredCount == 0)
+                {
+                    // If nothing was left after filtering, return the full list
+                    filteredValues = this.ValidValues;
+                }
+
+                return filteredValues;
+            }
         }
 
         public ErrorContext Merge(ErrorContext inner)

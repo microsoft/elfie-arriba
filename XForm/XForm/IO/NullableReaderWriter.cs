@@ -17,7 +17,7 @@ namespace XForm.Types
     public class NullableWriter : IColumnWriter
     {
         private IStreamProvider _streamProvider;
-        private int _rowCountSoFar;
+        private int _rowCountWritten;
         private string _columnPath;
         private IColumnWriter _valueWriter;
         private PrimitiveArrayWriter<bool> _nullWriter;
@@ -33,13 +33,21 @@ namespace XForm.Types
 
         public Type WritingAsType => _valueWriter.WritingAsType;
 
+        public bool CanAppend(XArray xarray)
+        {
+            // We can append if the nulls themselves fit (only one byte each, to be smaller) 
+            //  and the values can fit (should almost always be more limiting)
+            return (_rowCountWritten + xarray.Count) <= BinaryTableWriter.ColumnFileSizeLimit
+                && _valueWriter.CanAppend(xarray);
+        }
+
         public void Append(XArray xarray)
         {
             // Write the values (without the null markers; we're writing those here)
             _valueWriter.Append(xarray.WithoutNulls());
 
             // Track the row count written so we know how many null=false values to write when we first see a null
-            _rowCountSoFar += xarray.Count;
+            _rowCountWritten += xarray.Count;
 
             // If there are no nulls in this set and none previously, no null markers need to be written
             if (!xarray.HasNulls && _nullWriter == null) return;
@@ -61,7 +69,7 @@ namespace XForm.Types
                 _nullWriter = new PrimitiveArrayWriter<bool>(_streamProvider.OpenWrite(nullsPath));
 
                 // Write false for every value so far
-                int previousCount = _rowCountSoFar - xarray.Count;
+                int previousCount = _rowCountWritten - xarray.Count;
                 Allocator.AllocateToSize(ref _falseArray, 1024);
                 for (int i = 0; i < previousCount; i += 1024)
                 {

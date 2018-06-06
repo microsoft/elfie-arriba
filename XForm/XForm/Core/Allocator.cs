@@ -35,7 +35,8 @@ namespace XForm
         /// <param name="size">Minimum required size for vector</param>
         public static void AllocateToSize(ref BitVector vector, int size)
         {
-            if (vector == null || vector.Capacity < size) vector = new BitVector(size);
+            if (vector == null) vector = new BitVector(size);
+            vector.Capacity = size;
         }
 
         /// <summary>
@@ -106,6 +107,40 @@ namespace XForm
             Type specificType = genericContainerType.MakeGenericType(elementType);
             ConstructorInfo ctor = specificType.GetConstructor(new Type[] { typeof(int) });
             return ctor.Invoke(new object[] { capacity });
+        }
+
+        /// <summary>
+        ///  Create a generic class for a dynamic type parameter using the constructor which takes a T.
+        ///  
+        ///  Ex:
+        ///  IList list = (IList)ConstructTyped(typeof(List&lt;&gt;), typeof(int), 1000);
+        /// </summary>
+        /// <param name="genericContainerType">Type of class to create [ex: List&lt;&gt;]</param>
+        /// <param name="elementType">Type of elements for the class [typeof(int> for List&lt;int&gt;]</param>
+        /// <param name="argument">First constructor argument</param>
+        /// <returns>new genericContainerType&lt;elementType&gt;(argument)</returns>
+        public static object ConstructGenericOf<T>(Type genericContainerType, Type elementType, T argument)
+        {
+            Type specificType = genericContainerType.MakeGenericType(elementType);
+            ConstructorInfo ctor = specificType.GetConstructor(new Type[] { typeof(T) });
+            return ctor.Invoke(new object[] { argument });
+        }
+
+        /// <summary>
+        ///  Create a generic class for a dynamic type parameter using the constructor which takes a T.
+        ///  
+        ///  Ex:
+        ///  IList list = (IList)ConstructTyped(typeof(List&lt;&gt;), typeof(int), 1000);
+        /// </summary>
+        /// <param name="genericContainerType">Type of class to create [ex: List&lt;&gt;]</param>
+        /// <param name="elementType">Type of elements for the class [typeof(int> for List&lt;int&gt;]</param>
+        /// <param name="argument">First constructor argument</param>
+        /// <returns>new genericContainerType&lt;elementType&gt;(argument)</returns>
+        public static object ConstructGenericOf<T, U>(Type genericContainerType, Type elementType, T argument1, U argument2)
+        {
+            Type specificType = genericContainerType.MakeGenericType(elementType);
+            ConstructorInfo ctor = specificType.GetConstructor(new Type[] { typeof(T), typeof(U) });
+            return ctor.Invoke(new object[] { argument1, argument2 });
         }
     }
 }

@@ -1,13 +1,16 @@
 window.log = function() { console.log.apply(console, arguments) }
 
-window.xhr = (path, params) => {
+window.encodeParams = function(params) {
+    return Object.keys(params)
+        .filter(k => params[k] !== undefined)
+        .map(k => `${k}=${encodeURIComponent(params[k])}`).join('&')
+}
+
+window.xhr = (path, paramObj) => {
     return new Promise((resolve, reject) => {
-        const encodedParams = Object.keys(params)
-            .filter(k => params[k] !== undefined)
-            .map(k => `${k}=${encodeURIComponent(params[k])}`).join('&')
         const xhr = new XMLHttpRequest();
         xhr.withCredentials = false;
-        xhr.open("GET", `${window.xhr.urlRoot}/${path}?${encodedParams}`, true); // For testing: http://httpbin.org/post
+        xhr.open("GET", `${window.xhr.urlRoot}/${path}?${encodeParams(paramObj)}`, true); // For testing: http://httpbin.org/post
         xhr.onload = () => {
             const responseText = xhr.responseText;
 
@@ -57,9 +60,7 @@ window.CachableReusedRequest = class CachableReusedRequest {
 
         if (!paramObj) return then(); // return undef
 
-        const paramStr = Object.keys(paramObj)
-            .filter(k => paramObj[k] !== undefined)
-            .map(k => `${k}=${encodeURIComponent(paramObj[k])}`).join('&')
+        const paramStr = encodeParams(paramObj)
         const cache = this.caching && this._cache[paramStr];
         if (cache) {
             then(cache);
@@ -77,4 +78,10 @@ window.CachableReusedRequest = class CachableReusedRequest {
             xhr.send();
         }
     }
+}
+
+window.o2c = function(o) {
+    // Object --> css class names (string)
+    // { a: true, b: false, c: 1 } --> 'a c'
+    return Object.keys(o).filter(k => o[k]).join(' ')
 }

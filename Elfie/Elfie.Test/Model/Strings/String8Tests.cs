@@ -456,6 +456,32 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
         }
 
         [TestMethod]
+        public void String8_FloatConversions()
+        {
+            // TODO: XForm doesn't parse base and exponent notation yet; add tests when it does.
+
+            TryFloatConversions(null);
+            TryFloatConversions(string.Empty);
+            TryFloatConversions("0");
+            TryFloatConversions("-1.5");
+            TryFloatConversions("12345.67890");
+            TryFloatConversions("0.123456789");
+            TryFloatConversions(".123456789");
+            TryFloatConversions(int.MaxValue.ToString());
+            TryFloatConversions(long.MinValue.ToString());
+            TryFloatConversions(ulong.MaxValue.ToString());
+        }
+
+        private static void TryFloatConversions(string value)
+        {
+            String8 value8 = value.TestConvert();
+
+            double expectedDouble, actualDouble;
+            Assert.AreEqual(double.TryParse(value, out expectedDouble), value8.TryToDouble(out actualDouble));
+            Assert.AreEqual(expectedDouble, actualDouble);
+        }
+
+        [TestMethod]
         public void String8_FromInteger()
         {
             byte[] buffer = new byte[20];
@@ -471,6 +497,22 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
             Assert.AreEqual("123456789", String8.FromInteger(123456789, buffer).ToString());
             Assert.AreEqual(int.MaxValue.ToString(), String8.FromInteger(int.MaxValue, buffer).ToString());
             Assert.AreEqual(int.MinValue.ToString(), String8.FromInteger(int.MinValue, buffer).ToString());
+        }
+
+        [TestMethod]
+        public void String8_FromNumber_Double()
+        {
+            // TODO: XForm doesn't write to base and exponent notation yet; add tests when it does.
+
+            byte[] buffer = new byte[21];
+            Assert.AreEqual("0", String8.FromNumber(0.0, buffer).ToString());
+            Assert.AreEqual("1000", String8.FromNumber(1000.0, buffer).ToString());
+            Assert.AreEqual("1.5", String8.FromNumber(1.5, buffer).ToString());
+            Assert.AreEqual("-1.5", String8.FromNumber(-1.5, buffer).ToString());
+            Assert.AreEqual("0.666666666666666", String8.FromNumber((double)2 / (double)3, buffer).ToString());
+            Assert.AreEqual("0.75", String8.FromNumber((double)3 / (double)4, buffer).ToString());
+            Assert.AreEqual("0.0075", String8.FromNumber(0.0075, buffer).ToString());
+            Assert.AreEqual(int.MaxValue.ToString(), String8.FromNumber((double)int.MaxValue, buffer).ToString());
         }
 
         [TestMethod]
@@ -561,14 +603,125 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
         }
 
         [TestMethod]
-        public void String8_ToUpper()
+        public void String8_FromTimeSpan()
+        {
+            byte[] buffer = new byte[21];
+            Assert.AreEqual("00:00:00", String8.FromTimeSpan(TimeSpan.Zero, buffer).ToString());
+            Assert.AreEqual("1.00:00:00", String8.FromTimeSpan(TimeSpan.Parse("1.00:00:00"), buffer).ToString());
+            Assert.AreEqual("1.09:08:07", String8.FromTimeSpan(TimeSpan.Parse("1.09:08:07"), buffer).ToString());
+            Assert.AreEqual("09:08:07.654", String8.FromTimeSpan(TimeSpan.Parse("09:08:07.654"), buffer).ToString());
+            Assert.AreEqual("10675199.02:48:05.477", String8.FromTimeSpan(TimeSpan.MaxValue, buffer).ToString());
+        }
+
+        [TestMethod]
+        public void String8_TryToTimeSpan()
+        {
+            // Null/Empty
+            TryToTimeSpan(null);
+            TryToTimeSpan(String.Empty);
+
+            // Days only
+            TryToTimeSpan("100");
+            TryToTimeSpan("-50");
+
+            // Some parts only
+            TryToTimeSpan("12:40");
+            TryToTimeSpan("12:40:50");
+            TryToTimeSpan("7.12:40:50");
+            TryToTimeSpan("12:40:50.750");
+
+            // All parts
+            TryToTimeSpan("7.12:30:31.500");
+            TryToTimeSpan("-7.12:30:31.500");
+
+            // Min/Max
+            TryToTimeSpan(TimeSpan.MaxValue.ToString());
+            TryToTimeSpan(TimeSpan.MinValue.ToString());
+
+            // Max ticks length and too long
+            TryToTimeSpan("7.12:30:31.1234567");
+            TryToTimeSpan("7.12:30:31.12345678");
+
+            // Bad Separators
+            TryToTimeSpan("7|12:30:31.123");
+            TryToTimeSpan("7.12|30:31.123");
+            TryToTimeSpan("7.12:30|31.123");
+            TryToTimeSpan("7.12:30:31|123");
+
+            // Out of range numbers
+            TryToTimeSpan("10675200");
+            //TryToTimeSpan("24:00:00"); // BUG: TimeSpan.Parse("24:00:00") succeeds and returns 24 days.
+            TryToTimeSpan("12:60:00");
+            TryToTimeSpan("12:00:60");
+
+            // Non-numeric
+            TryToTimeSpan("a.12:30:31.123");
+            TryToTimeSpan("7.a2:30:31.123");
+            TryToTimeSpan("7.12:a0:31.123");
+            TryToTimeSpan("7.12:30:a1.123");
+            TryToTimeSpan("7.12:30:31.a23");
+        }
+
+        private void TryToTimeSpan(string value)
+        {
+            String8 value8 = value.TestConvert();
+
+            TimeSpan expected;
+            bool shouldSucceed = TimeSpan.TryParse(value, out expected);
+
+            TimeSpan actual;
+            bool didSucceed = value8.TryToTimeSpan(out actual);
+
+            Assert.AreEqual(shouldSucceed, didSucceed, $"Success wrong for '{value}'");
+            Assert.AreEqual(expected, actual, $"Result wrong for '{value}'");
+        }
+
+        [TestMethod]
+        public void String8_TryToTimeSpanFriendly()
+        {
+            // Null/Empty
+            TryToTimeSpanFriendly(null, null);
+            TryToTimeSpanFriendly(null, String.Empty);
+
+            // Passthrough to normal format
+            TryToTimeSpanFriendly(TimeSpan.Parse("7.12:30:31.500"), "7.12:30:31.500");
+            TryToTimeSpanFriendly(TimeSpan.Parse("-7.12:30:31.500"), "-7.12:30:31.500");
+
+            // Try each scale
+            TryToTimeSpanFriendly(TimeSpan.FromMilliseconds(500), "500ms");
+            TryToTimeSpanFriendly(TimeSpan.FromSeconds(30), "30s");
+            TryToTimeSpanFriendly(TimeSpan.FromHours(8), "8h");
+            TryToTimeSpanFriendly(TimeSpan.FromDays(7), "7d");
+
+            // Try negative values
+            TryToTimeSpanFriendly(TimeSpan.FromDays(-60), "-60d");
+        }
+
+        private void TryToTimeSpanFriendly(TimeSpan? expected, string value)
+        {
+            String8 value8 = value.TestConvert();
+
+            TimeSpan actual;
+            bool succeeded = value8.TryToTimeSpanFriendly(out actual);
+
+            Assert.AreEqual(expected.HasValue, succeeded, $"Success wrong for '{value}'");
+            Assert.AreEqual(expected ?? TimeSpan.Zero, actual, $"Result wrong for '{value}'");
+        }
+
+        [TestMethod]
+        public void String8_ToUpperToLower()
         {
             // Verify no exception
             String8.Empty.ToUpperInvariant();
+            String8.Empty.ToLowerInvariant();
 
-            String8 sample = "abcABC".TestConvert();
+            String8 sample = "abcABC@[`{".TestConvert();
             sample.ToUpperInvariant();
-            Assert.AreEqual("ABCABC", sample.ToString());
+            Assert.AreEqual("ABCABC@[`{", sample.ToString());
+
+            sample = "abcABC@[`{".TestConvert();
+            sample.ToLowerInvariant();
+            Assert.AreEqual("abcabc@[`{", sample.ToString());
         }
 
         [TestMethod]

@@ -49,8 +49,8 @@ namespace XForm.Transforms
             if (!_indicesFound)
             {
                 Allocator.AllocateToSize(ref _indices, _count);
-                int countFound = _vector.Page(_indices, ref _nextVectorIndex);
-                if (countFound != _count) System.Diagnostics.Debugger.Break();
+                int countFound = _vector.Page(_indices, ref _nextVectorIndex, _count);
+                if (countFound != _count) throw new InvalidOperationException($"RowRemapper found {countFound:n0} rows when {_count:n0} expected paging in Vector with {_vector.Count:n0} total matches up to index {_nextVectorIndex:n0}.");
             }
 
             // Set that we need indices again and the next expected count

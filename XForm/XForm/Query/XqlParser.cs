@@ -15,7 +15,6 @@ using XForm.Extensions;
 using XForm.Functions;
 using XForm.Query.Expression;
 using XForm.Types;
-using XForm.Verbs;
 
 namespace XForm.Query
 {
@@ -33,6 +32,11 @@ namespace XForm.Query
             _scanner = new XqlScanner(xqlQuery);
             _workflow = workflow;
             _currentlyBuilding = new Stack<IUsage>();
+        }
+
+        public void RewindTo(Position position)
+        {
+            _scanner.RewindTo(position);
         }
 
         private static void EnsureLoaded()
@@ -88,7 +92,7 @@ namespace XForm.Query
             // For nested pipelines, we should still be on the line for the stage which has a nested pipeline. Move forward.
             if (_scanner.Current.Type == TokenType.Newline) _scanner.Next();
 
-            while (_scanner.Current.Type != TokenType.End)
+            do
             {
                 // If this line is 'end', this is the end of the inner pipeline. Leave it at the end of this line; the outer NextPipeline will skip to the next line.
                 if (_scanner.Current.Value.Equals("end", StringComparison.OrdinalIgnoreCase))
@@ -99,7 +103,7 @@ namespace XForm.Query
 
                 pipeline = NextVerb(pipeline);
                 _scanner.Next();
-            }
+            } while (_scanner.Current.Type != TokenType.End) ;
 
             return pipeline;
         }
@@ -119,7 +123,7 @@ namespace XForm.Query
             {
                 stage = builder.Build(source, _workflow);
             }
-            catch (Exception ex)
+            catch (ArgumentException ex)
             {
                 Rethrow(ex);
             }
@@ -170,14 +174,21 @@ namespace XForm.Query
         public IXTable NextTableSource()
         {
             string tableName = _scanner.Current.Value;
-            ParseNextOrThrow(() => _scanner.Current.Type == TokenType.Value, "Table", TokenType.Value, _workflow.Runner.SourceNames);
 
-            // If there's a WorkflowProvider, ask it to get the table. This will recurse.
+            // Throw for tokens of the wrong type, but don't consume the table name token yet
+            if (_scanner.Current.Type != TokenType.Value) Throw("Table", _workflow.Runner.SourceNames);
+
+            // As the WorkflowProvider to get the table. This will recurse.
             try
             {
-                return _workflow.Runner.Build(tableName, _workflow);
+                IXTable table = _workflow.Runner.Build(tableName, _workflow);
+
+                // Consume the table *after* the runner built it
+                _scanner.Next();
+
+                return table;
             }
-            catch (Exception ex)
+            catch (ArgumentException ex)
             {
                 Rethrow(ex);
                 return null;
@@ -260,7 +271,7 @@ namespace XForm.Query
 
                 return result;
             }
-            catch (Exception ex)
+            catch (ArgumentException ex)
             {
                 Rethrow(ex);
                 return null;
@@ -291,7 +302,7 @@ namespace XForm.Query
 
                 return result;
             }
-            catch (Exception ex)
+            catch (ArgumentException ex)
             {
                 Rethrow(ex);
                 return null;
@@ -319,7 +330,7 @@ namespace XForm.Query
         public TimeSpan NextTimeSpan()
         {
             object value = null;
-            ParseNextOrThrow(() => TypeConverterFactory.TryConvertSingle(_scanner.Current.Value, typeof(TimeSpan), out value), "TimeSpan ['60s', '7d']", TokenType.Value);
+            ParseNextOrThrow(() => (TypeConverterFactory.TryConvertSingle(_scanner.Current.Value, typeof(TimeSpan), out value) && value != null), "TimeSpan ['60s', '7d']", TokenType.Value);
             return (TimeSpan)value;
         }
 
@@ -479,10 +490,10 @@ namespace XForm.Query
         {
             ErrorContext context = new ErrorContext();
             context.TableName = _workflow.CurrentTable;
-            context.QueryLineNumber = _scanner.Current.LineNumber;
+            context.QueryLineNumber = _scanner.Current.Position.LineNumber;
             context.Usage = (_currentlyBuilding.Count > 0 ? _currentlyBuilding.Peek().Usage : null);
-            context.InvalidValue = _scanner.Current.Value;
-            context.InvalidTokenIndex = _scanner.Current.Index;
+            context.InvalidValue = _scanner.Current.RawValue;
+            context.InvalidTokenIndex = _scanner.Current.Position.Index;
             context.ErrorMessage = "";
 
             return context;
@@ -490,7 +501,7 @@ namespace XForm.Query
 
         private void Throw(string valueCategory, IEnumerable<string> validValues = null)
         {
-            ErrorContext context = BuildErrorContext().Merge(new ErrorContext(_scanner.Current.Value, valueCategory, validValues));
+            ErrorContext context = BuildErrorContext().Merge(new ErrorContext(_scanner.Current.RawValue, valueCategory, validValues));
 
             // Consume the bad token
             _scanner.Next();
@@ -517,6 +528,10 @@ namespace XForm.Query
             if (ex is UsageException)
             {
                 ErrorContext context = BuildErrorContext().Merge(((UsageException)ex).Context);
+
+                // Consume the bad token
+                _scanner.Next();
+
                 if (!this.WasLastTokenInQuery && String.IsNullOrEmpty(context.ErrorMessage))
                 {
                     context.ErrorMessage = $"Invalid {context.InvalidValueCategory} \"{context.InvalidValue ?? "<null>"}\"";
@@ -542,10 +557,10 @@ namespace XForm.Query
             }
         }
 
-        public bool WasLastTokenInQuery => (_scanner.Current.Type == TokenType.End && _scanner.Current.WhitespacePrefix.Length == 0) || _scanner.Current.Type == TokenType.NextTokenHint;
+        public bool WasLastTokenInQuery => ((_scanner.Current.Type == TokenType.End || _scanner.Current.Type == TokenType.NextTokenHint) && _scanner.Current.WhitespacePrefix.Length == 0);
         public bool HasAnotherPart => _scanner.Current.Type != TokenType.Newline && _scanner.Current.Type != TokenType.End;
         public bool HasAnotherArgument => HasAnotherPart && _scanner.Current.Type != TokenType.CloseParen;
-        public int CurrentLineNumber => _scanner.Current.LineNumber;
+        public Position CurrentPosition => _scanner.Current.Position;
         public string NextTokenText => (HasAnotherPart ? _scanner.Current.Value : "");
     }
 }

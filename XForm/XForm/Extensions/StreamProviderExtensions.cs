@@ -20,6 +20,11 @@ namespace XForm.Extensions
     {
         public const string DateTimeFolderFormat = "yyyy.MM.dd HH.mm.ssZ";
 
+        public static bool Exists(this IStreamProvider streamProvider, string logicalPath)
+        {
+            return streamProvider.Attributes(logicalPath).Exists;
+        }
+
         public static string Path(this IStreamProvider streamProvider, LocationType type, string tableName, string extension)
         {
             return System.IO.Path.Combine(type.ToString(), tableName + extension);
@@ -110,6 +115,19 @@ namespace XForm.Extensions
             }
         }
 
+        public static bool ContainsTable(this IStreamProvider streamProvider, string tableName)
+        {
+            // Don't allow trailing characters on table name which File I/O removes
+            if (tableName.EndsWith(".") || tableName.EndsWith("\\") || tableName.EndsWith("/")) return false;
+
+            if (streamProvider.Attributes(Path(streamProvider, LocationType.Source, tableName, CrawlType.Full)).Exists) return true;
+            if (streamProvider.Attributes(Path(streamProvider, LocationType.Table, tableName, CrawlType.Full)).Exists) return true;
+            if (streamProvider.Attributes(Path(streamProvider, LocationType.Config, tableName, ".xql")).Exists) return true;
+            if (streamProvider.Attributes(Path(streamProvider, LocationType.Query, tableName, ".xql")).Exists) return true;
+
+            return false;
+        }
+
         public static IEnumerable<string> Tables(this IStreamProvider streamProvider)
         {
             HashSet<string> tables = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -198,6 +216,11 @@ namespace XForm.Extensions
                     source.CopyTo(output);
                 }
             }
+        }
+
+        public static void Copy(this IStreamProvider streamProvider, string sourceFilePath, string targetPath)
+        {
+            Copy(streamProvider, File.OpenRead(sourceFilePath), targetPath);
         }
     }
 }

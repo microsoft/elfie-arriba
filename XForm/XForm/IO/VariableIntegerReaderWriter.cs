@@ -40,6 +40,11 @@ namespace XForm.IO
             return $"{columnPathPrefix}.{PrimitiveTypeProvider<byte>.BinaryFileTypePart(type)}.bin";
         }
 
+        public bool CanAppend(XArray xarray)
+        {
+            return _writer.CanAppend(xarray);
+        }
+
         private static IColumnWriter BuildDirectWriter(IStreamProvider streamProvider, Type type, string columnPathFull)
         {
             // Open the correct *direct* writer for the desired type.
