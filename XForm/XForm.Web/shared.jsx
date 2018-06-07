@@ -6,6 +6,23 @@ window.encodeParams = function(params) {
         .map(k => `${k}=${encodeURIComponent(params[k])}`).join('&')
 }
 
+// Build an object with a property for each querystring parameter
+window.getQueryStringParameters = () => {
+    var urlParameters = window.location.search.substring(1);
+    var parameterParts = urlParameters.split("&");
+
+    var result = {};
+
+    for (var i = 0; i < parameterParts.length; ++i) {
+        if (!parameterParts[i]) continue;
+        var parameterAndValue = parameterParts[i].split("=");
+        if (parameterAndValue.length != 2) continue;
+        result[decodeURIComponent(parameterAndValue[0]).toLowerCase()] = decodeURIComponent(parameterAndValue[1]);
+    }
+
+    return result;
+}
+
 window.xhr = (path, paramObj) => {
     return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
