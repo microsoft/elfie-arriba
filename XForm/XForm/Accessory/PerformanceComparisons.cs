@@ -18,7 +18,7 @@ using XForm.Types;
 
 namespace XForm
 {
-    public class PerformanceComparisons
+    internal class PerformanceComparisons
     {
         private const int DefaultMeasureMilliseconds = 3000;
 

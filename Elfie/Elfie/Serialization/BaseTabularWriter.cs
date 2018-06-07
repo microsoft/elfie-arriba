@@ -128,13 +128,23 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         }
 
         /// <summary>
-        ///  Write an integer to the current row.
+        ///  Write a long to the current row.
         ///  The value is converted without allocations.
         /// </summary>
         /// <param name="value">Value to write</param>
-        public void Write(int value)
+        public void Write(long value)
         {
-            Write(String8.FromInteger(value, _typeConversionBuffer));
+            Write(String8.FromNumber(value, _typeConversionBuffer));
+        }
+
+        /// <summary>
+        ///  Write a double to the current row.
+        ///  The value is converted without allocations.
+        /// </summary>
+        /// <param name="value">Value to write</param>
+        public void Write(double value)
+        {
+            Write(String8.FromNumber(value, _typeConversionBuffer));
         }
 
         /// <summary>

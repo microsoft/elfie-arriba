@@ -88,6 +88,9 @@ namespace XForm
                     case "perf":
                         new PerformanceComparisons(context).Run();
                         return 0;
+                    case "generatehuge":
+                        HugeSampleGenerator.Generate(ParseLongOrDefault(args, 1, (long)5 * 1000 * 1000 * 1000), context);
+                        return 0;
                     default:
                         throw new UsageException($"Unknown XForm mode '{command}'.");
                 }
@@ -138,6 +141,20 @@ namespace XForm
             if (!bool.TryParse(args[index], out result))
             {
                 throw new UsageException($"'{args[index]} was not a valid Boolean.");
+            }
+
+            return result;
+        }
+
+
+        private static long ParseLongOrDefault(string[] args, int index, long defaultValue)
+        {
+            if (args.Length <= index) return defaultValue;
+
+            long result;
+            if (!long.TryParse(args[index], out result))
+            {
+                throw new UsageException($"'{args[index]} was not a valid long.");
             }
 
             return result;
