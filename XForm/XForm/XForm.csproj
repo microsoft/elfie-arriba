@@ -91,6 +91,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Accessory\HugeSampleGenerator.cs" />
     <Compile Include="Aggregators\PercentageAggregator.cs" />
     <Compile Include="Aggregators\CountAggregator.cs" />
     <Compile Include="Aggregators\IAggregator.cs" />
@@ -179,7 +180,7 @@
     <Compile Include="Extensions\StreamProviderExtensions.cs" />
     <Compile Include="IO\StreamProvider\MultipleSourceStreamProvider.cs" />
     <Compile Include="Core\NativeAccelerator.cs" />
-    <Compile Include="PerformanceComparisons.cs" />
+    <Compile Include="Accessory\PerformanceComparisons.cs" />
     <Compile Include="Query\Expression\NotExpression.cs" />
     <Compile Include="Query\Expression\IExpression.cs" />
     <Compile Include="Query\Expression\AndExpression.cs" />

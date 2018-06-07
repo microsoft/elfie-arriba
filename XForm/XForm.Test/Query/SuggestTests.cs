@@ -167,6 +167,18 @@ namespace XForm.Test.Query
             Assert.AreEqual("[ClientBrowser]|[ClientIP]|[ClientOs]|[ClientRegion]|[DataCenter]|[DaysSinceJoined]|[EventTime]|[HttpMethod]|[HttpStatus]|[ID]|[IsPremiumUser]|[Protocol]|[RequestBytes]|[ResponseBytes]|[ServerName]|[ServerPort]|[TimeTakenMs]|[UriStem]|[UserGuid]|[UserName]|[WasCachedResponse]|[WasEncrypted]", string.Join("|", result.Context.ValidValues));
         }
 
+        [TestMethod]
+        public void Suggest_NoErrorsForValidValues()
+        {
+            SampleDatabase.EnsureBuilt();
+            QuerySuggester suggester = new QuerySuggester(SampleDatabase.XDatabaseContext);
+
+            // No error on constant
+            Assert.AreEqual("", suggester.Suggest($@"
+                read WebRequest
+                where Cast([HttpStatus], UInt16) < 10").Context.ErrorMessage);
+        }
+
         private static string Values(SuggestResult result)
         {
             if (result.Context == null) return null;

@@ -74,15 +74,19 @@ namespace XForm
 
         public bool ForceSingleThreaded { get; set; }
 
-        public XDatabaseContext()
+        
+        public XDatabaseContext(string databaseRoot)
         {
             this.RequestedAsOfDateTime = DateTime.UtcNow;
             this.NewestDependency = DateTime.MinValue;
             this.RebuiltSomething = false;
 
-            this.StreamProvider = new LocalFileStreamProvider(Environment.CurrentDirectory);
+            this.StreamProvider = new LocalFileStreamProvider(databaseRoot);
             this.Runner = new WorkflowRunner(this);
         }
+
+        public XDatabaseContext() : this(Environment.CurrentDirectory)
+        { }
 
         public XDatabaseContext(IWorkflowRunner runner, IStreamProvider streamProvider) : this()
         {

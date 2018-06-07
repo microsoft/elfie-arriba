@@ -173,7 +173,7 @@ namespace XForm
                 using (ITabularWriter writer = WriterForFormat("json", response))
                 {
                     writer.SetColumns(new string[] { "Count", "IsComplete", "RuntimeMs" });
-                    writer.Write((int)result.RowCount);
+                    writer.Write(result.RowCount);
                     writer.Write(result.IsComplete);
                     writer.Write((int)result.Elapsed.TotalMilliseconds);
                     writer.NextRow();
