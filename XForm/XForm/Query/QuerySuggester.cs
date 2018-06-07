@@ -60,7 +60,11 @@ namespace XForm.Query
 
                 // If it was valid, don't show an error message
                 result.IsValid = true;
-                result.Context.ErrorMessage = "";
+
+                if (result.Context != null)
+                {
+                    result.Context.ErrorMessage = "";
+                }
             }
             catch (UsageException)
             { }

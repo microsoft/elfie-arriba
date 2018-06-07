@@ -48,7 +48,7 @@ namespace XForm.IO
 
         public IEnumerable<ItemVersion> VersionsInRange(CrawlType crawlType, DateTime startDateTime, DateTime asOfDateTime)
         {
-            return this.Versions.Where((v) => (v.CrawlType == crawlType && v.AsOfDate > startDateTime && v.AsOfDate <= asOfDateTime));
+            return this.Versions.Where((v) => (v.CrawlType == crawlType && v.AsOfDate >= startDateTime && v.AsOfDate <= asOfDateTime));
         }
     }
 

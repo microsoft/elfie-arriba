@@ -227,11 +227,18 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             String8.FromBoolean(value).WriteTo(_stream);
         }
 
-        public void Write(int value)
+        public void Write(long value)
         {
             // Numbers are written without quotes and never need escaping. "ColumnName": -1234
             WriteColumnSeparator();
-            String8.FromInteger(value, _typeConversionBuffer).WriteTo(_stream);
+            String8.FromNumber(value, _typeConversionBuffer).WriteTo(_stream);
+        }
+
+        public void Write(double value)
+        {
+            // Numbers are written without quotes and never need escaping. "ColumnName": -1234
+            WriteColumnSeparator();
+            String8.FromNumber(value, _typeConversionBuffer).WriteTo(_stream);
         }
 
         public void Write(String8 value)

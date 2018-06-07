@@ -70,8 +70,8 @@ namespace XForm.IO
         {
             if (_partitionWriter == null) NextPartitionWriter();
 
-            int count = _source.Next(desiredCount, cancellationToken);
-            if (count == 0)
+            int countRetrieved = _source.Next(desiredCount, cancellationToken);
+            if (countRetrieved == 0)
             {
                 // Ensure Writers flush
                 DisposeWriters();
@@ -84,6 +84,7 @@ namespace XForm.IO
                 _currentArrays[i] = _getters[i]();
             }
 
+            int countLeft = countRetrieved;
             while (true)
             {
                 // Write as many rows as possible
@@ -91,20 +92,20 @@ namespace XForm.IO
                 _metadata.RowCount += countWritten;
 
                 // If all rows fit, stop
-                if (countWritten == count) break;
+                if (countWritten == countLeft) break;
 
                 // Otherwise, open a new partition and continue writing
                 NextPartitionWriter();
 
-                int countLeft = _currentArrays[0].Count - countWritten;
+                // Slice off the remaining rows to write to the next partition
+                countLeft -= countWritten;
                 for (int i = 0; i < _getters.Length; ++i)
                 {
-                    _currentArrays[i] = _currentArrays[i].Slice(countWritten, countLeft);
+                    _currentArrays[i] = _currentArrays[i].Slice(countWritten, countRetrieved);
                 }
             }
 
-            _metadata.RowCount += count;
-            return count;
+            return countRetrieved;
         }
 
         public override void Reset()

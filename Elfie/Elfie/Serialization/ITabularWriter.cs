@@ -31,11 +31,18 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
         void Write(DateTime value);
 
         /// <summary>
-        ///  Write an integer to the current row.
+        ///  Write a long to the current row.
         ///  The value is converted without allocations.
         /// </summary>
         /// <param name="value">Value to write</param>
-        void Write(int value);
+        void Write(long value);
+
+        /// <summary>
+        ///  Write a double to the current row.
+        ///  The value is converted without allocations.
+        /// </summary>
+        /// <param name="value">Value to write</param>
+        void Write(double value);
 
         /// <summary>
         ///  Write a boolean to the current row.

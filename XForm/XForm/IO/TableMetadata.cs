@@ -66,7 +66,7 @@ namespace XForm.IO
 
                 mw.Write(block.GetCopy("RowCount"));
                 mw.Write(String8.Empty);
-                mw.Write(String8.FromNumber(metadata.RowCount, new byte[20]));
+                mw.Write(metadata.RowCount);
                 mw.NextRow();
             }
 
@@ -126,7 +126,8 @@ namespace XForm.IO
 
                     if (name.Equals("RowCount"))
                     {
-                        metadata.RowCount = value.ToInteger();
+                        long rowCount;
+                        if(value.ToString8().TryToLong(out rowCount)) metadata.RowCount = rowCount;
                     }
                     else
                     {

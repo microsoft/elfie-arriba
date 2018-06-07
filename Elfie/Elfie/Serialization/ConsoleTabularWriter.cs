@@ -52,6 +52,18 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             _consoleOutStream.WriteLine();
         }
 
+        public void Write(long value)
+        {
+            if (_currentRowColumnCount++ > 0) _consoleOutStream.Write('\t');
+            _consoleOutStream.Write(value);
+        }
+
+        public void Write(double value)
+        {
+            if (_currentRowColumnCount++ > 0) _consoleOutStream.Write('\t');
+            _consoleOutStream.Write(value);
+        }
+
         public void Write(bool value)
         {
             if (_currentRowColumnCount++ > 0) _consoleOutStream.Write('\t');
@@ -63,12 +75,6 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
             value = value.ToUniversalTime();
             if (_currentRowColumnCount++ > 0) _consoleOutStream.Write('\t');
             _consoleOutStream.Write(value.ToString("u"));
-        }
-
-        public void Write(int value)
-        {
-            if (_currentRowColumnCount++ > 0) _consoleOutStream.Write('\t');
-            _consoleOutStream.Write(value);
         }
 
         public void Write(byte value)
