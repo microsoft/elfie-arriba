@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
-
+using System.Threading;
 using XForm.IO;
 using XForm.IO.StreamProvider;
 
@@ -87,11 +87,11 @@ namespace XForm.Extensions
                         if (reallyDelete)
                         {
                             // Delete the source
-                            streamProvider.Delete(version.Path);
+                            streamProvider.DeleteWithRetries(version.Path);
                             version.LocationType = LocationType.Table;
 
                             // Delete the matching table, if found
-                            streamProvider.Delete(version.Path);
+                            streamProvider.DeleteWithRetries(version.Path);
                         }
                     }
                 }
@@ -109,10 +109,31 @@ namespace XForm.Extensions
                         countLeft--;
 
                         Trace.WriteLine($"DELETE {version.Path}");
-                        if (reallyDelete) streamProvider.Delete(version.Path);
+                        if (reallyDelete) streamProvider.DeleteWithRetries(version.Path);
                     }
                 }
             }
+        }
+
+        public static void DeleteWithRetries(this IStreamProvider streamProvider, string logicalPath, int tryCount = 3)
+        {
+            Exception lastException = null;
+
+            for(int i = 0; i < tryCount; ++i)
+            {
+                try
+                {
+                    streamProvider.Delete(logicalPath);
+                    return;
+                }
+                catch(Exception ex)
+                {
+                    lastException = ex;
+                    Thread.Sleep(2500);
+                }
+            }
+
+            throw new TimeoutException($"Timed out trying to delete '{logicalPath}' after {tryCount:n0} tries.", lastException);
         }
 
         public static bool ContainsTable(this IStreamProvider streamProvider, string tableName)
