@@ -149,6 +149,7 @@ class Index extends React.Component {
                 { regex: /^\w+/, sol: true, token: 'xf-verb' },
                 { regex: /\[\w*\]/, token: 'variable' },
                 { regex: /"\w*"/, token: 'string' },
+                { regex: /#.*$/, token: 'comment' },
             ]
         })
 
