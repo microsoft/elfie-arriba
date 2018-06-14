@@ -187,6 +187,7 @@ class Index extends React.Component {
                         [/^\w+/, 'verb'],
                         [/\[\w*\]/, 'column'],
                         [/"\w*"/, 'string'],
+                        [/#.*$/, 'comment'],
                     ]
                 }
             })
@@ -198,6 +199,7 @@ class Index extends React.Component {
                     { token: 'verb',   foreground: '5c99d6' }, // hsa(210, 60%, 60%), Atom dark: 44C0C6
                     { token: 'column', foreground: '40bfbf' }, // hsl(180, 50%, 50%), Atom dark: D1BC92
                     { token: 'string', foreground: 'bf5540' }, // hsl( 10, 50%, 50%), Atom dark: FC8458
+                    { token: 'comment', foreground: '8bc270' }, // hsl(100, 40%, 60%)
                 ]
             })
             monaco.languages.registerCompletionItemProvider('xform', {
