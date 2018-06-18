@@ -3,6 +3,7 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using System.Reflection.PortableExecutable;
 
 using Microsoft.CodeAnalysis.Elfie.PDB;
@@ -28,7 +29,9 @@ namespace Microsoft.CodeAnalysis.Elfie.Indexer
 
     public static class Assembly
     {
-        private const uint RsDsMarker = 0x53445352;
+        private const uint RsDsMarker = 0x53445352;  // "RSDS" in ASCII
+        private const uint PdbVersion = 20000404;    // 2000-04-04; 0x01312E94
+        private const long PdbBlockSize = 0x200;
 
         public static string GetSymbolCachePdbPath(string binaryFilePath)
         {
@@ -89,6 +92,44 @@ namespace Microsoft.CodeAnalysis.Elfie.Indexer
 
             // If we couldn't find a DebugDirectory of the right type, give up
             return null;
+        }
+
+        public static void WriteRsDsSignature(string pdbFilePath, RsDsSignature signature)
+        {
+            using (FileStream stream = new FileStream(pdbFilePath, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+            {
+                WriteRsDsSignature(stream, signature);
+            }
+        }
+
+        public static void WriteRsDsSignature(Stream pdbStream, RsDsSignature signature)
+        {
+            BinaryReader br = new BinaryReader(pdbStream);
+            BinaryWriter bw = new BinaryWriter(pdbStream);
+
+            // Look for all blocks starting with the PDB Version (20000404) and replace the Age and GUID four bytes later
+            int replacementCount = 0;
+
+            for(long position = PdbBlockSize; position + PdbBlockSize < pdbStream.Length; position += PdbBlockSize)
+            {
+                pdbStream.Seek(position, SeekOrigin.Begin);
+                uint startingValue = br.ReadUInt32();
+                if(startingValue == PdbVersion)
+                {
+                    br.ReadUInt32();
+
+                    // Read existing valuesand seek back  [debuggability] 
+                    //uint age = br.ReadUInt32();
+                    //Guid binaryGuid = new Guid(br.ReadBytes(16));
+                    //pdbStream.Seek(-20, SeekOrigin.Current);
+
+                    bw.Write(signature.Age);
+                    bw.Write(signature.Guid.ToByteArray());
+                    replacementCount++;
+                }
+            }
+
+            if(replacementCount == 0) throw new BadImageFormatException($"PDB Stream didn't contain expected marker {PdbVersion} on any blocks.");
         }
     }
 }
