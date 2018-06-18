@@ -15,7 +15,9 @@ ECHO - Copying XForm.Web required files to '%Target%'
 ROBOCOPY /PURGE /NJH /NJS "%~dp0XForm.Web" "%Target%\Web" /XF *.jsx *.scss *.json webpack.config.js
 IF NOT %ERRORLEVEL% LEQ 7 GOTO :Error
 
-ROBOCOPY /MIR /NJH /NJS "%~dp0XForm.Web\node_modules\monaco-editor\min\vs" "%Target%\Web\node_modules\monaco-editor\min\vs" /XD basic-languages language /XF editor.main.nls.*.js
+XCOPY /Y "%~dp0XForm.Web\node_modules\codemirror\lib\codemirror.*" "%Target%\Web\node_modules\codemirror\lib\"
+XCOPY /Y "%~dp0XForm.Web\node_modules\codemirror\addon\mode\simple.*" "%Target%\Web\node_modules\codemirror\addon\mode\"
+XCOPY /Y "%~dp0XForm.Web\node_modules\codemirror\addon\hint\show-hint.*" "%Target%\Web\node_modules\codemirror\addon\hint\"
 IF NOT %ERRORLEVEL% LEQ 7 GOTO :Error
 
 GOTO :End
