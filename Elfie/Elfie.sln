@@ -30,6 +30,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Xsv", "Xsv\Xsv.csproj", "{7
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Xsv.Test", "Xsv.Test\Xsv.Test.csproj", "{8A711BBB-5B69-4BAF-86A2-FB25397794B9}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SymbolForge", "SymbolForge\SymbolForge.csproj", "{BD3B23A9-9086-49BD-9C75-9554D56248BE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -172,6 +174,18 @@ Global
 		{8A711BBB-5B69-4BAF-86A2-FB25397794B9}.Release|x64.Build.0 = Release|Any CPU
 		{8A711BBB-5B69-4BAF-86A2-FB25397794B9}.Release|x86.ActiveCfg = Release|Any CPU
 		{8A711BBB-5B69-4BAF-86A2-FB25397794B9}.Release|x86.Build.0 = Release|Any CPU
+		{BD3B23A9-9086-49BD-9C75-9554D56248BE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BD3B23A9-9086-49BD-9C75-9554D56248BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BD3B23A9-9086-49BD-9C75-9554D56248BE}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{BD3B23A9-9086-49BD-9C75-9554D56248BE}.Debug|x64.Build.0 = Debug|Any CPU
+		{BD3B23A9-9086-49BD-9C75-9554D56248BE}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{BD3B23A9-9086-49BD-9C75-9554D56248BE}.Debug|x86.Build.0 = Debug|Any CPU
+		{BD3B23A9-9086-49BD-9C75-9554D56248BE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BD3B23A9-9086-49BD-9C75-9554D56248BE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BD3B23A9-9086-49BD-9C75-9554D56248BE}.Release|x64.ActiveCfg = Release|Any CPU
+		{BD3B23A9-9086-49BD-9C75-9554D56248BE}.Release|x64.Build.0 = Release|Any CPU
+		{BD3B23A9-9086-49BD-9C75-9554D56248BE}.Release|x86.ActiveCfg = Release|Any CPU
+		{BD3B23A9-9086-49BD-9C75-9554D56248BE}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
