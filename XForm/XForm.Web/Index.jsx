@@ -175,7 +175,7 @@ class Index extends React.Component {
 
         this.editor.on('change', () => {
             this.textJustChanged = true
-            this.queryTextChanged.bind(this)
+            this.queryTextChanged()
         })
         this.editor.on('cursorActivity', async cm => {
             if (this.textJustChanged && !this.justPicked) this.queryAndCursorChanged()
