@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
 using System.IO;
 using System.Threading;
 using XForm.IO;
@@ -23,6 +22,21 @@ namespace XForm.Extensions
         public static bool Exists(this IStreamProvider streamProvider, string logicalPath)
         {
             return streamProvider.Attributes(logicalPath).Exists;
+        }
+
+        public static bool UncachedExists(this IStreamProvider streamProvider, string logicalPath)
+        {
+            try
+            {
+                using (Stream stream = streamProvider.OpenRead(logicalPath))
+                {
+                    return true;
+                }
+            }
+            catch(IOException)
+            { }
+
+            return false;
         }
 
         public static string Path(this IStreamProvider streamProvider, LocationType type, string tableName, string extension)

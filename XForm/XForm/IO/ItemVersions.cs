@@ -46,9 +46,16 @@ namespace XForm.IO
             return this.Versions.LastOrDefault((v) => (v.CrawlType == crawlType && v.AsOfDate <= cutoff));
         }
 
-        public IEnumerable<ItemVersion> VersionsInRange(CrawlType crawlType, DateTime startDateTime, DateTime asOfDateTime)
+        public IEnumerable<ItemVersion> VersionsInRange(CrawlType crawlType, DateTime startDateTime, DateTime asOfDateTime, bool startInclusive = false)
         {
-            return this.Versions.Where((v) => (v.CrawlType == crawlType && v.AsOfDate >= startDateTime && v.AsOfDate <= asOfDateTime));
+            if (startInclusive)
+            {
+                return this.Versions.Where((v) => (v.CrawlType == crawlType && v.AsOfDate >= startDateTime && v.AsOfDate <= asOfDateTime));
+            }
+            else
+            {
+                return this.Versions.Where((v) => (v.CrawlType == crawlType && v.AsOfDate > startDateTime && v.AsOfDate <= asOfDateTime));
+            }
         }
     }
 

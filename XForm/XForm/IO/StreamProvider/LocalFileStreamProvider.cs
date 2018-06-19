@@ -74,7 +74,7 @@ namespace XForm.IO.StreamProvider
 
         public Stream OpenRead(string logicalPath)
         {
-            return new FileStream(PathCombineSandbox(logicalPath), FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            return new FileStream(PathCombineSandbox(logicalPath), FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
         }
 
         public Stream OpenWrite(string logicalPath)
