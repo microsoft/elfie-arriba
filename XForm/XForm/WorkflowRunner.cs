@@ -83,7 +83,8 @@ namespace XForm
             LatestTableForCutoff previousLatest;
             if (_currentTableVersions.TryGet(tableName, out previousLatest)
                 && previousLatest.Cutoff >= outerContext.RequestedAsOfDateTime
-                && previousLatest.TableVersion.AsOfDate <= outerContext.RequestedAsOfDateTime)
+                && previousLatest.TableVersion.AsOfDate <= outerContext.RequestedAsOfDateTime
+                && TableMetadataSerializer.UncachedExists(outerContext.StreamProvider, previousLatest.TableVersion.Path))
             {
                 outerContext.NewestDependency = previousLatest.TableVersion.AsOfDate;
                 return BinaryTableReader.Build(outerContext.StreamProvider, previousLatest.TableVersion.Path);
@@ -91,7 +92,6 @@ namespace XForm
 
             // Create a context to track what we're building now
             XDatabaseContext innerContext = XDatabaseContext.Push(outerContext);
-            innerContext.Runner = this;
             innerContext.CurrentTable = tableName;
 
             // If this is a query, there won't be a cached table - just build a pipeline to make it
@@ -144,17 +144,24 @@ namespace XForm
             // Get the path we're either reading or building
             string tablePath = innerContext.StreamProvider.Path(LocationType.Table, tableName, CrawlType.Full, innerContext.NewestDependency);
 
-            // If we can rebuild this table and we need to (sources rebuilt, the query changed, or the latest output isn't up-to-date), rebuild it
-            if (builder != null && (latestTable == null || innerContext.RebuiltSomething || (latestTableQuery != null && xql != latestTableQuery) || IsOutOfDate(latestTable.AsOfDate, innerContext.NewestDependency)))
+            // If we can rebuild this table and we need to (sources rebuilt, query changed, out-of-date, deleted), rebuild it
+            if (builder != null)
             {
-                // If we're not running now, just return how to build it
-                if (deferred) return builder;
+                if (latestTable == null 
+                    || innerContext.RebuiltSomething 
+                    || (latestTableQuery != null && xql != latestTableQuery) 
+                    || IsOutOfDate(latestTable.AsOfDate, innerContext.NewestDependency) 
+                    || !TableMetadataSerializer.UncachedExists(outerContext.StreamProvider, latestTable.Path))
+                {
+                    // If we're not running now, just return how to build it
+                    if (deferred) return builder;
 
-                // Otherwise, build it now; we'll return the query to read the output
-                innerContext.CurrentQuery = xql;
-                Trace.WriteLine($"COMPUTE: [{innerContext.NewestDependency.ToString(StreamProviderExtensions.DateTimeFolderFormat)}] {tableName}");
-                BinaryTableWriter.Build(builder, innerContext, tablePath).RunAndDispose();
-                innerContext.RebuiltSomething = true;
+                    // Otherwise, build it now; we'll return the query to read the output
+                    innerContext.CurrentQuery = xql;
+                    Trace.WriteLine($"COMPUTE: [{innerContext.NewestDependency.ToString(StreamProviderExtensions.DateTimeFolderFormat)}] {tableName}");
+                    BinaryTableWriter.Build(builder, innerContext, tablePath).RunAndDispose();
+                    innerContext.RebuiltSomething = true;
+                }
             }
 
             // Report the newest dependency in this chain to the components above
@@ -184,7 +191,9 @@ namespace XForm
 
             // Read the Table or the Full Crawl Source, whichever is newer
             DateTime incrementalNeededAfterCutoff;
-            if (latestBuiltTable != null && (latestFullSource == null || !IsOutOfDate(latestBuiltTable.AsOfDate, latestFullSource.AsOfDate)))
+            if (latestBuiltTable != null 
+                && (latestFullSource == null || !IsOutOfDate(latestBuiltTable.AsOfDate, latestFullSource.AsOfDate)) 
+                && TableMetadataSerializer.UncachedExists(context.StreamProvider, latestBuiltTable.Path))
             {
                 // If the table is current, reuse it
                 sources.Add(BinaryTableReader.Build(context.StreamProvider, latestBuiltTable.Path));

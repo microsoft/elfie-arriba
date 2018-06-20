@@ -88,7 +88,18 @@ namespace Microsoft.CodeAnalysis.Elfie.Serialization
 
         private static Func<U, T> GetConstructorFunc<T, U>(string keyName, string assemblyName, string typeName)
         {
-            Assembly asm = Assembly.Load(assemblyName);
+            Assembly asm;
+            if (assemblyName.Contains("\\"))
+            {
+                string exePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                string expectedPath = Path.Combine(exePath, assemblyName + ".dll");
+                asm = Assembly.LoadFrom(expectedPath);
+            }
+            else
+            {
+                asm = Assembly.Load(assemblyName);
+            }
+
             Type readerType = asm.GetType(typeName);
             if (readerType == null)
             {
