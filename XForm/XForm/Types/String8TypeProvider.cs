@@ -169,11 +169,8 @@ namespace XForm.Types
             _columnPath = columnPath;
 
             _streamProvider = streamProvider;
-            _bytesReader = TypeProviderFactory.TryGetColumnReader(streamProvider, typeof(byte), Path.Combine(columnPath, "V.s.bin"), option, typeof(String8ColumnReader));
-            _positionsReader = TypeProviderFactory.TryGetColumnReader(streamProvider, typeof(int), Path.Combine(columnPath, "Vp.i32.bin"), option, typeof(String8ColumnReader));
-
-            if (_bytesReader == null) throw new IOException($"No value bytes found in {columnPath}.");
-            if (_positionsReader == null) throw new IOException($"No value positions found in {columnPath}.");
+            _bytesReader = TypeProviderFactory.GetColumnReader(streamProvider, typeof(byte), Path.Combine(columnPath, "V.s.bin"), option, typeof(String8ColumnReader));
+            _positionsReader = TypeProviderFactory.GetColumnReader(streamProvider, typeof(int), Path.Combine(columnPath, "Vp.i32.bin"), option, typeof(String8ColumnReader));
         }
 
         public int Count => _positionsReader.Count;

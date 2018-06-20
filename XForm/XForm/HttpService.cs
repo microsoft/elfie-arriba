@@ -221,6 +221,13 @@ namespace XForm
                 // Run the query and return the output
                 pipeline.RunWithoutDispose();
             }
+            catch(ColumnDataNotFoundException ex)
+            {
+                // If column data is missing, delete the table to try to spur re-creating it
+                // NOTE: This logic will likely need to be updated when columns are downloaded remotely; multi-threaded scenarios will be complex.
+                string tablePath = Path.Combine(ex.ColumnPath, @"..\..\..");
+                TableMetadataSerializer.Delete(_xDatabaseContext.StreamProvider, tablePath);
+            }
             finally
             {
                 if (pipeline != null)

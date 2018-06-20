@@ -159,5 +159,14 @@ namespace XForm.IO
         {
             return streamProvider.UncachedExists(Path.Combine(tableRootPath, MetadataFileName));
         }
+
+        public static void Delete(IStreamProvider streamProvider, string tableRootPath)
+        {
+            // Delete metadata first (the main marker we use to detect table presence)
+            streamProvider.Delete(Path.Combine(tableRootPath, MetadataFileName));
+
+            // Delete the table 
+            streamProvider.DeleteWithRetries(tableRootPath);
+        }
     }
 }
