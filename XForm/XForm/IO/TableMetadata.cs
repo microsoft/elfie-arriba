@@ -154,5 +154,10 @@ namespace XForm.IO
 
             return metadata;
         }
+
+        public static bool UncachedExists(IStreamProvider streamProvider, string tableRootPath)
+        {
+            return streamProvider.UncachedExists(Path.Combine(tableRootPath, MetadataFileName));
+        }
     }
 }

@@ -24,7 +24,15 @@ namespace XForm.Extensions
 
     public static class XTableExtensions
     {
-        public const int DefaultBatchSize = 10240;
+        /// <summary>
+        ///  Number of rows to read on each Next() call, if not overridden by caller
+        /// </summary>
+        /// <remarks>
+        ///  For normal scale tables, performance improved up to 10,240 rows and then flattened out.
+        ///  For huge tables, disk I/O seems better for larger batch sizes.
+        ///  The batch size determines the memory use, though usually individual rows aren't especially large.
+        /// </remarks>
+        public const int DefaultBatchSize = 20480; // 10240;
 
         #region Next Overloads
         /// <summary>

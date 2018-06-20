@@ -223,5 +223,20 @@ namespace XForm.Test.Query
 
             return values;
         }
+
+        [TestMethod]
+        public void Verb_Skip()
+        {
+            // Verify skipping the first 100 rows of 0-1000 produces 100-1000
+            IXTable expected = TableTestHarness.DatabaseContext.FromArrays(900)
+                .WithColumn("Value", Enumerable.Range(100, 900).ToArray<int>());
+
+            IXTable actual = TableTestHarness.DatabaseContext.FromArrays(1000)
+                .WithColumn("Value", Enumerable.Range(0, 1000).ToArray<int>())
+                .Query(@"
+                    skip 100", TableTestHarness.DatabaseContext);
+
+            TableTestHarness.AssertAreEqual(expected, actual, 25);
+        }
     }
 }

@@ -278,12 +278,22 @@ namespace XForm
             toStream = new BufferedStream(toStream, 64 * 1024);
 
             format = format.ToLowerInvariant();
-            string sampleOutputFileName = $"Result.{format}";
+            string fileExtension = format;
+
+            // Allow Elfie 'hint' extensions like ~Hint~csv
+            if (format.StartsWith("~"))
+            {
+                int second = format.IndexOf('~', 1);
+                fileExtension = format.Substring(second + 1);
+            }
+
             if(format != "json")
             {
                 // Add a 'download this' header to all formats except JSON
-                response.AddHeader("Content-Disposition", $"attachment; filename=\"{sampleOutputFileName}\"");
-                return TabularFactory.BuildWriter(toStream, sampleOutputFileName);
+                response.AddHeader("Content-Disposition", $"attachment; filename=\"Result.{fileExtension}\"");
+
+                // Build the writer using the original format (with any hint)
+                return TabularFactory.BuildWriter(toStream, $"Result.{format}");
             }
             else
             {
