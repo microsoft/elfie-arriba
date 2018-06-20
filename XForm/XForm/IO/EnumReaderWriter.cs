@@ -4,8 +4,9 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-
+using System.Runtime.Serialization;
 using XForm.Data;
+using XForm.Extensions;
 using XForm.IO.StreamProvider;
 using XForm.Types;
 
@@ -334,12 +335,11 @@ namespace XForm.IO
 
         public static IColumnReader Wrap(IStreamProvider streamProvider, Type columnType, string columnPath, CachingOption option)
         {
-            // Build a reader for the row indices (will be null if the 'VR.u8.bin' file isn't there)
+            // Build an (optional) reader for the row indices (will be null if the 'VR.u8.bin' file isn't there)
             IColumnReader rowIndexReader = TypeProviderFactory.TryGetColumnReader(streamProvider, typeof(byte), Path.Combine(columnPath, EnumWriter.RowIndexFileName), option, typeof(EnumReader));
 
             // Build a reader for the values (require caching if we we have row indices)
-            IColumnReader valueReader = TypeProviderFactory.TryGetColumnReader(streamProvider, columnType, columnPath, (rowIndexReader != null ? CachingOption.Always : option), typeof(EnumReader));
-            if (valueReader == null) throw new IOException($"No values found in {columnPath}.");
+            IColumnReader valueReader = TypeProviderFactory.GetColumnReader(streamProvider, columnType, columnPath, (rowIndexReader != null ? CachingOption.Always : option), typeof(EnumReader));
 
             // If there were row indices, wrap the column. Otherwise, return as-is.
             if (rowIndexReader != null) return new EnumReader(valueReader, rowIndexReader);

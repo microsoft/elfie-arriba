@@ -69,6 +69,13 @@ namespace XForm.Types
             }
         }
 
+        public static IColumnReader GetColumnReader(IStreamProvider streamProvider, Type columnType, string columnPath, CachingOption option = CachingOption.AsConfigured, Type callingType = null)
+        {
+            IColumnReader reader = TryGetColumnReader(streamProvider, columnType, columnPath, option, callingType);
+            if (reader == null) throw new ColumnDataNotFoundException($"Column data not found at '{columnPath}'.", columnPath);
+            return reader;
+        }
+
         public static IColumnWriter TryGetColumnWriter(IStreamProvider streamProvider, Type columnType, string columnPath)
         {
             IColumnWriter writer = null;

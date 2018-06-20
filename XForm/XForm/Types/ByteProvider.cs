@@ -5,6 +5,7 @@ using System;
 using System.IO;
 
 using XForm.Data;
+using XForm.Extensions;
 using XForm.IO;
 using XForm.IO.StreamProvider;
 using XForm.Types.Comparers;
@@ -22,7 +23,7 @@ namespace XForm.Types
             return ColumnCache.Instance.GetOrBuild(columnPath, option, () =>
             {
                 string filePath = ValuesFilePath(columnPath);
-                if (!streamProvider.Attributes(filePath).Exists) return null;
+                if (!streamProvider.UncachedExists(filePath)) return null;
                 return new ByteReader(streamProvider.OpenRead(filePath));
             });
         }
