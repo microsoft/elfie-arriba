@@ -131,7 +131,7 @@ namespace XForm
                     IXTable firstTenWrapper = _pipeline;
                     firstTenWrapper = _xDatabaseContext.Query("limit 10 10", firstTenWrapper);
                     firstTenWrapper = _xDatabaseContext.Query("write cout", firstTenWrapper);
-                    lastCount = firstTenWrapper.Count();
+                    lastCount = firstTenWrapper.RunWithoutDispose().RowCount;
 
                     // Get the count
                     RunResult result = _pipeline.RunUntilTimeout(TimeSpan.FromSeconds(3));
