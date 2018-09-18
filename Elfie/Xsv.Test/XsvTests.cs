@@ -84,6 +84,16 @@ namespace Xsv.Test
             Write(new String8(_convertBuffer, 0, 1));
         }
 
+        public void Write(long value)
+        {
+            Write(String8.FromNumber(value, _convertBuffer, 0));
+        }
+
+        public void Write(double value)
+        {
+            Write(String8.FromNumber(value, _convertBuffer, 0));
+        }
+
         public void WriteValueEnd()
         { }
 
