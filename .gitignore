@@ -237,3 +237,6 @@ Arriba/Databases/*
 # Exclude Arriba.HttpShim
 Arriba.HttpShim/
 Arriba.HttpShim.sln
+
+# Exclude Mac metadata files
+.DS_Store
