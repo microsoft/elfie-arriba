@@ -3,6 +3,7 @@ import "./shared.jsx"
 import "./polyfill.jsx"
 import React from "react"
 import ReactDOM from "react-dom"
+import autobind from 'autobind-decorator'
 
 (() => {
     window.log = function() { console.log.apply(console, arguments) }
@@ -150,6 +151,38 @@ import ReactDOM from "react-dom"
         }
     }
 })()
+
+class Resizer extends React.Component {
+	@autobind onMouseDown(ev) {
+		const {onStart} = this.props
+		this.base = onStart && onStart() || 0
+		this.start = ev.clientX
+		addEventListener('mousemove', this.onMouseMove)
+		addEventListener('mouseup', this.onMouseUp)
+	}
+	@autobind onMouseMove(ev) {
+		const {onChange} = this.props
+		onChange && onChange(this.base + (ev.clientX - this.start))
+	}
+	@autobind onMouseUp(ev) {
+		removeEventListener('mousemove', this.onMouseMove)
+		removeEventListener('mouseup', this.onMouseUp)
+		this.start = 0
+	}
+	render() {
+		return <div className="resizer"
+			style={{
+				position: 'absolute',
+				width: 20,
+				right: 0,
+				top: 0, bottom: 0,
+                marginRight: -10,
+                cursor: 'col-resize',
+                userSelect: 'none',
+			}}
+			onMouseDown={this.onMouseDown}></div>
+	}
+}
 
 class Index extends React.Component {
     constructor(props) {
@@ -472,10 +505,13 @@ class Index extends React.Component {
                     this.state.errorMessage && <span className="errorMessage">{this.state.errorMessage}</span>
                     || this.state.usage || `\u200B`
                 }</div>
-                <div id="queryEditor">
+                <div ref="queryEditor" id="queryEditor" style={{ width: this.state.queryEditorWidth }}>
                     <div className="queryHint">{this.state.queryHint}</div>
                 </div>
                 <DatePicker key="datePicker" />
+                <Resizer
+                    onStart={() => this.refs.queryEditor.offsetWidth}
+                    onChange={i => this.setState({ queryEditorWidth: Math.max(300, i) })}/>
             </div>
             <div id="schema">
                 <div className="schemaHeader">

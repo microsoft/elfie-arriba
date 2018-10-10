@@ -13,9 +13,11 @@
   },
   "devDependencies": {
     "@babel/core": "^7.1.2",
+    "@babel/plugin-proposal-decorators": "^7.1.2",
     "@babel/plugin-proposal-optional-chaining": "^7.0.0",
     "@babel/preset-env": "^7.1.0",
     "@babel/preset-react": "^7.0.0",
+    "autobind-decorator": "^2.1.0",
     "babel-loader": "^8.0.4",
     "css-loader": "^1.0.0",
     "monaco-editor": "^0.10.1",
