@@ -201,6 +201,87 @@ namespace XForm.Test.Query
         }
 
         [TestMethod]
+        public void Function_AfterFirst()
+        {
+            String8Block block = new String8Block();
+            String8[] values = new String8[]
+            {
+                String8.Empty,
+                block.GetCopy("   "),
+                block.GetCopy(@"C:\Code\elfie-arriba\XForm\XForm.Test\bin\x64\Release"),
+                block.GetCopy(@"XForm.Test\bin\x64\Release"),
+                block.GetCopy(@"XForm.Test\bin"),
+                block.GetCopy(@"XForm.Test"),
+            };
+
+            String8[] expected = new String8[]
+            {
+                String8.Empty,
+                block.GetCopy("   "),
+                block.GetCopy(@"\bin\x64\Release"),
+                block.GetCopy(@"\bin\x64\Release"),
+                block.GetCopy(@"\bin"),
+                String8.Empty
+            };
+
+            RunQueryAndVerify(values, "Name", expected, "Name", "set [Name] AfterFirst([Name], \"XForm.Test\")");
+        }
+
+        [TestMethod]
+        public void Function_BeforeFirst()
+        {
+            String8Block block = new String8Block();
+            String8[] values = new String8[]
+            {
+                String8.Empty,
+                block.GetCopy("   "),
+                block.GetCopy(@"C:\Code\elfie-arriba\XForm\XForm.Test\bin\x64\Release"),
+                block.GetCopy(@"XForm.Test\bin\x64\Release"),
+                block.GetCopy(@"XForm.Test\bin"),
+                block.GetCopy(@"XForm.Test"),
+            };
+
+            String8[] expected = new String8[]
+            {
+                String8.Empty,
+                block.GetCopy("   "),
+                block.GetCopy(@"C:\Code\elfie-arriba\XForm\XForm.Test\"),
+                block.GetCopy(@"XForm.Test\"),
+                block.GetCopy(@"XForm.Test\"),
+                block.GetCopy(@"XForm.Test"),
+            };
+
+            RunQueryAndVerify(values, "Name", expected, "Name", "set [Name] BeforeFirst([Name], \"bin\")");
+        }
+
+        [TestMethod]
+        public void Function_Between()
+        {
+            String8Block block = new String8Block();
+            String8[] values = new String8[]
+            {
+                String8.Empty,
+                block.GetCopy("   "),
+                block.GetCopy(@"C:\Code\elfie-arriba\XForm\XForm.Test\bin\x64\Release"),
+                block.GetCopy(@"XForm.Test\bin\x64\Release"),
+                block.GetCopy(@"XForm.Test\bin"),
+                block.GetCopy(@"XForm.Test"),
+            };
+
+            String8[] expected = new String8[]
+            {
+                String8.Empty,
+                block.GetCopy("   "),
+                block.GetCopy(@"\bin\x64\"),
+                block.GetCopy(@"\bin\x64\"),
+                block.GetCopy(@"\bin"),
+                block.GetCopy(@""),
+            };
+
+            RunQueryAndVerify(values, "Name", expected, "Name", "set [Name] Between([Name], \"XForm.Test\", \"Release\")");
+        }
+
+        [TestMethod]
         public void Function_AsOfDate()
         {
             int[] values = Enumerable.Range(0, 5).ToArray();

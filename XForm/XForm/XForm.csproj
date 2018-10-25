@@ -101,6 +101,8 @@
     <Compile Include="Functions\Coalesce.cs" />
     <Compile Include="Functions\Date\DateSubtract.cs" />
     <Compile Include="Functions\SimpleTransformFunction.cs" />
+    <Compile Include="Functions\String\AfterFirst.cs" />
+    <Compile Include="Functions\String\Between.cs" />
     <Compile Include="Functions\String\ToLower.cs" />
     <Compile Include="IO\ColumnDataNotFoundException.cs" />
     <Compile Include="IO\VariableIntegerReaderWriter.cs" />

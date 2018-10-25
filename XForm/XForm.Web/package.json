@@ -2,7 +2,7 @@
   "name": "xform.web",
   "version": "0.1.0",
   "author": "Microsoft",
-  "description": "XForm is a C# data processing engine",  
+  "description": "XForm is a C# data processing engine",
   "license": "MIT",
   "repository": {
     "type": "git",

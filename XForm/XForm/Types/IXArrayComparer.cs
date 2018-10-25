@@ -37,6 +37,7 @@ namespace XForm.Types
         void WhereContains(XArray left, XArray right, BitVector vector);
         void WhereContainsExact(XArray left, XArray right, BitVector vector);
         void WhereStartsWith(XArray left, XArray right, BitVector vector);
+        void WhereEndsWith(XArray left, XArray right, BitVector vector);
     }
 
     public static class ComparerExtensions
@@ -60,6 +61,8 @@ namespace XForm.Types
                         return textComparer.WhereContainsExact;
                     case CompareOperator.StartsWith:
                         return textComparer.WhereStartsWith;
+                    case CompareOperator.EndsWith:
+                        return textComparer.WhereEndsWith;
                 }
             }
 
