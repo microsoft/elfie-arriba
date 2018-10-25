@@ -237,3 +237,12 @@ Arriba/Databases/*
 # Exclude Arriba.HttpShim
 Arriba.HttpShim/
 Arriba.HttpShim.sln
+
+# Exclude Mac metadata files
+.DS_Store
+
+# extensions.jsx are expected to be stored in external repos.
+extensions.jsx
+
+# Skipping package-locks temporarily.
+package-lock.json

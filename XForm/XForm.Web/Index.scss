@@ -203,7 +203,6 @@ body {
         width: 500px;
         overflow-y: hidden;
         overflow-x: scroll;
-        resize: horizontal;
 
         .monaco-editor { // Override default monaco styling.
             background-color: transparent;

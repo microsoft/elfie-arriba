@@ -3,8 +3,12 @@ import "./shared.jsx"
 import "./polyfill.jsx"
 import React from "react"
 import ReactDOM from "react-dom"
+import autobind from 'autobind-decorator'
 
-(() => {
+const extensionsRequire = require.context('./', false, /extensions\.jsx/)
+const extensions = extensionsRequire.keys().includes('./extensions.jsx') && extensionsRequire('./extensions.jsx') || {}
+
+;(() => {
     window.log = function() { console.log.apply(console, arguments) }
 
     // TODO: Run on leading edge AND trailing edge of last request.
@@ -151,6 +155,38 @@ import ReactDOM from "react-dom"
     }
 })()
 
+class Resizer extends React.Component {
+	@autobind onMouseDown(ev) {
+		const {onStart} = this.props
+		this.base = onStart && onStart() || 0
+		this.start = ev.clientX
+		addEventListener('mousemove', this.onMouseMove)
+		addEventListener('mouseup', this.onMouseUp)
+	}
+	@autobind onMouseMove(ev) {
+		const {onChange} = this.props
+		onChange && onChange(this.base + (ev.clientX - this.start))
+	}
+	@autobind onMouseUp(ev) {
+		removeEventListener('mousemove', this.onMouseMove)
+		removeEventListener('mouseup', this.onMouseUp)
+		this.start = 0
+	}
+	render() {
+		return <div className="resizer"
+			style={{
+				position: 'absolute',
+				width: 20,
+				right: 0,
+				top: 0, bottom: 0,
+                marginRight: -10,
+                cursor: 'col-resize',
+                userSelect: 'none',
+			}}
+			onMouseDown={this.onMouseDown}></div>
+	}
+}
+
 class Index extends React.Component {
     constructor(props) {
         super(props)
@@ -165,10 +201,12 @@ class Index extends React.Component {
         const loc = document.location;
         xhr.urlRoot = loc.port === '8080' ? `${loc.protocol}//${loc.hostname}:5073` : ''
 
-        this.initialQuery = q ? q : [
+        const defaultQuery = extensions.query || [
             'read WebRequest',
             'where [HttpStatus] != "200"',
-        ].join('\n');
+        ].join('\n')
+
+        this.initialQuery = q ? q : defaultQuery;
 
         this.reqPeek = new CachableReusedRequest('run');
         this.reqPeek.caching = true;
@@ -472,10 +510,13 @@ class Index extends React.Component {
                     this.state.errorMessage && <span className="errorMessage">{this.state.errorMessage}</span>
                     || this.state.usage || `\u200B`
                 }</div>
-                <div id="queryEditor">
+                <div ref="queryEditor" id="queryEditor" style={{ width: this.state.queryEditorWidth }}>
                     <div className="queryHint">{this.state.queryHint}</div>
                 </div>
                 <DatePicker key="datePicker" />
+                <Resizer
+                    onStart={() => this.refs.queryEditor.offsetWidth}
+                    onChange={i => this.setState({ queryEditorWidth: Math.max(300, i) })}/>
             </div>
             <div id="schema">
                 <div className="schemaHeader">
@@ -509,6 +550,7 @@ class Index extends React.Component {
                     <span className="flexFill"></span>
                     {encodedParams && <a className="button segoe-icon-link" alt="Link" href={`${xhr.urlRoot}/?${encodedParams}`}></a>}
                     {encodedParams && <a className="button" target="_blank" href={`${xhr.urlRoot}/download?fmt=csv&${encodedParams}`}>CSV</a>}
+                    {extensions.links && extensions.links(encodedParams)}
                     {encodedParams && <a className="button" target="_blank" href={`${xhr.urlRoot}/download?fmt=tsv&${encodedParams}`}>TSV</a>}
                     <span className={`loading ${ this.state.loading && 'loading-active' }`}></span>
                 </div>
