@@ -5,7 +5,10 @@ import React from "react"
 import ReactDOM from "react-dom"
 import autobind from 'autobind-decorator'
 
-(() => {
+const extensionsRequire = require.context('./', false, /extensions\.jsx/)
+const extensions = extensionsRequire.keys().includes('./extensions.jsx') && extensionsRequire('./extensions.jsx') || {}
+
+;(() => {
     window.log = function() { console.log.apply(console, arguments) }
 
     // TODO: Run on leading edge AND trailing edge of last request.
@@ -198,10 +201,12 @@ class Index extends React.Component {
         const loc = document.location;
         xhr.urlRoot = loc.port === '8080' ? `${loc.protocol}//${loc.hostname}:5073` : ''
 
-        this.initialQuery = q ? q : [
+        const defaultQuery = extensions.query || [
             'read WebRequest',
             'where [HttpStatus] != "200"',
-        ].join('\n');
+        ].join('\n')
+
+        this.initialQuery = q ? q : defaultQuery;
 
         this.reqPeek = new CachableReusedRequest('run');
         this.reqPeek.caching = true;
@@ -545,6 +550,7 @@ class Index extends React.Component {
                     <span className="flexFill"></span>
                     {encodedParams && <a className="button segoe-icon-link" alt="Link" href={`${xhr.urlRoot}/?${encodedParams}`}></a>}
                     {encodedParams && <a className="button" target="_blank" href={`${xhr.urlRoot}/download?fmt=csv&${encodedParams}`}>CSV</a>}
+                    {extensions.links && extensions.links(encodedParams)}
                     {encodedParams && <a className="button" target="_blank" href={`${xhr.urlRoot}/download?fmt=tsv&${encodedParams}`}>TSV</a>}
                     <span className={`loading ${ this.state.loading && 'loading-active' }`}></span>
                 </div>
