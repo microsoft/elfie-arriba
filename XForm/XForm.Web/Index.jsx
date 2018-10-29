@@ -487,6 +487,12 @@ class Index extends React.Component {
 
         const encodedParams = encodeParams({ asof: this.state.asOf, q: this.validQuery })
 
+        const columnWidths = (cols || []).map((col, i) => {
+            const firstCellLength = rows && rows[1] && `${rows[1][i]}`.length || 0
+            const headerOrFirstWidth = Math.max(Math.ceil(col.length * 6.5), Math.ceil(firstCellLength * 6.8)) + (i === 0 ? 20 : 30)
+            return Math.min(400, headerOrFirstWidth) // Limit default column width to 400.
+        })
+
         return [<div key="root" className={`root`}>
             <div className="query">
                 <div className="queryHeader">
@@ -565,16 +571,18 @@ class Index extends React.Component {
                     <table>
                         <thead>
                             <tr>
-                                {cols?.map(c => <td ref={`col${c}`} key={c} style={{ position: 'relative' }}>
-                                    {c}
+                                {cols?.map((c, i) => <td ref={`col${c}`} key={c} style={{ minWidth: columnWidths[i] }}>
+                                    <span>{c}</span>
                                     <Resizer
                                         onStart={() => this.refs[`col${c}`].offsetWidth}
-                                        onChange={i => this.refs[`col${c}`].style.width = `${i}px`}/>
+                                        onChange={i => this.refs[`col${c}`].style.minWidth = `${i}px`}/>
                                 </td>)}
                             </tr>
                         </thead>
                         <tbody>
-                            {rows?.map((r, i) => <tr key={i}>{r.map((c, ii) => <td key={i + "x" + ii}>{c}</td>)}</tr>)}
+                            {rows?.map((r, i) => <tr key={i}>{r.map((c, ii) => <td key={i + "x" + ii}>
+                                <span>{c}</span>
+                            </td>)}</tr>)}
                         </tbody>
                     </table>
                 </div>

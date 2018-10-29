@@ -360,6 +360,7 @@ body {
 
     table {
         border-collapse: collapse;
+        table-layout: fixed; // For presumed perf since we're doing manual layout.
 
         thead:hover td {
             border-right-color: $linedark;
@@ -369,15 +370,32 @@ body {
             font-weight: bold;
             border-bottom: 1px solid $linedark;
             border-right: 1px solid transparent; // Prep for hover.
+            overflow: visible; // Allow resizer to overflow.
         }
 
         td {
             border-bottom: transparent;
             padding: 10px 20px 10px 0;
-            white-space: nowrap;
+            position: relative; // For span.
+            height: 33px;
+            
+            & > span {
+                position: absolute;
+                top: 0px; bottom: 0px;
+                left: 0px; right: 0px;
+                padding: 10px 20px 10px 0;
+                
+                white-space: nowrap;         
+                text-overflow: ellipsis;
+                overflow: hidden;
+            }
         }
         
         td + td {
+            padding-left: 10px;
+        }
+        
+        td + td > span {
             padding-left: 10px;
         }
 
