@@ -487,10 +487,13 @@ class Index extends React.Component {
 
         const encodedParams = encodeParams({ asof: this.state.asOf, q: this.validQuery })
 
-        const columnWidths = (cols || []).map((col, i) => {
-            const firstCellLength = rows && rows[1] && `${rows[1][i]}`.length || 0
+        const columnMeta = (cols || []).map((col, i) => {
+            const firstCell = rows && rows[1] && rows[1][i]
+            const firstCellLength = `${firstCell}`.length || 0
             const headerOrFirstWidth = Math.max(Math.ceil(col.length * 6.5), Math.ceil(firstCellLength * 6.8)) + (i === 0 ? 20 : 30)
-            return Math.min(400, headerOrFirstWidth) // Limit default column width to 400.
+            return {
+                width: Math.min(400, headerOrFirstWidth), // Limit default column width to 400.
+            }
         })
 
         return [<div key="root" className={`root`}>
@@ -571,7 +574,7 @@ class Index extends React.Component {
                     <table>
                         <thead>
                             <tr>
-                                {cols?.map((c, i) => <td ref={`col${c}`} key={c} style={{ minWidth: columnWidths[i] }}>
+                                {cols?.map((c, i) => <td ref={`col${c}`} key={c} style={{ minWidth: columnMeta[i].width }}>
                                     <span>{c}</span>
                                     <Resizer
                                         onStart={() => this.refs[`col${c}`].offsetWidth}
