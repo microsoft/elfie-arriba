@@ -565,7 +565,12 @@ class Index extends React.Component {
                     <table>
                         <thead>
                             <tr>
-                                {cols?.map(c => <td key={c}>{c}</td>)}
+                                {cols?.map(c => <td ref={`col${c}`} key={c} style={{ position: 'relative' }}>
+                                    {c}
+                                    <Resizer
+                                        onStart={() => this.refs[`col${c}`].offsetWidth}
+                                        onChange={i => this.refs[`col${c}`].style.width = `${i}px`}/>
+                                </td>)}
                             </tr>
                         </thead>
                         <tbody>

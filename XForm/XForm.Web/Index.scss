@@ -361,15 +361,24 @@ body {
     table {
         border-collapse: collapse;
 
+        thead:hover td {
+            border-right-color: $linedark;
+        }
+
         thead td {
             font-weight: bold;
             border-bottom: 1px solid $linedark;
+            border-right: 1px solid transparent; // Prep for hover.
         }
 
         td {
             border-bottom: transparent;
             padding: 10px 20px 10px 0;
             white-space: nowrap;
+        }
+        
+        td + td {
+            padding-left: 10px;
         }
 
         tr:nth-child(2n) td {
