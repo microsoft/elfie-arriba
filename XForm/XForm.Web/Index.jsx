@@ -182,6 +182,7 @@ class Resizer extends React.Component {
                 marginRight: -10,
                 cursor: 'col-resize',
                 userSelect: 'none',
+                zIndex: 1,
 			}}
 			onMouseDown={this.onMouseDown}></div>
 	}
