@@ -9,7 +9,8 @@
     "url": "https://www.github.com/Microsoft/elfie-arriba"
   },
   "scripts": {
-    "start": "webpack-dev-server --mode development"
+    "start": "webpack-dev-server --mode development",
+    "build": "webpack --mode production"
   },
   "devDependencies": {
     "@babel/core": "^7.1.2",
