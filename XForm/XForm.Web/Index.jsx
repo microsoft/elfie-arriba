@@ -485,10 +485,17 @@ class Index extends React.Component {
 
         const columnMeta = (cols || []).map((col, i) => {
             const firstCell = rows && rows[1] && rows[1][i]
-            const firstCellLength = `${firstCell}`.length || 0
+            const formatter = firstCell && typeof firstCell === 'string' && firstCell.match(/^https?:\/\//)                          ? cell => <a href={cell} target="_blank">{cell}</a> :
+                              firstCell && typeof firstCell === 'string' && firstCell.match(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}Z/) ? cell => cell && (new Date(cell)).toLocaleString() || '—': // Must go before parseInt.
+                              firstCell && !!parseInt(firstCell)                                                                     ? cell => cell && (+cell).toLocaleString() || '—':
+                                                                                                                                       cell => cell
+            
+            const formattedFirstCell = formatter(firstCell)
+            const firstCellLength = `${typeof formattedFirstCell === 'string' ? formattedFirstCell : firstCell}`.length || 0
             const headerOrFirstWidth = Math.max(Math.ceil(col.length * 6.5), Math.ceil(firstCellLength * 6.8)) + (i === 0 ? 20 : 30)
             return {
-                width: Math.min(400, headerOrFirstWidth), // Limit default column width to 400.
+                width:     Math.min(400, headerOrFirstWidth), // Limit default column width to 400.
+                formatter,
             }
         })
 
@@ -580,7 +587,7 @@ class Index extends React.Component {
                         </thead>
                         <tbody>
                             {rows?.map((r, i) => <tr key={i}>{r.map((c, ii) => <td key={i + "x" + ii}>
-                                <span>{c}</span>
+                                <span>{columnMeta[ii].formatter(c)}</span>
                             </td>)}</tr>)}
                         </tbody>
                     </table>

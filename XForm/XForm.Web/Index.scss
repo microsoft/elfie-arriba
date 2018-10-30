@@ -33,6 +33,8 @@ body {
 
     a {
         text-decoration: none;
+        &, &:visited { color: hsl(205, 90%, 40%); } // Darker than $blue.
+        
     }
 
     input, select {
