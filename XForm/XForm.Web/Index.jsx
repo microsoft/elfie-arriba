@@ -481,10 +481,6 @@ class Index extends React.Component {
             </div>
         }
 
-        const formatters = rows && cols.map(col => col === "Count" || col.endsWith(".Sum")
-                ? cell => cell === "" ? "—" : (+cell).toLocaleString()
-                : cell => cell)
-
         const encodedParams = encodeParams({ asof: this.state.asOf, q: this.validQuery })
 
         const columnMeta = (cols || []).map((col, i) => {
