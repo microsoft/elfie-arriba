@@ -483,18 +483,25 @@ class Index extends React.Component {
 
         const encodedParams = encodeParams({ asof: this.state.asOf, q: this.validQuery })
 
+        const rowsSample = (rows || []).slice(0, 3)
         const columnMeta = (cols || []).map((col, i) => {
-            const firstCell = rows && rows[1] && rows[1][i]
-            const formatter = firstCell && typeof firstCell === 'string' && firstCell.match(/^https?:\/\//)                          ? cell => <a href={cell} target="_blank">{cell}</a> :
-                              firstCell && typeof firstCell === 'string' && firstCell.match(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}Z/) ? cell => cell && (new Date(cell)).toLocaleString() || '—': // Must go before parseInt.
-                              firstCell && !!parseInt(firstCell)                                                                     ? cell => cell && (+cell).toLocaleString() || '—':
-                                                                                                                                       cell => cell
+            const formats = [
+                { test: /^https?:\/\//                          , formatter: cell => <a href={cell} target="_blank">{cell}</a>        },
+                { test: /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}Z/ , formatter: cell => cell && (new Date(cell)).toLocaleString() || '—' }, // Must go before parseInt.
+                { test: /^-?\d+$/                               , formatter: cell => cell && (+cell).toLocaleString()          || '—' }, // Make sure exclude semVers such as 1.0.0
+                { test: /.?/                                    , formatter: cell => cell                                             },
+            ]
             
+            const formatter = formats.find(({ test, formatter }) => {
+                return rowsSample.length && rowsSample.every(row => !row[i] || `${row[i]}`.match(test))
+            }).formatter
+            
+            const firstCell = rows && rows[0] && rows[0][i]
             const formattedFirstCell = formatter(firstCell)
             const firstCellLength = `${typeof formattedFirstCell === 'string' ? formattedFirstCell : firstCell}`.length || 0
             const headerOrFirstWidth = Math.max(Math.ceil(col.length * 6.5), Math.ceil(firstCellLength * 6.8)) + (i === 0 ? 20 : 30)
             return {
-                width:     Math.min(400, headerOrFirstWidth), // Limit default column width to 400.
+                width: Math.min(400, headerOrFirstWidth), // Limit default column width to 400.
                 formatter,
             }
         })
