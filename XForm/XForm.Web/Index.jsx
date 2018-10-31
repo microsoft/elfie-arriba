@@ -505,6 +505,12 @@ class Index extends React.Component {
                 formatter,
             }
         })
+        
+        const everyFive = function*(list) {
+            for (let i = 0; i < list.length; i += 5) {
+                yield list.slice(i, i + 5)
+            }
+        }
 
         return [<div key="root" className={`root`}>
             <div className="query">
@@ -537,8 +543,6 @@ class Index extends React.Component {
                 <Resizer
                     onStart={() => this.refs.queryEditor.offsetWidth}
                     onChange={i => this.setState({ queryEditorWidth: Math.max(300, i) })}/>
-            </div>
-            <div id="schema">
                 <div className="schemaHeader">
                     {!this.state.userCols.length && this.state.schemaBody && <span>{this.state.schemaBody.length} Columns</span>}
                     {!!this.state.userCols.length && <span className="button" onClick={e => this.setState({ userCols: [] }, () => this.limitChanged())}>Reset</span>}
@@ -549,19 +553,18 @@ class Index extends React.Component {
                     }}>Apply</span>}
                 </div>
                 {this.state.schemaBody && <div className="tableWrapper">
-                    <table>
-                        <tbody>
-                            {this.state.schemaBody && this.state.schemaBody.map((r, i) => <tr key={i}
+                    <div className="schemaColumns">
+                        {[...everyFive(this.state.schemaBody)].map((five, ii) => <div className="groupOfFive" key={ii}>
+                            {five.map((r, i) => <div key={i}
                                 ref={tr => r.tr = tr}
                                 onMouseEnter={e => this.peekTimer(() => this.setState({ peek: r }))}
                                 onMouseLeave={e => this.peekTimer(() => this.setState({ peek: undefined }), 100)}>
-                                <td><label><input type="checkbox" checked={this.state.userCols.includes(r.name)} onChange={e => {
+                                <label><input type="checkbox" checked={this.state.userCols.includes(r.name)} onChange={e => {
                                     this.setState({ userCols: [...this.state.userCols].toggle(r.name) }, () => this.limitChanged())
-                                }}/>{r.name}</label></td>
-                                <td>{r.type}</td>
-                            </tr>)}
-                        </tbody>
-                    </table>
+                                }}/>{r.name}</label>
+                            </div>)}
+                        </div>)}
+                    </div>
                 </div>}
             </div>
             <div id="results">

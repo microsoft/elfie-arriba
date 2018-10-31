@@ -168,6 +168,9 @@ body {
     display: flex;
     flex-direction: column;
     position: relative; // For datePicker
+	& > * {
+		flex: 0 0 auto;
+	}
 
     .queryHeader {
         @include header;
@@ -201,10 +204,10 @@ body {
     }
 
     #queryEditor {
-        flex: 1 1 auto;
         width: 500px;
         overflow-y: hidden;
         overflow-x: scroll;
+		height: 200px;
 
         .monaco-editor { // Override default monaco styling.
             background-color: transparent;
@@ -247,55 +250,44 @@ body {
             color: hsl(5, 80%, 65%);
         }
     }
-}
-
-.flexFill { flex: 1 }
-#schema {
-    min-width: 150px;
-    display: flex;
-    flex-direction: column;
-
+	
     .schemaHeader {
         @include header;
-        flex: 0 0 auto;
     }
 
     .tableWrapper {
+        flex: 1 1 auto;
         overflow-x: hidden;
         overflow-y: auto;
-        flex: 1 1 auto;
-    }
-
-    table {
         margin-top: 20px;
-        border-collapse: collapse;
-        td {
-            white-space: nowrap;
-            padding: 0;
+		
+		.schemaColumns {
+			column-count: 2;
+			margin-right: 50px;
+		}
 
-            label {
-                padding: 5px 15px 5px 20px;
-                display: flex;
-                cursor: pointer;
-                user-select: none;
-            }
-
-            input {
-                margin: 0;
-                margin-right: 8px;
-            }
-
-            &:last-child {
-                color: $linedark;
-                padding-right: 20px;
-            }
+        label {
+            padding: 5px 15px 5px 20px;
+            display: flex;
+            cursor: pointer;
+            user-select: none;
         }
-        tr:hover { background: adjust-color(change-color($blue, $alpha: 0.1), $green: -40); }
-        :nth-child(5n) td {
-            padding-bottom: 20px;
+
+        input {
+            margin: 0;
+            margin-right: 8px;
         }
+
+		.groupOfFive {
+			break-inside: avoid;
+	        padding-bottom: 20px;
+			
+	        div:hover { background: adjust-color(change-color($blue, $alpha: 0.1), $green: -40); }			
+		}
     }
 }
+
+.flexFill { flex: 1 }
 
 #results {
     flex: 1;
