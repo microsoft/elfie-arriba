@@ -485,16 +485,18 @@ class Index extends React.Component {
 
         const rowsSample = (rows || []).slice(0, 3)
         const columnMeta = (cols || []).map((col, i) => {
+            const defaultFormat = { test: /.?/                  , formatter: cell => cell                                             }
             const formats = [
                 { test: /^https?:\/\//                          , formatter: cell => <a href={cell} target="_blank">{cell}</a>        },
                 { test: /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}Z/ , formatter: cell => cell && (new Date(cell)).toLocaleString() || '—' }, // Must go before parseInt.
                 { test: /^-?\d+$/                               , formatter: cell => cell && (+cell).toLocaleString()          || '—' }, // Make sure exclude semVers such as 1.0.0
-                { test: /.?/                                    , formatter: cell => cell                                             },
+                defaultFormat,
             ]
             
-            const formatter = formats.find(({ test, formatter }) => {
+            const inferredFormat = formats.find(({ test, formatter }) => {
                 return rowsSample.length && rowsSample.every(row => !row[i] || `${row[i]}`.match(test))
-            }).formatter
+            })
+            const formatter = (inferredFormat || defaultFormat).formatter
             
             const firstCell = rows && rows[0] && rows[0][i]
             const formattedFirstCell = formatter(firstCell)
