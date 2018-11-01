@@ -204,7 +204,7 @@ body {
     }
 
     #queryEditor {
-        width: 500px;
+        width: 100%;
         overflow-y: hidden;
         overflow-x: scroll;
 		height: 200px;
@@ -262,7 +262,7 @@ body {
         margin-top: 20px;
 		
 		.schemaColumns {
-			column-count: 2;
+            column-width: 180px;
 			margin-right: 50px;
 		}
 

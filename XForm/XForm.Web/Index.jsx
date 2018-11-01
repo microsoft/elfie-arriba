@@ -515,7 +515,7 @@ class Index extends React.Component {
         }
 
         return [<div key="root" className={`root`}>
-            <div className="query">
+            <div className="query" style={{ width: this.state.queryPaneWidth }}>
                 <div className="queryHeader">
                     <input type="text" placeholder="Save As"
                         value={this.state.saveAs} onChange={e => this.setState({ saveAs: e.target.value })}/>
@@ -538,13 +538,13 @@ class Index extends React.Component {
                     this.state.errorMessage && <span className="errorMessage">{this.state.errorMessage}</span>
                     || this.state.usage || `\u200B`
                 }</div>
-                <div ref="queryEditor" id="queryEditor" style={{ width: this.state.queryEditorWidth }}>
+                <div ref="queryEditor" id="queryEditor">
                     <div className="queryHint">{this.state.queryHint}</div>
                 </div>
                 <DatePicker key="datePicker" />
                 <Resizer
                     onStart={() => this.refs.queryEditor.offsetWidth}
-                    onChange={i => this.setState({ queryEditorWidth: Math.max(300, i) })}/>
+                    onChange={i => this.setState({ queryPaneWidth: Math.max(300, i) })}/>
                 <div className="schemaHeader">
                     {!this.state.userCols.length && this.state.schemaBody && <span>{this.state.schemaBody.length} Columns</span>}
                     {!!this.state.userCols.length && <span className="button" onClick={e => this.setState({ userCols: [] }, () => this.limitChanged())}>Reset</span>}
