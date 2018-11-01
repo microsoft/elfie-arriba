@@ -204,8 +204,15 @@ namespace XForm.IO
 
         public void SetCurrentSourceIndex(int index)
         {
-            IXColumn source = _sources[index];
-            if (_isSubscribed && source != null) _currentGetter = source.CurrentGetter();
+            if(index < _sources.Count)
+            {
+                IXColumn source = _sources[index];
+                if (_isSubscribed) { _currentGetter = source?.CurrentGetter() ?? null; }
+            }
+            else
+            {
+                _currentGetter = null;
+            }
         }
 
         public Func<XArray> CurrentGetter()
