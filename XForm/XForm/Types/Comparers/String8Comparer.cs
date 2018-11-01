@@ -829,6 +829,83 @@ namespace XForm.Types.Comparers
             return left.StartsWith(right, true);
         }
 
+        public void WhereEndsWith(XArray left, XArray right, BitVector vector)
+        {
+            String8[] leftArray = (String8[])left.Array;
+            String8[] rightArray = (String8[])right.Array;
+
+            // Check how the XArrays are configured and run the fastest loop possible for the configuration.
+            if (left.Selector.Indices != null || right.Selector.Indices != null)
+            {
+                // Slow Path: Look up indices on both sides. ~55ms for 16M
+                for (int i = 0; i < left.Count; ++i)
+                {
+                    if (leftArray[left.Index(i)].EndsWith(rightArray[right.Index(i)], true)) vector.Set(i);
+                }
+            }
+            else if (!right.Selector.IsSingleValue)
+            {
+                // Faster Path: Compare contiguous arrays. ~20ms for 16M
+                if (s_WhereNative != null)
+                {
+                    s_WhereNative(leftArray, left.Selector.StartIndexInclusive, (byte)CompareOperator.EndsWith, rightArray, right.Selector.StartIndexInclusive, left.Selector.Count, (byte)BooleanOperator.Or, vector.Array, 0);
+                }
+                else
+                {
+                    int zeroOffset = left.Selector.StartIndexInclusive;
+                    int leftIndexToRightIndex = right.Selector.StartIndexInclusive - left.Selector.StartIndexInclusive;
+                    for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
+                    {
+                        if (leftArray[i].EndsWith(rightArray[i + leftIndexToRightIndex], true)) vector.Set(i - zeroOffset);
+                    }
+                }
+            }
+            else if (!left.Selector.IsSingleValue)
+            {
+                // Fastest Path: Contiguous Array to constant. ~15ms for 16M
+                int zeroOffset = left.Selector.StartIndexInclusive;
+                String8 rightValue = rightArray[0];
+
+                if (s_WhereSingleNative != null)
+                {
+                    s_WhereSingleNative(leftArray, left.Selector.StartIndexInclusive, left.Selector.Count, (byte)CompareOperator.EndsWith, rightValue, (byte)BooleanOperator.Or, vector.Array, 0);
+                }
+                else
+                {
+                    String8 first = leftArray[left.Selector.StartIndexInclusive];
+                    String8 last = leftArray[left.Selector.EndIndexExclusive - 1];
+                    if (first.Array == last.Array && first.Index < last.Index)
+                    {
+                        WhereBlock(left, rightValue, true, CompareOperator.EndsWith, vector);
+                    }
+                    else
+                    {
+                        for (int i = left.Selector.StartIndexInclusive; i < left.Selector.EndIndexExclusive; ++i)
+                        {
+                            if (leftArray[i].EndsWith(rightValue, true)) vector.Set(i - zeroOffset);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                // Single Static comparison. ~0.7ms for 16M [called every 10,240 rows]
+                if (leftArray[left.Selector.StartIndexInclusive].EndsWith(rightArray[right.Selector.StartIndexInclusive], true))
+                {
+                    vector.All(left.Count);
+                }
+            }
+
+            // Remove nulls from matches
+            BoolComparer.AndNotNull(left, vector);
+            BoolComparer.AndNotNull(right, vector);
+        }
+
+        public bool WhereEndsWith(String8 left, String8 right)
+        {
+            return left.EndsWith(right, true);
+        }
+
         public void WhereBlock(XArray left, String8 rightValue, bool ignoreCase, CompareOperator cOp, BitVector vector)
         {
             if (rightValue.IsEmpty())
@@ -871,6 +948,10 @@ namespace XForm.Types.Comparers
                 {
                     IndicesToStartsWithRows(leftArray, rightValue.Length, ref nextRowIndex, left.Selector.StartIndexInclusive, left.Selector.EndIndexExclusive, countFound, vector);
                 }
+                else if (cOp == CompareOperator.EndsWith)
+                {
+                    IndicesToEndsWithRows(leftArray, rightValue.Length, ref nextRowIndex, left.Selector.StartIndexInclusive, left.Selector.EndIndexExclusive, countFound, vector);
+                }
                 else
                 {
                     throw new NotImplementedException(cOp.ToString());
@@ -887,7 +968,7 @@ namespace XForm.Types.Comparers
         public void WhereBlockEmpty(XArray left, CompareOperator cOp, BitVector vector)
         {
             // Contains and StartsWith are allowed but have no matches
-            if (cOp == CompareOperator.Contains || cOp == CompareOperator.ContainsExact || cOp == CompareOperator.StartsWith) return;
+            if (cOp == CompareOperator.Contains || cOp == CompareOperator.ContainsExact || cOp == CompareOperator.StartsWith || cOp == CompareOperator.EndsWith) return;
 
             // Operators other than equality are otherwise disallowed
             if (cOp != CompareOperator.Equal && cOp != CompareOperator.NotEqual) throw new NotImplementedException(cOp.ToString());
@@ -1007,6 +1088,44 @@ namespace XForm.Types.Comparers
             if (countMatched != countFound)
             {
                 if (_indicesBuffer[countMatched] == leftArray[endRowIndex - 1].Index)
+                {
+                    vector.Set(endRowIndex - 1 - startRowIndex);
+                }
+            }
+        }
+
+        private void IndicesToEndsWithRows(String8[] leftArray, int rightLength, ref int nextRowIndex, int startRowIndex, int endRowIndex, int countFound, BitVector vector)
+        {
+            // Find the row containing each match
+            int countMatched = 0;
+            for (; countMatched < countFound; ++countMatched)
+            {
+                int indexToFind = _indicesBuffer[countMatched] + rightLength;
+
+                for (; nextRowIndex < endRowIndex; ++nextRowIndex)
+                {
+                    // If the next match is before this row...
+                    if (indexToFind <= leftArray[nextRowIndex].Index)
+                    {
+                        // If it ends exactly on the previous row, it's a match
+                        if (indexToFind == leftArray[nextRowIndex].Index)
+                        {
+                            vector.Set(nextRowIndex - 1 - startRowIndex);
+                        }
+
+                        // Look for the next match (in this row again)
+                        break;
+                    }
+                }
+
+                // If we're out of rows, stop
+                if (nextRowIndex == endRowIndex) break;
+            }
+
+            // If there were matches left, they must be in the last row
+            if (countMatched != countFound)
+            {
+                if (_indicesBuffer[countMatched] + rightLength == leftArray[endRowIndex - 1].Index + leftArray[endRowIndex - 1].Length)
                 {
                     vector.Set(endRowIndex - 1 - startRowIndex);
                 }

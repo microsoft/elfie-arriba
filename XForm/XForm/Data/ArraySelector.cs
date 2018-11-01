@@ -87,8 +87,15 @@ namespace XForm.Data
             int shiftedEnd = shiftedStart + (endIndexExclusive - startIndexInclusive);
 
             // Validate the Slice is within bounds of the outer ArraySelector
-            if (shiftedStart < this.StartIndexInclusive || shiftedStart > this.EndIndexExclusive) throw new ArgumentOutOfRangeException("startIndexInclusive");
-            if (shiftedEnd < this.StartIndexInclusive || shiftedEnd > this.EndIndexExclusive) throw new ArgumentOutOfRangeException("endIndexExclusive");
+            if (shiftedStart < this.StartIndexInclusive || shiftedStart > this.EndIndexExclusive)
+            {
+                throw new ArgumentOutOfRangeException("startIndexInclusive");
+            }
+
+            if (shiftedEnd < this.StartIndexInclusive || shiftedEnd > this.EndIndexExclusive)
+            {
+                throw new ArgumentOutOfRangeException("endIndexExclusive");
+            }
 
             return new ArraySelector(this) { StartIndexInclusive = shiftedStart, EndIndexExclusive = shiftedEnd };
         }

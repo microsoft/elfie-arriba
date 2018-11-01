@@ -163,6 +163,8 @@ namespace Microsoft.CodeAnalysis.Elfie.Test.Model.Strings
             Assert.AreEqual(binaryName.IndexOf(list), binaryName8.IndexOf(list8));
             Assert.AreEqual(binaryName.IndexOf(list, 20), binaryName8.IndexOf(list8, 20));
             Assert.AreEqual(binaryName.IndexOf(list, 28), binaryName8.IndexOf(list8, 28));
+
+            Assert.AreEqual(-1, binaryName8.IndexOf(String8.Empty));
         }
 
         [TestMethod]
