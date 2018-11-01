@@ -100,10 +100,22 @@
     <Compile Include="Core\Sampler.cs" />
     <Compile Include="Functions\Coalesce.cs" />
     <Compile Include="Functions\Date\DateSubtract.cs" />
+    <Compile Include="Functions\Number\Divide.cs" />
+    <Compile Include="Functions\Number\Add.cs" />
+    <Compile Include="Functions\Number\Multiply.cs" />
+    <Compile Include="Functions\Number\Subtract.cs" />
     <Compile Include="Functions\SimpleTransformFunction.cs" />
+    <Compile Include="Functions\SimpleThreeArgumentFunction.cs" />
+    <Compile Include="Functions\BlockTwoArgumentFunction.cs" />
+    <Compile Include="Functions\String\Truncate.cs" />
+    <Compile Include="Functions\String\IndexOf.cs" />
+    <Compile Include="Functions\String\AfterFirst.cs" />
+    <Compile Include="Functions\String\Between.cs" />
     <Compile Include="Functions\String\ToLower.cs" />
     <Compile Include="IO\ColumnDataNotFoundException.cs" />
     <Compile Include="IO\VariableIntegerReaderWriter.cs" />
+    <Compile Include="Types\Computers\LongComputer.cs" />
+    <Compile Include="Types\IXArrayComputer.cs" />
     <Compile Include="Verbs\Count.cs" />
     <Compile Include="Columns\DeferredArrayColumn.cs" />
     <Compile Include="Core\DictionaryColumn.cs" />
@@ -244,6 +256,7 @@
       <Name>Elfie</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>$(ProjectDir)\..\Deploy.WebSite.cmd $(TargetDir)</PostBuildEvent>

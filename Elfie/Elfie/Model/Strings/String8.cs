@@ -1568,6 +1568,8 @@ namespace Microsoft.CodeAnalysis.Elfie.Model.Strings
         /// <returns>Index of first occurrence of value or -1 if not found</returns>
         public int IndexOf(String8 value, int startIndex = 0)
         {
+            if (value.IsEmpty()) return -1;
+
             int length = value.Length;
 
             int end = Index + Length - value.Length + 1;

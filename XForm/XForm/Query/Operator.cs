@@ -18,7 +18,8 @@ namespace XForm.Query
         GreaterThanOrEqual = 5,
         Contains = 6,
         ContainsExact = 7,
-        StartsWith = 8
+        StartsWith = 8,
+        EndsWith = 9
     }
 
     public enum BooleanOperator : byte
@@ -29,7 +30,7 @@ namespace XForm.Query
 
     public static class OperatorExtensions
     {
-        public static IEnumerable<string> ValidCompareOperators = new string[] { "<", "<=", ">", ">=", "=", "==", "!=", "<>", ":", "::", "|>" };
+        public static IEnumerable<string> ValidCompareOperators = new string[] { "<", "<=", ">", ">=", "=", "==", "!=", "<>", ":", "::", "|>", ">|" };
         public static IEnumerable<string> ValidBooleanOperators = new string[] { "AND", "&&", "&", "OR", "||", "|" };
 
         public static bool TryParseCompareOperator(this string op, out CompareOperator result)
@@ -65,6 +66,9 @@ namespace XForm.Query
                 case "|>":
                     result = CompareOperator.StartsWith;
                     break;
+                case ">|":
+                    result = CompareOperator.EndsWith;
+                    break;
                 default:
                     result = CompareOperator.Equal;
                     return false;
@@ -95,6 +99,8 @@ namespace XForm.Query
                     return "::";
                 case CompareOperator.StartsWith:
                     return "|>";
+                case CompareOperator.EndsWith:
+                    return ">|";
                 default:
                     throw new NotImplementedException(op.ToString());
             }
