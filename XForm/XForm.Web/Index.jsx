@@ -284,6 +284,7 @@ class Index extends React.Component {
                 overviewRulerBorder: false,
                 occurrencesHighlight: false,
                 hideCursorInOverviewRuler: true,
+                fixedOverflowWidgets: true,
     		});
             extendEditor(this.editor)
 
