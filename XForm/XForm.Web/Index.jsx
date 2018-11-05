@@ -157,15 +157,15 @@ const extensions = extensionsRequire.keys().includes('./extensions.jsx') && exte
 
 class Resizer extends React.Component {
 	@autobind onMouseDown(ev) {
-		const {onStart} = this.props
+		const {isHorizontal, onStart} = this.props
 		this.base = onStart && onStart() || 0
-		this.start = ev.clientX
+		this.start = isHorizontal ? ev.clientY : ev.clientX
 		addEventListener('mousemove', this.onMouseMove)
 		addEventListener('mouseup', this.onMouseUp)
 	}
 	@autobind onMouseMove(ev) {
-		const {onChange} = this.props
-		onChange && onChange(this.base + (ev.clientX - this.start))
+		const {isHorizontal, onChange} = this.props
+		onChange && onChange(this.base + ((isHorizontal ? ev.clientY : ev.clientX) - this.start))
 	}
 	@autobind onMouseUp(ev) {
 		removeEventListener('mousemove', this.onMouseMove)
@@ -176,13 +176,21 @@ class Resizer extends React.Component {
 		return <div className="resizer"
 			style={{
 				position: 'absolute',
-				width: 20,
-				right: 0,
-				top: 0, bottom: 0,
-                marginRight: -10,
-                cursor: 'col-resize',
                 userSelect: 'none',
                 zIndex: 1,
+                ...this.props.isHorizontal ? { // Sticks to the top as opposed to the bottom.
+    				height: 20,
+    				top: 0,
+    				left: 0, right: 0,
+                    marginTop: -10,
+                    cursor: 'row-resize',
+                } : {
+    				width: 20,
+    				right: 0,
+    				top: 0, bottom: 0,
+                    marginRight: -10,
+                    cursor: 'col-resize',
+                },
 			}}
 			onMouseDown={this.onMouseDown}></div>
 	}
@@ -538,14 +546,14 @@ class Index extends React.Component {
                     this.state.errorMessage && <span className="errorMessage">{this.state.errorMessage}</span>
                     || this.state.usage || `\u200B`
                 }</div>
-                <div ref="queryEditor" id="queryEditor">
+                <div ref="queryEditor" id="queryEditor" style={{ height: this.state.queryPaneHeight }}>
                     <div className="queryHint">{this.state.queryHint}</div>
                 </div>
                 <DatePicker key="datePicker" />
                 <Resizer
                     onStart={() => this.refs.queryEditor.offsetWidth}
                     onChange={i => this.setState({ queryPaneWidth: Math.max(300, i) })}/>
-                <div className="schemaHeader">
+                <div className="schemaHeader" style={{ position: 'relative' }}>{/* Relative for Resizer */}
                     {!this.state.userCols.length && this.state.schemaBody && <span>{this.state.schemaBody.length} Columns</span>}
                     {!!this.state.userCols.length && <span className="button" onClick={e => this.setState({ userCols: [] }, () => this.limitChanged())}>Reset</span>}
                     <span className="flexFill"></span>
@@ -553,6 +561,9 @@ class Index extends React.Component {
                         this.editor.appendLine(`select ${this.state.userCols.map(c => `[${c}]`).join(', ')}`)
                         this.setState({ userCols: [] }, () => this.limitChanged())
                     }}>Apply</span>}
+                    <Resizer isHorizontal
+                        onStart={() => this.refs.queryEditor.offsetHeight}
+                        onChange={i => this.setState({ queryPaneHeight: Math.max(100, i) })}/>
                 </div>
                 {this.state.schemaBody && <div className="tableWrapper">
                     <div className="schemaColumns">
