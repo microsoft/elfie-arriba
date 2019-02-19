@@ -104,9 +104,11 @@
     <Compile Include="Functions\Number\Add.cs" />
     <Compile Include="Functions\Number\Multiply.cs" />
     <Compile Include="Functions\Number\Subtract.cs" />
+    <Compile Include="Functions\SimpleMultiArgumentFunction.cs" />
     <Compile Include="Functions\SimpleTransformFunction.cs" />
     <Compile Include="Functions\SimpleThreeArgumentFunction.cs" />
     <Compile Include="Functions\BlockTwoArgumentFunction.cs" />
+    <Compile Include="Functions\String\Concat.cs" />
     <Compile Include="Functions\String\Truncate.cs" />
     <Compile Include="Functions\String\IndexOf.cs" />
     <Compile Include="Functions\String\AfterFirst.cs" />

@@ -497,6 +497,8 @@ class Index extends React.Component {
             const defaultFormat = { test: /.?/                  , formatter: cell => cell                                             }
             const formats = [
                 { test: /^https?:\/\//                          , formatter: cell => <a href={cell} target="_blank">{cell}</a>        },
+                { test: /^file:\/\//                            , formatter: cell => <a href={cell.replace("file:///", "vscode://file/")}>{cell}</a>        },
+                { test: /^\w{1,10}:\/\//                        , formatter: cell => <a href={cell} target="_blank">{cell}</a>        },
                 { test: /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}Z/ , formatter: cell => cell && (new Date(cell)).toLocaleString() || '—' }, // Must go before parseInt.
                 { test: /^-?\d+$/                               , formatter: cell => cell && (+cell).toLocaleString()          || '—' }, // Make sure exclude semVers such as 1.0.0
                 defaultFormat,
