@@ -92,7 +92,9 @@ namespace XForm.Functions
             foreach (IXColumn column in columns)
             {
                 if (previousColumnType != null && previousColumnType != column.ColumnDetails.Type)
+                {
                     throw new UsageException($"[{column.ColumnDetails.Name}] type of '{column.ColumnDetails.Type.ToString()}' does not match the previous columns type of '{previousColumnType.ToString()}'");
+                }
 
                 previousColumnType = column.ColumnDetails.Type;
             }
@@ -115,7 +117,7 @@ namespace XForm.Functions
             T[] currentTyped = (T[])currentArray.Array;
 
             // If there are no nulls or only one column, return as-is
-            if (!currentArray.HasNulls || getters.Length == 1) return currentArray;
+            if (!currentArray.HasNulls || getters.Length == 1) { return currentArray; }
 
             // Allocate result arrays for the coalesced results
             int rowCount = currentArray.Selector.Count;
@@ -155,7 +157,7 @@ namespace XForm.Functions
                 }
 
                 // If there are no nulls left, we can return
-                if (nullCount <= 0) return XArray.All(_buffer, rowCount);
+                if (nullCount <= 0) { return XArray.All(_buffer, rowCount); }
             }
 
             // If we got through all columns, return the values with any remaining nulls marked
