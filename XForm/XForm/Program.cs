@@ -88,6 +88,9 @@ namespace XForm
                     case "perf":
                         new PerformanceComparisons(context).Run();
                         return 0;
+                    case "io":
+                        IOPerformance.Test();
+                        return 0;
                     case "generatehuge":
                         HugeSampleGenerator.Generate(ParseLongOrDefault(args, 1, (long)5 * 1000 * 1000 * 1000), context);
                         return 0;

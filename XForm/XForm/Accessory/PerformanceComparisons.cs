@@ -52,17 +52,6 @@ namespace XForm
         {
             //Current();
 
-            // 350MB/s, 4GB/s RAM cached
-            //DirectRead(@"C:\Download\XFormProduction\Table\HugeSample\Full\2018.06.07 00.00.00Z\0\Segment\V.u16.bin", 20480 * 2);
-
-            // ~380MB/s, 4GB/s RAM cached
-            //ReadSet(@"C:\Download\XFormProduction\Table\HugeSample\Full\2018.06.07 00.00.00Z", @"Segment\V.u16.bin", 20480 * 2);
-
-            // ~450MB/s, 4GB/s RAM cached
-            //ReadSet(@"C:\Download\XFormProduction\Table\HugeSample\Full\2018.06.07 00.00.00Z", @"WasEncrypted\VR.u8.bin", 10 * 1024 * 1024);
-
-            ReadSetParallel(@"C:\Download\XFormProduction\Table\HugeSample\Full\2018.06.07 00.00.00Z", @"Status\VR.u8.bin", 10 * 1024 * 1024);
-
             //WhereUShortUnderConstant();
             //WhereUShortEqualsUshort();
             //ByteLessThanConstant();
@@ -462,55 +451,6 @@ namespace XForm
                     writer.NextRow();
                 }
             }
-        }
-
-        private static void ReadSet(string tablePath, string filePathPerPartition, int bytesPerRead)
-        {
-            long totalRead = 0;
-
-            using (new TraceWatch($@"Reading {tablePath}\*\{filePathPerPartition}..."))
-            {
-                foreach (string partition in Directory.GetDirectories(tablePath))
-                {
-                    totalRead += DirectRead(Path.Combine(partition, filePathPerPartition), bytesPerRead);
-                }
-            }
-
-            Trace.WriteLine($"Done. Read {totalRead.SizeString()}.");
-        }
-
-        private static void ReadSetParallel(string tablePath, string filePathPerPartition, int bytesPerRead)
-        {
-            long totalRead = 0;
-
-            using (new TraceWatch($@"Reading {tablePath}\*\{filePathPerPartition}..."))
-            {
-                Parallel.ForEach(Directory.GetDirectories(tablePath), (partition) =>
-                {
-                    long setRead = DirectRead(Path.Combine(partition, filePathPerPartition), bytesPerRead);
-                    Interlocked.Add(ref totalRead, setRead);
-                });
-            }
-
-            Trace.WriteLine($"Done. Read {totalRead.SizeString()}.");
-        }
-
-        private static long DirectRead(string filePath, int bytesPerRead)
-        {
-            byte[] buffer = new byte[bytesPerRead];
-            long totalRead = 0;
-            
-            using (FileStream stream = File.OpenRead(filePath))
-            {
-                while(true)
-                {
-                    int bytesRead = stream.Read(buffer, 0, bytesPerRead);
-                    totalRead += bytesRead;
-                    if (bytesRead < bytesPerRead) break;
-                }
-            }
-
-            return totalRead;
         }
     }
 }
