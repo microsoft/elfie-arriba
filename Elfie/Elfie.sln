@@ -3,34 +3,34 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30404.54
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Elfie", "Elfie\Elfie.csproj", "{D45F339F-847A-4F3A-88A0-AFB883E9920E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Elfie", "Elfie\Elfie.csproj", "{D45F339F-847A-4F3A-88A0-AFB883E9920E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Elfie.Test", "Elfie.Test\Elfie.Test.csproj", "{FBB1CED3-8C9D-4CB8-A322-04EC783E11B8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Elfie.Test", "Elfie.Test\Elfie.Test.csproj", "{FBB1CED3-8C9D-4CB8-A322-04EC783E11B8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Elfie.Api.Indexer", "Elfie.Indexer\Elfie.Api.Indexer.csproj", "{48C0034D-8531-4B72-95D8-50250BF7AF4F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Elfie.Api.Indexer", "Elfie.Indexer\Elfie.Api.Indexer.csproj", "{48C0034D-8531-4B72-95D8-50250BF7AF4F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Elfie.Search", "Elfie.Search\Elfie.Search.csproj", "{0004F542-0939-45BA-A138-395A9106BBCE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Elfie.Search", "Elfie.Search\Elfie.Search.csproj", "{0004F542-0939-45BA-A138-395A9106BBCE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Elfie.EndToEnd", "Elfie.EndToEnd\Elfie.EndToEnd.csproj", "{BD7C02F6-84BF-4BF7-818F-DD4B2C871250}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Elfie.EndToEnd", "Elfie.EndToEnd\Elfie.EndToEnd.csproj", "{BD7C02F6-84BF-4BF7-818F-DD4B2C871250}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Elfie.Merger", "Elfie.Merger\Elfie.Merger.csproj", "{138292CE-B4A7-4B6A-BE23-D61B8A244ECF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Elfie.Merger", "Elfie.Merger\Elfie.Merger.csproj", "{138292CE-B4A7-4B6A-BE23-D61B8A244ECF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SymbolSourceGet", "SymbolSourceGet\SymbolSourceGet.csproj", "{E5E258E2-E9D6-48F5-B581-732744647717}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SymbolSourceGet", "SymbolSourceGet\SymbolSourceGet.csproj", "{E5E258E2-E9D6-48F5-B581-732744647717}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SourceIndex", "SourceIndex\SourceIndex.csproj", "{12817C7C-C927-4959-BEDD-1456357ECEFF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SourceIndex", "SourceIndex\SourceIndex.csproj", "{12817C7C-C927-4959-BEDD-1456357ECEFF}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{9F32FE5F-346D-4594-9FAE-6EC62F0A0967}"
 	ProjectSection(SolutionItems) = preProject
 		Elfie.testsettings = Elfie.testsettings
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Elfie.NonCore.Test", "Elfie.NonCore.Test\Elfie.NonCore.Test.csproj", "{15F44DA7-815C-4F54-8C49-0FEEC9095DB8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Elfie.NonCore.Test", "Elfie.NonCore.Test\Elfie.NonCore.Test.csproj", "{15F44DA7-815C-4F54-8C49-0FEEC9095DB8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Xsv", "Xsv\Xsv.csproj", "{7E26458E-6A42-4053-BB89-62D3C7530815}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Xsv", "Xsv\Xsv.csproj", "{7E26458E-6A42-4053-BB89-62D3C7530815}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Xsv.Test", "Xsv.Test\Xsv.Test.csproj", "{8A711BBB-5B69-4BAF-86A2-FB25397794B9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Xsv.Test", "Xsv.Test\Xsv.Test.csproj", "{8A711BBB-5B69-4BAF-86A2-FB25397794B9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SymbolForge", "SymbolForge\SymbolForge.csproj", "{BD3B23A9-9086-49BD-9C75-9554D56248BE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SymbolForge", "SymbolForge\SymbolForge.csproj", "{BD3B23A9-9086-49BD-9C75-9554D56248BE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

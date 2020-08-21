@@ -1,159 +1,49 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project Sdk="Microsoft.NET.Sdk">
+
   <Import Project="..\Elfie.build.props" />
+
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
-    <ProductVersion>8.0.30703</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{D45F339F-847A-4F3A-88A0-AFB883E9920E}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <TargetFramework>net45</TargetFramework>
     <RootNamespace>Microsoft.CodeAnalysis.Elfie</RootNamespace>
     <AssemblyName>Microsoft.CodeAnalysis.Elfie</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <TargetFrameworkProfile />
-    <RestoreProjectStyle>PackageReference</RestoreProjectStyle>
+
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
-  <PropertyGroup>
-    <StartupObject />
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <DebugType>full</DebugType>
     <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
-    <Optimize>true</Optimize>
-    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <DebugType>pdbonly</DebugType>
+    <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
+
   <ItemGroup>
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System" />
     <Reference Include="System.Configuration" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Data" />
     <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="System.Xml" />
-    <Reference Include="System.Xml.Linq" />
   </ItemGroup>
+
   <ItemGroup>
     <Compile Include="..\Shared\VersionConstants.cs" />
     <Compile Include="..\Shared\SharedAssemblyInfo.cs" />
-    <Compile Include="Diagnostics\Cmd.cs" />
-    <Compile Include="Diagnostics\ConsoleHighlighter.cs" />
-    <Compile Include="Diagnostics\ConsoleSearchInterface.cs" />
-    <Compile Include="Diagnostics\Logger.cs" />
-    <Compile Include="Diagnostics\Position.cs" />
-    <Compile Include="Diagnostics\ProgressWriter.cs" />
-    <Compile Include="Diagnostics\SearchResult.cs" />
-    <Compile Include="Extensions\DateTimeExtensions.cs" />
-    <Compile Include="Extensions\IntExtensions.cs" />
-    <Compile Include="Extensions\IReadOnlyListExtensions.cs" />
-    <Compile Include="Extensions\IStatisticsExtensions.cs" />
-    <Compile Include="Extensions\StringExtensions.cs" />
-    <Compile Include="Model\AddReferenceDatabase.cs" />
-    <Compile Include="Model\ArdbVersion.cs" />
-    <Compile Include="Model\BaseItemSet.cs" />
-    <Compile Include="Model\DatabaseAddResult.cs" />
-    <Compile Include="Model\Columns\DateTimeColumn.cs" />
-    <Compile Include="Model\EmptyArray.cs" />
-    <Compile Include="Model\IMemberDatabase.cs" />
-    <Compile Include="Model\Map\ImmutableItemMap.cs" />
-    <Compile Include="Model\Map\ItemMap.cs" />
-    <Compile Include="Model\Map\MapEnumerator.cs" />
-    <Compile Include="Model\Map\MutableItemMap.cs" />
-    <Compile Include="Model\MemberQuery.cs" />
-    <Compile Include="Model\MergedMembersDatabase.cs" />
-    <Compile Include="Model\NugetVersionUtilities.cs" />
-    <Compile Include="Model\Strings\AlphanumericSplitter.cs" />
-    <Compile Include="Model\Columns\String8Column.cs" />
-    <Compile Include="Model\Strings\UTF8.cs" />
-    <Compile Include="Model\Structures\PackageIdentity.cs" />
-    <Compile Include="Model\Strings\IWriteableString.cs" />
-    <Compile Include="Model\Structures\PartialArray.cs" />
-    <Compile Include="Diagnostics\IStatistics.cs" />
-    <Compile Include="Diagnostics\StatisticsRollup.cs" />
-    <Compile Include="Model\Index\ImmutableMemberIndex.cs" />
-    <Compile Include="Model\Index\MemberIndex.cs" />
-    <Compile Include="Model\Index\MutableMemberIndex.cs" />
-    <Compile Include="Model\Strings\String8.cs" />
-    <Compile Include="Model\Strings\String8Set.cs" />
-    <Compile Include="Model\Structures\MutableSymbol.cs" />
-    <Compile Include="Diagnostics\Memory.cs" />
-    <Compile Include="Diagnostics\TraceWatch.cs" />
-    <Compile Include="Extensions\BinaryReaderWriterExtensions.cs" />
-    <Compile Include="Extensions\BinarySerializableExtensions.cs" />
-    <Compile Include="Extensions\LongExtensions.cs" />
-    <Compile Include="Extensions\TimeSpanExtensions.cs" />
-    <Compile Include="Model\PackageDatabase.cs" />
-    <Compile Include="Model\Strings\ImmutableStringStore.cs" />
-    <Compile Include="Model\Strings\IStringStore.cs" />
-    <Compile Include="Model\Strings\StringStore.cs" />
-    <Compile Include="Model\Structures\Range.cs" />
-    <Compile Include="Model\Structures\SymbolDetails.cs" />
-    <Compile Include="Model\Strings\MutableStringStore.cs" />
-    <Compile Include="Model\Structures\Symbol.cs" />
-    <Compile Include="Model\Structures\SymbolLocation.cs" />
-    <Compile Include="Model\Structures\SymbolModifier.cs" />
-    <Compile Include="Model\Tree\Path8.cs" />
-    <Compile Include="Model\Tree\ItemTree.cs" />
-    <Compile Include="Model\Structures\SymbolType.cs" />
-    <Compile Include="PDB\SourceFileDetails.cs" />
-    <Compile Include="PDB\SourceFileMap.cs" />
-    <Compile Include="PDB\SymbolCache.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Resources.Designer.cs">
-      <AutoGen>True</AutoGen>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Resources.Designer.cs">
       <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="Serialization\BaseTabularWriter.cs" />
-    <Compile Include="Serialization\BufferedRowReader.cs" />
-    <Compile Include="Serialization\ConsoleTabularWriter.cs" />
-    <Compile Include="Serialization\DataReaderTabularReader.cs" />
-    <Compile Include="Serialization\FileIO.cs" />
-    <Compile Include="Serialization\IBinarySerializable.cs" />
-    <Compile Include="Model\Columns\IColumn.cs" />
-    <Compile Include="Serialization\IISTabularReader.cs" />
-    <Compile Include="Serialization\ITabularValue.cs" />
-    <Compile Include="Serialization\ITabularReader.cs" />
-    <Compile Include="Serialization\ITabularWriter.cs" />
-    <Compile Include="Serialization\JsonTabularWriter.cs" />
-    <Compile Include="Serialization\LdfTabularReader.cs" />
-    <Compile Include="Serialization\Read.cs" />
-    <Compile Include="Model\Strings\String8Block.cs" />
-    <Compile Include="Serialization\BaseTabularReader.cs" />
-    <Compile Include="Serialization\CsvReader.cs" />
-    <Compile Include="Serialization\Resource.cs" />
-    <Compile Include="Serialization\TabularFactory.cs" />
-    <Compile Include="Serialization\TsvReader.cs" />
-    <Compile Include="Serialization\CsvWriter.cs" />
-    <Compile Include="Serialization\TsvWriter.cs" />
-    <Compile Include="Serialization\Write.cs" />
   </ItemGroup>
+
   <ItemGroup>
-    <None Include="app.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Resources.resx">
+    <EmbeddedResource Update="Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
+
 </Project>
