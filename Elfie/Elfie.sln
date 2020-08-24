@@ -19,11 +19,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SymbolSourceGet", "SymbolSo
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SourceIndex", "SourceIndex\SourceIndex.csproj", "{12817C7C-C927-4959-BEDD-1456357ECEFF}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{9F32FE5F-346D-4594-9FAE-6EC62F0A0967}"
-	ProjectSection(SolutionItems) = preProject
-		Elfie.testsettings = Elfie.testsettings
-	EndProjectSection
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Elfie.NonCore.Test", "Elfie.NonCore.Test\Elfie.NonCore.Test.csproj", "{15F44DA7-815C-4F54-8C49-0FEEC9095DB8}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Xsv", "Xsv\Xsv.csproj", "{7E26458E-6A42-4053-BB89-62D3C7530815}"
