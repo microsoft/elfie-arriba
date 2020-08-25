@@ -5,9 +5,9 @@ namespace Microsoft.CodeAnalysis.Elfie
 {
     public static class VersionConstants
     {
-        public const string Prerelease = "-rc12";
+        public const string Prerelease = "-rc13";
         public const string AssemblyVersion = "1.0.0";
-        public const string FileVersion = AssemblyVersion + ".13";
+        public const string FileVersion = AssemblyVersion + ".14";
         public const string Version = AssemblyVersion + Prerelease;
     }
 }
