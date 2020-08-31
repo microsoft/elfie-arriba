@@ -12,7 +12,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Version>1.0.0-rc13</Version>
+    <Version>1.0.0-rc14</Version>
     <Authors>Microsoft</Authors>
     <Title>Extensible Lightweight Fast Indexed Entities (ELFIE)</Title>
     <Description>An extensible library for fast indexing of code artifacts.</Description>
