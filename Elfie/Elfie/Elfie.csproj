@@ -13,13 +13,13 @@
 
   <PropertyGroup>
     <Version>1.0.0-rc13</Version>
-    <Authors>Scott Louvau,Michael C. Fanning,Ryley Taketa,Jinu Joseph</Authors>
+    <Authors>Microsoft</Authors>
     <Title>Extensible Lightweight Fast Indexed Entities (ELFIE)</Title>
     <Description>An extensible library for fast indexing of code artifacts.</Description>
-    <PackageReleaseNotes>Version $Version$ of Elfie (Extensible Lightweight Fast Indexed Entities)</PackageReleaseNotes>
+    <PackageReleaseNotes>Version $(Version) of Elfie (Extensible Lightweight Fast Indexed Entities)</PackageReleaseNotes>
     <Copyright>© Microsoft Corporation. All rights reserved.</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/microsoft/elfie</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/microsoft/elfie-arriba</PackageProjectUrl>
     <PackageTags>semantic;search;elfy</PackageTags>
 
 	  <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
