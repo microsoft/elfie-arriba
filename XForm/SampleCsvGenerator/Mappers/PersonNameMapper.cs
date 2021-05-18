@@ -5,7 +5,7 @@ using System;
 
 using Elfie.Serialization;
 
-namespace XForm.Generator.Mappers
+namespace SampleCsvGenerator.Mappers
 {
     /// <summary>
     ///  PersonNameMapper maps hashes to plausible person names using US
@@ -20,8 +20,8 @@ namespace XForm.Generator.Mappers
 
         public PersonNameMapper()
         {
-            FirstAndMiddleNames = Resource.ReadAllStreamLines(@"XForm.Generator.Data.FirstNames.txt");
-            LastNames = Resource.ReadAllStreamLines(@"XForm.Generator.Data.LastNames.txt");
+            FirstAndMiddleNames = Resource.ReadAllStreamLines(@"SampleCsvGenerator.Data.FirstNames.txt");
+            LastNames = Resource.ReadAllStreamLines(@"SampleCsvGenerator.Data.LastNames.txt");
 
             int middleNamesNeeded = int.MaxValue / this.LastNames.Length / this.FirstAndMiddleNames.Length;
             if (middleNamesNeeded > this.FirstAndMiddleNames.Length) throw new InvalidOperationException("Name sources didn't contain enough unique values.");

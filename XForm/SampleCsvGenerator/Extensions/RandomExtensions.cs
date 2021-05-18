@@ -3,7 +3,7 @@
 
 using System;
 
-namespace XForm.Generator.Extensions
+namespace SampleCsvGenerator.Extensions
 {
     public static class RandomExtensions
     {

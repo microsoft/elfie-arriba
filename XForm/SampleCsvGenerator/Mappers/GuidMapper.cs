@@ -3,7 +3,7 @@
 
 using System;
 
-namespace XForm.Generator.Mappers
+namespace SampleCsvGenerator.Mappers
 {
     /// <summary>
     ///  GuidMapper maps hashes to GUIDs (trivially).

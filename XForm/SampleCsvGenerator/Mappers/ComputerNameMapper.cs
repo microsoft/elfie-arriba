@@ -5,7 +5,7 @@ using System.Text;
 
 using Elfie.Serialization;
 
-namespace XForm.Generator.Mappers
+namespace SampleCsvGenerator.Mappers
 {
     /// <summary>
     ///  ComputerNameMapper maps hashes to plausible computer names.
@@ -16,7 +16,7 @@ namespace XForm.Generator.Mappers
 
         public ComputerNameMapper()
         {
-            this.ComputerNameWords = Resource.ReadAllStreamLines(@"XForm.Generator.Mappers.Data.ComputerNames.txt");
+            this.ComputerNameWords = Resource.ReadAllStreamLines(@"SampleCsvGenerator.Mappers.Data.ComputerNames.txt");
         }
 
         public string Generate(uint hash)

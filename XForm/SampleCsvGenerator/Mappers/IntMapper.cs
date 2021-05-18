@@ -3,7 +3,7 @@
 
 using System.Text;
 
-namespace XForm.Generator.Mappers
+namespace SampleCsvGenerator.Mappers
 {
     /// <summary>
     ///  IntMapper maps hashes to integers (trivially).

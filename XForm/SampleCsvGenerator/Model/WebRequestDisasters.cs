@@ -3,7 +3,7 @@
 
 using System;
 
-namespace XForm.Generator.Model
+namespace SampleCsvGenerator.Model
 {
     public interface IDisaster<T>
     {
