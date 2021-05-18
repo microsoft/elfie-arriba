@@ -5,7 +5,7 @@ using System.Security.Cryptography;
 
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 
-namespace XForm.Generator.Mappers
+namespace SampleCsvGenerator.Mappers
 {
     public static class Hashing
     {

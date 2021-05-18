@@ -3,25 +3,22 @@
 
 using System.Text;
 
-namespace XForm.Generator.Mappers
+namespace SampleCsvGenerator.Mappers
 {
     /// <summary>
-    ///  AliasMapper maps hashes to aliases appropriate for people or groups.
-    ///  [Up to 8 letters, dashed prefix sometimes]
+    ///  IpMapper maps hashes into IPv4 addresses.
     /// </summary>
-    public class AliasMapper : IValueMapper
+    public class IpMapper : IValueMapper
     {
-        public AliasMapper()
-        { }
-
         public string Generate(uint hash)
         {
             StringBuilder result = new StringBuilder();
             uint hashRemaining = hash;
 
-            while (hashRemaining > 0)
+            for (int i = 0; i < 4; ++i)
             {
-                result.Append((char)('A' + Hashing.Extract(ref hashRemaining, 26)));
+                if (i > 0) result.Append(".");
+                result.Append(Hashing.Extract(ref hashRemaining, 256));
             }
 
             return result.ToString();

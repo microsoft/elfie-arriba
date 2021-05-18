@@ -7,9 +7,9 @@ using System.Collections.Generic;
 using Microsoft.CodeAnalysis.Elfie.Model.Strings;
 using Microsoft.CodeAnalysis.Elfie.Serialization;
 
-using XForm.Generator.Mappers;
+using SampleCsvGenerator.Mappers;
 
-namespace XForm.Generator.Model
+namespace SampleCsvGenerator.Model
 {
     public class User
     {

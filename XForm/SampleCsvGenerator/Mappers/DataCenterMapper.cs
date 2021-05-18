@@ -3,7 +3,7 @@
 
 using System;
 
-namespace XForm.Generator.Mappers
+namespace SampleCsvGenerator.Mappers
 {
     internal class DataCenterMapper
     {

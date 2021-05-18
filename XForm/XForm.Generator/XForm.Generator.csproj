@@ -64,25 +64,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ComparerGenerator.cs" />
-    <Compile Include="Extensions\RandomExtensions.cs" />
-    <Compile Include="Mappers\AliasMapper.cs" />
-    <Compile Include="Mappers\ComputerNameMapper.cs" />
-    <Compile Include="Mappers\DataCenterMapper.cs" />
-    <Compile Include="Mappers\EmailAddressMapper.cs" />
-    <Compile Include="Mappers\FrequencyMapper.cs" />
-    <Compile Include="Mappers\GuidMapper.cs" />
-    <Compile Include="Mappers\Hashing.cs" />
-    <Compile Include="Mappers\IntMapper.cs" />
-    <Compile Include="Mappers\IpMapper.cs" />
-    <Compile Include="Mappers\ISanitizeMapper.cs" />
-    <Compile Include="Mappers\PersonNameMapper.cs" />
-    <Compile Include="Mappers\PhraseMapper.cs" />
-    <Compile Include="Mappers\ServerNameMapper.cs" />
-    <Compile Include="Mappers\UriStemMapper.cs" />
-    <Compile Include="Model\User.cs" />
-    <Compile Include="Model\WebRequest.cs" />
-    <Compile Include="Model\WebRequestDisasters.cs" />
-    <Compile Include="Model\WebRequestGenerator.cs" />
     <Compile Include="PrimitiveConvertersGenerator.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -90,12 +71,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Data\ComputerNames.txt" />
-    <EmbeddedResource Include="Data\FirstNames.txt" />
-    <EmbeddedResource Include="Data\LastNames.txt" />
-    <EmbeddedResource Include="Data\TopWords.txt" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Elfie\Elfie\Elfie.csproj">

@@ -4,10 +4,10 @@
 using System;
 using System.Collections.Generic;
 
-using XForm.Generator.Extensions;
-using XForm.Generator.Mappers;
+using SampleCsvGenerator.Extensions;
+using SampleCsvGenerator.Mappers;
 
-namespace XForm.Generator.Model
+namespace SampleCsvGenerator.Model
 {
     public class WebRequestGenerator
     {

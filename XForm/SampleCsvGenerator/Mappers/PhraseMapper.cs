@@ -6,7 +6,7 @@ using System.Text;
 
 using Elfie.Serialization;
 
-namespace XForm.Generator.Mappers
+namespace SampleCsvGenerator.Mappers
 {
     /// <summary>
     ///  PhraseMapper maps hashes into ThreeWordPhrases of common, short, English Words.
@@ -17,7 +17,7 @@ namespace XForm.Generator.Mappers
 
         public PhraseMapper()
         {
-            this.TopWords = Resource.ReadAllStreamLines(@"XForm.Generator.Data.TopWords.txt");
+            this.TopWords = Resource.ReadAllStreamLines(@"SampleCsvGenerator.Data.TopWords.txt");
         }
 
         public string Generate(uint hash)

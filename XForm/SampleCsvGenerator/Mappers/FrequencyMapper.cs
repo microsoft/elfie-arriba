@@ -3,7 +3,7 @@
 
 using System.Collections.Generic;
 
-namespace XForm.Generator.Mappers
+namespace SampleCsvGenerator.Mappers
 {
     public class FrequencyEntry<T>
     {
