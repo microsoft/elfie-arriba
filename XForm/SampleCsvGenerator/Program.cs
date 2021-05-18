@@ -66,8 +66,6 @@ namespace SampleCsvGenerator
             generator = new WebRequestGenerator(users, r, asOfDate, 1000);
             generator.Issue = new PortRangeBlocked(asOfDate.AddMinutes(1), asOfDate.AddMinutes(180), 11450, 11480);
             BuildWebRequests(basePath, "Sample", generator, eventCount, WebRequestWriteMode.UserIdentityOnly);
-
-            Console.WriteLine("Done.");
         }
 
         private static void GenerateXFormSample(string basePath, int eventCount)
@@ -109,8 +107,6 @@ namespace SampleCsvGenerator
                 BuildWebRequests(basePath, "WebRequest", generator, eventCount, WebRequestWriteMode.UserIdentityOnly);
                 asOfDate = asOfDate.AddDays(-1);
             }
-
-            Console.WriteLine("Done.");
         }
 
         private static void BuildWebRequests(string basePath, string fileNamePrefix, WebRequestGenerator generator, int eventCount, WebRequestWriteMode mode)
