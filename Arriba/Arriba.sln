@@ -4,9 +4,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 15.0.26730.16
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{46C7FEEB-4FA3-4CB1-87E6-D8DEA87F13C6}"
-	ProjectSection(SolutionItems) = preProject
-		Arriba.testsettings = Arriba.testsettings
-	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tools", "Tools", "{AC459F90-C1BF-4B6A-BEC4-5C19487C3D8B}"
 EndProject

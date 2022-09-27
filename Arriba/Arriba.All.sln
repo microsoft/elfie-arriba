@@ -1,12 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.26730.16
+# Visual Studio Version 17
+VisualStudioVersion = 17.3.32922.545
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{46C7FEEB-4FA3-4CB1-87E6-D8DEA87F13C6}"
-	ProjectSection(SolutionItems) = preProject
-		Arriba.testsettings = Arriba.testsettings
-	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tools", "Tools", "{AC459F90-C1BF-4B6A-BEC4-5C19487C3D8B}"
 EndProject
@@ -39,7 +36,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Arriba.IIS", "Arriba.IIS\Ar
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Arriba.TfsWorkItemCrawler", "Tools\Arriba.TfsWorkItemCrawler\Arriba.TfsWorkItemCrawler.csproj", "{FA9A437A-4299-4645-957D-EEABB17396C5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Elfie", "..\Elfie\Elfie\Elfie.csproj", "{D45F339F-847A-4F3A-88A0-AFB883E9920E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Elfie", "..\Elfie\Elfie\Elfie.csproj", "{D45F339F-847A-4F3A-88A0-AFB883E9920E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
