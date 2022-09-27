@@ -238,6 +238,9 @@ Arriba/Databases/*
 Arriba.HttpShim/
 Arriba.HttpShim.sln
 
+# XForm Generated Code
+XForm/XForm.Generator/XForm/Types/
+
 # Exclude Mac metadata files
 .DS_Store
 

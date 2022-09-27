@@ -18,7 +18,7 @@ namespace XForm.Generator
         {
             if (args.Length > 0 && args[0].Equals("sample", StringComparison.OrdinalIgnoreCase))
             {
-                Generate_WebRequestSample(@"C:\Download", 5, 250000, 1000 * 1000, 3, (args.Length > 1 && args[1].Equals("all", StringComparison.OrdinalIgnoreCase)));
+                Generate_WebRequestSample(@".", 5, 250000, 1000 * 1000, 3, (args.Length > 1 && args[1].Equals("all", StringComparison.OrdinalIgnoreCase)));
                 return;
             }
 
