@@ -23,9 +23,9 @@
     <ProjectGuid>{2940106F-71AA-48CA-8257-7FCEABAB098F}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>XFormNative</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.15063.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
     <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <CLRSupport>true</CLRSupport>
     <LinkIncremental>false</LinkIncremental>

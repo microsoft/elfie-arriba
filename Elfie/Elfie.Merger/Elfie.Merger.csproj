@@ -4,7 +4,7 @@
   <Import Project="..\Elfie.build.props" />
 
   <PropertyGroup>
-    <TargetFramework>net46</TargetFramework>
+    <TargetFramework>net48</TargetFramework>
     <OutputType>Exe</OutputType>
     <RootNamespace>Microsoft.CodeAnalysis.Elfie.Merger</RootNamespace>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>

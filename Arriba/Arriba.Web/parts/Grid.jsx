@@ -396,7 +396,7 @@ export default class extends EventedComponent {
 
     getGrid() {
         // Once the counts query runs and table basics are loaded, get a page of results
-        if (!this.props.query || !this.props.currentTable) {
+        if (!this.props.currentTable) {
             this.setState({ gridData: undefined })
             return;
         }
@@ -455,7 +455,7 @@ export default class extends EventedComponent {
         return "table/" + this.props.currentTable + queryString;
     }
     buildThisUrl(includeOpen) {
-        var relevantParams = {};
+        var relevantParams = { v: "g" };
 
         if (this.props.query) relevantParams.q = this.props.query;
         if (this.props.currentTable) relevantParams.t = this.props.currentTable;
@@ -474,7 +474,7 @@ export default class extends EventedComponent {
         if (this.state.rowLabels && this.state.rowLabels.length > 0) addArrayParameters(relevantParams, "rl", this.state.rowLabels);
         if (this.state.colLabels && this.state.colLabels.length > 0) addArrayParameters(relevantParams, "cl", this.state.colLabels);
 
-        return location.protocol + '//' + location.host + "/Grid.html" + buildUrlParameters(relevantParams);
+        return location.protocol + '//' + location.host + buildUrlParameters(relevantParams);
     }
     render() {
         var mainContent = null;

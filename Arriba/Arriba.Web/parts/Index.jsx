@@ -41,8 +41,8 @@ class Index extends EventedComponent {
             currentTable: table,
             userSelectedTable: table,
             mode:
-                window.location.pathname.startsWith("/help") ? "help" :
-                window.location.pathname.startsWith("/Grid.html") ? "grid" :
+                this.params.v === "h" ? "help" :
+                this.params.v === "g" ? "grid" :
                 undefined // Implies "search".
         };
 
